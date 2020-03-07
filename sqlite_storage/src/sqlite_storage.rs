@@ -27,7 +27,7 @@ impl SqliteAnimationStorage {
         let core    = SqliteCore::new(connection);
         let core    = Arc::new(Desync::new(core));
 
-        // Initialise it
+        // Initialise it (in the background)
         core.desync(|core| { core.initialize().ok(); });
 
         // Create the storage object
@@ -56,7 +56,6 @@ impl SqliteAnimationStorage {
     pub fn new_in_memory() -> Result<SqliteAnimationStorage, rusqlite::Error> {
         Ok(Self::new_from_connection(rusqlite::Connection::open_in_memory()?))
     }
-
 
     ///
     /// Returns the responses for a stream of commands
