@@ -1,14 +1,19 @@
 use super::sqlite_core::*;
 
+use flo_animation::storage::*;
+
 use ::desync::*;
 use rusqlite;
+use futures::*;
+
+use std::sync::*;
 
 ///
 /// Stores an animation using a SQLite database
 ///
 pub struct SqliteAnimationStorage {
     /// The core where the data resides
-    core: Desync<SqliteCore>
+    core: Arc<Desync<SqliteCore>>
 }
 
 impl SqliteAnimationStorage {
@@ -20,7 +25,7 @@ impl SqliteAnimationStorage {
     pub fn new_from_connection(connection: rusqlite::Connection) -> SqliteAnimationStorage {
         // Create the core with the connection
         let core    = SqliteCore::new(connection);
-        let core    = Desync::new(core);
+        let core    = Arc::new(Desync::new(core));
 
         // Initialise it
         core.desync(|core| { core.initialize().ok(); });
@@ -37,7 +42,7 @@ impl SqliteAnimationStorage {
     pub fn from_connection(connection: rusqlite::Connection) -> SqliteAnimationStorage {
         // Create the core with the connection
         let core    = SqliteCore::new(connection);
-        let core    = Desync::new(core);
+        let core    = Arc::new(Desync::new(core));
 
         // Create the storage object
         SqliteAnimationStorage {
@@ -50,5 +55,15 @@ impl SqliteAnimationStorage {
     ///
     pub fn new_in_memory() -> Result<SqliteAnimationStorage, rusqlite::Error> {
         Ok(Self::new_from_connection(rusqlite::Connection::open_in_memory()?))
+    }
+
+
+    ///
+    /// Returns the responses for a stream of commands
+    ///
+    pub fn get_responses<CommandStream: 'static+Send+Unpin+Stream<Item=Vec<StorageCommand>>>(&self, commands: CommandStream) -> impl Send+Unpin+Stream<Item=Vec<StorageResponse>> {
+        pipe(Arc::clone(&self.core), commands, |core, commands| {
+            future::ready(core.run_commands(commands)).boxed()
+        })
     }
 }

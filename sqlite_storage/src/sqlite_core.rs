@@ -1,3 +1,5 @@
+use flo_animation::storage::*;
+
 use rusqlite;
 
 const BASE_DATA_DEFN: &[u8]          = include_bytes!["../sql/flo_storage.sql"];
@@ -27,5 +29,12 @@ impl SqliteCore {
         let defn = String::from_utf8_lossy(BASE_DATA_DEFN);
 
         self.connection.execute_batch(&defn)
+    }
+
+    ///
+    /// Runs some commands on this storage database
+    ///
+    pub fn run_commands(&mut self, commands: Vec<StorageCommand>) -> Vec<StorageResponse> {
+        vec![]
     }
 }
