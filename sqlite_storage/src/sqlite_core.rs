@@ -86,9 +86,9 @@ impl SqliteCore {
             ReadHighestUnusedElementId                          => { self.read_highest_unused_element_id() },
             ReadEditLogLength                                   => { self.read_edit_log_length() },
             ReadEdits(edit_range)                               => { self.read_edits(edit_range) },
-            WriteElement(element_id, value)                     => { unimplemented!() },
-            ReadElement(element_id)                             => { unimplemented!() },
-            DeleteElement(element_id)                           => { unimplemented!() },
+            WriteElement(element_id, value)                     => { self.write_element(element_id, value) },
+            ReadElement(element_id)                             => { self.read_element(element_id) },
+            DeleteElement(element_id)                           => { self.delete_element(element_id) },
             AddLayer(layer_id, properties)                      => { unimplemented!() },
             DeleteLayer(layer_id)                               => { unimplemented!() },
             ReadLayers                                          => { unimplemented!() },
@@ -179,5 +179,50 @@ impl SqliteCore {
         let edits       = edits.map(|row| row.map(|(edit_id, edit)| StorageResponse::Edit((edit_id-1) as usize, edit)));
 
         Ok(edits.collect::<Result<_, _>>()?)
+    }
+
+    ///
+    /// Writes data for an element
+    ///
+    fn write_element(&mut self, element_id: i64, element: String) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let mut write   = self.connection.prepare_cached("INSERT OR REPLACE INTO Elements (ElementId, Element) VALUES (?, ?);")?;
+        write.execute(params![element_id, element])?;
+
+        Ok(vec![StorageResponse::Updated])
+    }
+
+    ///
+    /// Reads data for an element
+    ///
+    fn read_element(&mut self, element_id: i64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        use rusqlite::Error::QueryReturnedNoRows;
+
+        let mut read    = self.connection.prepare_cached("SELECT Element FROM Elements WHERE ElementId = ?;")?;
+        let element     = read.query_row(&[element_id], |row| row.get(0));
+
+        match element {
+            Ok(element)                 => Ok(vec![StorageResponse::Element(element_id, element)]),
+            Err(QueryReturnedNoRows)    => Ok(vec![StorageResponse::NotFound]),
+            Err(err)                    => Err(err)
+        }
+    }
+
+    ///
+    /// Deletes an element from the database
+    ///
+    fn delete_element(&mut self, element_id: i64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let transaction = self.connection.transaction()?;
+
+        {
+            let mut delete  = transaction.prepare_cached("DELETE FROM ElementKeyframeAttachment WHERE ElementId = ?;")?;
+            delete.execute(&[element_id])?;
+
+            let mut delete  = transaction.prepare_cached("DELETE FROM Elements WHERE ElementId = ?;")?;
+            delete.execute(&[element_id])?;
+        }
+
+        transaction.commit()?;
+
+        Ok(vec![StorageResponse::Updated])
     }
 }

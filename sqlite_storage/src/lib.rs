@@ -1,3 +1,5 @@
+#[macro_use] extern crate rusqlite;
+
 mod sqlite_core;
 mod sqlite_storage;
 

@@ -77,3 +77,40 @@ fn highest_unused_element_id_is_0_with_no_elements() {
     println!("{:?}", core.run_commands(vec![StorageCommand::ReadHighestUnusedElementId]));
     assert!(core.run_commands(vec![StorageCommand::ReadHighestUnusedElementId]) == vec![StorageResponse::HighestUnusedElementId(0)]);
 }
+
+#[test]
+fn read_missing_element() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![StorageCommand::ReadElement(1)]) == vec![StorageResponse::NotFound]);
+}
+
+#[test]
+fn write_and_read_elements() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::WriteElement(1, "Test1".to_string()), 
+            StorageCommand::WriteElement(3, "Test2".to_string())
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadElement(1), StorageCommand::ReadElement(3)]) == 
+        vec![StorageResponse::Element(1, "Test1".to_string()), StorageResponse::Element(3, "Test2".to_string())]);
+}
+
+#[test]
+fn write_and_delete_elements() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::WriteElement(1, "Test1".to_string()), 
+            StorageCommand::WriteElement(3, "Test2".to_string()),
+            StorageCommand::DeleteElement(3)
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadElement(1), StorageCommand::ReadElement(3)]) == 
+        vec![StorageResponse::Element(1, "Test1".to_string()), StorageResponse::NotFound]);
+}
