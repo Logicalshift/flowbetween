@@ -139,6 +139,21 @@ fn add_and_read_layers() {
 }
 
 #[test]
+fn write_layer_properties() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::AddLayer(3, "Test2".to_string()),
+            StorageCommand::WriteLayerProperties(3, "Test3".to_string())
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadLayers]) == 
+        vec![StorageResponse::LayerProperties(1, "Test1".to_string()), StorageResponse::LayerProperties(3, "Test3".to_string())]);
+}
+
+#[test]
 fn add_and_delete_layers() {
     let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
     core.initialize().unwrap();
