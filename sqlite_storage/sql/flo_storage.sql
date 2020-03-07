@@ -2,6 +2,9 @@
  **
  ** FlowBetween File format version 4
  **
+ **   V4 of the file format moves the bulk of the work of data representation into the animation and its serialization
+ **   format, which greatly simplifies the content of the database.
+ **
  ***/
 
 /**
