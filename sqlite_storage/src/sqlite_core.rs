@@ -80,9 +80,9 @@ impl SqliteCore {
         let result = match command {
             WriteAnimationProperties(properties)                => { self.write_animation_properties(properties) },
             ReadAnimationProperties                             => { self.read_animation_properties() },
-            WriteEdit(edit)                                     => { unimplemented!() },
+            WriteEdit(edit)                                     => { self.write_edit(edit) },
             ReadHighestUnusedElementId                          => { unimplemented!() },
-            ReadEditLogLength                                   => { unimplemented!() },
+            ReadEditLogLength                                   => { self.read_edit_log_length() },
             ReadEdits(edit_range)                               => { unimplemented!() },
             WriteElement(element_id, value)                     => { unimplemented!() },
             ReadElement(element_id)                             => { unimplemented!() },
@@ -130,5 +130,25 @@ impl SqliteCore {
             Err(QueryReturnedNoRows)    => Ok(vec![StorageResponse::NotFound]),
             Err(other)                  => Err(other)
         }
+    }
+
+    ///
+    /// Updates the animation properties for this animation
+    ///
+    fn write_edit(&mut self, edit: String) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let mut write   = self.connection.prepare_cached("INSERT INTO EditLog (Edit) VALUES (?);")?;
+        write.execute(&[edit])?;
+
+        Ok(vec![StorageResponse::Updated])
+    }
+
+    ///
+    /// Updates the animation properties for this animation
+    ///
+    fn read_edit_log_length(&mut self) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let mut read    = self.connection.prepare_cached("SELECT COUNT(EditId) FROM EditLog;")?;
+        let count       = read.query_row(NO_PARAMS, |row| row.get::<_, i64>(0))?;
+
+        Ok(vec![StorageResponse::NumberOfEdits(count as usize)])
     }
 }

@@ -33,3 +33,17 @@ fn read_and_write_properties() {
     let props       = core.run_commands(vec![StorageCommand::ReadAnimationProperties]);
     assert!(props == vec![StorageResponse::AnimationProperties("Test".to_string())]);
 }
+
+#[test]
+fn write_two_edits() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::WriteEdit("Test1".to_string()), 
+            StorageCommand::WriteEdit("Test2".to_string())
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated]);
+
+    let props       = core.run_commands(vec![StorageCommand::ReadEditLogLength]);
+    assert!(props == vec![StorageResponse::NumberOfEdits(2)]);
+}
