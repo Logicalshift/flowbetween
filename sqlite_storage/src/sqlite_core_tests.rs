@@ -264,6 +264,7 @@ fn read_missing_keyframe() {
 
     assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(0)..Duration::from_millis(1))]) ==
         vec![
+            StorageResponse::NotInAFrame(Duration::from_millis(420))
         ]);
 }
 
