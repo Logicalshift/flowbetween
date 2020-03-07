@@ -11,15 +11,15 @@
  * Represents the global properties for the animation
  */
 CREATE TABLE AnimationProperties (
-    PropertyId INTEGER NOT NULL AUTOINCREMENT PRIMARY KEY,
+    PropertyId INTEGER NOT NULL PRIMARY KEY,
     Value TEXT NOT NULL
-);
+) WITHOUT ROWID;
 
 /** 
  * A log of all the edits the user has performed to the animation
  */
 CREATE TABLE EditLog (
-    EditId INTEGER NOT NULL AUTOINCREMENT PRIMARY KEY,
+    EditId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     Edit TEXT NOT NULL
 );
 
