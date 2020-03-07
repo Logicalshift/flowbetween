@@ -124,5 +124,23 @@ pub enum StorageResponse {
     ElementAttachments(i64, Vec<(u64, Duration)>),
 
     /// Returns the contents of the requested layer cache
-    LayerCache(String)
+    LayerCache(String),
+
+    /// The storage subsystem encountered an error
+    Error(StorageError, String)
+}
+
+///
+/// Errors from the storage API
+///
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum StorageError {
+    /// General failure
+    General,
+
+    /// The storage could not be initialised
+    FailedToInitialise,
+
+    /// The storage cannot continue because of an eariler error
+    CannotContinueAfterError
 }
