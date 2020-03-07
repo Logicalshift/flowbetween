@@ -208,7 +208,6 @@ fn add_keyframe() {
         == vec![StorageResponse::KeyFrame(Duration::from_millis(420), Duration::from_micros(i64::MAX as u64))]);
 }
 
-
 #[test]
 fn read_many_keyframes() {
     let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
@@ -249,6 +248,57 @@ fn read_many_keyframes() {
         vec![
             StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_millis(600)),
             StorageResponse::KeyFrame(Duration::from_millis(600), Duration::from_millis(700)),
+            StorageResponse::KeyFrame(Duration::from_millis(700), Duration::from_micros(i64::MAX as u64))
+        ]);
+}
+
+#[test]
+fn read_missing_keyframe() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(600)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(700))
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(0)..Duration::from_millis(1))]) ==
+        vec![
+        ]);
+}
+
+#[test]
+fn read_with_no_keyframes() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+        ]) == vec![StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(700)..Duration::from_millis(701))]) ==
+        vec![
+        ]);
+}
+
+#[test]
+fn read_past_last_keyframe() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(600)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(700))
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(701)..Duration::from_millis(702))]) ==
+        vec![
             StorageResponse::KeyFrame(Duration::from_millis(700), Duration::from_micros(i64::MAX as u64))
         ]);
 }
