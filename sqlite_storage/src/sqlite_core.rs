@@ -331,12 +331,12 @@ impl SqliteCore {
     }
 
     ///
-    /// Reads where the keyframe following the specified time is located
+    /// Reads where the keyframe at or following the specified time is located
     ///
     fn read_next_key_frame(&mut self, layer_id: u64, when_micros: i64) -> Result<Option<i64>, rusqlite::Error> {
         use rusqlite::Error::QueryReturnedNoRows;
 
-        let mut read_keyframe   = self.connection.prepare_cached("SELECT TimeMicroseconds FROM Keyframe WHERE LayerId = ? AND TimeMicroseconds > ? ORDER BY TimeMicroseconds ASC LIMIT 1")?;
+        let mut read_keyframe   = self.connection.prepare_cached("SELECT TimeMicroseconds FROM Keyframe WHERE LayerId = ? AND TimeMicroseconds >= ? ORDER BY TimeMicroseconds ASC LIMIT 1")?;
         let result              = read_keyframe.query_row(&[layer_id as i64, when_micros], |row| row.get::<_, i64>(0));
 
         match result {
@@ -354,7 +354,12 @@ impl SqliteCore {
         let start   = self.read_previous_key_frame(layer_id, Self::time_to_int(when.start))?;
         let end     = self.read_next_key_frame(layer_id, Self::time_to_int(when.end))?;
         let start   = start.unwrap_or(0);
-        let end     = end.unwrap_or(i64::MAX);
+        let mut end = end.unwrap_or(i64::MAX);
+
+        // If the start and the end are the same then we need to read to the end of the current keyframe
+        if start == end  {
+            end = self.read_next_key_frame(layer_id, end+1)?.unwrap_or(i64::MAX);
+        }
 
         // Read the keyframes that exist in this time
         let mut read_keyframes  = self.connection.prepare_cached("SELECT TimeMicroseconds FROM Keyframe WHERE LayerId = ? AND TimeMicroseconds >= ? AND TimeMicroseconds <= ? ORDER BY TimeMicroseconds ASC")?;
