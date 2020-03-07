@@ -471,3 +471,90 @@ fn read_element_attachments() {
             StorageResponse::ElementAttachments(2, vec![(1, Duration::from_millis(420)), (1, Duration::from_millis(500))]),
         ]);
 }
+
+#[test]
+fn read_layer_cache() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(420), "Type".to_string(), "Cache1".to_string()),
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(500), "Type".to_string(), "Cache2".to_string())
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(420), "Type".to_string())]) ==
+        vec![StorageResponse::LayerCache("Cache1".to_string())]);
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(500), "Type".to_string())]) ==
+        vec![StorageResponse::LayerCache("Cache2".to_string())]);
+}
+
+#[test]
+fn overwrite_layer_cache() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(420), "Type".to_string(), "Cache1".to_string()),
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(500), "Type".to_string(), "Cache2".to_string())
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(420), "Type".to_string(), "Cache1Updated".to_string()),
+        ]) == vec![StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(420), "Type".to_string())]) ==
+        vec![StorageResponse::LayerCache("Cache1Updated".to_string())]);
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(500), "Type".to_string())]) ==
+        vec![StorageResponse::LayerCache("Cache2".to_string())]);
+}
+
+#[test]
+fn read_missing_layer_cache() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(420), "Type".to_string(), "Cache1".to_string()),
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(500), "Type".to_string(), "Cache2".to_string())
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(600), "Type".to_string())]) ==
+        vec![StorageResponse::NotFound]);
+}
+
+#[test]
+fn read_empty_layer_cache() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string())
+        ]) == vec![StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(600), "Type".to_string())]) ==
+        vec![StorageResponse::NotFound]);
+}
+
+#[test]
+fn delete_from_layer_cache() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(420), "Type".to_string(), "Cache1".to_string()),
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(500), "Type".to_string(), "Cache2".to_string())
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![
+            StorageCommand::DeleteLayerCache(1, Duration::from_millis(420), "Type".to_string()),
+        ]) == vec![StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(420), "Type".to_string())]) ==
+        vec![StorageResponse::NotFound]);
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(500), "Type".to_string())]) ==
+        vec![StorageResponse::LayerCache("Cache2".to_string())]);
+}

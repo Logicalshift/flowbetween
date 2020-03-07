@@ -103,9 +103,9 @@ impl SqliteCore {
             DetachElementFromLayer(element_id)                  => { self.detach_element_from_layer(element_id) },
             ReadElementAttachments(element_id)                  => { self.read_element_attachments(element_id) },
             ReadElementsForKeyFrame(layer_id, when)             => { self.read_elements_for_key_frame(layer_id, when) },
-            WriteLayerCache(layer_id, when, cache_type, value)  => { unimplemented!() },
-            DeleteLayerCache(layer_id, when, cache_type)        => { unimplemented!() },
-            ReadLayerCache(layer_id, when, cache_type)          => { unimplemented!() },
+            WriteLayerCache(layer_id, when, cache_type, value)  => { self.write_layer_cache(layer_id, when, cache_type, value) },
+            DeleteLayerCache(layer_id, when, cache_type)        => { self.delete_layer_cache(layer_id, when, cache_type) },
+            ReadLayerCache(layer_id, when, cache_type)          => { self.read_layer_cache(layer_id, when, cache_type) },
         };
 
         self.check_error(result)
@@ -441,7 +441,7 @@ impl SqliteCore {
     ///
     /// Attempts to attach an element to the keyframe nearest the specified time
     ///
-    pub fn attach_element_to_layer(&mut self, layer_id: u64, element_id: i64, when: Duration) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+    fn attach_element_to_layer(&mut self, layer_id: u64, element_id: i64, when: Duration) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         // Find the nearest keyframe to the requested time
         let when        = Self::time_to_int(when);
         let when        = self.read_previous_key_frame(layer_id, when)?;
@@ -460,7 +460,7 @@ impl SqliteCore {
     ///
     /// Removes an element from any layer it's attached to
     ///
-    pub fn detach_element_from_layer(&mut self, element_id: i64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+    fn detach_element_from_layer(&mut self, element_id: i64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         // Remove the attachment
         let mut delete   = self.connection.prepare_cached("DELETE FROM ElementKeyframeAttachment WHERE ElementId = ?;")?;
         delete.execute(&[element_id])?;
@@ -471,7 +471,7 @@ impl SqliteCore {
     ///
     /// Retrieves the layers and keyframes a particular element is currently attached to
     ///
-    pub fn read_element_attachments(&mut self, element_id: i64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+    fn read_element_attachments(&mut self, element_id: i64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         let mut read    = self.connection.prepare_cached("SELECT LayerId, TimeMicroseconds FROM ElementKeyframeAttachment WHERE ElementId = ?;")?;
         let attachments = read.query_map(&[element_id], |row| Ok((row.get::<_, i64>(0)? as u64, Self::int_to_time(row.get(1)?))))?;
 
@@ -481,7 +481,7 @@ impl SqliteCore {
     ///
     /// Retrieves the elements attached to a particular key frame
     ///
-    pub fn read_elements_for_key_frame(&mut self, layer_id: u64, when: Duration) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+    fn read_elements_for_key_frame(&mut self, layer_id: u64, when: Duration) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         // Find the nearest keyframe to the requested time
         let when        = Self::time_to_int(when);
         let when        = self.read_previous_key_frame(layer_id, when)?;
@@ -500,5 +500,47 @@ impl SqliteCore {
         let elements    = elements.map(|element| element.map(|(element_id, element)| StorageResponse::Element(element_id, element)));
 
         elements.collect()
+    }
+
+    ///
+    /// Writes a value to the layer cache at a particular time
+    ///
+    fn write_layer_cache(&mut self, layer_id: u64, when: Duration, cache_type: String, value: String) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let when        = Self::time_to_int(when);
+
+        let mut write   = self.connection.prepare_cached("INSERT OR REPLACE INTO LayerCache (LayerId, TimeMicroseconds, CacheType, Cache) VALUES (?, ?, ?, ?);")?;
+        write.execute(params![layer_id as i64, when, cache_type, value])?;
+
+        Ok(vec![StorageResponse::Updated])
+    }
+
+    ///
+    /// Removes a previously cached value
+    ///
+    fn delete_layer_cache(&mut self, layer_id: u64, when: Duration, cache_type: String) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let when        = Self::time_to_int(when);
+
+        let mut write   = self.connection.prepare_cached("DELETE FROM LayerCache WHERE LayerId = ? AND TimeMicroseconds = ? AND CacheType = ?;")?;
+        write.execute(params![layer_id as i64, when, cache_type])?;
+
+        Ok(vec![StorageResponse::Updated])
+    }
+
+    ///
+    /// Reads the value contained in the specified location of the layer cache
+    ///
+    fn read_layer_cache(&mut self, layer_id: u64, when: Duration, cache_type: String) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        use rusqlite::Error::QueryReturnedNoRows;
+
+        let when        = Self::time_to_int(when);
+
+        let mut read    = self.connection.prepare_cached("SELECT Cache FROM LayerCache WHERE LayerId = ? AND TimeMicroseconds = ? AND CacheType = ?;")?;
+        let result      = read.query_row(params![layer_id as i64, when, cache_type], |row| row.get(0));
+
+        match result {
+            Ok(cache)                   => Ok(vec![StorageResponse::LayerCache(cache)]),
+            Err(QueryReturnedNoRows)    => Ok(vec![StorageResponse::NotFound]),
+            Err(other)                  => Err(other)
+        }
     }
 }
