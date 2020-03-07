@@ -4,6 +4,7 @@ use rusqlite;
 use rusqlite::{NO_PARAMS};
 
 use std::ops::{Range};
+use std::time::{Duration};
 
 const BASE_DATA_DEFN: &[u8]          = include_bytes!["../sql/flo_storage.sql"];
 
@@ -107,6 +108,24 @@ impl SqliteCore {
         };
 
         self.check_error(result)
+    }
+
+    ///
+    /// Converts a Duration to a microseconds value which we can store in the database
+    ///
+    fn time_to_int(time: Duration) -> i64 {
+        time.as_micros() as i64
+    }
+
+    ///
+    /// Converts a microseconds value from the database to a Duration value
+    ///
+    fn int_to_time(time: i64) -> Duration {
+        if time < 0 {
+            Duration::from_micros(0)
+        } else {
+            Duration::from_micros(time as u64)
+        }
     }
 
     ///
