@@ -14,15 +14,15 @@ http        = [ "flo_http_ui", "flo_http_ui_actix", "actix-web", "actix-rt" ]
 cocoa       = [ "flo_cocoa_pipe", "flo_cocoa_ui", "flo_cocoa" ]
 
 [dependencies]
-flo_animation       = { path = "animation",     version="0.2" }
-flo_anim_sqlite     = { path = "anim_sqlite",   version="0.2" }
+flo_animation       = { path = "animation",         version="0.2" }
+flo_sqlite_storage  = { path = "sqlite_storage",    version="0.1" }
 flo_binding         = { git = "https://github.com/Logicalshift/flo_binding", version = "1.2" }
 
-flo_ui_files        = { path = "ui_files",      version="0.2" }
-flo_ui              = { path = "ui",            version="0.2" }
-flo_canvas          = { path = "canvas",        version="0.2" }
-flo_logging         = { path = "logging",       version="0.2" }
-flo                 = { path = "flo",           version="0.2" }
+flo_ui_files        = { path = "ui_files",          version="0.2" }
+flo_ui              = { path = "ui",                version="0.2" }
+flo_canvas          = { path = "canvas",            version="0.2" }
+flo_logging         = { path = "logging",           version="0.2" }
+flo                 = { path = "flo",               version="0.2" }
 
 flo_gtk_ui          = { path = "user_interfaces/gtk_ui",        version="0.2", optional = true }
 flo_http_ui         = { path = "user_interfaces/http_ui",       version="0.2", optional = true }
