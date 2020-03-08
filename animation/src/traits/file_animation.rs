@@ -11,5 +11,5 @@ pub trait FileAnimation {
     ///
     /// Opens an animation from a file on disk
     ///
-    fn open(path: &Path) -> Self::NewAnimation;
+    fn open(&self, path: &Path) -> Self::NewAnimation;
 }
