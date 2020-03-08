@@ -11,7 +11,6 @@ include     = [ "Cargo.toml", "src/**/*", "svg/**/*" ]
 
 [dependencies]
 flo_animation       = { path = "../animation", version = "0.2" }
-flo_sqlite_storage  = { path = "../sqlite_storage", version="0.1" }
 flo_curves          = { git = "https://github.com/Logicalshift/flo_curves", version = "0.3" }
 flo_stream          = { git = "https://github.com/Logicalshift/flo_stream", version = "0.5" }
 flo_binding         = { git = "https://github.com/Logicalshift/flo_binding", version = "1.2" }
