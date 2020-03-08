@@ -72,6 +72,8 @@ impl Animation for SqliteAnimation {
 }
 
 impl FileAnimation for SqliteAnimation {
+    type NewAnimation = SqliteAnimation;
+
     fn open(path: &Path) -> SqliteAnimation {
         // TODO: error handling!
 
