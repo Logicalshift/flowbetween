@@ -14,8 +14,8 @@ use std::sync::*;
 /// Creates an in-memory animaton for the tests
 ///
 fn create_animation() -> impl EditableAnimation {
-    let in_memory_store = SqliteAnimationStorage::new_from_connection(rusqlite::Connection::open_in_memory().unwrap());
-    let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
+    let sqlite_store    = SqliteAnimationStorage::new_from_connection(rusqlite::Connection::open_in_memory().unwrap());
+    let animation       = create_animation_editor(move |commands| sqlite_store.get_responses(commands).boxed());
 
     animation
 }

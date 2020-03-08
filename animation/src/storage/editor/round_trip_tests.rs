@@ -13,9 +13,9 @@ use std::sync::*;
 ///
 /// Creates an in-memory animaton for the tests
 ///
-fn create_animation() -> StreamAnimation {
+fn create_animation() -> impl EditableAnimation {
     let in_memory_store = InMemoryStorage::new();
-    let animation       = StreamAnimation::new(move |commands| in_memory_store.get_responses(commands).boxed());
+    let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
 
     animation
 }
