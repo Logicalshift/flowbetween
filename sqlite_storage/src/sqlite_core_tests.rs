@@ -408,6 +408,34 @@ fn attach_element_to_several_keyframes() {
 }
 
 #[test]
+fn double_attach_element_to_keyframe() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
+
+            StorageCommand::WriteElement(1, "Test1".to_string()),
+            StorageCommand::WriteElement(2, "Test2".to_string()),
+
+            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(420)),
+            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(420)),
+
+            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(420)),
+            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(420)),
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadElementsForKeyFrame(1, Duration::from_millis(420))]) ==
+        vec![
+            StorageResponse::Element(1, "Test1".to_string()),
+            StorageResponse::Element(2, "Test2".to_string()),
+        ]);
+}
+
+#[test]
 fn detach_element() {
     let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
     core.initialize().unwrap();

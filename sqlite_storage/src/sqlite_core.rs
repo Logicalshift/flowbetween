@@ -451,7 +451,7 @@ impl SqliteCore {
         };
 
         // Write out the attachment
-        let mut write   = self.connection.prepare_cached("INSERT INTO ElementKeyframeAttachment (ElementId, LayerId, TimeMicroseconds) VALUES (?, ?, ?);")?;
+        let mut write   = self.connection.prepare_cached("INSERT OR REPLACE INTO ElementKeyframeAttachment (ElementId, LayerId, TimeMicroseconds) VALUES (?, ?, ?);")?;
         write.execute(&[element_id, layer_id as i64, when])?;
 
         return Ok(vec![StorageResponse::Updated]);
