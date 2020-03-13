@@ -6,12 +6,11 @@ use std::path::Path;
 /// Represents a function that loads an animation
 ///
 pub struct AnimationLoader<TFn, TAnim>(TFn)
-where TFn: Fn(&Path) -> TAnim,
+where TFn: Send+Sync+Fn(&Path) -> TAnim,
 TAnim: Animation;
 
-/*
 impl<TFn, TAnim> FileAnimation for AnimationLoader<TFn, TAnim>
-where TFn: Fn(&Path) -> TAnim,
+where TFn: Send+Sync+Fn(&Path) -> TAnim,
 TAnim: Animation {
     type NewAnimation = TAnim;
 
@@ -22,4 +21,3 @@ TAnim: Animation {
         self.0(path)
     }
 }
-*/
