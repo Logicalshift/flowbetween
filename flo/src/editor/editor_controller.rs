@@ -29,7 +29,7 @@ enum SubController {
 ///
 /// The editor controller manages the editing of a single file
 ///
-pub struct EditorController<Anim: Animation> {
+pub struct EditorController<Anim: FileAnimation> {
     /// Phantom data so we can have the animation type
     anim: PhantomData<Anim>,
 
@@ -40,11 +40,12 @@ pub struct EditorController<Anim: Animation> {
     subcontrollers: HashMap<SubController, Arc<dyn Controller>>
 }
 
-impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
+impl<Loader: 'static+FileAnimation> EditorController<Loader>
+where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates a new editor controller from an animation
     ///
-    pub fn new(animation: Anim) -> EditorController<Anim> {
+    pub fn new(animation: Loader::NewAnimation) -> EditorController<Loader> {
         let animation   = FloModel::new(animation);
 
         Self::from_model(animation)
@@ -53,7 +54,7 @@ impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
     ///
     /// Creates a new editor controller from a model
     ///
-    pub fn from_model(animation: FloModel<Anim>) -> EditorController<Anim> {
+    pub fn from_model(animation: FloModel<Loader::NewAnimation>) -> EditorController<Loader> {
         let canvas      = Arc::new(CanvasController::new(&animation));
         let menu        = Arc::new(MenuController::new(&animation));
         let timeline    = Arc::new(TimelineController::new(&animation));
@@ -182,7 +183,8 @@ impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
     }
 }
 
-impl<Anim: 'static+Animation+EditableAnimation> Controller for EditorController<Anim> {
+impl<Loader: 'static+FileAnimation> Controller for EditorController<Loader>
+where Loader::NewAnimation: 'static+EditableAnimation {
     fn ui(&self) -> BindRef<Control> {
         BindRef::new(&self.ui)
     }
@@ -198,19 +200,20 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for EditorController<
     }
 }
 
-impl<Anim: FileAnimation+EditableAnimation+'static> FileController for EditorController<Anim> {
+impl<Loader: 'static+FileAnimation> FileController for EditorController<Loader>
+where Loader::NewAnimation: 'static+EditableAnimation {
     /// The model that this controller needs to be constructed
-    type Model = FloSharedModel<Anim>;
+    type Model = FloSharedModel<Loader>;
 
     ///
     /// Creates this controller with the specified instance model
     ///
-    fn open(model: FloModel<Anim>) -> Self {
+    fn open(model: FloModel<Loader::NewAnimation>) -> Self {
         Self::from_model(model)
     }
 }
 
-impl<Anim: Animation> PartialEq for EditorController<Anim> {
+impl<Loader: 'static+FileAnimation> PartialEq for EditorController<Loader> {
     fn eq(&self, _rhs: &Self) -> bool {
         // These are never equal at the moment (this is needed for the binding library)
         false

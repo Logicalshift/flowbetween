@@ -9,6 +9,7 @@ pub struct AnimationLoader<TFn, TAnim>(TFn)
 where TFn: Fn(&Path) -> TAnim,
 TAnim: Animation;
 
+/*
 impl<TFn, TAnim> FileAnimation for AnimationLoader<TFn, TAnim>
 where TFn: Fn(&Path) -> TAnim,
 TAnim: Animation {
@@ -21,3 +22,4 @@ TAnim: Animation {
         self.0(path)
     }
 }
+*/

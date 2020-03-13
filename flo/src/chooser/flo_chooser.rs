@@ -12,19 +12,21 @@ use std::sync::*;
 ///
 /// The default file chooser for FlowBetween
 ///
-pub struct FloChooser<Anim: 'static+EditableAnimation+FileAnimation> {
+pub struct FloChooser<Loader: 'static+FileAnimation>
+where Loader::NewAnimation: 'static+EditableAnimation {
     /// The file manager managed by this chooser
     file_manager: Arc<SqliteFileManager>,
 
     /// The shared open file store for this animation
-    file_store: Arc<OpenFileStore<FloSharedModel<Anim>>>
+    file_store: Arc<OpenFileStore<FloSharedModel<Loader>>>
 }
 
-impl<Anim: 'static+EditableAnimation+FileAnimation> FloChooser<Anim> {
+impl<Loader: 'static+FileAnimation> FloChooser<Loader>
+where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates a new chooser
     ///
-    pub fn new() -> FloChooser<Anim> {
+    pub fn new() -> FloChooser<Loader> {
         // Create the file manager (we use a single default user by default)
         let file_manager = Arc::new(SqliteFileManager::new(APP_NAME, DEFAULT_USER_FOLDER));
 
@@ -39,9 +41,10 @@ impl<Anim: 'static+EditableAnimation+FileAnimation> FloChooser<Anim> {
     }
 }
 
-impl<Anim: 'static+EditableAnimation+FileAnimation> FileChooser for FloChooser<Anim> {
+impl<Loader: 'static+FileAnimation> FileChooser for FloChooser<Loader>
+where Loader::NewAnimation: 'static+EditableAnimation  {
     /// The controller that edits/displays open files
-    type Controller = EditorController<Anim>;
+    type Controller = EditorController<Loader>;
 
     /// The file manager that finds paths where files can be located
     type FileManager = SqliteFileManager;
@@ -56,7 +59,7 @@ impl<Anim: 'static+EditableAnimation+FileAnimation> FileChooser for FloChooser<A
     ///
     /// Retrieves the shared file store for this chooser
     ///
-    fn get_file_store(&self) -> Arc<OpenFileStore<FloSharedModel<Anim>>> {
+    fn get_file_store(&self) -> Arc<OpenFileStore<FloSharedModel<Loader>>> {
         Arc::clone(&self.file_store)
     }
 }
