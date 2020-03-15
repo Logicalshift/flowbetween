@@ -11,7 +11,7 @@ TAnim: Animation;
 
 impl<TFn, TAnim> FileAnimation for AnimationLoader<TFn, TAnim>
 where TFn: Send+Sync+Fn(&Path) -> TAnim,
-TAnim: Animation {
+TAnim: EditableAnimation {
     type NewAnimation = TAnim;
 
     ///

@@ -4,7 +4,6 @@ use flo_ui::*;
 use flo_ui::Image;
 use flo_ui_files::ui::*;
 use flo_binding::*;
-use flo_animation::storage::*;
 use flo_sqlite_storage::*;
 
 use flo::style::*;
