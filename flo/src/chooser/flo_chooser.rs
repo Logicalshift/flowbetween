@@ -26,12 +26,12 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates a new chooser
     ///
-    pub fn new() -> FloChooser<Loader> {
+    pub fn new(loader: Arc<Loader>) -> FloChooser<Loader> {
         // Create the file manager (we use a single default user by default)
         let file_manager = Arc::new(SqliteFileManager::new(APP_NAME, DEFAULT_USER_FOLDER));
 
         // Create the file store
-        let file_store = Arc::new(OpenFileStore::new());
+        let file_store = Arc::new(OpenFileStore::new(loader));
 
         // Put everything together
         FloChooser {
