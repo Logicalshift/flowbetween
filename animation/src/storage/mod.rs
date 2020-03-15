@@ -23,9 +23,9 @@ mod layer_properties;
 mod storage_api;
 mod editor;
 mod in_memory_storage;
-mod file_animation;
+mod animation_loader;
 
 pub use self::storage_api::*;
 pub use self::editor::*;
 pub use self::in_memory_storage::*;
-pub use self::file_animation::*;
+pub use self::animation_loader::*;

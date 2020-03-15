@@ -5,7 +5,7 @@ use std::path::Path;
 ///
 /// Represents a function that loads an animation
 ///
-pub struct AnimationLoader<TFn, TAnim>(TFn)
+pub struct AnimationLoader<TFn, TAnim>(pub TFn)
 where TFn: Send+Sync+Fn(&Path) -> TAnim,
 TAnim: Animation;
 

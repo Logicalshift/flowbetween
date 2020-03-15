@@ -42,7 +42,7 @@ impl FlowBetweenSession {
         images.assign_name(&flo, "flo");
 
         // Create the file chooser
-        let file_chooser = FloChooser::<SqliteAnimation>::new();
+        let file_chooser = FloChooser::new(Arc::new(sqlite_animation_loader()));
         let file_chooser = FileChooserController::new(file_chooser, FloLogoController::new());
 
         file_chooser.set_background(FILE_CHOOSER_BACKGROUND);
