@@ -17,7 +17,7 @@ flo_binding         = { git = "https://github.com/Logicalshift/flo_binding", ver
 flo_ui              = { path = "../ui", version = "0.2" }
 flo_canvas          = { path = "../canvas", version = "0.2" }
 flo_ui_files        = { path = "../ui_files", version = "0.2" }
-desync              = { git = "https://github.com/Logicalshift/desync", branch = "develop", version = "0.6" }
+desync              = { git = "https://github.com/Logicalshift/desync", branch = "develop", version = "^0.6.1" }
 
 serde               = "1.0"
 serde_derive        = "1.0"

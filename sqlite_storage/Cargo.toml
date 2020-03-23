@@ -15,7 +15,7 @@ flo_logging         = { path = "../logging", version = "0.2" }
 
 rusqlite            = { version = "0.21", features = ["bundled"] }
 futures             = "0.3"
-desync              = { git = "https://github.com/Logicalshift/desync", branch = "develop", version = "0.6" }
+desync              = { git = "https://github.com/Logicalshift/desync", branch = "develop", version = "^0.6.1" }
 
 [dev-dependencies]
 flo_canvas          = { path = "../canvas", version = "0.2" }

@@ -16,7 +16,7 @@ flo_canvas  = { path = "../canvas", version = "0.2" }
 flo_binding = { git = "https://github.com/Logicalshift/flo_binding", version = "1.2" }
 flo_logging = { path = "../logging", version = "0.2" }
 
-desync      = { git = "https://github.com/Logicalshift/desync", branch = "develop", version = "0.6" }
+desync      = { git = "https://github.com/Logicalshift/desync", branch = "develop", version = "^0.6.1" }
 rusqlite    = { version = "0.21", features = ["bundled"] }
 dirs        = "2.0"
 uuid        = { version = "0.8", features = [ "v4" ] }

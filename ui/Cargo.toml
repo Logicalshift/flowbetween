@@ -11,7 +11,7 @@ description = "Implementation-free user interface description library"
 flo_binding     = { git = "https://github.com/Logicalshift/flo_binding", version = "1.2" }
 flo_canvas      = { path = "../canvas", version = "0.2" }
 flo_stream      = { git = "https://github.com/Logicalshift/flo_stream", version = "0.5" }
-desync          = { git = "https://github.com/Logicalshift/desync", branch = "develop", version = "0.6" }
+desync          = { git = "https://github.com/Logicalshift/desync", branch = "develop", version = "^0.6.1" }
 
 serde           = "1.0"
 serde_derive    = "1.0"
