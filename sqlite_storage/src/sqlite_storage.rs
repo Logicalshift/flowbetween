@@ -7,6 +7,7 @@ use rusqlite;
 use futures::*;
 
 use std::sync::*;
+use std::path::{Path};
 
 ///
 /// Stores an animation using a SQLite database
@@ -48,6 +49,22 @@ impl SqliteAnimationStorage {
         SqliteAnimationStorage {
             core:   core
         }
+    }
+
+    ///
+    /// Opens an existing database file
+    ///
+    pub fn open_file(path: &Path) -> Result<SqliteAnimationStorage, rusqlite::Error> {
+        let connection  = rusqlite::Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE)?;
+        Ok(Self::from_connection(connection))
+    }
+
+    ///
+    /// Creates a new animation at the specified path
+    ///
+    pub fn new_with_file(path: &Path) -> Result<SqliteAnimationStorage, rusqlite::Error> {
+        let connection  = rusqlite::Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE | rusqlite::OpenFlags::SQLITE_OPEN_CREATE)?;
+        Ok(Self::new_from_connection(connection))
     }
 
     ///

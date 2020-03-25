@@ -1,5 +1,9 @@
-use flo_anim_sqlite::*;
+use flo_animation::*;
+use flo_animation::storage::*;
+use flo_sqlite_storage::*;
 use flo_ui_files::*;
+
+use futures::prelude::*;
 
 use std::sync::*;
 use std::path::{PathBuf};
@@ -41,31 +45,36 @@ impl StorageDescriptor {
     ///
     /// Opens the animation that this storage descriptor references, using the specified file manager
     ///
-    pub fn open_animation(&self, file_manager: &Arc<dyn FileManager>) -> Option<Arc<SqliteAnimation>> {
-        match self {
-            StorageDescriptor::InMemory                 => Some(Arc::new(SqliteAnimation::new_in_memory())),
-            StorageDescriptor::File(filename)           => Some(Arc::new(SqliteAnimation::open_file(PathBuf::from(filename)).ok()?)),
+    pub fn open_animation(&self, file_manager: &Arc<dyn FileManager>) -> Option<Arc<impl EditableAnimation>> {
+        let storage = match self {
+            StorageDescriptor::InMemory                 => SqliteAnimationStorage::new_in_memory().ok(),
+            StorageDescriptor::File(filename)           => SqliteAnimationStorage::open_file(&PathBuf::from(filename)).ok(),
 
             StorageDescriptor::CatalogNumber(num)       => {
                 let all_files       = file_manager.get_all_files();
                 let requested_file  = all_files.into_iter().nth(*num)?;
-                Some(Arc::new(SqliteAnimation::open_file(requested_file.as_path()).ok()?))
+                SqliteAnimationStorage::open_file(requested_file.as_path()).ok()
             }
 
             StorageDescriptor::CatalogName(filename)    => {
                 let all_files       = file_manager.get_all_files();
                 let filename        = filename.to_lowercase();
+                let mut result      = None;
 
                 for file in all_files {
                     let full_name = file_manager.display_name_for_path(file.as_path()).unwrap_or("<untitled>".to_string());
                     if full_name.to_lowercase() == filename {
-                        return Some(Arc::new(SqliteAnimation::open_file(file.as_path()).ok()?));
+                        result = SqliteAnimationStorage::open_file(file.as_path()).ok();
+                        break;
                     }
                 }
 
-                None
+                result
             }
-        }
+        };
+
+        let animation   = storage.map(|storage| Arc::new(create_animation_editor(move |commands| storage.get_responses(commands).boxed())));
+        animation
     }
 
     ///

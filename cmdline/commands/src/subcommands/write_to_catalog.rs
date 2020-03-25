@@ -4,7 +4,8 @@ use super::super::output::*;
 use super::super::storage_descriptor::*;
 
 use flo_stream::*;
-use flo_anim_sqlite::*;
+use flo_animation::storage::*;
+use flo_sqlite_storage::*;
 
 use futures::prelude::*;
 use std::sync::*;
@@ -23,7 +24,8 @@ pub fn write_to_catalog<'a>(name: String, output: &'a mut Publisher<FloCommandOu
         // Create a new animation using the file manager
         let file_manager    = state.file_manager();
         let new_path        = file_manager.create_new_path();
-        let animation       = SqliteAnimation::new_with_file(new_path.clone()).map_err(|_| CommandError::CouldNotCreateAnimation(name.clone()))?;
+        let storage         = SqliteAnimationStorage::new_with_file(&new_path.clone()).map_err(|_| CommandError::CouldNotCreateAnimation(name.clone()))?;
+        let animation       = create_animation_editor(move |commands| storage.get_responses(commands).boxed());
         file_manager.set_display_name_for_path(new_path.as_path(), name.clone());
 
         // Update the state to point at it
