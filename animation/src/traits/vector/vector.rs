@@ -2,10 +2,12 @@ use super::element::*;
 use super::path_element::*;
 use super::brush_element::*;
 use super::group_element::*;
+use super::error_element::*;
 use super::motion_element::*;
 use super::transformed_vector::*;
 use super::brush_properties_element::*;
 use super::brush_definition_element::*;
+use super::super::path::*;
 use super::super::edit::ElementId;
 
 use std::ops::Deref;
@@ -34,7 +36,10 @@ pub enum Vector {
     Motion(MotionElement),
 
     /// Element describing a group (with optional cache and path combining operation)
-    Group(GroupElement)
+    Group(GroupElement),
+
+    /// Element exists but could not be loaded from the file
+    Error
 }
 
 impl Vector {
@@ -85,6 +90,24 @@ impl Vector {
             _                               => None
         }
     }
+
+    ///
+    /// Creates an updated vector element with updated path components
+    ///
+    pub fn with_path_components<ComponentList: IntoIterator<Item=PathComponent>>(&self, path_components: ComponentList) -> Vector {
+        match self {
+            Vector::Path(path_element) => {
+                // Create a clone of the path element with the new properties
+                let new_path            = Path::from_elements(path_components);
+                let new_path_element    = PathElement::new(path_element.id(), new_path, path_element.brush(), path_element.properties());
+
+                Vector::new(new_path_element)
+            },
+
+            // Element is unchanged if it's not a path
+            _ => self.clone()
+        }
+    }
 }
 
 impl Deref for Vector {
@@ -103,7 +126,8 @@ impl Deref for Vector {
 
             Path(elem)                      => elem,
             Motion(elem)                    => elem,
-            Group(elem)                     => elem
+            Group(elem)                     => elem,
+            Error                           => &*ERROR_ELEMENT
         }
     }
 }

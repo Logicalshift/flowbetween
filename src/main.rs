@@ -14,7 +14,7 @@ extern crate flo_canvas;
 extern crate flo;
 extern crate flo_binding;
 extern crate flo_animation;
-extern crate flo_anim_sqlite;
+extern crate flo_sqlite_storage;
 extern crate flo_logging;
 
 extern crate serde_json;

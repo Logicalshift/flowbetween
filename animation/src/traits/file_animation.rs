@@ -5,9 +5,11 @@ use std::path::Path;
 ///
 /// Trait implemented by animations that can be created from files
 ///
-pub trait FileAnimation : Animation {
+pub trait FileAnimation : Send+Sync {
+    type NewAnimation: EditableAnimation;
+
     ///
     /// Opens an animation from a file on disk
     ///
-    fn open(path: &Path) -> Self;
+    fn open(&self, path: &Path) -> Self::NewAnimation;
 }

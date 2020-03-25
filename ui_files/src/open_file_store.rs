@@ -7,6 +7,9 @@ use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 
 struct OpenFileStoreCore<Model: FileModel> {
+    /// The object that can load files for this file store
+    loader: Arc<Model::Loader>,
+
     /// The files that are open in this store
     open_files: HashMap<PathBuf, Arc<Model>>
 }
@@ -23,8 +26,9 @@ impl<Model: 'static+FileModel> OpenFileStore<Model> {
     ///
     /// Creates a new open file store
     ///
-    pub fn new() -> OpenFileStore<Model> {
+    pub fn new(loader: Arc<Model::Loader>) -> OpenFileStore<Model> {
         let core = OpenFileStoreCore {
+            loader:     loader,
             open_files: HashMap::new()
         };
 
@@ -39,10 +43,11 @@ impl<Model: 'static+FileModel> OpenFileStore<Model> {
     pub fn open_shared(&self, path: &Path) -> Arc<Model> {
         // Fetch the shared data for this path if it's already loaded, or create a new set by opening the file if not
         let shared = self.core.sync(|core| {
-            let path_buf = PathBuf::from(path);
+            let loader      = Arc::clone(&core.loader);
+            let path_buf    = PathBuf::from(path);
 
             Arc::clone(core.open_files.entry(path_buf)
-                .or_insert_with(|| Arc::new(Model::open(path))))
+                .or_insert_with(|| Arc::new(Model::open(loader, path))))
         });
 
         shared

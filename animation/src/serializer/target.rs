@@ -232,7 +232,6 @@ mod test {
     fn encode_u32() {
         let mut res = String::new();
         res.write_u32(0xf00d1234);
-        println!("{}", res);
         assert!(&res == "0IRDwD");
     }
 

@@ -6,7 +6,7 @@ use super::super::super::traits::*;
 use std::str::{Chars};
 
 // Function to turn a resolve function into a boxed resolve function (to get around limitations in Rust's type inference)
-fn box_fn<TFn: 'static+FnOnce(&dyn Fn(ElementId) -> Option<Vector>) -> Option<Vector>>(func: TFn) -> Box<dyn FnOnce(&dyn Fn(ElementId) -> Option<Vector>) -> Option<Vector>> {
+fn box_fn<TFn: 'static+FnOnce(&mut dyn FnMut(ElementId) -> Option<Vector>) -> Option<Vector>>(func: TFn) -> Box<dyn FnOnce(&mut dyn FnMut(ElementId) -> Option<Vector>) -> Option<Vector>> {
     Box::new(func)
 }
 
@@ -27,6 +27,7 @@ impl Vector {
             Path(path)                  => { data.write_chr('p'); path.serialize(data); }
             Motion(motion)              => { data.write_chr('m'); motion.serialize(data); }
             Group(group)                => { data.write_chr('g'); group.serialize(data); }
+            Error                       => { data.write_chr('?'); }
         }
     }
 
@@ -70,6 +71,11 @@ impl Vector {
                 Some(box_fn(move |mapper| {
                     let group = group_resolver.resolve(mapper)?;
                     Some(Vector::Group(group))
+                }))
+            }
+            '?' => {
+                Some(box_fn(move |_mapper| {
+                    Some(Vector::Error)
                 }))
             }
 

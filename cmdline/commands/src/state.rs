@@ -2,9 +2,11 @@ use super::storage_descriptor::*;
 
 use flo_animation;
 use flo_animation::*;
-use flo_anim_sqlite::*;
+use flo_animation::storage::*;
 use flo_ui_files::*;
 use flo_ui_files::sqlite::*;
+
+use futures::prelude::*;
 
 use std::sync::*;
 
@@ -53,8 +55,10 @@ impl CommandState {
         let file_manager        = Arc::new(file_manager);
 
         // Create the input and output animation in memory
-        let input_animation     = Arc::new(SqliteAnimation::new_in_memory());
-        let output_animation    = Arc::new(SqliteAnimation::new_in_memory());
+        let input_animation     = InMemoryStorage::new();
+        let input_animation     = Arc::new(create_animation_editor(move |commands| input_animation.get_responses(commands).boxed()));
+        let output_animation    = InMemoryStorage::new();
+        let output_animation    = Arc::new(create_animation_editor(move |commands| output_animation.get_responses(commands).boxed()));
         let input_animation     = AnimationState(StorageDescriptor::InMemory, input_animation.clone(), input_animation);
         let output_animation    = AnimationState(StorageDescriptor::InMemory, output_animation.clone(), output_animation);
 
@@ -118,7 +122,7 @@ impl CommandState {
     ///
     /// Updates the output animation for this state
     ///
-    pub fn set_output_animation(&self, description: StorageDescriptor, animation: Arc<SqliteAnimation>) -> CommandState {
+    pub fn set_output_animation<Anim: 'static+EditableAnimation>(&self, description: StorageDescriptor, animation: Arc<Anim>) -> CommandState {
         CommandState(Arc::new(StateValue {
             file_manager:       self.0.file_manager.clone(),
             input_animation:    self.0.input_animation.clone(),

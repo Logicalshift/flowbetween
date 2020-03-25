@@ -4,8 +4,7 @@ use flo_ui::*;
 use flo_ui::Image;
 use flo_ui_files::ui::*;
 use flo_binding::*;
-//use flo_animation::inmemory::*;
-use flo_anim_sqlite::*;
+use flo_sqlite_storage::*;
 
 use flo::style::*;
 use flo::chooser::*;
@@ -42,7 +41,7 @@ impl FlowBetweenSession {
         images.assign_name(&flo, "flo");
 
         // Create the file chooser
-        let file_chooser = FloChooser::<SqliteAnimation>::new();
+        let file_chooser = FloChooser::new(Arc::new(sqlite_animation_loader()));
         let file_chooser = FileChooserController::new(file_chooser, FloLogoController::new());
 
         file_chooser.set_background(FILE_CHOOSER_BACKGROUND);

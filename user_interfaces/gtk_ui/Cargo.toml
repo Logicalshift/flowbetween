@@ -12,7 +12,7 @@ flo_ui              = { path = "../../ui", version = "0.2" }
 flo_canvas          = { path = "../../canvas", version = "0.2" }
 flo_nanovg_canvas   = { path = "../nanovg_canvas", version = "0.2" }
 flo_stream          = { git = "https://github.com/Logicalshift/flo_stream", version = "0.5" }
-desync              = { git = "https://github.com/Logicalshift/desync", branch = "develop", version = "0.6" }
+desync              = { git = "https://github.com/Logicalshift/desync", branch = "develop", version = "^0.6.1" }
 
 gtk                 = { version = "0.6", features = ["v3_20"] }
 gdk                 = { version = "0.10", features = ["v3_18"] }

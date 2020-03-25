@@ -15,7 +15,7 @@ impl LayerEdit {
             AddKeyFrame(when)       => { data.write_chr('+'); data.write_duration(*when); },
             RemoveKeyFrame(when)    => { data.write_chr('-'); data.write_duration(*when); },
             SetName(name)           => { data.write_chr('N'); data.write_str(name); },
-            SetOrdering(ordering)   => { data.write_chr('O'); data.write_u32(*ordering); }
+            SetOrdering(ordering)   => { data.write_chr('O'); data.write_u64(*ordering); }
         }
     }
 
@@ -37,7 +37,7 @@ impl LayerEdit {
             '+' => { Some(LayerEdit::AddKeyFrame(data.next_duration())) }
             '-' => { Some(LayerEdit::RemoveKeyFrame(data.next_duration())) }
             'N' => { Some(LayerEdit::SetName(data.next_string())) }
-            'O' => { Some(LayerEdit::SetOrdering(data.next_u32())) }
+            'O' => { Some(LayerEdit::SetOrdering(data.next_u64())) }
 
             _   => None
         }
