@@ -1,7 +1,8 @@
 use flo_commands::*;
 
 use tokio::prelude::*;
-use tokio::io::{stderr};
+use tokio::io::{stdin, stderr};
+use tokio::fs;
 use futures::prelude::*;
 use clap::{App, Arg, SubCommand};
 
@@ -53,6 +54,12 @@ async fn main() {
             .about("Reads all of the edits in the input animation and writes them to the output animation"))
         .subcommand(SubCommand::with_name("serialize-edits")
             .about("Reads all of the edits in the input animation and writes their serialized equivalent to the output"))
+        .subcommand(SubCommand::with_name("deserialize-edits")
+            .arg(Arg::with_name("INPUT")
+                .help("The file to read from")
+                .required(false)
+                .index(1))
+            .about("Reads a file (or standard input if no file is specified) containing serialized edits and writes them to the output animation"))
         .subcommand(SubCommand::with_name("dump-all-catalog-edits")
             .about("Writes out the entire catalog as a set of edit logs"))
         .get_matches();
@@ -115,6 +122,21 @@ async fn main() {
         if let Some(_) = params.subcommand_matches("serialize-edits") {
             input.push(FloCommand::ReadAllEdits);
             input.push(FloCommand::SerializeEdits);
+        }
+
+        // Deserialize edits command
+        if let Some(deserialize) = params.subcommand_matches("deserialize-edits") {
+            // Read the input file
+            let mut input_data;
+            if let Some(input_file) = deserialize.value_of("INPUT") {
+                input_data = fs::read_to_string(input_file).await.unwrap();
+            } else {
+                input_data = String::new();
+                stdin().read_to_string(&mut input_data).await.unwrap();
+            }
+
+            input.push(FloCommand::DeserializeEdits(input_data));
+            input.push(FloCommand::WriteAllEdits);
         }
         
         // Prepare as a stream as input to the command line
