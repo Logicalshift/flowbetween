@@ -354,12 +354,14 @@ impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<A
 #[cfg(test)]
 mod test {
     use super::*;
-    use self::flo_anim_sqlite::*;
+    use flo_animation::storage::*;
     use futures::executor;
 
     #[test]
     fn size_command_updates_size_binding() {
-        let model = FloModel::new(SqliteAnimation::new_in_memory());
+        let in_memory_store = InMemoryStorage::new();
+        let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
+        let model           = FloModel::new(animation);
 
         // Initial size is 1980x1080
         assert!(model.size()        == (1980.0, 1080.0));
