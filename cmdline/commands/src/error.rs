@@ -10,7 +10,10 @@ pub enum CommandError {
     CouldNotOpenAnimation(String),
 
     /// An animation could not be created
-    CouldNotCreateAnimation(String)
+    CouldNotCreateAnimation(String),
+
+    /// An edit on the specified line number could not be parsed
+    CannotParseEdit(usize, String)
 }
 
 impl Display for CommandError {
@@ -19,7 +22,8 @@ impl Display for CommandError {
 
         match self {
             CouldNotOpenAnimation(name)     => write!(fmt, "Could not open animation '{}'", name),
-            CouldNotCreateAnimation(name)   => write!(fmt, "Coult not create animation '{}'", name)
+            CouldNotCreateAnimation(name)   => write!(fmt, "Coult not create animation '{}'", name),
+            CannotParseEdit(line, edit)     => write!(fmt, "{}: cannot parse edit '{}'", line, edit)
         }
     }
 }
