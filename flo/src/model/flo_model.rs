@@ -334,54 +334,6 @@ impl<Anim: Animation> AnimationMotion for FloModel<Anim> {
     }
 }
 
-/*
-///
-/// Sink used to send data to the animation
-///
-struct FloModelSink<TargetSink, ProcessingFn> {
-    /// Function called on every start send
-    processing_fn: ProcessingFn,
-
-    /// Sink where requests should be forwarded to
-    target_sink: TargetSink
-}
-
-impl<TargetSink, ProcessingFn> FloModelSink<TargetSink, ProcessingFn> {
-    ///
-    /// Creates a new model sink
-    ///
-    pub fn new(target_sink: TargetSink, processing_fn: ProcessingFn) -> FloModelSink<TargetSink, ProcessingFn> {
-        FloModelSink {
-            processing_fn:  processing_fn,
-            target_sink:    target_sink
-        }
-    }
-}
-
-impl<TargetSink: Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>, ProcessingFn: FnMut(Arc<Vec<AnimationEdit>>) -> ()> Sink for FloModelSink<TargetSink, ProcessingFn> {
-    type SinkItem   = Vec<AnimationEdit>;
-    type SinkError  = ();
-
-    fn start_send(&mut self, item: Vec<AnimationEdit>) -> StartSend<Vec<AnimationEdit>, ()> {
-        // Send to the target
-        let edit_clone  = item.clone();
-        let send_result = self.target_sink.start_send(item);
-
-        // If the target accepts the edit, perform processing
-        if send_result == Ok(AsyncSink::Ready) {
-            (self.processing_fn)(Arc::new(edit_clone));
-        }
-
-        // Pass on the result from the target
-        send_result
-    }
-
-    fn poll_complete(&mut self) -> Poll<(), ()> {
-        self.target_sink.poll_complete()
-    }
-}
-*/
-
 impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
     fn perform_edits(&self, edits: Vec<AnimationEdit>) {
         Self::process_edits(&edits, &self.size_binding, &self.timeline, &self.frame_edit_counter);
@@ -396,78 +348,11 @@ impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<A
     ///
     fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> {
         self.edit_publisher.sync(|publisher| publisher.republish())
-
-        /*
-        // Edit the underlying animation
-        let animation_edit  = self.animation.edit();
-        let edit_publisher  = Arc::clone(&self.edit_publisher);
-
-        // Borrow the bits of the viewmodel we can change
-        let frame_edit_counter  = self.frame_edit_counter.clone();
-        let size_binding        = self.size_binding.clone();
-        let timeline            = self.timeline.clone();
-
-        // Pipe the edits so they modify the model as a side-effect
-        let model_edit          = FloModelSink::new(animation_edit, move |edits: Arc<Vec<AnimationEdit>>| {
-            use self::AnimationEdit::*;
-            use self::LayerEdit::*;
-
-            // Update the viewmodel based on the edits that are about to go through
-            let mut advance_edit_counter = false;
-
-            for edit in edits.iter() {
-                match edit {
-                    SetSize(width, height) => {
-                        size_binding.set((*width, *height));
-                        advance_edit_counter = true;
-                    },
-
-                    AddNewLayer(_)              |
-                    RemoveLayer(_)              |
-                    Element(_, _)               |
-                    Motion(_, _)                |
-                    Layer(_, Path(_, _))        |
-                    Layer(_, Paint(_, _))       => {
-                        advance_edit_counter = true;
-                    }
-
-                    Layer(_, AddKeyFrame(_))    |
-                    Layer(_, RemoveKeyFrame(_)) => {
-                        advance_edit_counter = true;
-                    },
-
-                    Layer(layer_id, SetName(new_name)) => {
-                        timeline.layers.get()
-                            .iter()
-                            .for_each(|layer| if &layer.id == layer_id { layer.name.set(new_name.clone())} );
-                        advance_edit_counter = true;
-                    },
-
-                    Layer(layer_id, SetOrdering(at_index)) => {
-                        unimplemented!("Cannot update model with layer ordering")
-                    }
-                }
-            }
-
-            // Advancing the frame edit counter causes any animation frames to be regenerated
-            if advance_edit_counter {
-                frame_edit_counter.set(frame_edit_counter.get()+1);
-            }
-
-            // Publish the edits to any subscribers that there might be
-            let edits = Arc::clone(&edits);
-            edit_publisher.sync(move |publisher| publisher.wait_send(edits)).unwrap();
-        });
-
-        Box::new(model_edit)
-        */
     }
 }
 
 #[cfg(test)]
 mod test {
-    extern crate flo_anim_sqlite;
-
     use super::*;
     use self::flo_anim_sqlite::*;
     use futures::executor;
