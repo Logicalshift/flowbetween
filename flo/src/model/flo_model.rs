@@ -364,8 +364,8 @@ mod test {
         let model           = FloModel::new(animation);
 
         // Initial size is 1980x1080
-        assert!(model.size()        == (1980.0, 1080.0));
-        assert!(model.size.get()    == (1980.0, 1080.0));
+        assert!(model.size()        == (1920.0, 1080.0));
+        assert!(model.size.get()    == (1920.0, 1080.0));
 
         // Change to 800x600
         executor::block_on(async {
