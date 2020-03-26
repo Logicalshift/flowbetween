@@ -145,7 +145,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
                 },
 
                 Layer(layer_id, SetOrdering(at_index)) => {
-                    unimplemented!("Cannot update model with layer ordering")
+                    unimplemented!("Cannot update model with layer ordering yet")
                 }
             }
         }
@@ -371,6 +371,7 @@ mod test {
         executor::block_on(async {
             let mut edit_log = model.edit();
             edit_log.publish(Arc::new(vec![AnimationEdit::SetSize(800.0, 600.0)])).await;
+            edit_log.when_empty().await;
             model.when_complete().await;
         });
 
