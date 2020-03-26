@@ -9,7 +9,7 @@ use futures::prelude::*;
 use std::sync::*;
 
 ///
-/// The read_all_edits command loads all of the edits from the input animation and stores them in the state buffer
+/// The write_all_edits command writes all of the edits in the edit buffer to the output animation
 ///
 pub fn write_all_edits<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'a mut CommandState) -> impl Future<Output=Result<(), CommandError>>+Send+'a {
     async move {
