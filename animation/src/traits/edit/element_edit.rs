@@ -40,5 +40,15 @@ pub enum ElementEdit {
     Delete,
 
     /// Detaches elements from any keyframe it's a part of
-    DetachFromFrame
+    DetachFromFrame,
+
+    /// Attempts to join these elements with matching elements in the same frame
+    /// 
+    /// The combined elements will be given the ID of the element that 'bound' to them (ie, from the edit element list)
+    /// If there are multiple elements being edited and they bind to each other, the earlier element is the one that
+    /// keeps its ID.
+    CollideWithExistingElements,
+
+    /// Converts this element to a path
+    ConvertToPath
 }

@@ -17,6 +17,8 @@ impl ElementEdit {
             Order(ordering)             => { data.write_chr('O'); ordering.serialize(data); }
             Delete                      => { data.write_chr('X'); }
             DetachFromFrame             => { data.write_chr('D'); }
+            CollideWithExistingElements => { data.write_chr('j'); }
+            ConvertToPath               => { data.write_chr('p'); }
 
             SetControlPoints(points)    => { 
                 data.write_chr('C'); 
@@ -69,6 +71,14 @@ impl ElementEdit {
 
             'D' => {
                 Some(ElementEdit::DetachFromFrame)
+            }
+
+            'j' => {
+                Some(ElementEdit::CollideWithExistingElements)
+            }
+
+            'p' => {
+                Some(ElementEdit::ConvertToPath)
             }
 
             'C' => {
@@ -152,6 +162,22 @@ mod test {
         ElementEdit::DetachFromFrame.serialize(&mut encoded);
 
         assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::DetachFromFrame));
+    }
+
+    #[test]
+    fn collide_with_existing() {
+        let mut encoded = String::new();
+        ElementEdit::CollideWithExistingElements.serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::CollideWithExistingElements));
+    }
+
+    #[test]
+    fn convert_to_path() {
+        let mut encoded = String::new();
+        ElementEdit::ConvertToPath.serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::ConvertToPath));
     }
 
     #[test]
