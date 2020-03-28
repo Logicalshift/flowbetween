@@ -11,6 +11,7 @@ mod core_motion;
 mod core_element;
 mod keyframe_core;
 mod element_wrapper;
+mod collide_elements;
 mod stream_layer;
 mod stream_frame;
 mod stream_layer_cache;
