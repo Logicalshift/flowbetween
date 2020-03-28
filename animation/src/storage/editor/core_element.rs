@@ -150,7 +150,7 @@ impl StreamAnimationCore {
     ///
     /// Performs an update on an element in a keyframe
     ///
-    fn perform_update<'a>(&'a mut self, element_id: i64, update: ElementUpdate, keyframe: Option<Arc<Desync<KeyFrameCore>>>) -> impl 'a+Send+Future<Output=Vec<StorageCommand>>+Send {
+    fn perform_element_update<'a>(&'a mut self, element_id: i64, update: ElementUpdate, keyframe: Option<Arc<Desync<KeyFrameCore>>>) -> impl 'a+Send+Future<Output=Vec<StorageCommand>>+Send {
         async move {
             let mut updates = vec![];
 
@@ -310,7 +310,7 @@ impl StreamAnimationCore {
                         if let Ok(Some(existing_element)) = existing_element {
                             // Process via the update function
                             let updated_element = update_fn(existing_element);
-                            let element_updates = self.perform_update(element_id, updated_element, Some(keyframe.clone())).await;
+                            let element_updates = self.perform_element_update(element_id, updated_element, Some(keyframe.clone())).await;
                             updates.extend(element_updates);
 
                             // Remove the element from the remaining list so we don't try to update it again
@@ -327,7 +327,7 @@ impl StreamAnimationCore {
                         if let Some(element) = element {
                             // Update the element
                             let updated_element = update_fn(element);
-                            updates.extend(self.perform_update(root_element, updated_element, None).await);
+                            updates.extend(self.perform_element_update(root_element, updated_element, None).await);
                         }
                     }
                 }
