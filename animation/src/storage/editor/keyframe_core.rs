@@ -461,4 +461,27 @@ impl KeyFrameCore {
             None
         }
     }
+
+    ///
+    /// Applies all of the properties for the specified element (including those added by attached elements)
+    ///
+    pub fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
+        // Try to fetch the element from the core
+        let wrapper = self.elements.get(&element.id());
+
+        if let Some(wrapper) = wrapper {
+            // Apply the attachments from the wrapper
+            let mut properties = properties;
+            for attachment_id in wrapper.attachments.iter() {
+                if let Some(attach_element) = self.elements.get(&attachment_id) {
+                    properties = attach_element.element.update_properties(Arc::clone(&properties));
+                }
+            }
+
+            properties
+        } else {
+            // Element not from this keyframe?
+            properties
+        }
+    }
 }

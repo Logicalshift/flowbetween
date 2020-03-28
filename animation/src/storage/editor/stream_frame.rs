@@ -91,23 +91,8 @@ impl Frame for StreamFrame {
     ///
     fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
         if let Some(core) = self.keyframe_core.as_ref() {
-            // Try to fetch the element from the core
-            let wrapper     = core.elements.get(&element.id());
-
-            if let Some(wrapper) = wrapper {
-                // Apply the attachments from the wrapper
-                let mut properties = properties;
-                for attachment_id in wrapper.attachments.iter() {
-                    if let Some(attach_element) = core.elements.get(&attachment_id) {
-                        properties = attach_element.element.update_properties(Arc::clone(&properties));
-                    }
-                }
-
-                properties
-            } else {
-                // Element not from this keyframe?
-                properties
-            }
+            // Ask the core to apply the properties
+            core.apply_properties_for_element(element, properties)
         } else {
             // Properties are unaltered
             properties
