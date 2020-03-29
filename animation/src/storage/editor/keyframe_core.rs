@@ -484,4 +484,47 @@ impl KeyFrameCore {
             properties
         }
     }
+
+    ///
+    /// Unlinks an element in this layer, and returns the commands required to unlink it
+    /// 
+    /// This makes it possible to detach or delete this element
+    ///
+    pub fn unlink_element(&mut self, element_id: ElementId) -> Vec<StorageCommand> {
+        let element_id_i64  = match element_id.id() { Some(id) => id, None => { return vec![] } };
+
+        // The updates required to unlink this element
+        let mut updates     = vec![];
+
+        // Fetch this element
+        let wrapper         = self.elements.get_mut(&element_id);
+        if let Some(wrapper) = wrapper {
+            // We'll need to process the before/after versions next
+            let previous_id = wrapper.order_after;
+            let next_id     = wrapper.order_before;
+
+            // Make wrapper unattached
+            wrapper.unattached      = true;
+            wrapper.order_before    = None;
+            wrapper.order_after     = None;
+
+            updates.push(StorageCommand::WriteElement(element_id_i64, wrapper.serialize_to_string()));
+
+            // Rearrange the previous and next element to skip over this one
+            if let Some((Some(id), Some(previous_wrapper))) = previous_id.map(|previous_id| (previous_id.id(), self.elements.get_mut(&previous_id))) {
+                previous_wrapper.order_before = next_id;
+
+                updates.push(StorageCommand::WriteElement(id, previous_wrapper.serialize_to_string()));
+            }
+
+            if let Some((Some(id), Some(next_wrapper))) = next_id.map(|next_id| (next_id.id(), self.elements.get_mut(&next_id))) {
+                next_wrapper.order_after = previous_id;
+
+                updates.push(StorageCommand::WriteElement(id, next_wrapper.serialize_to_string()));
+            }
+        }
+
+        // Result is the updates to send to the storage layer
+        updates
+    }
 }
