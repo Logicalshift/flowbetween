@@ -24,6 +24,9 @@ pub (super) enum ElementUpdate {
     /// Remove the specified attachments (attachments are left on the keyframe)
     RemoveAttachments(Vec<ElementId>),
 
+    /// Unlinks the specified element from its frame
+    Unlink,
+
     /// Perform other updates, according to the specified storage command
     Other(Vec<StorageCommand>)
 }
@@ -58,7 +61,7 @@ impl StreamAnimationCore {
                         attachments.extend(wrapper.attachments.into_iter().map(|id| id.id()).flatten());
                         attached_to.extend(wrapper.attached_to.into_iter().map(|id| id.id()).flatten());
 
-                        ElementUpdate::Other(vec![])
+                        ElementUpdate::Unlink
                     }).await;
 
                     // Remove the element from anything it's attached to or is attached to it
@@ -253,6 +256,20 @@ impl StreamAnimationCore {
                                 updates.push(StorageCommand::WriteElement(element_id, element_wrapper.serialize_to_string()));
                             });
                     }));
+                }
+
+                ElementUpdate::Unlink => {
+                    if let Some(keyframe) = keyframe {
+                        // Generate the unlink updates on the keyframe
+                        let unlink_updates = keyframe.future(move |frame| {
+                            async move {
+                                frame.unlink_element(ElementId::Assigned(element_id))
+                            }.boxed()
+                        }).await.unwrap();
+
+                        // Add to the updates
+                        updates.extend(unlink_updates)
+                    }
                 }
 
                 ElementUpdate::Other(cmds) => {
