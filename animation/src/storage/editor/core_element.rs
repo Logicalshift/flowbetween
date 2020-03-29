@@ -12,7 +12,7 @@ use std::sync::*;
 use std::collections::{HashSet};
 
 ///
-/// Possible updates that can be made by the 
+/// Possible updates that can be made to elements in storage
 ///
 pub (super) enum ElementUpdate {
     /// Update the element wrapper
