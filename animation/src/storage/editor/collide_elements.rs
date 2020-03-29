@@ -73,13 +73,18 @@ impl StreamAnimationCore {
                     let current_brush = &new_properties.brush;
 
                     // Fetch the element from the frame
-                    let element     = frame.elements.get(&combine_element_id);
+                    let wrapper     = frame.elements.get(&combine_element_id);
                     let mut updates = vec![];
+
+                    let wrapper     = match wrapper {
+                        Some(wrapper)   => wrapper,
+                        None            => { return updates; }
+                    };
 
                     // Collide other elements in the frame with this element
                     // Only brush stroke elements can be combined at the moment
-                    match element.map(|wrapper| &wrapper.element) {
-                        Some(Vector::BrushStroke(brush_stroke)) => {
+                    match &wrapper.element {
+                        Vector::BrushStroke(brush_stroke) => {
                             // Take the brush points from this one to generate a new value for the element
                             let brush_points = brush_stroke.points();
 
@@ -117,6 +122,21 @@ impl StreamAnimationCore {
                                     UnableToCombineFurther      => { break; }                   // Always stop here
                                 }
                             }
+
+                            // Final update is to replace the old element with the new element
+                            if let Some(combined_element) = combined_element {
+                                // Replace the element
+                                let mut replacement_element = wrapper.clone();
+                                replacement_element.element = combined_element;
+
+                                // Update it in the storage
+                                let mut serialized = String::new();
+                                replacement_element.serialize(&mut serialized);
+                                updates.push(StorageCommand::WriteElement(assigned_element_id, serialized));
+                            } else {
+                                // If nothing was generated then any updates that might have been generated are not valid
+                                updates = vec![];
+                            }
                         }
 
                         _ => { }
@@ -130,36 +150,5 @@ impl StreamAnimationCore {
             // Send the updates to storage
             self.request(updates).await;
         }
-
-        /*
-        // We need to know the properties of all of the elements in the current frame (we need to work backwards to generate the grouped element)
-        let elements_with_properties        = self.frame_elements_with_properties(frame);
-        let brush_points                    = Arc::new(self.current_brush.brush_points_for_raw_points(&self.points));
-
-        // Nothing to do if there are no properties
-        if elements_with_properties.len() == 0 {
-            return;
-        }
-
-        // The vector properties of the brush will be the last element properties with the brush properties added in
-        let mut new_properties              = (*elements_with_properties.last().unwrap().1).clone();
-        new_properties.brush                = Arc::clone(&self.current_brush);
-        new_properties.brush_properties     = self.brush_properties.clone();
-
-        // Attempt to combine the current brush stroke with them
-        let mut combined_element            = None;
-        for (element, properties) in elements_with_properties.iter().rev() {
-            use self::CombineResult::*;
-
-            combined_element = match self.current_brush.combine_with(&element, Arc::clone(&brush_points), &new_properties, &*properties, combined_element.clone()) {
-                NewElement(new_combined)    => { Some(new_combined) },
-                NoOverlap                   => { continue; },               // Might be able to combine with an element further down
-                CannotCombineAndOverlaps    => { break; },                  // Not quite right: we can combine with any element that's not obscured by an existing element (we can skip over overlapping elements we can't combine with)
-                UnableToCombineFurther      => { break; }                   // Always stop here
-            }
-        }
-
-        self.combined_element = combined_element;
-        */
     }
 }
