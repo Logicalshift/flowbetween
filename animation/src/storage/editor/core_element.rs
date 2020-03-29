@@ -48,11 +48,11 @@ impl StreamAnimationCore {
                 SetControlPoints(new_points)    => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_adjusted_control_points(new_points.clone()); ChangeWrapper(wrapper) }).await; }
                 SetPath(new_path)               => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) }).await; }
                 Order(ordering)                 => { self.order_elements(element_ids, *ordering).await; }
-                DetachFromFrame                 => { self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id)).collect()).await; }
                 CollideWithExistingElements     => { unimplemented!("CollideWithExistingElements") }
                 ConvertToPath                   => { unimplemented!("ConvertToPath") }
 
-                Delete                          => {
+                Delete                          |
+                DetachFromFrame                 => {
                     let mut attachments         = vec![];
                     let mut attached_to         = vec![];
 
@@ -75,7 +75,11 @@ impl StreamAnimationCore {
                     }
 
                     // Delete the elements
-                    self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id)).collect()).await; 
+                    if element_edit == &ElementEdit::Delete {
+                        self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id)).collect()).await; 
+                    } else {
+                        self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id)).collect()).await; 
+                    }
                 }
             }
         }
