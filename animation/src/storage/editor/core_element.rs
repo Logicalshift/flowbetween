@@ -157,10 +157,7 @@ impl StreamAnimationCore {
             match update {
                 ElementUpdate::ChangeWrapper(updated_element) => {
                     // Generate the update of the serialized element
-                    let mut serialized  = String::new();
-                    updated_element.serialize(&mut serialized);
-
-                    updates.push(StorageCommand::WriteElement(element_id, serialized));
+                    updates.push(StorageCommand::WriteElement(element_id, updated_element.serialize_to_string()));
 
                     // Replace the element in the keyframe
                     keyframe.map(|keyframe| {
@@ -196,10 +193,7 @@ impl StreamAnimationCore {
                                     attachment.attached_to.push(ElementId::Assigned(element_id));
 
                                     // Generate the update of the serialized element
-                                    let mut serialized  = String::new();
-                                    attachment.serialize(&mut serialized);
-
-                                    updates.push(StorageCommand::WriteElement(attachment_id, serialized));
+                                    updates.push(StorageCommand::WriteElement(attachment_id, attachment.serialize_to_string()));
                                 }
                             }
 
@@ -219,10 +213,7 @@ impl StreamAnimationCore {
                                     element_wrapper.attachments.extend(attachments.clone());
 
                                     // Generate the update of the serialized element
-                                    let mut serialized  = String::new();
-                                    element_wrapper.serialize(&mut serialized);
-
-                                    updates.push(StorageCommand::WriteElement(element_id, serialized));
+                                    updates.push(StorageCommand::WriteElement(element_id, element_wrapper.serialize_to_string()));
                                 });
                         });
                     }
@@ -247,10 +238,7 @@ impl StreamAnimationCore {
                                         // TODO: if there are no attachments left, consider removing the element from the keyframe
                                         // (presently doesn't work as brush properties don't have their references reversed this way)
                                         attachment_id.id().map(|attachment_id| {
-                                            let mut serialized  = String::new();
-                                            attachment_wrapper.serialize(&mut serialized);
-
-                                            updates.push(StorageCommand::WriteElement(attachment_id, serialized));
+                                            updates.push(StorageCommand::WriteElement(attachment_id, attachment_wrapper.serialize_to_string()));
                                         });
                                     });
                             });
@@ -262,10 +250,7 @@ impl StreamAnimationCore {
                                 element_wrapper.attachments.retain(|attachment_id| !attachments.contains(attachment_id));
 
                                 // Generate the update of the serialized element
-                                let mut serialized  = String::new();
-                                element_wrapper.serialize(&mut serialized);
-
-                                updates.push(StorageCommand::WriteElement(element_id, serialized));
+                                updates.push(StorageCommand::WriteElement(element_id, element_wrapper.serialize_to_string()));
                             });
                     }));
                 }

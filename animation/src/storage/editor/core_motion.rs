@@ -30,12 +30,8 @@ impl StreamAnimationCore {
                     let motion  = Vector::Motion(motion);
                     let motion  = ElementWrapper::with_element(motion, Duration::from_millis(0));
 
-                    // Serialize
-                    let mut serialized = String::new();
-                    motion.serialize(&mut serialized);
-
                     // Write
-                    self.request_one(StorageCommand::WriteElement(motion_id, serialized)).await;
+                    self.request_one(StorageCommand::WriteElement(motion_id, motion.serialize_to_string())).await;
                 }
                 Delete                  => { self.request_one(StorageCommand::DeleteElement(motion_id)).await; }
 

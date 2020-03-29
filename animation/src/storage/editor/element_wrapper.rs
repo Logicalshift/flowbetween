@@ -68,6 +68,15 @@ impl ElementWrapper {
     }
 
     ///
+    /// Generates a string version of this element
+    ///
+    pub fn serialize_to_string(&self) -> String {
+        let mut result = String::new();
+        self.serialize(&mut result);
+        result
+    }
+
+    ///
     /// Writes this element to a data target
     ///
     pub fn serialize<Tgt: AnimationDataTarget>(&self, data: &mut Tgt) {

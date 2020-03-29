@@ -130,9 +130,7 @@ impl StreamAnimationCore {
                                 replacement_element.element = combined_element;
 
                                 // Update it in the storage
-                                let mut serialized = String::new();
-                                replacement_element.serialize(&mut serialized);
-                                updates.push(StorageCommand::WriteElement(assigned_element_id, serialized));
+                                updates.push(StorageCommand::WriteElement(assigned_element_id, replacement_element.serialize_to_string()));
                             } else {
                                 // If nothing was generated then any updates that might have been generated are not valid
                                 updates = vec![];
