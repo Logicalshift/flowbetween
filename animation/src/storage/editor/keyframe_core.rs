@@ -486,9 +486,10 @@ impl KeyFrameCore {
     }
 
     ///
-    /// Unlinks an element in this layer, and returns the commands required to unlink it
+    /// Unlinks an element in this frame, and returns the commands required to unlink it
     /// 
-    /// This makes it possible to detach or delete this element
+    /// This makes it possible to detach or delete this element, or use it in an attachment somewhere else
+    /// (eg, when grouping elements)
     ///
     pub fn unlink_element(&mut self, element_id: ElementId) -> Vec<StorageCommand> {
         let element_id_i64  = match element_id.id() { Some(id) => id, None => { return vec![] } };

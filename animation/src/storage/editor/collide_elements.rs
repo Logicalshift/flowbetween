@@ -85,6 +85,9 @@ impl StreamAnimationCore {
                     // Only brush stroke elements can be combined at the moment
                     match &wrapper.element {
                         Vector::BrushStroke(brush_stroke) => {
+                            // Create a copy of the wrapper we can use to update it later on
+                            let mut replacement_element = wrapper.clone();
+
                             // Take the brush points from this one to generate a new value for the element
                             let brush_points = brush_stroke.points();
 
@@ -101,18 +104,9 @@ impl StreamAnimationCore {
 
                                 combined_element = match current_brush.combine_with(&combine_with_wrapper.element, Arc::clone(&brush_points), &new_properties, &*properties, combined_element.clone()) {
                                     NewElement(new_combined)    => {
-                                        // Remove or detach the element from the frame (vector elements are usually unattached so the attached
-                                        // case here is very much an edge case)
-                                        // 
-                                        // TODO: add to a list of elements to remove from the current keyframe
-                                        // TODO TODO: mostly we end up producing a group here, so we actually just want to turn these into unattached elements?
-                                        if combine_with_wrapper.attached_to.len() == 0 {
-                                            combine_with_wrapper.element.id().id()
-                                                .map(|combine_with_element_id| updates.push(StorageCommand::DeleteElement(combine_with_element_id)));
-                                        } else {
-                                            combine_with_wrapper.element.id().id()
-                                                .map(|combine_with_element_id| updates.push(StorageCommand::DetachElementFromLayer(combine_with_element_id)));
-                                        }
+                                        // Unlink the element from the frame (brushes typicaly put their new element into a group so
+                                        // this will set up the element in a way that's appropriate for that)
+                                        updates.extend(frame.unlink_element(combine_with_wrapper.element.id()));
 
                                         Some(new_combined) 
                                     },
@@ -126,7 +120,6 @@ impl StreamAnimationCore {
                             // Final update is to replace the old element with the new element
                             if let Some(combined_element) = combined_element {
                                 // Replace the element
-                                let mut replacement_element = wrapper.clone();
                                 replacement_element.element = combined_element;
 
                                 // Update it in the storage
