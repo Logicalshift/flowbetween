@@ -1,5 +1,7 @@
 use super::keyframe_core::*;
+use super::element_wrapper::*;
 use super::stream_animation_core::*;
+use super::super::storage_api::*;
 use super::super::super::traits::*;
 
 use futures::prelude::*;
@@ -11,7 +13,7 @@ impl StreamAnimationCore {
     ///
     /// Discovers all of the elements in the frame along with their properties
     ///
-    async fn frame_elements_with_properties(&self, frame: &Arc<Desync<KeyFrameCore>>) -> Vec<(Vector, Arc<VectorProperties>)> {
+    async fn frame_elements_with_properties(&self, frame: &Arc<Desync<KeyFrameCore>>) -> Vec<(ElementWrapper, Arc<VectorProperties>)> {
         frame.future(move |frame| {
             async move {
                 // Start with the default properties
@@ -29,7 +31,7 @@ impl StreamAnimationCore {
                         current_properties = frame.apply_properties_for_element(&elem.element, current_properties);
 
                         // Add to the result
-                        result.push((elem.element.clone(), Arc::clone(&current_properties)));
+                        result.push((elem.clone(), Arc::clone(&current_properties)));
                     }
 
                     // Move on to the element that's ahead of the current one
@@ -60,18 +62,19 @@ impl StreamAnimationCore {
                 return;
             }
 
-            frame.future(move |frame| {
+            let updates = frame.future(move |frame| {
                 async move {
                     // Find the brush properties for the selected element. These are usually at the end, so a linear search like this should be fine
                     let new_properties = elements_with_properties.iter().rev()
-                        .filter(|elem| elem.0.id() == combine_element_id)
+                        .filter(|elem| elem.0.element.id() == combine_element_id)
                         .map(|elem| elem.1.clone())
                         .nth(0)
                         .unwrap_or_else(|| Arc::new(VectorProperties::default()));
                     let current_brush = &new_properties.brush;
 
                     // Fetch the element from the frame
-                    let element = frame.elements.get(&combine_element_id);
+                    let element     = frame.elements.get(&combine_element_id);
+                    let mut updates = vec![];
 
                     // Collide other elements in the frame with this element
                     // Only brush stroke elements can be combined at the moment
@@ -82,17 +85,33 @@ impl StreamAnimationCore {
 
                             // Attempt to combine the element we fetched with the rest of the frame
                             let mut combined_element            = None;
-                            for (element, properties) in elements_with_properties.iter().rev() {
+                            for (combine_with_wrapper, properties) in elements_with_properties.iter().rev() {
                                 use self::CombineResult::*;
 
                                 // Ignore the element we're merging
                                 // TODO: consider ignoring the elements above the element we're merging too
-                                if element.id() == combine_element_id {
+                                if combine_with_wrapper.element.id() == combine_element_id {
                                     continue;
                                 }
 
-                                combined_element = match current_brush.combine_with(&element, Arc::clone(&brush_points), &new_properties, &*properties, combined_element.clone()) {
-                                    NewElement(new_combined)    => { Some(new_combined) },
+                                combined_element = match current_brush.combine_with(&combine_with_wrapper.element, Arc::clone(&brush_points), &new_properties, &*properties, combined_element.clone()) {
+                                    NewElement(new_combined)    => {
+                                        // Remove or detach the element from the frame (vector elements are usually unattached so the attached
+                                        // case here is very much an edge case)
+                                        // 
+                                        // TODO: add to a list of elements to remove from the current keyframe
+                                        // TODO TODO: mostly we end up producing a group here, so we actually just want to turn these into unattached elements?
+                                        if combine_with_wrapper.attached_to.len() == 0 {
+                                            combine_with_wrapper.element.id().id()
+                                                .map(|combine_with_element_id| updates.push(StorageCommand::DeleteElement(combine_with_element_id)));
+                                        } else {
+                                            combine_with_wrapper.element.id().id()
+                                                .map(|combine_with_element_id| updates.push(StorageCommand::DetachElementFromLayer(combine_with_element_id)));
+                                        }
+
+                                        Some(new_combined) 
+                                    },
+
                                     NoOverlap                   => { continue; },               // Might be able to combine with an element further down
                                     CannotCombineAndOverlaps    => { break; },                  // Not quite right: we can combine with any element that's not obscured by an existing element (we can skip over overlapping elements we can't combine with)
                                     UnableToCombineFurther      => { break; }                   // Always stop here
@@ -102,8 +121,14 @@ impl StreamAnimationCore {
 
                         _ => { }
                     }
+
+                    // The result is the list of updates we want to perform
+                    updates
                 }.boxed()
             }).await.unwrap();
+            
+            // Send the updates to storage
+            self.request(updates).await;
         }
 
         /*
