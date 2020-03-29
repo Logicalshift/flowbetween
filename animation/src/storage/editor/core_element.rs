@@ -48,8 +48,13 @@ impl StreamAnimationCore {
                 SetControlPoints(new_points)    => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_adjusted_control_points(new_points.clone()); ChangeWrapper(wrapper) }).await; }
                 SetPath(new_path)               => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) }).await; }
                 Order(ordering)                 => { self.order_elements(element_ids, *ordering).await; }
-                CollideWithExistingElements     => { unimplemented!("CollideWithExistingElements") }
                 ConvertToPath                   => { unimplemented!("ConvertToPath") }
+
+                CollideWithExistingElements     => { 
+                    for id in element_ids.iter() {
+                        self.collide_with_existing_elements(ElementId::Assigned(*id)).await;
+                    }
+                }
 
                 Delete                          |
                 DetachFromFrame                 => {

@@ -48,7 +48,7 @@ impl StreamAnimationCore {
     ///
     /// Attempts to combine an element with other elements in the same frame (by joining them into a single path)
     ///
-    pub async fn collide_with_existing_elements<'a>(&'a mut self, combine_element_id: ElementId) -> impl 'a+Send+Future<Output=()> {
+    pub fn collide_with_existing_elements<'a>(&'a mut self, combine_element_id: ElementId) -> impl 'a+Send+Future<Output=()> {
         async move {
             // Fetch the frame that this element belongs to
             let assigned_element_id = match combine_element_id.id() {
