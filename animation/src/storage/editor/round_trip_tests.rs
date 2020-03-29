@@ -707,7 +707,7 @@ fn delete_element() {
             )
         )),
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
-            BrushProperties(ElementId::Unassigned, BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }))),
+            BrushProperties(ElementId::Assigned(125), BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }))),
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(126), Arc::new(vec![
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
@@ -720,12 +720,24 @@ fn delete_element() {
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
                 ])))),
+    ]);
+
+    {
+        let layer               = anim.get_layer_with_id(2).unwrap();
+        let frame               = layer.get_frame_at_time(Duration::from_millis(442));
+
+        let all_elements        = frame.vector_elements().unwrap()
+            .map(|elem| elem.id())
+            .collect::<Vec<_>>();
+        assert!(all_elements == vec![ElementId::Assigned(126), ElementId::Assigned(127), ElementId::Assigned(128)]);
+    }
+
+    anim.perform_edits(vec![
         AnimationEdit::Element(vec![ElementId::Assigned(127)], ElementEdit::Delete)
     ]);
 
-    let layer = anim.get_layer_with_id(2).unwrap();
-
     {
+        let layer               = anim.get_layer_with_id(2).unwrap();
         let frame               = layer.get_frame_at_time(Duration::from_millis(442));
         let element127          = frame.element_with_id(ElementId::Assigned(127));
 
@@ -733,6 +745,11 @@ fn delete_element() {
             Some(Vector::BrushStroke(ref brush_stroke)) => Some(brush_stroke.id()),
             _ => None
         } == None);
+
+        let all_elements        = frame.vector_elements().unwrap()
+            .map(|elem| elem.id())
+            .collect::<Vec<_>>();
+        assert!(all_elements == vec![ElementId::Assigned(126), ElementId::Assigned(128)]);
     }
 }
 
