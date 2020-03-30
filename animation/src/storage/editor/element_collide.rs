@@ -127,6 +127,7 @@ impl StreamAnimationCore {
 
                                     // Update it in the storage
                                     updates.push(StorageCommand::WriteElement(assigned_element_id, replacement_element.serialize_to_string()));
+                                    frame.elements.insert(combine_element_id, replacement_element);
                                 } else {
                                     // If nothing was generated then any updates that might have been generated are not valid
                                     updates = vec![];
