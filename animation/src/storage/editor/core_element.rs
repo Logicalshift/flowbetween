@@ -78,7 +78,7 @@ impl StreamAnimationCore {
     /// Note that this might leave elements that are no longer attached to anything: this presently does not clean
     /// up these elements.
     ///
-    fn remove_from_attachments<'a>(&'a mut self, element_ids: &'a Vec<i64>) -> impl 'a+Send+Future<Output=()> {
+    pub fn remove_from_attachments<'a>(&'a mut self, element_ids: &'a Vec<i64>) -> impl 'a+Send+Future<Output=()> {
         async move {
             let mut attachments         = vec![];
             let mut attached_to         = vec![];
