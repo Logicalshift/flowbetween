@@ -58,26 +58,7 @@ impl StreamAnimationCore {
 
                 Delete                          |
                 DetachFromFrame                 => {
-                    let mut attachments         = vec![];
-                    let mut attached_to         = vec![];
-
-                    // Use update_elements to read the attachments/attached_to values for the elements that are being deleted
-                    self.update_elements(element_ids.clone(), |wrapper| {
-                        attachments.extend(wrapper.attachments.into_iter().map(|id| id.id()).flatten());
-                        attached_to.extend(wrapper.attached_to.into_iter().map(|id| id.id()).flatten());
-
-                        ElementUpdate::Unlink
-                    }).await;
-
-                    // Remove the element from anything it's attached to or is attached to it
-                    if attachments.len() > 0 || attached_to.len() > 0 {
-                        // Hash set of the elements that are being deleted
-                        let attachments_to_remove   = element_ids.iter().map(|id| ElementId::Assigned(*id)).collect::<HashSet<_>>();
-
-                        // Remove the deleted elements from anything they're attached to
-                        self.update_elements(attachments, |wrapper| Self::remove_attachments(wrapper, &attachments_to_remove)).await;
-                        self.update_elements(attached_to, |wrapper| Self::remove_attachments(wrapper, &attachments_to_remove)).await;
-                    }
+                    self.remove_from_attachments(&element_ids).await;
 
                     // Delete the elements
                     if element_edit == &ElementEdit::Delete {
@@ -86,6 +67,38 @@ impl StreamAnimationCore {
                         self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id)).collect()).await; 
                     }
                 }
+            }
+        }
+    }
+
+    ///
+    /// When deleting or detaching an element, we might find that it has attachments or is attached to other elements.
+    /// This will remove the element from the attachment lists of those related elements.
+    /// 
+    /// Note that this might leave elements that are no longer attached to anything: this presently does not clean
+    /// up these elements.
+    ///
+    fn remove_from_attachments<'a>(&'a mut self, element_ids: &'a Vec<i64>) -> impl 'a+Send+Future<Output=()> {
+        async move {
+            let mut attachments         = vec![];
+            let mut attached_to         = vec![];
+
+            // Use update_elements to read the attachments/attached_to values for the elements that are being deleted
+            self.update_elements(element_ids.clone(), |wrapper| {
+                attachments.extend(wrapper.attachments.into_iter().map(|id| id.id()).flatten());
+                attached_to.extend(wrapper.attached_to.into_iter().map(|id| id.id()).flatten());
+
+                ElementUpdate::Unlink
+            }).await;
+
+            // Remove the element from anything it's attached to or is attached to it
+            if attachments.len() > 0 || attached_to.len() > 0 {
+                // Hash set of the elements that are being deleted
+                let attachments_to_remove   = element_ids.iter().map(|id| ElementId::Assigned(*id)).collect::<HashSet<_>>();
+
+                // Remove the deleted elements from anything they're attached to
+                self.update_elements(attachments, |wrapper| Self::remove_attachments(wrapper, &attachments_to_remove)).await;
+                self.update_elements(attached_to, |wrapper| Self::remove_attachments(wrapper, &attachments_to_remove)).await;
             }
         }
     }
