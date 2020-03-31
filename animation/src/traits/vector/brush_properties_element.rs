@@ -24,6 +24,12 @@ pub struct BrushPropertiesElement {
     new_properties: BrushProperties
 }
 
+impl Default for BrushPropertiesElement {
+    fn default() -> BrushPropertiesElement {
+        BrushPropertiesElement::new(ElementId::Unassigned, BrushProperties::new())
+    }
+}
+
 impl BrushPropertiesElement {
     ///
     /// Creates a new brush properties vector element

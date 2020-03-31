@@ -29,6 +29,12 @@ pub struct BrushDefinitionElement {
     drawing_style: BrushDrawingStyle
 }
 
+impl Default for BrushDefinitionElement {
+    fn default() -> BrushDefinitionElement {
+        BrushDefinitionElement::new(ElementId::Unassigned, BrushDefinition::Simple, BrushDrawingStyle::Draw)
+    }
+}
+
 impl BrushDefinitionElement {
     ///
     /// Creates a new brush properties vector element
