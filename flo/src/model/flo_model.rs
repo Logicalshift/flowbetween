@@ -304,15 +304,6 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
 
 impl<Anim: Animation> AnimationMotion for FloModel<Anim> {
     ///
-    /// Assigns a new unique ID for creating a new motion
-    ///
-    /// This ID will not have been used so far and will not be used again, and can be used as the ID for the MotionElement vector element.
-    ///
-    fn assign_element_id(&self) -> ElementId {
-        self.animation.motion().assign_element_id()
-    }
-
-    ///
     /// Retrieves the IDs of the motions attached to a particular element
     ///
     fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
@@ -348,6 +339,15 @@ impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<A
     ///
     fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> {
         self.edit_publisher.sync(|publisher| publisher.republish())
+    }
+
+    ///
+    /// Assigns a new unique ID for creating a new motion
+    ///
+    /// This ID will not have been used so far and will not be used again, and can be used as the ID for the MotionElement vector element.
+    ///
+    fn assign_element_id(&self) -> ElementId {
+        self.animation.assign_element_id()
     }
 }
 
