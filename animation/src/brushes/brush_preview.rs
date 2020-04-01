@@ -142,6 +142,7 @@ impl BrushPreview {
         result
     }
 
+    /*
     ///
     /// Attempts to combine the preview brush stroke with existing elements in the frame
     ///
@@ -175,6 +176,7 @@ impl BrushPreview {
 
         self.combined_element = combined_element;
     }
+    */
 
     ///
     /// Commits this preview to an animation, returning the element IDs that were generated
@@ -216,6 +218,7 @@ impl BrushPreview {
         vec![element_id]
     }
 
+    /*
     ///
     /// Generates a list of edits to perform before committing a combined path
     ///
@@ -294,4 +297,5 @@ impl BrushPreview {
         self.points             = vec![];
         self.combined_element   = None;
     }
+    */
 }

@@ -363,7 +363,8 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
             renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
 
             // Commit the preview to the animation
-            preview.commit_to_animation_as_path(current_time, preview_layer, &*self.animation);
+            let elements = preview.commit_to_animation(need_brush, need_props, current_time, preview_layer, &*self.animation);
+            self.animation.perform_edits(vec![AnimationEdit::Element(elements, ElementEdit::ConvertToPath)]);
         }
     }
 
@@ -376,7 +377,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
         // Perform collisions using the brush preview
         if let (Some(preview), Some(current_frame)) = (self.preview.as_mut(), current_frame) {
-            preview.collide_with_existing_elements(current_frame);
+            // preview.collide_with_existing_elements(current_frame);
         }
     }
 }
