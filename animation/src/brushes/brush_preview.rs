@@ -177,15 +177,15 @@ impl BrushPreview {
     }
 
     ///
-    /// Commits this preview to an animation
+    /// Commits this preview to an animation, returning the element IDs that were generated
     ///
-    pub fn commit_to_animation(&mut self, update_brush_definition: bool, update_properties: bool, when: Duration, layer_id: u64, animation: &dyn EditableAnimation) {
+    pub fn commit_to_animation(&mut self, update_brush_definition: bool, update_properties: bool, when: Duration, layer_id: u64, animation: &dyn EditableAnimation) -> Vec<ElementId> {
         use LayerEdit::*;
         use PaintEdit::*;
 
         if self.points.len() < 2 {
             // Do nothing if there are no points in this brush preview
-            return;
+            return vec![];
         }
 
         let mut actions = vec![];
@@ -203,14 +203,17 @@ impl BrushPreview {
         }
 
         // Perform the brush stroke (and clear out the points)
+        let element_id  = animation.assign_element_id();
         let mut points  = vec![];
         let _combined   = self.combined_element.take();
         mem::swap(&mut self.points, &mut points);
-        actions.push(Paint(when, BrushStroke(ElementId::Unassigned, Arc::new(points))));
+        actions.push(Paint(when, BrushStroke(element_id, Arc::new(points))));
 
         // Perform the edit
         let actions         = actions.into_iter().map(|action| AnimationEdit::Layer(layer_id, action));
         animation.perform_edits(actions.collect());
+
+        vec![element_id]
     }
 
     ///
