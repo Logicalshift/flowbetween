@@ -34,7 +34,7 @@ impl EditAction for MotionEditAction {
     ///
     /// Converts this edit action into a set of animation edits for a particular animation
     ///
-    fn to_animation_edits<Anim: Animation>(&self, animation: &Anim) -> Vec<AnimationEdit> {
+    fn to_animation_edits<Anim: EditableAnimation>(&self, animation: &Anim) -> Vec<AnimationEdit> {
         use self::MotionEditAction::*;
 
         match self {
@@ -47,10 +47,10 @@ impl EditAction for MotionEditAction {
 /// Generates an edit for a set of elements that currently have no translate motion attached to them
 /// that attaches a suitable motion that just translates them instantly at a point in time
 ///
-fn static_move_edit<Anim: Animation>(animation: &Anim, elements: &HashSet<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
+fn static_move_edit<Anim: EditableAnimation>(animation: &Anim, elements: &HashSet<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
     if elements.len() > 0 {
         // Create a new motion, then attach it to the static elements
-        let static_motion_id    = animation.motion().assign_element_id();
+        let static_motion_id    = animation.assign_element_id();
         let target_point        = TimePoint::new(to.0, to.1, when.clone());
 
         // Creates a motion that instantaneously moves from the 'from' point to the 'to' point
@@ -78,7 +78,7 @@ fn static_move_edit<Anim: Animation>(animation: &Anim, elements: &HashSet<Elemen
 ///
 /// Generates updates for elements attached to an existing motion
 ///
-fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, elements: &Vec<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
+fn dynamic_move_edit<Anim: EditableAnimation>(animation: &Anim, motion_id: ElementId, elements: &Vec<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
     if let Some(Motion::Translate(translate)) = animation.motion().get_motion(motion_id) {
         // Set an existing point in this translate motion
         let when_millis         = to_millis(*when) as f32;
@@ -100,7 +100,7 @@ fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, el
 
         if motion_in_use_elsewhere {
             // Create a new translation motion and attach/detach our elements (so elements outside of our set are not moved)
-            let new_motion_id       = animation.motion().assign_element_id();
+            let new_motion_id       = animation.assign_element_id();
             let detach_elements     = iter::once(AnimationEdit::Element(elements.clone(), ElementEdit::RemoveAttachment(motion_id)));
             let attach_elements     = iter::once(AnimationEdit::Element(elements.clone(), ElementEdit::AddAttachment(new_motion_id)));
 
@@ -132,7 +132,7 @@ fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, el
 ///
 /// Generates a move elements edit for a particular animation
 ///
-fn move_elements_edit<Anim: Animation>(animation: &Anim, elements: &Vec<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
+fn move_elements_edit<Anim: EditableAnimation>(animation: &Anim, elements: &Vec<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
     // An element can either have an existing translation or have no translation attached to it yet
     let mut existing_translations   = HashMap::new();
     let mut static_elements         = HashSet::new();
@@ -181,6 +181,7 @@ mod test {
     use super::*;
     use super::super::super::*;
 
+    use flo_stream::*;
     use futures::stream::{BoxStream};
     use std::sync::*;
     use std::ops::Range;
@@ -201,11 +202,16 @@ mod test {
             fn motion<'a>(&'a self) -> &'a dyn AnimationMotion { self }
         }
 
-        impl AnimationMotion for TestAnimation {
+        impl EditableAnimation for TestAnimation {
+            fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> { unimplemented!() }
+            fn perform_edits(&self, _edits: Vec<AnimationEdit>) { unimplemented!() }
+
             fn assign_element_id(&self) -> ElementId {
                 ElementId::Assigned(42)
             }
+        }
 
+        impl AnimationMotion for TestAnimation {
             fn get_motions_for_element(&self, _element_id: ElementId) -> Vec<ElementId> {
                 vec![]
             }
@@ -256,11 +262,16 @@ mod test {
             fn motion<'a>(&'a self) -> &'a dyn AnimationMotion { self }
         }
 
-        impl AnimationMotion for TestAnimation {
+        impl EditableAnimation for TestAnimation {
+            fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> { unimplemented!() }
+            fn perform_edits(&self, _edits: Vec<AnimationEdit>) { unimplemented!() }
+
             fn assign_element_id(&self) -> ElementId {
                 ElementId::Assigned(43)
             }
+        }
 
+        impl AnimationMotion for TestAnimation {
             fn get_motions_for_element(&self, _element_id: ElementId) -> Vec<ElementId> {
                 vec![ElementId::Assigned(42)]
             }

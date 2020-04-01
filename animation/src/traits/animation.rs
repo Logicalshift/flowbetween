@@ -60,6 +60,13 @@ pub trait Animation : Send+Sync {
 ///
 pub trait EditableAnimation : Animation+Send+Sync {
     ///
+    /// Assigns a new unique ID for creating a new motion
+    ///
+    /// This ID will not have been used so far and will not be used again, and can be used as the ID for the MotionElement vector element.
+    ///
+    fn assign_element_id(&self) -> ElementId;
+
+    ///
     /// Retrieves a sink that can be used to send edits for this animation
     ///
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that

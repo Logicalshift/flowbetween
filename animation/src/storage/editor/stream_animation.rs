@@ -290,6 +290,27 @@ impl Animation for StreamAnimation {
 
 impl EditableAnimation for StreamAnimation {
     ///
+    /// Assigns a new unique ID for creating a new motion
+    ///
+    /// This ID will not have been used so far and will not be used again, and can be used as the ID for the MotionElement vector element.
+    ///
+    fn assign_element_id(&self) -> ElementId {
+        // Create a queue to run the 'assign element ID' future on
+        let core    = Arc::clone(&self.core);
+        let request = Desync::new(None);
+
+        // Perform the request
+        let _ = request.future(|result| {
+            async move {
+                *result = Some(core.future(|core| core.assign_element_id(ElementId::Unassigned).boxed()).await.unwrap())
+            }.boxed()
+        });
+
+        // Retrieve the result
+        request.sync(|result| result.take()).unwrap()
+    }
+
+    ///
     /// Retrieves a sink that can be used to send edits for this animation
     ///
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
@@ -341,27 +362,6 @@ impl EditableAnimation for StreamAnimation {
 }
 
 impl AnimationMotion for StreamAnimation {
-    ///
-    /// Assigns a new unique ID for creating a new motion
-    ///
-    /// This ID will not have been used so far and will not be used again, and can be used as the ID for the MotionElement vector element.
-    ///
-    fn assign_element_id(&self) -> ElementId {
-        // Create a queue to run the 'assign element ID' future on
-        let core    = Arc::clone(&self.core);
-        let request = Desync::new(None);
-
-        // Perform the request
-        let _ = request.future(|result| {
-            async move {
-                *result = Some(core.future(|core| core.assign_element_id(ElementId::Unassigned).boxed()).await.unwrap())
-            }.boxed()
-        });
-
-        // Retrieve the result
-        request.sync(|result| result.take()).unwrap()
-    }
-
     ///
     /// Retrieves the IDs of the motions attached to a particular element
     ///
