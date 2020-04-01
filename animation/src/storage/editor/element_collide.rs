@@ -88,9 +88,6 @@ impl StreamAnimationCore {
                         // Only brush stroke elements can be combined at the moment
                         match &wrapper.element {
                             Vector::BrushStroke(brush_stroke) => {
-                                // Create a copy of the wrapper we can use to update it later on
-                                let mut replacement_element = wrapper.clone();
-
                                 // Take the brush points from this one to generate a new value for the element
                                 let brush_points = brush_stroke.points();
 
@@ -105,7 +102,7 @@ impl StreamAnimationCore {
                                         continue;
                                     }
 
-                                    combined_element = match current_brush.combine_with(&combine_with_wrapper.element, Arc::clone(&brush_points), &new_properties, &*properties, combined_element.clone()) {
+                                    let new_combined = match current_brush.combine_with(&combine_with_wrapper.element, Arc::clone(&brush_points), &new_properties, &*properties, combined_element.clone()) {
                                         NewElement(new_combined)    => {
                                             // Unlink the element from the frame (brushes typicaly put their new element into a group so
                                             // this will set up the element in a way that's appropriate for that)
@@ -117,11 +114,14 @@ impl StreamAnimationCore {
                                         NoOverlap                   => { continue; },               // Might be able to combine with an element further down
                                         CannotCombineAndOverlaps    => { break; },                  // Not quite right: we can combine with any element that's not obscured by an existing element (we can skip over overlapping elements we can't combine with)
                                         UnableToCombineFurther      => { break; }                   // Always stop here
-                                    }
+                                    };
+
+                                    combined_element = new_combined;
                                 }
 
                                 // Final update is to replace the old element with the new element
-                                if let Some(combined_element) = combined_element {
+                                let replacement_element = frame.elements.get(&combine_element_id).cloned();
+                                if let (Some(combined_element), Some(mut replacement_element)) = (combined_element, replacement_element) {
                                     // Replace the element
                                     replacement_element.element = combined_element;
 
