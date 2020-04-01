@@ -372,7 +372,7 @@ impl Select {
     ///
     /// Processes a paint action (at the top level)
     ///
-    fn paint<Anim: 'static+Animation>(&self, paint: Painting, actions: Vec<ToolAction<SelectData>>, animation: Arc<FloModel<Anim>>, data: Arc<SelectData>) -> (Vec<ToolAction<SelectData>>, Arc<SelectData>) {
+    fn paint<Anim: 'static+EditableAnimation>(&self, paint: Painting, actions: Vec<ToolAction<SelectData>>, animation: Arc<FloModel<Anim>>, data: Arc<SelectData>) -> (Vec<ToolAction<SelectData>>, Arc<SelectData>) {
         let mut actions     = actions;
         let mut data        = data;
         let current_action  = data.action;
