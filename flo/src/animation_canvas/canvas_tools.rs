@@ -30,6 +30,11 @@ pub struct CanvasTools<Anim: Animation+EditableAnimation> {
     /// Whether or not we should create a keyframe if one doesn't already exist before committing an action
     create_keyframe: BindRef<bool>,
 
+    /// Whether or not we should combine the new element with existing elements after the next commit
+    /// TODO: this doesn't need to be a stateful setting, it's like this to minimize the set of changes required to move the
+    /// code to do this out of the brush preview implementation
+    combine_after_commit: bool,
+
     /// The time where editing is taking place
     current_time: BindRef<Duration>,
 
@@ -65,17 +70,18 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
         let edit_sink       = animation.edit();
 
         CanvasTools {
-            animation:          animation,
-            edit_sink:          edit_sink,
-            effective_tool:     effective_tool,
-            create_keyframe:    create_keyframe,
-            current_time:       current_time,
-            preview:            None,
-            preview_layer:      None,
-            active_tool:        None,
-            tool_runner:        tool_runner,
-            brush_definition:   (BrushDefinition::Simple, BrushDrawingStyle::Draw),
-            brush_properties:   BrushProperties::new()
+            animation:              animation,
+            edit_sink:              edit_sink,
+            effective_tool:         effective_tool,
+            create_keyframe:        create_keyframe,
+            current_time:           current_time,
+            preview:                None,
+            preview_layer:          None,
+            combine_after_commit:   false,
+            active_tool:            None,
+            tool_runner:            tool_runner,
+            brush_definition:       (BrushDefinition::Simple, BrushDrawingStyle::Draw),
+            brush_properties:       BrushProperties::new()
         }
     }
 
@@ -233,7 +239,8 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                 preview.set_brush_properties(&self.brush_properties);
                 preview.select_brush(&self.brush_definition.0, self.brush_definition.1);
 
-                self.preview = Some(preview);
+                self.preview                = Some(preview);
+                self.combine_after_commit   = false;
             },
 
             BrushPreviewAction::UnsetProperties                 => { self.preview_layer.map(|layer_id| renderer.set_layer_brush(layer_id, None, None)); }
@@ -333,7 +340,10 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
             renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
 
             // Commit the preview to the animation
-            preview.commit_to_animation(need_brush, need_props, current_time, preview_layer, &*self.animation);
+            let elements = preview.commit_to_animation(need_brush, need_props, current_time, preview_layer, &*self.animation);
+            if self.combine_after_commit {
+                self.animation.perform_edits(vec![AnimationEdit::Element(elements, ElementEdit::CollideWithExistingElements)]);
+            }
 
             // Update the properties in the renderer if they've changed
             if need_brush || need_props {
@@ -363,8 +373,14 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
             renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
 
             // Commit the preview to the animation
-            let elements = preview.commit_to_animation(need_brush, need_props, current_time, preview_layer, &*self.animation);
-            self.animation.perform_edits(vec![AnimationEdit::Element(elements, ElementEdit::ConvertToPath)]);
+            let elements        = preview.commit_to_animation(need_brush, need_props, current_time, preview_layer, &*self.animation);
+            let mut path_edits  = vec![AnimationEdit::Element(elements.clone(), ElementEdit::ConvertToPath)];
+
+            if self.combine_after_commit {
+                path_edits.insert(0, AnimationEdit::Element(elements, ElementEdit::CollideWithExistingElements));
+            }
+
+            self.animation.perform_edits(path_edits);
         }
     }
 
@@ -372,12 +388,6 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     /// Causes the brush preview to combine any elements that are overlapping (so we combine them into one path)
     ///
     fn combine_colliding_elements(&mut self) {
-        // Fetch the current frame
-        let current_frame = self.animation.frame().frame.get();
-
-        // Perform collisions using the brush preview
-        if let (Some(preview), Some(current_frame)) = (self.preview.as_mut(), current_frame) {
-            // preview.collide_with_existing_elements(current_frame);
-        }
+        self.combine_after_commit = true;
     }
 }
