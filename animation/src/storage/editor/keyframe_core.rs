@@ -508,6 +508,7 @@ impl KeyFrameCore {
             wrapper.unattached      = true;
             wrapper.order_before    = None;
             wrapper.order_after     = None;
+            wrapper.parent          = None;
 
             updates.push(StorageCommand::WriteElement(element_id_i64, wrapper.serialize_to_string()));
 
