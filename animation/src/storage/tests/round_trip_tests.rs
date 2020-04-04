@@ -1,4 +1,4 @@
-use super::*;
+use super::super::editor::*;
 
 use flo_stream::*;
 use flo_canvas::*;

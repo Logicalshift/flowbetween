@@ -25,6 +25,8 @@ mod editor;
 mod in_memory_storage;
 mod animation_loader;
 
+#[cfg(test)] mod tests;
+
 pub use self::storage_api::*;
 pub use self::editor::*;
 pub use self::in_memory_storage::*;

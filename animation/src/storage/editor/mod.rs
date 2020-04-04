@@ -18,7 +18,6 @@ mod stream_frame;
 mod stream_layer_cache;
 
 #[cfg(test)] mod tests;
-#[cfg(test)] mod round_trip_tests;
 
 use self::stream_animation::*;
 use super::storage_api::*;
