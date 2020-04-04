@@ -10,6 +10,7 @@ mod frame_edits;
 mod motion;
 mod path;
 mod caching;
+mod collide_paths;
 
 ///
 /// Creates an in-memory animaton for the tests
