@@ -128,6 +128,58 @@ fn collide_three_paths_all_at_once() {
 }
 
 #[test]
+fn draw_away_from_existing_group() {
+    // Draw two plus signs then join them into a single path
+    let plus_sign = "
+        +B
+        LB+tAAAAAA
+        LBPtAAAAAA*+BIAAAAg+AAAAoABAAAICB+
+        LBPtAAAAAAP+CAAAAoABAAAg/AHAAAAAAAAAyCBAAAAAAAAAg/A
+        LBPtAAAAAAS+AArBmDGAAIAYHIRa9PAMCAEOtDA6/PTAAAAAAAAAAAAAAGAAAAAAAAAAAAAAEAAAAAAAAAAAAAAFAAAAAAAAAAAAAAQAAAAAAEAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAHCA9+PAAAAAAAAAnAAc8PCAAAAAAAAoAAL7PCAAAAAAAAQBAvyPCAAAAAAAANAAy3PDAAAAAAIAAAAj2PBAAAAAAAAAAAR1PBAAAAAAAAAAAzzPBAAAAAAAAAAAVyPCAAAAAAAAK/P2wPCAAAAAAAAw+PKvPBAAAAAAEAi+PetPBAAAAAAAAI6Pl/OAAAAAAAAAf9POoPBAAAAAAAAf9PAoPAAAAAAAAAD9PznPAAAAAAAAAR9PznPAAAAAAAIAF9PAoPAAAAAAAAAR9PboPAAAAAAAAAR9PpoPAAAAAAAAAs9PepPAAAAAAAEAO4PU2OAAAAAAAAAw+PHyPAAAAAAAEAw+PmzPAAAAAAAAAL/Pp0PAAAA8PAAAY/PH2PAAAAAAAAAm/PY3PAAAAAAAAAAAA9yPAAAAAAAAAAAAY7P+/PAAAAAAAAAD9P+/PAAAAAArBAU+P9/PAAAAAAQBAAAAx/PAAAAAAeBAKDAv/PAAAAAAQBAXDAa/PAAAAAAQBAGKAr+PAAAAAA
+        EB+Aj
+        LBPtAAAAAA*+EIAAAAg+AAAAoABAAAICB+
+        LBPtAAAAAAP+FAAAAoABAAAg/AHAAAAAAAAAyCBAAAAAAAAAg/A
+        LBPtAAAAAAS+DAoB0LCAAoZ2RHR/8PAMCAQOIBAX9PpAAAAAAAAAAAAAAOAAAAAAAAAAAAAAFAAAAAAAAAAAAAACAAAAAAAAAAAAAADAAAAAAAAAAAAAAEAAAAAAAAAAAAAADAAAAAAAAAAAAAACAAAAAAAAAAAAAAKAAA8PAAAsZAs9PCAAAAAAAAlHA8+PCAAAAAAAAoIAL/PCAAAAAAAAGKAZ/PDAAAAAAAAs5AMAACAAAAAAAA8SA5BAGAAAAAAAAoUAhCABAAAAAAAAHWAvCAAAAAAAAAAJXAJDAAAAAAAAAAAYAKDAAAAA4PAAA2YA7CAAAAAAAAAA6xAEFAAAAAAAAAAMYA4BAAAAA8PAAAYXADBAAAAAAAAAAeVAoAAAAAAAAAAAzTAAAA//PAAAAAArRAAAA//PAAAAAAXPAY/P//PAAAAAAQNAi+P//PAAAAAAKLAI+P//PAAAAAAOQAz7P//PAAAAAAdFA69P8/PAAAAAANEAU+P9/PAAAAAA9CAU+P8/PAAAAAAGCAw+P5/PAAAAAA5BAw+P2/PAAAAAArBAL/Py/PAAAAAADBAl/Pn/PAAAAAA2AA0/PU/PAAAAAAAAAAAAP/PAAAAAA
+        EB+Dj
+    ";
+
+    let line_away_from_plus_sign = "
+        LBPtAAAAAAS+GAlBAAYzM00QAA4MTyFRG9PAMCAAOnDAB+PhAAAAAAAAAAAAAALAAAAAAAAAAAAAAFAAAAAAAAAAAAAAFAAAAAAAAAAAAAAHAAAAAAAAAAAAAAHAAAAAAAAAAAAAAFAAAAAAAAAAAAAADAAAAAAAAUCAm3PAAAAAAAAAAAAy3PFAAAAAAAAAAAe1PCAAAAAAEAAAA+yPCAAAAAAAAz/P2wPBAAAAAAAAw+PhuPBAAAAAAAAw+PBsPCAAAAAAEAp8P2QPBAAAAAAAAH+PDlPCAAAAAAAA69PYjPAAAAAAAIA69PUiPAAAAAAAAA59PiiPAAAAAAAAAI+PmjPAAAAAAAAAi+PflPAAAAAAAEA9+PNoPAAAAAAAAAz/P9qPAAAAAAAAAAAA5tPAAAAAAAAAAAAcwPAAAAAAAIAoAAznPAAAAAAAAA1AAL3PAAAAAAAAA1AAR5PAAAAAAAAA2AAL7P//PAAAAEADBAR9P+/PAAAAAA1AAi+P7/PAAAAAA5BAAAA5/PAAAAAAnAAXDAq/PAAAAAAAAARFAq/PAAAAAAAAApEAW+PAAAAAA
+        EB+Gj
+    ";
+
+    // Draw a plus sign
+    let mut animation = create_animation();
+    perform_serialized_edits(&mut animation, plus_sign);
+
+    // Animation should contain a single layer and a frame with a two grouped items in it
+    let layer       = animation.get_layer_with_id(1).unwrap();
+    let frame       = layer.get_frame_at_time(Duration::from_millis(0));
+    let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+    // Should join together to make a plus sign
+    assert!(elements.len() == 1);
+
+    let group = match elements[0] {
+        Vector::Group(ref group)    => Some(group.clone()),
+        _                           => None
+    }.expect("Element should be a group");
+
+    assert!(group.group_type() == GroupType::Added);
+    assert!(group.elements().count() == 2);
+
+    // Add an extra line away from the current group
+    perform_serialized_edits(&mut animation, line_away_from_plus_sign);
+
+    let layer       = animation.get_layer_with_id(1).unwrap();
+    let frame       = layer.get_frame_at_time(Duration::from_millis(0));
+    let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+    // This should remain as a separate element
+    assert!(elements.len() == 2);
+}
+
+#[test]
 fn join_two_groups() {
     // Draw two plus signs then join them into a single path
     let two_plus_signs = "
@@ -161,7 +213,7 @@ fn join_two_groups() {
     let frame       = layer.get_frame_at_time(Duration::from_millis(0));
     let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
 
-    // These don't join together
+    // The two plus signs should not join together but will each form their own group
     assert!(elements.len() == 2);
 
     // Join the two plus signs into a single grouped shape
