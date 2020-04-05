@@ -39,7 +39,8 @@ fn collide_two_paths() {
 }
 
 #[test]
-fn collide_three_paths() {
+fn collide_three_paths_by_adding_to_existing_collision() {
+    // Collide two paths then add an extra one to the collision
     let edits = "
         +B
         LB+tAAAAAA
@@ -64,6 +65,57 @@ fn collide_three_paths() {
     let frame       = layer.get_frame_at_time(Duration::from_millis(0));
     let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
 
+    assert!(elements.len() == 1);
+
+    let group = match elements[0] {
+        Vector::Group(ref group)    => Some(group.clone()),
+        _                           => None
+    }.expect("Element should be a group");
+
+    assert!(group.group_type() == GroupType::Added);
+    assert!(group.elements().count() == 3);
+}
+
+#[test]
+fn collide_three_paths_all_at_once() {
+    // Draw two lines and join them to make an 'H' (which should all collide into one)
+    let two_lines = "
+        +B
+        LB+tAAAAAA
+        LBPtAAAAAA*+BIAAAAg+AAAAoABAAAICB+
+        LBPtAAAAAAP+CAAAAoABAAAg/AHAAAAAAAAAyCBAAAAAAAAAg/A
+        LBPtAAAAAAS+AAsBaqFAAoZOEIRN9PAMCAAONDA4AAcAAAAAAAAAAAAAAKAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAFAAAAAAAAAAAAAAHAAAAAAAAAAAAAAFAAAAAAAAnAAUqPEAAAAAAAA9+PUmPCAAAAAAAA69PYvPEAAAAAAEAf9PEtPCAAAAAAAA28PiqPCAAAAAAAA38PcoPCAAAAAAAA28PHmPCAAAAAAAAD9PAkPCAAAAAAEAF9PiiPBAAAAAAAAU6PcAPAAAAAAAAAR9PhePBAAAAAAIAR9PRdPAAAAAAAAAS9P2cPAAAAAAAEAD9PbcPAAAAAAAAAD9PbcPAAAAAAAAAF9PDdPAAAAAAAAAD9P6dPAAAAAAAIAD9P9ePAAAAAAAAAv6PAEPAAAAAAAAAs9PElPAAAAAAAEA69PKnPAAAAAAAEAz7PzTPAAAAAAAAA69PbsPAAAAAAAIA59PVuPAAAAAAAAAV+PBwPAAAAAAAAAU+P5xP//PA8PAAA69PRpP//PAAAAEAl/PpwP9/PAAAAAAAAA96P4/PAAAAIAAAAp8P4/PAAAAAA1AAU+P0/PAAAAAA5BAAAAs/PAAAAAAsBAAAAa/PAAAAAAJDAeFA3+PAAAAAA
+        EB+Aj
+        LBPtAAAAAA*+EIAAAAg+AAAAoABAAAICB+
+        LBPtAAAAAAP+FAAAAoABAAAg/AHAAAAAAAAAyCBAAAAAAAAAg/A
+        LBPtAAAAAAS+DAnBAAYzMgzQAAIAg0HR48PAACAEOYDAX+PlAAAAAAAAAAAAAALAAAAAAAAAAAAAACAAAAAAAAAAAAAADAAAAAAAAAAAAAAGAAAAAAAAAAAAAAKAAAAAAAAAAAAAAIAAAAAAAAAAAAAAFAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//PAAAAAAoAAw+PAAAAAAAAANAAi6PDAAAAAAAAMAAB4PDAAAAAAAAAAAKnPDAAAAAAAAAAA8uPEAAAAAAAA9+PBsPBAAAAAAEAV+PRpPBAAAAAAAAf9P6lPBAAAAAAAA28P9iPCAAAAAAAAO8PlfPBAAAAAAIAz7P2cPBAAAAAAAAY3PyzOBAAAAAAEAm3P4xOBAAAAAAAAO8PiaPAAAAAAAIAc8PNcPAAAAAAAAAR9PhePAAAAAAAEAR9P3gPAAAAAAAAA69PXjPAAAAAAAEAH+P6lPAAAAAAAAAi6P4tOAAAAAAAAAL/PExP+/PAAAAIAL/PKzPAAAAAAAEAK/Pf1P//PAAAAAAZ/PJ3P//PAAAAAAl/Ps5P+/PAAAAAAm/P07P+/PAAAAIAl/PCRA8/PAAAAAA
+        EB+Dj
+    ";
+    let join_lines = "
+        LBPtAAAAAAS+GAiBYtCAA4QggGRZ8PAICAQOAAAOBATBAAAAAAAAAAAAALAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+/PAAAAAAAAAAAAAAAAAAAAAAAAAAAHAAAAAAAAAAAAAAHAAAAAAAAbYAz/PGAAAAAAAA1IAAAADAAAAAAAAhKAAAAEAAAAAAAAoMAAAADAAAAAAAABcB5BACAAAAAAAANYANAALAAA4PAAAUaAAAABAAAAAAAAAcAAAAAAAAAAAAAsdAMAAAAAAAAAAAXfANAAAAAA8PAAAtxCAAAAAAAAAAAADlAAAABAAA8PAEAAkAAAAAAAAAAAAA5hAAAAAAAA4PAAAyfAAAAAAAAAAAAABoBL7PAAAAAAAAAEVAL/PAAAA8PAAAXTAY/PAAAAAAAAAfRAz/P//PAAAAAAyPAAAA//PAAAAAAHOAAAAAAAAAAAAAOMAAAA//PAAAAAAGKAbAA//PAAAAAAGWAeBA+/PAAAAAANAAAAAL/PAAAAAAAAAAAAW/PAAAAAA
+        EB+Gj
+    ";
+
+    // The two lines on either side of the 'H'
+    let mut animation = create_animation();
+    perform_serialized_edits(&mut animation, two_lines);
+
+    // Animation should contain a single layer and a frame with a single grouped item in it
+    let layer       = animation.get_layer_with_id(1).unwrap();
+    let frame       = layer.get_frame_at_time(Duration::from_millis(0));
+    let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+    // These don't join together
+    assert!(elements.len() == 2);
+
+    // The cross line that forms the 'H' shape
+    perform_serialized_edits(&mut animation, join_lines);
+
+    let layer       = animation.get_layer_with_id(1).unwrap();
+    let frame       = layer.get_frame_at_time(Duration::from_millis(0));
+    let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+    // Everything joined into one element now
     assert!(elements.len() == 1);
 
     let group = match elements[0] {
