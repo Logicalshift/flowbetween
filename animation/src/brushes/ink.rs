@@ -515,8 +515,50 @@ impl Brush for InkBrush {
                     }
                 },
 
+                Vector::Group(group) => {
+                    // We can add this path to a group if it's already an 'add' group
+                    if group.group_type() != GroupType::Added {
+                        // Can't currently combine with non-added groups
+                        // TODO: we *can* by creating an added subgroup, but for now we won't
+                        CombineResult::UnableToCombineFurther
+                    } else {
+                        // Combine if the path for this group will add up
+                        let src_path = element.to_path(&element_properties);
+                        let tgt_path = group.to_path(&brush_properties);
+
+                        // Try to combine with the path
+                        if let (Some(src_path), Some(tgt_path)) = (src_path, tgt_path) {
+                            let combined = combine_paths(&src_path, &tgt_path, 0.01);
+                            if let Some(mut combined) = combined {
+                                // Managed to combine the two brush strokes/paths into one
+                                let grouped_elements = if let Some(combined_element) = combined_element {
+                                    let previous_elements = combined_element.elements().cloned();
+                                    iter::once(element.clone()).chain(previous_elements).collect()
+                                } else {
+                                    iter::once(element.clone()).chain(group.elements().cloned()).collect()
+                                };
+
+                                let mut grouped         = GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(grouped_elements));
+
+                                // In checking for an overlap we will have calculated most of the combined path: finish the job and set it as the hint
+                                combined.set_exterior_by_adding();
+                                combined.heal_exterior_gaps();
+                                grouped.set_hint_path(Arc::new(combined.exterior_paths()));
+
+                                CombineResult::NewElement(Vector::Group(grouped))
+                            } else {
+                                // Elements do not overlap
+                                CombineResult::NoOverlap
+                            }
+                        } else {
+                            // No source path
+                            CombineResult::NoOverlap
+                        }
+                    }
+                }
+
                 // TODO: extend groups if they are of GroupType::Added and we overlap them
-                Vector::Transformed(_) | Vector::Group(_) => {
+                Vector::Transformed(_) => {
                     CombineResult::UnableToCombineFurther
                 },
 
