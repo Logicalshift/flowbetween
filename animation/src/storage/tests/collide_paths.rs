@@ -28,10 +28,14 @@ fn collide_two_paths() {
     let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
 
     assert!(elements.len() == 1);
-    assert!(match elements[0] {
-        Vector::Group(_)    => true,
-        _                   => false
-    })
+
+    let group = match elements[0] {
+        Vector::Group(ref group)    => Some(group.clone()),
+        _                           => None
+    }.expect("Element should be a group");
+
+    assert!(group.group_type() == GroupType::Added);
+    assert!(group.elements().count() == 2);
 }
 
 #[test]
@@ -61,8 +65,12 @@ fn collide_three_paths() {
     let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
 
     assert!(elements.len() == 1);
-    assert!(match elements[0] {
-        Vector::Group(_)    => true,
-        _                   => false
-    })
+
+    let group = match elements[0] {
+        Vector::Group(ref group)    => Some(group.clone()),
+        _                           => None
+    }.expect("Element should be a group");
+
+    assert!(group.group_type() == GroupType::Added);
+    assert!(group.elements().count() == 3);
 }
