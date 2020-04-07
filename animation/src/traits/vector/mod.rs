@@ -10,6 +10,7 @@ mod brush_element;
 mod group_element;
 mod motion_element;
 mod transformed_vector;
+mod path_conversion_options;
 mod brush_properties_element;
 mod brush_definition_element;
 
@@ -25,5 +26,6 @@ pub use self::brush_element::*;
 pub use self::group_element::*;
 pub use self::motion_element::*;
 pub use self::transformed_vector::*;
+pub use self::path_conversion_options::*;
 pub use self::brush_properties_element::*;
 pub use self::brush_definition_element::*;
