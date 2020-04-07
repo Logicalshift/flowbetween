@@ -479,7 +479,11 @@ impl Brush for InkBrush {
             match element {
                 Vector::BrushStroke(_) | Vector::Path(_) => {
                     // TODO: if Vector::Path, we don't really care about the element_properties as paths track their properties independently
-                    let brush_stroke = Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()));
+                    let brush_stroke = if let Some(ref combined_element) = combined_element {
+                        Vector::Group(combined_element.clone())
+                    } else {
+                        Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()))
+                    };
 
                     // Add to brush strokes or paths if possible
                     let src_path = element.to_path(&element_properties);
@@ -524,7 +528,11 @@ impl Brush for InkBrush {
                         // TODO: we *can* by creating an added subgroup, but for now we won't
                         CombineResult::UnableToCombineFurther
                     } else {
-                        let brush_stroke = Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()));
+                        let brush_stroke = if let Some(ref combined_element) = combined_element {
+                            Vector::Group(combined_element.clone())
+                        } else {
+                            Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()))
+                        };
 
                         // Combine if the path for this group will add up
                         let src_path = brush_stroke.to_path(&element_properties);
