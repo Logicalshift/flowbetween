@@ -1,9 +1,9 @@
-use super::element::*;
 use super::path_element::*;
 use super::brush_element::*;
 use super::group_element::*;
 use super::error_element::*;
 use super::motion_element::*;
+use super::vector_element::*;
 use super::transformed_vector::*;
 use super::brush_properties_element::*;
 use super::brush_definition_element::*;
