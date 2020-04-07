@@ -1,6 +1,7 @@
 ///
 /// Possible options to use when converting an element to a path
 ///
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum PathConversion {
 	/// Use the fastest possible way to generate the path
 	Fastest,

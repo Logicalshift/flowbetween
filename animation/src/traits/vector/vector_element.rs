@@ -1,6 +1,7 @@
 use super::vector::*;
 use super::properties::*;
 use super::control_point::*;
+use super::path_conversion_options::*;
 use super::super::path::*;
 use super::super::edit::*;
 use super::super::motion::*;
@@ -23,7 +24,7 @@ pub trait VectorElement : Send+Any {
     ///
     /// Retrieves the paths for this element, if there are any
     ///
-    fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>>;
+    fn to_path(&self, properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>>;
 
     ///
     /// Renders this vector element

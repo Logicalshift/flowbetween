@@ -3,6 +3,7 @@ use super::group_type::*;
 use super::properties::*;
 use super::control_point::*;
 use super::vector_element::*;
+use super::path_conversion_options::*;
 use super::super::edit::*;
 use super::super::path::*;
 use super::super::motion::*;
@@ -91,7 +92,7 @@ impl GroupElement {
         } else {
             // Get the paths for this rendering
             let paths = self.grouped_elements.iter()
-                .flat_map(|elem| elem.to_path(properties))
+                .flat_map(|elem| elem.to_path(properties, PathConversion::RemoveInteriorPoints))
                 .map(|path| path_remove_interior_points::<_, Path>(&path, 0.01))
                 .collect::<Vec<_>>();
 
@@ -143,9 +144,10 @@ impl VectorElement for GroupElement {
     ///
     /// Retrieves the paths for this element, if there are any
     ///
-    fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>> {
+    fn to_path(&self, properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> {
+        // With the added path type we can assume that the interior points are already removed so there's no need to apply the options
         match self.group_type {
-            GroupType::Normal   => Some(self.grouped_elements.iter().flat_map(|elem| elem.to_path(properties)).flatten().collect()),
+            GroupType::Normal   => Some(self.grouped_elements.iter().flat_map(|elem| elem.to_path(properties, options)).flatten().collect()),
             GroupType::Added    => Some(self.added_path(properties))
         }
     }

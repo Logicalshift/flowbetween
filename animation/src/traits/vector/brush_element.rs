@@ -3,12 +3,14 @@ use super::properties::*;
 use super::control_point::*;
 use super::vector_element::*;
 use super::transformed_vector::*;
+use super::path_conversion_options::*;
 use super::super::path::*;
 use super::super::edit::*;
 use super::super::brush::*;
 use super::super::motion::*;
 
 use flo_canvas::*;
+use flo_curves::bezier::path::*;
 
 use itertools::*;
 use std::sync::*;
@@ -50,7 +52,7 @@ impl BrushElement {
     ///
     pub fn move_to(&mut self, new_bounds: Rect, properties: &VectorProperties) {
         // Scale using the existing bounds
-        let existing_bounds = self.to_path(properties)
+        let existing_bounds = self.to_path(properties, PathConversion::Fastest)
             .map(|paths| paths.into_iter()
                 .map(|path| Rect::from(&path))
                 .fold(Rect::empty(), |a, b| a.union(b)))
@@ -101,8 +103,18 @@ impl VectorElement for BrushElement {
     ///
     /// Retrieves the paths for this element, if there are any
     ///
-    fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>> {
-        Some(vec![Path::from_drawing(properties.brush.render_brush(&properties.brush_properties, &self.points))])
+    fn to_path(&self, properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> {
+        // Convert the brush stroke to the simplest path we can
+        let simplest_path = vec![Path::from_drawing(properties.brush.render_brush(&properties.brush_properties, &self.points))];
+
+        // Final result depends on the options that are set
+        match options {
+            PathConversion::Fastest                 => Some(simplest_path),
+            PathConversion::RemoveInteriorPoints    => {
+                let path = path_remove_interior_points(&simplest_path, 0.01);
+                Some(path)
+            }
+        }
     }
 
     ///

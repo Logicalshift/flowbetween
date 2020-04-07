@@ -2,6 +2,7 @@ use super::vector::*;
 use super::properties::*;
 use super::control_point::*;
 use super::vector_element::*;
+use super::path_conversion_options::*;
 use super::brush_definition_element::*;
 use super::brush_properties_element::*;
 use super::super::path::*;
@@ -9,6 +10,7 @@ use super::super::edit::*;
 use super::super::motion::*;
 
 use flo_canvas::*;
+use flo_curves::bezier::path::*;
 
 use std::sync::*;
 use std::time::Duration;
@@ -77,8 +79,18 @@ impl VectorElement for PathElement {
     ///
     /// Retrieves the paths for this element, if there are any
     ///
-    fn to_path(&self, _properties: &VectorProperties) -> Option<Vec<Path>> {
-        Some(vec![self.path.clone()])
+    fn to_path(&self, _properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> {
+        // Simplest path is just the internal path defined by this element
+        let simplest_path = vec![self.path.clone()];
+
+        // Final result depends on the options that are set
+        match options {
+            PathConversion::Fastest                 => Some(simplest_path),
+            PathConversion::RemoveInteriorPoints    => {
+                let path = path_remove_interior_points(&simplest_path, 0.01);
+                Some(path)
+            }
+        }
     }
 
     ///

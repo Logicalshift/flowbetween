@@ -209,7 +209,7 @@ impl Select {
 
             // Render the element using the selection style
             element
-                .and_then(|element| element.to_path(&properties))
+                .and_then(|element| element.to_path(&properties, PathConversion::Fastest))
                 .map(|element_paths| {
                     for path in element_paths {
                         drawing.extend(path.to_drawing());
@@ -287,7 +287,7 @@ impl Select {
     ///
     fn highlight_for_selection(element: &Vector, properties: &VectorProperties) -> (Vec<Draw>, Rect) {
         // Get the paths for this element
-        let paths = element.to_path(properties);
+        let paths = element.to_path(properties, PathConversion::Fastest);
         if let Some(paths) = paths {
             let bounds = paths.iter()
                 .map(|path| path.bounding_box())

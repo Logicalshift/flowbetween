@@ -2,6 +2,7 @@ use super::vector::*;
 use super::properties::*;
 use super::control_point::*;
 use super::vector_element::*;
+use super::path_conversion_options::*;
 
 use super::super::edit::*;
 use super::super::path::*;
@@ -63,8 +64,8 @@ impl VectorElement for TransformedVector {
     /// Retrieves the paths for this element, if there are any
     ///
     #[inline]
-    fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>> {
-        self.transformed.to_path(properties)
+    fn to_path(&self, properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> {
+        self.transformed.to_path(properties, options)
     }
 
     ///

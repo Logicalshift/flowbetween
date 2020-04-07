@@ -129,7 +129,7 @@ impl Adjust {
         let mut draw = vec![];
 
         // Outline the path
-        let paths = element.to_path(properties);
+        let paths = element.to_path(properties, PathConversion::Fastest);
 
         if let Some(paths) = paths {
             draw.new_path();

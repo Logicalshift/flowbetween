@@ -326,7 +326,7 @@ impl FrameModel {
 
             let bounding_boxes = elements.iter()
                 .map(|(vector, properties)| {
-                    let paths   = vector.to_path(properties).unwrap_or_else(|| vec![]);
+                    let paths   = vector.to_path(properties, PathConversion::Fastest).unwrap_or_else(|| vec![]);
                     let bounds  = paths.into_iter().fold(Rect::empty(), |a, b| a.union(b.bounding_box()));
 
                     (vector.id(), bounds)
@@ -370,7 +370,7 @@ impl FrameModel {
                 let element_id                      = vector.id();
 
                 // Convert the element to paths and check if the point is inside
-                let paths                           = vector.to_path(properties);
+                let paths                           = vector.to_path(properties, PathConversion::Fastest);
                 let inside_path                     = paths.map(|paths| paths.into_iter().any(|path| path_contains_point(&path, &path_point))).unwrap_or(false);
 
                 // Any match inside the bounds is a match, but we often treat a point inside the path as a stronger match

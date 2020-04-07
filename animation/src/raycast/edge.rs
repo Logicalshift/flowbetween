@@ -99,7 +99,7 @@ impl RaycastEdge {
         match properties.brush.drawing_style() {
             BrushDrawingStyle::Erase    => {
                 // Ignore any elements underneath the entire path for an erasing brush stroke
-                Box::new(brush_stroke.to_path(&*properties).unwrap()
+                Box::new(brush_stroke.to_path(&*properties, PathConversion::Fastest).unwrap()
                     .into_iter()
                     .flat_map(|path| Self::from_path(&path, RaycastEdgeKind::EraseContents).collect::<Vec<_>>()))
             }

@@ -56,7 +56,7 @@ impl StreamAnimationCore {
                     }
 
                     // Convert the element to a path
-                    let path        = wrapper.element.to_path(&*vector_properties);
+                    let path        = wrapper.element.to_path(&*vector_properties, PathConversion::RemoveInteriorPoints);
                     let path        = path.unwrap_or(vec![]).into_iter();
                     let path        = path.filter(|path| path.elements().count() > 2);
                     let path        = path.map(|path| path.elements().collect::<Vec<_>>()).flatten();

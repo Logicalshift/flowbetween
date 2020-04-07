@@ -2,6 +2,7 @@ use super::vector::*;
 use super::properties::*;
 use super::control_point::*;
 use super::vector_element::*;
+use super::path_conversion_options::*;
 use super::super::edit::*;
 use super::super::path::*;
 use super::super::motion::*;
@@ -50,7 +51,7 @@ impl VectorElement for MotionElement {
     ///
     /// Retrieves the paths for this element, if there are any
     ///
-    fn to_path(&self, _properties: &VectorProperties) -> Option<Vec<Path>> {
+    fn to_path(&self, _properties: &VectorProperties, _options: PathConversion) -> Option<Vec<Path>> {
         // Not a path element
         None
     }

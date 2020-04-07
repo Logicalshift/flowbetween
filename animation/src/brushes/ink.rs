@@ -486,8 +486,8 @@ impl Brush for InkBrush {
                     };
 
                     // Add to brush strokes or paths if possible
-                    let src_path = element.to_path(&element_properties);
-                    let tgt_path = brush_stroke.to_path(&brush_properties);
+                    let src_path = element.to_path(&element_properties, PathConversion::RemoveInteriorPoints);
+                    let tgt_path = brush_stroke.to_path(&brush_properties, PathConversion::RemoveInteriorPoints);
 
                     // Try to combine with the path
                     if let (Some(src_path), Some(tgt_path)) = (src_path, tgt_path) {
@@ -535,8 +535,8 @@ impl Brush for InkBrush {
                         };
 
                         // Combine if the path for this group will add up
-                        let src_path = brush_stroke.to_path(&element_properties);
-                        let tgt_path = group.to_path(&brush_properties);
+                        let src_path = brush_stroke.to_path(&element_properties, PathConversion::RemoveInteriorPoints);
+                        let tgt_path = group.to_path(&brush_properties, PathConversion::RemoveInteriorPoints);
 
                         // Try to combine with the path
                         if let (Some(src_path), Some(tgt_path)) = (src_path, tgt_path) {
