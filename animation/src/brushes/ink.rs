@@ -508,7 +508,10 @@ impl Brush for InkBrush {
                             // In checking for an overlap we will have calculated most of the combined path: finish the job and set it as the hint
                             combined.set_exterior_by_adding();
                             combined.heal_exterior_gaps();
-                            grouped.set_hint_path(Arc::new(combined.exterior_paths()));
+
+                            let combined_path = combined.exterior_paths();
+                            let combined_path = vec![Path::from_paths(&combined_path)];
+                            grouped.set_hint_path(Arc::new(combined_path));
 
                             CombineResult::NewElement(Vector::Group(grouped))
                         } else {
@@ -558,7 +561,10 @@ impl Brush for InkBrush {
                                 // In checking for an overlap we will have calculated most of the combined path: finish the job and set it as the hint
                                 combined.set_exterior_by_adding();
                                 combined.heal_exterior_gaps();
-                                grouped.set_hint_path(Arc::new(combined.exterior_paths()));
+
+                                let combined_path = combined.exterior_paths();
+                                let combined_path = vec![Path::from_paths(&combined_path)];
+                                grouped.set_hint_path(Arc::new(combined_path));
 
                                 CombineResult::NewElement(Vector::Group(grouped))
                             } else {

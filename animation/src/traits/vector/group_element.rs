@@ -98,8 +98,8 @@ impl GroupElement {
             // Render if there are more than one path
             if paths.len() > 0 {
                 // Add the paths into a single path
-                let paths = path_add_chain(&paths, 0.01);
-                paths
+                let paths = path_add_chain::<_, Path>(&paths, 0.01);
+                vec![Path::from_paths(&paths)]
             } else {
                 vec![]
             }
