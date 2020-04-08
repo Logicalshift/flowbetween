@@ -30,6 +30,22 @@ impl Path {
     }
 
     ///
+    /// Creates a path that contains all of the specified paths merged into one
+    ///
+    pub fn from_paths<'a, PathIter: IntoIterator<Item=&'a Path>>(paths: PathIter) -> Path {
+        // Only paths with > 2 elements can be merged
+        let path    = paths.into_iter().filter(|path| path.elements().count() > 2);
+
+        // Flatten the elements into a single path
+        let path    = path.flat_map(|path| path.elements());
+
+        // Create a single path from these elements
+        let path    = Path::from_elements(path);
+
+        path
+    }
+
+    ///
     /// Creates a path from an elements iterator
     ///
     pub fn from_elements<Elements: IntoIterator<Item=PathComponent>>(elements: Elements) -> Path {
