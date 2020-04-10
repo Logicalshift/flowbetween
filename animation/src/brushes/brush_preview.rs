@@ -2,7 +2,6 @@ use super::*;
 use super::super::traits::*;
 
 use flo_canvas::*;
-use flo_curves::bezier::path::*;
 
 use std::mem;
 use std::time::Duration;
@@ -118,28 +117,6 @@ impl BrushPreview {
         let brush_element = self.brush_element();
         vector_properties = brush_element.update_properties(vector_properties);
         brush_element.render(gc, &vector_properties, Duration::from_millis(0));
-    }
-
-    ///
-    /// Discovers all of the elements in the frame along with their properties
-    ///
-    fn frame_elements_with_properties(&self, frame: Arc<dyn Frame>) -> Vec<(Vector, Arc<VectorProperties>)> {
-        // Start with the default properties
-        let mut current_properties  = Arc::new(VectorProperties::default());
-        let mut result              = vec![];
-
-        // If this is a vector frame, apply the properties from each element
-        if let Some(vector_elements) = frame.vector_elements() {
-            for elem in vector_elements {
-                // Update the properties for this element
-                current_properties = frame.apply_properties_for_element(&elem, current_properties);
-
-                // Add to the result
-                result.push((elem, Arc::clone(&current_properties)));
-            }
-        }
-
-        result
     }
 
     ///
