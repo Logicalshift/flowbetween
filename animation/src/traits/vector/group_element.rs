@@ -1,5 +1,4 @@
 use super::vector::*;
-use super::group_type::*;
 use super::properties::*;
 use super::control_point::*;
 use super::vector_element::*;
@@ -7,6 +6,7 @@ use super::path_conversion_options::*;
 use super::super::edit::*;
 use super::super::path::*;
 use super::super::motion::*;
+use super::super::group_type::*;
 
 use flo_canvas::*;
 use flo_curves::bezier::path::*;

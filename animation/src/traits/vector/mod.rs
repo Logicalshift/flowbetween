@@ -1,7 +1,6 @@
 mod vector;
 mod properties;
 mod vector_element;
-mod group_type;
 mod vector_type;
 mod path_element;
 mod control_point;
@@ -17,7 +16,6 @@ mod brush_definition_element;
 pub use self::vector::*;
 pub use self::properties::*;
 pub use self::vector_element::*;
-pub use self::group_type::*;
 pub use self::vector_type::*;
 pub use self::path_element::*;
 pub use self::control_point::*;
