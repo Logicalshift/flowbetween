@@ -48,6 +48,8 @@ impl StreamAnimationCore {
                 SetControlPoints(new_points)    => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_adjusted_control_points(new_points.clone()); ChangeWrapper(wrapper) }).await; }
                 SetPath(new_path)               => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) }).await; }
                 Order(ordering)                 => { self.order_elements(element_ids, *ordering).await; }
+                Group(group_type)               => { unimplemented!() }
+                Ungroup                         => { unimplemented!() }
 
                 ConvertToPath                   => {
                     for id in element_ids {

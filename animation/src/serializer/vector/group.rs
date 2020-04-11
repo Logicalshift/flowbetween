@@ -6,6 +6,30 @@ use super::super::super::traits::*;
 use std::sync::*;
 use std::str::{Chars};
 
+impl GroupType {
+    ///
+    /// Generates a serialized version of this group type on the specified data target
+    ///
+    pub fn serialize<Tgt: AnimationDataTarget>(&self, data: &mut Tgt) {
+        use self::GroupType::*;
+        match self {
+            Normal      => { data.write_chr('N'); }
+            Added       => { data.write_chr('+'); }
+        }
+    }
+
+    ///
+    /// Deserializes a group from a data source
+    ///
+    pub fn deserialize<Src: AnimationDataSource>(data: &mut Src) -> Option<GroupType> {
+        match data.next_chr() {
+            'N'     => Some(GroupType::Normal),
+            '+'     => Some(GroupType::Added),
+            _       => None
+        }
+    }
+}
+
 impl GroupElement {
     ///
     /// Generates a serialized version of this group element on the specified data target
@@ -14,11 +38,7 @@ impl GroupElement {
         // v0
         data.write_small_u64(0);
 
-        use self::GroupType::*;
-        match self.group_type() {
-            Normal      => { data.write_chr('N'); }
-            Added       => { data.write_chr('+'); }
-        }
+        self.group_type().serialize(data);
 
         // Grouped elements
         data.write_usize(self.num_elements());
@@ -50,11 +70,7 @@ impl GroupElement {
         match data.next_small_u64() {
             0 => {
                 // Type of this group
-                let group_type = match data.next_chr() {
-                    'N'     => Some(GroupType::Normal),
-                    '+'     => Some(GroupType::Added),
-                    _       => None
-                }?;
+                let group_type = GroupType::deserialize(data)?;
 
                 // The elements
                 enum Elem<LitType> {

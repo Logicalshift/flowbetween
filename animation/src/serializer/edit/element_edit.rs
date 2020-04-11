@@ -19,6 +19,8 @@ impl ElementEdit {
             DetachFromFrame             => { data.write_chr('D'); }
             CollideWithExistingElements => { data.write_chr('j'); }
             ConvertToPath               => { data.write_chr('p'); }
+            Group(group_type)           => { data.write_chr('g'); group_type.serialize(data); }
+            Ungroup                     => { data.write_chr('u'); }
 
             SetControlPoints(points)    => { 
                 data.write_chr('C'); 
@@ -79,6 +81,14 @@ impl ElementEdit {
 
             'p' => {
                 Some(ElementEdit::ConvertToPath)
+            }
+
+            'g' => {
+                Some(ElementEdit::Group(GroupType::deserialize(data)?))
+            }
+
+            'u' => {
+                Some(ElementEdit::Ungroup)
             }
 
             'C' => {
@@ -194,5 +204,29 @@ mod test {
         ElementEdit::SetPath(Arc::new(vec![PathComponent::Move(PathPoint::new(1.0, 2.0)), PathComponent::Line(PathPoint::new(2.0, 3.0)), PathComponent::Bezier(PathPoint::new(4.0, 5.0), PathPoint::new(6.0, 7.0), PathPoint::new(8.0, 9.0)), PathComponent::Close])).serialize(&mut encoded);
 
         assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::SetPath(Arc::new(vec![PathComponent::Move(PathPoint::new(1.0, 2.0)), PathComponent::Line(PathPoint::new(2.0, 3.0)), PathComponent::Bezier(PathPoint::new(4.0, 5.0), PathPoint::new(6.0, 7.0), PathPoint::new(8.0, 9.0)), PathComponent::Close]))));
+    }
+
+    #[test]
+    fn group() {
+        let mut encoded = String::new();
+        ElementEdit::Group(GroupType::Normal).serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Group(GroupType::Normal)));
+    }
+
+    #[test]
+    fn group_added() {
+        let mut encoded = String::new();
+        ElementEdit::Group(GroupType::Added).serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Group(GroupType::Added)));
+    }
+
+    #[test]
+    fn ungroup() {
+        let mut encoded = String::new();
+        ElementEdit::Ungroup.serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Ungroup));
     }
 }
