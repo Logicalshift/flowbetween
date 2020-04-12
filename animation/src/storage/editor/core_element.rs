@@ -393,12 +393,16 @@ impl StreamAnimationCore {
 
                     // Find all the elements and unlink them
                     for element_id in element_ids.iter() {
-                        if let Some(element) = frame.elements.get(&ElementId::Assigned(*element_id)) {
+                        if let Some(element) = frame.elements.get_mut(&ElementId::Assigned(*element_id)) {
                             // The start time of the group is the minimum of all elements
                             start_time = Duration::min(start_time, element.start_time);
 
                             // Add to the elements that go in our final group
                             group_elements.push(element.clone());
+
+                            // Set the parent of the element to be our new group element
+                            element.parent = Some(ElementId::Assigned(group_id));
+                            updates.push(StorageCommand::WriteElement(*element_id, element.serialize_to_string()));
 
                             // Unlink the element
                             let unlink = frame.unlink_element(ElementId::Assigned(*element_id));
