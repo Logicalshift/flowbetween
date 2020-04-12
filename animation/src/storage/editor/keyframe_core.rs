@@ -591,7 +591,7 @@ impl KeyFrameCore {
 
             // Add into the main list for this frame (there is no parent)
             let mut updates = self.unlink_element(element_id);
-            
+
             let after       = after.and_then(|after| after.id());
             let element_id  = match element_id.id() {
                 Some(id)    => id,
@@ -599,13 +599,16 @@ impl KeyFrameCore {
             };
 
             // Update the 'after' element such that it's followed by this element
-            let mut following_element = None;
+            let following_element;
             if let Some(after_wrapper) = after.and_then(|after| self.elements.get_mut(&ElementId::Assigned(after))) {
                 // The new element is ordered after the 'after' element 
                 following_element           = after_wrapper.order_before.and_then(|following| following.id());
                 after_wrapper.order_before  = Some(ElementId::Assigned(element_id));
 
                 updates.push(StorageCommand::WriteElement(after.unwrap(), after_wrapper.serialize_to_string()));
+            } else {
+                // The new element is ordered at the start
+                following_element = self.initial_element.and_then(|elem| elem.id());
             }
 
             // Update the main element such that it's between the after element and the following element
