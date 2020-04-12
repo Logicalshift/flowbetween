@@ -390,10 +390,18 @@ impl StreamAnimationCore {
 
                     let first_element   = frame.elements.get(&ElementId::Assigned(element_ids[0])).unwrap().clone();
                     let mut start_time  = first_element.start_time;
+                    let mut order_after = first_element.order_after;
+                    let parent          = first_element.parent;
 
                     // Find all the elements and unlink them
                     for element_id in element_ids.iter() {
                         if let Some(element) = frame.elements.get_mut(&ElementId::Assigned(*element_id)) {
+                            // If this is the current order_after element, move it behind this element
+                            // TODO: this is simple but buggy with some group orderings (we can miss that this used an element that )
+                            if order_after == Some(ElementId::Assigned(*element_id)) {
+                                order_after = element.order_after;
+                            }
+
                             // The start time of the group is the minimum of all elements
                             start_time = Duration::min(start_time, element.start_time);
 
@@ -428,11 +436,15 @@ impl StreamAnimationCore {
                         }
                     }
 
-                    // TODO: insert the group into the frame in place of the original element
-
                     // Add the new group to the updates
                     updates.push(StorageCommand::WriteElement(group_id, group.serialize_to_string()));
                     updates.push(StorageCommand::AttachElementToLayer(frame.layer_id, group_id, start_time));
+
+                    // Add the group to the frame
+                    frame.elements.insert(ElementId::Assigned(group_id), group);
+
+                    // Insert the group into the frame in place of the original element
+                    updates.extend(frame.order_after(ElementId::Assigned(group_id), parent, order_after));
 
                     updates
                 }.boxed()

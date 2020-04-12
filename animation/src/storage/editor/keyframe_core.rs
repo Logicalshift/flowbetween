@@ -575,6 +575,68 @@ impl KeyFrameCore {
     }
 
     ///
+    /// Adds the specified element so that it appears after the `after` element, with the specified `parent`.
+    /// If `after` is None, then the element is inserted at the start. If `parent` is none, the element is added
+    /// to the main list for this frame, otherwise it's added to a group.
+    ///
+    /// The return value is the commands to send to the storage layer to perform this update.
+    ///
+    pub fn order_after(&mut self, element_id: ElementId, parent: Option<ElementId>, after: Option<ElementId>) -> Vec<StorageCommand> {
+        if let Some(_parent) = parent {
+
+            // TODO: groups, etc - ie add into the list for a parent element
+            vec![]
+
+        } else {
+
+            // Add into the main list for this frame (there is no parent)
+            let mut updates = self.unlink_element(element_id);
+            let after       = after.and_then(|after| after.id());
+            let element_id  = match element_id.id() {
+                Some(id)    => id,
+                None        => { return vec![]; }   
+            };
+
+            // Update the 'after' element such that it's followed by this element
+            let mut following_element = None;
+            if let Some(after_wrapper) = after.and_then(|after| self.elements.get_mut(&ElementId::Assigned(after))) {
+                // The new element is ordered after the 'after' element 
+                following_element           = after_wrapper.order_before.and_then(|following| following.id());
+                after_wrapper.order_before  = Some(ElementId::Assigned(element_id));
+
+                updates.push(StorageCommand::WriteElement(after.unwrap(), after_wrapper.serialize_to_string()));
+            }
+
+            // Update the main element such that it's between the after element and the following element
+            if let Some(element_wrapper) = self.elements.get_mut(&ElementId::Assigned(element_id)) {
+                // Order relative to the specified element
+                element_wrapper.order_after     = after.map(|after| ElementId::Assigned(after));
+                element_wrapper.order_before    = following_element.map(|following| ElementId::Assigned(following));
+
+                updates.push(StorageCommand::WriteElement(element_id, element_wrapper.serialize_to_string()));
+
+                // Order first if necessary
+                if after.is_none() {
+                    self.initial_element = Some(ElementId::Assigned(element_id));
+                }
+            }
+
+            // Update the following element so it's after the new element
+            if let Some(following_wrapper) = following_element.and_then(|following| self.elements.get_mut(&ElementId::Assigned(following))) {
+                // This is ordered after the current element
+                following_wrapper.order_after = Some(ElementId::Assigned(element_id));
+
+                updates.push(StorageCommand::WriteElement(following_element.unwrap(), following_wrapper.serialize_to_string()));
+            } else {
+                // This becomes the last element
+                self.last_element = Some(ElementId::Assigned(element_id));
+            }
+
+            updates
+        }
+    }
+
+    ///
     /// Unlinks an element in this frame, and returns the commands required to unlink it
     /// 
     /// This makes it possible to detach or delete this element, or use it in an attachment somewhere else
