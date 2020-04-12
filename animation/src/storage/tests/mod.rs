@@ -11,6 +11,7 @@ mod motion;
 mod path;
 mod caching;
 mod collide_paths;
+mod grouping;
 
 ///
 /// Creates an in-memory animaton for the tests
