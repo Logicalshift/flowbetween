@@ -534,6 +534,47 @@ impl KeyFrameCore {
     }
 
     ///
+    /// Given an element that may contain child items (eg, a group), checks that all the child elements have the
+    /// appropriate parent, recursively
+    ///
+    pub fn update_parents(&mut self, element_id: ElementId) -> Vec<StorageCommand> {
+        // TODO: detect (and break?) loops
+
+        // Fetch the element whose attachments we'll be updated
+        let root_element = match self.elements.get(&element_id) {
+            Some(element)   => element,
+            None            => { return vec![] }
+        };
+
+        // Check for attachments
+        let attachments = match &root_element.element {
+            Vector::Group(group)    => group.elements().map(|elem| elem.id()).collect::<Vec<_>>(),
+            _                       => { return vec![]; }
+        };
+
+        // Update any elements that are out of date
+        let mut updates = vec![];
+        for attachment_id in attachments {
+            // Update any element in this child element that does not have its parent set properly
+            updates.extend(self.update_parents(attachment_id));
+
+            // Update this element if it does not have its parent set properly
+            if let (Some(attachment), Some(attachment_id)) = (self.elements.get_mut(&attachment_id), attachment_id.id()) {
+                if attachment.parent != Some(element_id) {
+                    // Update the parent
+                    attachment.parent = Some(element_id);
+
+                    // Write out the element
+                    updates.push(StorageCommand::WriteElement(attachment_id, attachment.serialize_to_string()));
+                }
+            }
+        }
+
+        // The result is the listof updates
+        updates
+    }
+
+    ///
     /// Unlinks an element in this frame, and returns the commands required to unlink it
     /// 
     /// This makes it possible to detach or delete this element, or use it in an attachment somewhere else
