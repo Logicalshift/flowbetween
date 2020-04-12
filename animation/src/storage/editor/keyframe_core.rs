@@ -591,6 +591,7 @@ impl KeyFrameCore {
 
             // Add into the main list for this frame (there is no parent)
             let mut updates = self.unlink_element(element_id);
+            
             let after       = after.and_then(|after| after.id());
             let element_id  = match element_id.id() {
                 Some(id)    => id,
@@ -612,6 +613,7 @@ impl KeyFrameCore {
                 // Order relative to the specified element
                 element_wrapper.order_after     = after.map(|after| ElementId::Assigned(after));
                 element_wrapper.order_before    = following_element.map(|following| ElementId::Assigned(following));
+                element_wrapper.unattached      = false;
 
                 updates.push(StorageCommand::WriteElement(element_id, element_wrapper.serialize_to_string()));
 
