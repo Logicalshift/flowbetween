@@ -216,38 +216,20 @@ impl StreamAnimationCore {
                         });
 
                         // Read the attachments that are missing from the keyframe
-                        let mut missing_attachments = self.read_elements(&missing_attachment_ids, Some(keyframe.clone())).await;
+                        let missing_attachments = self.read_elements(&missing_attachment_ids, Some(keyframe.clone())).await;
 
                         keyframe.sync(|keyframe| {
-                            // Add the element to the attachments
-                            for attachment in missing_attachments.iter_mut() {
-                                if let Some(attachment_id) = attachment.element.id().id() {
-                                    // Add the element to this attachment
-                                    attachment.attached_to.push(ElementId::Assigned(element_id));
-
-                                    // Generate the update of the serialized element
-                                    updates.push(StorageCommand::WriteElement(attachment_id, attachment.serialize_to_string()));
-                                }
-                            }
-
                             // Add the missing attachments to the keyframe
-                            for attachment in missing_attachments {
+                            for attachment in missing_attachments.iter() {
                                 let id = attachment.element.id();
-                                keyframe.elements.insert(id, attachment);
+                                keyframe.elements.insert(id, attachment.clone());
                             }
 
                             // Attach the elements to the layer
                             updates.extend(missing_attachment_ids.iter().map(|attachment_id| StorageCommand::AttachElementToLayer(keyframe.layer_id, *attachment_id, keyframe.start)));
 
-                            // Add the attachments to element
-                            keyframe.elements.get_mut(&ElementId::Assigned(element_id))
-                                .map(|element_wrapper| {
-                                    // Add the attachment
-                                    element_wrapper.attachments.extend(attachments.clone());
-
-                                    // Generate the update of the serialized element
-                                    updates.push(StorageCommand::WriteElement(element_id, element_wrapper.serialize_to_string()));
-                                });
+                            // Attach the elements
+                            updates.extend(keyframe.add_attachment(ElementId::Assigned(element_id), &attachments));
                         });
                     }
                 }
