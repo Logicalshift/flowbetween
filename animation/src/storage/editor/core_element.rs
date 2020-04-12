@@ -9,6 +9,7 @@ use futures::prelude::*;
 use ::desync::*;
 
 use std::sync::*;
+use std::time::{Duration};
 use std::collections::{HashSet};
 
 ///
@@ -48,7 +49,7 @@ impl StreamAnimationCore {
                 SetControlPoints(new_points)    => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_adjusted_control_points(new_points.clone()); ChangeWrapper(wrapper) }).await; }
                 SetPath(new_path)               => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) }).await; }
                 Order(ordering)                 => { self.order_elements(element_ids, *ordering).await; }
-                Group(group_type)               => { unimplemented!() }
+                Group(group_id, group_type)     => { self.group_elements(element_ids, *group_id, *group_type).await; }
                 Ungroup                         => { unimplemented!() }
 
                 ConvertToPath                   => {
@@ -368,6 +369,88 @@ impl StreamAnimationCore {
             }
 
             // Update all of the elements
+            self.request(updates).await;
+        }
+    }
+
+    ///
+    /// Moves a set of elements into a single group
+    ///
+    pub fn group_elements<'a>(&'a mut self, element_ids: Vec<i64>, group_id: ElementId, group_type: GroupType) -> impl 'a + Future<Output=()> {
+        async move {
+            // Nothing to do if there are no elements to group
+            if element_ids.len() == 0 {
+                return;
+            }
+
+            // Fetch the frame for the first element
+            let frame = self.edit_keyframe_for_element(element_ids[0]).await;
+            let frame = match frame {
+                Some(frame) => frame,
+                None        => { return; }
+            };
+
+            // Assign an ID to the group if none is supplied
+            let mut group_id = group_id;
+            if group_id.is_unassigned() {
+                group_id = self.assign_element_id(group_id).await;
+            }
+
+            let group_id = match group_id.id() {
+                Some(id)    => id,
+                None        => { return; }
+            };
+
+            let updates = frame.future(move |frame| {
+                async move {
+                    let mut updates         = vec![];
+                    let mut group_elements  = vec![];
+
+                    let first_element   = frame.elements.get(&ElementId::Assigned(element_ids[0])).unwrap().clone();
+                    let mut start_time  = first_element.start_time;
+
+                    // Find all the elements and unlink them
+                    for element_id in element_ids.iter() {
+                        if let Some(element) = frame.elements.get(&ElementId::Assigned(*element_id)) {
+                            // The start time of the group is the minimum of all elements
+                            start_time = Duration::min(start_time, element.start_time);
+
+                            // Add to the elements that go in our final group
+                            group_elements.push(element.clone());
+
+                            // Unlink the element
+                            let unlink = frame.unlink_element(ElementId::Assigned(*element_id));
+                            updates.extend(unlink);
+                        }
+                    }
+
+                    // Create the group element: properties are from the first element
+                    let group       = group_elements.iter().map(|wrapper| wrapper.element.clone()).collect();
+                    let group       = GroupElement::new(ElementId::Assigned(group_id), group_type, Arc::new(group));
+                    let group       = Vector::Group(group);
+                    let mut group   = ElementWrapper::with_element(group, start_time);
+
+                    // Normal groups take their properties from their internal elements. Other groups use
+                    // the properties of their first element.
+                    if group_type != GroupType::Normal {
+                        for attachment_id in first_element.attachments.iter() {
+                            // The group should have the same attachments as its first element
+                            updates.extend(frame.add_attachment(ElementId::Assigned(group_id), *attachment_id));
+                            group.attachments.push(*attachment_id);
+                        }
+                    }
+
+                    // TODO: insert the group into the frame in place of the original element
+
+                    // Add the new group to the updates
+                    updates.push(StorageCommand::WriteElement(group_id, group.serialize_to_string()));
+                    updates.push(StorageCommand::AttachElementToLayer(frame.layer_id, group_id, start_time));
+
+                    updates
+                }.boxed()
+            }).await.unwrap();
+
+            // Send the updates to storage
             self.request(updates).await;
         }
     }

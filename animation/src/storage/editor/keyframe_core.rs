@@ -486,6 +486,46 @@ impl KeyFrameCore {
     }
 
     ///
+    /// Returns the commands needed to add an attachment to the specified element
+    ///
+    /// If either element does not exist in the frame, this will still generate commands to add the attachment
+    /// to the remaining element (on the assumption that we're adding a new element that is not ready to be
+    /// edited yet)
+    ///
+    pub fn add_attachment(&mut self, attach_to: ElementId, attachment: ElementId) -> Vec<StorageCommand> {
+        let mut updates = vec![];
+
+        // Both the thing being attached to and the attachment must have assigned IDs (can't attach unassigned elements)
+        if let (Some(attach_to_id), Some(attachment_id)) = (attach_to.id(), attachment.id()) {
+            // Add the attachment to attach_to
+            if let Some(attach_to) = self.elements.get_mut(&attach_to) {
+                // Only add the attachment if it doesn't already exist
+                if !attach_to.attachments.contains(&attachment) {
+                    // Add the attachment
+                    attach_to.attachments.push(attachment);
+
+                    // Add to the updates
+                    updates.push(StorageCommand::WriteElement(attach_to_id, attach_to.serialize_to_string()));
+                }
+            }
+
+            // Back-reference from the attachment to attach_to
+            if let Some(attachment) = self.elements.get_mut(&attachment) {
+                // Only add the attachment if it doesn't already exist
+                if !attachment.attached_to.contains(&attach_to) {
+                    // Add the item that this is attached to
+                    attachment.attached_to.push(attach_to);
+
+                    // Add to the updates
+                    updates.push(StorageCommand::WriteElement(attachment_id, attachment.serialize_to_string()));
+                }
+            }
+        }
+
+        updates
+    }
+
+    ///
     /// Unlinks an element in this frame, and returns the commands required to unlink it
     /// 
     /// This makes it possible to detach or delete this element, or use it in an attachment somewhere else
