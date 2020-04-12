@@ -435,7 +435,7 @@ impl StreamAnimationCore {
                     if group_type != GroupType::Normal {
                         for attachment_id in first_element.attachments.iter() {
                             // The group should have the same attachments as its first element
-                            updates.extend(frame.add_attachment(ElementId::Assigned(group_id), *attachment_id));
+                            updates.extend(frame.add_attachment(ElementId::Assigned(group_id), vec![*attachment_id]));
                             group.attachments.push(*attachment_id);
                         }
                     }

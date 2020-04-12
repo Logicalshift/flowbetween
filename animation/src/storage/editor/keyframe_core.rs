@@ -492,32 +492,40 @@ impl KeyFrameCore {
     /// to the remaining element (on the assumption that we're adding a new element that is not ready to be
     /// edited yet)
     ///
-    pub fn add_attachment(&mut self, attach_to: ElementId, attachment: ElementId) -> Vec<StorageCommand> {
+    pub fn add_attachment(&mut self, attach_to: ElementId, attachments: Vec<ElementId>) -> Vec<StorageCommand> {
         let mut updates = vec![];
 
         // Both the thing being attached to and the attachment must have assigned IDs (can't attach unassigned elements)
-        if let (Some(attach_to_id), Some(attachment_id)) = (attach_to.id(), attachment.id()) {
+        if let Some(attach_to_id) = attach_to.id() {
             // Add the attachment to attach_to
             if let Some(attach_to) = self.elements.get_mut(&attach_to) {
                 // Only add the attachment if it doesn't already exist
-                if !attach_to.attachments.contains(&attachment) {
-                    // Add the attachment
-                    attach_to.attachments.push(attachment);
+                let mut added = false;
+                for attachment in attachments.iter() {
+                    if attachment.id().is_some() && !attach_to.attachments.contains(attachment) {
+                        // Add the attachment
+                        attach_to.attachments.push(*attachment);
+                        added = true;
+                    }
+                }
 
-                    // Add to the updates
+                // Add to the updates
+                if added {
                     updates.push(StorageCommand::WriteElement(attach_to_id, attach_to.serialize_to_string()));
                 }
             }
 
             // Back-reference from the attachment to attach_to
-            if let Some(attachment) = self.elements.get_mut(&attachment) {
-                // Only add the attachment if it doesn't already exist
-                if !attachment.attached_to.contains(&attach_to) {
-                    // Add the item that this is attached to
-                    attachment.attached_to.push(attach_to);
+            for attachment in attachments {
+                if let (Some(attachment), Some(attachment_id)) = (self.elements.get_mut(&attachment), attachment.id()) {
+                    // Only add the attachment if it doesn't already exist
+                    if !attachment.attached_to.contains(&attach_to) {
+                        // Add the item that this is attached to
+                        attachment.attached_to.push(attach_to);
 
-                    // Add to the updates
-                    updates.push(StorageCommand::WriteElement(attachment_id, attachment.serialize_to_string()));
+                        // Add to the updates
+                        updates.push(StorageCommand::WriteElement(attachment_id, attachment.serialize_to_string()));
+                    }
                 }
             }
         }
