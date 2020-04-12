@@ -656,6 +656,11 @@ impl KeyFrameCore {
         // Fetch this element
         let wrapper         = self.elements.get_mut(&element_id);
         if let Some(wrapper) = wrapper {
+            // If this is the initial element the next element becomes the initial element
+            if self.initial_element == Some(element_id) {
+                self.initial_element = wrapper.order_before;
+            }
+
             // We'll need to process the before/after versions next
             let previous_id = wrapper.order_after;
             let next_id     = wrapper.order_before;
