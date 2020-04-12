@@ -492,7 +492,7 @@ impl KeyFrameCore {
     /// to the remaining element (on the assumption that we're adding a new element that is not ready to be
     /// edited yet)
     ///
-    pub fn add_attachment(&mut self, attach_to: ElementId, attachments: Vec<ElementId>) -> Vec<StorageCommand> {
+    pub fn add_attachment(&mut self, attach_to: ElementId, attachments: &Vec<ElementId>) -> Vec<StorageCommand> {
         let mut updates = vec![];
 
         // Both the thing being attached to and the attachment must have assigned IDs (can't attach unassigned elements)
