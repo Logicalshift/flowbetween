@@ -44,11 +44,11 @@ pub enum ElementEdit {
     DetachFromFrame,
 
     /// Combines the specified elements into a Group, removing them from any other group they might already
-    /// be in.
+    /// be in. The group is created with the element ID specified here.
     ///
     /// For groups that involve path arithmetic the properties are taken from the first item in the list. Ordering
     /// within the group is the same as the ordering in the element list.
-    Group(GroupType),
+    Group(ElementId, GroupType),
 
     /// Any groups in the list are broken into their constituent elements
     Ungroup,

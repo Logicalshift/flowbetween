@@ -19,7 +19,7 @@ impl ElementEdit {
             DetachFromFrame             => { data.write_chr('D'); }
             CollideWithExistingElements => { data.write_chr('j'); }
             ConvertToPath               => { data.write_chr('p'); }
-            Group(group_type)           => { data.write_chr('g'); group_type.serialize(data); }
+            Group(group_id, group_type) => { data.write_chr('g'); group_id.serialize(data); group_type.serialize(data); }
             Ungroup                     => { data.write_chr('u'); }
 
             SetControlPoints(points)    => { 
@@ -84,7 +84,7 @@ impl ElementEdit {
             }
 
             'g' => {
-                Some(ElementEdit::Group(GroupType::deserialize(data)?))
+                Some(ElementEdit::Group(ElementId::deserialize(data)?, GroupType::deserialize(data)?))
             }
 
             'u' => {
@@ -209,17 +209,17 @@ mod test {
     #[test]
     fn group() {
         let mut encoded = String::new();
-        ElementEdit::Group(GroupType::Normal).serialize(&mut encoded);
+        ElementEdit::Group(ElementId::Assigned(42), GroupType::Normal).serialize(&mut encoded);
 
-        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Group(GroupType::Normal)));
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Group(ElementId::Assigned(42), GroupType::Normal)));
     }
 
     #[test]
     fn group_added() {
         let mut encoded = String::new();
-        ElementEdit::Group(GroupType::Added).serialize(&mut encoded);
+        ElementEdit::Group(ElementId::Unassigned, GroupType::Added).serialize(&mut encoded);
 
-        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Group(GroupType::Added)));
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Group(ElementId::Unassigned, GroupType::Added)));
     }
 
     #[test]
