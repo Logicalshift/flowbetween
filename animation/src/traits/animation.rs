@@ -80,4 +80,9 @@ pub trait EditableAnimation : Animation+Send+Sync {
     /// (Note that these are not always published to the publisher)
     ///
     fn perform_edits(&self, edits: Vec<AnimationEdit>);
+
+    ///
+    /// Flushes any caches this might have (forces reload from data storage)
+    ///
+    fn flush_caches(&self);
 }

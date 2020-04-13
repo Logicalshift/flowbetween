@@ -359,6 +359,15 @@ impl EditableAnimation for StreamAnimation {
         // Return the sync_request to the pool
         self.idle_sync_requests.desync(move |reqs| { reqs.push(sync_request) });
     }
+
+    ///
+    /// Flushes any caches this might have (forces reload from data storage)
+    ///
+    fn flush_caches(&self) {
+        self.core.desync(|core| {
+            core.cached_keyframe = None;
+        });
+    }
 }
 
 impl AnimationMotion for StreamAnimation {

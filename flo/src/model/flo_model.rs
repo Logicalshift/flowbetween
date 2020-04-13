@@ -349,6 +349,13 @@ impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<A
     fn assign_element_id(&self) -> ElementId {
         self.animation.assign_element_id()
     }
+
+    ///
+    /// Flushes any caches this might have (forces reload from data storage)
+    ///
+    fn flush_caches(&self) {
+        self.animation.flush_caches()
+    }
 }
 
 #[cfg(test)]
