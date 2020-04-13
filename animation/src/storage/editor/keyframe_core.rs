@@ -278,10 +278,9 @@ impl KeyFrameCore {
     /// Returns none if the element is not in the current keyframe
     ///
     pub fn order_element(&mut self, element_id: ElementId, ordering: ElementOrdering) -> Option<Vec<StorageCommand>> {
-        if let Some(mut element) = self.elements.get(&element_id).cloned() {
+        if let Some(element) = self.elements.get(&element_id).cloned() {
             // Update the element
             let mut updates         = vec![];
-            let mut edit_elements   = vec![];
 
             // Order the element
             use self::ElementOrdering::*;
@@ -318,115 +317,36 @@ impl KeyFrameCore {
                 }
 
                 ToTop           => {
-                    // Nothing to do if the element is already on top
-                    if element.order_before.is_some() {
-                        // Remove the element from the list
-                        let element_id_in_front     = element.order_before;
-                        let element_id_behind       = element.order_after;
-                        let mut element_in_front    = element.order_before.and_then(|order_before| self.elements.get(&order_before).cloned());
-                        let mut element_behind      = element.order_after.and_then(|order_after| self.elements.get(&order_after).cloned());
+                    // Follow the links from the element to find the top (relative to this element)
+                    let mut topmost_element = element.order_before;
+                    let parent              = element.parent;
 
-                        if let Some(mut element_behind) = element_behind.as_mut() {
-                            element_behind.order_before = element_id_in_front;
-                            edit_elements.push((element_id_behind.unwrap(), element_behind.clone()));
-                        }
+                    while let Some(next_element) = topmost_element
+                        .and_then(|topmost_element| self.elements.get(&topmost_element))
+                        .and_then(|topmost| topmost.order_before) {
+                        topmost_element = Some(next_element);
+                    }
 
-                        if let Some(mut element_in_front) = element_in_front.as_mut() {
-                            element_in_front.order_after = element_id_behind;
-                            edit_elements.push((element_id_in_front.unwrap(), element_in_front.clone()));
-                        }
-
-                        if self.initial_element == Some(element_id) { self.initial_element = element_id_in_front; }
-
-                        // Find the element that's on top (has an empty 'order_before' element, starting at our existing element)
-                        let mut on_top_id = element.order_before.unwrap();
-                        while let Some(on_top_element) = self.elements.get(&on_top_id) {
-                            if let Some(order_before) = on_top_element.order_before {
-                                // Move to the next element along
-                                on_top_id = order_before;
-                            } else {
-                                // Stop when we reach the top-most element
-                                break;
-                            }
-                        }
-
-                        // Edit the element to be the one on top
-                        let mut element_on_top      = if Some(on_top_id) == element_id_in_front { element_in_front.unwrap() } else { self.elements.get(&on_top_id).unwrap().clone() };
-
-                        element.order_before        = None;
-                        element.order_after         = Some(on_top_id);
-                        element_on_top.order_before = Some(element_id);
-
-                        edit_elements.push((on_top_id, element_on_top));
-
-                        if self.last_element == Some(on_top_id) { self.last_element = Some(element_id); }
-                        edit_elements.push((element_id, element));
+                    if topmost_element.is_some() {
+                        // Order after the topmost element
+                        updates.extend(self.unlink_element(element_id));
+                        updates.extend(self.order_after(element_id, parent, topmost_element));
                     }
                 }
 
                 ToBottom        => {
-                    // Nothing to do if the element is already on bottom
+                    let parent = element.parent;
+
                     if element.order_after.is_some() {
-                        // Remove the element from the list
-                        let element_id_in_front     = element.order_before;
-                        let element_id_behind       = element.order_after;
-                        let mut element_in_front    = element.order_before.and_then(|order_before| self.elements.get(&order_before).cloned());
-                        let mut element_behind      = element.order_after.and_then(|order_after| self.elements.get(&order_after).cloned());
-
-                        if let Some(mut element_behind) = element_behind.as_mut() {
-                            element_behind.order_before = element_id_in_front;
-                            edit_elements.push((element_id_behind.unwrap(), element_behind.clone()));
-                        }
-
-                        if let Some(mut element_in_front) = element_in_front.as_mut() {
-                            element_in_front.order_after = element_id_behind;
-                            edit_elements.push((element_id_in_front.unwrap(), element_in_front.clone()));
-                        }
-
-                        if self.last_element == Some(element_id) { self.last_element = element_id_behind; }
-
-                        // Find the element that's on bottom (has an empty 'order_after' element, starting at our existing element)
-                        let mut on_bottom_id = element.order_after.unwrap();
-                        while let Some(on_bottom_element) = self.elements.get(&on_bottom_id) {
-                            if let Some(order_after) = on_bottom_element.order_after {
-                                // Move to the next element along
-                                on_bottom_id = order_after;
-                            } else {
-                                // Stop when we reach the bottom-most element
-                                break;
-                            }
-                        }
-
-                        // Edit the element to be the one on bottom
-                        let mut element_on_bottom       = if Some(on_bottom_id) == element_id_behind { element_behind.unwrap() } else { self.elements.get(&on_bottom_id).unwrap().clone() };
-
-                        element.order_before            = Some(on_bottom_id);
-                        element.order_after             = None;
-                        element_on_bottom.order_after   = Some(element_id);
-
-                        edit_elements.push((on_bottom_id, element_on_bottom));
-
-                        if self.initial_element == Some(on_bottom_id) { self.initial_element = Some(element_id); }
-                        edit_elements.push((element_id, element));
+                        // Order to the bottom
+                        updates.extend(self.unlink_element(element_id));
+                        updates.extend(self.order_after(element_id, parent, None));
                     }
                 }
 
                 Before(elem)    => {
                     unimplemented!()
                 }
-            }
-
-            // Convert the element edits to updates
-            for (changed_element_id, changed_element_wrapper) in edit_elements {
-                // Serialize it
-                let mut serialized = String::new();
-                changed_element_wrapper.serialize(&mut serialized);
-
-                // Add to the elements
-                self.elements.insert(changed_element_id, changed_element_wrapper);
-
-                // Update in the storage
-                updates.push(StorageCommand::WriteElement(changed_element_id.id().unwrap(), serialized));
             }
 
             Some(updates)
