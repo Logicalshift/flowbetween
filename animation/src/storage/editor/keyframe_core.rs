@@ -301,15 +301,17 @@ impl KeyFrameCore {
                 }
 
                 Behind          => {
+                    let element = element.clone();
+
                     if element.order_after.is_some() {
+                        // Unlink the element
+                        updates.extend(self.unlink_element(element_id));
+
                         // We'll order after the element that's behind the element this is currently in front of
                         let element_id_in_front     = element.order_after.as_ref()
                             .and_then(|after| self.elements.get(after))
                             .and_then(|after| after.order_after);
                         let parent                  = element.parent;
-
-                        // Unlink the element
-                        updates.extend(self.unlink_element(element_id));
 
                         // Update the ordering
                         updates.extend(self.order_after(element_id, parent, element_id_in_front));
@@ -344,8 +346,22 @@ impl KeyFrameCore {
                     }
                 }
 
-                Before(elem)    => {
-                    unimplemented!()
+                Before(before)    => {
+                    // Record what we need from the parent
+                    let parent = element.parent;
+
+                    // Fetch the 'before' element
+                    if self.elements.contains_key(&before) {
+                        // Unlink the element
+                        updates.extend(self.unlink_element(element_id));
+
+                        // We'll order after the element that's behind the element this is currently in front of
+                        let before                  = self.elements.get(&before).unwrap();
+                        let element_id_in_front     = before.order_after;
+
+                        // Update the ordering
+                        updates.extend(self.order_after(element_id, parent, element_id_in_front));
+                    }
                 }
             }
 

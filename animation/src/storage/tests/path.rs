@@ -323,7 +323,6 @@ fn create_path_and_re_order_in_front() {
     }
 }
 
-/*
 #[test]
 fn create_path_and_re_order_before() {
     use self::LayerEdit::*;
@@ -388,7 +387,6 @@ fn create_path_and_re_order_before() {
         assert!(elements[2].id() == ElementId::Assigned(102));
     }
 }
-*/
 
 #[test]
 fn create_path_and_re_order_to_top_and_bottom() {
