@@ -130,6 +130,13 @@ impl GroupElement {
     pub fn elements(&self) -> impl Iterator<Item=&Vector> {
         self.grouped_elements.iter()
     }
+
+    ///
+    /// Creates a new version of this group element with an alternative set of elements attached
+    ///
+    pub fn with_elements<Elements: IntoIterator<Item=Vector>>(&self, elements: Elements) -> GroupElement {
+        GroupElement::new(self.id, self.group_type, Arc::new(elements.into_iter().collect()))
+    }
 }
 
 impl VectorElement for GroupElement {

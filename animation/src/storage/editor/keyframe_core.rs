@@ -567,9 +567,10 @@ impl KeyFrameCore {
         let wrapper         = self.elements.get_mut(&element_id);
         if let Some(wrapper) = wrapper {
 
-            if let Some(_parent) = wrapper.parent {
+            if let Some(parent) = wrapper.parent {
 
-                // TODO: unlink from a group/similar item
+                // Unlink from a group/similar item
+                updates = self.unlink_from_group(element_id, parent);
 
             } else {
 
@@ -607,6 +608,48 @@ impl KeyFrameCore {
         }
 
         // Result is the updates to send to the storage layer
+        updates
+    }
+
+    ///
+    /// Unlinks an element from a group
+    ///
+    pub fn unlink_from_group(&mut self, element_id: ElementId, group_id: ElementId) -> Vec<StorageCommand> {
+        let mut updates = vec![];
+
+        let element_id  = match element_id.id() {
+            Some(id)    => id,
+            None        => { return updates }
+        };
+        let group_id    = match group_id.id() {
+            Some(id)    => id,
+            None        => { return updates }
+        };
+
+        // For the element, we just remove the parent from the wrapper
+        if let Some(wrapper) = self.elements.get_mut(&ElementId::Assigned(element_id)) {
+            wrapper.parent = None;
+            updates.push(StorageCommand::WriteElement(element_id, wrapper.serialize_to_string()));
+        }
+
+        // Update the parent group so it doesn't contain this element any more
+        if let Some(group_wrapper) = self.elements.get_mut(&ElementId::Assigned(group_id)) {
+            match &group_wrapper.element {
+                Vector::Group(group) => {
+                    // Create a new version of the group that's missing this element
+                    let new_group = group.with_elements(group.elements()
+                        .filter(|elem| elem.id() != ElementId::Assigned(element_id))
+                        .cloned());
+
+                    // Update the wrapper to be missing this element
+                    group_wrapper.element = Vector::Group(new_group);
+                    updates.push(StorageCommand::WriteElement(group_id, group_wrapper.serialize_to_string()));
+                }
+
+                _ => { }
+            }
+        }
+
         updates
     }
 }
