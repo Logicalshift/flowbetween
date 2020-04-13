@@ -408,15 +408,17 @@ impl StreamAnimationCore {
                             // Add to the elements that go in our final group
                             group_elements.push(element.clone());
 
+                            // Unlink the element
+                            let unlink = frame.unlink_element(ElementId::Assigned(*element_id));
+                            updates.extend(unlink);
+
                             // Set the parent of the element to be our new group element
+                            let element = frame.elements.get_mut(&ElementId::Assigned(*element_id)).unwrap();
+                            
                             if element.parent != Some(ElementId::Assigned(group_id)) {
                                 element.parent = Some(ElementId::Assigned(group_id));
                                 updates.push(StorageCommand::WriteElement(*element_id, element.serialize_to_string()));
                             }
-
-                            // Unlink the element
-                            let unlink = frame.unlink_element(ElementId::Assigned(*element_id));
-                            updates.extend(unlink);
                         }
                     }
 

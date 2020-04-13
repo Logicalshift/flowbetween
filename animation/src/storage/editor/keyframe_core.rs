@@ -566,34 +566,43 @@ impl KeyFrameCore {
         // Fetch this element
         let wrapper         = self.elements.get_mut(&element_id);
         if let Some(wrapper) = wrapper {
-            // If this is the initial element the next element becomes the initial element
-            if self.initial_element == Some(element_id) {
-                self.initial_element = wrapper.order_before;
-            }
 
-            // We'll need to process the before/after versions next
-            let previous_id = wrapper.order_after;
-            let next_id     = wrapper.order_before;
+            if let Some(_parent) = wrapper.parent {
 
-            // Make wrapper unattached
-            wrapper.unattached      = true;
-            wrapper.order_before    = None;
-            wrapper.order_after     = None;
-            wrapper.parent          = None;
+                // TODO: unlink from a group/similar item
 
-            updates.push(StorageCommand::WriteElement(element_id_i64, wrapper.serialize_to_string()));
+            } else {
 
-            // Rearrange the previous and next element to skip over this one
-            if let Some((Some(id), Some(previous_wrapper))) = previous_id.map(|previous_id| (previous_id.id(), self.elements.get_mut(&previous_id))) {
-                previous_wrapper.order_before = next_id;
+                // If this is the initial element the next element becomes the initial element
+                if self.initial_element == Some(element_id) {
+                    self.initial_element = wrapper.order_before;
+                }
 
-                updates.push(StorageCommand::WriteElement(id, previous_wrapper.serialize_to_string()));
-            }
+                // We'll need to process the before/after versions next
+                let previous_id = wrapper.order_after;
+                let next_id     = wrapper.order_before;
 
-            if let Some((Some(id), Some(next_wrapper))) = next_id.map(|next_id| (next_id.id(), self.elements.get_mut(&next_id))) {
-                next_wrapper.order_after = previous_id;
+                // Make wrapper unattached
+                wrapper.unattached      = true;
+                wrapper.order_before    = None;
+                wrapper.order_after     = None;
+                wrapper.parent          = None;
 
-                updates.push(StorageCommand::WriteElement(id, next_wrapper.serialize_to_string()));
+                updates.push(StorageCommand::WriteElement(element_id_i64, wrapper.serialize_to_string()));
+
+                // Rearrange the previous and next element to skip over this one
+                if let Some((Some(id), Some(previous_wrapper))) = previous_id.map(|previous_id| (previous_id.id(), self.elements.get_mut(&previous_id))) {
+                    previous_wrapper.order_before = next_id;
+
+                    updates.push(StorageCommand::WriteElement(id, previous_wrapper.serialize_to_string()));
+                }
+
+                if let Some((Some(id), Some(next_wrapper))) = next_id.map(|next_id| (next_id.id(), self.elements.get_mut(&next_id))) {
+                    next_wrapper.order_after = previous_id;
+
+                    updates.push(StorageCommand::WriteElement(id, next_wrapper.serialize_to_string()));
+                }
+
             }
         }
 
