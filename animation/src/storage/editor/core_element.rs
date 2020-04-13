@@ -50,7 +50,12 @@ impl StreamAnimationCore {
                 SetPath(new_path)               => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) }).await; }
                 Order(ordering)                 => { self.order_elements(element_ids, *ordering).await; }
                 Group(group_id, group_type)     => { self.group_elements(element_ids, *group_id, *group_type).await; }
-                Ungroup                         => { unimplemented!() }
+                
+                Ungroup                         => { 
+                    for id in element_ids {
+                        self.ungroup_element(ElementId::Assigned(id)).await; 
+                    }
+                }
 
                 ConvertToPath                   => {
                     for id in element_ids {
@@ -414,7 +419,7 @@ impl StreamAnimationCore {
 
                             // Set the parent of the element to be our new group element
                             let element = frame.elements.get_mut(&ElementId::Assigned(*element_id)).unwrap();
-                            
+
                             if element.parent != Some(ElementId::Assigned(group_id)) {
                                 element.parent = Some(ElementId::Assigned(group_id));
                                 updates.push(StorageCommand::WriteElement(*element_id, element.serialize_to_string()));
@@ -453,6 +458,68 @@ impl StreamAnimationCore {
             }).await.unwrap();
 
             // Send the updates to storage
+            self.request(updates).await;
+        }
+    }
+
+    ///
+    /// Given an element that represents a group, ungroups it and moves all the elements in the group into the parent
+    /// element
+    ///
+    pub fn ungroup_element<'a>(&'a mut self, group_element_id: ElementId) -> impl 'a+Future<Output=()> {
+        async move {
+            let group_element_id = match group_element_id.id() {
+                Some(id)    => id,
+                None        => { return; }
+            };
+
+            // Fetch the frame for the grouped element
+            let frame = self.edit_keyframe_for_element(group_element_id).await;
+            let frame = match frame {
+                Some(frame) => frame,
+                None        => { return; }
+            };
+
+            // Modify the frame
+            let updates = frame.future(move |frame| {
+                async move {
+                    // The updates that will be performed
+                    let mut updates = vec![];
+
+                    // Fetch the element as a group
+                    let group_wrapper = match frame.elements.get(&ElementId::Assigned(group_element_id)) {
+                        Some(wrapper)   => wrapper,
+                        None            => { return vec![] }
+                    };
+
+                    // Gather information on where the grouped elements will go
+                    let parent      = group_wrapper.parent;
+                    let order_after = group_wrapper.order_after;
+
+                    // Fetch the group elements
+                    let elements    = match &group_wrapper.element {
+                        Vector::Group(group)    => group.elements().map(|elem| elem.id()).collect::<Vec<_>>(),
+                        _                       => { return vec![]; }
+                    };
+
+                    // Unlink all of the elements from the group
+                    for elem in elements.iter() {
+                        updates.extend(frame.unlink_element(*elem));
+                    }
+
+                    // Unlink the group itself
+                    updates.extend(frame.unlink_element(ElementId::Assigned(group_element_id)));
+
+                    // Order the elements after the place where the group way
+                    for elem in elements.iter().rev() {
+                        updates.extend(frame.order_after(*elem, parent, order_after));
+                    }
+
+                    // Result is the updates
+                    updates
+                }.boxed()
+            }).await.unwrap();
+
             self.request(updates).await;
         }
     }
