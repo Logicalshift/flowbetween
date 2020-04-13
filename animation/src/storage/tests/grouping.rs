@@ -41,6 +41,7 @@ fn group_middle_elements() {
 
     // Group should have replaced the original elements
     {
+        animation.flush_caches();
         let layer           = animation.get_layer_with_id(1).unwrap();
         let frame           = layer.get_frame_at_time(Duration::from_millis(0));
         let elements        = frame.vector_elements().unwrap().collect::<Vec<_>>();
@@ -86,6 +87,7 @@ fn group_first_elements() {
 
     // Group should have replaced the original elements
     {
+        animation.flush_caches();
         let layer           = animation.get_layer_with_id(1).unwrap();
         let frame           = layer.get_frame_at_time(Duration::from_millis(0));
         let elements        = frame.vector_elements().unwrap().collect::<Vec<_>>();
@@ -131,6 +133,7 @@ fn group_last_elements() {
 
     // Group should have replaced the original elements
     {
+        animation.flush_caches();
         let layer           = animation.get_layer_with_id(1).unwrap();
         let frame           = layer.get_frame_at_time(Duration::from_millis(0));
         let elements        = frame.vector_elements().unwrap().collect::<Vec<_>>();
@@ -176,6 +179,7 @@ fn group_all_elements() {
 
     // Group should have replaced the original elements
     {
+        animation.flush_caches();
         let layer           = animation.get_layer_with_id(1).unwrap();
         let frame           = layer.get_frame_at_time(Duration::from_millis(0));
         let elements        = frame.vector_elements().unwrap().collect::<Vec<_>>();
