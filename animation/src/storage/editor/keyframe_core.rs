@@ -492,10 +492,10 @@ impl KeyFrameCore {
     /// The return value is the commands to send to the storage layer to perform this update.
     ///
     pub fn order_after(&mut self, element_id: ElementId, parent: Option<ElementId>, after: Option<ElementId>) -> Vec<StorageCommand> {
-        if let Some(_parent) = parent {
+        if let Some(parent) = parent {
 
-            // TODO: groups, etc - ie add into the list for a parent element
-            vec![]
+            // Perform group re-ordering/adding
+            self.order_after_in_group(element_id, parent, after)
 
         } else {
 
@@ -549,6 +549,61 @@ impl KeyFrameCore {
 
             updates
         }
+    }
+
+    ///
+    /// Given an element that is in a group element (the parent), orders/adds it after the 'after' element
+    ///
+    fn order_after_in_group(&mut self, element_id: ElementId, parent_id: ElementId, after: Option<ElementId>) -> Vec<StorageCommand> {
+        // IDs need to be assigned to be editable
+        let (element_id, parent_id) = match (element_id.id(), parent_id.id()) {
+            (Some(element_id), Some(parent_id)) => (element_id, parent_id),
+            _                                   => { return vec![] }
+        };
+
+        // We need a clone of the element we're going to add
+        let mut wrapper_to_add = match self.elements.get(&ElementId::Assigned(element_id)).cloned() {
+            Some(wrapper_to_add)    => wrapper_to_add,
+            None                    => { return vec![]; }
+        };
+
+        // Unlink the existing element (which will also remove it from the group if it's present)
+        let mut updates = self.unlink_element(ElementId::Assigned(element_id));
+
+        // Fetch the parent wrapper
+        let parent_wrapper = match self.elements.get_mut(&ElementId::Assigned(parent_id)) {
+            Some(wrapper)   => wrapper,
+            None            => { return updates; }
+        };
+
+        match &parent_wrapper.element {
+            Vector::Group(group)    => {
+                // The parent element is expected to be a group
+                let mut group_elements  = group.elements().cloned().collect::<Vec<_>>();
+                let after_index         = group_elements.iter().position(|elem| Some(elem.id()) == after);
+
+                // Update the element list
+                match after_index {
+                    None        => group_elements.insert(0, wrapper_to_add.element.clone()),
+                    Some(idx)   => group_elements.insert(idx, wrapper_to_add.element.clone())
+                }
+
+                // Update the group
+                let new_group               = group.with_elements(group_elements);
+                parent_wrapper.element      = Vector::Group(new_group);
+
+                // Update the element wrapper
+                wrapper_to_add.parent       = Some(ElementId::Assigned(parent_id));
+
+                // Update storage
+                updates.push(StorageCommand::WriteElement(parent_id, parent_wrapper.serialize_to_string()));
+                updates.push(StorageCommand::WriteElement(element_id, wrapper_to_add.serialize_to_string()));
+            },
+
+            _ => { }
+        }
+
+        updates
     }
 
     ///
