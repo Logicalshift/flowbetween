@@ -291,6 +291,7 @@ impl KeyFrameCore {
                     let element_id_in_front     = element.order_before;
                     let parent                  = element.parent;
 
+                    // If we're already the top-most element, there's nothing to do
                     if element_id_in_front.is_some() {
                         // Unlink the element
                         updates.extend(self.unlink_element(element_id));
@@ -301,29 +302,18 @@ impl KeyFrameCore {
                 }
 
                 Behind          => {
-                    // Fetch the element that's in front of the current element
-                    let element_id_in_front     = element.order_before;
-                    let element_id_behind       = element.order_after;
-                    let mut element_in_front    = element.order_before.and_then(|order_before| self.elements.get(&order_before).cloned());
-                    let element_behind          = element.order_after.and_then(|order_after| self.elements.get(&order_after).cloned());
+                    if element.order_after.is_some() {
+                        // We'll order after the element that's behind the element this is currently in front of
+                        let element_id_in_front     = element.order_after.as_ref()
+                            .and_then(|after| self.elements.get(after))
+                            .and_then(|after| after.order_after);
+                        let parent                  = element.parent;
 
-                    if let Some(mut element_behind) = element_behind {
-                        // This element becomes the lowermost element if it's replacing the current lower-most element
-                        if element_id_behind == self.initial_element {
-                            self.initial_element = Some(element_id);
-                        }
+                        // Unlink the element
+                        updates.extend(self.unlink_element(element_id));
 
-                        // Swap the in-front element and the before element
-                        element.order_after                                             = element_behind.order_after;
-                        element.order_before                                            = element_id_behind;
-                        element_behind.order_after                                      = Some(element_id);
-                        element_behind.order_before                                     = element_id_in_front;
-                        element_in_front.as_mut().map(|in_front| in_front.order_after   = element_id_behind);
-
-                        // These are the two elements that need updating
-                        edit_elements.push((element_id, element));
-                        edit_elements.push((element_id_behind.unwrap(), element_behind));
-                        element_in_front.map(|in_front| edit_elements.push((element_id_in_front.unwrap(), in_front)));
+                        // Update the ordering
+                        updates.extend(self.order_after(element_id, parent, element_id_in_front));
                     }
                 }
 
