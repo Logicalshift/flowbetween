@@ -278,41 +278,25 @@ impl KeyFrameCore {
     /// Returns none if the element is not in the current keyframe
     ///
     pub fn order_element(&mut self, element_id: ElementId, ordering: ElementOrdering) -> Option<Vec<StorageCommand>> {
-        if self.elements.contains_key(&element_id) {
+        if let Some(mut element) = self.elements.get(&element_id).cloned() {
             // Update the element
             let mut updates         = vec![];
             let mut edit_elements   = vec![];
-
-            // Fetch the element (we know it exists at this point)
-            let mut element         = self.elements.get(&element_id).unwrap().clone();
 
             // Order the element
             use self::ElementOrdering::*;
             match ordering {
                 InFront         => {
-                    // Fetch the element that's in front of the current element
+                    // We'll order after the element that this element is currently ordered before
                     let element_id_in_front     = element.order_before;
-                    let element_id_behind       = element.order_after;
-                    let element_in_front        = element.order_before.and_then(|order_before| self.elements.get(&order_before).cloned());
-                    let mut element_behind      = element.order_after.and_then(|order_after| self.elements.get(&order_after).cloned());
+                    let parent                  = element.parent;
 
-                    if let Some(mut element_in_front) = element_in_front {
-                        // This element becomes the 'in front' element if it's ahead of all the others
-                        if element_id_in_front == self.last_element {
-                            self.last_element = Some(element_id);
-                        }
+                    if element_id_in_front.is_some() {
+                        // Unlink the element
+                        updates.extend(self.unlink_element(element_id));
 
-                        // Swap the in-front element and the before element
-                        element.order_before                                        = element_in_front.order_before;
-                        element.order_after                                         = element_id_in_front;
-                        element_in_front.order_before                               = Some(element_id);
-                        element_in_front.order_after                                = element_id_behind;
-                        element_behind.as_mut().map(|behind| behind.order_before    = element_id_in_front);
-
-                        // These are the two elements that need updating
-                        edit_elements.push((element_id, element));
-                        edit_elements.push((element_id_in_front.unwrap(), element_in_front));
-                        element_behind.map(|behind| edit_elements.push((element_id_behind.unwrap(), behind)));
+                        // Update the ordering
+                        updates.extend(self.order_after(element_id, parent, element_id_in_front));
                     }
                 }
 
