@@ -291,7 +291,7 @@ impl KeyFrameCore {
                     let parent                  = element.parent;
 
                     // If we're already the top-most element, there's nothing to do
-                    if element_id_in_front.is_some() {
+                    if element_id_in_front.is_some() || parent.is_some() {
                         // Unlink the element
                         updates.extend(self.unlink_element(element_id));
 
@@ -302,8 +302,9 @@ impl KeyFrameCore {
 
                 Behind          => {
                     let element = element.clone();
+                    let parent  = element.parent;
 
-                    if element.order_after.is_some() {
+                    if element.order_after.is_some() || parent.is_some() {
                         // Unlink the element
                         updates.extend(self.unlink_element(element_id));
 
@@ -311,7 +312,6 @@ impl KeyFrameCore {
                         let element_id_in_front     = element.order_after.as_ref()
                             .and_then(|after| self.elements.get(after))
                             .and_then(|after| after.order_after);
-                        let parent                  = element.parent;
 
                         // Update the ordering
                         updates.extend(self.order_after(element_id, parent, element_id_in_front));
@@ -339,7 +339,7 @@ impl KeyFrameCore {
                 ToBottom        => {
                     let parent = element.parent;
 
-                    if element.order_after.is_some() {
+                    if element.order_after.is_some() || parent.is_some() {
                         // Order to the bottom
                         updates.extend(self.unlink_element(element_id));
                         updates.extend(self.order_after(element_id, parent, None));
