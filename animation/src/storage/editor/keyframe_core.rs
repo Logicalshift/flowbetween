@@ -585,7 +585,7 @@ impl KeyFrameCore {
                 // Update the element list
                 match after_index {
                     None        => group_elements.insert(0, wrapper_to_add.element.clone()),
-                    Some(idx)   => group_elements.insert(idx, wrapper_to_add.element.clone())
+                    Some(idx)   => group_elements.insert(idx+1, wrapper_to_add.element.clone())
                 }
 
                 // Update the group
