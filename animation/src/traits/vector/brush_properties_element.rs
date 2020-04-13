@@ -61,7 +61,7 @@ impl VectorElement for BrushPropertiesElement {
     ///
     /// Retrieves the paths for this element, if there are any
     ///
-    fn to_path(&self, _properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> {
+    fn to_path(&self, _properties: &VectorProperties, _options: PathConversion) -> Option<Vec<Path>> {
         None
     }
 
