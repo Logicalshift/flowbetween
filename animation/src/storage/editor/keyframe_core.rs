@@ -278,7 +278,7 @@ impl KeyFrameCore {
     /// Returns none if the element is not in the current keyframe
     ///
     pub fn order_element(&mut self, element_id: ElementId, ordering: ElementOrdering) -> Option<Vec<StorageCommand>> {
-        if let Some(element) = self.elements.get(&element_id).cloned() {
+        if let Some(element) = self.elements.get(&element_id) {
             // Update the element
             let mut updates         = vec![];
 
