@@ -273,6 +273,55 @@ impl KeyFrameCore {
     }
 
     ///
+    /// Returns the child element IDs for a parent element
+    ///
+    fn child_elements_for_parent(&self, parent_element_id: ElementId) -> Vec<ElementId> {
+        if let Some(parent_wrapper) = self.elements.get(&parent_element_id) {
+            match &parent_wrapper.element {
+                Vector::Group(group)    => group.elements().map(|elem| elem.id()).collect(),
+                _                       => vec![]
+            }
+        } else {
+            vec![]
+        }
+    }
+
+    ///
+    /// Returns the elements before and after the specified element
+    ///
+    fn elements_before_and_after(&self, element_id: ElementId) -> (Option<ElementId>, Option<ElementId>) {
+        if let Some(wrapper) = self.elements.get(&element_id) {
+            // Element found
+            if let Some(parent_id) = wrapper.parent {
+
+                // Need to find the before and after by looking at the parent element
+                let siblings    = self.child_elements_for_parent(parent_id);
+                let idx         = siblings.iter().position(|elem| elem == &element_id);
+
+                match idx {
+                    None        => (None, None),
+                    Some(idx)   => (
+                        if idx > 0 { Some(siblings[idx-1]) } else { None },
+                        if idx+1 < siblings.len() { Some(siblings[idx+1]) } else { None }
+                    )
+                }
+
+            } else {
+
+                // Use the main element ordering
+                // Note that 'order_after' means 'order this element after this'
+                (wrapper.order_after, wrapper.order_before)
+
+            }
+        } else {
+
+            // Element not found, so there's no before or after element
+            (None, None)
+
+        }
+    }
+
+    ///
     /// Attempts to re-order an element relative to the others in the keyframe, returning the storage commands needed to update the underlying storage
     /// 
     /// Returns none if the element is not in the current keyframe
@@ -287,11 +336,11 @@ impl KeyFrameCore {
             match ordering {
                 InFront         => {
                     // We'll order after the element that this element is currently ordered before
-                    let element_id_in_front     = element.order_before;
+                    let element_id_in_front     = self.elements_before_and_after(element_id).1;
                     let parent                  = element.parent;
 
                     // If we're already the top-most element, there's nothing to do
-                    if element_id_in_front.is_some() || parent.is_some() {
+                    if element_id_in_front.is_some() {
                         // Unlink the element
                         updates.extend(self.unlink_element(element_id));
 
@@ -301,17 +350,17 @@ impl KeyFrameCore {
                 }
 
                 Behind          => {
-                    let element = element.clone();
-                    let parent  = element.parent;
+                    let element             = element.clone();
+                    let element_id_behind   = self.elements_before_and_after(element_id).0;
+                    let parent              = element.parent;
 
-                    if element.order_after.is_some() || parent.is_some() {
+                    if element_id_behind.is_some() {
                         // Unlink the element
                         updates.extend(self.unlink_element(element_id));
 
                         // We'll order after the element that's behind the element this is currently in front of
-                        let element_id_in_front     = element.order_after.as_ref()
-                            .and_then(|after| self.elements.get(after))
-                            .and_then(|after| after.order_after);
+                        let element_id_in_front     = element_id_behind.as_ref()
+                            .and_then(|behind| self.elements_before_and_after(*behind).0);
 
                         // Update the ordering
                         updates.extend(self.order_after(element_id, parent, element_id_in_front));
@@ -323,10 +372,22 @@ impl KeyFrameCore {
                     let mut topmost_element = element.order_before;
                     let parent              = element.parent;
 
-                    while let Some(next_element) = topmost_element
-                        .and_then(|topmost_element| self.elements.get(&topmost_element))
-                        .and_then(|topmost| topmost.order_before) {
-                        topmost_element = Some(next_element);
+                    if let Some(parent) = parent {
+                        // Order after the last sibling
+                        let siblings        = self.child_elements_for_parent(parent);
+                        let last_sibling    = siblings.into_iter().last();
+                        let last_sibling    = if last_sibling == Some(element_id) { None } else { last_sibling };
+
+                        topmost_element     = last_sibling;
+
+                    } else {
+
+                        // Follow the chain
+                        while let Some(next_element) = topmost_element
+                            .and_then(|topmost_element| self.elements.get(&topmost_element))
+                            .and_then(|topmost| topmost.order_before) {
+                            topmost_element = Some(next_element);
+                        }
                     }
 
                     if topmost_element.is_some() {
