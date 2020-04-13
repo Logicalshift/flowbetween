@@ -341,9 +341,6 @@ impl KeyFrameCore {
 
                     // If we're already the top-most element, there's nothing to do
                     if element_id_in_front.is_some() {
-                        // Unlink the element
-                        updates.extend(self.unlink_element(element_id));
-
                         // Update the ordering
                         updates.extend(self.order_after(element_id, parent, element_id_in_front));
                     }
@@ -355,9 +352,6 @@ impl KeyFrameCore {
                     let parent              = element.parent;
 
                     if element_id_behind.is_some() {
-                        // Unlink the element
-                        updates.extend(self.unlink_element(element_id));
-
                         // We'll order after the element that's behind the element this is currently in front of
                         let element_id_in_front     = element_id_behind.as_ref()
                             .and_then(|behind| self.elements_before_and_after(*behind).0);
@@ -392,7 +386,6 @@ impl KeyFrameCore {
 
                     if topmost_element.is_some() {
                         // Order after the topmost element
-                        updates.extend(self.unlink_element(element_id));
                         updates.extend(self.order_after(element_id, parent, topmost_element));
                     }
                 }
@@ -402,7 +395,6 @@ impl KeyFrameCore {
 
                     if element.order_after.is_some() || parent.is_some() {
                         // Order to the bottom
-                        updates.extend(self.unlink_element(element_id));
                         updates.extend(self.order_after(element_id, parent, None));
                     }
                 }
