@@ -338,10 +338,10 @@ impl KeyFrameCore {
     /// 
     /// Returns none if the element is not in the current keyframe
     ///
-    pub fn order_element(&mut self, element_id: ElementId, ordering: ElementOrdering) -> Option<Vec<StorageCommand>> {
+    pub fn order_element(&mut self, element_id: ElementId, ordering: ElementOrdering) -> Option<PendingStorageChange> {
         if let Some(element) = self.elements.get(&element_id) {
             // Update the element
-            let mut updates         = vec![];
+            let mut updates         = PendingStorageChange::new();
 
             // Order the element
             use self::ElementOrdering::*;
@@ -467,8 +467,8 @@ impl KeyFrameCore {
     /// to the remaining element (on the assumption that we're adding a new element that is not ready to be
     /// edited yet)
     ///
-    pub fn add_attachment(&mut self, attach_to: ElementId, attachments: &Vec<ElementId>) -> Vec<StorageCommand> {
-        let mut updates = vec![];
+    pub fn add_attachment(&mut self, attach_to: ElementId, attachments: &Vec<ElementId>) -> PendingStorageChange {
+        let mut updates = PendingStorageChange::new();
 
         // Both the thing being attached to and the attachment must have assigned IDs (can't attach unassigned elements)
         if let Some(attach_to_id) = attach_to.id() {
@@ -512,23 +512,23 @@ impl KeyFrameCore {
     /// Given an element that may contain child items (eg, a group), checks that all the child elements have the
     /// appropriate parent, recursively
     ///
-    pub fn update_parents(&mut self, element_id: ElementId) -> Vec<StorageCommand> {
+    pub fn update_parents(&mut self, element_id: ElementId) -> PendingStorageChange {
         // TODO: detect (and break?) loops
 
         // Fetch the element whose attachments we'll be updated
         let root_element = match self.elements.get(&element_id) {
             Some(element)   => element,
-            None            => { return vec![] }
+            None            => { return PendingStorageChange::new() }
         };
 
         // Check for attachments
         let attachments = match &root_element.element {
             Vector::Group(group)    => group.elements().map(|elem| elem.id()).collect::<Vec<_>>(),
-            _                       => { return vec![]; }
+            _                       => { return PendingStorageChange::new(); }
         };
 
         // Update any elements that are out of date
-        let mut updates = vec![];
+        let mut updates = PendingStorageChange::new();
         for attachment_id in attachments {
             // Update any element in this child element that does not have its parent set properly
             updates.extend(self.update_parents(attachment_id));
@@ -556,7 +556,7 @@ impl KeyFrameCore {
     ///
     /// The return value is the commands to send to the storage layer to perform this update.
     ///
-    pub fn order_after(&mut self, element_id: ElementId, parent: Option<ElementId>, after: Option<ElementId>) -> Vec<StorageCommand> {
+    pub fn order_after(&mut self, element_id: ElementId, parent: Option<ElementId>, after: Option<ElementId>) -> PendingStorageChange {
         if let Some(parent) = parent {
 
             // Perform group re-ordering/adding
@@ -570,7 +570,7 @@ impl KeyFrameCore {
             let after       = after.and_then(|after| after.id());
             let element_id  = match element_id.id() {
                 Some(id)    => id,
-                None        => { return vec![]; }   
+                None        => { return PendingStorageChange::new(); }   
             };
 
             // Update the 'after' element such that it's followed by this element
@@ -619,17 +619,17 @@ impl KeyFrameCore {
     ///
     /// Given an element that is in a group element (the parent), orders/adds it after the 'after' element
     ///
-    fn order_after_in_group(&mut self, element_id: ElementId, parent_id: ElementId, after: Option<ElementId>) -> Vec<StorageCommand> {
+    fn order_after_in_group(&mut self, element_id: ElementId, parent_id: ElementId, after: Option<ElementId>) -> PendingStorageChange {
         // IDs need to be assigned to be editable
         let (element_id, parent_id) = match (element_id.id(), parent_id.id()) {
             (Some(element_id), Some(parent_id)) => (element_id, parent_id),
-            _                                   => { return vec![] }
+            _                                   => { return PendingStorageChange::new() }
         };
 
         // We need a clone of the element we're going to add
         let mut wrapper_to_add = match self.elements.get(&ElementId::Assigned(element_id)).cloned() {
             Some(wrapper_to_add)    => wrapper_to_add,
-            None                    => { return vec![]; }
+            None                    => { return PendingStorageChange::new(); }
         };
 
         // Unlink the existing element (which will also remove it from the group if it's present)
@@ -677,11 +677,11 @@ impl KeyFrameCore {
     /// This makes it possible to detach or delete this element, or use it in an attachment somewhere else
     /// (eg, when grouping elements)
     ///
-    pub fn unlink_element(&mut self, element_id: ElementId) -> Vec<StorageCommand> {
-        let element_id_i64  = match element_id.id() { Some(id) => id, None => { return vec![] } };
+    pub fn unlink_element(&mut self, element_id: ElementId) -> PendingStorageChange {
+        let element_id_i64  = match element_id.id() { Some(id) => id, None => { return PendingStorageChange::new() } };
 
         // The updates required to unlink this element
-        let mut updates     = vec![];
+        let mut updates     = PendingStorageChange::new();
 
         // Fetch this element
         let wrapper         = self.elements.get_mut(&element_id);
@@ -734,8 +734,8 @@ impl KeyFrameCore {
     ///
     /// Unlinks an element from a group
     ///
-    pub fn unlink_from_group(&mut self, element_id: ElementId, group_id: ElementId) -> Vec<StorageCommand> {
-        let mut updates = vec![];
+    pub fn unlink_from_group(&mut self, element_id: ElementId, group_id: ElementId) -> PendingStorageChange {
+        let mut updates = PendingStorageChange::new();
 
         let element_id  = match element_id.id() {
             Some(id)    => id,
