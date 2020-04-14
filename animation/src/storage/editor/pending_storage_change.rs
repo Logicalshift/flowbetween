@@ -60,6 +60,13 @@ impl PendingStorageChange {
     }
 
     ///
+    /// Adds an update to an element to this change
+    ///
+    pub fn push_element(&mut self, element_id: i64, element: ElementWrapper) {
+        self.element_changes.insert(element_id, ElementChange::Wrapper(element));
+    }
+
+    ///
     /// Adds many commands to the list supported by this change
     ///
     pub fn extend<Commands: IntoIterator<Item=StorageCommand>>(&mut self, commands: Commands) {
