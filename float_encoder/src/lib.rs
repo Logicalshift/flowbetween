@@ -198,4 +198,28 @@ mod test {
 
         assert!((res-42.0).abs() < 0.01);
     }
+
+    #[test]
+    fn zero_is_small() {
+        let mut target = vec![];
+
+        squish_float(&mut target, 0.0, 0.0).unwrap();
+        assert!(target.len() == 2);
+    }
+
+    #[test]
+    fn one_is_small() {
+        let mut target = vec![];
+
+        squish_float(&mut target, 0.0, 1.0).unwrap();
+        assert!(target.len() == 2);
+    }
+
+    #[test]
+    fn minus_one_is_small() {
+        let mut target = vec![];
+
+        squish_float(&mut target, 0.0, -1.0).unwrap();
+        assert!(target.len() == 2);
+    }
 }
