@@ -1,5 +1,6 @@
 use super::keyframe_controls_controller::*;
 use super::super::model::*;
+use super::super::style::*;
 
 use flo_ui::*;
 use flo_binding::*;
@@ -46,6 +47,45 @@ impl<Anim: 'static+Animation+EditableAnimation> ControlBarController<Anim> {
             .with(Bounds::fill_all())
             .with(ControlAttribute::Padding((0, 2), (0, 2)))
             .with(vec![
+                Control::empty()
+                    .with(Bounds::next_horiz(6.0)),
+
+                Control::container()
+                    .with(Hint::Class("button-group".to_string()))
+                    .with(vec![
+                        Control::button()
+                            .with(ControlAttribute::Padding((9, 4), (4, 4)))
+                            .with(Bounds::next_horiz(22.0)),
+                        Control::button()
+                            .with(ControlAttribute::Padding((9, 4), (4, 4)))
+                            .with(Bounds::next_horiz(22.0)),
+                        Control::button()
+                            .with(ControlAttribute::Padding((4, 4), (4, 4)))
+                            .with(Bounds::next_horiz(22.0)),
+                        Control::button()
+                            .with(ControlAttribute::Padding((4, 4), (4, 4)))
+                            .with(Bounds::next_horiz(22.0)),
+                        Control::button()
+                            .with(ControlAttribute::Padding((4, 4), (4, 4)))
+                            .with(Bounds::next_horiz(22.0)),
+                        Control::button()
+                            .with(ControlAttribute::Padding((4, 4), (4, 4)))
+                            .with(Bounds::next_horiz(22.0)),
+                    ])
+                    .with(Bounds::next_horiz(22.0*6.0)),
+                Control::label()
+                    .with("F 107999")
+                    .with(TextAlign::Center)
+                    .with(Font::Size(11.0))
+                    .with(ControlAttribute::Padding((4, 4), (9, 4)))
+                    .with(Bounds::next_horiz(80.0)),
+
+                Control::empty()
+                    .with(Bounds::next_horiz(3.0)),
+                Control::empty()
+                    .with(Appearance::Background(TIMESCALE_LAYERS))
+                    .with(Bounds::next_horiz(1.0)),
+
                 Control::empty()
                     .with(Bounds::stretch_horiz(1.0)),
                 Control::container()
