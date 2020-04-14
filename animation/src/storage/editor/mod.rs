@@ -10,6 +10,7 @@ mod core_layer;
 mod core_motion;
 mod core_element;
 mod keyframe_core;
+mod pending_storage_change;
 mod element_wrapper;
 mod element_collide;
 mod element_convert_to_path;
