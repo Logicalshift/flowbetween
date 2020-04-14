@@ -1,6 +1,7 @@
 use super::keyframe_core::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
+use super::pending_storage_change::*;
 use super::super::storage_api::*;
 use super::super::super::traits::*;
 use super::super::super::serializer::*;
@@ -188,14 +189,14 @@ impl StreamAnimationCore {
     ///
     /// Performs an update on an element in a keyframe
     ///
-    fn perform_element_update<'a>(&'a mut self, element_id: i64, update: ElementUpdate, keyframe: Option<Arc<Desync<KeyFrameCore>>>) -> impl 'a+Send+Future<Output=Vec<StorageCommand>>+Send {
+    fn perform_element_update<'a>(&'a mut self, element_id: i64, update: ElementUpdate, keyframe: Option<Arc<Desync<KeyFrameCore>>>) -> impl 'a+Send+Future<Output=PendingStorageChange>+Send {
         async move {
-            let mut updates = vec![];
+            let mut updates = PendingStorageChange::new();
 
             match update {
                 ElementUpdate::ChangeWrapper(updated_element) => {
                     // Generate the update of the serialized element
-                    updates.push(StorageCommand::WriteElement(element_id, updated_element.serialize_to_string()));
+                    updates.push_element(element_id, updated_element.clone());
 
                     // Replace the element in the keyframe
                     keyframe.map(|keyframe| {
@@ -258,7 +259,7 @@ impl StreamAnimationCore {
                                         // TODO: if there are no attachments left, consider removing the element from the keyframe
                                         // (presently doesn't work as brush properties don't have their references reversed this way)
                                         attachment_id.id().map(|attachment_id| {
-                                            updates.push(StorageCommand::WriteElement(attachment_id, attachment_wrapper.serialize_to_string()));
+                                            updates.push_element(attachment_id, attachment_wrapper.clone());
                                         });
                                     });
                             });
@@ -270,7 +271,7 @@ impl StreamAnimationCore {
                                 element_wrapper.attachments.retain(|attachment_id| !attachments.contains(attachment_id));
 
                                 // Generate the update of the serialized element
-                                updates.push(StorageCommand::WriteElement(element_id, element_wrapper.serialize_to_string()));
+                                updates.push_element(element_id, element_wrapper.clone());
                             });
                     }));
                 }
@@ -290,7 +291,7 @@ impl StreamAnimationCore {
                 }
 
                 ElementUpdate::Other(cmds) => {
-                    updates = cmds;
+                    updates.extend(cmds);
                 }
             }
 
@@ -390,7 +391,7 @@ impl StreamAnimationCore {
 
             let updates = frame.future(move |frame| {
                 async move {
-                    let mut updates         = vec![];
+                    let mut updates         = PendingStorageChange::new();
                     let mut group_elements  = vec![];
 
                     let first_element   = frame.elements.get(&ElementId::Assigned(element_ids[0])).unwrap().clone();
@@ -422,7 +423,7 @@ impl StreamAnimationCore {
 
                             if element.parent != Some(ElementId::Assigned(group_id)) {
                                 element.parent = Some(ElementId::Assigned(group_id));
-                                updates.push(StorageCommand::WriteElement(*element_id, element.serialize_to_string()));
+                                updates.push_element(*element_id, element.clone());
                             }
                         }
                     }
@@ -444,7 +445,7 @@ impl StreamAnimationCore {
                     }
 
                     // Add the new group to the updates
-                    updates.push(StorageCommand::WriteElement(group_id, group.serialize_to_string()));
+                    updates.push_element(group_id, group.clone());
                     updates.push(StorageCommand::AttachElementToLayer(frame.layer_id, group_id, start_time));
 
                     // Add the group to the frame
