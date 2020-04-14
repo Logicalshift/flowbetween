@@ -537,7 +537,7 @@ impl KeyFrameCore {
                     attachment.parent = Some(element_id);
 
                     // Write out the element
-                    updates.push(StorageCommand::WriteElement(attachment_id, attachment.serialize_to_string()));
+                    updates.push_element(attachment_id, attachment.clone());
                 }
             }
         }
@@ -577,7 +577,7 @@ impl KeyFrameCore {
                 following_element           = after_wrapper.order_before.and_then(|following| following.id());
                 after_wrapper.order_before  = Some(ElementId::Assigned(element_id));
 
-                updates.push(StorageCommand::WriteElement(after.unwrap(), after_wrapper.serialize_to_string()));
+                updates.push_element(after.unwrap(), after_wrapper.clone());
             } else {
                 // The new element is ordered at the start
                 following_element = self.initial_element.and_then(|elem| elem.id());
@@ -590,7 +590,7 @@ impl KeyFrameCore {
                 element_wrapper.order_before    = following_element.map(|following| ElementId::Assigned(following));
                 element_wrapper.unattached      = false;
 
-                updates.push(StorageCommand::WriteElement(element_id, element_wrapper.serialize_to_string()));
+                updates.push_element(element_id, element_wrapper.clone());
 
                 // Order first if necessary
                 if after.is_none() {
@@ -603,7 +603,7 @@ impl KeyFrameCore {
                 // This is ordered after the current element
                 following_wrapper.order_after = Some(ElementId::Assigned(element_id));
 
-                updates.push(StorageCommand::WriteElement(following_element.unwrap(), following_wrapper.serialize_to_string()));
+                updates.push_element(following_element.unwrap(), following_wrapper.clone());
             } else {
                 // This becomes the last element
                 self.last_element = Some(ElementId::Assigned(element_id));
@@ -658,8 +658,8 @@ impl KeyFrameCore {
                 wrapper_to_add.parent       = Some(ElementId::Assigned(parent_id));
 
                 // Update storage
-                updates.push(StorageCommand::WriteElement(parent_id, parent_wrapper.serialize_to_string()));
-                updates.push(StorageCommand::WriteElement(element_id, wrapper_to_add.serialize_to_string()));
+                updates.push_element(parent_id, parent_wrapper.clone());
+                updates.push_element(element_id, wrapper_to_add);
             },
 
             _ => { }
@@ -706,19 +706,19 @@ impl KeyFrameCore {
                 wrapper.order_after     = None;
                 wrapper.parent          = None;
 
-                updates.push(StorageCommand::WriteElement(element_id_i64, wrapper.serialize_to_string()));
+                updates.push_element(element_id_i64, wrapper.clone());
 
                 // Rearrange the previous and next element to skip over this one
                 if let Some((Some(id), Some(previous_wrapper))) = previous_id.map(|previous_id| (previous_id.id(), self.elements.get_mut(&previous_id))) {
                     previous_wrapper.order_before = next_id;
 
-                    updates.push(StorageCommand::WriteElement(id, previous_wrapper.serialize_to_string()));
+                    updates.push_element(id, previous_wrapper.clone());
                 }
 
                 if let Some((Some(id), Some(next_wrapper))) = next_id.map(|next_id| (next_id.id(), self.elements.get_mut(&next_id))) {
                     next_wrapper.order_after = previous_id;
 
-                    updates.push(StorageCommand::WriteElement(id, next_wrapper.serialize_to_string()));
+                    updates.push_element(id, next_wrapper.clone());
                 }
 
             }
@@ -746,7 +746,7 @@ impl KeyFrameCore {
         // For the element, we just remove the parent from the wrapper
         if let Some(wrapper) = self.elements.get_mut(&ElementId::Assigned(element_id)) {
             wrapper.parent = None;
-            updates.push(StorageCommand::WriteElement(element_id, wrapper.serialize_to_string()));
+            updates.push_element(element_id, wrapper.clone());
         }
 
         // Update the parent group so it doesn't contain this element any more
@@ -760,7 +760,7 @@ impl KeyFrameCore {
 
                     // Update the wrapper to be missing this element
                     group_wrapper.element = Vector::Group(new_group);
-                    updates.push(StorageCommand::WriteElement(group_id, group_wrapper.serialize_to_string()));
+                    updates.push_element(group_id, group_wrapper.clone());
                 }
 
                 _ => { }
