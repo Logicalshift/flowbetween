@@ -1,5 +1,6 @@
 use super::stream_animation_core::*;
 use super::element_wrapper::*;
+use super::pending_storage_change::*;
 use super::super::storage_api::*;
 use super::super::super::traits::*;
 use super::super::super::serializer::*;
@@ -221,7 +222,7 @@ impl KeyFrameCore {
     /// 
     /// Returns the list of storage commands required to update the storage with the new element
     ///
-    pub fn add_element_to_end(&mut self, new_element_id: ElementId, mut new_element: ElementWrapper) -> Vec<StorageCommand> {
+    pub fn add_element_to_end(&mut self, new_element_id: ElementId, mut new_element: ElementWrapper) -> PendingStorageChange {
         let last_element        = self.last_element;
         let new_id              = new_element_id.id().unwrap_or(0);
 
@@ -229,9 +230,10 @@ impl KeyFrameCore {
 
         // Some elements cause other effects to the status of the keyframe
         match new_element.element {
-            Vector::BrushProperties(_) | Vector::BrushDefinition(_) => { self.active_brush = None; }
+            Vector::BrushProperties(_)  | 
+            Vector::BrushDefinition(_)  => { self.active_brush = None; }
 
-            _ => { }
+            _                           => { }
         }
 
         // Serialize it
@@ -261,14 +263,24 @@ impl KeyFrameCore {
                 
                 previous_element.serialize(&mut previous_elem_serialized);
 
-                vec![StorageCommand::WriteElement(previous_element_id, previous_elem_serialized), StorageCommand::WriteElement(new_id, serialized), StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)]
+                PendingStorageChange::from_commands(vec![
+                    StorageCommand::WriteElement(previous_element_id, previous_elem_serialized), 
+                    StorageCommand::WriteElement(new_id, serialized), 
+                    StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)
+                ])
             } else {
                 // Just creating a new element
-                vec![StorageCommand::WriteElement(new_id, serialized), StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)]
+                PendingStorageChange::from_commands(vec![
+                    StorageCommand::WriteElement(new_id, serialized),
+                    StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)
+                ])
             }
         } else {
             // Unattached elements are just attached to the layer without updating the position
-            vec![StorageCommand::WriteElement(new_id, serialized), StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)]
+            PendingStorageChange::from_commands(vec![
+                StorageCommand::WriteElement(new_id, serialized),
+                StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)
+            ])
         }
     }
 

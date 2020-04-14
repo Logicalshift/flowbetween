@@ -76,8 +76,8 @@ impl StreamAnimation {
     ///
     /// Performs an asynchronous request on a storage layer for this animation
     ///
-    pub (super) fn request_async(&self, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {
-        request_core_async(&self.core, request)
+    pub (super) fn request_async<Commands: Send+IntoIterator<Item=StorageCommand>>(&self, request: Commands) -> impl Future<Output=Option<Vec<StorageResponse>>> {
+        request_core_async(&self.core, request.into_iter().collect())
     }
 
     ///
@@ -85,8 +85,8 @@ impl StreamAnimation {
     /// 
     /// Synchronous requests are fairly slow, so should be avoided in inner loops
     ///
-    pub (super) fn request_sync(&self, request: Vec<StorageCommand>) -> Option<Vec<StorageResponse>> {
-        request_core_sync(Arc::clone(&self.core), &self.idle_sync_requests, request)
+    pub (super) fn request_sync<Commands: Send+IntoIterator<Item=StorageCommand>>(&self, request: Commands) -> Option<Vec<StorageResponse>> {
+        request_core_sync(Arc::clone(&self.core), &self.idle_sync_requests, request.into_iter().collect())
     }
 
     ///

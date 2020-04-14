@@ -90,8 +90,7 @@ impl StreamAnimationCore {
 
                         (layer_id, serialized)
                     })
-                    .map(|(layer_id, serialized)| StorageCommand::WriteLayerProperties(layer_id, serialized))
-                .collect())
+                    .map(|(layer_id, serialized)| StorageCommand::WriteLayerProperties(layer_id, serialized)))
                 .await;
         } 
     }

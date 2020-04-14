@@ -75,9 +75,9 @@ impl StreamAnimationCore {
 
                     // Delete the elements
                     if element_edit == &ElementEdit::Delete {
-                        self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id)).collect()).await; 
+                        self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id))).await; 
                     } else {
-                        self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id)).collect()).await; 
+                        self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id))).await; 
                     }
                 }
             }
@@ -150,7 +150,7 @@ impl StreamAnimationCore {
             }
 
             // Request the serialized elements from storage
-            let response = self.request(element_ids.iter().map(|id| StorageCommand::ReadElement(*id)).collect()).await;
+            let response = self.request(element_ids.iter().map(|id| StorageCommand::ReadElement(*id)).collect::<Vec<_>>()).await;
 
             // Deserialize each element in the response (assume they don't refer to each other)
             let mut elements = vec![];

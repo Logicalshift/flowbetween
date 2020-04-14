@@ -100,9 +100,9 @@ impl StreamAnimationCore {
     ///
     /// Sends a request to the storage layer
     ///
-    pub fn request<'a>(&'a mut self, request: Vec<StorageCommand>) -> impl 'a+Future<Output=Option<Vec<StorageResponse>>> {
+    pub fn request<'a, Commands: 'a+IntoIterator<Item=StorageCommand>>(&'a mut self, request: Commands) -> impl 'a+Future<Output=Option<Vec<StorageResponse>>> {
         async move {
-            self.storage_requests.publish(request).await;
+            self.storage_requests.publish(request.into_iter().collect()).await;
             self.storage_responses.next().await
         }
     }
@@ -207,7 +207,7 @@ impl StreamAnimationCore {
                     serialized
                 })
                 .map(|edit| StorageCommand::WriteEdit(edit))
-                .collect();
+                .collect::<Vec<_>>();
 
             self.request(edit_log).await;
 

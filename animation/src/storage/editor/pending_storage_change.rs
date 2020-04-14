@@ -1,13 +1,12 @@
 use super::element_wrapper::*;
 use super::super::storage_api::*;
 
-use std::sync::*;
 use std::collections::{HashMap};
 
 #[derive(Clone)]
 enum ElementChange {
     /// A change that is stored as an element wrapper
-    Wrapper(Arc<ElementWrapper>),
+    Wrapper(ElementWrapper),
 
     /// A change that has already been serialized
     Serialized(String)
@@ -39,13 +38,55 @@ impl PendingStorageChange {
             storage_changes:    vec![]
         }
     }
+
+    ///
+    /// Creates a new storage change from an existing list of commands
+    ///
+    pub fn from_commands<Commands: IntoIterator<Item=StorageCommand>>(commands: Commands) -> PendingStorageChange {
+        let mut changes = PendingStorageChange::new();
+        changes.extend(commands);
+
+        changes
+    }
+
+    ///
+    /// Adds a new command to the end of the list supported by this change
+    ///
+    pub fn push(&mut self, command: StorageCommand) {
+        match command {
+            StorageCommand::WriteElement(element_id, serialized)    => { self.element_changes.insert(element_id, ElementChange::Serialized(serialized)); },
+            other                                                   => { self.storage_changes.push(other); }
+        }
+    }
+
+    ///
+    /// Adds many commands to the list supported by this change
+    ///
+    pub fn extend<Commands: IntoIterator<Item=StorageCommand>>(&mut self, commands: Commands) {
+        // Split ito commands that update elements and the rest of the commands
+        let (elements, others): (Vec<_>, Vec<_>) = commands.into_iter()
+            .partition(|command| {
+                match command {
+                    StorageCommand::WriteElement(_, _)  => true,
+                    _                                   => false
+                }
+            });
+
+        // Update the storage changes
+        self.storage_changes.extend(others);
+
+        // Update the elements
+        for write_element in elements {
+            self.push(write_element);
+        }
+    }
 }
 
 impl IntoIterator for PendingStorageChange {
     type Item       = StorageCommand;
-    type IntoIter   = Box<dyn Iterator<Item=StorageCommand>>;
+    type IntoIter   = Box<dyn Send+Iterator<Item=StorageCommand>>;
 
-    fn into_iter(self) -> Box<dyn Iterator<Item=StorageCommand>> {
+    fn into_iter(self) -> Box<dyn Send+Iterator<Item=StorageCommand>> {
         // First update the elements
         let update_elements = self.element_changes.into_iter()
             .map(|(element_id, change)| {
