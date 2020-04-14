@@ -1,6 +1,7 @@
 use super::keyframe_core::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
+use super::pending_storage_change::*;
 use super::super::storage_api::*;
 use super::super::super::traits::*;
 
@@ -77,7 +78,7 @@ impl StreamAnimationCore {
 
                         // Fetch the element from the frame
                         let wrapper     = frame.elements.get(&combine_element_id);
-                        let mut updates = vec![];
+                        let mut updates = PendingStorageChange::new();
 
                         let wrapper     = match wrapper {
                             Some(wrapper)   => wrapper,
@@ -126,14 +127,14 @@ impl StreamAnimationCore {
                                     replacement_element.element = combined_element;
 
                                     // Update it in the storage
-                                    updates.push(StorageCommand::WriteElement(assigned_element_id, replacement_element.serialize_to_string()));
+                                    updates.push_element(assigned_element_id, replacement_element.clone());
                                     frame.elements.insert(combine_element_id, replacement_element);
 
                                     // Make sure the parents are set correctly
                                     updates.extend(frame.update_parents(combine_element_id));
                                 } else {
                                     // If nothing was generated then any updates that might have been generated are not valid
-                                    updates = vec![];
+                                    updates = PendingStorageChange::new();
                                 }
                             }
 
