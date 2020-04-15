@@ -88,17 +88,21 @@ impl<Anim: 'static+Animation+EditableAnimation> FrameControlsController<Anim> {
                 FrameDisplayStyle::TimeOffset => {
                     // Millisecond position (later updated to be the remainder)
                     // We round up using the microsecond position
-                    let micros  = current_time.get().as_micros();
-                    let millis  = if (micros%1000) >= 500 { (micros/1000) + 1 } else { micros/1000 };
+                    let duration    = frame_duration.get().as_micros();
+                    let micros      = current_time.get().as_micros();
+                    let millis      = if (micros%1000) >= 500 { (micros/1000) + 1 } else { micros/1000 };
 
                     // Compute minutes, seconds, centiseconds
-                    let minutes = millis / (60 * 1000);
-                    let millis  = millis - (minutes * 60 * 1000);
-                    let seconds = millis / 1000;
-                    let millis  = millis - (seconds * 1000);
-                    let centis  = millis / 10;
+                    let minutes     = millis / (60 * 1000);
+                    let millis      = millis - (minutes * 60 * 1000);
+                    let seconds     = millis / 1000;
 
-                    format!("T+{}:{:02}.{:02}", minutes, seconds, centis)
+                    let micros      = micros % 1_000_000;
+                    let fps         = 1_000_000 / duration;
+                    let frame       = micros / duration;
+                    let frame       = (frame % fps)+1;
+
+                    format!("T+{}:{:02}.{:02}", minutes, seconds, frame)
                 }
 
                 FrameDisplayStyle::FrameNumber => {
