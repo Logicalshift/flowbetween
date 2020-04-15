@@ -58,11 +58,9 @@ impl<Anim: 'static+Animation+EditableAnimation> FrameControlsController<Anim> {
 
         let frame_text      = Self::frame_text(model, frame_style.clone());
 
-        view_model.set_computed("CurrentFrame", move || PropertyValue::String(frame_text.get()));
-
         // Create the images and the UI
         let images          = Arc::new(Self::images());
-        let ui              = Self::ui(Arc::clone(&images));
+        let ui              = Self::ui(Arc::clone(&images), frame_text);
 
         FrameControlsController {
             ui:             ui,
@@ -117,7 +115,7 @@ impl<Anim: 'static+Animation+EditableAnimation> FrameControlsController<Anim> {
     ///
     /// Creates the UI for this controller
     ///
-    fn ui(images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
+    fn ui(images: Arc<ResourceManager<Image>>, frame_text: BindRef<String>) -> BindRef<Control> {
         let frame_controls = images.get_named_resource("frame_controls");
 
         let ui = computed(move || {
@@ -146,7 +144,7 @@ impl<Anim: 'static+Animation+EditableAnimation> FrameControlsController<Anim> {
                     Control::empty()
                         .with(Bounds::next_horiz(4.0)),
                     Control::label()
-                        .with(ControlAttribute::Text(Property::Bind("CurrentFrame".to_string())))
+                        .with(frame_text.get())
                         .with(TextAlign::Left)
                         .with(Font::Size(11.0))
                         .with(Font::Weight(FontWeight::Normal))
