@@ -92,7 +92,7 @@ impl<Anim: 'static+Animation+EditableAnimation> FrameControlsController<Anim> {
                     let micros      = current_time.get().as_micros();
                     let millis      = if (micros%1000) >= 500 { (micros/1000) + 1 } else { micros/1000 };
 
-                    // Compute minutes, seconds, centiseconds
+                    // Compute minutes, seconds and the frame
                     let minutes     = millis / (60 * 1000);
                     let millis      = millis - (minutes * 60 * 1000);
                     let seconds     = millis / 1000;
