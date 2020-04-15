@@ -106,7 +106,7 @@ impl<Anim: 'static+Animation+EditableAnimation> FrameControlsController<Anim> {
                     let micros      = current_time.get().as_micros();
                     let duration    = frame_duration.get().as_micros();
 
-                    let frame       = micros/duration;
+                    let frame       = micros/duration + 1;
 
                     format!("F {}", frame)
                 }
@@ -151,6 +151,7 @@ impl<Anim: 'static+Animation+EditableAnimation> FrameControlsController<Anim> {
                         .with(Font::Size(11.0))
                         .with(Font::Weight(FontWeight::Normal))
                         .with(ControlAttribute::Padding((4, 4), (9, 4)))
+                        .with((ActionTrigger::Click, "ToggleTimeDisplay"))
                         .with(Bounds::next_horiz(76.0))
                 ])
                 .with(Bounds::next_horiz(22.0*6.0+80.0))
@@ -184,5 +185,20 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for FrameControlsCont
 
     fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {
         Some(Arc::clone(&self.images))
+    }
+
+    fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
+        match action_id {
+            "ToggleTimeDisplay" => {
+                // Switch to the other frame style when the timer is clicked
+                let new_style = match self.frame_style.get() {
+                    FrameDisplayStyle::TimeOffset   => FrameDisplayStyle::FrameNumber,
+                    FrameDisplayStyle::FrameNumber  => FrameDisplayStyle::TimeOffset
+                };
+                self.frame_style.set(new_style);
+            }
+
+            _ => { }
+        }
     }
 }
