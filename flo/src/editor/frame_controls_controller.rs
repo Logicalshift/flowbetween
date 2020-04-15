@@ -87,7 +87,9 @@ impl<Anim: 'static+Animation+EditableAnimation> FrameControlsController<Anim> {
             match frame_style.get() {
                 FrameDisplayStyle::TimeOffset => {
                     // Millisecond position (later updated to be the remainder)
-                    let millis  = current_time.get().as_millis();
+                    // We round up using the microsecond position
+                    let micros  = current_time.get().as_micros();
+                    let millis  = if (micros%1000) >= 500 { (micros/1000) + 1 } else { micros/1000 };
 
                     // Compute minutes, seconds, centiseconds
                     let minutes = millis / (60 * 1000);
