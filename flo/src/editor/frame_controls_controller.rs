@@ -93,7 +93,7 @@ impl<Anim: 'static+Animation+EditableAnimation> FrameControlsController<Anim> {
                     let minutes = millis / (60 * 1000);
                     let millis  = millis - (minutes * 60 * 1000);
                     let seconds = millis / 1000;
-                    let millis  = millis - (seconds / 1000);
+                    let millis  = millis - (seconds * 1000);
                     let centis  = millis / 10;
 
                     format!("{}:{:02}.{:02}", minutes, seconds, centis)
