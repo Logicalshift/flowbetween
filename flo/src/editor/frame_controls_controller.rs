@@ -96,7 +96,7 @@ impl<Anim: 'static+Animation+EditableAnimation> FrameControlsController<Anim> {
                     let millis  = millis - (seconds * 1000);
                     let centis  = millis / 10;
 
-                    format!("{}:{:02}.{:02}", minutes, seconds, centis)
+                    format!("T+{}:{:02}.{:02}", minutes, seconds, centis)
                 }
 
                 FrameDisplayStyle::FrameNumber => {
