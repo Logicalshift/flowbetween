@@ -5,6 +5,7 @@ mod timeline_controller;
 mod timeline_layer_list_controller;
 mod timeline_layer_controls_controller;
 mod controlbar_controller;
+mod frame_controls_controller;
 mod keyframe_controls_controller;
 mod toolbox_controller;
 
