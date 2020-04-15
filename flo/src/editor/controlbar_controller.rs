@@ -1,3 +1,4 @@
+use super::frame_controls_controller::*;
 use super::keyframe_controls_controller::*;
 use super::super::model::*;
 use super::super::style::*;
@@ -18,6 +19,9 @@ pub struct ControlBarController<Anim: 'static+Animation+EditableAnimation> {
     /// The keyframe controls controller
     keyframe_controls: Arc<KeyFrameControlsController<Anim>>,
 
+    /// The frame controls
+    frame_controls: Arc<FrameControlsController<Anim>>,
+
     /// The images for this controller
     images: Arc<ResourceManager<Image>>
 }
@@ -35,10 +39,14 @@ impl<Anim: 'static+Animation+EditableAnimation> ControlBarController<Anim> {
         let keyframe_controls   = KeyFrameControlsController::new(model);
         let keyframe_controls   = Arc::new(keyframe_controls);
 
+        let frame_controls      = FrameControlsController::new(model);
+        let frame_controls      = Arc::new(frame_controls);
+
         // Build the controller itself
         ControlBarController {
             ui:                 ui,
             keyframe_controls:  keyframe_controls,
+            frame_controls:     frame_controls,
             images:             images
         }
     }
@@ -49,19 +57,13 @@ impl<Anim: 'static+Animation+EditableAnimation> ControlBarController<Anim> {
     fn images() -> ResourceManager<Image> {
         let images              = ResourceManager::new();
 
-        let frame_controls      = images.register(svg_static(include_bytes!("../../svg/keyframes/frame_controls.svg")));
-
-        images.assign_name(&frame_controls,     "frame_controls");
-
         images
     }
 
     ///
     /// Creates the UI for this controller
     ///
-    fn ui(images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
-        let frame_controls = images.get_named_resource("frame_controls");
-
+    fn ui(_images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
         // Create the UI itself
         let ui = Control::container()
             .with(Bounds::fill_all())
@@ -71,37 +73,7 @@ impl<Anim: 'static+Animation+EditableAnimation> ControlBarController<Anim> {
                     .with(Bounds::next_horiz(6.0)),
 
                 Control::container()
-                    .with(frame_controls.clone())
-                    .with(vec![
-                        Control::empty()
-                            .with(ControlAttribute::Padding((9, 4), (4, 4)))
-                            .with(Bounds::next_horiz(22.0)),
-                        Control::empty()
-                            .with(ControlAttribute::Padding((9, 4), (4, 4)))
-                            .with(Bounds::next_horiz(22.0)),
-                        Control::empty()
-                            .with(ControlAttribute::Padding((4, 4), (4, 4)))
-                            .with(Bounds::next_horiz(22.0)),
-                        Control::empty()
-                            .with(ControlAttribute::Padding((4, 4), (4, 4)))
-                            .with(Bounds::next_horiz(22.0)),
-                        Control::empty()
-                            .with(ControlAttribute::Padding((4, 4), (4, 4)))
-                            .with(Bounds::next_horiz(22.0)),
-                        Control::empty()
-                            .with(ControlAttribute::Padding((4, 4), (4, 4)))
-                            .with(Bounds::next_horiz(22.0)),
-
-                        Control::empty()
-                            .with(Bounds::next_horiz(4.0)),
-                        Control::label()
-                            .with("F 107999")
-                            .with(TextAlign::Left)
-                            .with(Font::Size(11.0))
-                            .with(Font::Weight(FontWeight::Normal))
-                            .with(ControlAttribute::Padding((4, 4), (9, 4)))
-                            .with(Bounds::next_horiz(76.0))
-                    ])
+                    .with_controller("FrameControls")
                     .with(Bounds::next_horiz(22.0*6.0+80.0)),
 
                 Control::empty()
@@ -132,6 +104,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for ControlBarControl
 
     fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
         match id {
+            "FrameControls"     => Some(self.frame_controls.clone()),
             "KeyFrameControls"  => Some(self.keyframe_controls.clone()),
 
             _                   => None
