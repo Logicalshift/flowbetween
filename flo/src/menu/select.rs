@@ -117,25 +117,29 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
                             .with(Bounds::next_horiz(22.0*2.0 + 28.0*2.0))
                             .with(vec![
                                 Control::button()
-                                    .with(order_to_back.clone())
+                                    .with(vec![Control::empty().with(order_to_back.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "MoveToFront"))
-                                    .with(Bounds::next_horiz(28.0)),
+                                    .with(Bounds::next_horiz(28.0))
+                                    .with(ControlAttribute::Padding((6, 0), (0, 2))),
                                 Control::button()
-                                    .with(order_behind.clone())
+                                    .with(vec![Control::empty().with(order_behind.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "MoveForwards"))
-                                    .with(Bounds::next_horiz(22.0)),
+                                    .with(Bounds::next_horiz(22.0))
+                                    .with(ControlAttribute::Padding((0, 0), (0, 2))),
                                 Control::button()
-                                    .with(order_forward.clone())
+                                    .with(vec![Control::empty().with(order_forward.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "MoveBackwards"))
-                                    .with(Bounds::next_horiz(22.0)),
+                                    .with(Bounds::next_horiz(22.0))
+                                    .with(ControlAttribute::Padding((0, 0), (0, 2))),
                                 Control::button()
-                                    .with(order_to_front.clone())
+                                    .with(vec![Control::empty().with(order_to_front.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "MoveToBack"))
                                     .with(Bounds::next_horiz(28.0))
+                                    .with(ControlAttribute::Padding((0, 0), (6, 2)))
                             ])
                     ]
                 } else {
