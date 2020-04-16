@@ -66,6 +66,9 @@ fn run_command<'a>(command: FloCommand, output: &'a mut Publisher<FloCommandOutp
             FloCommand::ClearEdits                      => { *state = state.clear_edit_buffer(); }
             FloCommand::DumpCatalogAsEdits              => { dump_catalog_as_edits(output, state).await; }
             FloCommand::DeserializeEdits(ref edits)     => { deserialize_edits(stream::iter(edits.chars()), output, state).await?; }
+            FloCommand::ListLayers                      => { unimplemented!() }
+            FloCommand::SelectFrame(_layer, _when)      => { unimplemented!() }
+            FloCommand::ListElements                    => { unimplemented!() }
         }
 
         // Finish the command
