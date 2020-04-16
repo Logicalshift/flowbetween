@@ -6,7 +6,7 @@ use futures::prelude::*;
 use flo_stream::*;
 
 ///
-/// Implementation of the list_files command
+/// Writes out a list of layers to the output
 ///
 pub fn list_layers<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'a mut CommandState) -> impl 'a+Future<Output=()>+Send {
     async move {
@@ -15,7 +15,7 @@ pub fn list_layers<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'a m
         let input_animation = state.input_animation();
 
         // Retrieve all the layers for the animation
-        let layer_ids = input_animation.get_layer_ids();
+        let layer_ids       = input_animation.get_layer_ids();
 
         output.publish(Message("Animation layers:".to_string())).await;
 
