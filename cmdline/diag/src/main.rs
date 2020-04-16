@@ -48,6 +48,8 @@ async fn main() {
             .help("Specifies the path of a file to load as the input file"))
         .subcommand(SubCommand::with_name("ls")
             .about("Lists animations in the main index"))
+        .subcommand(SubCommand::with_name("ls-layers")
+            .about("Lists the layers defined in the input animation"))
         .subcommand(SubCommand::with_name("summarize-edits")
             .about("Reads all of the edits in the input animation and shows a summary of them"))
         .subcommand(SubCommand::with_name("rewrite-edits")
@@ -94,6 +96,11 @@ async fn main() {
         // Ls command
         if let Some(_ls_params) = params.subcommand_matches("ls") {
             input.push(FloCommand::ListAnimations);
+        }
+
+        // Ls-layers command
+        if let Some(_ls_params) = params.subcommand_matches("ls-layers") {
+            input.push(FloCommand::ListLayers);
         }
 
         // Summarize edits command
