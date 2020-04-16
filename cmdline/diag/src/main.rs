@@ -57,6 +57,8 @@ async fn main() {
             .about("Lists animations in the main index"))
         .subcommand(SubCommand::with_name("ls-layers")
             .about("Lists the layers defined in the input animation"))
+        .subcommand(SubCommand::with_name("ls-elements")
+            .about("Lists all of the elements in the selected frame"))
         .subcommand(SubCommand::with_name("summarize-edits")
             .about("Reads all of the edits in the input animation and shows a summary of them"))
         .subcommand(SubCommand::with_name("rewrite-edits")
@@ -130,6 +132,11 @@ async fn main() {
         // Ls-layers command
         if let Some(_ls_params) = params.subcommand_matches("ls-layers") {
             input.push(FloCommand::ListLayers);
+        }
+
+        // Ls-elements command
+        if let Some(_ls_params) = params.subcommand_matches("ls-elements") {
+            input.push(FloCommand::ListElements);
         }
 
         // Summarize edits command
