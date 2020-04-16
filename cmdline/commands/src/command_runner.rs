@@ -67,7 +67,7 @@ fn run_command<'a>(command: FloCommand, output: &'a mut Publisher<FloCommandOutp
             FloCommand::DumpCatalogAsEdits              => { dump_catalog_as_edits(output, state).await; }
             FloCommand::DeserializeEdits(ref edits)     => { deserialize_edits(stream::iter(edits.chars()), output, state).await?; }
             FloCommand::ListLayers                      => { list_layers(output, state).await; }
-            FloCommand::SelectFrame(layer, when)        => { select_frame(state, layer, when).await; }
+            FloCommand::SelectFrame(layer, when)        => { select_frame(output, state, layer, when).await; }
             FloCommand::ListElements                    => { unimplemented!() }
         }
 

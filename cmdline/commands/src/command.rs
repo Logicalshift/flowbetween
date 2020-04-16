@@ -1,8 +1,6 @@
 use super::state::*;
 use super::storage_descriptor::*;
 
-use std::time::{Duration};
-
 ///
 /// Command that can be issued to a FlowBetween instance
 ///
@@ -57,7 +55,7 @@ pub enum FloCommand {
     ListLayers,
 
     /// Selects the specified frame in the inout animation
-    SelectFrame(u64, Duration),
+    SelectFrame(u64, usize),
 
     /// Displays a list of elements for the currently selected frame
     ListElements

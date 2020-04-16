@@ -9,6 +9,8 @@ use clap::{App, Arg, SubCommand};
 mod console;
 use self::console::*;
 
+use std::str::{FromStr};
+
 #[tokio::main]
 async fn main() {
     // Fetch the parameters
@@ -46,6 +48,11 @@ async fn main() {
             .short("I")
             .takes_value(true)
             .help("Specifies the path of a file to load as the input file"))
+        .arg(Arg::with_name("frame")
+            .long("frame")
+            .short("F")
+            .takes_value(true)
+            .help("Specifies the layer and frame to apply the operation to (eg: -F 3:5 selects layer 3, frame 5)"))
         .subcommand(SubCommand::with_name("ls")
             .about("Lists animations in the main index"))
         .subcommand(SubCommand::with_name("ls-layers")
@@ -91,6 +98,28 @@ async fn main() {
         // Generate the output animation if there is one
         if let Some(name) = params.value_of("output-to-catalog") {
             input.push(FloCommand::WriteToCatalog(name.to_string()));
+        }
+
+        // Pick a frame if the user wanted one
+        if let Some(frame) = params.value_of("frame") {
+            // Expect two numbers seperated by a ':'
+            if let Some(sep_pos) = frame.find(':') {
+                // Split into layer and frame
+                let (layer_num, frame_num) = (frame[0..sep_pos].to_string(), frame[sep_pos+1..frame.len()].to_string());
+
+                if let (Ok(layer_num), Ok(frame_num)) = (u64::from_str(&layer_num), usize::from_str(&frame_num)) {
+                    // Request this frame in the input
+                    input.push(FloCommand::SelectFrame(layer_num, frame_num));
+                } else {
+                    // Bad frame format
+                    stderr().write(format!("'{}:{}' is not a valid value for --frame. The parameter must be of the format <layer_id>:<frame_number> (eg: 3:5 for frame 5 of layer 3)\n\n", layer_num, frame_num).as_bytes()).await.unwrap();
+                    return;
+                }
+            } else {
+                // Bad frame format
+                stderr().write(format!("'{}' is not a valid value for --frame. The parameter must be of the format <layer_id>:<frame_number> (eg: 3:5 for frame 5 of layer 3)\n\n", frame).as_bytes()).await.unwrap();
+                return;
+            }
         }
 
         // Ls command
