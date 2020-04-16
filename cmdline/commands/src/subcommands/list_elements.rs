@@ -55,7 +55,10 @@ pub fn list_elements<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'a
 
                 // Create a text representation of the element
                 let mut description = describe_vector(&element);
-                description.truncate(65);
+                if description.len() > 65 {
+                    description.truncate(62);
+                    description.extend("...".chars());
+                }
 
                 // Write it out to the output
                 let element = format!("{} : {}", element_id, description);
