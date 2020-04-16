@@ -41,6 +41,9 @@ struct StateValue {
     /// The animation that this will write to
     output_animation: AnimationState,
 
+    /// The frame that's currently selected
+    frame: Option<Arc<dyn Frame>>,
+
     /// A list of edits (read from an animation, or waiting to be written to one)
     edit_buffer: Arc<Vec<AnimationEdit>>
 }
@@ -67,6 +70,7 @@ impl CommandState {
             file_manager:       file_manager,
             input_animation:    input_animation,
             output_animation:   output_animation,
+            frame:              None,
             edit_buffer:        Arc::new(vec![])
         }))
     }
@@ -100,6 +104,13 @@ impl CommandState {
     }
 
     ///
+    /// Retrieves the currently selected frame, if there is one
+    ///
+    pub fn frame(&self) -> Option<Arc<dyn Frame>> {
+        self.0.frame.clone()
+    }
+
+    ///
     /// Removes all of the edits from the current state
     ///
     pub fn clear_edit_buffer(&self) -> CommandState {
@@ -114,6 +125,7 @@ impl CommandState {
             input_animation:    self.0.input_animation.clone(),
             output_animation:   self.0.output_animation.clone(),
             edit_buffer:        self.0.edit_buffer.clone(),
+            frame:              self.0.frame.clone(),
 
             file_manager:       new_file_manager
         }))
@@ -127,6 +139,7 @@ impl CommandState {
             file_manager:       self.0.file_manager.clone(),
             input_animation:    self.0.input_animation.clone(),
             edit_buffer:        self.0.edit_buffer.clone(),
+            frame:              self.0.frame.clone(),
 
             output_animation:   AnimationState(description, animation.clone(), animation.clone()),
         }))
@@ -144,6 +157,7 @@ impl CommandState {
             file_manager:       self.0.file_manager.clone(),
             output_animation:   self.0.output_animation.clone(),
             edit_buffer:        self.0.edit_buffer.clone(),
+            frame:              self.0.frame.clone(),
 
             input_animation:    AnimationState(input, new_input.clone(), new_input.clone()),
         })))
@@ -157,6 +171,7 @@ impl CommandState {
             file_manager:       self.0.file_manager.clone(),
             output_animation:   self.0.output_animation.clone(),
             edit_buffer:        self.0.edit_buffer.clone(),
+            frame:              self.0.frame.clone(),
 
             input_animation:    self.0.output_animation.clone()
         }))
@@ -170,8 +185,23 @@ impl CommandState {
             file_manager:       self.0.file_manager.clone(),
             input_animation:    self.0.input_animation.clone(),
             output_animation:   self.0.output_animation.clone(),
+            frame:              self.0.frame.clone(),
 
             edit_buffer:        Arc::new(new_buffer)
+        }))
+    }
+
+    ///
+    /// Sets the selected frame to a new value
+    ///
+    pub fn set_selected_frame(&self, new_frame: Option<Arc<dyn Frame>>) -> CommandState {
+        CommandState(Arc::new(StateValue {
+            file_manager:       self.0.file_manager.clone(),
+            input_animation:    self.0.input_animation.clone(),
+            output_animation:   self.0.output_animation.clone(),
+            edit_buffer:        self.0.edit_buffer.clone(),
+
+            frame:              new_frame
         }))
     }
 }
