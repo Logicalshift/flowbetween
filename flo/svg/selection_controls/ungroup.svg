@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 36 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g transform="matrix(1,0,0,1,-378,-128)">
+        <g id="Icons">
+            <g id="FlipVert">
+            </g>
+            <g id="FlipHoriz">
+            </g>
+            <g id="AlignLeft">
+            </g>
+            <g id="AlignCenter">
+            </g>
+            <g id="AlignRight">
+            </g>
+            <g id="AlignBottom">
+            </g>
+            <g id="AlignMiddle">
+            </g>
+            <g id="AlignTop">
+            </g>
+            <g id="OrderBack">
+            </g>
+            <g id="OrderBehind">
+            </g>
+            <g id="OrderForward">
+            </g>
+            <g id="OrderFront">
+            </g>
+            <g id="Add">
+            </g>
+            <g id="Subtract">
+            </g>
+            <g id="Intersect">
+            </g>
+            <g id="Ungroup" transform="matrix(1,0,0,1,0,49)">
+                <g transform="matrix(1.12398,0,0,1.12754,-51.0286,-12.5775)">
+                    <ellipse cx="387.802" cy="88.088" rx="3.559" ry="3.548" style="fill:rgb(162,216,227);fill-opacity:0.5;stroke:rgb(162,216,227);stroke-width:0.89px;"/>
+                </g>
+                <g transform="matrix(3.15951,0,0,4.20159,-852.245,-313.81)">
+                    <path d="M395.234,99.341L396.5,101.245L393.968,101.245L395.234,99.341Z" style="fill:rgb(162,216,227);fill-opacity:0.5;stroke:rgb(162,216,227);stroke-width:0.27px;"/>
+                </g>
+                <g transform="matrix(1,0,0,1,5.07717,-4.74524)">
+                    <rect x="397.923" y="87.745" width="8.027" height="8" style="fill:rgb(162,216,227);fill-opacity:0.5;stroke:rgb(162,216,227);stroke-width:1px;"/>
+                </g>
+                <g transform="matrix(0.272282,0,0,0.293914,288.058,68.3962)">
+                    <rect x="381.742" y="83.711" width="29.381" height="27.219" style="fill:none;stroke:rgb(198,247,196);stroke-opacity:0.5;stroke-width:7.06px;stroke-dasharray:14.12,14.12,0,0;"/>
+                </g>
+                <g transform="matrix(1.0165,0,0,1.0165,14.7806,20.2132)">
+                    <g transform="matrix(0.983771,-0,-0,0.983771,357.325,57.8327)">
+                        <path d="M26.879,23.136L29,29.5L22.636,27.379L26.879,23.136Z" style="fill:rgb(198,247,196);"/>
+                        <path d="M20,20.5C20,20.5 23.056,23.556 25.606,26.106" style="fill:none;stroke:rgb(198,247,196);stroke-width:2px;"/>
+                    </g>
+                </g>
+                <g transform="matrix(-1.0165,0,0,1.0165,777.219,20.2132)">
+                    <g transform="matrix(-0.983771,0,0,0.983771,392.74,57.8327)">
+                        <path d="M13.364,27.379L7,29.5L9.121,23.136L13.364,27.379Z" style="fill:rgb(198,247,196);"/>
+                        <path d="M16,20.5C16,20.5 12.944,23.556 10.394,26.106" style="fill:none;stroke:rgb(198,247,196);stroke-width:2px;"/>
+                    </g>
+                </g>
+                <g transform="matrix(-1.0165,0,0,-1.0165,777.219,174.787)">
+                    <g transform="matrix(-0.983771,-0,-0,-0.983771,392.74,94.2322)">
+                        <path d="M9.121,13.864L7,7.5L13.364,9.621L9.121,13.864Z" style="fill:rgb(198,247,196);"/>
+                        <path d="M16,16.5C16,16.5 12.944,13.444 10.394,10.894" style="fill:none;stroke:rgb(198,247,196);stroke-width:2px;"/>
+                    </g>
+                </g>
+                <g transform="matrix(1.0165,0,0,-1.0165,14.7806,174.787)">
+                    <g transform="matrix(0.983771,0,0,-0.983771,357.325,94.2322)">
+                        <path d="M22.636,9.621L29,7.5L26.879,13.864L22.636,9.621Z" style="fill:rgb(198,247,196);"/>
+                        <path d="M20,16.5C20,16.5 23.056,13.444 25.606,10.894" style="fill:none;stroke:rgb(198,247,196);stroke-width:2px;"/>
+                    </g>
+                </g>
+            </g>
+            <g id="Group">
+            </g>
+        </g>
+        <g id="BoundEditorControls">
+        </g>
+        <g id="Slices">
+        </g>
+    </g>
+</svg>

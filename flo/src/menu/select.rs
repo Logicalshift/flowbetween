@@ -22,6 +22,9 @@ pub struct SelectMenuController<Anim: Animation> {
     /// Currently selected elements, in order
     selection_in_order: BindRef<Arc<Vec<ElementId>>>,
 
+    /// The images for the selection menu
+    images: Arc<ResourceManager<Image>>,
+
     /// The animation editing stream where this will send updates
     edit: Desync<Publisher<Arc<Vec<AnimationEdit>>>>,
 
@@ -37,7 +40,8 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
     /// Creates a new select menu controller
     ///
     pub fn new(flo_model: &FloModel<Anim>, tool_model: &SelectToolModel) -> SelectMenuController<Anim> {
-        let ui                  = Self::ui(tool_model);
+        let images              = Self::images();
+        let ui                  = Self::ui(&images, tool_model);
         let edit                = Desync::new(flo_model.edit());
         let selected            = flo_model.selection().selected_elements.clone();
         let selection_in_order  = flo_model.selection().selection_in_order.clone();
@@ -46,6 +50,7 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
         SelectMenuController {
             ui:                 ui,
             edit:               edit,
+            images:             Arc::new(images),
             selected:           selected,
             selection_in_order: selection_in_order,
             timeline:           timeline
@@ -53,9 +58,33 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
     }
 
     ///
+    /// Creates the images for this controller
+    ///
+    fn images() -> ResourceManager<Image> {
+        let images          = ResourceManager::new();
+
+        let order_to_back   = images.register(svg_static(include_bytes!("../../svg/selection_controls/to_back.svg")));
+        let order_behind    = images.register(svg_static(include_bytes!("../../svg/selection_controls/behind.svg")));
+        let order_forward   = images.register(svg_static(include_bytes!("../../svg/selection_controls/forward.svg")));
+        let order_to_front  = images.register(svg_static(include_bytes!("../../svg/selection_controls/to_front.svg")));
+
+        images.assign_name(&order_to_back, "OrderToBack");
+        images.assign_name(&order_behind, "OrderBehind");
+        images.assign_name(&order_forward, "OrderForward");
+        images.assign_name(&order_to_front, "OrderToFront");
+
+        images
+    }
+
+    ///
     /// Creates the UI for the select menu controller
     ///
-    fn ui(tool_model: &SelectToolModel) -> BindRef<Control> {
+    fn ui(images: &ResourceManager<Image>, tool_model: &SelectToolModel) -> BindRef<Control> {
+        let order_to_back       = images.get_named_resource("OrderToBack");
+        let order_behind        = images.get_named_resource("OrderBehind");
+        let order_forward       = images.get_named_resource("OrderForward");
+        let order_to_front      = images.get_named_resource("OrderToFront");
+
         let anything_selected   = tool_model.anything_selected.clone();
         let num_selected        = tool_model.num_elements_selected.clone();
 
@@ -85,28 +114,28 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
                             .with(Hint::Class("button-group".to_string()))
                             .with(ControlAttribute::Padding((0,2), (0,2)))
                             .with(Font::Size(9.0))
-                            .with(Bounds::next_horiz(80.0))
+                            .with(Bounds::next_horiz(22.0*2.0 + 28.0*2.0))
                             .with(vec![
                                 Control::button()
-                                    .with(vec![Control::label().with("^^").with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(order_to_back.clone())
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "MoveToFront"))
-                                    .with(Bounds::next_horiz(20.0)),
+                                    .with(Bounds::next_horiz(28.0)),
                                 Control::button()
-                                    .with(vec![Control::label().with("^").with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(order_behind.clone())
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "MoveForwards"))
-                                    .with(Bounds::next_horiz(20.0)),
+                                    .with(Bounds::next_horiz(22.0)),
                                 Control::button()
-                                    .with(vec![Control::label().with("v").with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(order_forward.clone())
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "MoveBackwards"))
-                                    .with(Bounds::next_horiz(20.0)),
+                                    .with(Bounds::next_horiz(22.0)),
                                 Control::button()
-                                    .with(vec![Control::label().with("vv").with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(order_to_front.clone())
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "MoveToBack"))
-                                    .with(Bounds::next_horiz(20.0))
+                                    .with(Bounds::next_horiz(28.0))
                             ])
                     ]
                 } else {
@@ -149,6 +178,10 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
 impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         self.ui.clone()
+    }
+
+    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {
+        Some(Arc::clone(&self.images))
     }
 
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 36 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g transform="matrix(1,0,0,1,-428,-128)">
+        <g id="Icons">
+            <g id="FlipVert">
+            </g>
+            <g id="FlipHoriz">
+            </g>
+            <g id="AlignLeft">
+            </g>
+            <g id="AlignCenter">
+            </g>
+            <g id="AlignRight">
+            </g>
+            <g id="AlignBottom">
+            </g>
+            <g id="AlignMiddle">
+            </g>
+            <g id="AlignTop">
+            </g>
+            <g id="OrderBack">
+            </g>
+            <g id="OrderBehind">
+            </g>
+            <g id="OrderForward">
+            </g>
+            <g id="OrderFront">
+            </g>
+            <g id="Add">
+            </g>
+            <g id="Subtract">
+            </g>
+            <g id="Intersect">
+            </g>
+            <g id="Ungroup">
+            </g>
+            <g id="Group" transform="matrix(1,0,0,1,50,49)">
+                <g transform="matrix(1.12398,0,0,1.12754,-46.0286,-7.57754)">
+                    <ellipse cx="387.802" cy="88.088" rx="3.559" ry="3.548" style="fill:rgb(162,216,227);fill-opacity:0.5;stroke:rgb(162,216,227);stroke-width:0.89px;"/>
+                </g>
+                <g transform="matrix(3.15951,0,0,4.20159,-852.245,-318.81)">
+                    <path d="M395.234,99.341L396.5,101.245L393.968,101.245L395.234,99.341Z" style="fill:rgb(162,216,227);fill-opacity:0.5;stroke:rgb(162,216,227);stroke-width:0.27px;"/>
+                </g>
+                <g transform="matrix(1,0,0,1,0.0771702,0.254762)">
+                    <rect x="397.923" y="87.745" width="8.027" height="8" style="fill:rgb(162,216,227);fill-opacity:0.5;stroke:rgb(162,216,227);stroke-width:1px;"/>
+                </g>
+                <g transform="matrix(0.884917,0,0,0.955221,45.1896,4.03763)">
+                    <rect x="381.742" y="83.711" width="29.381" height="27.219" style="fill:none;stroke:rgb(198,247,196);stroke-opacity:0.5;stroke-width:2.17px;stroke-dasharray:4.34,4.34,0,0;"/>
+                </g>
+                <g transform="matrix(1.0165,0,0,1.0165,-3.21939,1.21323)">
+                    <g transform="matrix(0.983771,-0,-0,0.983771,375.032,76.5243)">
+                        <path d="M8.879,4.136L11,10.5L4.636,8.379L8.879,4.136Z" style="fill:rgb(198,247,196);"/>
+                        <path d="M2,1.5C2,1.5 5.056,4.556 7.606,7.106" style="fill:none;stroke:rgb(198,247,196);stroke-width:2px;"/>
+                    </g>
+                </g>
+                <g transform="matrix(-1.0165,0,0,1.0165,795.219,1.21323)">
+                    <g transform="matrix(-0.983771,0,0,0.983771,410.448,76.5243)">
+                        <path d="M31.364,8.379L25,10.5L27.121,4.136L31.364,8.379Z" style="fill:rgb(198,247,196);"/>
+                        <path d="M34,1.5C34,1.5 30.944,4.556 28.394,7.106" style="fill:none;stroke:rgb(198,247,196);stroke-width:2px;"/>
+                    </g>
+                </g>
+                <g transform="matrix(-1.0165,0,0,-1.0165,795.219,192.787)">
+                    <g transform="matrix(-0.983771,-0,-0,-0.983771,410.448,111.94)">
+                        <path d="M27.121,31.864L25,25.5L31.364,27.621L27.121,31.864Z" style="fill:rgb(198,247,196);"/>
+                        <path d="M34,34.5C34,34.5 30.944,31.444 28.394,28.894" style="fill:none;stroke:rgb(198,247,196);stroke-width:2px;"/>
+                    </g>
+                </g>
+                <g transform="matrix(1.0165,0,0,-1.0165,-3.21939,192.787)">
+                    <g transform="matrix(0.983771,0,0,-0.983771,375.032,111.94)">
+                        <path d="M4.636,27.621L11,25.5L8.879,31.864L4.636,27.621Z" style="fill:rgb(198,247,196);"/>
+                        <path d="M2,34.5C2,34.5 5.056,31.444 7.606,28.894" style="fill:none;stroke:rgb(198,247,196);stroke-width:2px;"/>
+                    </g>
+                </g>
+            </g>
+        </g>
+        <g id="BoundEditorControls">
+        </g>
+        <g id="Slices">
+        </g>
+    </g>
+</svg>
