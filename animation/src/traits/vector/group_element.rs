@@ -93,6 +93,7 @@ impl GroupElement {
             // Get the paths for this rendering
             let paths = self.grouped_elements.iter()
                 .flat_map(|elem| elem.to_path(properties, PathConversion::RemoveInteriorPoints))
+                .flat_map(|paths| paths.into_iter().map(|path| path.to_subpaths()))
                 .collect::<Vec<_>>();
 
             // Render if there are more than one path
