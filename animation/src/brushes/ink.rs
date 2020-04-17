@@ -490,9 +490,9 @@ impl Brush for InkBrush {
                     if let (Some(src_path), Some(tgt_path)) = (src_path, tgt_path) {
                         let combined = combine_paths(&src_path, &tgt_path, 0.01);
                         if let Some(mut combined) = combined {
-                            // Managed to combine the two brush strokes/paths into one: add to the group
+                            // Managed to combine the two brush strokes/paths into one: add to the group. Note that the 'next' element is combined underneath the current element.
                             let previous_elements   = combined_element.elements().cloned();
-                            let grouped_elements    = previous_elements.chain(iter::once(next_element.clone())).collect();
+                            let grouped_elements    = iter::once(next_element.clone()).chain(previous_elements).collect();
 
                             let mut grouped         = GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(grouped_elements));
 
@@ -532,7 +532,7 @@ impl Brush for InkBrush {
                             if let Some(mut combined) = combined {
                                 // Managed to combine the two brush strokes/paths into one: add to the group
                                 let previous_elements   = combined_element.elements().cloned();
-                                let grouped_elements    = previous_elements.chain(group.elements().cloned()).collect();
+                                let grouped_elements    = group.elements().cloned().chain(previous_elements).collect();
 
                                 let mut grouped         = GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(grouped_elements));
 
