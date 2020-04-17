@@ -22,6 +22,11 @@ pub trait VectorElement : Send+Any {
     fn id(&self) -> ElementId;
 
     ///
+    /// Modifies this element to have a new ID
+    ///
+    fn set_id(&mut self, new_id: ElementId);
+
+    ///
     /// Retrieves the paths for this element, if there are any
     ///
     fn to_path(&self, properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>>;

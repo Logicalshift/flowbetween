@@ -94,6 +94,13 @@ impl VectorElement for BrushElement {
     }
 
     ///
+    /// Modifies this element to have a new ID
+    ///
+    fn set_id(&mut self, new_id: ElementId) {
+        self.id = new_id
+    }
+
+    ///
     /// Renders this vector element
     ///
     fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, _when: Duration) {

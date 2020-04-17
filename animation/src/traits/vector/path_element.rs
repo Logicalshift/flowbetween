@@ -77,6 +77,13 @@ impl VectorElement for PathElement {
     }
 
     ///
+    /// Modifies this element to have a new ID
+    ///
+    fn set_id(&mut self, new_id: ElementId) {
+        self.id = new_id
+    }
+
+    ///
     /// Retrieves the paths for this element, if there are any
     ///
     fn to_path(&self, _properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> {

@@ -22,7 +22,10 @@ pub struct TransformedVector {
     original:       Arc<Vector>,
 
     /// The vector element as it is after the transformations were applied
-    transformed:    Arc<Vector>
+    transformed:    Arc<Vector>,
+
+    /// The ID of this transformed vector
+    id:             ElementId
 }
 
 impl TransformedVector {
@@ -31,8 +34,9 @@ impl TransformedVector {
     ///
     pub fn new(original: Vector, transformed: Vector) -> TransformedVector {
         TransformedVector {
-            original: Arc::new(original),
-            transformed: Arc::new(transformed)
+            id:             transformed.id(),
+            original:       Arc::new(original),
+            transformed:    Arc::new(transformed)
         }
     }
 
@@ -57,7 +61,14 @@ impl VectorElement for TransformedVector {
     ///
     #[inline]
     fn id(&self) -> ElementId {
-        self.transformed.id()
+        self.id
+    }
+
+    ///
+    /// Modifies this element to have a new ID
+    ///
+    fn set_id(&mut self, new_id: ElementId) {
+        self.id = new_id;
     }
 
     ///
@@ -93,10 +104,12 @@ impl VectorElement for TransformedVector {
         Vector::Transformed(match transformed {
             Vector::Transformed(transformed) => TransformedVector {
                 original:       Arc::clone(&self.original),
-                transformed:    Arc::clone(&transformed.transformed)
+                transformed:    Arc::clone(&transformed.transformed),
+                id:             transformed.id()
             },
 
             transformed => TransformedVector {
+                id:             transformed.id(),
                 original:       Arc::clone(&self.original),
                 transformed:    Arc::new(transformed)
             }
@@ -120,7 +133,8 @@ impl VectorElement for TransformedVector {
     fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector {
         Vector::Transformed(TransformedVector {
             original:       Arc::clone(&self.original),
-            transformed:    Arc::new(self.transformed.with_adjusted_control_points(new_positions))
+            transformed:    Arc::new(self.transformed.with_adjusted_control_points(new_positions)),
+            id:             self.id
         })
     }
 }
