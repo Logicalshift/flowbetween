@@ -69,6 +69,7 @@ fn run_command<'a>(command: FloCommand, output: &'a mut Publisher<FloCommandOutp
             FloCommand::ListLayers                      => { list_layers(output, state).await; }
             FloCommand::SelectFrame(layer, when)        => { select_frame(output, state, layer, when).await; }
             FloCommand::ListElements                    => { list_elements(output, state).await; }
+            FloCommand::RayCastToSvg(element_id)        => { raycast_to_svg(output, state, element_id).await?; }
         }
 
         // Finish the command

@@ -1,3 +1,5 @@
+use flo_animation::*;
+
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
@@ -13,7 +15,13 @@ pub enum CommandError {
     CouldNotCreateAnimation(String),
 
     /// An edit on the specified line number could not be parsed
-    CannotParseEdit(usize, String)
+    CannotParseEdit(usize, String),
+
+    /// The operation requires a frame to be selected
+    NoFrameSelected,
+
+    /// The element ID was not found
+    ElementNotFound(ElementId)
 }
 
 impl Display for CommandError {
@@ -23,7 +31,9 @@ impl Display for CommandError {
         match self {
             CouldNotOpenAnimation(name)     => write!(fmt, "Could not open animation '{}'", name),
             CouldNotCreateAnimation(name)   => write!(fmt, "Coult not create animation '{}'", name),
-            CannotParseEdit(line, edit)     => write!(fmt, "{}: cannot parse edit '{}'", line, edit)
+            CannotParseEdit(line, edit)     => write!(fmt, "{}: cannot parse edit '{}'", line, edit),
+            NoFrameSelected                 => write!(fmt, "A frame must be selected for this operation"),
+            ElementNotFound(id)             => write!(fmt, "Element {} was not found", id.id().map(|id| id.to_string()).unwrap_or("<unassigned>".to_string()))
         }
     }
 }

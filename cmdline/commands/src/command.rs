@@ -1,6 +1,8 @@
 use super::state::*;
 use super::storage_descriptor::*;
 
+use flo_animation::*;
+
 ///
 /// Command that can be issued to a FlowBetween instance
 ///
@@ -58,5 +60,8 @@ pub enum FloCommand {
     SelectFrame(u64, usize),
 
     /// Displays a list of elements for the currently selected frame
-    ListElements
+    ListElements,
+
+    /// Writes out debugging SVG files for raycasting a particular element
+    RayCastToSvg(ElementId)
 }
