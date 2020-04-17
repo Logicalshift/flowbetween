@@ -121,8 +121,9 @@ impl StreamAnimationCore {
 
                                 // Final update is to replace the old element with the new element
                                 let replacement_element = frame.elements.get(&source_element_id).cloned();
-                                if let (Some(combined_element), Some(mut replacement_element)) = (combined_element, replacement_element) {
-                                    // Replace the element
+                                if let (Some(mut combined_element), Some(mut replacement_element)) = (combined_element, replacement_element) {
+                                    // Replace the source element with the combined element
+                                    combined_element.set_id(source_element_id);
                                     replacement_element.element = combined_element;
 
                                     // Update it in the storage
