@@ -55,11 +55,11 @@ pub fn raycast_to_svg<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'
         for (path_num, path) in paths.into_iter().enumerate() {
             // Start writing the 'remove interior points' file
             let remove_interior_filename = format!("remove_interior_{}.svg", path_num);
-            output.publish(FloCommandOutput::Message(format!("  Writing {}", remove_interior_filename)));
-            output.publish(FloCommandOutput::BeginOutput(remove_interior_filename));
+            output.publish(FloCommandOutput::Message(format!("  Writing {}", remove_interior_filename))).await;
+            output.publish(FloCommandOutput::BeginOutput(remove_interior_filename)).await;
             output.publish(FloCommandOutput::Output("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>
                 <!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">
-                <svg width=\"100%\" height=\"100%\" viewBox=\"0 0 2000 4000\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xml:space=\"preserve\" style=\"fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-miterlimit:8;\">".to_string()));
+                <svg width=\"100%\" height=\"100%\" viewBox=\"0 0 2000 4000\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xml:space=\"preserve\" style=\"fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-miterlimit:8;\">".to_string())).await;
 
             // Generate a graph from this path
             let mut remove_interior = GraphPath::new();
