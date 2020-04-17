@@ -13,7 +13,10 @@ fn get_bounds<P: BezierPath>(path: &Vec<P>) -> Bounds<P::Point> {
 }
 
 ///
-/// If two paths can be combined, generates the
+/// If two paths can be combined, returns the combined paths. Paths can be combined if they collide at any point.
+///
+/// The path that is passed in here must have no interior points: these can be removed by `path_remove_interior_points`
+/// if necessary.
 ///
 pub fn combine_paths<P: BezierPathFactory>(path1: &Vec<P>, path2: &Vec<P>, accuracy: f64) -> Option<GraphPath<P::Point, PathLabel>>
 where P::Point: Coordinate2D {
@@ -30,12 +33,6 @@ where P::Point: Coordinate2D {
         // Neither of the paths overlap as the bounding boxes are different
         None
     } else {
-        // Remove interior points
-        //let path1 = path_remove_overlapped_points::<_, P>(path1, 0.01); - assume the first path already has all of its interior points removed
-        let path2 = path2.iter()
-            .flat_map(|path| path_remove_interior_points::<_, P>(&vec![path.clone()], 0.01))
-            .collect::<Vec<_>>();
-
         // Convert both to graph paths
         let graph_path1 = GraphPath::from_merged_paths(path1.iter().map(|path| (path, PathLabel(0, PathDirection::from(path)))));
         let graph_path2 = GraphPath::from_merged_paths(path2.iter().map(|path| (path, PathLabel(1, PathDirection::from(path)))));
