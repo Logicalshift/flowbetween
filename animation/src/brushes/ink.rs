@@ -468,41 +468,31 @@ impl Brush for InkBrush {
     ///
     /// Attempts to combine this brush stroke with the specified vector element. Returns the combined element if successful
     ///
-    fn combine_with(&self, element: &Vector, points: Arc<Vec<BrushPoint>>, brush_properties: &VectorProperties, element_properties: &VectorProperties, combined_element: Option<Vector>) -> CombineResult {
+    fn combine_with(&self, combined_element: &Vector, combined_element_properties: &VectorProperties, next_element: &Vector, next_element_properties: &VectorProperties) -> CombineResult {
         // The ink brush always combines into a group: retrieve that as the combined element here
         let combined_element = match combined_element {
-            Some(Vector::Group(group_element))  => Some(group_element),
-            Some(other)                         => Some(GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(vec![other]))),
-            _                                   => None
+            Vector::Group(group_element)    => group_element.clone(),
+            other                           => {
+                let mut other = other.clone();
+                other.set_id(ElementId::Unassigned);
+                GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(vec![other]))
+            }
         };
 
-        if brush_properties.brush_properties == element_properties.brush_properties {
-            match element {
+        if combined_element_properties.brush_properties == next_element_properties.brush_properties {
+            match next_element {
                 Vector::BrushStroke(_) | Vector::Path(_) => {
-                    // TODO: if Vector::Path, we don't really care about the element_properties as paths track their properties independently
-                    let brush_stroke = if let Some(ref combined_element) = combined_element {
-                        Vector::Group(combined_element.clone())
-                    } else {
-                        Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()))
-                    };
-
                     // Add to brush strokes or paths if possible
-                    let src_path = element.to_path(&element_properties, PathConversion::RemoveInteriorPoints);
-                    let tgt_path = brush_stroke.to_path(&brush_properties, PathConversion::RemoveInteriorPoints);
+                    let src_path = next_element.to_path(next_element_properties, PathConversion::RemoveInteriorPoints);
+                    let tgt_path = combined_element.to_path(combined_element_properties, PathConversion::RemoveInteriorPoints);
 
                     // Try to combine with the path
                     if let (Some(src_path), Some(tgt_path)) = (src_path, tgt_path) {
                         let combined = combine_paths(&src_path, &tgt_path, 0.01);
                         if let Some(mut combined) = combined {
-                            // Managed to combine the two brush strokes/paths into one
-                            let grouped_elements = if let Some(combined_element) = combined_element {
-                                // The combined element will already contain a copy of the brush stroke, so we only need to add the new element to the previous elements
-                                let previous_elements = combined_element.elements().cloned();
-                                previous_elements.chain(iter::once(element.clone())).collect()
-                            } else {
-                                // This is the first element to be merged, so we add the brush stroke to the element it overlaps                                
-                                vec![brush_stroke, element.clone()]
-                            };
+                            // Managed to combine the two brush strokes/paths into one: add to the group
+                            let previous_elements   = combined_element.elements().cloned();
+                            let grouped_elements    = previous_elements.chain(iter::once(next_element.clone())).collect();
 
                             let mut grouped         = GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(grouped_elements));
 
@@ -532,30 +522,17 @@ impl Brush for InkBrush {
                         // TODO: we *can* by creating an added subgroup, but for now we won't
                         CombineResult::UnableToCombineFurther
                     } else {
-                        let brush_stroke = if let Some(ref combined_element) = combined_element {
-                            Vector::Group(combined_element.clone())
-                        } else {
-                            Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()))
-                        };
-
                         // Combine if the path for this group will add up
-                        let src_path = brush_stroke.to_path(&element_properties, PathConversion::RemoveInteriorPoints);
-                        let tgt_path = group.to_path(&brush_properties, PathConversion::RemoveInteriorPoints);
+                        let src_path = group.to_path(next_element_properties, PathConversion::RemoveInteriorPoints);
+                        let tgt_path = combined_element.to_path(combined_element_properties, PathConversion::RemoveInteriorPoints);
 
                         // Try to combine with the path
                         if let (Some(src_path), Some(tgt_path)) = (src_path, tgt_path) {
                             let combined = combine_paths(&src_path, &tgt_path, 0.01);
                             if let Some(mut combined) = combined {
-                                // Managed to combine the two brush strokes/paths into one
-                                let grouped_elements = if let Some(combined_element) = combined_element {
-                                    // The combined element will already contain a copy of the brush stroke, so we only need to add the new elements
-                                    // from the group to the previously merged elements
-                                    let previous_elements = combined_element.elements().cloned();
-                                    previous_elements.chain(group.elements().cloned()).collect()
-                                } else {
-                                    // Add the brush stroke to the start of the grouped items
-                                    iter::once(brush_stroke.clone()).chain(group.elements().cloned()).collect::<Vec<_>>()
-                                };
+                                // Managed to combine the two brush strokes/paths into one: add to the group
+                                let previous_elements   = combined_element.elements().cloned();
+                                let grouped_elements    = previous_elements.chain(group.elements().cloned()).collect();
 
                                 let mut grouped         = GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(grouped_elements));
 

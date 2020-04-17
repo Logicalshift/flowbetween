@@ -10,7 +10,7 @@ use super::brush_definition_element::*;
 use super::super::path::*;
 use super::super::edit::ElementId;
 
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 ///
 /// Possible types of vector element
@@ -106,6 +106,26 @@ impl Vector {
 
             // Element is unchanged if it's not a path
             _ => self.clone()
+        }
+    }
+}
+
+impl DerefMut for Vector {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut dyn VectorElement {
+        use Vector::*;
+
+        match self {
+            Transformed(transform)          => transform,
+
+            BrushDefinition(defn)           => defn,
+            BrushProperties(props)          => props,
+            BrushStroke(elem)               => elem,
+
+            Path(elem)                      => elem,
+            Motion(elem)                    => elem,
+            Group(elem)                     => elem,
+            Error                           => panic!("Cannot edit an error element")
         }
     }
 }

@@ -76,7 +76,7 @@ impl StreamAnimationCore {
                         let current_brush = &new_properties.brush;
 
                         // Fetch the element from the frame
-                        let wrapper     = frame.elements.get(&combine_element_id);
+                        let wrapper     = frame.elements.get(&combine_element_id).cloned();
                         let mut updates = PendingStorageChange::new();
 
                         let wrapper     = match wrapper {
@@ -87,10 +87,7 @@ impl StreamAnimationCore {
                         // Collide other elements in the frame with this element
                         // Only brush stroke elements can be combined at the moment
                         match &wrapper.element {
-                            Vector::BrushStroke(brush_stroke) => {
-                                // Take the brush points from this one to generate a new value for the element
-                                let brush_points = brush_stroke.points();
-
+                            Vector::BrushStroke(_) => {
                                 // Attempt to combine the element we fetched with the rest of the frame
                                 let mut combined_element            = None;
                                 for (combine_with_wrapper, properties) in elements_with_properties.iter().rev() {
@@ -102,7 +99,10 @@ impl StreamAnimationCore {
                                         continue;
                                     }
 
-                                    let new_combined = match current_brush.combine_with(&combine_with_wrapper.element, Arc::clone(&brush_points), &new_properties, &*properties, combined_element.clone()) {
+                                    // The 'combined so far' vector is either just our brush stroke, or what we've got from the combination we've built up so far
+                                    let combined_so_far = combined_element.as_ref().unwrap_or_else(|| &wrapper.element);
+
+                                    let new_combined = match current_brush.combine_with(combined_so_far, &new_properties, &combine_with_wrapper.element, &*properties) {
                                         NewElement(new_combined)    => {
                                             // Unlink the element from the frame (brushes typicaly put their new element into a group so
                                             // this will set up the element in a way that's appropriate for that)
