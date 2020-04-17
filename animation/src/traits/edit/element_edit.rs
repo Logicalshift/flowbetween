@@ -55,9 +55,9 @@ pub enum ElementEdit {
 
     /// Attempts to join these elements with matching elements in the same frame
     /// 
-    /// The combined elements will be given the ID of the element that 'bound' to them (ie, from the edit element list)
-    /// If there are multiple elements being edited and they bind to each other, the earlier element is the one that
-    /// keeps its ID.
+    /// The ID of the combined element is the same as the ID of the first element of the set. This makes it possible
+    /// to call ConvertToPath on the result and get a valid path. There's a slight issue in that this usually generates
+    /// a group of the combined elements. The source element will be in this group but will have no ID of its own.
     CollideWithExistingElements,
 
     /// Converts this element to a path
