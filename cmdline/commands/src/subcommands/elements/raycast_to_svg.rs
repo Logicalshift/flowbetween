@@ -52,7 +52,8 @@ pub fn raycast_to_svg<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'
         // use flo_curve's debugging function to generate a set of SVG files
         let mut current_path: Option<Vec<Path>> = None;
 
-        for (path_num, path) in paths.into_iter().enumerate() {
+        // We reverse here because when combining paths, they're added in reverse order so this illustrates the most common bugs
+        for (path_num, path) in paths.into_iter().enumerate().rev() {
             // Generate a graph from this path
             let mut remove_interior = GraphPath::new();
             remove_interior         = remove_interior.merge(GraphPath::from_merged_paths(path.iter().map(|sub_path| (sub_path, PathLabel(0, PathDirection::from(sub_path))))));
@@ -85,8 +86,8 @@ pub fn raycast_to_svg<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'
             if let Some(existing_path) = current_path {
                 // Add to the existing 'current' path
                 let mut combined_path   = GraphPath::new();
-                combined_path           = combined_path.merge(GraphPath::from_merged_paths(existing_path.iter().map(|sub_path| (sub_path, PathLabel(0, PathDirection::from(sub_path))))));
-                combined_path           = combined_path.collide(GraphPath::from_merged_paths(remove_interior.iter().map(|sub_path| (sub_path, PathLabel(1, PathDirection::from(sub_path))))), 0.01);
+                combined_path           = combined_path.merge(GraphPath::from_merged_paths(existing_path.iter().map(|sub_path| (sub_path, PathLabel(1, PathDirection::from(sub_path))))));
+                combined_path           = combined_path.collide(GraphPath::from_merged_paths(remove_interior.iter().map(|sub_path| (sub_path, PathLabel(0, PathDirection::from(sub_path))))), 0.01);
                 combined_path.round(0.01);
 
                 // Add the paths
