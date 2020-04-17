@@ -27,7 +27,6 @@ where InputStream: Stream<Item=FloCommandOutput>+Send+Unpin {
                 BeginCommand(_cmd)              => { }
                 Message(msg)                    => { message_stream.write(msg.as_bytes()).await.unwrap(); message_stream.write("\n".as_bytes()).await.unwrap(); }
                 BeginOutput(filename)           => { output_stream = Box::new(fs::File::create(PathBuf::from(filename)).await.unwrap()); }
-                Output(output)                  => { output_stream.write(output.as_bytes()).await.unwrap(); }
                 Error(err)                      => { message_stream.write(err.as_bytes()).await.unwrap(); message_stream.write("\n".as_bytes()).await.unwrap(); }
                 State(_state)                   => { }
                 FinishCommand(_cmd)             => { }
@@ -37,6 +36,18 @@ where InputStream: Stream<Item=FloCommandOutput>+Send+Unpin {
                 Failure(error)                  => { 
                     let msg = format!("ERROR: {}", error);
                     message_stream.write(msg.as_bytes()).await.unwrap();
+                }
+
+                Output(output)                  => {
+                    let bytes   = output.as_bytes();
+                    let mut pos = 0;
+
+                    while pos < bytes.len() {
+                        let remaining_bytes = &bytes[pos..bytes.len()];
+
+                        let num_written     = output_stream.write(remaining_bytes).await.unwrap();
+                        pos                 += num_written;
+                    }
                 }
             }
         }
