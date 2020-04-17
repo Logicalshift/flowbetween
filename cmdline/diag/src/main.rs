@@ -1,4 +1,5 @@
 use flo_commands::*;
+use flo_animation::*;
 
 use tokio::prelude::*;
 use tokio::io::{stdin, stderr};
@@ -73,6 +74,12 @@ async fn main() {
             .about("Reads a file (or standard input if no file is specified) containing serialized edits and writes them to the output animation"))
         .subcommand(SubCommand::with_name("dump-all-catalog-edits")
             .about("Writes out the entire catalog as a set of edit logs"))
+        .subcommand(SubCommand::with_name("debug-raycasting")
+            .about("Writes out a series of SVG files showing the raycasting used for a particular element")
+            .arg(Arg::with_name("ELEMENT")
+                .help("The element ID in the selected frame to raycast")
+                .required(true)
+                .index(1)))
         .get_matches();
 
     tokio::spawn(async move {
@@ -180,6 +187,26 @@ async fn main() {
 
             input.push(FloCommand::DeserializeEdits(input_data));
             input.push(FloCommand::WriteAllEdits);
+        }
+
+        // Debug raycasting command
+        if let Some(debug_raycasting) = params.subcommand_matches("debug-raycasting") {
+            // Parse the element ID
+            let element_id = if let Some(element_id) = debug_raycasting.value_of("ELEMENT") {
+                i64::from_str(element_id).ok()
+            } else {
+                None
+            };
+            let element_id = match element_id {
+                Some(id)    => ElementId::Assigned(id),
+                None        => { 
+                    stderr().write(format!("'{}' is not a valid element ID\n\n", debug_raycasting.value_of("ELEMENT").unwrap_or("-")).as_bytes()).await.unwrap();
+                    return;
+                }
+            };
+
+            // Add a raycast command
+            input.push(FloCommand::RayCastToSvg(element_id));
         }
         
         // Prepare as a stream as input to the command line

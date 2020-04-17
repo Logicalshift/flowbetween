@@ -10,6 +10,7 @@ include         = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
 
 [dependencies]
 flo_commands    = { path = "../commands", version = "0.2.0" }
+flo_animation   = { path = "../../animation", version = "0.2" }
 
 futures         = "0.3"
 tokio           = { version = "0.2", features = [ "fs", "io-std", "io-util", "rt-core", "rt-threaded", "macros" ] }
