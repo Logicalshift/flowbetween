@@ -1,5 +1,6 @@
 mod list;
 mod edits;
+mod elements;
 mod read_from;
 mod dump_catalog;
 mod select_frame;
@@ -8,6 +9,7 @@ mod set_catalog_folder;
 
 pub (super) use self::list::*;
 pub (super) use self::edits::*;
+pub (super) use self::elements::*;
 pub (super) use self::read_from::*;
 pub (super) use self::dump_catalog::*;
 pub (super) use self::select_frame::*;
