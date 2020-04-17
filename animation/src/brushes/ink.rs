@@ -472,6 +472,7 @@ impl Brush for InkBrush {
         // The ink brush always combines into a group: retrieve that as the combined element here
         let combined_element = match combined_element {
             Some(Vector::Group(group_element))  => Some(group_element),
+            Some(other)                         => Some(GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(vec![other]))),
             _                                   => None
         };
 
