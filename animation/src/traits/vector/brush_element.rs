@@ -119,7 +119,8 @@ impl VectorElement for BrushElement {
             PathConversion::Fastest                 => Some(simplest_path),
             PathConversion::RemoveInteriorPoints    => {
                 let path = path_remove_interior_points(&simplest_path, 0.01);
-                Some(path)
+                let path = Path::from_paths(&path);
+                Some(vec![path])
             }
         }
     }

@@ -87,15 +87,14 @@ impl VectorElement for PathElement {
     /// Retrieves the paths for this element, if there are any
     ///
     fn to_path(&self, _properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> {
-        // Simplest path is just the internal path defined by this element
-        let simplest_path = vec![self.path.clone()];
-
         // Final result depends on the options that are set
         match options {
-            PathConversion::Fastest                 => Some(simplest_path),
+            PathConversion::Fastest                 => Some(vec![self.path.clone()]),
             PathConversion::RemoveInteriorPoints    => {
-                let path = path_remove_interior_points(&simplest_path, 0.01);
-                Some(path)
+                let subpaths    = self.path.to_subpaths();
+                let path        = path_remove_interior_points(&subpaths, 0.01);
+                let path        = Path::from_paths(&path);
+                Some(vec![path])
             }
         }
     }
