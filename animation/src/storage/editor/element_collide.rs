@@ -2,7 +2,6 @@ use super::keyframe_core::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use super::pending_storage_change::*;
-use super::super::storage_api::*;
 use super::super::super::traits::*;
 
 use futures::prelude::*;
