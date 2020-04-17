@@ -72,6 +72,11 @@ pub trait Brush : Send+Sync {
     ///
     /// Attempts to combine this brush stroke with the specified vector element. Returns the combined element if successful
     ///
+    /// The combined element is the combination so far. The next element is an element that is found underneath this element that
+    /// we're trying to combine with. The result indicates if a new element was generated, and if it was what the newly combined
+    /// element was (this should be used with future calls if more elements can be combined in). It can also indicate that an
+    /// overlapping element means that elements lower down can't be combined.
+    ///
     fn combine_with(&self, _combined_element: &Vector, _combined_element_properties: &VectorProperties, _next_element: &Vector, _next_element_properties: &VectorProperties) -> CombineResult {
         CombineResult::UnableToCombineFurther
     }
