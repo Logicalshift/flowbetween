@@ -488,6 +488,9 @@ impl Brush for InkBrush {
 
                     // Try to combine with the path
                     if let (Some(src_path), Some(tgt_path)) = (src_path, tgt_path) {
+                        let src_path = src_path.into_iter().flat_map(|p| p.to_subpaths()).collect();
+                        let tgt_path = tgt_path.into_iter().flat_map(|p| p.to_subpaths()).collect();
+
                         let combined = combine_paths(&src_path, &tgt_path, 0.01);
                         if let Some(mut combined) = combined {
                             // Managed to combine the two brush strokes/paths into one: add to the group. Note that the 'next' element is combined underneath the current element.
@@ -528,6 +531,9 @@ impl Brush for InkBrush {
 
                         // Try to combine with the path
                         if let (Some(src_path), Some(tgt_path)) = (src_path, tgt_path) {
+                            let src_path = src_path.into_iter().flat_map(|p| p.to_subpaths()).collect();
+                            let tgt_path = tgt_path.into_iter().flat_map(|p| p.to_subpaths()).collect();
+
                             let combined = combine_paths(&src_path, &tgt_path, 0.01);
                             if let Some(mut combined) = combined {
                                 // Managed to combine the two brush strokes/paths into one: add to the group
