@@ -7,6 +7,5 @@ mod summarize_edit_log;
 pub use self::read_all_edits::*;
 pub use self::write_all_edits::*;
 pub use self::serialize_edits::*;
-pub use self::write_to_catalog::*;
 pub use self::deserialize_edits::*;
 pub use self::summarize_edit_log::*;

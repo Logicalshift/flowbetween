@@ -1,5 +1,5 @@
-use super::super::state::*;
-use super::super::output::*;
+use crate::state::*;
+use crate::output::*;
 
 use flo_stream::*;
 
