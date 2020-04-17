@@ -134,6 +134,8 @@ fn collide_three_paths_all_at_once() {
     // Group should contain three elements
     assert!(group.group_type() == GroupType::Added);
     assert!(group.elements().count() == 3);
+    println!("{:?}", group.elements().map(|elem| elem.id().id()).collect::<Vec<_>>());
+    assert!(group.elements().map(|elem| elem.id().id()).collect::<Vec<_>>() == vec![Some(0), Some(3), Some(6)]);
 
     // It should combine to be a single path
     let properties = frame.apply_properties_for_element(&elements[0], Arc::new(VectorProperties::default()));
