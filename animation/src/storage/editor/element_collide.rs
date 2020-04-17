@@ -48,10 +48,10 @@ impl StreamAnimationCore {
     ///
     /// Attempts to combine an element with other elements in the same frame (by joining them into a single path)
     ///
-    pub fn collide_with_existing_elements<'a>(&'a mut self, combine_element_id: ElementId) -> impl 'a+Send+Future<Output=()> {
+    pub fn collide_with_existing_elements<'a>(&'a mut self, source_element_id: ElementId) -> impl 'a+Send+Future<Output=()> {
         async move {
             // Fetch the frame that this element belongs to
-            let assigned_element_id = match combine_element_id.id() {
+            let assigned_element_id = match source_element_id.id() {
                 Some(id)    => id,
                 None        => { return }
             };
@@ -68,25 +68,25 @@ impl StreamAnimationCore {
                 let updates = frame.future(move |frame| {
                     async move {
                         // Find the brush properties for the selected element. These are usually at the end, so a linear search like this should be fine
-                        let new_properties = elements_with_properties.iter().rev()
-                            .filter(|elem| elem.0.element.id() == combine_element_id)
+                        let source_element_properties = elements_with_properties.iter().rev()
+                            .filter(|elem| elem.0.element.id() == source_element_id)
                             .map(|elem| elem.1.clone())
                             .nth(0)
                             .unwrap_or_else(|| Arc::new(VectorProperties::default()));
-                        let current_brush = &new_properties.brush;
+                        let source_brush = &source_element_properties.brush;
 
                         // Fetch the element from the frame
-                        let wrapper     = frame.elements.get(&combine_element_id).cloned();
-                        let mut updates = PendingStorageChange::new();
+                        let source_wrapper  = frame.elements.get(&source_element_id).cloned();
+                        let mut updates     = PendingStorageChange::new();
 
-                        let wrapper     = match wrapper {
+                        let source_wrapper  = match source_wrapper {
                             Some(wrapper)   => wrapper,
                             None            => { return updates; }
                         };
 
                         // Collide other elements in the frame with this element
                         // Only brush stroke elements can be combined at the moment
-                        match &wrapper.element {
+                        match &source_wrapper.element {
                             Vector::BrushStroke(_) => {
                                 // Attempt to combine the element we fetched with the rest of the frame
                                 let mut combined_element            = None;
@@ -95,14 +95,14 @@ impl StreamAnimationCore {
 
                                     // Ignore the element we're merging
                                     // TODO: consider ignoring the elements above the element we're merging too
-                                    if combine_with_wrapper.element.id() == combine_element_id {
+                                    if combine_with_wrapper.element.id() == source_element_id {
                                         continue;
                                     }
 
                                     // The 'combined so far' vector is either just our brush stroke, or what we've got from the combination we've built up so far
-                                    let combined_so_far = combined_element.as_ref().unwrap_or_else(|| &wrapper.element);
+                                    let combined_so_far = combined_element.as_ref().unwrap_or_else(|| &source_wrapper.element);
 
-                                    let new_combined = match current_brush.combine_with(combined_so_far, &new_properties, &combine_with_wrapper.element, &*properties) {
+                                    let new_combined = match source_brush.combine_with(combined_so_far, &source_element_properties, &combine_with_wrapper.element, &*properties) {
                                         NewElement(new_combined)    => {
                                             // Unlink the element from the frame (brushes typicaly put their new element into a group so
                                             // this will set up the element in a way that's appropriate for that)
@@ -120,17 +120,17 @@ impl StreamAnimationCore {
                                 }
 
                                 // Final update is to replace the old element with the new element
-                                let replacement_element = frame.elements.get(&combine_element_id).cloned();
+                                let replacement_element = frame.elements.get(&source_element_id).cloned();
                                 if let (Some(combined_element), Some(mut replacement_element)) = (combined_element, replacement_element) {
                                     // Replace the element
                                     replacement_element.element = combined_element;
 
                                     // Update it in the storage
                                     updates.push_element(assigned_element_id, replacement_element.clone());
-                                    frame.elements.insert(combine_element_id, replacement_element);
+                                    frame.elements.insert(source_element_id, replacement_element);
 
                                     // Make sure the parents are set correctly
-                                    updates.extend(frame.update_parents(combine_element_id));
+                                    updates.extend(frame.update_parents(source_element_id));
                                 } else {
                                     // If nothing was generated then any updates that might have been generated are not valid
                                     updates = PendingStorageChange::new();
