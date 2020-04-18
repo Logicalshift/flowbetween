@@ -32,7 +32,7 @@ impl VectorElement for ErrorElement {
     ///
     /// Modifies this element to have a new ID
     ///
-    fn set_id(&mut self, new_id: ElementId) {
+    fn set_id(&mut self, _new_id: ElementId) {
     }
 
     ///
