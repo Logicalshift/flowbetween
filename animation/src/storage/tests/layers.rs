@@ -301,3 +301,36 @@ fn delete_layer_after_drawing_brush_stroke() {
 
     anim.perform_edits(vec![AnimationEdit::RemoveLayer(2)]);
 }
+
+#[test]
+fn get_active_brush() {
+    let create_layer = "
+        +B
+        LB+tAAAAAA";
+
+    let draw_lines = "
+        LBPtAAAAAA*+BIAAAAg+AAAAoABAAAICB+
+        LBPtAAAAAAP+CAAAAoABAAAg/AHAAAAAAAAAyCBAAAAAAAAAg/A
+        LBPtAAAAAAS+AAiB+2FAAodjLHRF9PA8BAcNj5P1EA4AAAAAAAAAAAAAAGAAAAAAAAAAAAAACAAAAAAAAAAAAAADAAAAAAAAAAAAAANAAAAAAAAAAAAAAEAAAAAAAAlXAaIAEAAAAAAAA2MAsBACAAAAAAAAXPAGCACAAA8PAAArlAbEACAAAAAAAAGWAUCADAAAAAAAAbYA5BABAAAAAAAAVaArBABAAAAAAAAocAsBABAAAAAAAAieAQBABAAAAAAAAOgADBAAAAAAAAAA5hA1AAAAAAAAAAAXjAbAAAAAA4PAAAM3Cs9PAAAAAAAAAAkAU+PAAAA8PAAA8iAI+PAAAAAAAIAfhAU+PAAAAAAAAAyfAU+PAAAA4PAAADdAj+PAAAAAAAAADxA28P//PAAAAAAmvAv6P8/PA8PAAAQJAw+P0/PAAAAAA9GAi+P4/PA4PAAAbEA9+P3/PAAAAAAhCA9+Pw/PAAAAAA1AAL/Pn/PAAAAAAAAAl/PZ/PAAAAAA69PAAAF/PAAAAAA
+        LBPtAAAAAAS+DAjBAAoZmS0QAA4MzFIRt9PAsBAYNJBAB/PQAAAAAAAAAAAAAAIAAAAAAAAAAAAAADAAAAAAAAAAAAAABAAAAAAAAAAAAAACAAAAAAAAAAAAAALAAAAAAAAAAAAAAEAAAAAAAAoAAbkPDAAAAAAAANAAUyPCAAAAAAAAAAALvPCAAAAAAAAAAAKrPCAAAAAAEAi+P9mPCAAAAAAAAmzPkbOBAAAAAAAAU6PNYPDAAAAAAIA65PiWPAAAAAAAEAU6PhWPAAAAAAAAAm7PYXPAAAAAAAEAD9PEZPAAAAAAAAA9+PYbPAAAAAAAIAAAA6dPAAAAAAAAAsBA8CPAAAAAAAAAUCAflPAAAAAAAEAhCAAoPAAAAAAAAAGCAhqPAAAAAAAIAHCA3sPAAAAAAAAA4BAKvPAAAAAAAAAeBAexPAAAAAAAEAeBAYzPAAAAAAAAAQBAs1P//PAAAAAAXDA6tP+/PAAAAAADBAAAAu/PAAAAEAQBAhCA0/PAAAAAA2AAXDAq/PAAAAAAQBAGKAE/PAAAAAA
+    ";
+
+    // Create a layer
+    let mut animation = create_animation();
+    perform_serialized_edits(&mut animation, create_layer);
+
+    // As there are no brush strokes in the layer yet, there should be no active brush
+    let layer           = animation.get_layer_with_id(1).unwrap();
+    let active_brush    = layer.as_vector_layer().unwrap().active_brush(Duration::from_millis(0));
+
+    assert!(active_brush.is_none());
+
+    // Draw some lines in the layer
+    perform_serialized_edits(&mut animation, draw_lines);
+
+    // Should now be an active brush
+    let layer           = animation.get_layer_with_id(1).unwrap();
+    let active_brush    = layer.as_vector_layer().unwrap().active_brush(Duration::from_millis(0));
+
+    assert!(active_brush.is_some());
+}

@@ -210,6 +210,42 @@ impl VectorLayer for StreamLayer {
     /// The brush that will be active for the next element that's added to this layer (if one is set)
     ///
     fn active_brush(&self, when: Duration) -> Option<Arc<dyn Brush>> {
-        None
+        // Create a desync to store the result, once we have it
+        let result      = Desync::new(None);
+        let layer_id    = self.layer_id;
+        let core        = Arc::clone(&self.core);
+
+        // Start loading the result into the desync
+        let _ = result.future(move |result| {
+            async move {
+                // Store the result from the core
+                *result = core.future(move |core| {
+                    async move {
+                        // Fetch the keyframe at this time
+                        let frame = core.edit_keyframe(layer_id, when).await?;
+
+                        // The last brush stroke element in the frame will indicate the active brush
+                        let last_brush_properties = frame.future(move |frame| {
+                            async move {
+                                // Fetch the last brush stroke from the frame
+                                let last_brush_stroke = frame.vector_elements(when)
+                                    .filter(|elem| match elem { Vector::BrushStroke(_) => true, _ => false })
+                                    .last()?;
+
+                                Some(frame.apply_properties_for_element(&last_brush_stroke, Arc::new(VectorProperties::default())))
+                            }.boxed()
+                        }).await.unwrap()?;
+
+                        // Get the brush from the properties
+                        let brush = Arc::clone(&last_brush_properties.brush);
+
+                        Some(brush)
+                    }.boxed()
+                }).await.unwrap();
+            }.boxed()
+        });
+
+        // Retrieve the result
+        result.sync(|res| res.take())
     }
 }

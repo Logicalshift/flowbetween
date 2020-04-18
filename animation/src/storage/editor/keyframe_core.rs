@@ -190,6 +190,35 @@ impl KeyFrameCore {
     }
 
     ///
+    /// Retrieves the vector elements associated with this frame
+    ///
+    pub fn vector_elements<'a>(&'a self, frame_time: Duration) -> impl 'a+Iterator<Item=Vector> {
+        let mut result          = vec![];
+
+        // Start at the initial element
+        let mut next_element    = self.initial_element;
+
+        while let Some(current_element) = next_element {
+            // Fetch the element definition
+            let wrapper = self.elements.get(&current_element);
+            let wrapper = match wrapper {
+                Some(wrapper)   => wrapper,
+                None            => { break; }
+            };
+
+            // Store the element in the result
+            if wrapper.start_time <= frame_time {
+                result.push(wrapper.element.clone());
+            }
+
+            // Move on to the next element in the list
+            next_element = wrapper.order_before;
+        }
+
+        result.into_iter()
+    }
+
+    ///
     /// Retrieves the currently active brush for this keyframe
     ///
     pub fn get_active_brush(&mut self) -> Arc<dyn Brush> {
