@@ -15,7 +15,7 @@ fn get_bounds<P: BezierPath>(path: &Vec<P>) -> Bounds<P::Point> {
 ///
 /// If two paths can be combined, returns the combined paths. Paths can be combined if they collide at any point.
 ///
-/// The path that is passed in here must have no interior points: these can be removed by `path_remove_interior_points`
+/// The path that is passed in here must have no interior points: these can be removed by `path_remove_overlapped_points`
 /// if necessary.
 ///
 pub fn combine_paths<P: BezierPathFactory>(path1: &Vec<P>, path2: &Vec<P>, accuracy: f64) -> Option<GraphPath<P::Point, PathLabel>>
