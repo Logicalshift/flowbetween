@@ -92,7 +92,7 @@ impl VectorElement for PathElement {
             PathConversion::Fastest                 => Some(vec![self.path.clone()]),
             PathConversion::RemoveInteriorPoints    => {
                 let subpaths    = self.path.to_subpaths();
-                let path        = path_remove_interior_points(&subpaths, 0.01);
+                let path        = path_remove_overlapped_points(&subpaths, 0.01);
                 let path        = Path::from_paths(&path);
                 Some(vec![path])
             }
