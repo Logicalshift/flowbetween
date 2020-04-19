@@ -162,6 +162,7 @@ impl StreamAnimationCore {
             use self::AnimationEdit::*;
             use self::LayerEdit::*;
             use self::PaintEdit::*;
+            use self::ElementEdit::*;
 
             match edit {
                 Layer(layer_id, Paint(when, BrushProperties(element, props))) =>
@@ -184,6 +185,9 @@ impl StreamAnimationCore {
 
                 Layer(layer_id, Path(when, PathEdit::BrushProperties(element, properties))) =>
                     Layer(*layer_id, Path(*when, PathEdit::BrushProperties(self.assign_element_id(*element).await, properties.clone()))),
+
+                Element(elements, Group(group_id, group_type)) =>
+                    Element(elements.clone(), Group(self.assign_element_id(*group_id).await, *group_type)),
 
                 other => other.clone()
             }
