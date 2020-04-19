@@ -40,16 +40,6 @@ impl PendingStorageChange {
     }
 
     ///
-    /// Creates a new storage change from an existing list of commands
-    ///
-    pub fn from_commands<Commands: IntoIterator<Item=StorageCommand>>(commands: Commands) -> PendingStorageChange {
-        let mut changes = PendingStorageChange::new();
-        changes.extend(commands);
-
-        changes
-    }
-
-    ///
     /// Adds a new command to the end of the list supported by this change
     ///
     pub fn push(&mut self, command: StorageCommand) {
