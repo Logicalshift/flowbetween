@@ -1,4 +1,5 @@
 use super::element_id::*;
+use super::fill_option::*;
 
 use super::super::path::*;
 use super::super::raw_point::*;
@@ -35,7 +36,11 @@ pub enum PaintEdit {
     BrushProperties(ElementId, BrushProperties),
 
     /// Draws a brush stroke using the current brush and the specified set of input points
-    BrushStroke(ElementId, Arc<Vec<RawPoint>>)
+    BrushStroke(ElementId, Arc<Vec<RawPoint>>),
+
+    /// Creates a path by flood-filling at the specified point on the current layer. The current brush/properties are used to generate
+    /// the fill path, and some other options can be set in the fill options.
+    Fill(ElementId, RawPoint, Vec<FillOption>)
 }
 
 impl PaintEdit {
@@ -48,7 +53,8 @@ impl PaintEdit {
         match self {
             SelectBrush(id, _, _)   => *id,
             BrushProperties(id, _)  => *id,
-            BrushStroke(id, _)      => *id
+            BrushStroke(id, _)      => *id,
+            Fill(id, _, _)          => *id
         }
     }
 

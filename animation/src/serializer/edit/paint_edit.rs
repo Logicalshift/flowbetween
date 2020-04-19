@@ -34,6 +34,22 @@ impl PaintEdit {
 
                     last_pos = *point;
                 }
+            },
+
+            Fill(elem, point, options)                      => {
+                data.write_chr('F');
+                elem.serialize(data);
+
+                data.write_f64(point.position.0 as f64);
+                data.write_f64(point.position.1 as f64);
+                data.write_f64(point.pressure as f64);
+                data.write_f64(point.tilt.0 as f64);
+                data.write_f64(point.tilt.1 as f64);
+
+                data.write_usize(options.len());
+                for option in options.iter() {
+                    option.serialize(data);
+                }
             }
         }
     }
@@ -82,6 +98,22 @@ impl PaintEdit {
                     })
             }
 
+            'F' => {
+                let elem_id     = ElementId::deserialize(data)?;
+                let position    = (data.next_f64() as f32, data.next_f64() as f32);
+                let pressure    = data.next_f64() as f32;
+                let tilt        = (data.next_f64() as f32, data.next_f64() as f32);
+                let point       = RawPoint { position: position, pressure: pressure, tilt: tilt };
+                let num_options = data.next_usize();
+
+                let mut options = vec![];
+                for _option_num in 0..num_options {
+                    options.push(FillOption::deserialize(data)?);
+                }
+
+                Some(PaintEdit::Fill(elem_id, point, options))
+            }
+
             _   => None
         }
     }
@@ -113,5 +145,13 @@ mod test {
         PaintEdit::BrushStroke(ElementId::Assigned(42), Arc::new(vec![RawPoint::from((1.0, 2.0)), RawPoint::from((2.0, 3.0)), RawPoint::from((4.0, 5.0))])).serialize(&mut encoded);
 
         assert!(PaintEdit::deserialize(&mut encoded.chars()) == Some(PaintEdit::BrushStroke(ElementId::Assigned(42), Arc::new(vec![RawPoint::from((1.0, 2.0)), RawPoint::from((2.0, 3.0)), RawPoint::from((4.0, 5.0))]))));
+    }
+
+    #[test]
+    fn fill() {
+        let mut encoded = String::new();
+        PaintEdit::Fill(ElementId::Assigned(42), RawPoint::from((1.0, 2.0)), vec![FillOption::Concave, FillOption::FillBehind]).serialize(&mut encoded);
+
+        assert!(PaintEdit::deserialize(&mut encoded.chars()) == Some(PaintEdit::Fill(ElementId::Assigned(42), RawPoint::from((1.0, 2.0)), vec![FillOption::Concave, FillOption::FillBehind])));
     }
 }

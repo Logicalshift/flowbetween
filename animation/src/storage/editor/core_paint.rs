@@ -61,6 +61,9 @@ impl StreamAnimationCore {
 
                     (element_id, wrapper)
                 }
+
+
+                Fill(_elem, _point, _options)           => { unimplemented!() }
             };
 
             // Edit the keyframe
