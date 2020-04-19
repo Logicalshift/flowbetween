@@ -11,8 +11,7 @@ use std::cmp::Ordering;
 ///
 struct VectorCollision {
     pos:    PathPoint,
-    line_t: f64,
-    kind:   RaycastEdgeKind
+    line_t: f64
 }
 
 impl Ord for VectorCollision {
@@ -70,7 +69,7 @@ pub fn vector_frame_raycast<'a, FrameType: Frame>(frame: &'a FrameType) -> impl 
         let collisions = edges.iter()
             .flat_map(|edge| curve_intersects_ray(&edge.curve, &ray)
                 .into_iter()
-                .map(move |(_curve_t, line_t, pos)| VectorCollision { line_t, pos, kind: edge.kind }));
+                .map(move |(_curve_t, line_t, pos)| VectorCollision { line_t, pos }));
 
         // Collect into an ordered list
         let mut collisions = collisions.collect::<Vec<_>>();
