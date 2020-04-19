@@ -173,6 +173,9 @@ impl StreamAnimationCore {
                 Layer(layer_id, Paint(when, BrushStroke(element, points))) =>
                     Layer(*layer_id, Paint(*when, BrushStroke(self.assign_element_id(*element).await, points.clone()))),
 
+                Layer(layer_id, Paint(when, Fill(element, point, options))) =>
+                    Layer(*layer_id, Paint(*when, Fill(self.assign_element_id(*element).await, point.clone(), options.clone()))),
+
                 Layer(layer_id, Path(when, PathEdit::CreatePath(element, points))) =>
                     Layer(*layer_id, Path(*when, PathEdit::CreatePath(self.assign_element_id(*element).await, points.clone()))),
 
