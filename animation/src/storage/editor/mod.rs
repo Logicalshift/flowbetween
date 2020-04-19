@@ -10,6 +10,7 @@ mod core_layer;
 mod core_motion;
 mod core_element;
 mod keyframe_core;
+mod keyframe_raycast;
 mod pending_storage_change;
 mod paint_fill;
 mod element_wrapper;
