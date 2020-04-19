@@ -1,8 +1,8 @@
 use super::element_id::*;
-use super::fill_option::*;
 
 use super::super::path::*;
 use super::super::raw_point::*;
+use super::super::fill_option::*;
 use super::super::brush_properties::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;

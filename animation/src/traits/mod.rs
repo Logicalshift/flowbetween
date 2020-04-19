@@ -17,6 +17,7 @@ mod motion;
 mod cache;
 mod combine_result;
 mod group_type;
+mod fill_option;
 
 pub use self::edit::*;
 pub use self::actions::*;
@@ -37,3 +38,4 @@ pub use self::motion::*;
 pub use self::cache::*;
 pub use self::combine_result::*;
 pub use self::group_type::*;
+pub use self::fill_option::*;
