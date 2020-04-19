@@ -150,8 +150,8 @@ mod test {
     #[test]
     fn fill() {
         let mut encoded = String::new();
-        PaintEdit::Fill(ElementId::Assigned(42), RawPoint::from((1.0, 2.0)), vec![FillOption::Concave, FillOption::FillBehind]).serialize(&mut encoded);
+        PaintEdit::Fill(ElementId::Assigned(42), RawPoint::from((1.0, 2.0)), vec![FillOption::Algorithm(FillAlgorithm::Concave), FillOption::Position(FillPosition::Behind)]).serialize(&mut encoded);
 
-        assert!(PaintEdit::deserialize(&mut encoded.chars()) == Some(PaintEdit::Fill(ElementId::Assigned(42), RawPoint::from((1.0, 2.0)), vec![FillOption::Concave, FillOption::FillBehind])));
+        assert!(PaintEdit::deserialize(&mut encoded.chars()) == Some(        PaintEdit::Fill(ElementId::Assigned(42), RawPoint::from((1.0, 2.0)), vec![FillOption::Algorithm(FillAlgorithm::Concave), FillOption::Position(FillPosition::Behind)])));
     }
 }

@@ -8,13 +8,16 @@ impl FillOption {
     ///
     pub fn serialize<Tgt: AnimationDataTarget>(&self, data: &mut Tgt) {
         use self::FillOption::*;
+        use self::FillAlgorithm::*;
+        use self::FillPosition::*;
 
         match self {
             RayCastDistance(distance)   => { data.write_chr('d'); data.write_f64(*distance); }
             MinGap(gap_length)          => { data.write_chr('g'); data.write_f64(*gap_length); }
-            FillBehind                  => { data.write_chr('B'); }
-            Convex                      => { data.write_chr('v'); }
-            Concave                     => { data.write_chr('c'); }
+            Position(InFront)           => { data.write_chr('F'); }
+            Position(Behind)            => { data.write_chr('B'); }
+            Algorithm(Convex)           => { data.write_chr('v'); }
+            Algorithm(Concave)          => { data.write_chr('c'); }
         }
     }
 
@@ -25,9 +28,10 @@ impl FillOption {
         match data.next_chr() {
             'd' => Some(FillOption::RayCastDistance(data.next_f64())),
             'g' => Some(FillOption::MinGap(data.next_f64())),
-            'B' => Some(FillOption::FillBehind),
-            'v' => Some(FillOption::Convex),
-            'c' => Some(FillOption::Concave),
+            'F' => Some(FillOption::Position(FillPosition::InFront)),
+            'B' => Some(FillOption::Position(FillPosition::Behind)),
+            'v' => Some(FillOption::Algorithm(FillAlgorithm::Convex)),
+            'c' => Some(FillOption::Algorithm(FillAlgorithm::Concave)),
             _   => None
         }
     }
@@ -54,26 +58,34 @@ mod test {
     }
 
     #[test]
+    fn fill_in_front() {
+        let mut encoded = String::new();
+        FillOption::Position(FillPosition::InFront).serialize(&mut encoded);
+
+        assert!(FillOption::deserialize(&mut encoded.chars()) == Some(FillOption::Position(FillPosition::InFront)));
+    }
+
+    #[test]
     fn fill_behind() {
         let mut encoded = String::new();
-        FillOption::FillBehind.serialize(&mut encoded);
+        FillOption::Position(FillPosition::Behind).serialize(&mut encoded);
 
-        assert!(FillOption::deserialize(&mut encoded.chars()) == Some(FillOption::FillBehind));
+        assert!(FillOption::deserialize(&mut encoded.chars()) == Some(FillOption::Position(FillPosition::Behind)));
     }
 
     #[test]
     fn concave() {
         let mut encoded = String::new();
-        FillOption::Concave.serialize(&mut encoded);
+        FillOption::Algorithm(FillAlgorithm::Concave).serialize(&mut encoded);
 
-        assert!(FillOption::deserialize(&mut encoded.chars()) == Some(FillOption::Concave));
+        assert!(FillOption::deserialize(&mut encoded.chars()) == Some(FillOption::Algorithm(FillAlgorithm::Concave)));
     }
 
     #[test]
     fn convex() {
         let mut encoded = String::new();
-        FillOption::Convex.serialize(&mut encoded);
+        FillOption::Algorithm(FillAlgorithm::Convex).serialize(&mut encoded);
 
-        assert!(FillOption::deserialize(&mut encoded.chars()) == Some(FillOption::Convex));
+        assert!(FillOption::deserialize(&mut encoded.chars()) == Some(FillOption::Algorithm(FillAlgorithm::Convex)));
     }
 }
