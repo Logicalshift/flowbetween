@@ -6,8 +6,6 @@ use flo_ui::*;
 use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
-use flo_animation::raycast::*;
-use flo_curves::bezier::path::algorithms::*;
 
 use futures::*;
 use futures::stream::{BoxStream};
@@ -70,47 +68,33 @@ impl FloodFill {
     pub fn flood_fill<Anim: 'static+Animation>(&self, model: Arc<FloModel<Anim>>, center_point: (f32, f32), data: &FloodFillData) -> impl Iterator<Item=ToolAction<FloodFillData>> {
         // Turn the x, y coordinates into a pathpoint
         let (x, y)          = center_point;
-        let center_point    = PathPoint::new(x, y);
 
         // Get the current frame information
         let when            = model.timeline().current_time.get();
         let layer           = model.timeline().selected_layer.get();
         let frame           = model.frame().frame.get();
 
-        if let (Some(frame), Some(layer)) = (frame, layer) {
-            // Generate a ray-casting function from it
-            let ray_casting_fn  = vector_frame_raycast(&frame);
+        if let (Some(_frame), Some(layer)) = (frame, layer) {
+            // Create the editing action for this fill action
+            let brush_defn      = BrushDefinition::Ink(InkDefinition::default());
+            let brush_props     = data.brush_properties.clone();
+            let paint_edit      = vec![
+                PaintEdit::SelectBrush(ElementId::Unassigned, brush_defn, BrushDrawingStyle::Draw),
+                PaintEdit::BrushProperties(ElementId::Unassigned, brush_props),
+                PaintEdit::Fill(ElementId::Unassigned, RawPoint { position: (x, y), pressure: 0.0, tilt: (0.0, 0.0) }, vec![])
+            ];
+            let layer_edit      = paint_edit.into_iter().map(move |edit| LayerEdit::Paint(when, edit));
+            let anim_edit       = layer_edit.map(move |edit| AnimationEdit::Layer(layer, edit));
 
-            // Attempt to generate a path element by flood-filling
-            let fill_path       = flood_fill_convex(center_point, &FillOptions::default(), ray_casting_fn);
+            // Turn into tool actions: we need to invalidate any brush preview and the frame in order to render the new fill path
+            let tool_actions    = anim_edit.map(|edit| ToolAction::Edit(edit));
+            let tool_actions    = tool_actions.chain(vec![
+                ToolAction::InvalidateFrame,
+                ToolAction::BrushPreview(BrushPreviewAction::Layer(layer)),
+                ToolAction::BrushPreview(BrushPreviewAction::UnsetProperties)
+            ]);
 
-            if let Some(fill_path) = fill_path {
-                // Create a new path element for this fill path
-                let fill_path: Path = fill_path;
-
-                let brush_defn      = BrushDefinition::Ink(InkDefinition::default());
-                let brush_props     = data.brush_properties.clone();
-
-                // Generate the editing actions to create this fill path
-                let actions         = vec![
-                    PathEdit::SelectBrush(ElementId::Unassigned, brush_defn, BrushDrawingStyle::Draw),
-                    PathEdit::BrushProperties(ElementId::Unassigned, brush_props),
-                    PathEdit::CreatePath(ElementId::Unassigned, Arc::new(fill_path.elements().collect()))
-                ];
-                let actions = actions.into_iter()
-                    .map(move |action| LayerEdit::Path(when, action))
-                    .map(move |action| AnimationEdit::Layer(layer, action))
-                    .map(|action| ToolAction::Edit(action))
-                    .chain(vec![
-                        ToolAction::BrushPreview(BrushPreviewAction::Layer(layer)),
-                        ToolAction::BrushPreview(BrushPreviewAction::UnsetProperties),
-                        ToolAction::InvalidateFrame
-                    ]);
-
-                Either::Left(actions)
-            } else {
-                Either::Right(iter::empty())
-            }
+            Either::Left(tool_actions)
         } else {
             Either::Right(iter::empty())
         }
