@@ -81,7 +81,9 @@ impl FloodFill {
             let paint_edit      = vec![
                 PaintEdit::SelectBrush(ElementId::Unassigned, brush_defn, BrushDrawingStyle::Draw),
                 PaintEdit::BrushProperties(ElementId::Unassigned, brush_props),
-                PaintEdit::Fill(ElementId::Unassigned, RawPoint { position: (x, y), pressure: 0.0, tilt: (0.0, 0.0) }, vec![])
+                PaintEdit::Fill(ElementId::Unassigned, RawPoint { position: (x, y), pressure: 0.0, tilt: (0.0, 0.0) }, vec![
+                    FillOption::Position(FillPosition::Behind)
+                ])
             ];
             let layer_edit      = paint_edit.into_iter().map(move |edit| LayerEdit::Paint(when, edit));
             let anim_edit       = layer_edit.map(move |edit| AnimationEdit::Layer(layer, edit));
