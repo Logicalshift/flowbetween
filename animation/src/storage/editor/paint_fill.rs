@@ -60,8 +60,8 @@ impl StreamAnimationCore {
 
                     // Attempt to generate a path element by flood-filling
                     let fill_path           = match algorithm {
-                        FillAlgorithm::Convex   => flood_fill_convex::<Path, _, _, _>(center_point, &fill_options, ray_casting_fn)?,
-                        FillAlgorithm::Concave  => flood_fill_convex::<Path, _, _, _>(center_point, &fill_options, ray_casting_fn)? // TODO!!
+                        FillAlgorithm::Convex   => flood_fill_convex::<Path, _, _, _, _>(center_point, &fill_options, ray_casting_fn)?,
+                        FillAlgorithm::Concave  => flood_fill_convex::<Path, _, _, _, _>(center_point, &fill_options, ray_casting_fn)? // TODO!!
                     };
 
                     // Create a new path element from the fill path we just generated

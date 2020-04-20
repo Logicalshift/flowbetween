@@ -3,6 +3,7 @@ use crate::raycast::edge::*;
 use super::keyframe_core::*;
 
 use flo_curves::bezier::*;
+use flo_curves::bezier::path::algorithms::*;
 
 use std::sync::*;
 use std::cmp::{Ordering};
@@ -51,7 +52,7 @@ impl KeyFrameCore {
     ///
     /// The function that this returns will determine where a ray intersects the vector objects in the frame.
     ///
-    pub (super) fn raycast<'a>(&'a self, when: Duration) -> impl 'a+Fn(PathPoint, PathPoint) -> Vec<PathPoint> {
+    pub (super) fn raycast<'a>(&'a self, when: Duration) -> impl 'a+Fn(PathPoint, PathPoint) -> Vec<RayCollision<PathPoint, ()>> {
         // Collect all of the vector elements in the frame into a single place
         // If this isn't a vector frame, we'll use the empty list
         let all_elements = self.vector_elements(when);
@@ -80,7 +81,7 @@ impl KeyFrameCore {
                 collisions.sort();
 
                 collisions.into_iter()
-                    .map(|collision| collision.pos)
+                    .map(|collision| RayCollision::new(collision.pos, ()))
                     .collect()
             } else {
                 // Short-circuit the case where there are no collisions
