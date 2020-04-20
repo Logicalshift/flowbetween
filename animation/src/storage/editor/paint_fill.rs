@@ -10,6 +10,7 @@ use futures::prelude::*;
 
 use std::sync::*;
 use std::time::{Duration};
+use std::collections::{HashSet};
 
 impl StreamAnimationCore {
     ///
@@ -66,8 +67,30 @@ impl StreamAnimationCore {
                         FillAlgorithm::Concave  => trace_outline_convex(center_point, &fill_options, ray_casting_fn) // TODO!!
                     };
 
+                    // Find the element to create the path behind (if in 'behind' mode)
+                    let create_behind       = match position {
+                        FillPosition::InFront   => None,
+                        FillPosition::Behind    => { 
+                            // Get the elements that were hit in the outline
+                            let outline_elements    = outline.iter().map(|point| point.what).collect::<HashSet<_>>();
+                            let mut create_behind   = None;
+
+                            // Find the lowest element in the frame
+                            for elem in frame.vector_elements(when) {
+                                if outline_elements.contains(&elem.id()) {
+                                    create_behind = Some(elem.id());
+                                    break;
+                                }
+                            }
+
+                            create_behind
+                        }
+                    };
+
+                    println!("Create behind {:?}", create_behind);
+
                     // Create a path from the points in the outline
-                    let curves = fit_curve::<PathCurve>(&outline.iter().map(|point| point.position.clone()).collect::<Vec<_>>(), 0.01)?;
+                    let curves              = fit_curve::<PathCurve>(&outline.iter().map(|point| point.position.clone()).collect::<Vec<_>>(), 0.01)?;
 
                     let initial_point       = curves[0].start_point();
                     let fill_path           = Path::from_points(initial_point, curves.into_iter().map(|curve| {

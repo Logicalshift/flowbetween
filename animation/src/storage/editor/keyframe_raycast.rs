@@ -13,8 +13,9 @@ use std::time::{Duration};
 /// Represents a collision along a raycast edge
 ///
 struct VectorCollision {
-    pos:    PathPoint,
-    line_t: f64
+    pos:        PathPoint,
+    line_t:     f64,
+    element_id: ElementId
 }
 
 impl Ord for VectorCollision {
@@ -52,7 +53,7 @@ impl KeyFrameCore {
     ///
     /// The function that this returns will determine where a ray intersects the vector objects in the frame.
     ///
-    pub (super) fn raycast<'a>(&'a self, when: Duration) -> impl 'a+Fn(PathPoint, PathPoint) -> Vec<RayCollision<PathPoint, ()>> {
+    pub (super) fn raycast<'a>(&'a self, when: Duration) -> impl 'a+Fn(PathPoint, PathPoint) -> Vec<RayCollision<PathPoint, ElementId>> {
         // Collect all of the vector elements in the frame into a single place
         // If this isn't a vector frame, we'll use the empty list
         let all_elements = self.vector_elements(when);
@@ -72,7 +73,7 @@ impl KeyFrameCore {
             let collisions = edges.iter()
                 .flat_map(|edge| curve_intersects_ray(&edge.curve, &ray)
                     .into_iter()
-                    .map(move |(_curve_t, line_t, pos)| VectorCollision { line_t, pos }));
+                    .map(move |(_curve_t, line_t, pos)| VectorCollision { line_t: line_t, pos: pos, element_id: edge.element_id }));
 
             // Collect into an ordered list
             let mut collisions = collisions.collect::<Vec<_>>();
@@ -81,7 +82,7 @@ impl KeyFrameCore {
                 collisions.sort();
 
                 collisions.into_iter()
-                    .map(|collision| RayCollision::new(collision.pos, ()))
+                    .map(|collision| RayCollision::new(collision.pos, collision.element_id))
                     .collect()
             } else {
                 // Short-circuit the case where there are no collisions

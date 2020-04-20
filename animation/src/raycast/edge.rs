@@ -27,6 +27,9 @@ pub struct RaycastEdge {
 
     /// The type of this edge
     pub kind: RaycastEdgeKind,
+
+    /// The element ID that this edge was from
+    pub element_id: ElementId
 }
 
 impl RaycastEdge {
@@ -65,8 +68,14 @@ impl RaycastEdge {
     /// Retrieves the edges corresponding to a group element
     ///
     pub fn from_group<'a>(group: &'a GroupElement, properties: Arc<VectorProperties>) -> impl 'a+Iterator<Item=Self> {
+        let element_id = group.id();
+
         group.elements()
             .flat_map(move |element| Self::from_vector(element, properties.clone()))
+            .map(move |mut element| {
+                element.element_id = element_id;
+                element
+            })
     }
 
     ///
@@ -74,20 +83,21 @@ impl RaycastEdge {
     ///
     pub fn from_path_element<'a>(vector: &'a PathElement) -> impl 'a+Iterator<Item=Self> {
         match vector.brush().drawing_style() {
-            BrushDrawingStyle::Erase    => { Self::from_path(vector.path(), RaycastEdgeKind::EraseContents) }
-            BrushDrawingStyle::Draw     => { Self::from_path(vector.path(), RaycastEdgeKind::Solid) }
+            BrushDrawingStyle::Erase    => { Self::from_path(vector.id(), vector.path(), RaycastEdgeKind::EraseContents) }
+            BrushDrawingStyle::Draw     => { Self::from_path(vector.id(), vector.path(), RaycastEdgeKind::Solid) }
         }
     }
 
     ///
     /// Returns a particular path as ray cast edges
     ///
-    pub fn from_path<'a>(path: &'a Path, edge_kind: RaycastEdgeKind) -> impl 'a+Iterator<Item=Self> {
+    pub fn from_path<'a>(element_id: ElementId, path: &'a Path, edge_kind: RaycastEdgeKind) -> impl 'a+Iterator<Item=Self> {
         path.to_curves()
             .map(move |curve| {
                 Self {
-                    curve: curve,
-                    kind: edge_kind
+                    curve:          curve,
+                    kind:           edge_kind,
+                    element_id:     element_id
                 }
             })
     }
@@ -98,16 +108,18 @@ impl RaycastEdge {
     pub fn from_brush_stroke<'a>(brush_stroke: &'a BrushElement, properties: Arc<VectorProperties>) -> Box<dyn 'a+Iterator<Item=Self>> {
         match properties.brush.drawing_style() {
             BrushDrawingStyle::Erase    => {
+                let element_id = brush_stroke.id();
+
                 // Ignore any elements underneath the entire path for an erasing brush stroke
                 Box::new(brush_stroke.to_path(&*properties, PathConversion::Fastest).unwrap()
                     .into_iter()
-                    .flat_map(|path| Self::from_path(&path, RaycastEdgeKind::EraseContents).collect::<Vec<_>>()))
+                    .flat_map(move |path| Self::from_path(element_id, &path, RaycastEdgeKind::EraseContents).collect::<Vec<_>>()))
             }
 
             BrushDrawingStyle::Draw     => {
                 // A draw brush stroke just adds a single edge
                 let points  = brush_stroke.points();
-                let paths   = Self::from_brush_points(&*points, RaycastEdgeKind::Solid);
+                let paths   = Self::from_brush_points(brush_stroke.id(), &*points, RaycastEdgeKind::Solid);
                 let paths   = paths.collect::<Vec<_>>();
                 Box::new(paths.into_iter())
             }
@@ -124,7 +136,7 @@ impl RaycastEdge {
     ///
     /// Converts a set of brush points into a set of
     ///
-    pub fn from_brush_points<'a, PointIter: 'a+IntoIterator<Item=&'a BrushPoint>>(points: PointIter, edge_kind: RaycastEdgeKind) -> Box<dyn 'a+Iterator<Item=RaycastEdge>> {
+    pub fn from_brush_points<'a, PointIter: 'a+IntoIterator<Item=&'a BrushPoint>>(element_id: ElementId, points: PointIter, edge_kind: RaycastEdgeKind) -> Box<dyn 'a+Iterator<Item=RaycastEdge>> {
         Box::new(points.into_iter()
             .tuple_windows()
             .map(|(prev, next)| {
@@ -136,8 +148,9 @@ impl RaycastEdge {
                 PathCurve::from_points(start_point, (cp1, cp2), end_point)
             })
             .map(move |curve| Self {
-                curve:  curve,
-                kind:   edge_kind
+                curve:      curve,
+                kind:       edge_kind,
+                element_id: element_id
             }))
     }
 }
