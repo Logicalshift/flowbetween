@@ -2,6 +2,8 @@ use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use super::super::super::traits::*;
 
+use flo_curves::bezier::*;
+use flo_curves::bezier::path::*;
 use flo_curves::bezier::path::algorithms::*;
 
 use futures::prelude::*;
@@ -58,11 +60,21 @@ impl StreamAnimationCore {
                     let fill_options        = FillOptions::default();
                     let fill_options        = fill_options.with_step(step_size);
 
-                    // Attempt to generate a path element by flood-filling
-                    let fill_path           = match algorithm {
-                        FillAlgorithm::Convex   => flood_fill_convex::<Path, _, _, _, _>(center_point, &fill_options, ray_casting_fn)?,
-                        FillAlgorithm::Concave  => flood_fill_convex::<Path, _, _, _, _>(center_point, &fill_options, ray_casting_fn)? // TODO!!
+                    // Trace the outline of the path
+                    let outline             = match algorithm {
+                        FillAlgorithm::Convex   => trace_outline_convex(center_point, &fill_options, ray_casting_fn),
+                        FillAlgorithm::Concave  => trace_outline_convex(center_point, &fill_options, ray_casting_fn) // TODO!!
                     };
+
+                    // Create a path from the points in the outline
+                    let curves = fit_curve::<PathCurve>(&outline.iter().map(|point| point.position.clone()).collect::<Vec<_>>(), 0.01)?;
+
+                    let initial_point       = curves[0].start_point();
+                    let fill_path           = Path::from_points(initial_point, curves.into_iter().map(|curve| {
+                        let (cp1, cp2)  = curve.control_points();
+                        let end_point   = curve.end_point();
+                        (cp1, cp2, end_point)
+                    }));
 
                     // Create a new path element from the fill path we just generated
                     let path_element        = PathElement::new(path_id, fill_path, Arc::new(brush_defn), Arc::new(brush_props));
