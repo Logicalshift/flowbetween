@@ -1,5 +1,6 @@
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
+use super::pending_storage_change::*;
 use super::super::super::traits::*;
 
 use flo_curves::bezier::*;
@@ -47,7 +48,7 @@ impl StreamAnimationCore {
             let frame = match frame { Some(frame) => frame, None => { return None; } };
 
             // Generate a path element by performing the fill
-            let new_path = frame.future(move |frame| {
+            let updates = frame.future(move |frame| {
                 async move {
                     // Fetch the brush properties from the frame
                     let brush_props         = frame.elements.get(&brush_props_id).and_then(|props| props.element.clone().extract_brush_properties())?;
@@ -87,8 +88,6 @@ impl StreamAnimationCore {
                         }
                     };
 
-                    println!("Create behind {:?}", create_behind);
-
                     // Create a path from the points in the outline
                     let curves              = fit_curve::<PathCurve>(&outline.iter().map(|point| point.position.clone()).collect::<Vec<_>>(), 0.01)?;
 
@@ -106,12 +105,24 @@ impl StreamAnimationCore {
 
                     wrapper.attachments = vec![brush_props_id, brush_defn_id];
 
-                    // Return as the result
-                    Some(wrapper)
+                    // Edit the keyframe
+                    let mut storage_updates = frame.add_element_to_end(path_id, wrapper);
+
+                    // Move behind the 'behind' element if there is one
+                    if let Some(create_behind) = create_behind.and_then(|create_behind| frame.elements.get(&create_behind)) {
+                        let create_after = create_behind.order_after;
+                        storage_updates.extend(frame.order_after(path_id, None, create_after));
+                    }
+
+                    // Result is 'no wrapper', as we add it ourselves
+                    Some(storage_updates)
                 }.boxed()
             }).await.unwrap();
 
-            new_path
+            // Send the updates to storage
+            self.request(updates.unwrap_or_else(|| PendingStorageChange::new())).await;
+
+            None
         }
     }
 }
