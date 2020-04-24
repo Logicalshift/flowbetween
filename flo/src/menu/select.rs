@@ -221,19 +221,19 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "AlignLeft"))
                                     .with(Bounds::next_horiz(28.0))
-                                    .with(ControlAttribute::Padding((6, 0), (0, 2))),
+                                    .with(ControlAttribute::Padding((7, 1), (1, 3))),
                                 Control::button()
                                     .with(vec![Control::empty().with(align_center.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "AlignCenter"))
                                     .with(Bounds::next_horiz(22.0))
-                                    .with(ControlAttribute::Padding((0, 0), (0, 2))),
+                                    .with(ControlAttribute::Padding((1, 1), (1, 3))),
                                 Control::button()
                                     .with(vec![Control::empty().with(align_right.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "AlignRight"))
                                     .with(Bounds::next_horiz(28.0))
-                                    .with(ControlAttribute::Padding((0, 0), (6, 2)))
+                                    .with(ControlAttribute::Padding((1, 1), (7, 3)))
                             ]),
                         Control::empty()
                             .with(Bounds::next_horiz(4.0)),
@@ -248,19 +248,19 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "AlignTop"))
                                     .with(Bounds::next_horiz(28.0))
-                                    .with(ControlAttribute::Padding((6, 0), (0, 2))),
+                                    .with(ControlAttribute::Padding((7, 1), (1, 3))),
                                 Control::button()
                                     .with(vec![Control::empty().with(align_middle.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "AlignMiddle"))
                                     .with(Bounds::next_horiz(22.0))
-                                    .with(ControlAttribute::Padding((0, 0), (0, 2))),
+                                    .with(ControlAttribute::Padding((1, 1), (1, 3))),
                                 Control::button()
                                     .with(vec![Control::empty().with(align_bottom.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "AlignBottom"))
                                     .with(Bounds::next_horiz(28.0))
-                                    .with(ControlAttribute::Padding((0, 0), (6, 2)))
+                                    .with(ControlAttribute::Padding((1, 1), (7, 3)))
                             ]),
                     ]
                 } else {
@@ -284,13 +284,13 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "FlipHorizontal"))
                                     .with(Bounds::next_horiz(28.0))
-                                    .with(ControlAttribute::Padding((6, 0), (0, 2))),
+                                    .with(ControlAttribute::Padding((7, 1), (1, 3))),
                                 Control::button()
                                     .with(vec![Control::empty().with(flip_vert.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
                                     .with((ActionTrigger::Click, "FlipVertical"))
                                     .with(Bounds::next_horiz(28.0))
-                                    .with(ControlAttribute::Padding((0, 0), (6, 2)))
+                                    .with(ControlAttribute::Padding((1, 1), (7, 3)))
                             ])
                     ]
                 } else {
