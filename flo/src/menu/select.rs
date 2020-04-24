@@ -95,7 +95,7 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
         images.assign_name(&align_top, "AlignTop");
         images.assign_name(&align_middle, "AlignMiddle");
         images.assign_name(&align_bottom, "AlignBottom");
-        
+
         images.assign_name(&flip_horiz, "FlipHorizontal");
         images.assign_name(&flip_vert, "FlipVertical");
 
@@ -112,26 +112,47 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
     /// Creates the UI for the select menu controller
     ///
     fn ui(images: &ResourceManager<Image>, tool_model: &SelectToolModel) -> BindRef<Control> {
+        // Fetch the images
         let order_to_back       = images.get_named_resource("OrderToBack");
         let order_behind        = images.get_named_resource("OrderBehind");
         let order_forward       = images.get_named_resource("OrderForward");
         let order_to_front      = images.get_named_resource("OrderToFront");
 
+        let align_left          = images.get_named_resource("AlignLeft");
+        let align_center        = images.get_named_resource("AlignCenter");
+        let align_right         = images.get_named_resource("AlignRight");
+        let align_top           = images.get_named_resource("AlignTop");
+        let align_middle        = images.get_named_resource("AlignMiddle");
+        let align_bottom        = images.get_named_resource("AlignBottom");
+        
+        let flip_horiz          = images.get_named_resource("FlipHorizontal");
+        let flip_vert           = images.get_named_resource("FlipVertical");
+
+        let group               = images.get_named_resource("Group");
+        let ungroup             = images.get_named_resource("Ungroup");
+        let path_add            = images.get_named_resource("PathAdd");
+        let path_subtract       = images.get_named_resource("PathSubtract");
+        let path_intersect      = images.get_named_resource("PathIntersect");
+
+        // Parts of the model
         let anything_selected   = tool_model.anything_selected.clone();
         let num_selected        = tool_model.num_elements_selected.clone();
 
         let ui              =
             computed(move || {
                 // Number of things selected
-                let num_selected = num_selected.get();
-                let num_selected = match num_selected {
+                let num_selected        = num_selected.get();
+                let num_selected_text   = match num_selected {
                     0 => String::from("Nothing"),
                     1 => String::from("1 item"),
                     _ => format!("{} items", num_selected)
                 };
 
-                // Extra controls to display when there's a selection to edit
-                let selection_controls = if anything_selected.get() {
+                let anything_selected   = anything_selected.get();
+                let multi_select        = num_selected > 1;
+
+                // Pick the control sets based on the selection
+                let order_controls = if anything_selected { 
                     vec![
                         controls::divider(),
 
@@ -178,6 +199,157 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
                     vec![]
                 };
 
+                let align_controls = if multi_select {
+                    vec![
+                        controls::divider(),
+
+                        Control::label()
+                            .with("Align:")
+                            .with(TextAlign::Right)
+                            .with(Font::Size(13.0))
+                            .with(Bounds::next_horiz(48.0)),
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
+                        Control::container()
+                            .with(Hint::Class("button-group".to_string()))
+                            .with(ControlAttribute::Padding((0,2), (0,2)))
+                            .with(Font::Size(9.0))
+                            .with(Bounds::next_horiz(22.0*1.0 + 28.0*2.0))
+                            .with(vec![
+                                Control::button()
+                                    .with(vec![Control::empty().with(align_left.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "AlignLeft"))
+                                    .with(Bounds::next_horiz(28.0))
+                                    .with(ControlAttribute::Padding((6, 0), (0, 2))),
+                                Control::button()
+                                    .with(vec![Control::empty().with(align_center.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "AlignCenter"))
+                                    .with(Bounds::next_horiz(22.0))
+                                    .with(ControlAttribute::Padding((0, 0), (0, 2))),
+                                Control::button()
+                                    .with(vec![Control::empty().with(align_right.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "AlignRight"))
+                                    .with(Bounds::next_horiz(28.0))
+                                    .with(ControlAttribute::Padding((0, 0), (6, 2)))
+                            ]),
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
+                        Control::container()
+                            .with(Hint::Class("button-group".to_string()))
+                            .with(ControlAttribute::Padding((0,2), (0,2)))
+                            .with(Font::Size(9.0))
+                            .with(Bounds::next_horiz(22.0*1.0 + 28.0*2.0))
+                            .with(vec![
+                                Control::button()
+                                    .with(vec![Control::empty().with(align_top.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "AlignTop"))
+                                    .with(Bounds::next_horiz(28.0))
+                                    .with(ControlAttribute::Padding((6, 0), (0, 2))),
+                                Control::button()
+                                    .with(vec![Control::empty().with(align_middle.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "AlignMiddle"))
+                                    .with(Bounds::next_horiz(22.0))
+                                    .with(ControlAttribute::Padding((0, 0), (0, 2))),
+                                Control::button()
+                                    .with(vec![Control::empty().with(align_bottom.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "AlignBottom"))
+                                    .with(Bounds::next_horiz(28.0))
+                                    .with(ControlAttribute::Padding((0, 0), (6, 2)))
+                            ]),
+                    ]
+                } else {
+                    vec![]
+                };
+
+                let flip_controls = if anything_selected {
+                    vec![
+                        controls::divider(),
+
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
+                        Control::container()
+                            .with(Hint::Class("button-group".to_string()))
+                            .with(ControlAttribute::Padding((0,2), (0,2)))
+                            .with(Font::Size(9.0))
+                            .with(Bounds::next_horiz(28.0*2.0))
+                            .with(vec![
+                                Control::button()
+                                    .with(vec![Control::empty().with(flip_horiz.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "FlipHorizontal"))
+                                    .with(Bounds::next_horiz(28.0))
+                                    .with(ControlAttribute::Padding((6, 0), (0, 2))),
+                                Control::button()
+                                    .with(vec![Control::empty().with(flip_vert.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "FlipVertical"))
+                                    .with(Bounds::next_horiz(28.0))
+                                    .with(ControlAttribute::Padding((0, 0), (6, 2)))
+                            ])
+                    ]
+                } else {
+                    vec![]
+                };
+
+                let group_controls = if multi_select {
+                    vec![
+                        controls::divider(),
+
+                        Control::label()
+                            .with("Group:")
+                            .with(TextAlign::Right)
+                            .with(Font::Size(13.0))
+                            .with(Bounds::next_horiz(48.0)),
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
+                        Control::container()
+                            .with(Hint::Class("button-group".to_string()))
+                            .with(ControlAttribute::Padding((0,2), (0,2)))
+                            .with(Font::Size(9.0))
+                            .with(Bounds::next_horiz(22.0*2.0 + 28.0*2.0))
+                            .with(vec![
+                                Control::button()
+                                    .with(vec![Control::empty().with(group.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "Group"))
+                                    .with(Bounds::next_horiz(28.0))
+                                    .with(ControlAttribute::Padding((6, 0), (0, 2))),
+                                Control::button()
+                                    .with(vec![Control::empty().with(path_add.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "PathAdd"))
+                                    .with(Bounds::next_horiz(22.0))
+                                    .with(ControlAttribute::Padding((0, 0), (0, 2))),
+                                Control::button()
+                                    .with(vec![Control::empty().with(path_subtract.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "PathSubtract"))
+                                    .with(Bounds::next_horiz(22.0))
+                                    .with(ControlAttribute::Padding((0, 0), (0, 2))),
+                                Control::button()
+                                    .with(vec![Control::empty().with(path_intersect.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                                    .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "PathIntersect"))
+                                    .with(Bounds::next_horiz(28.0))
+                                    .with(ControlAttribute::Padding((0, 0), (6, 2)))
+                            ])
+                    ]
+                } else {
+                    vec![]
+                };
+
+                // Extra controls to display when there's a selection to edit
+                let selection_controls = order_controls.into_iter()
+                    .chain(align_controls)
+                    .chain(flip_controls)
+                    .chain(group_controls);
+
                 // Build the control
                 Control::container()
                     .with(Bounds::fill_all())
@@ -196,7 +368,7 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
                             .with(Bounds::next_horiz(4.0)),
 
                         Control::label()
-                            .with(num_selected)
+                            .with(num_selected_text)
                             .with(FontWeight::Light)
                             .with(TextAlign::Left)
                             .with(Font::Size(12.0))
