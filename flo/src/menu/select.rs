@@ -68,10 +68,42 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
         let order_forward   = images.register(svg_static(include_bytes!("../../svg/selection_controls/forward.svg")));
         let order_to_front  = images.register(svg_static(include_bytes!("../../svg/selection_controls/to_front.svg")));
 
+        let align_left      = images.register(svg_static(include_bytes!("../../svg/selection_controls/align_left.svg")));
+        let align_center    = images.register(svg_static(include_bytes!("../../svg/selection_controls/align_center.svg")));
+        let align_right     = images.register(svg_static(include_bytes!("../../svg/selection_controls/align_right.svg")));
+        let align_top       = images.register(svg_static(include_bytes!("../../svg/selection_controls/align_top.svg")));
+        let align_middle    = images.register(svg_static(include_bytes!("../../svg/selection_controls/align_middle.svg")));
+        let align_bottom    = images.register(svg_static(include_bytes!("../../svg/selection_controls/align_bottom.svg")));
+
+        let flip_horiz      = images.register(svg_static(include_bytes!("../../svg/selection_controls/flip_horizontal.svg")));
+        let flip_vert       = images.register(svg_static(include_bytes!("../../svg/selection_controls/flip_vertical.svg")));
+
+        let group           = images.register(svg_static(include_bytes!("../../svg/selection_controls/group.svg")));
+        let ungroup         = images.register(svg_static(include_bytes!("../../svg/selection_controls/ungroup.svg")));
+        let path_add        = images.register(svg_static(include_bytes!("../../svg/selection_controls/add.svg")));
+        let path_subtract   = images.register(svg_static(include_bytes!("../../svg/selection_controls/subtract.svg")));
+        let path_intersect  = images.register(svg_static(include_bytes!("../../svg/selection_controls/intersect.svg")));
+
         images.assign_name(&order_to_back, "OrderToBack");
         images.assign_name(&order_behind, "OrderBehind");
         images.assign_name(&order_forward, "OrderForward");
         images.assign_name(&order_to_front, "OrderToFront");
+
+        images.assign_name(&align_left, "AlignLeft");
+        images.assign_name(&align_center, "AlignCenter");
+        images.assign_name(&align_right, "AlignRight");
+        images.assign_name(&align_top, "AlignTop");
+        images.assign_name(&align_middle, "AlignMiddle");
+        images.assign_name(&align_bottom, "AlignBottom");
+        
+        images.assign_name(&flip_horiz, "FlipHorizontal");
+        images.assign_name(&flip_vert, "FlipVertical");
+
+        images.assign_name(&group, "Group");
+        images.assign_name(&ungroup, "Ungroup");
+        images.assign_name(&path_add, "PathAdd");
+        images.assign_name(&path_subtract, "PathSubtract");
+        images.assign_name(&path_intersect, "PathIntersect");
 
         images
     }
