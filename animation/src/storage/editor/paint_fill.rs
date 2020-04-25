@@ -66,7 +66,7 @@ impl StreamAnimationCore {
 
                     // Trace the outline of the path
                     let outline             = match algorithm {
-                        FillAlgorithm::Convex   => trace_outline_convex(center_point, &fill_options, ray_casting_fn),
+                        FillAlgorithm::Convex   => trace_outline_convex(center_point, &fill_options, move |from, to| ray_casting_fn(from, to).into_iter().map(|col| RayCollision { position: col.position, what: Some(col.what) })),
                         FillAlgorithm::Concave  => trace_outline_concave(center_point, &fill_options, ray_casting_fn)
                     };
 
@@ -75,7 +75,7 @@ impl StreamAnimationCore {
                         FillPosition::InFront   => None,
                         FillPosition::Behind    => { 
                             // Get the elements that were hit in the outline
-                            let outline_elements    = outline.iter().map(|point| point.what).collect::<HashSet<_>>();
+                            let outline_elements    = outline.iter().flat_map(|point| point.what).collect::<HashSet<_>>();
                             let mut create_behind   = None;
 
                             // Find the lowest element in the frame
