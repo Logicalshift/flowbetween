@@ -67,7 +67,7 @@ impl StreamAnimationCore {
                     // Trace the outline of the path
                     let outline             = match algorithm {
                         FillAlgorithm::Convex   => trace_outline_convex(center_point, &fill_options, ray_casting_fn),
-                        FillAlgorithm::Concave  => trace_outline_convex(center_point, &fill_options, ray_casting_fn) // TODO!!
+                        FillAlgorithm::Concave  => trace_outline_concave(center_point, &fill_options, ray_casting_fn)
                     };
 
                     // Find the element to create the path behind (if in 'behind' mode)
@@ -99,6 +99,12 @@ impl StreamAnimationCore {
                         let end_point   = curve.end_point();
                         (cp1, cp2, end_point)
                     }));
+
+                    // Remove interior points from the fill path if we're using the concave algorithm
+                    let fill_path            = match algorithm {
+                        FillAlgorithm::Convex   => fill_path,
+                        FillAlgorithm::Concave  => fill_path    // TODO!
+                    };
 
                     // Create a new path element from the fill path we just generated
                     let path_element        = PathElement::new(path_id, fill_path, Arc::new(brush_defn), Arc::new(brush_props));
