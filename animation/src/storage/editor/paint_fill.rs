@@ -61,7 +61,7 @@ impl StreamAnimationCore {
 
                     // Set up the fill options
                     let center_point        = PathPoint::new(point.position.0, point.position.1);
-                    let fill_options        = FillOptions::default();
+                    let fill_options        = FillSettings::default();
                     let fill_options        = fill_options.with_step(step_size);
 
                     // Trace the outline of the path
