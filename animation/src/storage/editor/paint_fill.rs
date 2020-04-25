@@ -20,22 +20,24 @@ impl StreamAnimationCore {
     pub (super) fn paint_fill<'a>(&'a mut self, layer_id: u64, when: Duration, path_id: ElementId, point: RawPoint, options: &'a Vec<FillOption>) -> impl 'a+Future<Output=Option<ElementWrapper>> {
         async move {
             // Fetch the brush properties
-            let brush_defn_id   = self.brush_defn?;
-            let brush_props_id  = self.brush_props?;
+            let brush_defn_id       = self.brush_defn?;
+            let brush_props_id      = self.brush_props?;
 
             // Decide on the fill options
-            let mut gap_size    = 2.0;
-            let mut step_size   = 2.0;
-            let mut algorithm   = FillAlgorithm::Concave;
-            let mut position    = FillPosition::Behind;
+            let mut gap_size        = 2.0;
+            let mut step_size       = 2.0;
+            let mut algorithm       = FillAlgorithm::Concave;
+            let mut position        = FillPosition::Behind;
+            let mut fit_precision   = 1.0;
 
             for option in options.iter() {
                 use self::FillOption::*;
                 match option {
-                    RayCastDistance(new_step_size)  => { step_size    = *new_step_size; }
-                    MinGap(new_gap_size)            => { gap_size     = *new_gap_size; }
-                    Algorithm(new_algorithm)        => { algorithm    = *new_algorithm; }
-                    Position(new_position)          => { position     = *new_position; }
+                    RayCastDistance(new_step_size)  => { step_size      = *new_step_size; }
+                    MinGap(new_gap_size)            => { gap_size       = *new_gap_size; }
+                    Algorithm(new_algorithm)        => { algorithm      = *new_algorithm; }
+                    Position(new_position)          => { position       = *new_position; }
+                    FitPrecision(new_precision)     => { fit_precision  = *new_precision; }
                 }
             }
 
@@ -89,7 +91,7 @@ impl StreamAnimationCore {
                     };
 
                     // Create a path from the points in the outline
-                    let curves              = fit_curve::<PathCurve>(&outline.iter().map(|point| point.position.clone()).collect::<Vec<_>>(), 0.01)?;
+                    let curves              = fit_curve::<PathCurve>(&outline.iter().map(|point| point.position.clone()).collect::<Vec<_>>(), fit_precision)?;
 
                     let initial_point       = curves[0].start_point();
                     let fill_path           = Path::from_points(initial_point, curves.into_iter().map(|curve| {

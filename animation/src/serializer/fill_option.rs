@@ -18,6 +18,7 @@ impl FillOption {
             Position(Behind)            => { data.write_chr('B'); }
             Algorithm(Convex)           => { data.write_chr('v'); }
             Algorithm(Concave)          => { data.write_chr('c'); }
+            FitPrecision(precision)     => { data.write_chr('P'); data.write_f64(*precision); }
         }
     }
 
@@ -32,6 +33,7 @@ impl FillOption {
             'B' => Some(FillOption::Position(FillPosition::Behind)),
             'v' => Some(FillOption::Algorithm(FillAlgorithm::Convex)),
             'c' => Some(FillOption::Algorithm(FillAlgorithm::Concave)),
+            'P' => Some(FillOption::FitPrecision(data.next_f64())),
             _   => None
         }
     }
@@ -55,6 +57,14 @@ mod test {
         FillOption::MinGap(24.0).serialize(&mut encoded);
 
         assert!(FillOption::deserialize(&mut encoded.chars()) == Some(FillOption::MinGap(24.0)));
+    }
+
+    #[test]
+    fn fit_precision() {
+        let mut encoded = String::new();
+        FillOption::FitPrecision(1.5).serialize(&mut encoded);
+
+        assert!(FillOption::deserialize(&mut encoded.chars()) == Some(FillOption::FitPrecision(1.5)));
     }
 
     #[test]

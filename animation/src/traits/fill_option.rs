@@ -33,6 +33,9 @@ pub enum FillOption {
     /// The minimum gap size that the fill can 'escape' through
     MinGap(f64),
 
+    /// The maximum fit error for the fill path that was traced out
+    FitPrecision(f64),
+
     /// The algorithm to use to create this fill
     Algorithm(FillAlgorithm),
 
