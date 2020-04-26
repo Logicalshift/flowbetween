@@ -102,9 +102,10 @@ impl StreamAnimationCore {
 
                     // Remove interior points from the fill path if we're using the concave algorithm
                     let fill_path            = match algorithm {
-                        FillAlgorithm::Convex   => fill_path,
-                        FillAlgorithm::Concave  => fill_path    // TODO!
+                        FillAlgorithm::Convex   => vec![fill_path],
+                        FillAlgorithm::Concave  => path_remove_overlapped_points(&vec![fill_path], 0.01)
                     };
+                    let fill_path           = Path::from_paths(fill_path.iter());
 
                     // Create a new path element from the fill path we just generated
                     let path_element        = PathElement::new(path_id, fill_path, Arc::new(brush_defn), Arc::new(brush_props));
