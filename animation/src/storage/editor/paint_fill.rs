@@ -103,7 +103,7 @@ impl StreamAnimationCore {
                     // Remove interior points from the fill path if we're using the concave algorithm
                     let fill_path            = match algorithm {
                         FillAlgorithm::Convex   => vec![fill_path],
-                        FillAlgorithm::Concave  => path_remove_overlapped_points(&vec![fill_path], 0.01)
+                        FillAlgorithm::Concave  => path_remove_interior_points(&vec![fill_path], 0.01)
                     };
                     let fill_path           = Path::from_paths(fill_path.iter());
 
@@ -112,7 +112,7 @@ impl StreamAnimationCore {
                     let element             = Vector::Path(path_element);
                     let mut wrapper         = ElementWrapper::with_element(element, when);
 
-                    wrapper.attachments = vec![brush_props_id, brush_defn_id];
+                    wrapper.attachments     = vec![brush_props_id, brush_defn_id];
 
                     // Edit the keyframe
                     let mut storage_updates = frame.add_element_to_end(path_id, wrapper);
