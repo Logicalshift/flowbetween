@@ -23,6 +23,9 @@ pub enum VectorType {
     /// Group of other vector elements
     Group,
 
+    /// A property describing a transformation that can be applied to another element
+    Transformation,
+
     /// Element that exists but could not be loaded
     Error
 }
@@ -39,6 +42,7 @@ impl From<&Vector> for VectorType {
             Path(_)                         => VectorType::Path,
             Motion(_)                       => VectorType::Motion,
             Group(_)                        => VectorType::Group,
+            Transformation(_)               => VectorType::Transformation,
             Error                           => VectorType::Error
         }
     }

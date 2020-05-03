@@ -20,14 +20,15 @@ impl Vector {
         use self::Vector::*;
 
         match self {
-            Transformed(transform)      => { data.write_chr('T'); transform.serialize(data); }
-            BrushDefinition(defn)       => { data.write_chr('D'); defn.serialize(data); }
-            BrushProperties(props)      => { data.write_chr('P'); props.serialize(data); }
-            BrushStroke(brush)          => { data.write_chr('s'); brush.serialize(data); }
-            Path(path)                  => { data.write_chr('p'); path.serialize(data); }
-            Motion(motion)              => { data.write_chr('m'); motion.serialize(data); }
-            Group(group)                => { data.write_chr('g'); group.serialize(data); }
-            Error                       => { data.write_chr('?'); }
+            Transformed(transform)          => { data.write_chr('T'); transform.serialize(data); }
+            BrushDefinition(defn)           => { data.write_chr('D'); defn.serialize(data); }
+            BrushProperties(props)          => { data.write_chr('P'); props.serialize(data); }
+            BrushStroke(brush)              => { data.write_chr('s'); brush.serialize(data); }
+            Path(path)                      => { data.write_chr('p'); path.serialize(data); }
+            Motion(motion)                  => { data.write_chr('m'); motion.serialize(data); }
+            Group(group)                    => { data.write_chr('g'); group.serialize(data); }
+            Transformation((id, transform)) => { data.write_chr('t'); id.serialize(data); transform.serialize(data); }
+            Error                           => { data.write_chr('?'); }
         }
     }
 
@@ -72,6 +73,14 @@ impl Vector {
                     let group = group_resolver.resolve(mapper)?;
                     Some(Vector::Group(group))
                 }))
+            }
+            't' => {
+                ElementId::deserialize(data)
+                    .and_then(|elem_id| 
+                        Transformation::deserialize(data).map(move |transform| (elem_id, transform))
+                    )
+                    .map(|transform| Vector::Transformation(transform))
+                    .map(|vector| box_fn(move |_| Some(vector)))
             }
             '?' => {
                 Some(box_fn(move |_mapper| {

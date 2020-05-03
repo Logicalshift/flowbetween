@@ -4,6 +4,7 @@ use super::group_element::*;
 use super::error_element::*;
 use super::motion_element::*;
 use super::vector_element::*;
+use super::transformation::*;
 use super::transformed_vector::*;
 use super::brush_properties_element::*;
 use super::brush_definition_element::*;
@@ -37,6 +38,9 @@ pub enum Vector {
 
     /// Element describing a group (with optional cache and path combining operation)
     Group(GroupElement),
+
+    /// Attached to an element to indicate a transformation that should be applied to it when rendering
+    Transformation((ElementId, Transformation)),
 
     /// Element exists but could not be loaded from the file
     Error
@@ -125,6 +129,7 @@ impl DerefMut for Vector {
             Path(elem)                      => elem,
             Motion(elem)                    => elem,
             Group(elem)                     => elem,
+            Transformation(elem)            => elem,
             Error                           => panic!("Cannot edit an error element")
         }
     }
@@ -147,6 +152,7 @@ impl Deref for Vector {
             Path(elem)                      => elem,
             Motion(elem)                    => elem,
             Group(elem)                     => elem,
+            Transformation(transform)       => transform,
             Error                           => &*ERROR_ELEMENT
         }
     }
