@@ -25,6 +25,9 @@ pub struct VectorProperties {
     /// The properties set for the active brush
     pub brush_properties: BrushProperties,
 
+    /// Transformations to apply to the element during rendering
+    pub transformations: Arc<Vec<Transformation>>,
+
     /// Transformation to apply before rendering an element with these properties
     pub transform_vector: Arc<dyn (Fn(Vector, Duration) -> Vector) + Sync+Send>,
 
@@ -40,6 +43,7 @@ impl VectorProperties {
         VectorProperties {
             brush:              Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
             brush_properties:   BrushProperties::new(),
+            transformations:    Arc::new(vec![]),
             transform_vector:   Arc::new(|vector, _when| vector),
             render_vector:      Arc::new(|gc, vector, when, properties| vector.render(gc, properties, when))
         }
