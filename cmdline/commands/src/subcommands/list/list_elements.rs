@@ -20,6 +20,7 @@ fn describe_vector(vec: &Vector) -> String {
         BrushStroke(brush_stroke)       => { format!("Brush stroke, {} points", brush_stroke.points().len()) }
         Path(path)                      => { format!("Path, {} elements", path.path().elements().count()) }
         Motion(_motion)                 => { format!("Motion description") }
+        Transformation(_transform)      => { format!("Transformation description") }
         Error                           => { format!("Error :-(") }
 
         Group(group)                    => { 
