@@ -8,6 +8,7 @@ use crate::traits::edit::*;
 use crate::traits::path::*;
 use crate::traits::motion::*;
 
+use flo_curves::*;
 use flo_canvas::*;
 
 use std::sync::*;
@@ -20,6 +21,44 @@ use std::time::{Duration};
 pub enum Transformation {
     /// A 2D transformation matrix
     Matrix([[f64; 3]; 3])
+}
+
+impl Transformation {
+    ///
+    /// Transforms a 2D point using this transformation
+    ///
+    pub fn transform_point<Coord>(&self, point: &Coord) -> Coord
+    where Coord: Coordinate {
+        // We translate the X and Y coordinates
+        let num_components  = Coord::len();
+        let (x, y)          = (point.get(0), point.get(1));
+
+        let (x, y)          = match self {
+            Transformation::Matrix(matrix)  => Self::transform_matrix(x, y, matrix)
+        };
+
+        // The rest of the points are let through as-is
+        let mut components  = vec![0.0; num_components];
+        components[0]       = x;
+        components[1]       = y;
+
+        for index in 2..num_components {
+            components[index] = point.get(index);
+        }
+
+        // Build the final result
+        Coord::from_components(&components)
+    }
+
+    ///
+    /// Transforms a 2D point via the matrix transformation
+    ///
+    fn transform_matrix(x: f64, y: f64, matrix: &[[f64; 3]; 3]) -> (f64, f64) {
+        let x = matrix[0][0] * x + matrix[0][1] * y + matrix[0][2];
+        let y = matrix[1][0] * x + matrix[1][1] * y + matrix[1][2];
+
+        (x, y)
+    }
 }
 
 impl VectorElement for (ElementId, Transformation) {
