@@ -24,7 +24,7 @@ impl StreamAnimationCore {
             let brush_props_id      = self.brush_props?;
 
             // Decide on the fill options
-            let mut gap_size        = 2.0;
+            let mut gap_size        = 10.0;
             let mut step_size       = 2.0;
             let mut algorithm       = FillAlgorithm::Concave;
             let mut position        = FillPosition::Behind;
@@ -63,6 +63,7 @@ impl StreamAnimationCore {
                     let center_point        = PathPoint::new(point.position.0, point.position.1);
                     let fill_options        = FillSettings::default();
                     let fill_options        = fill_options.with_step(step_size);
+                    let fill_options        = if gap_size > 0.1 { fill_options.with_min_gap(Some(gap_size)) } else { fill_options.with_min_gap(None) };
 
                     // Trace the outline of the path
                     let outline             = match algorithm {
