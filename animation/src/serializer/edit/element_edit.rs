@@ -252,4 +252,28 @@ mod test {
 
         assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Ungroup));
     }
+
+    #[test]
+    fn transform_set_anchor() {
+        let mut encoded = String::new();
+        ElementEdit::Transform(vec![ElementTransform::SetAnchor(2.0, 3.0)]).serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Transform(vec![ElementTransform::SetAnchor(2.0, 3.0)])));
+    }
+
+    #[test]
+    fn transform_move() {
+        let mut encoded = String::new();
+        ElementEdit::Transform(vec![ElementTransform::Move(2.0, 3.0)]).serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Transform(vec![ElementTransform::Move(2.0, 3.0)])));
+    }
+
+    #[test]
+    fn transform_anchor_and_move() {
+        let mut encoded = String::new();
+        ElementEdit::Transform(vec![ElementTransform::SetAnchor(6.0, 7.0), ElementTransform::Move(2.0, 3.0)]).serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Transform(vec![ElementTransform::SetAnchor(6.0, 7.0), ElementTransform::Move(2.0, 3.0)])));
+    }
 }
