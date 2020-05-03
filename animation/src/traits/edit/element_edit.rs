@@ -1,6 +1,7 @@
 use super::element_id::*;
-use super::super::path::*;
-use super::super::group_type::*;
+use super::element_transform::*;
+use crate::traits::path::*;
+use crate::traits::group_type::*;
 
 use std::sync::*;
 
@@ -61,5 +62,8 @@ pub enum ElementEdit {
     CollideWithExistingElements,
 
     /// Converts this element to a path
-    ConvertToPath
+    ConvertToPath,
+
+    /// Applies one or more transformations to the elements
+    Transform(Vec<ElementTransform>)
 }

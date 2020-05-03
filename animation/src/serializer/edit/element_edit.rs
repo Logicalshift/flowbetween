@@ -1,6 +1,7 @@
 use super::super::source::*;
 use super::super::target::*;
-use super::super::super::traits::*;
+
+use crate::traits::*;
 
 use std::sync::*;
 
@@ -43,6 +44,13 @@ impl ElementEdit {
                 for component in path_components.iter() {
                     last_point = component.serialize_next(&last_point, data);
                 }
+            },
+
+            Transform(transform)        => {
+                data.write_chr('T');
+                data.write_usize(transform.len());
+
+                transform.iter().for_each(|transform| transform.serialize(data));
             }
         }
     }
@@ -123,6 +131,21 @@ impl ElementEdit {
                 }
 
                 Some(ElementEdit::SetPath(Arc::new(components)))
+            }
+
+            'T' => {
+                let num_transforms = data.next_usize();
+                let mut transforms = vec![];
+
+                for _ in 0..num_transforms {
+                    if let Some(transform) = ElementTransform::deserialize(data) {
+                        transforms.push(transform)
+                    } else {
+                        return None;
+                    }
+                }
+
+                Some(ElementEdit::Transform(transforms))
             }
 
             _   => None

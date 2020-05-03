@@ -80,6 +80,10 @@ impl StreamAnimationCore {
                     } else {
                         self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id))).await; 
                     }
+                },
+
+                Transform(transformations)      => {
+                    unimplemented!("ElementEdit::Transform()")
                 }
             }
         }
