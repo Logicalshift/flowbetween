@@ -77,7 +77,7 @@ impl GroupElement {
         let mut properties = Arc::new(properties.clone());
 
         for elem in self.grouped_elements.iter() {
-            properties = elem.update_properties(properties);
+            properties = elem.update_properties(properties, when);
             properties.render(gc, elem.clone(), when);
         }
     }
@@ -179,7 +179,7 @@ impl VectorElement for GroupElement {
     ///
     /// Returns the properties to use for future elements
     ///
-    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
+    fn update_properties(&self, properties: Arc<VectorProperties>, _when: Duration) -> Arc<VectorProperties> {
         // Groups do not update properties
         properties
     }

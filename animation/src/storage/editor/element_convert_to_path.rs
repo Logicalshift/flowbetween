@@ -44,7 +44,7 @@ impl StreamAnimationCore {
                     for attachment_id in wrapper.attachments.iter() {
                         if let Some(attachment) = frame.elements.get(attachment_id) {
                             // Apply the properties from this
-                            vector_properties = attachment.element.update_properties(vector_properties);
+                            vector_properties = attachment.element.update_properties(vector_properties, frame.start);
 
                             // Capture brush definition & properties elements
                             match &attachment.element {

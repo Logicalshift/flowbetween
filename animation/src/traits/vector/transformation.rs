@@ -93,7 +93,7 @@ impl VectorElement for (ElementId, Transformation) {
     ///
     /// Returns the properties to use for future elements
     ///
-    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> { 
+    fn update_properties(&self, properties: Arc<VectorProperties>, _when: Duration) -> Arc<VectorProperties> { 
         properties
     }
 

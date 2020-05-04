@@ -39,7 +39,7 @@ pub trait VectorElement : Send+Any {
     ///
     /// Returns the properties to use for future elements
     ///
-    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> { properties }
+    fn update_properties(&self, properties: Arc<VectorProperties>, when: Duration) -> Arc<VectorProperties> { properties }
 
     ///
     /// Returns a new element that is this element transformed along a motion at a particular moment

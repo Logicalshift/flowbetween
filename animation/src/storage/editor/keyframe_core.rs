@@ -233,7 +233,7 @@ impl KeyFrameCore {
 
         while let Some(element_id) = next_element {
             if let Some(element) = self.elements.get(&element_id) {
-                properties      = element.element.update_properties(properties);
+                properties      = element.element.update_properties(properties, self.start);
                 next_element    = element.order_before;
             } else {
                 break;
@@ -466,7 +466,7 @@ impl KeyFrameCore {
     ///
     /// Applies all of the properties for the specified element (including those added by attached elements)
     ///
-    pub fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
+    pub fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>, when: Duration) -> Arc<VectorProperties> {
         // Try to fetch the element from the core
         let wrapper = self.elements.get(&element.id());
 
@@ -475,7 +475,7 @@ impl KeyFrameCore {
             let mut properties = properties;
             for attachment_id in wrapper.attachments.iter() {
                 if let Some(attach_element) = self.elements.get(&attachment_id) {
-                    properties = attach_element.element.update_properties(Arc::clone(&properties));
+                    properties = attach_element.element.update_properties(Arc::clone(&properties), when);
                 }
             }
 

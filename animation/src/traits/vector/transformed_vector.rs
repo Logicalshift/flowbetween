@@ -90,8 +90,8 @@ impl VectorElement for TransformedVector {
     /// Returns the properties to use for future elements
     ///
     #[inline]
-    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
-        self.transformed.update_properties(properties)
+    fn update_properties(&self, properties: Arc<VectorProperties>, when: Duration) -> Arc<VectorProperties> {
+        self.transformed.update_properties(properties, when)
     }
 
     ///

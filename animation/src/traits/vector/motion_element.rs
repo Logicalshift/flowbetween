@@ -73,7 +73,7 @@ impl VectorElement for MotionElement {
     ///
     /// Returns the properties to use for future elements
     ///
-    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
+    fn update_properties(&self, properties: Arc<VectorProperties>, _when: Duration) -> Arc<VectorProperties> {
         // Clone the properties
         let mut properties          = (*properties).clone();
         let motion                  = Arc::clone(&self.motion);

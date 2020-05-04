@@ -41,7 +41,7 @@ pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProce
                     properties = Arc::new(VectorProperties::default());
                     for element_id in active_attachments.iter() {
                         if let Some(attach_element) = frame.element_with_id(element_id.clone()) {
-                            properties = attach_element.update_properties(Arc::clone(&properties));
+                            properties = attach_element.update_properties(Arc::clone(&properties), when);
                         }
                     }
                 }

@@ -72,7 +72,7 @@ impl Frame for StreamFrame {
                         // Apply the properties from each of the attachments in turn
                         for attachment_id in active_attachments.iter() {
                             if let Some(attach_element) = core.elements.get(&attachment_id) {
-                                properties = attach_element.element.update_properties(Arc::clone(&properties));
+                                properties = attach_element.element.update_properties(Arc::clone(&properties), when);
                                 properties.render(gc, attach_element.element.clone(), when);
                             }
                         }
@@ -94,7 +94,7 @@ impl Frame for StreamFrame {
     fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
         if let Some(core) = self.keyframe_core.as_ref() {
             // Ask the core to apply the properties
-            core.apply_properties_for_element(element, properties)
+            core.apply_properties_for_element(element, properties, self.time_index())
         } else {
             // Properties are unaltered
             properties

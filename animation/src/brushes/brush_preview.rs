@@ -106,7 +106,7 @@ impl BrushPreview {
 
         // We always apply the properties so that our vector properties are accurate
         let mut vector_properties   = Arc::new(vector_properties);
-        vector_properties           = new_properties.update_properties(vector_properties);
+        vector_properties           = new_properties.update_properties(vector_properties, Duration::from_millis(0));
 
         // We only render the properties if they're marked as updated
         if update_properties {
@@ -115,7 +115,7 @@ impl BrushPreview {
 
         // Draw the current brush stroke
         let brush_element = self.brush_element();
-        vector_properties = brush_element.update_properties(vector_properties);
+        vector_properties = brush_element.update_properties(vector_properties, Duration::from_millis(0));
         brush_element.render(gc, &vector_properties, Duration::from_millis(0));
     }
 

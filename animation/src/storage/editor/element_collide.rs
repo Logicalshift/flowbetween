@@ -8,12 +8,13 @@ use futures::prelude::*;
 use ::desync::*;
 
 use std::sync::*;
+use std::time::{Duration};
 
 impl StreamAnimationCore {
     ///
     /// Discovers all of the elements in the frame along with their properties
     ///
-    fn frame_elements_with_properties(frame: Arc<Desync<KeyFrameCore>>) -> impl Send+Future<Output=Vec<(ElementWrapper, Arc<VectorProperties>)>> {
+    fn frame_elements_with_properties(frame: Arc<Desync<KeyFrameCore>>, when: Duration) -> impl Send+Future<Output=Vec<(ElementWrapper, Arc<VectorProperties>)>> {
         async move {
             frame.future(move |frame| {
                 async move {
@@ -29,7 +30,7 @@ impl StreamAnimationCore {
 
                         if let Some(elem) = current_element {
                             // Update the properties for this element
-                            current_properties = frame.apply_properties_for_element(&elem.element, current_properties);
+                            current_properties = frame.apply_properties_for_element(&elem.element, current_properties, when);
 
                             // Add to the result
                             result.push((elem.clone(), Arc::clone(&current_properties)));
@@ -58,7 +59,8 @@ impl StreamAnimationCore {
 
             if let Some(frame) = self.edit_keyframe_for_element(assigned_element_id).await {
                 // We need to know the properties of all of the elements in the current frame (we need to work backwards to generate the grouped element)
-                let elements_with_properties    = Self::frame_elements_with_properties(Arc::clone(&frame)).await;
+                let when                        = frame.future(|frame| async move { frame.start }.boxed()).await.unwrap();
+                let elements_with_properties    = Self::frame_elements_with_properties(Arc::clone(&frame), when).await;
 
                 // Nothing to do if there are no properties
                 if elements_with_properties.len() == 0 {

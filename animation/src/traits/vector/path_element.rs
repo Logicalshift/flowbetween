@@ -102,9 +102,9 @@ impl VectorElement for PathElement {
     ///
     /// Updates the vector properties for future elements
     ///
-    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
-        let properties = self.brush.update_properties(properties);
-        let properties = self.brush_properties.update_properties(properties);
+    fn update_properties(&self, properties: Arc<VectorProperties>, when: Duration) -> Arc<VectorProperties> {
+        let properties = self.brush.update_properties(properties, when);
+        let properties = self.brush_properties.update_properties(properties, when);
 
         properties
     }

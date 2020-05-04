@@ -61,7 +61,7 @@ impl KeyFrameCore {
         // Convert the elements into edges
         let mut edges       = vec![];
         for element in all_elements {
-            let properties = self.apply_properties_for_element(&element, Arc::new(VectorProperties::default()));
+            let properties = self.apply_properties_for_element(&element, Arc::new(VectorProperties::default()), when);
             edges.extend(RaycastEdge::from_vector(&element, Arc::clone(&properties)));
         }
 

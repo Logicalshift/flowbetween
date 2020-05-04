@@ -45,7 +45,7 @@ impl VectorElement for ErrorElement {
     ///
     /// Updates the vector properties for future elements
     ///
-    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
+    fn update_properties(&self, properties: Arc<VectorProperties>, _when: Duration) -> Arc<VectorProperties> {
         properties
     }
 

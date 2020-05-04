@@ -232,7 +232,7 @@ impl VectorLayer for StreamLayer {
                                     .filter(|elem| match elem { Vector::BrushStroke(_) => true, _ => false })
                                     .last()?;
 
-                                Some(frame.apply_properties_for_element(&last_brush_stroke, Arc::new(VectorProperties::default())))
+                                Some(frame.apply_properties_for_element(&last_brush_stroke, Arc::new(VectorProperties::default()), when))
                             }.boxed()
                         }).await.unwrap()?;
 
