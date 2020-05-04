@@ -59,6 +59,47 @@ impl Transformation {
 
         (x, y)
     }
+
+    ///
+    /// Applies this transformation to a path point
+    ///
+    pub fn transform_path_point(&self, point: &PathPoint) -> PathPoint {
+        let new_position = self.transform_point(&Coord2(point.position.0, point.position.1));
+
+        PathPoint {
+            position: (new_position.x(), new_position.y())
+        }
+    }
+
+    ///
+    /// Transforms a path component via this transformation
+    ///
+    pub fn transform_path_component(&self, component: &PathComponent) -> PathComponent {
+        use self::PathComponent::*;
+
+        match component {
+            Move(point)         => Move(self.transform_path_point(point)),
+            Line(point)         => Line(self.transform_path_point(point)),
+            Bezier(p1, p2, p3)  => Bezier(self.transform_path_point(p1), self.transform_path_point(p2), self.transform_path_point(p3)),
+
+            Close               => Close,
+        }
+    }
+
+    ///
+    /// Transforms a path via this transformation
+    ///
+    pub fn transform_path(&self, path: &Path) -> Path {
+        let mut new_elements = vec![];
+
+        // Transform each of the components
+        for component in path.elements.iter() {
+            new_elements.push(self.transform_path_component(component));
+        }
+
+        // Build into a new path
+        Path::from_elements(new_elements)
+    }
 }
 
 impl VectorElement for (ElementId, Transformation) {
