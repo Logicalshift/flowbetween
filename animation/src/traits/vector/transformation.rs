@@ -25,6 +25,17 @@ pub enum Transformation {
 
 impl Transformation {
     ///
+    /// Returns the inverse of this transformation
+    ///
+    pub fn invert(&self) -> Option<Transformation> {
+        use self::Transformation::*;
+
+        match self {
+            Matrix(matrix)  => Self::invert_matrix(matrix).map(|inverted_matrix| Matrix(inverted_matrix))
+        }
+    }
+
+    ///
     /// Transforms a 2D point using this transformation
     ///
     pub fn transform_point<Coord>(&self, point: &Coord) -> Coord
@@ -58,6 +69,67 @@ impl Transformation {
         let y = matrix[1][0] * x + matrix[1][1] * y + matrix[1][2];
 
         (x, y)
+    }
+
+    ///
+    /// Computes the determinant of a 2x2 matrix
+    ///
+    fn det2(matrix: &[[f64; 2]; 2]) -> f64 {
+        matrix[0][0]*matrix[1][1] + matrix[0][1]*matrix[1][0]
+    }
+
+    ///
+    /// Computes the minor of a 3x3 matrix
+    ///
+    fn minor3(matrix: &[[f64; 3]; 3], row: usize, col: usize) -> f64 {
+        let (x1, x2)    = match row { 0 => (1, 2), 1 => (0, 2), 2 => (0, 1), _ => (0, 1) };
+        let (y1, y2)    = match col { 0 => (1, 2), 1 => (0, 2), 2 => (0, 1), _ => (0, 1) };
+
+        let matrix      = [
+            [matrix[y1][x1], matrix[y1][x2]], 
+            [matrix[y2][x1], matrix[y2][x2]]
+        ];
+
+        Self::det2(&matrix)
+    }
+
+    ///
+    /// Computes the cofactor of an element in a 3x3 matrix
+    ///
+    fn cofactor3(matrix: &[[f64; 3]; 3], row: usize, col: usize) -> f64 {
+        let minor   = Self::minor3(matrix, row, col);
+        let sign    = (col&1) ^ (row&1);
+
+        if sign != 0 {
+            -minor 
+        } else {
+            minor
+        }
+    }
+
+    ///
+    /// Inverts a matrix transform
+    ///
+    fn invert_matrix(matrix: &[[f64; 3]; 3]) -> Option<[[f64; 3]; 3]> {
+        let cofactors   = [
+            [Self::cofactor3(&matrix, 0, 0), Self::cofactor3(&matrix, 1, 0), Self::cofactor3(&matrix, 2, 0)],
+            [Self::cofactor3(&matrix, 0, 1), Self::cofactor3(&matrix, 1, 1), Self::cofactor3(&matrix, 2, 1)],
+            [Self::cofactor3(&matrix, 0, 2), Self::cofactor3(&matrix, 1, 2), Self::cofactor3(&matrix, 2, 2)],
+        ];
+
+        let det         = matrix[0][0]*cofactors[0][0] + matrix[0][1]*cofactors[0][1] + matrix[0][2]*cofactors[0][2];
+
+        if det != 0.0 {
+            let inv_det = 1.0/det;
+
+            Some([
+                [inv_det * cofactors[0][0], inv_det * cofactors[1][0], inv_det * cofactors[2][0]],
+                [inv_det * cofactors[0][1], inv_det * cofactors[1][1], inv_det * cofactors[2][1]],
+                [inv_det * cofactors[0][2], inv_det * cofactors[1][2], inv_det * cofactors[2][2]]
+            ])
+        } else {
+            None
+        }
     }
 
     ///
