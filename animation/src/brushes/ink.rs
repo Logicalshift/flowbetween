@@ -387,7 +387,7 @@ impl Brush for InkBrush {
         ].into_iter())
     }
 
-    fn render_brush<'a>(&'a self, properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<dyn 'a+Iterator<Item=Draw>> {
+    fn render_brush<'a>(&'a self, properties: &'a BrushProperties, points: &'a Vec<BrushPoint>, transform: Arc<Vec<Transformation>>) -> Box<dyn 'a+Iterator<Item=Draw>> {
         let size_ratio = properties.size / self.max_width;
 
         // Nothing to do if there are too few points

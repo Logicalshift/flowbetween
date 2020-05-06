@@ -4,7 +4,10 @@ use flo_curves::*;
 use flo_curves::bezier;
 use flo_canvas::*;
 
+use itertools::{Either};
+
 use std::iter;
+use std::sync::*;
 
 ///
 /// Simple brush, which renders a brush stroke as a straight series of line segments
@@ -86,19 +89,35 @@ impl Brush for SimpleBrush {
         brush_points
     }
 
-    fn render_brush<'a>(&'a self, _properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<dyn 'a+Iterator<Item=Draw>> {
+    fn render_brush<'a>(&'a self, _properties: &'a BrushProperties, points: &'a Vec<BrushPoint>, transform: Arc<Vec<Transformation>>) -> Box<dyn 'a+Iterator<Item=Draw>> {
         // Nothing to draw if there are no points in the brush stroke (or only one point)
         if points.len() <= 1 {
             return Box::new(iter::empty());
         }
 
+        // Apply the transformations to the brush points
+        let mut points = if transform.len() > 0 {
+            Either::Left(points.iter()
+                .map(move |point| {
+                    let mut new_point = point.clone();
+                    for transform in transform.iter() {
+                        let new_position    = transform.transform_point(&Coord2(new_point.position.0 as f64, new_point.position.1 as f64));
+                        new_point.position  = (new_position.x() as f32, new_position.y() as f32);
+                    }
+                    new_point
+                }))
+        } else {
+            Either::Right(points.iter().cloned())
+        };
+
         // Draw a simple line for this brush
-        let preamble = vec![
+        let first_point = points.next().unwrap();
+        let preamble    = vec![
             Draw::NewPath,
-            Draw::Move(points[0].position.0, points[0].position.1)
+            Draw::Move(first_point.position.0, first_point.position.1)
         ];
 
-        let curves = points.iter()
+        let curves = points
             .skip(1)
             .map(|segment| Draw::BezierCurve(
                 (segment.position.0, segment.position.1),

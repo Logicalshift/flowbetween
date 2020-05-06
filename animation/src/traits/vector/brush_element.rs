@@ -104,7 +104,7 @@ impl VectorElement for BrushElement {
     /// Renders this vector element
     ///
     fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, _when: Duration) {
-        gc.draw_list(properties.brush.render_brush(&properties.brush_properties, &self.points))
+        gc.draw_list(properties.brush.render_brush(&properties.brush_properties, &self.points, Arc::clone(&properties.transformations)))
     }
 
     ///
@@ -112,7 +112,7 @@ impl VectorElement for BrushElement {
     ///
     fn to_path(&self, properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> {
         // Convert the brush stroke to the simplest path we can
-        let simplest_path = vec![Path::from_drawing(properties.brush.render_brush(&properties.brush_properties, &self.points))];
+        let simplest_path = vec![Path::from_drawing(properties.brush.render_brush(&properties.brush_properties, &self.points, Arc::clone(&properties.transformations)))];
 
         // Final result depends on the options that are set
         match options {

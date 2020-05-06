@@ -5,10 +5,12 @@ use super::combine_result::*;
 use super::brush_properties::*;
 use super::brush_definition::*;
 use super::brush_drawing_style::*;
+use super::vector::transformation::*;
 
 use flo_canvas::*;
 
 use std::iter;
+use std::sync::*;
 
 ///
 /// Represents a segment of a brush stroke
@@ -46,7 +48,7 @@ pub trait Brush : Send+Sync {
     ///
     /// Renders a brush stroke to a set of drawing commands
     ///
-    fn render_brush<'a>(&'a self, properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<dyn 'a+Iterator<Item=Draw>>;
+    fn render_brush<'a>(&'a self, properties: &'a BrushProperties, points: &'a Vec<BrushPoint>, transform: Arc<Vec<Transformation>>) -> Box<dyn 'a+Iterator<Item=Draw>>;
 
     ///
     /// Renders a path using this brush's style

@@ -8,7 +8,7 @@ mod error_element;
 mod brush_element;
 mod group_element;
 mod motion_element;
-mod transformation;
+pub mod transformation;
 mod transformed_vector;
 mod path_conversion_options;
 mod brush_properties_element;

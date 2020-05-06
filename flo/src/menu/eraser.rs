@@ -214,7 +214,7 @@ impl EraserMenuController {
             let points = brush.brush_points_for_raw_points(&points);
 
             gc.draw_list(brush.prepare_to_render(&brush_properties));
-            gc.draw_list(brush.render_brush(&brush_properties, &points));
+            gc.draw_list(brush.render_brush(&brush_properties, &points, Arc::new(vec![])));
         })
     }
 }
