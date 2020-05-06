@@ -3,7 +3,10 @@ use super::transform::*;
 use super::motion_type::*;
 use super::super::path::*;
 use super::super::brush::*;
+use super::super::vector::*;
 use super::super::time_path::*;
+
+use smallvec::*;
 
 use std::sync::*;
 use std::ops::Range;
@@ -98,6 +101,26 @@ impl MotionTransform for Motion {
             None                    => 0.0..0.0,
             Reverse(motion)         => motion.range_millis(),
             Translate(translate)    => translate.range_millis()
+        }
+    }
+
+    ///
+    /// Returns the transformations to apply for this motion at a particular point in time
+    ///
+    fn transformation(&self, when: Duration) -> SmallVec<[Transformation; 2]> {
+        use self::Motion::*;
+
+        match self {
+            None                    => smallvec![],
+            Translate(translate)    => translate.transformation(when),
+
+            Reverse(motion)         => {
+                let transform = motion.transformation(when);
+                transform.into_iter()
+                    .rev()
+                    .flat_map(|transform| transform.invert())
+                    .collect()
+            }
         }
     }
 

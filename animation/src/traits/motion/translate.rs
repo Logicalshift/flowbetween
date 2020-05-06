@@ -1,7 +1,10 @@
 use super::transform::*;
 use super::super::path::*;
 use super::super::brush::*;
+use super::super::vector::*;
 use super::super::time_path::*;
+
+use smallvec::*;
 
 use std::ops::Range;
 use std::time::Duration;
@@ -69,6 +72,21 @@ impl MotionTransform for TranslateMotion {
             let end     = self.translate.points.last().unwrap().point.milliseconds();
 
             start..end
+        }
+    }
+
+    ///
+    /// Returns the transformations to apply for this motion at a particular point in time
+    ///
+    fn transformation(&self, when: Duration) -> SmallVec<[Transformation; 2]> {
+        let time_millis = ((when.as_secs() as f32) * 1_000.0) + ((when.subsec_nanos() as f32) / 1_000_000.0);
+        let origin      = self.origin;
+        let position    = self.translate.point_at_time(time_millis);
+
+        if let Some(position) = position {
+            smallvec![Transformation::Translate((position.0-origin.0) as f64, (position.1-origin.1) as f64)]
+        } else {
+            smallvec![]
         }
     }
 
