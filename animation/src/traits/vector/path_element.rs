@@ -7,7 +7,6 @@ use super::brush_definition_element::*;
 use super::brush_properties_element::*;
 use super::super::path::*;
 use super::super::edit::*;
-use super::super::motion::*;
 
 use flo_canvas::*;
 use flo_curves::bezier::path::*;
@@ -129,53 +128,6 @@ impl VectorElement for PathElement {
             // No transformations: just render the path directly
             gc.draw_list(properties.brush.render_path(&properties.brush_properties, &self.path));
         }
-    }
-
-    ///
-    /// Returns a new element that is this element transformed along a motion at a particular moment
-    /// in time.
-    ///
-    fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
-        // Gather all the points in this path in one place
-        let all_points          = self.path.elements_ref()
-            .flat_map(|component| {
-                match component {
-                    PathComponent::Move(pos)                => vec![pos],
-                    PathComponent::Line(pos)                => vec![pos],
-                    PathComponent::Bezier(pos, cp1, cp2)    => vec![cp1, cp2, pos],
-                    PathComponent::Close                    => vec![]
-                }
-            });
-
-        // Transform the points
-        let transformed_points  = motion.transform_path_points(when, all_points);
-
-        // Collect into a set of new elements
-        let mut next_position   = transformed_points;
-        let new_elements        = self.path.elements_ref()
-            .map(|component| {
-                match component {
-                    PathComponent::Move(_)          => PathComponent::Move(next_position.next().unwrap()),
-                    PathComponent::Line(_)          => PathComponent::Line(next_position.next().unwrap()),
-                    PathComponent::Bezier(_, _, _)  => {
-                        let cp1 = next_position.next().unwrap();
-                        let cp2 = next_position.next().unwrap();
-                        let pos = next_position.next().unwrap();
-
-                        PathComponent::Bezier(pos, cp1, cp2)
-                    },
-                    PathComponent::Close            => PathComponent::Close
-                }
-            })
-            .collect();
-
-        // Create a new path transformed with these points
-        Vector::Path(PathElement {
-            id:                 self.id,
-            brush:              Arc::clone(&self.brush),
-            brush_properties:   Arc::clone(&self.brush_properties),
-            path:               Path::from_elements_arc(Arc::new(new_elements))
-        })
     }
 
     ///

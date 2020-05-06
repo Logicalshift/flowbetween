@@ -94,14 +94,6 @@ impl VectorElement for MotionElement {
     }
 
     ///
-    /// Returns a new element that is this element transformed along a motion at a particular moment
-    /// in time.
-    ///
-    fn motion_transform(&self, _motion: &Motion, _when: Duration) -> Vector {
-        Vector::Motion(self.clone())
-    }
-
-    ///
     /// Fetches the control points for this element
     ///
     fn control_points(&self) -> Vec<ControlPoint> {

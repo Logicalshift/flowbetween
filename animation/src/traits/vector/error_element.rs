@@ -5,7 +5,6 @@ use super::vector_element::*;
 use super::path_conversion_options::*;
 use super::super::path::*;
 use super::super::edit::*;
-use super::super::motion::*;
 
 use flo_canvas::*;
 
@@ -53,14 +52,6 @@ impl VectorElement for ErrorElement {
     /// Renders this vector element
     ///
     fn render(&self, _gc: &mut dyn GraphicsPrimitives, _properties: &VectorProperties, _when: Duration) {
-    }
-
-    ///
-    /// Returns a new element that is this element transformed along a motion at a particular moment
-    /// in time.
-    ///
-    fn motion_transform(&self, _motion: &Motion, _when: Duration) -> Vector {
-        Vector::Error
     }
 
     ///

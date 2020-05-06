@@ -5,7 +5,6 @@ use super::vector_element::*;
 use super::path_conversion_options::*;
 use super::super::edit::*;
 use super::super::path::*;
-use super::super::motion::*;
 use super::super::group_type::*;
 
 use flo_canvas::*;
@@ -182,18 +181,6 @@ impl VectorElement for GroupElement {
     fn update_properties(&self, properties: Arc<VectorProperties>, _when: Duration) -> Arc<VectorProperties> {
         // Groups do not update properties
         properties
-    }
-
-    ///
-    /// Returns a new element that is this element transformed along a motion at a particular moment
-    /// in time.
-    ///
-    fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
-        let new_elements = self.grouped_elements.iter()
-            .map(|old_elem| old_elem.motion_transform(motion, when))
-            .collect();
-
-        Vector::Group(GroupElement::new(self.id, self.group_type, Arc::new(new_elements)))
     }
 
     ///

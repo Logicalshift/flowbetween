@@ -5,7 +5,6 @@ use super::vector_element::*;
 use super::path_conversion_options::*;
 use super::super::path::*;
 use super::super::edit::*;
-use super::super::motion::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 use super::super::super::brushes::*;
@@ -100,14 +99,6 @@ impl VectorElement for BrushDefinitionElement {
     ///
     fn to_path(&self, _properties: &VectorProperties, _options: PathConversion) -> Option<Vec<Path>> {
         None
-    }
-
-    ///
-    /// Returns a new element that is this element transformed along a motion at a particular moment
-    /// in time.
-    ///
-    fn motion_transform(&self, _motion: &Motion, _when: Duration) -> Vector {
-        Vector::BrushDefinition(self.clone())
     }
 
     ///

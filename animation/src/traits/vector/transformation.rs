@@ -6,7 +6,6 @@ use super::path_conversion_options::*;
 
 use crate::traits::edit::*;
 use crate::traits::path::*;
-use crate::traits::motion::*;
 
 use flo_curves::*;
 use flo_canvas::*;
@@ -227,14 +226,6 @@ impl VectorElement for (ElementId, Transformation) {
     ///
     fn update_properties(&self, properties: Arc<VectorProperties>, _when: Duration) -> Arc<VectorProperties> { 
         properties
-    }
-
-    ///
-    /// Returns a new element that is this element transformed along a motion at a particular moment
-    /// in time.
-    ///
-    fn motion_transform(&self, _motion: &Motion, _when: Duration) -> Vector {
-        Vector::Transformation(self.clone())
     }
 
     ///

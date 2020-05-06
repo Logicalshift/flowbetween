@@ -5,7 +5,6 @@ use super::vector_element::*;
 use super::path_conversion_options::*;
 use super::super::path::*;
 use super::super::edit::*;
-use super::super::motion::*;
 use super::super::brush_properties::*;
 
 use flo_canvas::*;
@@ -87,14 +86,6 @@ impl VectorElement for BrushPropertiesElement {
         properties.brush_properties = self.new_properties.clone();
 
         Arc::new(properties)
-    }
-
-    ///
-    /// Returns a new element that is this element transformed along a motion at a particular moment
-    /// in time.
-    ///
-    fn motion_transform(&self, _motion: &Motion, _when: Duration) -> Vector {
-        Vector::BrushProperties(self.clone())
     }
 
     ///

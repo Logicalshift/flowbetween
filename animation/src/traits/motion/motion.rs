@@ -1,8 +1,6 @@
 use super::translate::*;
 use super::transform::*;
 use super::motion_type::*;
-use super::super::path::*;
-use super::super::brush::*;
 use super::super::vector::*;
 use super::super::time_path::*;
 

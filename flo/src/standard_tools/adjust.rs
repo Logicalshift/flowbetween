@@ -339,12 +339,14 @@ impl Adjust {
         let motion_ids  = flo_model.motion().get_motions_for_element(to_edit.id());
         let motions     = motion_ids.into_iter().filter_map(|id| flo_model.get_motion(id));
 
-        // Reverse the motions
+        // TODO: Reverse the motions
+        /*
         for motion in motions.rev() {
             // Perform the motion in reverse
             let motion  = motion.reverse();
             adjusted    = adjusted.motion_transform(&motion, frame_time);
         }
+        */
 
         // Return the control points for the adjusted vector
         adjusted.control_points()

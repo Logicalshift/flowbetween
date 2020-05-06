@@ -4,7 +4,6 @@ use super::control_point::*;
 use super::path_conversion_options::*;
 use super::super::path::*;
 use super::super::edit::*;
-use super::super::motion::*;
 
 use flo_canvas::*;
 
@@ -39,13 +38,7 @@ pub trait VectorElement : Send+Any {
     ///
     /// Returns the properties to use for future elements
     ///
-    fn update_properties(&self, properties: Arc<VectorProperties>, when: Duration) -> Arc<VectorProperties> { properties }
-
-    ///
-    /// Returns a new element that is this element transformed along a motion at a particular moment
-    /// in time.
-    ///
-    fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector;
+    fn update_properties(&self, properties: Arc<VectorProperties>, _when: Duration) -> Arc<VectorProperties> { properties }
 
     ///
     /// Fetches the control points for this element

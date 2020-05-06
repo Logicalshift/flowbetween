@@ -6,7 +6,6 @@ use super::path_conversion_options::*;
 
 use super::super::edit::*;
 use super::super::path::*;
-use super::super::motion::*;
 
 use flo_canvas::*;
 
@@ -92,28 +91,6 @@ impl VectorElement for TransformedVector {
     #[inline]
     fn update_properties(&self, properties: Arc<VectorProperties>, when: Duration) -> Arc<VectorProperties> {
         self.transformed.update_properties(properties, when)
-    }
-
-    ///
-    /// Returns a new element that is this element transformed along a motion at a particular moment
-    /// in time.
-    ///
-    fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
-        let transformed = self.transformed.motion_transform(motion, when);
-
-        Vector::Transformed(match transformed {
-            Vector::Transformed(transformed) => TransformedVector {
-                original:       Arc::clone(&self.original),
-                transformed:    Arc::clone(&transformed.transformed),
-                id:             transformed.id()
-            },
-
-            transformed => TransformedVector {
-                id:             transformed.id(),
-                original:       Arc::clone(&self.original),
-                transformed:    Arc::new(transformed)
-            }
-        })
     }
 
     ///

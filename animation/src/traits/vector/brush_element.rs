@@ -2,12 +2,10 @@ use super::vector::*;
 use super::properties::*;
 use super::control_point::*;
 use super::vector_element::*;
-use super::transformed_vector::*;
 use super::path_conversion_options::*;
 use super::super::path::*;
 use super::super::edit::*;
 use super::super::brush::*;
-use super::super::motion::*;
 
 use flo_canvas::*;
 use flo_curves::bezier::path::*;
@@ -123,21 +121,6 @@ impl VectorElement for BrushElement {
                 Some(vec![path])
             }
         }
-    }
-
-    ///
-    /// Returns a new element that is this element transformed along a motion at a particular moment
-    /// in time.
-    ///
-    fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
-        let transformed_points = motion.transform_brush_points(when, self.points.iter()).collect();
-
-        let transformed = Vector::BrushStroke(BrushElement {
-            id:     self.id,
-            points: Arc::new(transformed_points)
-        });
-
-        Vector::Transformed(TransformedVector::new(Vector::BrushStroke(self.clone()), transformed))
     }
 
     ///
