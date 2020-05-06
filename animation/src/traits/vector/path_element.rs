@@ -114,7 +114,21 @@ impl VectorElement for PathElement {
     ///
     fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, _when: Duration) {
         gc.draw_list(properties.brush.prepare_to_render(&properties.brush_properties));
-        gc.draw_list(properties.brush.render_path(&properties.brush_properties, &self.path));
+
+        if properties.transformations.len() > 0 {
+            // Transform the path
+            let mut path = properties.transformations[0].transform_path(&self.path);
+
+            for transform in properties.transformations.iter().skip(1) {
+                path = transform.transform_path(&path);
+            }
+
+            // Draw the transformed path
+            gc.draw_list(properties.brush.render_path(&properties.brush_properties, &path));
+        } else {
+            // No transformations: just render the path directly
+            gc.draw_list(properties.brush.render_path(&properties.brush_properties, &self.path));
+        }
     }
 
     ///
