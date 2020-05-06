@@ -1143,7 +1143,6 @@ fn replace_path_components() {
         ])))
     ]);
 
-
     let edit_log        = anim.read_edit_log(5..6);
     let edit_log        = edit_log.collect();
     let edits: Vec<_>   = executor::block_on(edit_log);
