@@ -19,6 +19,12 @@ impl Transformation {
                     }
                 }
             }
+
+            Translate(dx, dy) => {
+                data.write_chr('t');
+                data.write_f64(*dx);
+                data.write_f64(*dy);
+            }
         }
     }
 
@@ -39,6 +45,13 @@ impl Transformation {
                 Some(Transformation::Matrix(matrix))
             }
 
+            't' => {
+                let dx = data.next_f64();
+                let dy = data.next_f64();
+
+                Some(Transformation::Translate(dx, dy))
+            }
+
             _ => None
         }
     }
@@ -51,6 +64,18 @@ mod test {
     #[test]
     fn matrix() {
         let transformation  = Transformation::Matrix([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]);
+        let mut encoded     = String::new();
+        transformation.serialize(&mut encoded);
+
+        let decoded         = Transformation::deserialize(&mut encoded.chars());
+        let decoded         = decoded.unwrap();
+
+        assert!(decoded == transformation);
+    }
+
+    #[test]
+    fn translate() {
+        let transformation  = Transformation::Translate(11.0, 12.0);
         let mut encoded     = String::new();
         transformation.serialize(&mut encoded);
 

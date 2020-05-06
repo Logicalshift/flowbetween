@@ -20,7 +20,10 @@ use std::time::{Duration};
 #[derive(Clone, PartialEq, Debug)]
 pub enum Transformation {
     /// A 2D transformation matrix
-    Matrix([[f64; 3]; 3])
+    Matrix([[f64; 3]; 3]),
+
+    /// A translation offset
+    Translate(f64, f64)
 }
 
 impl Transformation {
@@ -31,7 +34,8 @@ impl Transformation {
         use self::Transformation::*;
 
         match self {
-            Matrix(matrix)  => Self::invert_matrix(matrix).map(|inverted_matrix| Matrix(inverted_matrix))
+            Matrix(matrix)      => Self::invert_matrix(matrix).map(|inverted_matrix| Matrix(inverted_matrix)),
+            Translate(dx, dy)   => Some(Translate(-dx, -dy))
         }
     }
 
@@ -45,7 +49,8 @@ impl Transformation {
         let (x, y)          = (point.get(0), point.get(1));
 
         let (x, y)          = match self {
-            Transformation::Matrix(matrix)  => Self::transform_matrix(x, y, matrix)
+            Transformation::Matrix(matrix)      => Self::transform_matrix(x, y, matrix),
+            Transformation::Translate(dx, dy)   => (x + dx, y + dy)
         };
 
         // The rest of the points are let through as-is
