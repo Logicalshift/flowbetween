@@ -62,6 +62,20 @@ impl Transformation {
     }
 
     ///
+    /// Transforms a bezier curve using this transformation
+    ///
+    pub fn transform_curve<Curve, NewCurve>(&self, curve: &Curve) -> NewCurve
+    where   Curve:      BezierCurve,
+            NewCurve:   BezierCurveFactory<Point=Curve::Point> {
+        let start_point = self.transform_point(&curve.start_point());
+        let end_point   = self.transform_point(&curve.end_point());
+        let (cp1, cp2)  = curve.control_points();
+        let (cp1, cp2)  = (self.transform_point(&cp1), self.transform_point(&cp2));
+
+        NewCurve::from_points(start_point, (cp1, cp2), end_point)
+    }
+
+    ///
     /// Transforms a 2D point via the matrix transformation
     ///
     fn transform_matrix(x: f64, y: f64, matrix: &[[f64; 3]; 3]) -> (f64, f64) {
