@@ -96,8 +96,12 @@ impl StreamAnimation {
         // Force a desync to wait for the when_empty future to complete
         let when_empty = self.edit_publisher.republish().when_empty();
 
-        // The desync will need to wait for this future when it is dropped here
-        let _ = Desync::new(()).future(move |_| when_empty.boxed());
+        // Create a desync and wait for the 'when_empty' signal to show up (indicating all the edits have been sent to the core)
+        let wait_for_edits  = Desync::new(());
+        let _               = wait_for_edits.future(move |_| async move { when_empty.await; }.boxed());
+
+        // Synchronise after the future has completed
+        wait_for_edits.sync(|_| { });
     }
 
     ///
