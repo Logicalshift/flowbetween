@@ -404,6 +404,15 @@ impl Brush for InkBrush {
             last_point = brush_point;
         }
 
+        // Transform the ink curve if needed
+        if transform.len() > 0 {
+            for index in 0..curve.len() {
+                for transform in transform.iter() {
+                    curve[index] = transform.transform_curve(&curve[index]);
+                }
+            }
+        }
+
         // Draw a variable width line for this curve
         let (upper_curves, lower_curves): (Vec<_>, Vec<_>) = curve.into_iter()
             .map(|ink_curve| ink_curve.to_offset_curves((self.min_width*size_ratio) as f64, (self.max_width*size_ratio) as f64))
