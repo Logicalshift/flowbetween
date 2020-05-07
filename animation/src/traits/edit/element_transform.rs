@@ -7,5 +7,5 @@ pub enum ElementTransform {
     SetAnchor(f64, f64),
 
     /// Moves the components to a new location (the specified location is the new location of the anchor: further operations will use this as the anchor position)
-    Move(f64, f64)
+    MoveTo(f64, f64)
 }

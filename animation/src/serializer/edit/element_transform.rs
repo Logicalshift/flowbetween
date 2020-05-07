@@ -17,7 +17,7 @@ impl ElementTransform {
                 data.write_f64(*y);
             }
 
-            Move(x, y) => {
+            MoveTo(x, y) => {
                 data.write_chr('m');
                 data.write_f64(*x);
                 data.write_f64(*y);
@@ -39,7 +39,7 @@ impl ElementTransform {
             'm' => {
                 let (x, y) = (data.next_f64(), data.next_f64());
 
-                Some(ElementTransform::Move(x, y))
+                Some(ElementTransform::MoveTo(x, y))
             }
 
             _ => None
