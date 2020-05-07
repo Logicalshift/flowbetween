@@ -83,7 +83,7 @@ impl StreamAnimationCore {
                 },
 
                 Transform(transformations)      => {
-                    unimplemented!("ElementEdit::Transform()")
+                    self.transform_elements(&element_ids, transformations).await;
                 }
             }
         }
