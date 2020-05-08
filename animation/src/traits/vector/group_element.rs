@@ -73,10 +73,29 @@ impl GroupElement {
     ///
     fn render_normal(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, when: Duration) {
         // Properties update internally to the group
-        let mut properties = Arc::new(properties.clone());
+        let default_properties      = Arc::new(properties.clone());
+        let mut properties          = Arc::clone(&default_properties);
+        let mut active_attachments  = vec![];
 
         for elem in self.grouped_elements.iter() {
-            properties = elem.update_properties(properties, when);
+            // Retrieve the attachments for the element
+            let element_attachments     = (properties.retrieve_attachments)(elem.id());
+
+            // If they're different from the active attachments, update the properties
+            let element_attachment_ids  = element_attachments.iter().map(|elem| elem.id()).collect();
+            if element_attachment_ids != active_attachments {
+                // New set of attachments
+                properties          = Arc::clone(&default_properties);
+                active_attachments = element_attachment_ids;
+
+                // Apply the attachments
+                for attachment in element_attachments {
+                    properties = attachment.update_properties(properties, when);
+                    attachment.render(gc, &*properties, when);
+                }
+            }
+
+            // Render the element
             properties.render(gc, elem.clone(), when);
         }
     }
