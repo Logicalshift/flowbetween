@@ -12,6 +12,7 @@ mod path;
 mod caching;
 mod collide_paths;
 mod grouping;
+mod transformation;
 
 ///
 /// Creates an in-memory animaton for the tests

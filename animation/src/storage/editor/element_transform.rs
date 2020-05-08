@@ -54,7 +54,7 @@ impl StreamAnimationCore {
                 return;
             }
 
-            // The origin starts as the center point of all of the elments
+            // The anchor point starts as the center point of all of the elements: calculate this point
             let mut bounding_box: Option<Rect>  = None;
 
             for element_id in element_ids.iter() {
