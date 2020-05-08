@@ -50,6 +50,26 @@ impl StreamFrame {
             vec![]
         }
     }
+
+    ///
+    /// Creates the default properties for this frame
+    ///
+    fn default_properties(core: &Arc<KeyFrameCore>) -> Arc<VectorProperties> {
+        let core            = Arc::clone(core);
+        let mut properties  = VectorProperties::default();
+
+        // Retrieve attachments from this frame
+        properties.retrieve_attachments = Arc::new(move |element_id| {
+            Self::retrieve_attachments_for_core(&core, element_id).into_iter()
+                .flat_map(|(element_id, _type)| {
+                    core.elements.get(&element_id)
+                        .map(|wrapper| wrapper.element.clone())
+                })
+                .collect()
+        });
+
+        Arc::new(properties)
+    }
 }
 
 impl Frame for StreamFrame {
@@ -72,6 +92,7 @@ impl Frame for StreamFrame {
         // Render the elements
         if let Some(core) = self.keyframe_core.as_ref() {
             // Start at the initial element
+            let default_properties  = Self::default_properties(core);
             let mut next_element    = core.initial_element;
 
             while let Some(current_element) = next_element {
@@ -85,7 +106,7 @@ impl Frame for StreamFrame {
                 // Render the element if it is displayed on this frame
                 if wrapper.start_time <= self.frame_time {
                     // Reset the properties
-                    properties = Arc::new(VectorProperties::default());
+                    properties = Arc::clone(&default_properties);
 
                     // Check the attachments
                     if active_attachments != wrapper.attachments {
