@@ -1,5 +1,6 @@
-use super::super::vector::*;
+use super::super::edit::*;
 use super::super::brush::*;
+use super::super::vector::*;
 use super::super::brush_properties::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
@@ -28,6 +29,9 @@ pub struct VectorProperties {
     /// Transformations to apply to the element during rendering
     pub transformations: Arc<Vec<Transformation>>,
 
+    /// Returns the 
+    pub retrieve_attachments: Arc<dyn (Fn(ElementId) -> Vec<Vector>) + Sync+Send>,
+
     /// Provides an override for how a vector element is rendered
     pub render_vector: Arc<dyn (Fn(&mut dyn GraphicsPrimitives, Vector, Duration, &VectorProperties)) + Sync+Send>
 }
@@ -38,10 +42,11 @@ impl VectorProperties {
     ///
     pub fn default() -> VectorProperties {
         VectorProperties {
-            brush:              Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
-            brush_properties:   BrushProperties::new(),
-            transformations:    Arc::new(vec![]),
-            render_vector:      Arc::new(|gc, vector, when, properties| vector.render(gc, properties, when))
+            brush:                  Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
+            brush_properties:       BrushProperties::new(),
+            transformations:        Arc::new(vec![]),
+            retrieve_attachments:   Arc::new(|_| vec![]),
+            render_vector:          Arc::new(|gc, vector, when, properties| vector.render(gc, properties, when))
         }
     }
 

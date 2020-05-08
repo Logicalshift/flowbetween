@@ -264,16 +264,16 @@ mod test {
     #[test]
     fn transform_move() {
         let mut encoded = String::new();
-        ElementEdit::Transform(vec![ElementTransform::Move(2.0, 3.0)]).serialize(&mut encoded);
+        ElementEdit::Transform(vec![ElementTransform::MoveTo(2.0, 3.0)]).serialize(&mut encoded);
 
-        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Transform(vec![ElementTransform::Move(2.0, 3.0)])));
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Transform(vec![ElementTransform::MoveTo(2.0, 3.0)])));
     }
 
     #[test]
     fn transform_anchor_and_move() {
         let mut encoded = String::new();
-        ElementEdit::Transform(vec![ElementTransform::SetAnchor(6.0, 7.0), ElementTransform::Move(2.0, 3.0)]).serialize(&mut encoded);
+        ElementEdit::Transform(vec![ElementTransform::SetAnchor(6.0, 7.0), ElementTransform::MoveTo(2.0, 3.0)]).serialize(&mut encoded);
 
-        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Transform(vec![ElementTransform::SetAnchor(6.0, 7.0), ElementTransform::Move(2.0, 3.0)])));
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Transform(vec![ElementTransform::SetAnchor(6.0, 7.0), ElementTransform::MoveTo(2.0, 3.0)])));
     }
 }
