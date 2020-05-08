@@ -131,6 +131,19 @@ impl GroupElement {
     fn render_added(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) {
         let paths = self.added_path(properties);
 
+        let paths = if properties.transformations.len() > 0 {
+            paths.into_iter()
+                .map(|mut path| {
+                    for transform in properties.transformations.iter() {
+                        path = transform.transform_path(&path);
+                    }
+                    path
+                })
+                .collect()
+        } else {
+            paths
+        };
+
         gc.draw_list(properties.brush.prepare_to_render(&properties.brush_properties));
         paths.into_iter()
             .for_each(|path| gc.draw_list(properties.brush.render_path(&properties.brush_properties, &path)));
