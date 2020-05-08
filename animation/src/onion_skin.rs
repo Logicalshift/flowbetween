@@ -39,11 +39,7 @@ pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProce
 
                     // Apply them to generate the properties for the following elements
                     properties = Arc::new(VectorProperties::default());
-                    for element_id in active_attachments.iter() {
-                        if let Some(attach_element) = frame.element_with_id(element_id.clone()) {
-                            properties = attach_element.update_properties(Arc::clone(&properties), when);
-                        }
-                    }
+                    properties = frame.apply_properties_for_element(&element, properties);
                 }
 
                 // Add this element to the onion skin path
