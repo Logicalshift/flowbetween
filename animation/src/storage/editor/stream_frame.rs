@@ -14,7 +14,7 @@ pub struct StreamFrame {
     frame_time: Duration,
 
     /// The keyframe that was retrieved for this frame (or none if no keyframe was retrieved)
-    keyframe_core: Option<KeyFrameCore>
+    keyframe_core: Option<Arc<KeyFrameCore>>
 }
 
 impl StreamFrame {
@@ -24,7 +24,30 @@ impl StreamFrame {
     pub (super) fn new(frame_time: Duration, keyframe_core: Option<KeyFrameCore>) -> StreamFrame {
         StreamFrame {
             frame_time:     frame_time,
-            keyframe_core:  keyframe_core
+            keyframe_core:  keyframe_core.map(|core| Arc::new(core))
+        }
+    }
+
+    ///
+    /// Loads the attachments for an element from a core
+    ///
+    fn retrieve_attachments_for_core(core: &Arc<KeyFrameCore>, id: ElementId) -> Vec<(ElementId, VectorType)> {
+        // Start at the initial element
+        if let Some(wrapper) = core.elements.get(&id) {
+            // Fetch the types of the attachments to the element
+            wrapper.attachments
+                .iter()
+                .map(|attachment_id| {
+                    core.elements.get(attachment_id)
+                        .map(|attachment_wrapper| {
+                            (*attachment_id, VectorType::from(&attachment_wrapper.element))
+                        })
+                })
+                .flatten()
+                .collect()
+        } else {
+            // Element not found
+            vec![]
         }
     }
 }
@@ -93,7 +116,21 @@ impl Frame for StreamFrame {
     ///
     fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
         if let Some(core) = self.keyframe_core.as_ref() {
-            // Ask the core to apply the properties
+            // Create the attachment fetcher for this frame
+            let mut properties  = (*properties).clone();
+            let retrieve_core   = Arc::clone(&core);
+            properties.retrieve_attachments = Arc::new(move |element_id| {
+                Self::retrieve_attachments_for_core(&retrieve_core, element_id).into_iter()
+                    .flat_map(|(element_id, _type)| {
+                        retrieve_core.elements.get(&element_id)
+                            .map(|wrapper| wrapper.element.clone())
+                    })
+                    .collect()
+            });
+
+            let properties      = Arc::new(properties);
+
+            // Ask the core to apply the properties for the element
             core.apply_properties_for_element(element, properties, self.time_index())
         } else {
             // Properties are unaltered
@@ -155,23 +192,7 @@ impl Frame for StreamFrame {
     ///
     fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)> {
         if let Some(core) = self.keyframe_core.as_ref() {
-            // Start at the initial element
-            if let Some(wrapper) = core.elements.get(&id) {
-                // Fetch the types of the attachments to the element
-                wrapper.attachments
-                    .iter()
-                    .map(|attachment_id| {
-                        core.elements.get(attachment_id)
-                            .map(|attachment_wrapper| {
-                                (*attachment_id, VectorType::from(&attachment_wrapper.element))
-                            })
-                    })
-                    .flatten()
-                    .collect()
-            } else {
-                // Element not found
-                vec![]
-            }
+            Self::retrieve_attachments_for_core(&core, id)
         } else {
             // No elements
             vec![]
