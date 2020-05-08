@@ -65,7 +65,6 @@ impl Frame for StreamFrame {
     ///
     fn render_to(&self, gc: &mut dyn GraphicsPrimitives) {
         // Set up the properties
-        let mut properties;
         let mut active_attachments  = vec![];
         let when                    = self.time_index();
 
@@ -85,21 +84,10 @@ impl Frame for StreamFrame {
                 // Render the element if it is displayed on this frame
                 if wrapper.start_time <= self.frame_time {
                     // Reset the properties
-                    properties = Arc::new(VectorProperties::default());
+                    let properties = Arc::new(VectorProperties::default());
 
-                    // Check the attachments
-                    if active_attachments != wrapper.attachments {
-                        // Update the properties based on the new attachments
-                        active_attachments = wrapper.attachments.clone();
-
-                        // Apply the properties from each of the attachments in turn
-                        for attachment_id in active_attachments.iter() {
-                            if let Some(attach_element) = core.elements.get(&attachment_id) {
-                                properties = attach_element.element.update_properties(Arc::clone(&properties), when);
-                                properties.render(gc, attach_element.element.clone(), when);
-                            }
-                        }
-                    }
+                    // Apply the properties for this element
+                    let properties = self.apply_properties_for_element(&wrapper.element, properties);
 
                     // Render the element
                     properties.render(gc, wrapper.element.clone(), when);
