@@ -1,5 +1,8 @@
+use super::core_element::*;
 use super::keyframe_core::*;
+use super::element_wrapper::*;
 use super::stream_animation_core::*;
+use super::super::storage_api::*;
 use crate::traits::*;
 
 use flo_curves::*;
@@ -7,6 +10,7 @@ use flo_curves::*;
 use futures::prelude::*;
 
 use std::sync::*;
+use std::time::{Duration};
 
 impl StreamAnimationCore {
     ///
@@ -76,7 +80,41 @@ impl StreamAnimationCore {
             }
 
             // Set up the initial origin for the transformation
-            let mut transform_origin = bounding_box.map(|bounding_box| bounding_box.center());
+            let mut transform_origin    = bounding_box.map(|bounding_box| bounding_box.center());
+
+            // Build up the transformations to apply to the element
+            let mut element_transform   = vec![];
+            for transform in transformations.iter() {
+                match transform {
+                    ElementTransform::SetAnchor(x, y)   => transform_origin = Some(Coord2(*x, *y)),
+
+                    ElementTransform::MoveTo(x, y)      => {
+                        if let Some(origin) = transform_origin {
+                            element_transform.push(Transformation::Translate(x - origin.x(), y - origin.y()));
+                        }
+                    }
+                }
+            }
+
+            // Generate the attachments for these transformations
+            let mut new_attachments     = vec![];
+            let mut generate_elements   = vec![];
+            for transform in element_transform {
+                // Create a new wrapper for this transformation
+                let attachment_id       = self.assign_element_id(ElementId::Unassigned).await;
+                let attachment_wrapper  = ElementWrapper::with_element(Vector::Transformation((attachment_id, transform)), Duration::from_millis(0));
+
+                // Write it out
+                generate_elements.push(StorageCommand::WriteElement(attachment_id.id().unwrap(), attachment_wrapper.serialize_to_string()));
+
+                // Attach to the elements
+                new_attachments.push(attachment_id);
+            }
+
+            self.request(generate_elements).await;
+
+            // Attach to all of the elements
+            self.update_elements(element_ids.clone(), |_wrapper| ElementUpdate::AddAttachments(new_attachments.clone())).await
         }
     }
 }
