@@ -99,6 +99,13 @@ impl Rect {
     }
 
     ///
+    /// Returns the center of this rectangle
+    ///
+    pub fn center(&self) -> Coord2 {
+        Coord2(((self.x1+self.x2)/2.0) as f64, ((self.y1+self.y2)/2.0) as f64)
+    }
+
+    ///
     /// True if this rectangle has no size
     ///
     #[inline]
