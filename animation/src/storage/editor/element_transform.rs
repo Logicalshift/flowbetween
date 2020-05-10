@@ -165,6 +165,8 @@ impl StreamAnimationCore {
                             element_transforms.transform(|_| smallvec![Transformation::Translate(x - origin.x(), y - origin.y())]); 
                         }
                     }
+
+                    ElementTransform::Align(alignment)  => { unimplemented!() }
                 }
             }
 

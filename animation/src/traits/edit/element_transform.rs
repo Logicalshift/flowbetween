@@ -1,3 +1,5 @@
+use super::element_align::*;
+
 ///
 /// Transformations that can be applied to elements
 ///
@@ -7,5 +9,8 @@ pub enum ElementTransform {
     SetAnchor(f64, f64),
 
     /// Moves the components to a new location (the specified location is the new location of the anchor: further operations will use this as the anchor position)
-    MoveTo(f64, f64)
+    MoveTo(f64, f64),
+
+    /// Aligns several elements to the anchor point (or the overall bounding box)
+    Align(ElementAlign)
 }

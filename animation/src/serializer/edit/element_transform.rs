@@ -22,6 +22,11 @@ impl ElementTransform {
                 data.write_f64(*x);
                 data.write_f64(*y);
             }
+
+            Align(alignment) => {
+                data.write_chr('a');
+                alignment.serialize(data);
+            }
         }
     }
 
@@ -40,6 +45,11 @@ impl ElementTransform {
                 let (x, y) = (data.next_f64(), data.next_f64());
 
                 Some(ElementTransform::MoveTo(x, y))
+            }
+
+            'a' => {
+                ElementAlign::deserialize(data)
+                    .map(|align| ElementTransform::Align(align))
             }
 
             _ => None
