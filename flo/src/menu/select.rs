@@ -423,6 +423,31 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
                 self.timeline.invalidate_canvas();
             },
 
+            "AlignLeft" | "AlignCenter" | "AlignRight" |
+            "AlignTop" | "AlignMiddle" | "AlignBottom" => {
+                // Convert to an alignment
+                let selection       = self.selection_in_order.get();
+                let element_align   = match action_id {
+                    "AlignLeft"     => ElementAlign::Left,
+                    "AlignCenter"   => ElementAlign::Center,
+                    "AlignRight"    => ElementAlign::Right,
+
+                    "AlignTop"      => ElementAlign::Top,
+                    "AlignMiddle"   => ElementAlign::Middle,
+                    "AlignBottom"   => ElementAlign::Bottom,
+
+                    _               => ElementAlign::Center
+                };
+
+                // Send the edit
+                let _ = self.edit.future(move |animation| {
+                    animation.publish(Arc::new(vec![AnimationEdit::Element(selection.iter().cloned().collect(), 
+                        ElementEdit::Transform(vec![ElementTransform::Align(element_align)]))]))
+                });
+                self.edit.sync(|_| { });
+                self.timeline.invalidate_canvas();
+            }
+
             _ => { }
         }
     }
