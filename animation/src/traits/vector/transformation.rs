@@ -227,7 +227,16 @@ impl VectorElement for (ElementId, SmallVec<[Transformation; 2]>) {
     /// Returns the properties to use for future elements
     ///
     fn update_properties(&self, properties: Arc<VectorProperties>, _when: Duration) -> Arc<VectorProperties> { 
-        properties
+        // Clone the properties
+        let mut new_properties          = (*properties).clone();
+        let mut new_transformations     = (*properties.transformations).clone();
+
+        // Apply the transformations from this item to the new properties
+        new_transformations.extend(self.1.iter().cloned());
+        new_properties.transformations  = Arc::new(new_transformations);
+
+        // Result is the updated properties
+        Arc::new(new_properties)
     }
 
     ///
