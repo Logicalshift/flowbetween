@@ -14,6 +14,67 @@ use std::sync::*;
 use std::time::{Duration};
 use std::collections::{HashMap};
 
+///
+/// Structure that represents the transformations made to a set of elements
+///
+struct TransformsForElements {
+    /// The transformations to apply to each element
+    transformations_for_element: HashMap<i64, SmallVec<[Transformation; 2]>>
+}
+
+impl TransformsForElements {
+    ///
+    /// Creates a new set of element transformations
+    ///
+    fn new() -> TransformsForElements {
+        TransformsForElements {
+            transformations_for_element: HashMap::new()
+        }
+    }
+
+    ///
+    /// Adds the existing transforms for a particular element (if there are any)
+    ///
+    fn read_transformation(&mut self, id: i64, frame: &KeyFrameCore) {
+        // If there are no transformations attached to the element, then it ends up with an empty list
+        let mut element_transforms = smallvec![];
+
+        // Fetch the attachments for this element
+        let attachments = if let Some(element_wrapper) = frame.elements.get(&ElementId::Assigned(id)) {
+            element_wrapper.attachments.clone()
+        } else {
+            vec![]
+        };
+
+        // Try to fetch the transformations for this element from the frame
+        for attachment_id in attachments {
+            if let Some(attachment_wrapper) = frame.elements.get(&attachment_id) {
+                if let Vector::Transformation((_, transform)) = &attachment_wrapper.element {
+                    // Add these transforms to the element
+                    element_transforms.extend(transform.iter().cloned());
+
+                    // Only use the first set of transformations if there are multiple (this is the element we'lloverwrite)
+                    break;
+                }
+            }
+        }
+
+        // Store the transforms for this element
+        self.transformations_for_element.insert(id, element_transforms);
+    }
+
+    ///
+    /// Requests and applies a transformation for all of the elements in this structure
+    ///
+    fn transform<'a, TransformFn>(&'a mut self, transform: TransformFn)
+    where TransformFn: 'a+Fn(i64) -> SmallVec<[Transformation; 2]> {
+        for (id, existing_transform) in self.transformations_for_element.iter_mut() {
+            let new_transform = transform(*id);
+            existing_transform.push(new_transform);
+        }
+    }
+}
+
 impl StreamAnimationCore {
     ///
     /// Returns the bounding box for an element
@@ -60,19 +121,20 @@ impl StreamAnimationCore {
             // This is also used for alignments
             let mut bounding_box: Option<Rect>  = None;
             let mut bounds_for_element          = HashMap::new(); 
+            let mut element_transforms          = TransformsForElements::new();
 
             for element_id in element_ids.iter() {
                 let element_id = *element_id;
 
                 if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
-                    // Calculate the origin for this element
-                    let bounds = frame.future(move |frame| {
-                        async move {
-                            Self::bounds_for_element(frame, element_id)
-                        }.boxed()
-                    }).await.unwrap();
+                    // Store the active transformation for this element
+                    let element_transforms = &mut element_transforms;
+                    frame.sync(move |frame| element_transforms.read_transformation(element_id, frame));
 
-                    // Add to the sum of the origins
+                    // Calculate the origin for this element
+                    let bounds = frame.sync(move |frame| Self::bounds_for_element(frame, element_id));
+
+                    // Add to the overall bounding box
                     if let Some(bounds) = bounds {
                         bounds_for_element.insert(element_id, bounds);
 
@@ -88,21 +150,22 @@ impl StreamAnimationCore {
             // Set up the initial origin for the transformation
             let mut transform_origin    = bounding_box.map(|bounding_box| bounding_box.center());
 
-            // Build up the transformations to apply to the element
-            let mut element_transform   = smallvec![];
+            // Apply the transformations for each element in turn
             for transform in transformations.iter() {
                 match transform {
-                    ElementTransform::SetAnchor(x, y)   => transform_origin = Some(Coord2(*x, *y)),
+                    ElementTransform::SetAnchor(x, y)   => { transform_origin = Some(Coord2(*x, *y)); },
 
-                    ElementTransform::MoveTo(x, y)      => {
+                    ElementTransform::MoveTo(x, y)      => { 
                         if let Some(origin) = transform_origin {
-                            element_transform.push(Transformation::Translate(x - origin.x(), y - origin.y()));
+                            element_transforms.transform(|_| smallvec![Transformation::Translate(x - origin.x(), y - origin.y())]); 
                         }
                     }
                 }
             }
 
-            // Generate the attachments for these transformations
+            /*
+            // Create or update the attachments for each element
+            // We assume that any transformation attachment made to an element is unique to that element (if it's shared we'll update across everything it's shared with)
             let mut new_attachments     = vec![];
             let mut generate_elements   = vec![];
 
@@ -120,6 +183,7 @@ impl StreamAnimationCore {
 
             // Attach to all of the elements
             self.update_elements(element_ids.clone(), |_wrapper| ElementUpdate::AddAttachments(new_attachments.clone())).await
+            */
         }
     }
 }
