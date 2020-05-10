@@ -10,6 +10,8 @@ use crate::traits::path::*;
 use flo_curves::*;
 use flo_canvas::*;
 
+use smallvec::*;
+
 use std::sync::*;
 use std::time::{Duration};
 
@@ -192,7 +194,7 @@ impl Transformation {
     }
 }
 
-impl VectorElement for (ElementId, Transformation) {
+impl VectorElement for (ElementId, SmallVec<[Transformation; 2]>) {
     ///
     /// The ID of this element
     ///

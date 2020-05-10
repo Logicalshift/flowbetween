@@ -41,9 +41,15 @@ fn transform_path() {
 
     assert!(if let Vector::Transformation((_, _)) = attached_element { true } else { false });
 
-    if let Vector::Transformation((_, Transformation::Translate(x, y))) = attached_element {
-        assert!((x- -10.0).abs() < 0.001);
-        assert!((y- -20.0).abs() < 0.001);
+    if let Vector::Transformation((_, transform)) = attached_element {
+        assert!(transform.len() == 1);
+
+        if let Transformation::Translate(x, y) = transform[0] {
+            assert!((x- -10.0).abs() < 0.001);
+            assert!((y- -20.0).abs() < 0.001);
+        } else {
+            assert!(false);
+        }
     } else {
         assert!(false);
     }

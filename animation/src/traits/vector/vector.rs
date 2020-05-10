@@ -11,6 +11,8 @@ use super::brush_definition_element::*;
 use super::super::path::*;
 use super::super::edit::ElementId;
 
+use smallvec::*;
+
 use std::ops::{Deref, DerefMut};
 
 ///
@@ -40,7 +42,7 @@ pub enum Vector {
     Group(GroupElement),
 
     /// Attached to an element to indicate a transformation that should be applied to it when rendering
-    Transformation((ElementId, Transformation)),
+    Transformation((ElementId, SmallVec<[Transformation; 2]>)),
 
     /// Element exists but could not be loaded from the file
     Error

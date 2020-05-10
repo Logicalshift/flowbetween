@@ -3,6 +3,8 @@ use super::super::source::*;
 use super::super::target::*;
 use super::super::super::traits::*;
 
+use smallvec::*;
+
 use std::str::{Chars};
 
 // Function to turn a resolve function into a boxed resolve function (to get around limitations in Rust's type inference)
@@ -27,8 +29,15 @@ impl Vector {
             Path(path)                      => { data.write_chr('p'); path.serialize(data); }
             Motion(motion)                  => { data.write_chr('m'); motion.serialize(data); }
             Group(group)                    => { data.write_chr('g'); group.serialize(data); }
-            Transformation((id, transform)) => { data.write_chr('t'); id.serialize(data); transform.serialize(data); }
             Error                           => { data.write_chr('?'); }
+
+            Transformation((id, transform)) => { 
+                data.write_chr('t'); 
+                id.serialize(data); 
+
+                data.write_usize(transform.len());
+                transform.iter().for_each(|item| item.serialize(data));
+            }
         }
     }
 
@@ -76,9 +85,14 @@ impl Vector {
             }
             't' => {
                 ElementId::deserialize(data)
-                    .and_then(|elem_id| 
-                        Transformation::deserialize(data).map(move |transform| (elem_id, transform))
-                    )
+                    .and_then(|elem_id| {
+                        let num_items   = data.next_usize();
+                        let transforms  = (0..num_items).into_iter()
+                            .map(|_| Transformation::deserialize(data))
+                            .collect::<Option<SmallVec<[_; 2]>>>();
+
+                        transforms.map(move |transforms| (elem_id, transforms))
+                    })
                     .map(|transform| Vector::Transformation(transform))
                     .map(|vector| box_fn(move |_| Some(vector)))
             }

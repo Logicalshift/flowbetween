@@ -8,6 +8,7 @@ use crate::traits::*;
 use flo_curves::*;
 
 use futures::prelude::*;
+use smallvec::*;
 
 use std::sync::*;
 use std::time::{Duration};
@@ -88,7 +89,7 @@ impl StreamAnimationCore {
             let mut transform_origin    = bounding_box.map(|bounding_box| bounding_box.center());
 
             // Build up the transformations to apply to the element
-            let mut element_transform   = vec![];
+            let mut element_transform   = smallvec![];
             for transform in transformations.iter() {
                 match transform {
                     ElementTransform::SetAnchor(x, y)   => transform_origin = Some(Coord2(*x, *y)),
@@ -104,17 +105,16 @@ impl StreamAnimationCore {
             // Generate the attachments for these transformations
             let mut new_attachments     = vec![];
             let mut generate_elements   = vec![];
-            for transform in element_transform {
-                // Create a new wrapper for this transformation
-                let attachment_id       = self.assign_element_id(ElementId::Unassigned).await;
-                let attachment_wrapper  = ElementWrapper::with_element(Vector::Transformation((attachment_id, transform)), Duration::from_millis(0));
 
-                // Write it out
-                generate_elements.push(StorageCommand::WriteElement(attachment_id.id().unwrap(), attachment_wrapper.serialize_to_string()));
+            // Create a new wrapper for this transformation
+            let attachment_id       = self.assign_element_id(ElementId::Unassigned).await;
+            let attachment_wrapper  = ElementWrapper::with_element(Vector::Transformation((attachment_id, element_transform)), Duration::from_millis(0));
 
-                // Attach to the elements
-                new_attachments.push(attachment_id);
-            }
+            // Write it out
+            generate_elements.push(StorageCommand::WriteElement(attachment_id.id().unwrap(), attachment_wrapper.serialize_to_string()));
+
+            // Attach to the elements
+            new_attachments.push(attachment_id);
 
             self.request(generate_elements).await;
 
