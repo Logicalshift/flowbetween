@@ -132,6 +132,16 @@ impl Rect {
         }
     }
 
+    #[inline]
+    pub fn width(&self) -> f32 {
+        self.x2 - self.x1
+    }
+
+    #[inline]
+    pub fn height(&self) -> f32 {
+        self.y2 - self.y1
+    }
+
     ///
     /// Draws this rectangle on a graphics context
     ///
