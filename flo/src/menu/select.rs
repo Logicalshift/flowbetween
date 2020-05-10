@@ -394,6 +394,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
 
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
         match action_id {
+            // Ordering
             "MoveToFront" | "MoveForwards" | "MoveBackwards" | "MoveToBack" => {
                 let selection                       = self.selection_in_order.get();
                 let (ordering, apply_in_reverse)    = match action_id {
@@ -423,6 +424,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
                 self.timeline.invalidate_canvas();
             },
 
+            // Alignment
             "AlignLeft" | "AlignCenter" | "AlignRight" |
             "AlignTop" | "AlignMiddle" | "AlignBottom" => {
                 // Convert to an alignment
