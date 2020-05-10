@@ -11,6 +11,7 @@ use futures::prelude::*;
 
 use std::sync::*;
 use std::time::{Duration};
+use std::collections::{HashMap};
 
 impl StreamAnimationCore {
     ///
@@ -54,8 +55,10 @@ impl StreamAnimationCore {
                 return;
             }
 
-            // The anchor point starts as the center point of all of the elements: calculate this point
+            // The anchor point starts as the center point of all of the elements: calculate this point by computing the bounding box of all the elements
+            // This is also used for alignments
             let mut bounding_box: Option<Rect>  = None;
+            let mut bounds_for_element          = HashMap::new(); 
 
             for element_id in element_ids.iter() {
                 let element_id = *element_id;
@@ -70,11 +73,13 @@ impl StreamAnimationCore {
 
                     // Add to the sum of the origins
                     if let Some(bounds) = bounds {
+                        bounds_for_element.insert(element_id, bounds);
+
                         bounding_box = if let Some(bounding_box) = bounding_box {
                             Some(bounding_box.union(bounds))
                         } else {
                             Some(bounds)
-                        }
+                        };
                     }
                 }
             }
