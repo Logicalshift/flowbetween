@@ -251,7 +251,7 @@ impl VectorElement for (ElementId, SmallVec<[Transformation; 2]>) {
     ///
     /// The vector here specifies the updated position for each control point in control_points
     ///
-    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector {
+    fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>) -> Vector {
         Vector::Transformation(self.clone())
     }
 }
