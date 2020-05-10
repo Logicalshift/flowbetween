@@ -175,6 +175,7 @@ impl StreamAnimationCore {
             for element_id in element_ids.iter() {
                 // Get the transforms and the frame for thie element
                 if let (Some(new_transformations), Some(frame)) = (element_transforms.transformations_for_element.get(element_id), self.edit_keyframe_for_element(*element_id).await) {
+                    // Create a new transformation if there's none yet attached to the element, update the existing one if there is
                     if let Some(existing_attachment_id) = element_transforms.current_transform_element_id.get(element_id) {
                         // Replace the transformation element with a new one
                         frame.sync(|frame| {
@@ -193,9 +194,14 @@ impl StreamAnimationCore {
 
                         update_elements.push(StorageCommand::WriteElement(attachment_id.id().unwrap(), attachment_wrapper.serialize_to_string()));
                         new_attachments.insert(*element_id, attachment_id);
+
+                        frame.desync(move |frame| { frame.elements.insert(attachment_id, attachment_wrapper); });
                     }
                 }
             }
+
+            // Write the updates
+            self.request(update_elements).await;
 
             // Update any elements that need new attachments
             self.update_elements(new_attachments.keys().cloned().collect::<Vec<_>>(), 
