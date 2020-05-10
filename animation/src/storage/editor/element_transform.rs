@@ -19,7 +19,10 @@ use std::collections::{HashMap};
 ///
 struct TransformsForElements {
     /// The transformations to apply to each element
-    transformations_for_element: HashMap<i64, SmallVec<[Transformation; 2]>>
+    transformations_for_element: HashMap<i64, SmallVec<[Transformation; 2]>>,
+
+    /// The element containing the existing transformation for this element (if there is one)
+    current_transform_element_id: HashMap<i64, ElementId>
 }
 
 impl TransformsForElements {
@@ -28,7 +31,8 @@ impl TransformsForElements {
     ///
     fn new() -> TransformsForElements {
         TransformsForElements {
-            transformations_for_element: HashMap::new()
+            transformations_for_element:    HashMap::new(),
+            current_transform_element_id:   HashMap::new()
         }
     }
 
@@ -52,6 +56,7 @@ impl TransformsForElements {
                 if let Vector::Transformation((_, transform)) = &attachment_wrapper.element {
                     // Add these transforms to the element
                     element_transforms.extend(transform.iter().cloned());
+                    self.current_transform_element_id.insert(id, attachment_id);
 
                     // Only use the first set of transformations if there are multiple (this is the element we'lloverwrite)
                     break;
@@ -70,7 +75,7 @@ impl TransformsForElements {
     where TransformFn: 'a+Fn(i64) -> SmallVec<[Transformation; 2]> {
         for (id, existing_transform) in self.transformations_for_element.iter_mut() {
             let new_transform = transform(*id);
-            existing_transform.push(new_transform);
+            existing_transform.extend(new_transform);
         }
     }
 }
@@ -163,27 +168,38 @@ impl StreamAnimationCore {
                 }
             }
 
-            /*
-            // Create or update the attachments for each element
-            // We assume that any transformation attachment made to an element is unique to that element (if it's shared we'll update across everything it's shared with)
-            let mut new_attachments     = vec![];
-            let mut generate_elements   = vec![];
+            // Update or create the attachments for each of the elements
+            let mut new_attachments = HashMap::new();
+            let mut update_elements = vec![];
 
-            // Create a new wrapper for this transformation
-            let attachment_id       = self.assign_element_id(ElementId::Unassigned).await;
-            let attachment_wrapper  = ElementWrapper::with_element(Vector::Transformation((attachment_id, element_transform)), Duration::from_millis(0));
+            for element_id in element_ids.iter() {
+                // Get the transforms and the frame for thie element
+                if let (Some(new_transformations), Some(frame)) = (element_transforms.transformations_for_element.get(element_id), self.edit_keyframe_for_element(*element_id).await) {
+                    if let Some(existing_attachment_id) = element_transforms.current_transform_element_id.get(element_id) {
+                        // Replace the transformation element with a new one
+                        frame.sync(|frame| {
+                            let transform_wrapper       = frame.elements.get_mut(existing_attachment_id)?;
+                            let transform_id            = existing_attachment_id.id()?;
+                            transform_wrapper.element   = Vector::Transformation((transform_wrapper.element.id(), new_transformations.clone()));
 
-            // Write it out
-            generate_elements.push(StorageCommand::WriteElement(attachment_id.id().unwrap(), attachment_wrapper.serialize_to_string()));
+                            update_elements.push(StorageCommand::WriteElement(transform_id, transform_wrapper.serialize_to_string()));
 
-            // Attach to the elements
-            new_attachments.push(attachment_id);
+                            Some(())
+                        });
+                    } else {
+                        // Create a new transformation attachment for this element
+                        let attachment_id       = self.assign_element_id(ElementId::Unassigned).await;
+                        let attachment_wrapper  = ElementWrapper::with_element(Vector::Transformation((attachment_id, new_transformations.clone())), Duration::from_millis(0));
 
-            self.request(generate_elements).await;
+                        update_elements.push(StorageCommand::WriteElement(attachment_id.id().unwrap(), attachment_wrapper.serialize_to_string()));
+                        new_attachments.insert(*element_id, attachment_id);
+                    }
+                }
+            }
 
-            // Attach to all of the elements
-            self.update_elements(element_ids.clone(), |_wrapper| ElementUpdate::AddAttachments(new_attachments.clone())).await
-            */
+            // Update any elements that need new attachments
+            self.update_elements(new_attachments.keys().cloned().collect::<Vec<_>>(), 
+                |wrapper| ElementUpdate::AddAttachments(vec![new_attachments.get(&wrapper.element.id().id().unwrap()).unwrap().clone()])).await;
         }
     }
 }
