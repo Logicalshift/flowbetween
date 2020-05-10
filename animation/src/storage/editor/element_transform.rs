@@ -21,6 +21,9 @@ struct TransformsForElements {
     /// The transformations to apply to each element
     transformations_for_element: HashMap<i64, SmallVec<[Transformation; 2]>>,
 
+    /// The bounding box for each element
+    bounds_for_element: HashMap<i64, Rect>,
+
     /// The element containing the existing transformation for this element (if there is one)
     current_transform_element_id: HashMap<i64, ElementId>
 }
@@ -32,6 +35,7 @@ impl TransformsForElements {
     fn new() -> TransformsForElements {
         TransformsForElements {
             transformations_for_element:    HashMap::new(),
+            bounds_for_element:             HashMap::new(),
             current_transform_element_id:   HashMap::new()
         }
     }
@@ -76,6 +80,49 @@ impl TransformsForElements {
         for (id, existing_transform) in self.transformations_for_element.iter_mut() {
             let new_transform = transform(*id);
             existing_transform.extend(new_transform);
+        }
+    }
+
+    ///
+    /// Generates a 'move to' transformation for all of the elements
+    ///
+    fn move_to(&mut self, origin: Coord2, x: f64, y: f64) {
+        self.transform(|_| smallvec![Transformation::Translate(x - origin.x(), y - origin.y())]);
+    }
+
+    ///
+    /// Aligns all elements within the bounding box
+    ///
+    fn align(&mut self, origin: Coord2, overall_bounds: Rect, alignment: ElementAlign) {
+        // For every element with a bounding box...
+        for (elem_id, bounds) in self.bounds_for_element.iter() {
+            // ... translate according to the requested alignment
+            use self::ElementAlign::*;
+
+            let (x, y) = match alignment {
+                Left    => { (overall_bounds.x1 - bounds.x1, 0.0) }
+                Right   => { (overall_bounds.x2 - bounds.x2, 0.0) }
+
+                Top     => { (0.0, overall_bounds.y1 - bounds.y1) }
+                Bottom  => { (0.0, overall_bounds.y2 - bounds.y2) }
+
+                Center  => { 
+                    let new_x1 = (origin.x() as f32) - (bounds.width()/2.0);
+
+                    (new_x1 - bounds.x1, 0.0) 
+                }
+                Middle  => {
+                    let new_y1 = (origin.y() as f32) - (bounds.height()/2.0);
+
+                    (0.0, new_y1 - bounds.y1) 
+                }
+            };
+
+            // Amend the transformations for these elements
+            if x != 0.0 || y != 0.0 {
+                self.transformations_for_element.get_mut(elem_id)
+                    .map(|transform| transform.push(Transformation::Translate(x as f64, y as f64)));
+            }
         }
     }
 }
@@ -125,7 +172,6 @@ impl StreamAnimationCore {
             // The anchor point starts as the center point of all of the elements: calculate this point by computing the bounding box of all the elements
             // This is also used for alignments
             let mut bounding_box: Option<Rect>  = None;
-            let mut bounds_for_element          = HashMap::new(); 
             let mut element_transforms          = TransformsForElements::new();
 
             for element_id in element_ids.iter() {
@@ -133,15 +179,15 @@ impl StreamAnimationCore {
 
                 if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
                     // Store the active transformation for this element
-                    let element_transforms = &mut element_transforms;
-                    frame.sync(move |frame| element_transforms.read_transformation(element_id, frame));
+                    let element_transforms_ref = &mut element_transforms;
+                    frame.sync(move |frame| element_transforms_ref.read_transformation(element_id, frame));
 
                     // Calculate the origin for this element
                     let bounds = frame.sync(move |frame| Self::bounds_for_element(frame, element_id));
 
                     // Add to the overall bounding box
                     if let Some(bounds) = bounds {
-                        bounds_for_element.insert(element_id, bounds);
+                        element_transforms.bounds_for_element.insert(element_id, bounds);
 
                         bounding_box = if let Some(bounding_box) = bounding_box {
                             Some(bounding_box.union(bounds))
@@ -162,11 +208,15 @@ impl StreamAnimationCore {
 
                     ElementTransform::MoveTo(x, y)      => { 
                         if let Some(origin) = transform_origin {
-                            element_transforms.transform(|_| smallvec![Transformation::Translate(x - origin.x(), y - origin.y())]); 
+                            element_transforms.move_to(origin, *x, *y);
                         }
                     }
 
-                    ElementTransform::Align(alignment)  => { unimplemented!() }
+                    ElementTransform::Align(alignment)  => {
+                        if let (Some(origin), Some(bounding_box)) = (transform_origin, bounding_box) {
+                            element_transforms.align(origin, bounding_box, *alignment);
+                        }
+                    }
                 }
             }
 
