@@ -103,8 +103,8 @@ impl TransformsForElements {
                 Left    => { (overall_bounds.x1 - bounds.x1, 0.0) }
                 Right   => { (overall_bounds.x2 - bounds.x2, 0.0) }
 
-                Top     => { (0.0, overall_bounds.y1 - bounds.y1) }
-                Bottom  => { (0.0, overall_bounds.y2 - bounds.y2) }
+                Top     => { (0.0, overall_bounds.y2 - bounds.y2) }
+                Bottom  => { (0.0, overall_bounds.y1 - bounds.y1) }
 
                 Center  => { 
                     let new_x1 = (origin.x() as f32) - (bounds.width()/2.0);
