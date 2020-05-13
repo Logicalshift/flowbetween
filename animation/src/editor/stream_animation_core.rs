@@ -1,7 +1,7 @@
 use super::keyframe_core::*;
-use super::super::storage_api::*;
-use super::super::file_properties::*;
-use super::super::super::traits::*;
+use crate::storage::storage_api::*;
+use crate::storage::file_properties::*;
+use crate::traits::*;
 
 use ::desync::*;
 use flo_stream::*;

@@ -1,6 +1,6 @@
-use super::*;
-use super::super::*;
-use super::super::super::traits::*;
+use crate::editor::*;
+use crate::storage::*;
+use crate::traits::*;
 
 use flo_stream::*;
 use futures::prelude::*;

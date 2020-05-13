@@ -1,5 +1,5 @@
-use super::editor::*;
 use crate::*;
+use crate::editor::*;
 use crate::storage::*;
 use futures::*;
 

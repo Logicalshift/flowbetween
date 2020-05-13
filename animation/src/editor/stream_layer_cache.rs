@@ -1,6 +1,6 @@
 use super::stream_animation_core::*;
-use super::super::storage_api::*;
-use super::super::super::traits::*;
+use crate::storage::storage_api::*;
+use crate::traits::*;
 
 use flo_canvas::*;
 use flo_stream::*;

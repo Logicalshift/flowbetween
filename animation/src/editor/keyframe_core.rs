@@ -1,9 +1,9 @@
 use super::stream_animation_core::*;
 use super::element_wrapper::*;
 use super::pending_storage_change::*;
-use super::super::storage_api::*;
-use super::super::super::traits::*;
-use super::super::super::serializer::*;
+use crate::storage::storage_api::*;
+use crate::traits::*;
+use crate::serializer::*;
 
 use futures::prelude::*;
 

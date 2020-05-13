@@ -24,8 +24,8 @@ mod stream_layer_cache;
 #[cfg(test)] mod tests;
 
 use self::stream_animation::*;
-use super::storage_api::*;
-use super::super::traits::*;
+use crate::storage::storage_api::*;
+use crate::traits::*;
 
 use futures::stream::{BoxStream};
 

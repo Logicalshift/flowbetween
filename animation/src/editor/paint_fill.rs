@@ -1,7 +1,7 @@
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use super::pending_storage_change::*;
-use super::super::super::traits::*;
+use crate::traits::*;
 
 use flo_curves::bezier::*;
 use flo_curves::bezier::path::*;

@@ -18,16 +18,15 @@
 //! relatively simple
 //!
 
-mod file_properties;
-mod layer_properties;
-mod storage_api;
-mod editor;
-mod in_memory_storage;
-mod animation_loader;
+pub (super) mod file_properties;
+pub (super) mod layer_properties;
+pub (super) mod storage_api;
+pub (super) mod in_memory_storage;
+pub (super) mod animation_loader;
 
 #[cfg(test)] mod tests;
 
+pub use super::editor::*;
 pub use self::storage_api::*;
-pub use self::editor::*;
 pub use self::in_memory_storage::*;
 pub use self::animation_loader::*;

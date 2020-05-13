@@ -1,5 +1,5 @@
-use super::super::super::traits::*;
-use super::super::super::serializer::*;
+use crate::traits::*;
+use crate::serializer::*;
 
 use std::str::{Chars};
 use std::time::{Duration};

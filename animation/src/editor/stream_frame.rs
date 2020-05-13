@@ -1,5 +1,5 @@
 use super::keyframe_core::*;
-use super::super::super::traits::*;
+use crate::traits::*;
 
 use flo_canvas::*;
 

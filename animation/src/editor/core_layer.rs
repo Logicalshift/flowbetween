@@ -1,7 +1,7 @@
 use super::stream_animation_core::*;
-use super::super::storage_api::*;
-use super::super::layer_properties::*;
-use super::super::super::traits::*;
+use crate::traits::*;
+use crate::storage::storage_api::*;
+use crate::storage::layer_properties::*;
 
 use futures::prelude::*;
 

@@ -18,6 +18,7 @@ pub mod brushes;
 pub mod raycast;
 pub mod serializer;
 pub mod storage;
+pub mod editor;
 
 pub use self::traits::*;
 pub use self::onion_skin::*;

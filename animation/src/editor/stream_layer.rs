@@ -1,9 +1,9 @@
 use super::stream_frame::*;
 use super::stream_layer_cache::*;
 use super::stream_animation_core::*;
-use super::super::storage_api::*;
-use super::super::layer_properties::*;
-use super::super::super::traits::*;
+use crate::storage::storage_api::*;
+use crate::storage::layer_properties::*;
+use crate::traits::*;
 
 use ::desync::*;
 use futures::prelude::*;
