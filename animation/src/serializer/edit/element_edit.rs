@@ -4,6 +4,7 @@ use super::super::target::*;
 use crate::traits::*;
 
 use std::sync::*;
+use std::time::{Duration};
 
 impl ElementEdit {
     ///
@@ -13,18 +14,19 @@ impl ElementEdit {
         use self::ElementEdit::*;
 
         match self {
-            AddAttachment(elem)         => { data.write_chr('+'); elem.serialize(data); }
-            RemoveAttachment(elem)      => { data.write_chr('-'); elem.serialize(data); }
-            Order(ordering)             => { data.write_chr('O'); ordering.serialize(data); }
-            Delete                      => { data.write_chr('X'); }
-            DetachFromFrame             => { data.write_chr('D'); }
-            CollideWithExistingElements => { data.write_chr('j'); }
-            ConvertToPath               => { data.write_chr('p'); }
-            Group(group_id, group_type) => { data.write_chr('g'); group_id.serialize(data); group_type.serialize(data); }
-            Ungroup                     => { data.write_chr('u'); }
+            AddAttachment(elem)             => { data.write_chr('+'); elem.serialize(data); }
+            RemoveAttachment(elem)          => { data.write_chr('-'); elem.serialize(data); }
+            Order(ordering)                 => { data.write_chr('O'); ordering.serialize(data); }
+            Delete                          => { data.write_chr('X'); }
+            DetachFromFrame                 => { data.write_chr('D'); }
+            CollideWithExistingElements     => { data.write_chr('j'); }
+            ConvertToPath                   => { data.write_chr('p'); }
+            Group(group_id, group_type)     => { data.write_chr('g'); group_id.serialize(data); group_type.serialize(data); }
+            Ungroup                         => { data.write_chr('u'); }
 
-            SetControlPoints(points)    => { 
-                data.write_chr('C'); 
+            SetControlPoints(points, when)  => { 
+                data.write_chr('c');
+                data.write_duration(*when); 
                 data.write_usize(points.len());
 
                 let mut last_point = (0.0f32, 0.0f32);
@@ -100,6 +102,7 @@ impl ElementEdit {
             }
 
             'C' => {
+                // Obsolete version from older versions of FlowBetween
                 let num_points      = data.next_usize();
                 let mut last_point  = (0.0, 0.0);
                 let mut points      = vec![];
@@ -113,7 +116,25 @@ impl ElementEdit {
                     last_point = (x, y);
                 }
 
-                Some(ElementEdit::SetControlPoints(points))
+                Some(ElementEdit::SetControlPoints(points, Duration::from_millis(0)))
+            }
+
+            'c' => {
+                let num_points      = data.next_usize();
+                let when            = data.next_duration();
+                let mut last_point  = (0.0, 0.0);
+                let mut points      = vec![];
+
+                for _ in 0..num_points {
+                    let x = data.next_f64_offset(last_point.0);
+                    let y = data.next_f64_offset(last_point.1);
+
+                    points.push((x as f32, y as f32));
+
+                    last_point = (x, y);
+                }
+
+                Some(ElementEdit::SetControlPoints(points, when))
             }
 
             'P' => {

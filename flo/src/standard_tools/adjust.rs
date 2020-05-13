@@ -502,9 +502,10 @@ impl Adjust {
 
                 // Generate the edit action for this element
                 let edit_element        = if let Some(vector) = vector {
+                    let time_index          = data.frame.as_ref().map(|frame| frame.time_index()).unwrap_or(Duration::from_millis(0));
                     let new_control_points  = Self::adjusted_control_points_before_motion(model, data, &vector, &final_action);
                     vec![
-                        ToolAction::Edit(AnimationEdit::Element(vec![element_id], ElementEdit::SetControlPoints(new_control_points))),
+                        ToolAction::Edit(AnimationEdit::Element(vec![element_id], ElementEdit::SetControlPoints(new_control_points, time_index))),
                         ToolAction::InvalidateFrame
                     ]
                 } else {

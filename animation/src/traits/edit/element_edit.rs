@@ -4,6 +4,7 @@ use crate::traits::path::*;
 use crate::traits::group_type::*;
 
 use std::sync::*;
+use std::time::{Duration};
 
 ///
 /// Possible element ordering operations
@@ -28,8 +29,8 @@ pub enum ElementEdit {
     /// Removes an attachment from this element
     RemoveAttachment(ElementId),
 
-    /// Updates the control points for this element
-    SetControlPoints(Vec<(f32, f32)>),
+    /// Updates the control points for this element (at a particular time)
+    SetControlPoints(Vec<(f32, f32)>, Duration),
 
     /// Updates the path for this element
     SetPath(Arc<Vec<PathComponent>>),
