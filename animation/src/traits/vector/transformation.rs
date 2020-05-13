@@ -41,6 +41,18 @@ impl Transformation {
     }
 
     ///
+    /// Converts this transformation to a matrix transformation
+    ///
+    pub fn to_matrix(&self) -> Option<Transformation> {
+        use self::Transformation::*;
+
+        match self {
+            Matrix(matrix)  => Some(Matrix(*matrix)),
+            Translate(x, y) => Some(Matrix([[1.0, 0.0, *x], [0.0, 1.0, *y], [0.0, 0.0, 1.0]]))
+        }
+    }
+
+    ///
     /// Transforms a 2D point using this transformation
     ///
     pub fn transform_point<Coord>(&self, point: &Coord) -> Coord
@@ -253,5 +265,32 @@ impl VectorElement for (ElementId, SmallVec<[Transformation; 2]>) {
     ///
     fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>) -> Vector {
         Vector::Transformation(self.clone())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn translate_point() {
+        let transform           = Transformation::Translate(1.0, 2.0);
+        let source_point        = Coord2(42.0, 45.0);
+
+        let translated_point    = transform.transform_point(&source_point);
+
+        assert!((translated_point.x() - 43.0).abs() < 0.001);
+        assert!((translated_point.y() - 47.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn translate_point_matrix() {
+        let transform           = Transformation::Translate(1.0, 2.0).to_matrix().unwrap();
+        let source_point        = Coord2(42.0, 45.0);
+
+        let translated_point    = transform.transform_point(&source_point);
+
+        assert!((translated_point.x() - 43.0).abs() < 0.001);
+        assert!((translated_point.y() - 47.0).abs() < 0.001);
     }
 }
