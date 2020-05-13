@@ -97,8 +97,8 @@ impl VectorElement for TransformedVector {
     /// Fetches the control points for this element
     ///
     #[inline]
-    fn control_points(&self) -> Vec<ControlPoint> {
-        self.transformed.control_points()
+    fn control_points(&self, properties: &VectorProperties) -> Vec<ControlPoint> {
+        self.transformed.control_points(properties)
     }
 
     ///
@@ -107,10 +107,10 @@ impl VectorElement for TransformedVector {
     /// The vector here specifies the updated position for each control point in control_points
     ///
     #[inline]
-    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector {
+    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>, properties: &VectorProperties) -> Vector {
         Vector::Transformed(TransformedVector {
             original:       Arc::clone(&self.original),
-            transformed:    Arc::new(self.transformed.with_adjusted_control_points(new_positions)),
+            transformed:    Arc::new(self.transformed.with_adjusted_control_points(new_positions, properties)),
             id:             self.id
         })
     }

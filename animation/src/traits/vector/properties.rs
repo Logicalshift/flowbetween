@@ -6,6 +6,7 @@ use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 use super::super::super::brushes::*;
 
+use flo_curves::*;
 use flo_canvas::*;
 
 use std::sync::*;
@@ -63,5 +64,52 @@ impl VectorProperties {
     pub fn render(&self, gc: &mut dyn GraphicsPrimitives, element: Vector, when: Duration) {
         // Render this element
         (self.render_vector)(gc, element, when, self);
+    }
+
+    ///
+    /// Transforms a control point via the transformations specified in these properties
+    ///
+    pub fn transform_control_point(&self, control_point: &ControlPoint) -> ControlPoint {
+        let mut result = control_point.clone();
+
+        for transform in self.transformations.iter() {
+            result = transform.transform_control_point(&result);
+        }
+
+        result
+    }
+
+    ///
+    /// Transforms a coordinate via the transformations specified in these properties
+    ///
+    pub fn transform_point<Coord>(&self, coord: &Coord) -> Coord
+    where Coord: Coordinate {
+        let mut result = coord.clone();
+
+        for transform in self.transformations.iter() {
+            result = transform.transform_point(&result);
+        }
+
+        result
+    }
+
+    ///
+    /// Creates a variant of these properties with the transformations inverted
+    ///
+    pub fn with_inverse_transformation(&self) -> Option<VectorProperties> {
+        // Reverse the transformations and invert each one
+        let inverted_transformations = self.transformations.iter()
+            .rev()
+            .map(|transform| transform.invert())
+            .collect::<Option<Vec<_>>>()?;
+
+        // Generate the result
+        Some(VectorProperties {
+            brush:                  Arc::clone(&self.brush),
+            brush_properties:       self.brush_properties.clone(),
+            transformations:        Arc::new(inverted_transformations),
+            retrieve_attachments:   Arc::clone(&self.retrieve_attachments),
+            render_vector:          Arc::clone(&self.render_vector)
+        })
     }
 }

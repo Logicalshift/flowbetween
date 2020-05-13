@@ -144,7 +144,7 @@ impl Adjust {
             draw.stroke();
         }
 
-        let control_points = element.control_points();
+        let control_points = element.control_points(properties);
 
         // Draw the control point connecting lines
         draw.new_path();
@@ -213,15 +213,20 @@ impl Adjust {
             let selected        = selected_elements.get();
             let current_frame   = frame.get();
 
-            let control_points  = selected.iter()
-                .map(move |element_id|              (*element_id, current_frame.as_ref().and_then(|frame| frame.element_with_id(*element_id))))
-                .map(|(element_id, maybe_element)|  (element_id, maybe_element.map(|element| element.control_points()).unwrap_or_else(|| vec![])))
-                .flat_map(|(element_id, control_points)| {
-                    control_points.into_iter()
-                        .enumerate()
-                        .map(move |(index, control_point)| (element_id, index, control_point.position()))
-                })
-                .collect();
+            let control_points  = if let Some(current_frame) = current_frame.as_ref() {
+                selected.iter()
+                    .flat_map(|element_id|                      current_frame.element_with_id(*element_id).map(|elem| (*element_id, elem)))
+                    .map(|(element_id, element)|                (element_id, current_frame.apply_properties_for_element(&element, Arc::new(VectorProperties::default())), element))
+                    .map(|(element_id, properties, element)|    (element_id, element.control_points(&*properties)))
+                    .flat_map(|(element_id, control_points)| {
+                        control_points.into_iter()
+                            .enumerate()
+                            .map(move |(index, control_point)| (element_id, index, control_point.position()))
+                    })
+                    .collect()
+            } else {
+                vec![]
+            };
 
             // Final result
             Arc::new(control_points)
@@ -274,9 +279,9 @@ impl Adjust {
     ///
     /// Returns the control points as adjusted by an edit actions
     ///
-    fn adjusted_control_points(to_edit: &Vector, action: &AdjustAction) -> Vec<(f32, f32)> {
+    fn adjusted_control_points(to_edit: &Vector, properties: &VectorProperties, action: &AdjustAction) -> Vec<(f32, f32)> {
         // Fetch the control points for this element
-        let control_points          = to_edit.control_points();
+        let control_points          = to_edit.control_points(properties);
         let mut new_control_points  = vec![];
 
         match action {
@@ -315,12 +320,12 @@ impl Adjust {
     ///
     /// Performs an editing action on a vector
     ///
-    fn edit_vector(to_edit: &Vector, action: &AdjustAction) -> Vector {
+    fn edit_vector(to_edit: &Vector, properties: &VectorProperties, action: &AdjustAction) -> Vector {
         // Fetch the new control points
-        let new_control_points = Self::adjusted_control_points(to_edit, action);
+        let new_control_points = Self::adjusted_control_points(to_edit, properties, action);
 
         // Return the vector updated with these control points
-        to_edit.with_adjusted_control_points(new_control_points)
+        to_edit.with_adjusted_control_points(new_control_points, properties)
     }
 
     ///
@@ -330,26 +335,18 @@ impl Adjust {
     /// The element as we have it for editing (in `to_edit`) is how it is represented after the motions
     /// are applied.
     ///
-    fn adjusted_control_points_before_motion<Anim: Animation>(flo_model: &FloModel<Anim>, data: &AdjustData, to_edit: &Vector, action: &AdjustAction) -> Vec<(f32, f32)> {
-        // Apply the edit to the vector
-        let mut adjusted = Self::edit_vector(to_edit, action);
-
-        // Get the motions applied to this element
-        let frame_time  = data.frame_time;
-        let motion_ids  = flo_model.motion().get_motions_for_element(to_edit.id());
-        let motions     = motion_ids.into_iter().filter_map(|id| flo_model.get_motion(id));
-
-        // TODO: Reverse the motions
-        /*
-        for motion in motions.rev() {
-            // Perform the motion in reverse
-            let motion  = motion.reverse();
-            adjusted    = adjusted.motion_transform(&motion, frame_time);
+    fn adjusted_control_points_before_motion<Anim: 'static+Animation>(flo_model: &FloModel<Anim>, data: &AdjustData, to_edit: &Vector, action: &AdjustAction) -> Vec<(f32, f32)> {
+        // Get the properties for the element
+        let mut properties = Arc::new(VectorProperties::default());
+        if let Some(frame) = flo_model.frame().frame.get() {
+            properties = frame.apply_properties_for_element(to_edit, properties);
         }
-        */
+
+        // Apply the edit to the vector
+        let mut adjusted = Self::edit_vector(to_edit, &*properties, action);
 
         // Return the control points for the adjusted vector
-        adjusted.control_points()
+        adjusted.control_points(&*properties)
             .into_iter()
             .map(|cp| cp.position())
             .collect()
@@ -392,7 +389,7 @@ impl Adjust {
 
                         // Edit the elements
                         let elements_to_draw    = elements.iter().filter(|(vector, _)|          vector.id() == element_id);
-                        let edited_elements     = elements_to_draw.map(|(vector, properties)|   (Self::edit_vector(vector, &action), properties));
+                        let edited_elements     = elements_to_draw.map(|(vector, properties)|   (Self::edit_vector(vector, &*properties, &action), properties));
                         let edited_elements     = edited_elements.collect::<Vec<_>>();
 
                         // Draw them with their control points

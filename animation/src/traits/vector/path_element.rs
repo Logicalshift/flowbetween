@@ -9,6 +9,7 @@ use super::super::path::*;
 use super::super::edit::*;
 
 use flo_canvas::*;
+use flo_curves::*;
 use flo_curves::bezier::path::*;
 
 use std::sync::*;
@@ -133,7 +134,7 @@ impl VectorElement for PathElement {
     ///
     /// Fetches the control points for this element
     ///
-    fn control_points(&self) -> Vec<ControlPoint> {
+    fn control_points(&self, properties: &VectorProperties) -> Vec<ControlPoint> {
         self.path.elements_ref()
             .flat_map(|component| {
                 match component {
@@ -147,6 +148,7 @@ impl VectorElement for PathElement {
                     PathComponent::Close                    => vec![]
                 }
             })
+            .map(|control_point| properties.transform_control_point(&control_point))
             .collect()
     }
 
@@ -155,10 +157,13 @@ impl VectorElement for PathElement {
     ///
     /// The vector here specifies the updated position for each control point in control_points
     ///
-    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector {
+    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>, properties: &VectorProperties) -> Vector {
+        let inverse_properties = properties.with_inverse_transformation().unwrap_or_else(|| properties.clone());
+
         // Iterator for fetching points from
         let mut next_position = new_positions.into_iter()
-            .map(|(x, y)| PathPoint::new(x, y));
+            .map(|(x, y)| inverse_properties.transform_point(&Coord2(x as f64, y as f64)))
+            .map(|Coord2(x, y)| PathPoint::new(x as f32, y as f32));
 
         // Transform the components to generate a new path
         let new_elements = self.path.elements_ref()

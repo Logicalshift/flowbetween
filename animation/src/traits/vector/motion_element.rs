@@ -96,7 +96,7 @@ impl VectorElement for MotionElement {
     ///
     /// Fetches the control points for this element
     ///
-    fn control_points(&self) -> Vec<ControlPoint> {
+    fn control_points(&self, _properties: &VectorProperties) -> Vec<ControlPoint> {
         // TODO: can return control points to make this motion editable here
         vec![]
     }
@@ -106,7 +106,7 @@ impl VectorElement for MotionElement {
     ///
     /// The vector here specifies the updated position for each control point in control_points
     ///
-    fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>) -> Vector {
+    fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>, _properties: &VectorProperties) -> Vector {
         // TODO: can update time points from control points if we want
         Vector::Motion(self.clone())
     }

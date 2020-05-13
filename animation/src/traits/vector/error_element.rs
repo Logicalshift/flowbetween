@@ -57,7 +57,7 @@ impl VectorElement for ErrorElement {
     ///
     /// Fetches the control points for this element
     ///
-    fn control_points(&self) -> Vec<ControlPoint> {
+    fn control_points(&self, _proprties: &VectorProperties) -> Vec<ControlPoint> {
         vec![]
     }
 
@@ -66,7 +66,7 @@ impl VectorElement for ErrorElement {
     ///
     /// The vector here specifies the updated position for each control point in control_points
     ///
-    fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>) -> Vector {
+    fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>, _properties: &VectorProperties) -> Vector {
         Vector::Error
     }
 }

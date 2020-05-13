@@ -80,6 +80,16 @@ impl Transformation {
     }
 
     ///
+    /// Applies this transformation to a control point
+    ///
+    pub fn transform_control_point(&self, point: &ControlPoint) -> ControlPoint {
+        match point {
+            ControlPoint::BezierPoint(x, y)         => { let Coord2(x, y) = self.transform_point(&Coord2(*x as f64, *y as f64)); ControlPoint::BezierPoint(x as f32, y as f32) }
+            ControlPoint::BezierControlPoint(x, y)  => { let Coord2(x, y) = self.transform_point(&Coord2(*x as f64, *y as f64)); ControlPoint::BezierControlPoint(x as f32, y as f32) }
+        }
+    }
+
+    ///
     /// Transforms a bezier curve using this transformation
     ///
     pub fn transform_curve<Curve, NewCurve>(&self, curve: &Curve) -> NewCurve
@@ -254,7 +264,7 @@ impl VectorElement for (ElementId, SmallVec<[Transformation; 2]>) {
     ///
     /// Fetches the control points for this element
     ///
-    fn control_points(&self) -> Vec<ControlPoint> {
+    fn control_points(&self, _properties: &VectorProperties) -> Vec<ControlPoint> {
         vec![]
     }
 
@@ -263,7 +273,7 @@ impl VectorElement for (ElementId, SmallVec<[Transformation; 2]>) {
     ///
     /// The vector here specifies the updated position for each control point in control_points
     ///
-    fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>) -> Vector {
+    fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>, _properties: &VectorProperties) -> Vector {
         Vector::Transformation(self.clone())
     }
 }

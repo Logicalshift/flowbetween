@@ -8,6 +8,7 @@ use super::super::edit::*;
 use super::super::brush::*;
 
 use flo_canvas::*;
+use flo_curves::*;
 use flo_curves::bezier::path::*;
 
 use itertools::*;
@@ -126,7 +127,7 @@ impl VectorElement for BrushElement {
     ///
     /// Fetches the control points for this element
     ///
-    fn control_points(&self) -> Vec<ControlPoint> {
+    fn control_points(&self, properties: &VectorProperties) -> Vec<ControlPoint> {
         self.points.iter()
             .flat_map(|brush_point| {
                 vec![
@@ -135,6 +136,7 @@ impl VectorElement for BrushElement {
                     ControlPoint::BezierPoint(brush_point.position.0, brush_point.position.1)
                 ]
             })
+            .map(|cp| properties.transform_control_point(&cp))
             .skip(2)
             .collect()
     }
@@ -142,7 +144,13 @@ impl VectorElement for BrushElement {
     ///
     /// Creates a new vector element from this one with the control points updated to the specified set of new values
     ///
-    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector {
+    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>, properties: &VectorProperties) -> Vector {
+        let inverse_properties  = properties.with_inverse_transformation().unwrap_or_else(|| properties.clone());
+        let new_positions       = new_positions.into_iter()
+            .map(|(x, y)| inverse_properties.transform_point(&Coord2(x as f64, y as f64)))
+            .map(|Coord2(x, y)| (x as f32, y as f32))
+            .collect::<Vec<_>>();
+
         // The widths are kept the same as they are in this element
         let widths = self.points.iter().map(|point| point.width);
 
@@ -154,7 +162,7 @@ impl VectorElement for BrushElement {
         // Using more elements than we already have will just clip the result to the same number of points
         // Using fewer elements will cause the result to have fewer elements
         // Neither of these behaviours is a good way to change the number of points in the result
-        let brush_elements          = initial_control_points.into_iter().chain(new_positions.into_iter())
+        let brush_elements          = initial_control_points.into_iter().chain(new_positions)
             .tuples()
             .zip(widths)
             .map(|((cp1, cp2, pos), width)| BrushPoint {
