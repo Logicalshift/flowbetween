@@ -120,8 +120,8 @@ impl ElementEdit {
             }
 
             'c' => {
-                let num_points      = data.next_usize();
                 let when            = data.next_duration();
+                let num_points      = data.next_usize();
                 let mut last_point  = (0.0, 0.0);
                 let mut points      = vec![];
 
@@ -237,9 +237,9 @@ mod test {
     #[test]
     fn set_control_points() {
         let mut encoded = String::new();
-        ElementEdit::SetControlPoints(vec![(1.0, 2.0), (3.0, 4.0), (5.0, 6.0)]).serialize(&mut encoded);
+        ElementEdit::SetControlPoints(vec![(1.0, 2.0), (3.0, 4.0), (5.0, 6.0)], Duration::from_millis(442)).serialize(&mut encoded);
 
-        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::SetControlPoints(vec![(1.0, 2.0), (3.0, 4.0), (5.0, 6.0)])));
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::SetControlPoints(vec![(1.0, 2.0), (3.0, 4.0), (5.0, 6.0)], Duration::from_millis(442))));
     }
 
     #[test]

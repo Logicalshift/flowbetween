@@ -217,7 +217,7 @@ mod test {
         ];
         let element = BrushElement::new(ElementId::Assigned(5), Arc::new(points));
 
-        let control_points = element.control_points();
+        let control_points = element.control_points(&VectorProperties::default());
 
         assert!(control_points[0] == ControlPoint::BezierPoint(1.0, 2.0));
         assert!(control_points[1] == ControlPoint::BezierControlPoint(9.0, 10.0));
@@ -262,9 +262,9 @@ mod test {
             (5.1, 5.2),
             (6.1, 6.2),
             (7.1, 7.2)
-        ]);
+        ], &VectorProperties::default());
 
-        let control_points = updated.control_points();
+        let control_points = updated.control_points(&VectorProperties::default());
 
         assert!(control_points[0] == ControlPoint::BezierPoint(1.1, 1.2));
         assert!(control_points[1] == ControlPoint::BezierControlPoint(2.1, 2.2));

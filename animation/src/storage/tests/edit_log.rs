@@ -103,7 +103,7 @@ fn edit_brush_strokes() {
                     RawPoint::from((20.0, 5.0))
                 ])))),
 
-        AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::SetControlPoints(vec![(0.0, 1.0), (2.0, 3.0), (4.0, 5.0)]))
+        AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::SetControlPoints(vec![(0.0, 1.0), (2.0, 3.0), (4.0, 5.0)], Duration::from_millis(442)))
     ]);
 }
 
