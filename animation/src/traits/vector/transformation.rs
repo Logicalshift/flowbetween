@@ -24,7 +24,13 @@ pub enum Transformation {
     Matrix([[f64; 3]; 3]),
 
     /// A translation offset
-    Translate(f64, f64)
+    Translate(f64, f64),
+
+    /// Flip horizontally around a particular point 
+    FlipHoriz(f64, f64),
+
+    /// Flip vertically around a particular point
+    FlipVert(f64, f64)
 }
 
 impl Transformation {
@@ -36,7 +42,24 @@ impl Transformation {
 
         match self {
             Matrix(matrix)      => Self::invert_matrix(matrix).map(|inverted_matrix| Matrix(inverted_matrix)),
-            Translate(dx, dy)   => Some(Translate(-dx, -dy))
+            Translate(dx, dy)   => Some(Translate(-dx, -dy)),
+            FlipHoriz(x, y)     => Some(FlipHoriz(*x, *y)),
+            FlipVert(x, y)      => Some(FlipVert(*x, *y))
+        }
+    }
+
+    ///
+    /// Retrieves the matrix for this transformation
+    ///
+    fn get_matrix(&self) -> Option<[[f64; 3]; 3]> {
+        use self::Transformation::*;
+
+        match self {
+            Matrix(matrix)      => Some(*matrix),
+            Translate(dx, dy)   => Some([[1.0, 0.0, *dx], [0.0, 1.0, *dy], [0.0, 0.0, 1.0]]),
+
+            FlipHoriz(x, _y)    => Some([[-1.0, 0.0, 2.0*x], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]),
+            FlipVert(_x, y)     => Some([[1.0, 0.0, 0.0], [0.0, -1.0, 2.0*y], [0.0, 0.0, 1.0]]),
         }
     }
 
@@ -44,12 +67,8 @@ impl Transformation {
     /// Converts this transformation to a matrix transformation
     ///
     pub fn to_matrix(&self) -> Option<Transformation> {
-        use self::Transformation::*;
-
-        match self {
-            Matrix(matrix)  => Some(Matrix(*matrix)),
-            Translate(x, y) => Some(Matrix([[1.0, 0.0, *x], [0.0, 1.0, *y], [0.0, 0.0, 1.0]]))
-        }
+        self.get_matrix()
+            .map(|matrix| Transformation::Matrix(matrix))
     }
 
     ///
@@ -63,7 +82,9 @@ impl Transformation {
 
         let (x, y)          = match self {
             Transformation::Matrix(matrix)      => Self::transform_matrix(x, y, matrix),
-            Transformation::Translate(dx, dy)   => (x + dx, y + dy)
+            Transformation::Translate(dx, dy)   => (x + dx, y + dy),
+
+            _other                              => Self::transform_matrix(x, y, &self.get_matrix().unwrap())
         };
 
         // The rest of the points are let through as-is
@@ -302,5 +323,50 @@ mod test {
 
         assert!((translated_point.x() - 43.0).abs() < 0.001);
         assert!((translated_point.y() - 47.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn flip_horiz_around_origin() {
+        let transform           = Transformation::FlipHoriz(0.0, 0.0);
+        let source_point        = Coord2(42.0, 45.0);
+
+        let translated_point    = transform.transform_point(&source_point);
+
+        assert!((translated_point.x() - -42.0).abs() < 0.001);
+        assert!((translated_point.y() - 45.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn flip_horiz_around_offset() {
+        let transform           = Transformation::FlipHoriz(41.0, 44.0);
+        let source_point        = Coord2(42.0, 45.0);
+
+        let translated_point    = transform.transform_point(&source_point);
+        println!("{:?}", translated_point);
+
+        assert!((translated_point.x() - 40.0).abs() < 0.001);
+        assert!((translated_point.y() - 45.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn flip_vertically_around_origin() {
+        let transform           = Transformation::FlipVert(0.0, 0.0);
+        let source_point        = Coord2(42.0, 45.0);
+
+        let translated_point    = transform.transform_point(&source_point);
+
+        assert!((translated_point.x() - 42.0).abs() < 0.001);
+        assert!((translated_point.y() - -45.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn flip_vertically_around_offset() {
+        let transform           = Transformation::FlipVert(41.0, 44.0);
+        let source_point        = Coord2(42.0, 45.0);
+
+        let translated_point    = transform.transform_point(&source_point);
+
+        assert!((translated_point.x() - 42.0).abs() < 0.001);
+        assert!((translated_point.y() - 43.0).abs() < 0.001);
     }
 }

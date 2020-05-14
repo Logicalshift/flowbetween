@@ -24,6 +24,20 @@ impl Transformation {
                 data.write_chr('t');
                 data.write_f64(*dx);
                 data.write_f64(*dy);
+            },
+
+            FlipHoriz(x, y) => {
+                data.write_chr('f');
+                data.write_chr('h');
+                data.write_f64(*x);
+                data.write_f64(*y);
+            }
+
+            FlipVert(x, y) => {
+                data.write_chr('f');
+                data.write_chr('v');
+                data.write_f64(*x);
+                data.write_f64(*y);
             }
         }
     }
@@ -52,6 +66,26 @@ impl Transformation {
                 Some(Transformation::Translate(dx, dy))
             }
 
+            'f' => {
+                match data.next_chr() {
+                    'h' => {
+                        let x = data.next_f64();
+                        let y = data.next_f64();
+
+                        Some(Transformation::FlipHoriz(x, y))
+                    }
+
+                    'v' => {
+                        let x = data.next_f64();
+                        let y = data.next_f64();
+
+                        Some(Transformation::FlipVert(x, y))
+                    }
+
+                    _ => None
+                }
+            }
+
             _ => None
         }
     }
@@ -76,6 +110,30 @@ mod test {
     #[test]
     fn translate() {
         let transformation  = Transformation::Translate(11.0, 12.0);
+        let mut encoded     = String::new();
+        transformation.serialize(&mut encoded);
+
+        let decoded         = Transformation::deserialize(&mut encoded.chars());
+        let decoded         = decoded.unwrap();
+
+        assert!(decoded == transformation);
+    }
+
+    #[test]
+    fn flip_horiz() {
+        let transformation  = Transformation::FlipHoriz(11.0, 12.0);
+        let mut encoded     = String::new();
+        transformation.serialize(&mut encoded);
+
+        let decoded         = Transformation::deserialize(&mut encoded.chars());
+        let decoded         = decoded.unwrap();
+
+        assert!(decoded == transformation);
+    }
+
+    #[test]
+    fn flip_vert() {
+        let transformation  = Transformation::FlipVert(11.0, 12.0);
         let mut encoded     = String::new();
         transformation.serialize(&mut encoded);
 
