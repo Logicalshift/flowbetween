@@ -47,7 +47,6 @@ impl StreamAnimationCore {
             match element_edit {
                 AddAttachment(attach_id)            => { self.update_elements(element_ids, |_wrapper| { AddAttachments(vec![*attach_id]) }).await; }
                 RemoveAttachment(attach_id)         => { self.update_elements(element_ids, |_wrapper| { RemoveAttachments(vec![*attach_id]) }).await; }
-                SetControlPoints(new_points, when)  => { /* self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_adjusted_control_points(new_points.clone()); ChangeWrapper(wrapper) }).await; */ }
                 SetPath(new_path)                   => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) }).await; }
                 Order(ordering)                     => { self.order_elements(element_ids, *ordering).await; }
                 Group(group_id, group_type)         => { self.group_elements(element_ids, *group_id, *group_type).await; }
@@ -84,6 +83,44 @@ impl StreamAnimationCore {
 
                 Transform(transformations)          => {
                     self.transform_elements(&element_ids, transformations).await;
+                }
+
+                SetControlPoints(new_points, when)  => { 
+                    let mut updates = vec![];
+
+                    // Need to process the elements individually with their properties
+                    for element_id in element_ids.iter().cloned() {
+                        if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
+                            let when        = *when;
+                            let new_points  = new_points.clone();
+
+                            // Use the frame to update the element
+                            let element_updates = frame.future(move |frame| {
+                                async move {
+                                    // Fetch the element wrapper
+                                    let mut wrapper = frame.elements.get(&ElementId::Assigned(element_id))?.clone();
+
+                                    // Work out the properties for this element
+                                    let properties  = frame.apply_properties_for_element(&wrapper.element, Arc::new(VectorProperties::default()), when);
+
+                                    // Update the control points
+                                    wrapper.element = wrapper.element.with_adjusted_control_points(new_points, &*properties);
+
+                                    // Generate the updates for this element
+                                    let updates     = vec![StorageCommand::WriteElement(element_id, wrapper.serialize_to_string())]; 
+                                    frame.elements.insert(ElementId::Assigned(element_id), wrapper);
+
+                                    Some(updates)
+                                }.boxed()
+                            }).await.unwrap();
+
+                            // Add the updates to the overall list
+                            if let Some(element_updates) = element_updates { updates.extend(element_updates); }
+                        }
+                    }
+
+                    // Send the updates to storage
+                    self.request(updates).await;
                 }
             }
         }
