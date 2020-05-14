@@ -436,7 +436,7 @@ fn edit_brush_strokes() {
                     RawPoint::from((20.0, 5.0))
                 ])))),
 
-        AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::SetControlPoints(vec![(0.0, 1.0), (2.0, 3.0), (4.0, 5.0)]))
+        AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::SetControlPoints(vec![(0.0, 1.0), (2.0, 3.0), (4.0, 5.0)], Duration::from_millis(442)))
     ]);
 }
 
@@ -1092,7 +1092,7 @@ fn update_path_elements() {
             (60.0, 60.0),
             (70.0, 70.0),
             (80.0, 90.0), (100.0, 110.0), (120.0, 130.0)
-        ]))
+        ], Duration::from_millis(300)))
     ]);
 
 
@@ -1100,7 +1100,7 @@ fn update_path_elements() {
     let edit_log        = edit_log.collect();
     let edits: Vec<_>   = executor::block_on(edit_log);
 
-    if let AnimationEdit::Element(ref elem_ids, ElementEdit::SetControlPoints(ref control_points)) = edits[0] {
+    if let AnimationEdit::Element(ref elem_ids, ElementEdit::SetControlPoints(ref control_points, ref _when)) = edits[0] {
         assert!(elem_ids == &vec![ElementId::Assigned(100)]);
         assert!(control_points == &vec![
             (60.0, 60.0),
