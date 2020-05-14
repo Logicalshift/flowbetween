@@ -27,6 +27,16 @@ impl ElementTransform {
                 data.write_chr('a');
                 alignment.serialize(data);
             }
+
+            FlipHorizontal => {
+                data.write_chr('f');
+                data.write_chr('h');
+            }
+
+            FlipVertical => {
+                data.write_chr('f');
+                data.write_chr('v');
+            }
         }
     }
 
@@ -50,6 +60,14 @@ impl ElementTransform {
             'a' => {
                 ElementAlign::deserialize(data)
                     .map(|align| ElementTransform::Align(align))
+            }
+
+            'f' => {
+                match data.next_chr() {
+                    'h' => Some(ElementTransform::FlipHorizontal),
+                    'v' => Some(ElementTransform::FlipVertical),
+                    _ => None
+                }
             }
 
             _ => None

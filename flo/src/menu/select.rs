@@ -450,6 +450,29 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
                 self.timeline.invalidate_canvas();
             }
 
+            // Flipping about an axis
+            "FlipHorizontal" => {
+                let selection   = self.selection_in_order.get();
+
+                let _           = self.edit.future(move |animation| {
+                    animation.publish(Arc::new(vec![AnimationEdit::Element(selection.iter().cloned().collect(), 
+                        ElementEdit::Transform(vec![ElementTransform::FlipHorizontal]))]))
+                });
+                self.edit.sync(|_| { });
+                self.timeline.invalidate_canvas();
+            }
+
+            "FlipVertical" => {
+                let selection   = self.selection_in_order.get();
+
+                let _           = self.edit.future(move |animation| {
+                    animation.publish(Arc::new(vec![AnimationEdit::Element(selection.iter().cloned().collect(), 
+                        ElementEdit::Transform(vec![ElementTransform::FlipVertical]))]))
+                });
+                self.edit.sync(|_| { });
+                self.timeline.invalidate_canvas();
+            }
+
             _ => { }
         }
     }

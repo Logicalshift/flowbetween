@@ -125,6 +125,20 @@ impl TransformsForElements {
             }
         }
     }
+
+    ///
+    /// Flips the elements horizontally around a point
+    ///
+    fn flip_horizontal(&mut self, origin: Coord2) {
+        self.transform(|_| smallvec![Transformation::FlipHoriz(origin.x(), origin.y())])
+    }
+
+    ///
+    /// Flips the elements vertically around a point
+    ///
+    fn flip_vertical(&mut self, origin: Coord2) {
+        self.transform(|_| smallvec![Transformation::FlipVert(origin.x(), origin.y())])
+    }
 }
 
 impl StreamAnimationCore {
@@ -215,6 +229,18 @@ impl StreamAnimationCore {
                     ElementTransform::Align(alignment)  => {
                         if let (Some(origin), Some(bounding_box)) = (transform_origin, bounding_box) {
                             element_transforms.align(origin, bounding_box, *alignment);
+                        }
+                    }
+
+                    ElementTransform::FlipHorizontal    => {
+                        if let Some(origin) = transform_origin {
+                            element_transforms.flip_horizontal(origin);
+                        }
+                    }
+
+                    ElementTransform::FlipVertical      => {
+                        if let Some(origin) = transform_origin {
+                            element_transforms.flip_vertical(origin);
                         }
                     }
                 }

@@ -12,5 +12,11 @@ pub enum ElementTransform {
     MoveTo(f64, f64),
 
     /// Aligns several elements to the anchor point (or the overall bounding box)
-    Align(ElementAlign)
+    Align(ElementAlign),
+
+    /// Flips the element horizontally
+    FlipHorizontal,
+
+    /// Flips the element vertically
+    FlipVertical
 }
