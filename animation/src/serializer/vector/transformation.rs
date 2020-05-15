@@ -38,6 +38,21 @@ impl Transformation {
                 data.write_chr('v');
                 data.write_f64(*x);
                 data.write_f64(*y);
+            },
+
+            Scale(ratiox, ratioy, (x, y)) => {
+                data.write_chr('s');
+                data.write_f64(*ratiox);
+                data.write_f64(*ratioy);
+                data.write_f64(*x);
+                data.write_f64(*y);
+            },
+
+            Rotate(angle, (x, y)) => {
+                data.write_chr('r');
+                data.write_f64(*angle);
+                data.write_f64(*x);
+                data.write_f64(*y);
             }
         }
     }
@@ -84,6 +99,23 @@ impl Transformation {
 
                     _ => None
                 }
+            }
+
+            's' => {
+                let xratio  = data.next_f64();
+                let yratio  = data.next_f64();
+                let x       = data.next_f64();
+                let y       = data.next_f64();
+
+                Some(Transformation::Scale(xratio, yratio, (x, y)))
+            }
+
+            'r' => {
+                let angle   = data.next_f64();
+                let x       = data.next_f64();
+                let y       = data.next_f64();
+
+                Some(Transformation::Rotate(angle, (x, y)))
             }
 
             _ => None
@@ -134,6 +166,30 @@ mod test {
     #[test]
     fn flip_vert() {
         let transformation  = Transformation::FlipVert(11.0, 12.0);
+        let mut encoded     = String::new();
+        transformation.serialize(&mut encoded);
+
+        let decoded         = Transformation::deserialize(&mut encoded.chars());
+        let decoded         = decoded.unwrap();
+
+        assert!(decoded == transformation);
+    }
+
+    #[test]
+    fn scale() {
+        let transformation  = Transformation::Scale(1.0, 2.0, (3.0, 4.0));
+        let mut encoded     = String::new();
+        transformation.serialize(&mut encoded);
+
+        let decoded         = Transformation::deserialize(&mut encoded.chars());
+        let decoded         = decoded.unwrap();
+
+        assert!(decoded == transformation);
+    }
+
+    #[test]
+    fn rotate() {
+        let transformation  = Transformation::Rotate(1.0, (3.0, 4.0));
         let mut encoded     = String::new();
         transformation.serialize(&mut encoded);
 

@@ -30,7 +30,13 @@ pub enum Transformation {
     FlipHoriz(f64, f64),
 
     /// Flip vertically around a particular point
-    FlipVert(f64, f64)
+    FlipVert(f64, f64),
+
+    /// Scale around a point
+    Scale(f64, f64, (f64, f64)),
+
+    /// Rotate around a point
+    Rotate(f64, (f64, f64))
 }
 
 impl Transformation {
@@ -41,10 +47,12 @@ impl Transformation {
         use self::Transformation::*;
 
         match self {
-            Matrix(matrix)      => Self::invert_matrix(matrix).map(|inverted_matrix| Matrix(inverted_matrix)),
-            Translate(dx, dy)   => Some(Translate(-dx, -dy)),
-            FlipHoriz(x, y)     => Some(FlipHoriz(*x, *y)),
-            FlipVert(x, y)      => Some(FlipVert(*x, *y))
+            Matrix(matrix)                  => Self::invert_matrix(matrix).map(|inverted_matrix| Matrix(inverted_matrix)),
+            Translate(dx, dy)               => Some(Translate(-dx, -dy)),
+            FlipHoriz(x, y)                 => Some(FlipHoriz(*x, *y)),
+            FlipVert(x, y)                  => Some(FlipVert(*x, *y)),
+            Scale(xratio, yratio, origin)   => Some(Scale(1.0/xratio, 1.0/yratio, *origin)),
+            Rotate(angle, origin)           => Some(Rotate(-angle, *origin))
         }
     }
 
@@ -55,11 +63,19 @@ impl Transformation {
         use self::Transformation::*;
 
         match self {
-            Matrix(matrix)      => Some(*matrix),
-            Translate(dx, dy)   => Some([[1.0, 0.0, *dx], [0.0, 1.0, *dy], [0.0, 0.0, 1.0]]),
+            Matrix(matrix)                  => Some(*matrix),
+            Translate(dx, dy)               => Some([[1.0, 0.0, *dx], [0.0, 1.0, *dy], [0.0, 0.0, 1.0]]),
 
-            FlipHoriz(x, _y)    => Some([[-1.0, 0.0, 2.0*x], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]),
-            FlipVert(_x, y)     => Some([[1.0, 0.0, 0.0], [0.0, -1.0, 2.0*y], [0.0, 0.0, 1.0]]),
+            FlipHoriz(x, _y)                => Some([[-1.0, 0.0, 2.0*x], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]),
+            FlipVert(_x, y)                 => Some([[1.0, 0.0, 0.0], [0.0, -1.0, 2.0*y], [0.0, 0.0, 1.0]]),
+
+            Scale(xratio, yratio, (x, y))   => Some([[*xratio, 0.0, -xratio*x+x], [0.0, *yratio, -yratio*y+y], [0.0, 0.0, 1.0]]),
+            Rotate(angle, (x, y))           => {
+                let cos_a = angle.cos();
+                let sin_a = angle.sin();
+
+                Some([[cos_a, -sin_a, -x*cos_a+y*sin_a+x], [sin_a, cos_a, -x*sin_a-y*cos_a+y], [0.0, 0.0, 1.0]])
+            }
         }
     }
 
@@ -128,10 +144,10 @@ impl Transformation {
     /// Transforms a 2D point via the matrix transformation
     ///
     fn transform_matrix(x: f64, y: f64, matrix: &[[f64; 3]; 3]) -> (f64, f64) {
-        let x = matrix[0][0] * x + matrix[0][1] * y + matrix[0][2];
-        let y = matrix[1][0] * x + matrix[1][1] * y + matrix[1][2];
+        let x1 = matrix[0][0] * x + matrix[0][1] * y + matrix[0][2];
+        let y1 = matrix[1][0] * x + matrix[1][1] * y + matrix[1][2];
 
-        (x, y)
+        (x1, y1)
     }
 
     ///
@@ -303,6 +319,8 @@ impl VectorElement for (ElementId, SmallVec<[Transformation; 2]>) {
 mod test {
     use super::*;
 
+    use std::f64;
+
     #[test]
     fn translate_point() {
         let transform           = Transformation::Translate(1.0, 2.0);
@@ -368,5 +386,49 @@ mod test {
 
         assert!((translated_point.x() - 42.0).abs() < 0.001);
         assert!((translated_point.y() - 43.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn scale_about_center() {
+        let transform           = Transformation::Scale(2.0, 3.0, (0.0, 0.0));
+        let source_point        = Coord2(42.0, 45.0);
+
+        let translated_point    = transform.transform_point(&source_point);
+
+        assert!((translated_point.x() - 84.0).abs() < 0.001);
+        assert!((translated_point.y() - 135.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn scale_about_point() {
+        let transform           = Transformation::Scale(2.0, 3.0, (43.0, 45.0));
+        let source_point        = Coord2(42.0, 45.0);
+
+        let translated_point    = transform.transform_point(&source_point);
+
+        assert!((translated_point.x() - 41.0).abs() < 0.001);
+        assert!((translated_point.y() - 45.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn rotate_about_center() {
+        let transform           = Transformation::Rotate(f64::consts::PI/2.0, (0.0, 0.0));
+        let source_point        = Coord2(42.0, 45.0);
+
+        let translated_point    = transform.transform_point(&source_point);
+
+        assert!((translated_point.x() - -45.0).abs() < 0.001);
+        assert!((translated_point.y() - 42.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn rotate_abount_point() {
+        let transform           = Transformation::Rotate(f64::consts::PI/2.0, (41.0, 44.0));
+        let source_point        = Coord2(42.0, 45.0);
+
+        let translated_point    = transform.transform_point(&source_point);
+
+        assert!((translated_point.x() - 40.0).abs() < 0.001);
+        assert!((translated_point.y() - 45.0).abs() < 0.001);
     }
 }
