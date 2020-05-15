@@ -14,9 +14,15 @@ pub enum ElementTransform {
     /// Aligns several elements to the anchor point (or the overall bounding box)
     Align(ElementAlign),
 
-    /// Flips the element horizontally
+    /// Flips the element horizontally around the anchor
     FlipHorizontal,
 
-    /// Flips the element vertically
-    FlipVertical
+    /// Flips the element vertically around the anchor
+    FlipVertical,
+
+    /// Scales the element around the anchor
+    Scale(f64, f64),
+
+    /// Rotates the element around the anchor
+    Rotate(f64)
 }

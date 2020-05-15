@@ -37,6 +37,17 @@ impl ElementTransform {
                 data.write_chr('f');
                 data.write_chr('v');
             }
+
+            Scale(x, y) => {
+                data.write_chr('s');
+                data.write_f64(*x);
+                data.write_f64(*y);
+            }
+
+            Rotate(angle) => {
+                data.write_chr('r');
+                data.write_f64(*angle);
+            }
         }
     }
 
@@ -68,6 +79,18 @@ impl ElementTransform {
                     'v' => Some(ElementTransform::FlipVertical),
                     _ => None
                 }
+            }
+
+            's' => {
+                let (x, y) = (data.next_f64(), data.next_f64());
+
+                Some(ElementTransform::Scale(x, y))
+            }
+
+            'r' => {
+                let angle = data.next_f64();
+
+                Some(ElementTransform::Rotate(angle))
             }
 
             _ => None

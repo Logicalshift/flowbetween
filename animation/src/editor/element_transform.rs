@@ -139,6 +139,20 @@ impl TransformsForElements {
     fn flip_vertical(&mut self, origin: Coord2) {
         self.transform(|_| smallvec![Transformation::FlipVert(origin.x(), origin.y())])
     }
+
+    ///
+    /// Scales the element around a point
+    ///
+    fn scale(&mut self, xratio: f64, yratio: f64, origin: Coord2) {
+        self.transform(|_| smallvec![Transformation::Scale(xratio, yratio, (origin.x(), origin.y()))]);
+    }
+
+    ///
+    /// Rotates the element around a point
+    ///
+    fn rotate(&mut self, angle: f64, origin: Coord2) {
+        self.transform(|_| smallvec![Transformation::Rotate(angle, (origin.x(), origin.y()))]);
+    }
 }
 
 impl StreamAnimationCore {
@@ -241,6 +255,18 @@ impl StreamAnimationCore {
                     ElementTransform::FlipVertical      => {
                         if let Some(origin) = transform_origin {
                             element_transforms.flip_vertical(origin);
+                        }
+                    }
+
+                    ElementTransform::Scale(x, y)       => {
+                        if let Some(origin) = transform_origin {
+                            element_transforms.scale(*x, *y, origin);
+                        }
+                    }
+
+                    ElementTransform::Rotate(angle)     => {
+                        if let Some(origin) = transform_origin {
+                            element_transforms.rotate(*angle, origin);
                         }
                     }
                 }
