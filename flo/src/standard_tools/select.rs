@@ -38,6 +38,23 @@ enum SelectAction {
 }
 
 ///
+/// The handles that are used to manipulate the selection
+///
+#[derive(Copy, Clone, PartialEq, Debug)]
+enum SelectHandle {
+    ScaleTopLeft,
+    ScaleTop,
+    ScaleTopRight,
+    ScaleRight,
+    ScaleBottomRight,
+    ScaleBottom,
+    ScaleBottomLeft,
+    ScaleLeft,
+
+    Rotate
+}
+
+///
 /// The select data provides feedback for the action being taken by the select tool
 ///
 #[derive(Clone)]
@@ -194,11 +211,11 @@ impl Select {
     fn scaling_handles_for_bounding_box(bounding_box: &Rect) -> Vec<Draw> {
         // Parameters for the handles
         let max_len         = 16.0;
-        let seperation      = 6.0;
+        let separation      = 6.0;
         let gap             = 4.0;
 
         // The handles are placed on a bounding box outside the selection bounds
-        let bounding_box    = bounding_box.inset(-seperation, -seperation);
+        let bounding_box    = bounding_box.inset(-separation, -separation);
         
         // Work out the length to draw the scaling handles
         let horiz_len       = if bounding_box.width() > (max_len*2.0 + gap) {
@@ -505,20 +522,92 @@ impl Select {
     }
 
     ///
+    /// Returns the selection handle found at the specified point
+    ///
+    fn handle_at_point(bounds: Rect, point: (f32, f32)) -> Option<SelectHandle> {
+        // Parameters for the handles
+        let max_len             = 16.0;
+        let separation          = 6.0;
+        let gap                 = 4.0;
+
+        // The handles are placed on a bounding box outside the selection bounds
+        let bounding_box        = bounds.inset(-separation, -separation);
+        
+        // Work out the length to draw the scaling handles
+        let horiz_len           = if bounding_box.width() > (max_len*2.0 + gap) {
+            max_len
+        } else {
+            ((bounding_box.width() - gap) / 2.0).floor()
+        };
+        let vert_len            = if bounding_box.height() > (max_len*2.0 + gap) {
+            max_len
+        } else {
+            ((bounding_box.height() - gap) / 2.0).floor()
+        };
+
+        // Compute which handle the pointer is over
+        let (x, y)              = point;
+        let (x1, y1, x2, y2)    = (bounds.x1, bounds.y1, bounds.x2, bounds.y2);
+
+        // Scale handles
+        let border = 1.0;
+        
+        if x <= x1+border && x >= x1-separation {
+            if y >= y2-vert_len && y <= y2 + separation {
+                return Some(SelectHandle::ScaleTopLeft)
+            } else if y >= y1 - separation && y <= y1+vert_len {
+                return Some(SelectHandle::ScaleBottomLeft)
+            }
+        }
+
+        if x >= x2-border && x <= x2+separation {
+            if y >= y2-vert_len && y <= y2 + separation {
+                return Some(SelectHandle::ScaleTopRight)
+            } else if y >= y1 - separation && y <= y1+vert_len {
+                return Some(SelectHandle::ScaleBottomRight)
+            }
+        }
+
+        if y <= y1+border && y >= y1-separation {
+            if x >= x1-separation && x <= x1+horiz_len {
+                return Some(SelectHandle::ScaleBottomLeft)
+            } else if x >= x2-horiz_len && x <= x2+separation {
+                return Some(SelectHandle::ScaleBottomRight)
+            }
+        }
+
+        if y >= y2-border && y <= y2+separation {
+            if x >= x1-separation && x <= x1+horiz_len {
+                return Some(SelectHandle::ScaleTopLeft)
+            } else if x >= x2-horiz_len && x <= x2+separation {
+                return Some(SelectHandle::ScaleTopRight)
+            }
+        }
+
+        // Over no handles
+        None
+    }
+
+    ///
     /// Processes a paint action (at the top level)
     ///
     fn paint<Anim: 'static+EditableAnimation>(&self, paint: Painting, actions: Vec<ToolAction<SelectData>>, animation: Arc<FloModel<Anim>>, data: Arc<SelectData>) -> (Vec<ToolAction<SelectData>>, Arc<SelectData>) {
         let mut actions     = actions;
         let mut data        = data;
         let current_action  = data.action;
+        let select_bounds   = data.selection_bounds.clone();
 
         match (current_action, paint.action) {
             (_, PaintAction::Start) => {
                 // Find the element at this point
                 // TODO: preferentially check if the point is within the bounds of an already selected element
                 let element = Self::element_at_point(&*animation.frame(), |element_id| self.is_selected(&data, element_id), paint.location);
+                let handle  = select_bounds.and_then(|bounds| Self::handle_at_point(bounds, paint.location));
 
-                if element.as_ref().map(|element| self.is_selected(&*data, *element)).unwrap_or(false) {
+                if handle.is_some() {
+                    // User has clicked over a handle (these drag for various effects)
+
+                } else if element.as_ref().map(|element| self.is_selected(&*data, *element)).unwrap_or(false) {
                     // Element is already selected: don't change the selection (so we can start dragging an existing selection)
                     let new_data = data.with_action(SelectAction::Reselect)
                         .with_initial_position(RawPoint::from(paint.location));
@@ -800,10 +889,14 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
             .map(|(current_frame, selected_elements, combined_bounding_boxes)| {
                 // Collapse the bounding boxes to the selection bounds
                 let selection_bounds = (*combined_bounding_boxes).iter()
-                    .fold(None, |maybe_bounds: Option<Rect>, (_, _, next_rect)| {
-                        match maybe_bounds {
-                            Some(bounds)    => Some(bounds.union(*next_rect)),
-                            None            => Some(*next_rect)
+                    .fold(None, |maybe_bounds: Option<Rect>, (element_id, _, next_rect)| {
+                        if selected_elements.contains(element_id) {
+                            match maybe_bounds {
+                                Some(bounds)    => Some(bounds.union(*next_rect)),
+                                None            => Some(*next_rect)
+                            }
+                        } else {
+                            maybe_bounds
                         }
                     });
 
