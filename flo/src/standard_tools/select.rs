@@ -641,6 +641,8 @@ impl Select {
         let max_len             = 16.0;
         let separation          = 6.0;
         let gap                 = 4.0;
+        let stalk_len           = 40.0;
+        let radius              = 8.0;
 
         // The handles are placed on a bounding box outside the selection bounds
         let bounding_box        = bounds.inset(-separation, -separation);
@@ -703,6 +705,11 @@ impl Select {
             } else if x >= mid_x - horiz_len/2.0 && x <= mid_x + horiz_len/2.0 {
                 return Some(SelectHandle::ScaleTop)
             }
+        }
+
+        if y >= y2+stalk_len-radius-separation && y <= y2+stalk_len+radius
+            && x >= mid_x-radius && x <= mid_x+radius {
+            return Some(SelectHandle::Rotate)
         }
 
         // Over no handles
