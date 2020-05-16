@@ -315,6 +315,18 @@ impl VectorElement for (ElementId, SmallVec<[Transformation; 2]>) {
     }
 }
 
+impl Into<Transform2D> for Transformation {
+    fn into(self) -> Transform2D {
+        let matrix = self.get_matrix().unwrap_or_else(|| [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]);
+
+        Transform2D(
+            (matrix[0][0] as f32, matrix[0][1] as f32, matrix[0][2] as f32), 
+            (matrix[1][0] as f32, matrix[1][1] as f32, matrix[1][2] as f32),
+            (matrix[2][0] as f32, matrix[2][1] as f32, matrix[2][2] as f32)
+        )
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

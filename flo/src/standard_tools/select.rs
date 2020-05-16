@@ -1,8 +1,8 @@
 use super::select_tool_model::*;
-use super::super::menu::*;
-use super::super::tools::*;
-use super::super::model::*;
-use super::super::style::*;
+use crate::menu::*;
+use crate::tools::*;
+use crate::model::*;
+use crate::style::*;
 
 use flo_ui::*;
 use flo_canvas::*;
@@ -34,7 +34,10 @@ enum SelectAction {
     RubberBand,
 
     /// The user has dragged their selection (either by selecting and moving away from the current location or by clicking on an item that's already selected)
-    Drag
+    Drag,
+
+    /// The user is dragging one of the selection handles
+    DragHandle(SelectHandle)
 }
 
 ///
@@ -434,6 +437,86 @@ impl Select {
     }
 
     ///
+    /// Returns the transformation to use during a drag of a selection handle
+    ///
+    fn handle_transformation(bounds: Rect, handle: SelectHandle, initial_point: (f32, f32), drag_point: (f32, f32)) -> Transformation {
+        let (drag_x, drag_y) = drag_point;
+        let (init_x, init_y) = initial_point;
+
+        // Origin depends on the handle being dragged (opposite side to the handle)
+        let origin = match handle {
+            SelectHandle::ScaleBottomRight  => (bounds.x1, bounds.y2),
+            SelectHandle::ScaleBottom       => ((bounds.x1+bounds.x2)/2.0, bounds.y2),
+            SelectHandle::ScaleBottomLeft   => (bounds.x2, bounds.y2),
+            SelectHandle::ScaleLeft         => (bounds.x2, (bounds.y1+bounds.y2)/2.0),
+            SelectHandle::ScaleTopLeft      => (bounds.x2, bounds.y1),
+            SelectHandle::ScaleTop          => ((bounds.x1+bounds.x2)/2.0, bounds.y1),
+            SelectHandle::ScaleTopRight     => (bounds.x1, bounds.y1),
+            SelectHandle::ScaleRight        => (bounds.x1, (bounds.y1+bounds.y2)/2.0),
+            SelectHandle::Rotate            => ((bounds.x1+bounds.x2)/2.0, (bounds.y1+bounds.y2)/2.0),
+        };
+
+        // The distance dragged in the x and y directions
+        let dx = match handle {
+            SelectHandle::ScaleTopLeft | SelectHandle::ScaleLeft | SelectHandle::ScaleBottomLeft        => init_x - drag_x,
+            SelectHandle::ScaleTopRight | SelectHandle::ScaleRight | SelectHandle::ScaleBottomRight     => drag_x - init_x,
+            SelectHandle::ScaleTop | SelectHandle::ScaleBottom                                          => 0.0,
+            SelectHandle::Rotate                                                                        => unimplemented!()
+        };
+        let dy = match handle {
+            SelectHandle::ScaleTopLeft | SelectHandle::ScaleTop | SelectHandle::ScaleTopRight           => drag_y - init_y,
+            SelectHandle::ScaleBottomLeft | SelectHandle::ScaleBottom | SelectHandle::ScaleBottomRight  => init_y - drag_y,
+            SelectHandle::ScaleLeft | SelectHandle::ScaleRight                                          => 0.0,
+            SelectHandle::Rotate                                                                        => unimplemented!()
+        };
+
+        // TODO: for even scaling make dx, dy equal to the max of both
+        // TODO: rotation too
+
+        // For scaling, work out a new bounding box size
+        let scale_x = (bounds.width() + dx) / bounds.width();
+        let scale_y = (bounds.height() + dy) / bounds.height();
+
+        let (ox, oy) = origin;
+        Transformation::Scale(scale_x as f64, scale_y as f64, (ox as f64, oy as f64))
+    }
+
+    ///
+    /// Draws a set of dragged elements
+    ///
+    fn draw_drag_handle(data: &SelectData, handle: SelectHandle, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>, initial_point: (f32, f32), drag_point: (f32, f32)) -> Vec<Draw> {
+        let mut drawing = vec![];
+
+        drawing.layer(1);
+        drawing.clear_layer();
+
+        // Work out the bounding box
+        let bounds = selected_elements.iter()
+            .map(|(_, _, bounds)| *bounds)
+            .fold(Rect::empty(), |r1, r2| r1.union(r2));
+
+        // Convert to a transformation
+        let transform = Self::handle_transformation(bounds, handle, initial_point, drag_point);
+
+        // Draw everything translated by the drag distance
+        drawing.push_state();
+        drawing.transform(transform.into());
+
+        // Draw the 'shadows' of the elements
+        if data.selected_elements_draw.len() > 0 {
+            // Use the cached version
+            drawing.extend(&*data.selected_elements_draw);
+        } else {
+            // Regenerate every time
+            drawing.extend(Self::rendering_for_elements(data, selected_elements));
+        }
+
+        // Finish up (popping state to restore the transformation)
+        drawing.pop_state();
+        drawing
+    }
+
+    ///
     /// Returns the drawing actions to highlight the specified element
     ///
     fn highlight_for_selection(element: &Vector, properties: &VectorProperties) -> (Vec<Draw>, Rect) {
@@ -551,7 +634,7 @@ impl Select {
 
         // Scale handles
         let border = 1.0;
-        
+
         if x <= x1+border && x >= x1-separation {
             if y >= y2-vert_len && y <= y2 + separation {
                 return Some(SelectHandle::ScaleTopLeft)
@@ -604,8 +687,13 @@ impl Select {
                 let element = Self::element_at_point(&*animation.frame(), |element_id| self.is_selected(&data, element_id), paint.location);
                 let handle  = select_bounds.and_then(|bounds| Self::handle_at_point(bounds, paint.location));
 
-                if handle.is_some() {
+                if let Some(handle) = handle {
                     // User has clicked over a handle (these drag for various effects)
+                    let new_data = data.with_action(SelectAction::DragHandle(handle))
+                        .with_initial_position(RawPoint::from(paint.location));
+
+                    actions.push(ToolAction::Data(new_data.clone()));
+                    data = Arc::new(new_data);
 
                 } else if element.as_ref().map(|element| self.is_selected(&*data, *element)).unwrap_or(false) {
                     // Element is already selected: don't change the selection (so we can start dragging an existing selection)
@@ -724,6 +812,25 @@ impl Select {
                     .collect();
 
                 let draw_drag = Self::draw_drag(&*data, selected, data.initial_position.position, paint.location);
+                actions.push(ToolAction::Overlay(OverlayAction::Draw(draw_drag)));
+            },
+
+
+            (SelectAction::DragHandle(handle), PaintAction::Continue)   |
+            (SelectAction::DragHandle(handle), PaintAction::Prediction) => {
+                // Update the drag position
+                let new_data = data.with_drag_position(RawPoint::from(paint.location));
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+
+                // Draw the current drag state
+                let selected_elements   = Arc::clone(&data.selected_elements);
+                let selected            = data.bounding_boxes.iter()
+                    .filter(|&&(ref id, _, _)| selected_elements.contains(id))
+                    .map(|item| item.clone())
+                    .collect();
+
+                let draw_drag = Self::draw_drag_handle(&*data, handle, selected, data.initial_position.position, paint.location);
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(draw_drag)));
             },
 
