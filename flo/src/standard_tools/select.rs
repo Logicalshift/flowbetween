@@ -6,6 +6,7 @@ use crate::style::*;
 
 use flo_ui::*;
 use flo_canvas::*;
+use flo_curves::*;
 use flo_binding::*;
 use flo_animation::*;
 
@@ -339,7 +340,7 @@ impl Select {
     /// This can be used to cache the standard rendering for a set of selected elements so that we don't
     /// have to constantly recalculate it (which can be quite slow for a large set of brush elements)
     ///
-    fn rendering_for_elements(data: &SelectData, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>) -> Vec<Draw> {
+    fn rendering_for_elements(data: &SelectData, selected_elements: &Vec<(ElementId, Arc<VectorProperties>, Rect)>) -> Vec<Draw> {
         let mut drawing = vec![];
         // let mut paths   = vec![];
 
@@ -348,14 +349,14 @@ impl Select {
         drawing.new_path();
 
         // Draw each of the elements and store the bounding boxes
-        for (element, properties, _bounds) in selected_elements {
+        for (element, properties, _bounds) in selected_elements.iter() {
             // Update the brush properties to be a 'shadow' of the original
-            let mut properties = (*properties).clone();
+            let mut properties = (**properties).clone();
             properties.brush_properties.opacity *= 0.25;
             properties.brush_properties.color   = Color::Rgba(0.6, 0.8, 0.9, 1.0);
 
             // Fetch the element to render it
-            let element = data.frame.as_ref().and_then(|frame| frame.element_with_id(element));
+            let element = data.frame.as_ref().and_then(|frame| frame.element_with_id(*element));
 
             // Render the element using the selection style
             element
@@ -433,8 +434,12 @@ impl Select {
             drawing.extend(&*data.selected_elements_draw);
         } else {
             // Regenerate every time
-            drawing.extend(Self::rendering_for_elements(data, selected_elements));
+            drawing.extend(Self::rendering_for_elements(data, &selected_elements));
         }
+
+        // Draw the bounding box
+        let bounds = selected_elements.iter().map(|(_, _, bounds)| *bounds).fold(Rect::empty(), |r1, r2| r1.union(r2));
+        drawing.extend(Self::render_bounding_box(&bounds));
 
         // Finish up (popping state to restore the transformation)
         drawing.pop_state();
@@ -505,7 +510,7 @@ impl Select {
 
         // Draw everything translated by the drag distance
         drawing.push_state();
-        drawing.transform(transform.into());
+        drawing.transform(transform.clone().into());
 
         // Draw the 'shadows' of the elements
         if data.selected_elements_draw.len() > 0 {
@@ -513,7 +518,26 @@ impl Select {
             drawing.extend(&*data.selected_elements_draw);
         } else {
             // Regenerate every time
-            drawing.extend(Self::rendering_for_elements(data, selected_elements));
+            drawing.extend(Self::rendering_for_elements(data, &selected_elements));
+        }
+
+        // Draw the bounding box
+        match transform {
+            Transformation::Scale(_, _, _)  => { 
+                // Reset to the default state (so we can draw the bounding box untransformed - it'll look weird with a 2D transform applied to it)
+                drawing.pop_state();
+                drawing.push_state();
+
+                // Transform the bounds
+                let Coord2(x1, y1)  = transform.transform_point(&Coord2(bounds.x1 as f64, bounds.y1 as f64));
+                let Coord2(x2, y2)  = transform.transform_point(&Coord2(bounds.x2 as f64, bounds.y2 as f64));
+
+                // Render the transformed bounding box
+                let bounds          = Rect { x1: x1 as f32, y1: y1 as f32, x2: x2 as f32, y2: y2 as f32 };
+                drawing.extend(Self::render_bounding_box(&bounds));
+            }
+
+            _                               => { drawing.extend(Self::render_bounding_box(&bounds)); }
         }
 
         // Finish up (popping state to restore the transformation)
@@ -795,7 +819,9 @@ impl Select {
                     .filter(|&&(ref id, _, _)| selected_elements.contains(id))
                     .map(|item| item.clone())
                     .collect();
-                new_data.selected_elements_draw = Arc::new(Self::rendering_for_elements(&new_data, selected));
+                let render              = Self::rendering_for_elements(&new_data, &selected);
+
+                new_data.selected_elements_draw = Arc::new(render);
 
                 // Update the tool data
                 actions.push(ToolAction::Data(new_data.clone()));
