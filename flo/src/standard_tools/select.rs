@@ -660,6 +660,7 @@ impl Select {
         // Compute which handle the pointer is over
         let (x, y)              = point;
         let (x1, y1, x2, y2)    = (bounds.x1, bounds.y1, bounds.x2, bounds.y2);
+        let (mid_x, mid_y)      = ((bounds.x1+bounds.x2)/2.0, (bounds.y1+bounds.y2)/2.0);
 
         // Scale handles
         let border = 1.0;
@@ -669,6 +670,8 @@ impl Select {
                 return Some(SelectHandle::ScaleTopLeft)
             } else if y >= y1 - separation && y <= y1+vert_len {
                 return Some(SelectHandle::ScaleBottomLeft)
+            } else if y >= mid_y - vert_len/2.0 && y <= mid_y + vert_len/2.0 {
+                return Some(SelectHandle::ScaleLeft)
             }
         }
 
@@ -677,6 +680,8 @@ impl Select {
                 return Some(SelectHandle::ScaleTopRight)
             } else if y >= y1 - separation && y <= y1+vert_len {
                 return Some(SelectHandle::ScaleBottomRight)
+            } else if y >= mid_y - vert_len/2.0 && y <= mid_y + vert_len/2.0 {
+                return Some(SelectHandle::ScaleRight)
             }
         }
 
@@ -685,6 +690,8 @@ impl Select {
                 return Some(SelectHandle::ScaleBottomLeft)
             } else if x >= x2-horiz_len && x <= x2+separation {
                 return Some(SelectHandle::ScaleBottomRight)
+            } else if x >= mid_x - horiz_len/2.0 && x <= mid_x + horiz_len/2.0 {
+                return Some(SelectHandle::ScaleBottom)
             }
         }
 
@@ -693,6 +700,8 @@ impl Select {
                 return Some(SelectHandle::ScaleTopLeft)
             } else if x >= x2-horiz_len && x <= x2+separation {
                 return Some(SelectHandle::ScaleTopRight)
+            } else if x >= mid_x - horiz_len/2.0 && x <= mid_x + horiz_len/2.0 {
+                return Some(SelectHandle::ScaleTop)
             }
         }
 
