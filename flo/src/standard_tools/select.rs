@@ -183,6 +183,96 @@ impl Select {
     }
 
     ///
+    /// Returns the drawing instructions for the scaling handles for a particular bounding box
+    ///
+    fn scaling_handles_for_bounding_box(bounding_box: &Rect) -> Vec<Draw> {
+        // Parameters for the handles
+        let max_len         = 16.0;
+        let seperation      = 6.0;
+        let gap             = 4.0;
+
+        // The handles are placed on a bounding box outside the selection bounds
+        let bounding_box    = bounding_box.inset(-seperation, -seperation);
+        
+        // Work out the length to draw the scaling handles
+        let horiz_len       = if bounding_box.width() > (max_len*2.0 + gap) {
+            max_len
+        } else {
+            ((bounding_box.width() - gap) / 2.0).floor()
+        };
+        let vert_len        = if bounding_box.height() > (max_len*2.0 + gap) {
+            max_len
+        } else {
+            ((bounding_box.height() - gap) / 2.0).floor()
+        };
+
+        // Corner scaling handles
+        let mut handles     = vec![];
+
+        handles.extend(vec![
+            Draw::NewPath,
+            
+            Draw::Move(bounding_box.x1, bounding_box.y1 + vert_len),
+            Draw::Line(bounding_box.x1, bounding_box.y1),
+            Draw::Line(bounding_box.x1 + horiz_len, bounding_box.y1),
+
+            Draw::Move(bounding_box.x2 - horiz_len, bounding_box.y1),
+            Draw::Line(bounding_box.x2, bounding_box.y1),
+            Draw::Line(bounding_box.x2, bounding_box.y1 + vert_len),
+
+            Draw::Move(bounding_box.x2, bounding_box.y2 - vert_len),
+            Draw::Line(bounding_box.x2, bounding_box.y2),
+            Draw::Line(bounding_box.x2 - horiz_len, bounding_box.y2),
+
+            Draw::Move(bounding_box.x1 + horiz_len, bounding_box.y2),
+            Draw::Line(bounding_box.x1, bounding_box.y2),
+            Draw::Line(bounding_box.x1, bounding_box.y2 - vert_len)
+        ]);
+
+        // Edge scaling handles
+        if (bounding_box.width() - horiz_len*2.0) > gap*2.0 + 2.0 {
+            let mid_len     = bounding_box.width() - horiz_len*2.0 - gap * 2.0;
+            let mid_len     = mid_len.min(max_len);
+            let mid_point   = bounding_box.x1 + (bounding_box.width() - mid_len)/2.0;
+
+            handles.extend(vec![
+                Draw::Move(mid_point, bounding_box.y1),
+                Draw::Line(mid_point+mid_len, bounding_box.y1),
+
+                Draw::Move(mid_point, bounding_box.y2),
+                Draw::Line(mid_point+mid_len, bounding_box.y2)
+            ]);
+        }
+
+        if (bounding_box.height() - vert_len*2.0) > gap*2.0 + 2.0 {
+            let mid_len     = bounding_box.height() - vert_len*2.0 - gap * 2.0;
+            let mid_len     = mid_len.min(max_len);
+            let mid_point   = bounding_box.y1 + (bounding_box.height() - mid_len)/2.0;
+
+            handles.extend(vec![
+                Draw::Move(bounding_box.x1, mid_point),
+                Draw::Line(bounding_box.x1, mid_point+mid_len),
+
+                Draw::Move(bounding_box.x2, mid_point),
+                Draw::Line(bounding_box.x2, mid_point+mid_len)
+            ]);
+        }
+
+        // Actually draw the handle lines
+        handles.extend(vec!{
+            Draw::LineWidthPixels(4.0),
+            Draw::StrokeColor(SELECTION_OUTLINE),
+            Draw::Stroke,
+
+            Draw::LineWidthPixels(2.0),
+            Draw::StrokeColor(SELECTION_BBOX),
+            Draw::Stroke
+        });
+
+        handles
+    }
+
+    ///
     /// Returns how the specified selected elements should be rendered (as a selection)
     ///
     /// This can be used to cache the standard rendering for a set of selected elements so that we don't
@@ -251,6 +341,9 @@ impl Select {
         drawing.stroke_color(SELECTION_BBOX);
         drawing.stroke();
 
+        // Draw the scaling handles
+        drawing.extend(Self::scaling_handles_for_bounding_box(&bounds));
+
         // Return the set of commands for drawing these elements
         drawing
     }
@@ -299,6 +392,7 @@ impl Select {
 
             path_draw.insert(0, Draw::NewPath);
 
+            // Draw the outline
             path_draw.push(Draw::FillColor(SELECTION_FILL));
             path_draw.push(Draw::Fill);
 
@@ -625,6 +719,9 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                         selection.line_width_pixels(0.5);
                         selection.stroke_color(SELECTION_BBOX);
                         selection.stroke();
+
+                        // Draw the scaling handles
+                        selection.extend(Self::scaling_handles_for_bounding_box(&bounds));
                     }
 
                     // Create the overlay drawing
