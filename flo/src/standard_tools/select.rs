@@ -391,6 +391,18 @@ impl Select {
         ]);
 
         let bounds = bounding_boxes.into_iter().fold(Rect::empty(), |r1, r2| r1.union(r2));
+        drawing.extend(Self::render_bounding_box(&bounds));
+
+        // Return the set of commands for drawing these elements
+        drawing
+    }
+
+    ///
+    /// Renders the bounding box for a set of elements
+    ///
+    fn render_bounding_box(bounds: &Rect) -> Vec<Draw> {
+        let mut drawing = vec![];
+
         bounds.draw(&mut drawing);
 
         // Finish drawing the bounding boxes
@@ -403,7 +415,7 @@ impl Select {
         drawing.stroke();
 
         // Draw the scaling handles
-        drawing.extend(Self::scaling_handles_for_bounding_box(&bounds));
+        drawing.extend(Self::scaling_handles_for_bounding_box(bounds));
 
         // Return the set of commands for drawing these elements
         drawing
