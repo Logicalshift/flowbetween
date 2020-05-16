@@ -54,6 +54,9 @@ pub struct SelectData {
     // The drawing instructions to render the selected elements (or empty if there's no rendering yet)
     selected_elements_draw: Arc<Vec<Draw>>,
 
+    /// The bounding box of the selected elements
+    selection_bounds: Option<Rect>,
+
     /// The current select action
     action: SelectAction,
 
@@ -79,6 +82,7 @@ impl SelectData {
             bounding_boxes:         self.bounding_boxes.clone(),
             selected_elements:      self.selected_elements.clone(),
             selected_elements_draw: self.selected_elements_draw.clone(),
+            selection_bounds:       self.selection_bounds.clone(),
             action:                 new_action,
             initial_position:       self.initial_position.clone(),
             drag_position:          self.drag_position.clone()
@@ -94,6 +98,7 @@ impl SelectData {
             bounding_boxes:         self.bounding_boxes.clone(),
             selected_elements:      self.selected_elements.clone(),
             selected_elements_draw: self.selected_elements_draw.clone(),
+            selection_bounds:       self.selection_bounds.clone(),
             action:                 self.action,
             initial_position:       new_initial_position,
             drag_position:          None
@@ -109,6 +114,7 @@ impl SelectData {
             bounding_boxes:         self.bounding_boxes.clone(),
             selected_elements:      self.selected_elements.clone(),
             selected_elements_draw: self.selected_elements_draw.clone(),
+            selection_bounds:       self.selection_bounds.clone(),
             action:                 self.action,
             initial_position:       self.initial_position.clone(),
             drag_position:          Some(new_drag_position)
@@ -724,7 +730,6 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                     // Build up a vector of bounds
                     let mut selection   = vec![];
                     let mut bounds      = Rect::empty();
-                    let frame_time      = current_frame.time_index();
 
                     // Draw highlights around the selection (and discover the bounds)
                     for selected_id in selected_elements.iter() {
@@ -784,7 +789,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                 let bounds      = bounding_boxes.get(&element_id).cloned().unwrap_or_else(|| Rect::empty());
 
                 (element_id, properties, bounds)
-            }).collect())
+            }).collect::<Vec<_>>())
         });
 
         // Whenever the frame or the set of bounding boxes changes, we create a new SelectData object
@@ -793,11 +798,21 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
         let selected_elements   = flo_model.selection().selected_elements.clone();
         let data_for_model  = follow(computed(move || (current_frame.get(), selected_elements.get(), combined_bounding_boxes.get())))
             .map(|(current_frame, selected_elements, combined_bounding_boxes)| {
+                // Collapse the bounding boxes to the selection bounds
+                let selection_bounds = (*combined_bounding_boxes).iter()
+                    .fold(None, |maybe_bounds: Option<Rect>, (_, _, next_rect)| {
+                        match maybe_bounds {
+                            Some(bounds)    => Some(bounds.union(*next_rect)),
+                            None            => Some(*next_rect)
+                        }
+                    });
+
                 ToolAction::Data(SelectData {
                     frame:                  current_frame,
                     bounding_boxes:         combined_bounding_boxes,
                     selected_elements:      selected_elements.clone(),
                     selected_elements_draw: Arc::new(vec![]),
+                    selection_bounds:       selection_bounds,
                     action:                 SelectAction::NoAction,
                     initial_position:       RawPoint::from((0.0, 0.0)),
                     drag_position:          None
