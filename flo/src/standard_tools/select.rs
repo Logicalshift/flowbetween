@@ -273,6 +273,41 @@ impl Select {
     }
 
     ///
+    /// Returns drawing instructions for a rotation handle for the specified bounding box
+    ///
+    fn rotation_handle_for_bounding_box(bounding_box: &Rect) -> Vec<Draw> {
+        // Properties
+        let stalk_len   = 40.0;
+        let radius      = 8.0;
+        let separation  = 5.0;
+
+        let mid_point   = bounding_box.x1 + bounding_box.width()/2.0;
+
+        // Draw the stalk
+        let mut handle  = vec![
+            Draw::NewPath,
+            Draw::Move(mid_point, bounding_box.y2+separation),
+            Draw::Line(mid_point, bounding_box.y2+stalk_len-radius),
+
+            Draw::LineWidthPixels(1.0),
+            Draw::StrokeColor(SELECTION_OUTLINE),
+            Draw::Stroke
+        ];
+
+        // Draw the 'rotator'
+        handle.new_path();
+        handle.circle(mid_point, bounding_box.y2+stalk_len, radius);
+        handle.line_width_pixels(4.0);
+        handle.stroke_color(SELECTION_OUTLINE);
+        handle.stroke();
+        handle.line_width_pixels(2.0);
+        handle.stroke_color(SELECTION_BBOX);
+        handle.stroke();
+
+        handle
+    }
+
+    ///
     /// Returns how the specified selected elements should be rendered (as a selection)
     ///
     /// This can be used to cache the standard rendering for a set of selected elements so that we don't
@@ -722,6 +757,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
 
                         // Draw the scaling handles
                         selection.extend(Self::scaling_handles_for_bounding_box(&bounds));
+                        selection.extend(Self::rotation_handle_for_bounding_box(&bounds));
                     }
 
                     // Create the overlay drawing
