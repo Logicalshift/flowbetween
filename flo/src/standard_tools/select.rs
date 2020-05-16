@@ -471,24 +471,47 @@ impl Select {
             SelectHandle::ScaleTopLeft | SelectHandle::ScaleLeft | SelectHandle::ScaleBottomLeft        => init_x - drag_x,
             SelectHandle::ScaleTopRight | SelectHandle::ScaleRight | SelectHandle::ScaleBottomRight     => drag_x - init_x,
             SelectHandle::ScaleTop | SelectHandle::ScaleBottom                                          => 0.0,
-            SelectHandle::Rotate                                                                        => unimplemented!()
+            SelectHandle::Rotate                                                                        => {
+                // dx will be the new position of the rotate handle relative to the origin
+                let dx = drag_x - init_x;
+                let px = (bounds.x1+bounds.x2)/2.0;
+
+                px+dx-origin.0
+            }
         };
         let dy = match handle {
             SelectHandle::ScaleTopLeft | SelectHandle::ScaleTop | SelectHandle::ScaleTopRight           => drag_y - init_y,
             SelectHandle::ScaleBottomLeft | SelectHandle::ScaleBottom | SelectHandle::ScaleBottomRight  => init_y - drag_y,
             SelectHandle::ScaleLeft | SelectHandle::ScaleRight                                          => 0.0,
-            SelectHandle::Rotate                                                                        => unimplemented!()
+            SelectHandle::Rotate                                                                        => {
+                // dy will be the new position of the rotate handle relative to the origin
+                let dy = drag_y - init_y;
+                let py = bounds.y2+40.0;
+
+                py+dy-origin.1
+            }
         };
 
         // TODO: for even scaling make dx, dy equal to the max of both
-        // TODO: rotation too
 
-        // For scaling, work out a new bounding box size
-        let scale_x = (bounds.width() + dx) / bounds.width();
-        let scale_y = (bounds.height() + dy) / bounds.height();
+        match handle {
+            SelectHandle::Rotate => {
+                // Rotate the handle around the center
+                let theta       = f32::atan2(-dx, dy);
 
-        let (ox, oy) = origin;
-        Transformation::Scale(scale_x as f64, scale_y as f64, (ox as f64, oy as f64))
+                let (ox, oy)    = origin;
+                Transformation::Rotate(theta as f64, (ox as f64, oy as f64))
+            }
+
+            _ => {
+                // For scaling, work out a new bounding box size
+                let scale_x     = (bounds.width() + dx) / bounds.width();
+                let scale_y     = (bounds.height() + dy) / bounds.height();
+
+                let (ox, oy)    = origin;
+                Transformation::Scale(scale_x as f64, scale_y as f64, (ox as f64, oy as f64))
+            }
+        }
     }
 
     ///
@@ -523,7 +546,7 @@ impl Select {
 
         // Draw the bounding box
         match transform {
-            Transformation::Scale(_, _, _)  => { 
+            Transformation::Scale(_, _, _) => { 
                 // Reset to the default state (so we can draw the bounding box untransformed - it'll look weird with a 2D transform applied to it)
                 drawing.pop_state();
                 drawing.push_state();
@@ -537,7 +560,10 @@ impl Select {
                 drawing.extend(Self::render_bounding_box(&bounds));
             }
 
-            _                               => { drawing.extend(Self::render_bounding_box(&bounds)); }
+            _ => { 
+                drawing.extend(Self::render_bounding_box(&bounds));
+                drawing.extend(Self::rotation_handle_for_bounding_box(&bounds));
+            }
         }
 
         // Finish up (popping state to restore the transformation)
