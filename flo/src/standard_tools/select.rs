@@ -348,8 +348,7 @@ impl Select {
         drawing.new_path();
 
         // Draw each of the elements and store the bounding boxes
-        let mut bounding_boxes = vec![];
-        for (element, properties, bounds) in selected_elements {
+        for (element, properties, _bounds) in selected_elements {
             // Update the brush properties to be a 'shadow' of the original
             let mut properties = (*properties).clone();
             properties.brush_properties.opacity *= 0.25;
@@ -375,9 +374,6 @@ impl Select {
                     }
                     */
                 });
-
-            // We'll draw the bounding rectangles later on
-            bounding_boxes.push(bounds);
         }
 
         // Draw the elements
@@ -389,9 +385,6 @@ impl Select {
         drawing.extend(vec![
             Draw::NewPath
         ]);
-
-        let bounds = bounding_boxes.into_iter().fold(Rect::empty(), |r1, r2| r1.union(r2));
-        drawing.extend(Self::render_bounding_box(&bounds));
 
         // Return the set of commands for drawing these elements
         drawing
