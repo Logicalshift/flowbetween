@@ -449,7 +449,7 @@ impl Select {
     ///
     /// Returns the transformation to use during a drag of a selection handle
     ///
-    fn handle_transformation(bounds: Rect, handle: SelectHandle, initial_point: (f32, f32), drag_point: (f32, f32)) -> Transformation {
+    fn handle_transformation(bounds: Rect, handle: SelectHandle, initial_point: (f32, f32), drag_point: (f32, f32)) -> (Coord2, ElementTransform) {
         let (drag_x, drag_y) = drag_point;
         let (init_x, init_y) = initial_point;
 
@@ -500,16 +500,16 @@ impl Select {
                 let theta       = f32::atan2(-dx, dy);
 
                 let (ox, oy)    = origin;
-                Transformation::Rotate(theta as f64, (ox as f64, oy as f64))
+                (Coord2(ox as f64, oy as f64), ElementTransform::Rotate(theta as f64))
             }
 
             _ => {
-                // For scaling, work out a new bounding box size
+                // For scaling, work out a new bounding box size (the differences between the scaling algorithm are all specified by the origin and the dx and dy values)
                 let scale_x     = (bounds.width() + dx) / bounds.width();
                 let scale_y     = (bounds.height() + dy) / bounds.height();
 
                 let (ox, oy)    = origin;
-                Transformation::Scale(scale_x as f64, scale_y as f64, (ox as f64, oy as f64))
+                (Coord2(ox as f64, oy as f64), ElementTransform::Scale(scale_x as f64, scale_y as f64))
             }
         }
     }
@@ -529,7 +529,8 @@ impl Select {
             .fold(Rect::empty(), |r1, r2| r1.union(r2));
 
         // Convert to a transformation
-        let transform = Self::handle_transformation(bounds, handle, initial_point, drag_point);
+        let (origin, transform) = Self::handle_transformation(bounds, handle, initial_point, drag_point);
+        let transform           = Transformation::from_element_transform(&origin, transform);
 
         // Draw everything translated by the drag distance
         drawing.push_state();
