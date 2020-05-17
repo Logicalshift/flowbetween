@@ -41,6 +41,27 @@ pub enum Transformation {
 
 impl Transformation {
     ///
+    /// Converts an element transform to a transformation
+    ///
+    /// Not all element transforms can be converted by this routine (eg, this doesn't know bounding boxes so can't
+    /// perform alignment transforms)
+    ///
+    pub fn from_element_transform<Coord>(origin: &Coord, transform: ElementTransform) -> Transformation
+    where Coord: Coordinate+Coordinate2D {
+        let (ox, oy) = (origin.x(), origin.y());
+
+        match transform {
+            ElementTransform::SetAnchor(_, _)   => Transformation::Translate(0.0, 0.0),
+            ElementTransform::Align(_)          => Transformation::Translate(0.0, 0.0),
+            ElementTransform::FlipHorizontal    => Transformation::FlipHoriz(ox, oy),
+            ElementTransform::FlipVertical      => Transformation::FlipVert(ox, oy),
+            ElementTransform::Scale(sx, sy)     => Transformation::Scale(sx, sy, (ox, oy)),
+            ElementTransform::Rotate(theta)     => Transformation::Rotate(theta, (ox, oy)),
+            ElementTransform::MoveTo(x, y)      => Transformation::Translate(x+ox, y+oy),
+        }
+    }
+
+    ///
     /// Returns the inverse of this transformation
     ///
     pub fn invert(&self) -> Option<Transformation> {

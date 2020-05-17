@@ -1029,7 +1029,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                         selection.stroke_color(SELECTION_BBOX);
                         selection.stroke();
 
-                        // Draw the scaling handles
+                        // Draw the scaling handles (TODO: except when the user is dragging the selection)
                         selection.extend(Self::scaling_handles_for_bounding_box(&bounds));
                         selection.extend(Self::rotation_handle_for_bounding_box(&bounds));
                     }
