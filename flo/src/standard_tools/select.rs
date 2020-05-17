@@ -889,6 +889,28 @@ impl Select {
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(draw_drag)));
             },
 
+            (SelectAction::Drag, PaintAction::Finish) => {
+                // Reset the data state to 'no action'
+                let new_data = data.with_action(SelectAction::NoAction);
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+
+                // Create a motion for this element
+                let selected_element_ids    = data.selected_elements.iter().cloned().collect();
+                let edit_time               = data.frame.as_ref().map(|frame| frame.time_index()).unwrap_or(Duration::from_millis(0));
+                let move_elements           = MotionEditAction::MoveElements(selected_element_ids, edit_time, data.initial_position.position, paint.location);
+
+                actions.extend(move_elements.to_animation_edits(&*animation).into_iter().map(|elem| ToolAction::Edit(elem)));
+
+                // Cause the frame to be redrawn
+                actions.push(ToolAction::InvalidateFrame);
+
+                // Redraw the selection highlights
+                actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
+                    Draw::Layer(1),
+                    Draw::ClearLayer
+                ])));
+            },
 
             (SelectAction::DragHandle(handle), PaintAction::Continue)   |
             (SelectAction::DragHandle(handle), PaintAction::Prediction) => {
@@ -908,18 +930,20 @@ impl Select {
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(draw_drag)));
             },
 
-            (SelectAction::Drag, PaintAction::Finish) => {
+            (SelectAction::DragHandle(handle), PaintAction::Finish) => {
                 // Reset the data state to 'no action'
                 let new_data = data.with_action(SelectAction::NoAction);
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
 
-                // Create a motion for this element
+                // Transform these elements
+                // (TODO: also support motions for these kinds of transformations, and support raw transformations for the elements themselves)
                 let selected_element_ids    = data.selected_elements.iter().cloned().collect();
-                let edit_time               = data.frame.as_ref().map(|frame| frame.time_index()).unwrap_or(Duration::from_millis(0));
-                let move_elements           = MotionEditAction::MoveElements(selected_element_ids, edit_time, data.initial_position.position, paint.location);
+                let (origin, transform)     = Self::handle_transformation(data.selection_bounds.unwrap_or(Rect::empty()), handle, data.initial_position.position, paint.location);
+                let transform_elements      = vec![ElementTransform::SetAnchor(origin.x(), origin.y()), transform];
+                let transform_elements      = vec![AnimationEdit::Element(selected_element_ids, ElementEdit::Transform(transform_elements))];
 
-                actions.extend(move_elements.to_animation_edits(&*animation).into_iter().map(|elem| ToolAction::Edit(elem)));
+                actions.extend(transform_elements.into_iter().map(|elem| ToolAction::Edit(elem)));
 
                 // Cause the frame to be redrawn
                 actions.push(ToolAction::InvalidateFrame);
