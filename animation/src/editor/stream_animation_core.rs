@@ -251,9 +251,9 @@ impl StreamAnimationCore {
         async move {
             // Return the cached keyframe if it matches the layer and time
             if let Some(keyframe) = self.cached_keyframe.as_ref() {
-                let (layer_id, start, end) = keyframe.future(|keyframe| future::ready((keyframe.layer_id, keyframe.start, keyframe.end)).boxed()).await.unwrap();
+                let (frame_layer_id, start, end) = keyframe.future(|keyframe| future::ready((keyframe.layer_id, keyframe.start, keyframe.end)).boxed()).await.unwrap();
 
-                if layer_id == layer_id && start <= when && end > when {
+                if frame_layer_id == layer_id && start <= when && (end > when || start == when) {
                     return Some(Arc::clone(keyframe));
                 }
             }
