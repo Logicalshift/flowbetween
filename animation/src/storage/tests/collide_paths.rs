@@ -379,6 +379,8 @@ fn collide_with_paths_leaves_holes() {
 #[test]
 fn move_and_fill() {
     // This produces a weird bug where everything disappears (presumably motions + ordering have a strange effect)
+    // The bug appears to be due to a race condition: best guess is that it's to do with having more than one instance of the same
+    // frame being edited by different parts of the code simultaneously
     let move_and_fill = "
         +B
         LB+tAAAAAA
