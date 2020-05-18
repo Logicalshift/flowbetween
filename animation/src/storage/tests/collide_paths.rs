@@ -417,4 +417,15 @@ fn move_and_fill() {
     assert!(elements.len() != 0);
     assert!(elements.len() >= 2);
     assert!(elements.len() == 3);
+
+    animation.flush_caches();
+
+    // Should still be three elements in the frame: two brush strokes and a fill (issue only seems to occur when the items have a motion applied to them)
+    let layer       = animation.get_layer_with_id(1).unwrap();
+    let frame       = layer.get_frame_at_time(Duration::from_millis(0));
+    let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+    assert!(elements.len() != 0);
+    assert!(elements.len() >= 2);
+    assert!(elements.len() == 3);
 }
