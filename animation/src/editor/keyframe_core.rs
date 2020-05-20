@@ -265,14 +265,15 @@ impl KeyFrameCore {
             _                           => { }
         }
 
+        // Add to the list of elements in the current frame
+        self.elements.insert(ElementId::Assigned(new_id), new_element.clone());
+
         // Create the updates
         let mut updates     = PendingStorageChange::new();
         let new_start_time  = new_element.start_time;
 
         if !new_element.unattached {
             // Add to the current keyframe as the new last element
-            self.elements.insert(ElementId::Assigned(new_id), new_element.clone());
-
             let previous_element = last_element.and_then(|last_element| self.elements.get_mut(&last_element));
             let previous_element = if let Some(previous_element) = previous_element {
                 previous_element.order_before = Some(ElementId::Assigned(new_id));
