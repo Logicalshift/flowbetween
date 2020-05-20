@@ -284,6 +284,11 @@ impl KeyFrameCore {
             // Update the last element
             self.last_element = Some(ElementId::Assigned(new_id));
 
+            // This becomes the initial element if one isn't assigned yet
+            if self.initial_element.is_none() {
+                self.initial_element = Some(ElementId::Assigned(new_id));
+            }
+
             // Generate the storage commands
             if let Some(previous_element) = previous_element {
                 // Need to update the previous element as well as the current one
@@ -621,7 +626,7 @@ impl KeyFrameCore {
 
                 updates.push_element(element_id, element_wrapper.clone());
 
-                // Order first if necessary
+                // Order first if this element is not ordered after any other element
                 if after.is_none() {
                     self.initial_element = Some(ElementId::Assigned(element_id));
                 }
