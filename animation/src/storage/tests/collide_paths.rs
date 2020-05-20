@@ -380,7 +380,16 @@ fn collide_with_paths_leaves_holes() {
 fn move_and_fill() {
     // This produces a weird bug where everything disappears (presumably motions + ordering have a strange effect)
     // The bug appears to be due to a race condition: best guess is that it's to do with having more than one instance of the same
-    // frame being edited by different parts of the code simultaneously
+    // frame being edited by different parts of the code simultaneously.
+    //
+    // The problem here turned out to be that motions are created in an 'attached' state, and thus can randomly end up as the
+    // initial element in the frame if they're loaded in the right order. Changing them to an 'unattached' state fixed the
+    // issue.
+    //
+    // Bugs also revealed: we weren't caching the frame correctly (reloading it for every edit), and we weren't setting the
+    // initial element when adding new elements (an issue hidden by the former bug a lot of the time)
+    //
+    // The fill also doesn't take account of the transformation applied by the motion; this is not checked for here.
     let move_and_fill = "
         +B
         LB+tAAAAAA

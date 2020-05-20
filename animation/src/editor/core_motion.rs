@@ -25,10 +25,12 @@ impl StreamAnimationCore {
             match motion_edit {
                 Create                  => {
                     // Create the motion element
-                    let motion  = Motion::None;
-                    let motion  = MotionElement::new(ElementId::Assigned(motion_id), motion);
-                    let motion  = Vector::Motion(motion);
-                    let motion  = ElementWrapper::with_element(motion, Duration::from_millis(0));
+                    let motion          = Motion::None;
+                    let motion          = MotionElement::new(ElementId::Assigned(motion_id), motion);
+                    let motion          = Vector::Motion(motion);
+                    let mut motion      = ElementWrapper::with_element(motion, Duration::from_millis(0));
+
+                    motion.unattached   = true;
 
                     // Write
                     self.request_one(StorageCommand::WriteElement(motion_id, motion.serialize_to_string())).await;
