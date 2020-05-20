@@ -38,13 +38,27 @@ impl ElementWrapper {
     ///
     /// Creates an element wrapper containing a particular element with its other properties sert to the default values
     ///
-    pub fn with_element(element: Vector, when: Duration) -> ElementWrapper {
+    pub fn attached_with_element(element: Vector, when: Duration) -> ElementWrapper {
+        Self::with_element(element, when, false)
+    }
+
+    ///
+    /// Creates an element wrapper containing a particular element with its other properties sert to the default values
+    ///
+    pub fn unattached_with_element(element: Vector, when: Duration) -> ElementWrapper {
+        Self::with_element(element, when, true)
+    }
+
+    ///
+    /// Creates an element wrapper containing a particular element with its other properties sert to the default values
+    ///
+    fn with_element(element: Vector, when: Duration, unattached: bool) -> ElementWrapper {
         ElementWrapper {
             element:        element,
             start_time:     when,
             attachments:    vec![],
             attached_to:    vec![],
-            unattached:     false,
+            unattached:     unattached,
             parent:         None,
             order_before:   None,
             order_after:    None

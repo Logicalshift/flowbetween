@@ -294,7 +294,7 @@ impl StreamAnimationCore {
                     } else {
                         // Create a new transformation attachment for this element
                         let attachment_id       = self.assign_element_id(ElementId::Unassigned).await;
-                        let attachment_wrapper  = ElementWrapper::with_element(Vector::Transformation((attachment_id, new_transformations.clone())), Duration::from_millis(0));
+                        let attachment_wrapper  = ElementWrapper::unattached_with_element(Vector::Transformation((attachment_id, new_transformations.clone())), Duration::from_millis(0));
 
                         update_elements.push(StorageCommand::WriteElement(attachment_id.id().unwrap(), attachment_wrapper.serialize_to_string()));
                         new_attachments.insert(*element_id, attachment_id);

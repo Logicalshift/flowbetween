@@ -27,9 +27,8 @@ impl StreamAnimationCore {
                     let defn            = BrushDefinitionElement::new(*element_id, defn.clone(), *style);
                     let element         = Vector::BrushDefinition(defn);
                     let element_id      = element_id.id().unwrap_or(0);
-                    let mut wrapper     = ElementWrapper::with_element(element, when);
+                    let wrapper         = ElementWrapper::unattached_with_element(element, when);
 
-                    wrapper.unattached  = true;
                     self.brush_defn     = Some(ElementId::Assigned(element_id));
 
                     (element_id, Some(wrapper))
@@ -40,9 +39,7 @@ impl StreamAnimationCore {
                     let defn            = BrushPropertiesElement::new(*element_id, properties.clone());
                     let element         = Vector::BrushProperties(defn);
                     let element_id      = element_id.id().unwrap_or(0);
-                    let mut wrapper     = ElementWrapper::with_element(element, when);
-
-                    wrapper.unattached  = true;
+                    let wrapper         = ElementWrapper::unattached_with_element(element, when);
                     self.brush_props    = Some(ElementId::Assigned(element_id));
 
                     (element_id, Some(wrapper))
@@ -55,7 +52,7 @@ impl StreamAnimationCore {
                     let brush_element   = BrushElement::new(*element_id, Arc::new(points));
                     let element         = Vector::BrushStroke(brush_element);
                     let element_id      = element_id.id().unwrap_or(0);
-                    let mut wrapper     = ElementWrapper::with_element(element, when);
+                    let mut wrapper     = ElementWrapper::attached_with_element(element, when);
 
                     wrapper.attachments = vec![self.brush_defn, self.brush_props].into_iter().flatten().collect();
 

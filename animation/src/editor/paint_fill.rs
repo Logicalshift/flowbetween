@@ -111,7 +111,7 @@ impl StreamAnimationCore {
                     // Create a new path element from the fill path we just generated
                     let path_element        = PathElement::new(path_id, fill_path, Arc::new(brush_defn), Arc::new(brush_props));
                     let element             = Vector::Path(path_element);
-                    let mut wrapper         = ElementWrapper::with_element(element, when);
+                    let mut wrapper         = ElementWrapper::attached_with_element(element, when);
 
                     wrapper.attachments     = vec![brush_props_id, brush_defn_id];
 

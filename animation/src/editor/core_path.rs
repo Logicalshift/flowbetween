@@ -42,7 +42,7 @@ impl StreamAnimationCore {
                     let storage_updates = current_keyframe.future(move |current_keyframe| {
                         async move {
                             // Add to a wrapper
-                            let wrapper         = ElementWrapper::with_element(element, when);
+                            let wrapper         = ElementWrapper::attached_with_element(element, when);
 
                             // Append to the current keyframe and return the list of storage commands
                             let mut add_element = current_keyframe.add_element_to_end(element_id, wrapper);
@@ -67,8 +67,7 @@ impl StreamAnimationCore {
                     // Save as an element (it gets attached to a frame when used in a path)
                     let element                 = Vector::BrushDefinition(defn);
                     let element_id              = element_id.id().unwrap_or(0);
-                    let mut element_wrapper     = ElementWrapper::with_element(element, when);
-                    element_wrapper.unattached  = true;
+                    let element_wrapper         = ElementWrapper::unattached_with_element(element, when);
 
                     let mut element_string  = String::new();
                     element_wrapper.serialize(&mut element_string);
@@ -84,8 +83,7 @@ impl StreamAnimationCore {
                     // Save as an element
                     let element                 = Vector::BrushProperties(defn);
                     let element_id              = element_id.id().unwrap_or(0);
-                    let mut element_wrapper     = ElementWrapper::with_element(element, when);
-                    element_wrapper.unattached  = true;
+                    let element_wrapper         = ElementWrapper::unattached_with_element(element, when);
 
                     let mut element_string  = String::new();
                     element_wrapper.serialize(&mut element_string);

@@ -28,9 +28,7 @@ impl StreamAnimationCore {
                     let motion          = Motion::None;
                     let motion          = MotionElement::new(ElementId::Assigned(motion_id), motion);
                     let motion          = Vector::Motion(motion);
-                    let mut motion      = ElementWrapper::with_element(motion, Duration::from_millis(0));
-
-                    motion.unattached   = true;
+                    let motion          = ElementWrapper::unattached_with_element(motion, Duration::from_millis(0));
 
                     // Write
                     self.request_one(StorageCommand::WriteElement(motion_id, motion.serialize_to_string())).await;

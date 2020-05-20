@@ -473,7 +473,7 @@ impl StreamAnimationCore {
                     let group       = group_elements.iter().map(|wrapper| wrapper.element.clone()).collect();
                     let group       = GroupElement::new(ElementId::Assigned(group_id), group_type, Arc::new(group));
                     let group       = Vector::Group(group);
-                    let mut group   = ElementWrapper::with_element(group, start_time);
+                    let mut group   = ElementWrapper::attached_with_element(group, start_time);
 
                     // Normal groups take their properties from their internal elements. Other groups use
                     // the properties of their first element.
