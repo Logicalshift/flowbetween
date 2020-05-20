@@ -296,10 +296,15 @@ impl StreamAnimationCore {
                         let attachment_id       = self.assign_element_id(ElementId::Unassigned).await;
                         let attachment_wrapper  = ElementWrapper::unattached_with_element(Vector::Transformation((attachment_id, new_transformations.clone())), Duration::from_millis(0));
 
-                        update_elements.push(StorageCommand::WriteElement(attachment_id.id().unwrap(), attachment_wrapper.serialize_to_string()));
-                        new_attachments.insert(*element_id, attachment_id);
+                        frame.sync(|frame| {
+                            // Create the element and attach it
+                            update_elements.push(StorageCommand::WriteElement(attachment_id.id().unwrap(), attachment_wrapper.serialize_to_string()));
+                            update_elements.push(StorageCommand::AttachElementToLayer(frame.layer_id, attachment_id.id().unwrap(), frame.start));
+                            new_attachments.insert(*element_id, attachment_id);
 
-                        frame.desync(move |frame| { frame.elements.insert(attachment_id, attachment_wrapper); });
+                            // Add to the frame
+                            frame.elements.insert(attachment_id, attachment_wrapper);
+                        });
                     }
                 }
             }
