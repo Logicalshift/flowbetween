@@ -86,9 +86,9 @@ impl VectorElement for PathElement {
     ///
     /// Retrieves the paths for this element, if there are any
     ///
-    fn to_path(&self, _properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> {
+    fn to_path(&self, properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> {
         // Final result depends on the options that are set
-        match options {
+        let path = match options {
             PathConversion::Fastest                 => Some(vec![self.path.clone()]),
             PathConversion::RemoveInteriorPoints    => {
                 let subpaths    = self.path.to_subpaths();
@@ -96,7 +96,26 @@ impl VectorElement for PathElement {
                 let path        = Path::from_paths(&path);
                 Some(vec![path])
             }
-        }
+        };
+
+        // Apply any transformations in the properties
+        path.map(|path| {
+            let path = if properties.transformations.len() > 0 {
+                let mut path = path;
+
+                for transform in properties.transformations.iter() {
+                    for path_component in path.iter_mut() {
+                        *path_component = transform.transform_path(path_component);
+                    }
+                }
+
+                path
+            } else {
+                path
+            };
+
+            path
+        })
     }
 
     ///
