@@ -236,7 +236,7 @@ let flo_canvas = (function() {
             // Length of the first column of the transformation matrix is the scale factor (for the width)
             let scale = Math.sqrt(transform[0]*transform[0] + transform[3]*transform[3]);
             if (scale === 0) scale = 1;
-            scale /= window.devicePixelRatio || 1;
+            //scale /= window.devicePixelRatio || 1;
 
             // Scale the width down according to this factor (we'll always use the horizontal scale factor)
             context.lineWidth = width / scale;
