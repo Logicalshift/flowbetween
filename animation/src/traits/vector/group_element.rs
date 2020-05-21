@@ -191,10 +191,29 @@ impl VectorElement for GroupElement {
     ///
     fn to_path(&self, properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> {
         // With the added path type we can assume that the interior points are already removed so there's no need to apply the options
-        match self.group_type {
+        let path = match self.group_type {
             GroupType::Normal   => Some(self.grouped_elements.iter().flat_map(|elem| elem.to_path(properties, options)).flatten().collect()),
             GroupType::Added    => Some(self.added_path(properties))
-        }
+        };
+
+        // Apply any transformations in the properties
+        path.map(|path| {
+            let path = if properties.transformations.len() > 0 {
+                let mut path = path;
+
+                for transform in properties.transformations.iter() {
+                    for path_component in path.iter_mut() {
+                        *path_component = transform.transform_path(path_component);
+                    }
+                }
+
+                path
+            } else {
+                path
+            };
+
+            path
+        })
     }
 
     ///
