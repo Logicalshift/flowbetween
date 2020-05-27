@@ -2113,6 +2113,11 @@ function flowbetween(root_node) {
     /// Sends a request to the session URI and processes the result
     ///
     let send_request = (function() {
+        // Flag that sets if we log the events to the developer console
+        let show_requests       = false;
+        add_command('show_server_requests', 'Log the requests sent to the server', () => show_requests = true);
+        add_command('hide_server_requests', 'Stop requests sent to the server', () => show_requests = false);
+
         // Events waiting to be sent
         let pending_events      = [];
 
@@ -2130,6 +2135,10 @@ function flowbetween(root_node) {
             let events      = request.events;
 
             if (session_id && websocket_for_session[session_id]) {
+                if (show_requests && sending_events && pending_events.length == 0) {
+                    note('Queuing events while we wait for the server');
+                }
+
                 // Add the events to the pending list
                 pending_events = pending_events.concat(events);
 
@@ -2162,6 +2171,10 @@ function flowbetween(root_node) {
                         sending_events = null;
                         let events     = pending_events;
                         pending_events = [];
+
+                        if (show_requests) {
+                            console.log('Sending request', events);
+                        }
 
                         // Send to the websocket
                         let websocket = websocket_for_session[session_id];
