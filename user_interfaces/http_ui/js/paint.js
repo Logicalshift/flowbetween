@@ -479,10 +479,15 @@ let flo_paint = (function() {
         add_action_event(node, 'pointerdown', pointer_down, false);
 
         // If touch events are also supported, disable them for this control so gestures are disabled
-        if (supports_touch_events) {
-            // Touch & pointer events fight each other :-(
-            add_action_event(node, 'touchstart', ev => ev.preventDefault(), false);
-        }
+
+        // Touch & pointer events fight each other :-(
+        // Chrome does not have 'ontouchstart', but secretly supports touch events anyway, so we try to register this regardless
+        add_action_event(node, 'touchstart', ev => {
+            if (pointer_device !== '') {
+                // Pointer events that we're tracking should take precedence over touch events
+                ev.preventDefault();
+            }
+        }, false);
     };
 
     ///
