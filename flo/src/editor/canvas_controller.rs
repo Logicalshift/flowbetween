@@ -148,7 +148,6 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
                         .with(Hint::FastDrawing)
                         .with((
                             (ActionTrigger::Paint(PaintDevice::Pen),                        PAINT_ACTION),
-                            (ActionTrigger::Paint(PaintDevice::Touch),                      PAINT_ACTION),
                             (ActionTrigger::Paint(PaintDevice::Other),                      PAINT_ACTION),
                             (ActionTrigger::Paint(PaintDevice::Eraser),                     PAINT_ACTION),
                             (ActionTrigger::Paint(PaintDevice::Mouse(MouseButton::Left)),   PAINT_ACTION)
