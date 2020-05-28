@@ -385,6 +385,7 @@ let flo_paint = (function() {
                     
                     // Pointer down on the right device
                     pointer_event.preventDefault();
+                    node.setPointerCapture(pointer_event.pointerId);
 
                     // Create the 'start' event
                     let start_parameter = {
@@ -445,6 +446,7 @@ let flo_paint = (function() {
 
             // Release the device
             pointer_device = '';
+            node.releasePointerCapture(pointer_event.pointerId);
 
             document.removeEventListener('pointermove', pointer_move, true);
             document.removeEventListener('pointerup', pointer_up, true);
@@ -466,6 +468,7 @@ let flo_paint = (function() {
 
             // Release the device
             pointer_device = '';
+            node.releasePointerCapture(pointer_event.pointerId);
 
             document.removeEventListener('pointermove', pointer_move, true);
             document.removeEventListener('pointerup', pointer_up, true);
