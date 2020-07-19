@@ -18,7 +18,7 @@ flo_logging = { path = "../logging", version = "0.2" }
 
 desync      = { git = "https://github.com/Logicalshift/desync", branch = "v0.7.0", version = "0.7" }
 rusqlite    = { version = "0.21", features = ["bundled"] }
-dirs        = "2.0"
+dirs        = "3.0"
 uuid        = { version = "0.8", features = [ "v4" ] }
 lazy_static = "1.2"
 futures     = "0.3"
