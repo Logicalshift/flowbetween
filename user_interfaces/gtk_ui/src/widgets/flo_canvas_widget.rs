@@ -10,7 +10,6 @@ use flo_canvas::*;
 use gtk;
 use gtk::prelude::*;
 use cairo;
-use cairo::prelude::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -179,7 +178,7 @@ impl FloDrawingWidget {
         if !core.draw_pending {
             core.draw_pending = true;
 
-            drawing_area.add_tick_callback(|widget: &gtk::Widget, _clock| { widget.queue_draw(); false });
+            drawing_area.add_tick_callback(|widget: &gtk::Widget, _clock| { widget.queue_draw(); glib::Continue(false) });
         }
     }
 

@@ -30,7 +30,7 @@ pub fn image_from_image(image: Resource<Image>) -> gtk::Image {
 
             // Scale the image to fit
             let scaled = pixbuf.scale_simple(new_width, new_height, gdk_pixbuf::InterpType::Bilinear);
-            scaled.map(|scaled| image.set_from_pixbuf(&scaled));
+            scaled.map(|scaled| image.set_from_pixbuf(Some(&scaled)));
         }
     });
 
@@ -68,10 +68,10 @@ fn bytes_from_data(image_data: &dyn ImageData) -> glib::Bytes {
 ///
 fn pixbuf_from_png(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
     let bytes           = bytes_from_data(image_data);
-    let input_stream    = gio::MemoryInputStream::new_from_bytes(&bytes);
+    let input_stream    = gio::MemoryInputStream::from_bytes(&bytes);
     let not_cancellable: Option<gio::Cancellable> = None;
 
-    gdk_pixbuf::Pixbuf::new_from_stream(&input_stream, not_cancellable.as_ref()).unwrap()
+    gdk_pixbuf::Pixbuf::from_stream(&input_stream, not_cancellable.as_ref()).unwrap()
 }
 
 ///
@@ -79,8 +79,8 @@ fn pixbuf_from_png(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
 ///
 fn pixbuf_from_svg(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
     let bytes           = bytes_from_data(image_data);
-    let input_stream    = gio::MemoryInputStream::new_from_bytes(&bytes);
+    let input_stream    = gio::MemoryInputStream::from_bytes(&bytes);
     let not_cancellable: Option<gio::Cancellable> = None;
 
-    gdk_pixbuf::Pixbuf::new_from_stream(&input_stream, not_cancellable.as_ref()).unwrap()
+    gdk_pixbuf::Pixbuf::from_stream(&input_stream, not_cancellable.as_ref()).unwrap()
 }

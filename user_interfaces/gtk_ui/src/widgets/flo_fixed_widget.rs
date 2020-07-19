@@ -107,7 +107,7 @@ impl FloFixedWidget {
         // Get the label for this widget
         let container   = &mut self.container;
         let text_label  = self.text.get_or_insert_with(|| {
-            let label = gtk::Label::new(new_text);
+            let label = gtk::Label::new(Some(new_text));
             container.add(&label);
             label.show_all();
             label

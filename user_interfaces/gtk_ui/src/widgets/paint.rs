@@ -13,7 +13,6 @@ use gdk;
 use gdk::prelude::*;
 use gdk_sys;
 use cairo;
-use cairo::prelude::*;
 
 use std::rc::*;
 use std::cell::*;

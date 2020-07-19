@@ -98,7 +98,7 @@ impl FloBinWidget {
             *label_text = new_label;
         } else if self.image.is_none() && self.fixed.is_none() {
             // If there's no label widget, create one
-            let label_widget = gtk::Label::new(new_label.as_str());
+            let label_widget = gtk::Label::new(Some(new_label.as_str()));
             label_widget.show();
 
             self.bin.add(&label_widget);

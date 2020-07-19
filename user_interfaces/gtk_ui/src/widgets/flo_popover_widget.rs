@@ -61,7 +61,7 @@ impl FloPopoverWidget {
     pub fn new<Src: Clone+Cast+IsA<gtk::Widget>>(id: WidgetId, widget: Src, widget_data: Rc<WidgetData>) -> FloPopoverWidget {
         // Create the various components
         let widget          = widget.upcast::<gtk::Widget>();
-        let popover         = gtk::Popover::new(&widget);
+        let popover         = gtk::Popover::new(Some(&widget));
         let content         = gtk::Fixed::new();
 
         // Create the layout data
@@ -81,7 +81,7 @@ impl FloPopoverWidget {
         Self::connect_reopen(&widget, popover.clone(), Rc::clone(&data));
 
         // TODO: somehow get the styles to cascade from the parent widget
-        popover.override_background_color(gtk::StateFlags::NORMAL, &gdk::RGBA { red: 0.20, green: 0.22, blue: 0.25, alpha: 0.94 });
+        popover.override_background_color(gtk::StateFlags::NORMAL, Some(&gdk::RGBA { red: 0.20, green: 0.22, blue: 0.25, alpha: 0.94 }));
 
         // Default size
         content.set_size_request(100, 100);

@@ -4,7 +4,6 @@ use glib::translate::*;
 use gdk;
 use gdk_sys;
 use cairo;
-use cairo::prelude::*;
 
 use std::slice;
 
@@ -86,7 +85,7 @@ impl GtkPainting {
     ///
     unsafe fn update_from_axes(&mut self, axes: *const f64, device: *mut gdk_sys::GdkDevice) {
         // Turn device into a rust object
-        let device: gdk::Device = gdk::Device::from_glib_borrow(device);
+        let device: Borrowed<gdk::Device> = gdk::Device::from_glib_borrow(device);
 
         // Fetch the number of axes in the device
         let num_axes = if axes.is_null() { return; } else { device.get_n_axes() as usize };

@@ -51,7 +51,7 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
                     .add_provider(flo_gtk.style_provider(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
 
                 // New windows with no content get a generic message initially
-                new_window.add(&gtk::Label::new("Flo: This space left blank"));
+                new_window.add(&gtk::Label::new(Some("Flo: This space left blank")));
 
                 // Wire up events
                 wire_up_window(&new_window, window_id, flo_gtk);

@@ -22,15 +22,17 @@ pub fn paint_device_for_source(source: gdk::InputSource) -> PaintDevice {
         Pen             => PaintDevice::Pen,
         Eraser          => PaintDevice::Eraser,
         Touchscreen     => PaintDevice::Touch,
-        TabletPad       => PaintDevice::Pen
+        TabletPad       => PaintDevice::Pen,
+
+        _               => PaintDevice::Mouse(MouseButton::Left)
     }
 }
 
 ///
 /// Returns the GDK device that generated a particular event
 ///
-pub fn device_for_event(event: &gdk::Event) -> gdk::Device {
-    let device: gdk::Device = unsafe {
+pub fn device_for_event(event: &gdk::Event) -> Borrowed<gdk::Device> {
+    let device = unsafe {
         let sys_device: *const gdk_sys::GdkEvent = mem::transmute(event.as_ref());
         let sys_device = gdk_sys::gdk_event_get_source_device(sys_device);
         gdk::Device::from_glib_borrow(sys_device)
