@@ -79,10 +79,9 @@ impl GtkUiWidget for FloTextBoxWidget {
                 let event_name  = event_name.clone();
 
                 self.widget.connect_property_text_notify(move |widget| {
-                    if let Some(new_text) = widget.get_text() {
-                        let new_text = String::from(new_text);
-                        publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text)));
-                    }
+                    let new_text = widget.get_text();
+                    let new_text = String::from(new_text);
+                    publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text)));
                 });
             }
 
@@ -96,10 +95,9 @@ impl GtkUiWidget for FloTextBoxWidget {
                 let event_name  = name.clone();
 
                 self.widget.connect_focus_out_event(move |widget, _focus| {
-                    if let Some(new_text) = widget.get_text() {
-                        let new_text = String::from(new_text);
-                        publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text)));
-                    }
+                    let new_text = widget.get_text();
+                    let new_text = String::from(new_text);
+                    publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text)));
 
                     Inhibit(false)
                 });
@@ -110,10 +108,9 @@ impl GtkUiWidget for FloTextBoxWidget {
                 let event_name  = name.clone();
 
                 self.widget.connect_activate(move |widget| {
-                    if let Some(new_text) = widget.get_text() {
-                        let new_text = String::from(new_text);
-                        publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text)));
-                    }
+                    let new_text = widget.get_text();
+                    let new_text = String::from(new_text);
+                    publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text)));
                 });
             }
 

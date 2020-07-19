@@ -92,7 +92,7 @@ impl GtkMessageTarget {
         if !messages_pending {
             // The idle_add_full function would be more elegant here but it's not currently available in glib
             // (idle_add uses too low a priority for us)
-            let source = glib::idle_source_new("flo", glib::PRIORITY_HIGH, process_pending_messages);
+            let source = glib::idle_source_new(Some("flo"), glib::PRIORITY_HIGH, process_pending_messages);
             source.attach(self.target_context.as_ref());
         }
     }
@@ -137,7 +137,7 @@ impl GtkMessageTarget {
 ///
 /// Callback function that tells all of the FloGtk objects on the current thread to process their pending messages
 ///
-fn process_pending_messages() -> gtk::Continue {
+fn process_pending_messages() -> glib::Continue {
     GTK_INSTANCES.with(|gtk_instances| {
         // Tell each instance on this thread to process its pending messages immediately
         for instance in gtk_instances.borrow_mut().iter_mut() {
@@ -145,7 +145,7 @@ fn process_pending_messages() -> gtk::Continue {
         }
     });
 
-    gtk::Continue(false)
+    glib::Continue(false)
 }
 
 impl FloGtk {
