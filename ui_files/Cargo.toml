@@ -17,7 +17,7 @@ flo_binding = { git = "https://github.com/Logicalshift/flo_binding", version = "
 flo_logging = { path = "../logging", version = "0.2" }
 
 desync      = { git = "https://github.com/Logicalshift/desync", branch = "v0.7.0", version = "0.7" }
-rusqlite    = { version = "0.21", features = ["bundled"] }
+rusqlite    = { version = "0.23", features = ["bundled"] }
 dirs        = "3.0"
 uuid        = { version = "0.8", features = [ "v4" ] }
 lazy_static = "1.2"
