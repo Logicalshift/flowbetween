@@ -46,8 +46,8 @@ impl StaticFile {
     fn etag_from_content(content: &[u8]) -> String {
         // Hash the content using SHA-256
         let mut hasher = Sha256::default();
-        hasher.input(content);
-        let output = hasher.result();
+        hasher.update(content);
+        let output = hasher.finalize();
 
         // Use first few bytes to build a string
         output.iter()
