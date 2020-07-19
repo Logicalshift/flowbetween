@@ -18,6 +18,42 @@ use percent_encoding::*;
 use std::mem;
 use std::sync::*;
 
+lazy_static! {
+    ///
+    /// The percent-encode set to use for UI queries (the full application/x-www-form-urlencoded percent-encode set)
+    ///
+    pub (super) static ref QUERY_PERCENT_ENCODE: AsciiSet = CONTROLS
+        .add(b' ')
+        .add(b'"')
+        .add(b'#')
+        .add(b'<')
+        .add(b'>')
+        .add(b'\'')
+        .add(b'?')
+        .add(b'`')
+        .add(b'{')
+        .add(b'}')
+        .add(b'/')
+        .add(b':')
+        .add(b';')
+        .add(b'=')
+        .add(b'@')
+        .add(b'[')
+        .add(b'\\')
+        .add(b']')
+        .add(b'^')
+        .add(b'|')
+        .add(b'!')
+        .add(b'$')
+        .add(b'%')
+        .add(b'&')
+        .add(b'(')
+        .add(b')')
+        .add(b'+')
+        .add(b',')
+        .add(b'~');
+}
+
 ///
 /// Converts a core user interface into a HTTP user interface
 ///
@@ -186,11 +222,11 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
         // Create the HTTP version of the controller path
         let controller_path = join(canvas_diff.controller.iter()
-            .map(|component| utf8_percent_encode(&*component, NON_ALPHANUMERIC)),
+            .map(|component| utf8_percent_encode(&*component, &QUERY_PERCENT_ENCODE)),
             "/");
 
         // Canvas name also needs to be encoded
-        let canvas_name     = utf8_percent_encode(&canvas_diff.canvas_name, NON_ALPHANUMERIC).to_string();
+        let canvas_name     = utf8_percent_encode(&canvas_diff.canvas_name, &QUERY_PERCENT_ENCODE).to_string();
 
         // Can now generate an update
         CanvasUpdate::new(controller_path, canvas_name, encoded_updates)

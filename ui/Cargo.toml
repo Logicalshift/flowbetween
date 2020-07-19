@@ -19,6 +19,6 @@ serde_json      = "1.0"
 modifier        = "0.1"
 futures         = { version = "0.3", features = ["thread-pool"] }
 png             = "0.16"
-lazy_static     = "1.0"
+lazy_static     = "1.2"
 bytes           = "0.5"
 itertools       = "0.9"

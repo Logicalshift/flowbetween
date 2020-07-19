@@ -4,6 +4,7 @@
 
 use ui::*;
 use super::minidom::*;
+use super::http_user_interface::{QUERY_PERCENT_ENCODE};
 
 use percent_encoding::*;
 
@@ -29,7 +30,7 @@ pub trait ToHtml {
 /// Appends a sub-controller to a controller path, returning the new controller path
 ///
 pub fn append_component_to_controller_path<'a>(controller_path: &str, subcontroller_name: &str) -> String {
-    format!("{}/{}", controller_path, utf8_percent_encode(subcontroller_name, NON_ALPHANUMERIC))
+    format!("{}/{}", controller_path, utf8_percent_encode(subcontroller_name, &QUERY_PERCENT_ENCODE))
 }
 
 ///
@@ -131,7 +132,7 @@ impl ToHtml for Control {
         let mut subcomponent_path   = controller_path;
 
         if let Some(subcontroller_name) = self.controller() {
-            new_path                = format!("{}/{}", controller_path, utf8_percent_encode(subcontroller_name, NON_ALPHANUMERIC));
+            new_path                = format!("{}/{}", controller_path, utf8_percent_encode(subcontroller_name, &QUERY_PERCENT_ENCODE));
             subcomponent_path       = &new_path;
         }
 
@@ -182,7 +183,7 @@ impl ToHtml for ControlAttribute {
                 };
 
                 // Build the URL from the base path
-                let canvas_url = format!("{}/c{}/{}", base_path, controller_path, utf8_percent_encode(&canvas_name, NON_ALPHANUMERIC));
+                let canvas_url = format!("{}/c{}/{}", base_path, controller_path, utf8_percent_encode(&canvas_name, &QUERY_PERCENT_ENCODE));
 
                 // We attach canvas details to the node when it has a canvas attached to it
                 DomCollection::new(vec![
@@ -272,7 +273,7 @@ impl ToHtml for Appearance {
                 };
 
                 // Build the URL from the base path
-                let image_url = format!("{}/i{}/{}", base_path, controller_path, utf8_percent_encode(&image_name, NON_ALPHANUMERIC));
+                let image_url = format!("{}/i{}/{}", base_path, controller_path, utf8_percent_encode(&image_name, &QUERY_PERCENT_ENCODE));
 
                 // Style attribute to render this image as the background
                 DomAttribute::new("style", &format!("background: no-repeat center/contain url('{}');", image_url))
