@@ -3,6 +3,7 @@ use crate::buffer::*;
 ///
 /// Represents an action for a `gfx` target
 ///
+#[derive(Clone, PartialEq, Debug)]
 pub enum GfxAction {
     ///
     /// Creates a vertex buffer with the specified 2D vertices in it (replacing any existing buffer)
