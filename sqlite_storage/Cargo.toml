@@ -13,7 +13,7 @@ include     = [ "Cargo.toml", "src/**/*", "sql/**/*" ]
 flo_animation       = { path = "../animation", version = "0.2" }
 flo_logging         = { path = "../logging", version = "0.2" }
 
-rusqlite            = { version = "0.21", features = ["bundled"] }
+rusqlite            = { version = "0.23", features = ["bundled"] }
 futures             = "0.3"
 desync              = { git = "https://github.com/Logicalshift/desync", branch = "v0.7.0", version = "0.7" }
 
