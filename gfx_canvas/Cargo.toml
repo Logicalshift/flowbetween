@@ -1,0 +1,11 @@
+name        = "flo_gfx"
+version     = "0.1.0"
+authors     = ["Andrew Hunter"]
+license     = "Apache-2.0"
+edition     = "2018"
+repository  = "https://github.com/Logicalshift/flowbetween"
+description = "Converts flo_canvas streams to flo_gfx streams"
+
+include     = [ "Cargo.toml", "src/**/*", "svg/**/*" ]
+
+[dependencies]
