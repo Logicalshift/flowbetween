@@ -29,7 +29,7 @@ pub trait ToHtml {
 /// Appends a sub-controller to a controller path, returning the new controller path
 ///
 pub fn append_component_to_controller_path<'a>(controller_path: &str, subcontroller_name: &str) -> String {
-    format!("{}/{}", controller_path, utf8_percent_encode(subcontroller_name, DEFAULT_ENCODE_SET))
+    format!("{}/{}", controller_path, utf8_percent_encode(subcontroller_name, NON_ALPHANUMERIC))
 }
 
 ///
@@ -131,7 +131,7 @@ impl ToHtml for Control {
         let mut subcomponent_path   = controller_path;
 
         if let Some(subcontroller_name) = self.controller() {
-            new_path                = format!("{}/{}", controller_path, utf8_percent_encode(subcontroller_name, DEFAULT_ENCODE_SET));
+            new_path                = format!("{}/{}", controller_path, utf8_percent_encode(subcontroller_name, NON_ALPHANUMERIC));
             subcomponent_path       = &new_path;
         }
 
@@ -182,7 +182,7 @@ impl ToHtml for ControlAttribute {
                 };
 
                 // Build the URL from the base path
-                let canvas_url = format!("{}/c{}/{}", base_path, controller_path, utf8_percent_encode(&canvas_name, DEFAULT_ENCODE_SET));
+                let canvas_url = format!("{}/c{}/{}", base_path, controller_path, utf8_percent_encode(&canvas_name, NON_ALPHANUMERIC));
 
                 // We attach canvas details to the node when it has a canvas attached to it
                 DomCollection::new(vec![
@@ -272,7 +272,7 @@ impl ToHtml for Appearance {
                 };
 
                 // Build the URL from the base path
-                let image_url = format!("{}/i{}/{}", base_path, controller_path, utf8_percent_encode(&image_name, DEFAULT_ENCODE_SET));
+                let image_url = format!("{}/i{}/{}", base_path, controller_path, utf8_percent_encode(&image_name, NON_ALPHANUMERIC));
 
                 // Style attribute to render this image as the background
                 DomAttribute::new("style", &format!("background: no-repeat center/contain url('{}');", image_url))

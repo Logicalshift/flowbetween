@@ -175,7 +175,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     }
 
     ///
-    /// Converts a canvas diff into a canvas update
+/// Converts a canvas diff into a canvas update
     ///
     /// Mainly this means encoding the content of the update
     ///
@@ -186,11 +186,11 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
         // Create the HTTP version of the controller path
         let controller_path = join(canvas_diff.controller.iter()
-            .map(|component| utf8_percent_encode(&*component, DEFAULT_ENCODE_SET)),
+            .map(|component| utf8_percent_encode(&*component, NON_ALPHANUMERIC)),
             "/");
 
         // Canvas name also needs to be encoded
-        let canvas_name     = utf8_percent_encode(&canvas_diff.canvas_name, DEFAULT_ENCODE_SET).to_string();
+        let canvas_name     = utf8_percent_encode(&canvas_diff.canvas_name, NON_ALPHANUMERIC).to_string();
 
         // Can now generate an update
         CanvasUpdate::new(controller_path, canvas_name, encoded_updates)
