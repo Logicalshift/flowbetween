@@ -1,3 +1,4 @@
+[package]
 name        = "flo_gfx"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
@@ -9,3 +10,4 @@ description = "Streaming API for the Rust GFX library"
 include     = [ "Cargo.toml", "src/**/*", "svg/**/*" ]
 
 [dependencies]
+gfx         = "0.18"

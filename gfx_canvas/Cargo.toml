@@ -1,3 +1,4 @@
+[package]
 name        = "flo_gfx"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
