@@ -13,7 +13,7 @@ impl FloGfxCanvasWidget {
     ///
     /// Creates a new GFX canvas widget that renders to the specified GL area
     ///
-    pub fn new<W: Clone+Cast+IsA<gtk::GLArea>>(widget_id: WidgetId, widget: W) -> FloGfxCanvasWidget {
+    pub fn new_opengl<W: Clone+Cast+IsA<gtk::GLArea>>(widget_id: WidgetId, widget: W) -> FloGfxCanvasWidget {
         FloGfxCanvasWidget {
 
         }
