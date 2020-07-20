@@ -10,6 +10,7 @@ use super::flo_canvas_widget::*;
 use super::flo_nanovg_widget::*;
 use super::flo_textbox_widget::*;
 use super::flo_checkbox_widget::*;
+use super::flo_gfx_canvas_widget::*;
 use super::flo_canvas_layout_widget::*;
 use super::widget_data::*;
 use super::super::gtk_action::*;
@@ -50,7 +51,7 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
             Box::new(FloCanvasLayoutWidget::new(id, gtk::Layout::new(no_adjustment.as_ref(), no_adjustment.as_ref()), widget_data))
         },
         CanvasNanovg        => Box::new(FloNanoVgWidget::new(id, gtk::GLArea::new())),
-        CanvasGfx           => Box::new(FloFixedWidget::new(id, gtk::Fixed::new(), widget_data)),
+        CanvasGfx           => Box::new(FloGfxCanvasWidget::new_opengl(id, gtk::GLArea::new())),
 
         Scale               => {
             let no_adjustment: Option<gtk::Adjustment> = None;
