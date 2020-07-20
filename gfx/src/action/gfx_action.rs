@@ -1,5 +1,7 @@
 use super::identities::*;
 use super::render_target_type::*;
+use super::color::*;
+
 use crate::buffer::*;
 
 ///
@@ -35,5 +37,10 @@ pub enum GfxAction {
     ///
     /// Loads byte data into the specifed texture, at the specified offset
     ///
-    LoadTextureData(TextureId, usize, Vec<u8>)
+    LoadTextureData(TextureId, usize, Vec<u8>),
+
+    ///
+    /// Clears the current render target to the specified colour
+    ///
+    Clear(Rgba8)
 }
