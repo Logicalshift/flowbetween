@@ -13,6 +13,7 @@ pub mod flo_canvas_widget;
 pub mod flo_nanovg_widget;
 pub mod flo_textbox_widget;
 pub mod flo_checkbox_widget;
+pub mod flo_gfx_canvas_widget;
 pub mod flo_canvas_layout_widget;
 pub mod proxy_widget;
 pub mod flo_layout;
