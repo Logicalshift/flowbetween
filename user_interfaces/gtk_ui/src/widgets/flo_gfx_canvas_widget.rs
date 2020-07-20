@@ -3,7 +3,10 @@ use crate::gtk_thread::*;
 use crate::widgets::*;
 use crate::widgets::basic_widget::*;
 
+use gl;
 use gtk::prelude::*;
+use gfx_device_gl;
+use epoxy;
 
 use std::cell::*;
 use std::rc::*;
@@ -52,7 +55,11 @@ impl FloGfxCanvasWidget {
     ///
     fn on_realize(glarea: &mut gtk::GLArea) {
         glarea.connect_realize(move |gl_widget| { 
+            // Make the context the current context
             gl_widget.make_current();
+
+            // Create a new GFX GL device (using epoxy to look up the functions)
+            let (device, factory) = gfx_device_gl::create(|s| epoxy::get_proc_addr(s));
         });
     }
 
