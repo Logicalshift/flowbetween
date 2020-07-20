@@ -30,6 +30,21 @@ pub enum GfxAction {
     FreeRenderTarget(RenderTargetId),
 
     ///
+    /// Send future rendering instructions to the specified render target
+    ///
+    SelectRenderTarget(RenderTargetId),
+
+    ///
+    /// Send future rendering instructions to the main frame buffer
+    ///
+    RenderToFrameBuffer,
+
+    ///
+    /// Display the current frame buffer on-screen
+    ///
+    ShowFrameBuffer,
+
+    ///
     /// Creates an 8-bit RGBA texture of the specified size
     ///
     CreateTextureRgba(TextureId, usize, usize),
