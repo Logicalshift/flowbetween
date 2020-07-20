@@ -6,6 +6,7 @@ use crate::widgets::basic_widget::*;
 use flo_gfx::*;
 
 use gl;
+use gfx_core::format::{Formatted};
 use gtk::prelude::*;
 use gfx_device_gl;
 use epoxy;
@@ -73,13 +74,25 @@ impl FloGfxCanvasWidget {
             // Borrow the core
             let mut core = core.borrow_mut();
 
+            // Get the window dimensions
+            let allocation      = gl_widget.get_allocation();
+            let scale           = gl_widget.get_scale_factor();
+            let width           = allocation.width * scale;
+            let height          = allocation.height * scale;
+            let dimensions      = (width as u16, height as u16, 0u16, gfx_core::texture::AaMode::Single);
+
             // Make the context the current context
             gl_widget.make_current();
 
             // Create a new GFX GL device (using epoxy to look up the functions)
-            let (device, mut factory)   = gfx_device_gl::create(|s| epoxy::get_proc_addr(s));
-            let command_buffer          = factory.create_command_buffer();
-            let encoder                 = gfx::Encoder::from(command_buffer);
+            let (device, mut factory)       = gfx_device_gl::create(|s| epoxy::get_proc_addr(s));
+            let command_buffer              = factory.create_command_buffer();
+            let encoder                     = gfx::Encoder::from(command_buffer);
+
+            // Create a render target view that renders to the main frame buffer
+            let color_format                = gfx::format::Rgba8::get_format();
+            let stencil_format              = gfx::format::DepthStencil::get_format();
+            let (raw_render, raw_stencil)   = gfx_device_gl::create_main_targets_raw(dimensions, color_format.0, stencil_format.0);
 
             // Set up the renderer
             core.renderer = Some(flo_gfx::Renderer::new(device, factory, encoder));
