@@ -1,5 +1,5 @@
 [package]
-name        = "flo_gfx"
+name        = "flo_gfx_canvas"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
@@ -10,3 +10,5 @@ description = "Converts flo_canvas streams to flo_gfx streams"
 include     = [ "Cargo.toml", "src/**/*", "svg/**/*" ]
 
 [dependencies]
+flo_gfx     = { path = "../gfx" }
+lyon        = "0.15"
