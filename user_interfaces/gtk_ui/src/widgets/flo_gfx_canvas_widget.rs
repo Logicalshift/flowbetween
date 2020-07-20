@@ -77,10 +77,12 @@ impl FloGfxCanvasWidget {
             gl_widget.make_current();
 
             // Create a new GFX GL device (using epoxy to look up the functions)
-            let (device, factory) = gfx_device_gl::create(|s| epoxy::get_proc_addr(s));
+            let (device, mut factory)   = gfx_device_gl::create(|s| epoxy::get_proc_addr(s));
+            let command_buffer          = factory.create_command_buffer();
+            let encoder                 = gfx::Encoder::from(command_buffer);
 
             // Set up the renderer
-            core.renderer = Some(flo_gfx::Renderer::new(device, factory));
+            core.renderer = Some(flo_gfx::Renderer::new(device, factory, encoder));
         });
     }
 
