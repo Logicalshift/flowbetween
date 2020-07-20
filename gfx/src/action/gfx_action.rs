@@ -1,3 +1,5 @@
+use super::identities::*;
+use super::render_target_type::*;
 use crate::buffer::*;
 
 ///
@@ -8,10 +10,20 @@ pub enum GfxAction {
     ///
     /// Creates a vertex buffer with the specified 2D vertices in it (replacing any existing buffer)
     ///
-    CreateVertex2DBuffer(usize, Vec<Vertex2D>),
+    CreateVertex2DBuffer(VertexBufferId, Vec<Vertex2D>),
 
     ///
     /// Frees an existing vertex buffer
     ///
-    FreeVertexBuffer(usize)
+    FreeVertexBuffer(VertexBufferId),
+
+    ///
+    /// Creates a new render target of the specified size, as the specified texture
+    ///
+    CreateRenderTarget(RenderTargetId, TextureId, usize, usize, RenderTargetType),
+
+    ///
+    /// Frees up an existing render target
+    ///
+    FreeRenderTarget(RenderTargetId)
 }
