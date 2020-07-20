@@ -25,5 +25,15 @@ pub enum GfxAction {
     ///
     /// Frees up an existing render target
     ///
-    FreeRenderTarget(RenderTargetId)
+    FreeRenderTarget(RenderTargetId),
+
+    ///
+    /// Creates an 8-bit RGBA texture of the specified size
+    ///
+    CreateTextureRgba(TextureId, usize, usize),
+
+    ///
+    /// Loads byte data into the specifed texture, at the specified offset
+    ///
+    LoadTextureData(TextureId, usize, Vec<u8>)
 }
