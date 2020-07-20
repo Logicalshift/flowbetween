@@ -45,8 +45,7 @@ fn canvas_type_for_control(control: &Control) -> GtkWidgetType {
     let fast_drawing = control.attributes().any(|attr| attr == &ControlAttribute::HintAttr(Hint::FastDrawing));
 
     if fast_drawing {
-        // TODO: finish up the nanovg canvas
-        GtkWidgetType::CanvasDrawingArea
+        GtkWidgetType::CanvasGfx
     } else if let Some(subcomponents) = control.subcomponents() {
         if subcomponents.len() > 0 {
             GtkWidgetType::CanvasLayout

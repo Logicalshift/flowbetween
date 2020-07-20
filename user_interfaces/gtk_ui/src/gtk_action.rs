@@ -53,7 +53,8 @@ pub enum GtkWidgetType {
     Rotor,
     CanvasDrawingArea,
     CanvasLayout,
-    CanvasNanovg
+    CanvasNanovg,
+    CanvasGfx
 }
 
 ///
