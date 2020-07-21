@@ -45,6 +45,14 @@ where   Device:                 gfx::Device,
     }
 
     ///
+    /// Updates the render target to use as the 'main' render target for this renderer
+    ///
+    pub fn set_main_render_target(&mut self, main_render_target: gfx::handle::RenderTargetView<Device::Resources, format::Rgba8>, main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, format::DepthStencil>) {
+        self.main_render_target = Some(main_render_target);
+        self.main_depth_stencil = Some(main_depth_stencil);
+    }
+
+    ///
     /// Performs rendering of the specified actions to this device target
     ///
     pub fn render<Actions: IntoIterator<Item=GfxAction>>(&mut self, actions: Actions) {
