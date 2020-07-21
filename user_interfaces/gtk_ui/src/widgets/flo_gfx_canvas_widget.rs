@@ -110,13 +110,12 @@ impl FloGfxCanvasWidget {
             let allocation      = gl_widget.get_allocation();
             let scale           = gl_widget.get_scale_factor();
 
-            // TODO: the 'main' framebuffer is not the one GTK wants to use: we need to create a framebuffer from whatever is set
-            // TOOD: we can do this using the same technique the GFX OpenGL driver uses, though it's a bit low-level and liable
-            // to lose support (I've found another library that creates a framebuffer and blits it, which is inefficient but might
-            // also work)
+            // Set whatever is set as the current framebuffer as the render target
+            let width           = allocation.width * scale;
+            let height          = allocation.height * scale;
+            let dimensions      = (width as u16, height as u16, 0u16, gfx_core::texture::AaMode::Single);
 
-            // See https://www.khronos.org/opengl/wiki/GLAPI/glGetFramebufferAttachmentParameter to read things like the texture
-            // See GetIntegerv(gl::DRAW_FRAMEBUFFER_BINDING, &mut framebuffer_name); to get the framebuffer ID
+            core.use_current_framebuffer_as_main_render_target(dimensions);
 
             // Prepare to render
             unsafe {
@@ -181,4 +180,75 @@ impl FloGfxWidgetCore {
         self.renderer.as_mut().map(|renderer| renderer.set_main_render_target(render_target, stencil));
     }
 
+    ///
+    /// Sets the current framebuffer as the default render target for the OpenGL context
+    ///
+    pub fn use_current_framebuffer_as_main_render_target(&mut self, dimensions: gfx::texture::Dimensions) {
+        // The 'main' framebuffer is not the one GTK wants to use: we need to create a framebuffer from whatever is set
+        // We can load in the frame buffer resources by querying OpenGL state and then use the same method that the
+        // GFX OpenGL driver uses in `create_main_targets_raw` to attach the renderer.
+
+        // See https://www.khronos.org/opengl/wiki/GLAPI/glGetFramebufferAttachmentParameter to read things like the texture
+        // See GetIntegerv(gl::DRAW_FRAMEBUFFER_BINDING, &mut framebuffer_name); to get the framebuffer ID
+
+        use gfx_core::handle;
+        use gfx_core::handle::{Producer};
+        use gfx_core::memory::{Bind, Usage};
+
+        // Assume a standard 8BPP framebuffer
+        let color_format            = gfx::format::Rgba8::get_format();
+        let stencil_format          = gfx::format::DepthStencil::get_format();
+
+        // Create a temporary handle manager
+        let mut handle_manager      = handle::Manager::new();
+
+        // Read the current framebuffer information
+        let mut framebuffer_id      = 0;
+        let mut framebuffer_texture = 0;
+        let mut framebuffer_stencil = 0;
+        unsafe {
+            // Get the current framebuffer ID
+            gl::GetIntegerv(gl::DRAW_FRAMEBUFFER_BINDING, &mut framebuffer_id);
+
+            // Get the framebuffer texture
+            gl::GetFramebufferAttachmentParameteriv(gl::DRAW_FRAMEBUFFER, gl::COLOR_ATTACHMENT0, gl::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut framebuffer_texture);
+            gl::GetFramebufferAttachmentParameteriv(gl::DRAW_FRAMEBUFFER, gl::DEPTH_ATTACHMENT, gl::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut framebuffer_stencil);
+        }
+
+        // Convert the IDs to raw textures
+        let framebuffer_id      = framebuffer_id as u32;
+
+        let framebuffer_texture = handle_manager.make_texture(
+            gfx_device_gl::NewTexture::Surface(framebuffer_texture as u32),
+            gfx::texture::Info {
+                levels: 1,
+                kind:   gfx::texture::Kind::D2(dimensions.0, dimensions.1, dimensions.3),
+                format: color_format.0,
+                bind:   Bind::RENDER_TARGET | Bind::TRANSFER_SRC,
+                usage:  Usage::Data,
+            },
+        );
+
+        let stencil_texture     = handle_manager.make_texture(
+            gfx_device_gl::NewTexture::Surface(framebuffer_stencil as u32),
+            gfx::texture::Info {
+                levels: 1,
+                kind:   gfx::texture::Kind::D2(dimensions.0, dimensions.1, dimensions.3),
+                format: stencil_format.0,
+                bind:   Bind::DEPTH_STENCIL | Bind::TRANSFER_SRC,
+                usage:  Usage::Data,
+            },
+        );
+
+        // See `create_main_targets_raw` in gfx_device_gl for how this works
+        let raw_color       = handle_manager.make_rtv(gfx_device_gl::TargetView::Surface(framebuffer_id), &framebuffer_texture, dimensions);
+        let raw_stencil     = handle_manager.make_dsv(gfx_device_gl::TargetView::Surface(framebuffer_id), &stencil_texture, dimensions);
+
+        // Convert from the raw type
+        let render_target   = Typed::new(raw_color);
+        let stencil         = Typed::new(raw_stencil);
+
+        // Set in the renderer
+        self.renderer.as_mut().map(|renderer| renderer.set_main_render_target(render_target, stencil));
+    }
 }
