@@ -77,4 +77,12 @@ where   Device:                 gfx::Device,
 
         self.encoder.clear(&self.main_render_target, [r, g, b, a]);
     }
+
+
+    ///
+    /// Flushes all changes to the device
+    ///
+    pub fn flush(&mut self) {
+        self.encoder.flush(&mut self.device);
+    }
 }

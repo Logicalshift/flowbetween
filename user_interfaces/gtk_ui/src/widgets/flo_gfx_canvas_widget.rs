@@ -120,8 +120,10 @@ impl FloGfxCanvasWidget {
                 gl::Viewport(0, 0, allocation.width*scale, allocation.height*scale);
 
                 // Clear the view
-                core.renderer.as_mut().map(|renderer| 
-                    renderer.render(vec![GfxAction::Clear(Rgba8([0, 128, 0, 255]))]));
+                core.renderer.as_mut().map(|renderer| {
+                    renderer.render(vec![GfxAction::Clear(Rgba8([0, 0, 128, 255]))]);
+                    renderer.flush();
+                });
             }
 
             Inhibit(true)
