@@ -1,11 +1,12 @@
 use crate::action::*;
 
 use gfx;
+use gfx::format;
 
 ///
 /// Renders GFX actions to a GFX device
 ///
-pub struct Renderer<Device, Factory, RenderFormat, DepthFormat>
+pub struct Renderer<Device, Factory>
 where   Device:     gfx::Device,
         Factory:    gfx::Factory<Device::Resources> {
     /// The render device
@@ -18,15 +19,15 @@ where   Device:     gfx::Device,
     encoder: gfx::Encoder<Device::Resources, Device::CommandBuffer>,
 
     /// The 'main' render target
-    main_render_target: gfx::handle::RenderTargetView<Device::Resources, RenderFormat>,
+    main_render_target: gfx::handle::RenderTargetView<Device::Resources, format::Rgba8>,
 
     /// The 'main' depth stencil
-    main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, DepthFormat>
+    main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, format::DepthStencil>
 }
 
-impl<Device, Factory, RenderFormat, DepthFormat> Renderer<Device, Factory, RenderFormat, DepthFormat>
-where   Device:     gfx::Device,
-        Factory:    gfx::Factory<Device::Resources> {
+impl<Device, Factory> Renderer<Device, Factory>
+where   Device:                 gfx::Device,
+        Factory:                gfx::Factory<Device::Resources> {
     ///
     /// Creates a new renderer that will render to the specified device and factory
     ///
@@ -34,8 +35,8 @@ where   Device:     gfx::Device,
         device:             Device, 
         factory:            Factory, 
         encoder:            gfx::Encoder<Device::Resources, Device::CommandBuffer>,
-        main_render_target: gfx::handle::RenderTargetView<Device::Resources, RenderFormat>,
-        main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, DepthFormat>) -> Renderer<Device, Factory, RenderFormat, DepthFormat> {
+        main_render_target: gfx::handle::RenderTargetView<Device::Resources, format::Rgba8>,
+        main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, format::DepthStencil>) -> Renderer<Device, Factory> {
         Renderer {
             device:             device,
             factory:            factory,
@@ -74,6 +75,6 @@ where   Device:     gfx::Device,
         let Rgba8([r, g, b, a]) = color;
         let (r, g, b, a)        = ((r as f32)/255.0, (g as f32)/255.0, (b as f32)/255.0, (a as f32)/255.0);
 
-        // self.encoder.clear([r, g, b, a);
+        self.encoder.clear(&self.main_render_target, [r, g, b, a]);
     }
 }
