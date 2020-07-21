@@ -115,23 +115,13 @@ impl FloGfxCanvasWidget {
             let height          = allocation.height * scale;
             let dimensions      = (width as u16, height as u16, 0u16, gfx_core::texture::AaMode::Single);
 
-            //core.use_current_framebuffer_as_main_render_target(dimensions);
+            core.use_current_framebuffer_as_main_render_target(dimensions);
 
-            // Prepare to render
-            unsafe {
-                // Set up the viewport
-                gl::Viewport(0, 0, allocation.width*scale, allocation.height*scale);
-
-                gl::ClearBufferfv(gl::COLOR, 0, &[0.0f32, 0.5, 0.0, 1.0][0]);
-
-                /*
-                // Clear the view
-                core.renderer.as_mut().map(|renderer| {
-                    renderer.render(vec![GfxAction::Clear(Rgba8([0, 0, 128, 255]))]);
-                    renderer.flush();
-                });
-                */
-            }
+            // Clear the view
+            core.renderer.as_mut().map(|renderer| {
+                renderer.render(vec![GfxAction::Clear(Rgba8([0, 0, 128, 255]))]);
+                renderer.flush();
+            });
 
             Inhibit(true)
         });
