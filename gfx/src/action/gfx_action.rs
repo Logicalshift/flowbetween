@@ -45,9 +45,9 @@ pub enum GfxAction {
     ShowFrameBuffer,
 
     ///
-    /// Creates an 8-bit RGBA texture of the specified size
+    /// Creates an 8-bit BGRA texture of the specified size
     ///
-    CreateTextureRgba(TextureId, usize, usize),
+    CreateTextureBgra(TextureId, usize, usize),
 
     ///
     /// Loads byte data into the specifed texture, at the specified offset
