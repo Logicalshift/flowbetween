@@ -94,11 +94,11 @@ impl FloGfxCanvasWidget {
             let color_format                = gfx::format::Rgba8::get_format();
             let stencil_format              = gfx::format::DepthStencil::get_format();
             let (raw_render, raw_stencil)   = gfx_device_gl::create_main_targets_raw(dimensions, color_format.0, stencil_format.0);
-            let render_target               = Typed::new(raw_render);
-            let stencil                     = Typed::new(raw_stencil);
+            //let render_target               = Typed::new(raw_render);
+            //let stencil                     = Typed::new(raw_stencil);
 
             // Set up the renderer
-            core.renderer = Some(flo_gfx::Renderer::new(device, factory, encoder, render_target, stencil));
+            core.renderer = Some(flo_gfx::Renderer::new(device, factory, encoder));
         });
     }
 
@@ -113,6 +113,14 @@ impl FloGfxCanvasWidget {
             // Get the current size of the control
             let allocation      = gl_widget.get_allocation();
             let scale           = gl_widget.get_scale_factor();
+
+            // TODO: the 'main' framebuffer is not the one GTK wants to use: we need to create a framebuffer from whatever is set
+            // TOOD: we can do this using the same technique the GFX OpenGL driver uses, though it's a bit low-level and liable
+            // to lose support (I've found another library that creates a framebuffer and blits it, which is inefficient but might
+            // also work)
+
+            // See https://www.khronos.org/opengl/wiki/GLAPI/glGetFramebufferAttachmentParameter to read things like the texture
+            // See GetIntegerv(gl::DRAW_FRAMEBUFFER_BINDING, &mut framebuffer_name); to get the framebuffer ID
 
             // Prepare to render
             unsafe {

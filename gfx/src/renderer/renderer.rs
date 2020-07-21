@@ -19,10 +19,10 @@ where   Device:     gfx::Device,
     encoder: gfx::Encoder<Device::Resources, Device::CommandBuffer>,
 
     /// The 'main' render target
-    main_render_target: gfx::handle::RenderTargetView<Device::Resources, format::Rgba8>,
+    main_render_target: Option<gfx::handle::RenderTargetView<Device::Resources, format::Rgba8>>,
 
     /// The 'main' depth stencil
-    main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, format::DepthStencil>
+    main_depth_stencil: Option<gfx::handle::DepthStencilView<Device::Resources, format::DepthStencil>>
 }
 
 impl<Device, Factory> Renderer<Device, Factory>
@@ -34,15 +34,13 @@ where   Device:                 gfx::Device,
     pub fn new(
         device:             Device, 
         factory:            Factory, 
-        encoder:            gfx::Encoder<Device::Resources, Device::CommandBuffer>,
-        main_render_target: gfx::handle::RenderTargetView<Device::Resources, format::Rgba8>,
-        main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, format::DepthStencil>) -> Renderer<Device, Factory> {
+        encoder:            gfx::Encoder<Device::Resources, Device::CommandBuffer>) -> Renderer<Device, Factory> {
         Renderer {
             device:             device,
             factory:            factory,
             encoder:            encoder,
-            main_render_target: main_render_target,
-            main_depth_stencil: main_depth_stencil
+            main_render_target: None,
+            main_depth_stencil: None
         }
     }
 
@@ -72,10 +70,17 @@ where   Device:                 gfx::Device,
     /// Clears the current render target
     ///
     fn clear(&mut self, color: Rgba8) {
+        // Convert the colour to f32 values
         let Rgba8([r, g, b, a]) = color;
         let (r, g, b, a)        = ((r as f32)/255.0, (g as f32)/255.0, (b as f32)/255.0, (a as f32)/255.0);
 
-        self.encoder.clear(&self.main_render_target, [r, g, b, a]);
+        // Fetch the encoder
+        let encoder             = &mut self.encoder;
+
+        // Send to the current render target
+        self.main_render_target.as_ref().map(|render_target| {
+            encoder.clear(render_target, [r, g, b, a]);
+        });
     }
 
 
