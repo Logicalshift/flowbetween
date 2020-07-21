@@ -237,8 +237,8 @@ impl FloGfxWidgetCore {
         );
 
         // See `create_main_targets_raw` in gfx_device_gl for how this works
-        let raw_color       = handle_manager.make_rtv(gfx_device_gl::TargetView::Surface(framebuffer_texture_id), &framebuffer_texture, dimensions);
-        let raw_stencil     = handle_manager.make_dsv(gfx_device_gl::TargetView::Surface(framebuffer_stencil_id), &stencil_texture, dimensions);
+        let raw_color       = handle_manager.make_rtv(gfx_device_gl::TargetView::Texture(framebuffer_texture_id, 0), &framebuffer_texture, dimensions);
+        let raw_stencil     = handle_manager.make_dsv(gfx_device_gl::TargetView::Texture(framebuffer_stencil_id, 0), &stencil_texture, dimensions);
 
         // Convert from the raw type
         let render_target   = Typed::new(raw_color);
