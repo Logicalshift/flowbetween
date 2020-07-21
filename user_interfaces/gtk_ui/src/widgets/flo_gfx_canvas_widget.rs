@@ -7,6 +7,7 @@ use flo_gfx::*;
 
 use gl;
 use gfx_core::format::{Formatted};
+use gfx_core::memory::{Typed};
 use gtk::prelude::*;
 use gfx_device_gl;
 use epoxy;
@@ -19,7 +20,7 @@ use std::rc::*;
 ///
 struct FloGfxWidgetCore {
     /// The renderer for this widget
-    renderer: Option<flo_gfx::Renderer<gfx_device_gl::Device, gfx_device_gl::Factory>>
+    renderer: Option<flo_gfx::Renderer<gfx_device_gl::Device, gfx_device_gl::Factory, gfx::format::Rgba8, gfx::format::DepthStencil>>
 }
 
 ///
@@ -93,9 +94,11 @@ impl FloGfxCanvasWidget {
             let color_format                = gfx::format::Rgba8::get_format();
             let stencil_format              = gfx::format::DepthStencil::get_format();
             let (raw_render, raw_stencil)   = gfx_device_gl::create_main_targets_raw(dimensions, color_format.0, stencil_format.0);
+            let render_target               = Typed::new(raw_render);
+            let stencil                     = Typed::new(raw_stencil);
 
             // Set up the renderer
-            core.renderer = Some(flo_gfx::Renderer::new(device, factory, encoder));
+            core.renderer = Some(flo_gfx::Renderer::new(device, factory, encoder, render_target, stencil));
         });
     }
 

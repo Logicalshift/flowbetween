@@ -5,7 +5,7 @@ use gfx;
 ///
 /// Renders GFX actions to a GFX device
 ///
-pub struct Renderer<Device, Factory>
+pub struct Renderer<Device, Factory, RenderFormat, DepthFormat>
 where   Device:     gfx::Device,
         Factory:    gfx::Factory<Device::Resources> {
     /// The render device
@@ -15,20 +15,33 @@ where   Device:     gfx::Device,
     factory: Factory,
 
     /// The command buffer for this renderer
-    encoder: gfx::Encoder<Device::Resources, Device::CommandBuffer>
+    encoder: gfx::Encoder<Device::Resources, Device::CommandBuffer>,
+
+    /// The 'main' render target
+    main_render_target: gfx::handle::RenderTargetView<Device::Resources, RenderFormat>,
+
+    /// The 'main' depth stencil
+    main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, DepthFormat>
 }
 
-impl<Device, Factory> Renderer<Device, Factory>
+impl<Device, Factory, RenderFormat, DepthFormat> Renderer<Device, Factory, RenderFormat, DepthFormat>
 where   Device:     gfx::Device,
         Factory:    gfx::Factory<Device::Resources> {
     ///
     /// Creates a new renderer that will render to the specified device and factory
     ///
-    pub fn new(device: Device, factory: Factory, encoder: gfx::Encoder<Device::Resources, Device::CommandBuffer>) -> Renderer<Device, Factory> {
+    pub fn new(
+        device:             Device, 
+        factory:            Factory, 
+        encoder:            gfx::Encoder<Device::Resources, Device::CommandBuffer>,
+        main_render_target: gfx::handle::RenderTargetView<Device::Resources, RenderFormat>,
+        main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, DepthFormat>) -> Renderer<Device, Factory, RenderFormat, DepthFormat> {
         Renderer {
-            device:     device,
-            factory:    factory,
-            encoder:    encoder
+            device:             device,
+            factory:            factory,
+            encoder:            encoder,
+            main_render_target: main_render_target,
+            main_depth_stencil: main_depth_stencil
         }
     }
 
