@@ -206,7 +206,7 @@ impl FloGfxWidgetCore {
 
             // Get the framebuffer texture
             gl::GetFramebufferAttachmentParameteriv(gl::DRAW_FRAMEBUFFER, gl::COLOR_ATTACHMENT0, gl::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut framebuffer_texture_id);
-            gl::GetFramebufferAttachmentParameteriv(gl::DRAW_FRAMEBUFFER, gl::DEPTH_ATTACHMENT, gl::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut framebuffer_stencil_id);
+            gl::GetFramebufferAttachmentParameteriv(gl::DRAW_FRAMEBUFFER, gl::STENCIL_ATTACHMENT, gl::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut framebuffer_stencil_id);
         }
 
         // Convert the IDs to raw textures
