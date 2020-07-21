@@ -90,15 +90,11 @@ impl FloGfxCanvasWidget {
             let command_buffer              = factory.create_command_buffer();
             let encoder                     = gfx::Encoder::from(command_buffer);
 
-            // Create a render target view that renders to the main frame buffer
-            let color_format                = gfx::format::Rgba8::get_format();
-            let stencil_format              = gfx::format::DepthStencil::get_format();
-            let (raw_render, raw_stencil)   = gfx_device_gl::create_main_targets_raw(dimensions, color_format.0, stencil_format.0);
-            //let render_target               = Typed::new(raw_render);
-            //let stencil                     = Typed::new(raw_stencil);
-
             // Set up the renderer
             core.renderer = Some(flo_gfx::Renderer::new(device, factory, encoder));
+
+            // Create a render target view that renders to the main frame buffer
+            core.use_default_render_target_as_main(dimensions);
         });
     }
 
@@ -169,4 +165,20 @@ impl FloGfxWidgetCore {
             renderer: None
         }
     }
+
+    ///
+    /// Sets the render target to be the default render target for the OpenGL context
+    ///
+    pub fn use_default_render_target_as_main(&mut self, dimensions: gfx::texture::Dimensions) {
+        // Create render targets from the main target
+        let color_format                = gfx::format::Rgba8::get_format();
+        let stencil_format              = gfx::format::DepthStencil::get_format();
+        let (raw_render, raw_stencil)   = gfx_device_gl::create_main_targets_raw(dimensions, color_format.0, stencil_format.0);
+
+        let render_target               = Typed::new(raw_render);
+        let stencil                     = Typed::new(raw_stencil);
+
+        self.renderer.as_mut().map(|renderer| renderer.set_main_render_target(render_target, stencil));
+    }
+
 }
