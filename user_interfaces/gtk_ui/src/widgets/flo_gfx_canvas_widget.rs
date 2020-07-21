@@ -196,30 +196,32 @@ impl FloGfxWidgetCore {
         use gfx_core::memory::{Bind, Usage};
 
         // Assume a standard 8BPP framebuffer
-        let color_format            = gfx::format::Rgba8::get_format();
-        let stencil_format          = gfx::format::DepthStencil::get_format();
+        let color_format                = gfx::format::Rgba8::get_format();
+        let stencil_format              = gfx::format::DepthStencil::get_format();
 
         // Create a temporary handle manager
-        let mut handle_manager      = handle::Manager::new();
+        let mut handle_manager          = handle::Manager::new();
 
         // Read the current framebuffer information
-        let mut framebuffer_id      = 0;
-        let mut framebuffer_texture = 0;
-        let mut framebuffer_stencil = 0;
+        let mut framebuffer_id          = 0;
+        let mut framebuffer_texture_id  = 0;
+        let mut framebuffer_stencil_id  = 0;
         unsafe {
             // Get the current framebuffer ID
             gl::GetIntegerv(gl::DRAW_FRAMEBUFFER_BINDING, &mut framebuffer_id);
 
             // Get the framebuffer texture
-            gl::GetFramebufferAttachmentParameteriv(gl::DRAW_FRAMEBUFFER, gl::COLOR_ATTACHMENT0, gl::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut framebuffer_texture);
-            gl::GetFramebufferAttachmentParameteriv(gl::DRAW_FRAMEBUFFER, gl::DEPTH_ATTACHMENT, gl::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut framebuffer_stencil);
+            gl::GetFramebufferAttachmentParameteriv(gl::DRAW_FRAMEBUFFER, gl::COLOR_ATTACHMENT0, gl::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut framebuffer_texture_id);
+            gl::GetFramebufferAttachmentParameteriv(gl::DRAW_FRAMEBUFFER, gl::DEPTH_ATTACHMENT, gl::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &mut framebuffer_stencil_id);
         }
 
         // Convert the IDs to raw textures
-        let framebuffer_id      = framebuffer_id as u32;
+        let _framebuffer_id         = framebuffer_id as u32;
+        let framebuffer_texture_id  = framebuffer_texture_id as u32;
+        let framebuffer_stencil_id  = framebuffer_stencil_id as u32;
 
-        let framebuffer_texture = handle_manager.make_texture(
-            gfx_device_gl::NewTexture::Surface(framebuffer_texture as u32),
+        let framebuffer_texture     = handle_manager.make_texture(
+            gfx_device_gl::NewTexture::Surface(framebuffer_texture_id),
             gfx::texture::Info {
                 levels: 1,
                 kind:   gfx::texture::Kind::D2(dimensions.0, dimensions.1, dimensions.3),
@@ -229,8 +231,8 @@ impl FloGfxWidgetCore {
             },
         );
 
-        let stencil_texture     = handle_manager.make_texture(
-            gfx_device_gl::NewTexture::Surface(framebuffer_stencil as u32),
+        let stencil_texture         = handle_manager.make_texture(
+            gfx_device_gl::NewTexture::Surface(framebuffer_stencil_id),
             gfx::texture::Info {
                 levels: 1,
                 kind:   gfx::texture::Kind::D2(dimensions.0, dimensions.1, dimensions.3),
@@ -241,8 +243,8 @@ impl FloGfxWidgetCore {
         );
 
         // See `create_main_targets_raw` in gfx_device_gl for how this works
-        let raw_color       = handle_manager.make_rtv(gfx_device_gl::TargetView::Surface(framebuffer_id), &framebuffer_texture, dimensions);
-        let raw_stencil     = handle_manager.make_dsv(gfx_device_gl::TargetView::Surface(framebuffer_id), &stencil_texture, dimensions);
+        let raw_color       = handle_manager.make_rtv(gfx_device_gl::TargetView::Surface(framebuffer_texture_id), &framebuffer_texture, dimensions);
+        let raw_stencil     = handle_manager.make_dsv(gfx_device_gl::TargetView::Surface(framebuffer_stencil_id), &stencil_texture, dimensions);
 
         // Convert from the raw type
         let render_target   = Typed::new(raw_color);
