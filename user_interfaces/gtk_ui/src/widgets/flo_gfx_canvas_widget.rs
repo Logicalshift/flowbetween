@@ -20,7 +20,7 @@ use std::rc::*;
 ///
 struct FloGfxWidgetCore {
     /// The renderer for this widget
-    renderer: Option<flo_gfx::Renderer<gfx_device_gl::Device, gfx_device_gl::Factory, gfx::format::Rgba8, gfx::format::DepthStencil>>
+    renderer: Option<flo_gfx::Renderer<gfx_device_gl::Device, gfx_device_gl::Factory>>
 }
 
 ///
@@ -107,14 +107,21 @@ impl FloGfxCanvasWidget {
     ///
     fn on_render(glarea: &mut gtk::GLArea, core: Rc<RefCell<FloGfxWidgetCore>>) {
         glarea.connect_render(move |gl_widget, _ctxt| {
+            // Borrow the core
+            let mut core = core.borrow_mut();
+
+            // Get the current size of the control
             let allocation      = gl_widget.get_allocation();
             let scale           = gl_widget.get_scale_factor();
 
             // Prepare to render
             unsafe {
-                gl::ClearColor(0.5, 0.0, 0.0, 1.0);
-                gl::Clear(gl::COLOR_BUFFER_BIT);
+                // Set up the viewport
                 gl::Viewport(0, 0, allocation.width*scale, allocation.height*scale);
+
+                // Clear the view
+                core.renderer.as_mut().map(|renderer| 
+                    renderer.render(vec![GfxAction::Clear(Rgba8([0, 128, 0, 255]))]));
             }
 
             Inhibit(true)
