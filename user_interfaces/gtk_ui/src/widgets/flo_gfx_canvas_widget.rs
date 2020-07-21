@@ -215,7 +215,7 @@ impl FloGfxWidgetCore {
         let framebuffer_stencil_id  = framebuffer_stencil_id as u32;
 
         let framebuffer_texture     = handle_manager.make_texture(
-            gfx_device_gl::NewTexture::Surface(framebuffer_texture_id),
+            gfx_device_gl::NewTexture::Texture(framebuffer_texture_id),
             gfx::texture::Info {
                 levels: 1,
                 kind:   gfx::texture::Kind::D2(dimensions.0, dimensions.1, dimensions.3),
@@ -226,7 +226,7 @@ impl FloGfxWidgetCore {
         );
 
         let stencil_texture         = handle_manager.make_texture(
-            gfx_device_gl::NewTexture::Surface(framebuffer_stencil_id),
+            gfx_device_gl::NewTexture::Texture(framebuffer_stencil_id),
             gfx::texture::Info {
                 levels: 1,
                 kind:   gfx::texture::Kind::D2(dimensions.0, dimensions.1, dimensions.3),
