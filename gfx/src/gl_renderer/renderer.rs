@@ -58,7 +58,13 @@ impl GlRenderer {
     ///
     /// Clears the current render target
     ///
-    fn clear(&mut self, color: Rgba8) {
+    fn clear(&mut self, Rgba8([r, g, b, a]): Rgba8) {
+        let r = (r as f32)/255.0;
+        let g = (g as f32)/255.0;
+        let b = (b as f32)/255.0;
+        let a = (a as f32)/255.0;
+
+        unsafe { gl::ClearBufferfv(gl::COLOR, 0, &[r, g, b, a][0]); }
     }
 
     ///
