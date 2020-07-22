@@ -1,7 +1,7 @@
 mod action;
 mod buffer;
-mod renderer;
+mod gl_renderer;
 
 pub use self::action::*;
 pub use self::buffer::*;
-pub use self::renderer::*;
+pub use self::gl_renderer::*;
