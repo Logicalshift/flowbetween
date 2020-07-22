@@ -9,6 +9,16 @@ use gfx::texture;
 use gfx::traits::{FactoryExt};
 
 ///
+/// The data associated with a render target
+///
+#[derive(Clone)]
+struct RenderTarget<Device> 
+where   Device:     gfx::Device {
+    /// The render target view this will be rendering to
+    render_target: handle::RenderTargetView<Device::Resources, format::Rgba8>,
+}
+
+///
 /// Renders GFX actions to a GFX device
 ///
 pub struct Renderer<Device, Factory>
@@ -23,20 +33,26 @@ where   Device:     gfx::Device,
     /// The command buffer for this renderer
     encoder: gfx::Encoder<Device::Resources, Device::CommandBuffer>,
 
+    /// The currently selected render target
+    active_render_target: Option<RenderTarget<Device>>,
+
     /// The 'main' render target
-    main_render_target: Option<handle::RenderTargetView<Device::Resources, format::Rgba8>>,
+    main_render_target: Option<RenderTarget<Device>>,
 
     /// The 'main' depth stencil
     main_depth_stencil: Option<handle::DepthStencilView<Device::Resources, format::DepthStencil>>,
 
     /// Render targets created for this renderer
-    render_targets: Vec<Option<handle::RenderTargetView<Device::Resources, format::Bgra8>>>,
+    render_targets: Vec<Option<RenderTarget<Device>>>,
 
     /// The vertex buffers that have been allocated (indexed by ID)
     vertex_buffers_2d: Vec<Option<handle::Buffer<Device::Resources, Vertex2D>>>,
 
     /// The BGRA format textures for this renderer
-    bgra_textures: Vec<Option<handle::Texture<Device::Resources, format::B8_G8_R8_A8>>>
+    bgra_textures: Vec<Option<handle::Texture<Device::Resources, format::B8_G8_R8_A8>>>,
+
+    /// The RGBA format textures for this renderer
+    rgba_textures: Vec<Option<handle::Texture<Device::Resources, format::R8_G8_B8_A8>>>
 }
 
 impl<Device, Factory> Renderer<Device, Factory>
@@ -50,14 +66,16 @@ where   Device:                 gfx::Device,
         factory:            Factory, 
         encoder:            gfx::Encoder<Device::Resources, Device::CommandBuffer>) -> Renderer<Device, Factory> {
         Renderer {
-            device:             device,
-            factory:            factory,
-            encoder:            encoder,
-            main_render_target: None,
-            main_depth_stencil: None,
-            render_targets:     vec![],
-            vertex_buffers_2d:  vec![],
-            bgra_textures:      vec![]
+            device:                 device,
+            factory:                factory,
+            encoder:                encoder,
+            active_render_target:   None,
+            main_render_target:     None,
+            main_depth_stencil:     None,
+            render_targets:         vec![],
+            vertex_buffers_2d:      vec![],
+            bgra_textures:          vec![],
+            rgba_textures:          vec![]
         }
     }
 
@@ -65,7 +83,7 @@ where   Device:                 gfx::Device,
     /// Updates the render target to use as the 'main' render target for this renderer
     ///
     pub fn set_main_render_target(&mut self, main_render_target: gfx::handle::RenderTargetView<Device::Resources, format::Rgba8>, main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, format::DepthStencil>) {
-        self.main_render_target = Some(main_render_target);
+        self.main_render_target = Some(RenderTarget { render_target: main_render_target });
         self.main_depth_stencil = Some(main_depth_stencil);
     }
 
@@ -104,7 +122,7 @@ where   Device:                 gfx::Device,
 
         // Send to the current render target
         self.main_render_target.as_ref().map(|render_target| {
-            encoder.clear(render_target, [r, g, b, a]);
+            encoder.clear(&render_target.render_target, [r, g, b, a]);
         });
     }
 
@@ -144,6 +162,7 @@ where   Device:                 gfx::Device,
 
         // Create a new texture
         self.bgra_textures[id] = None;
+        self.rgba_textures[id] = None;
 
         let new_texture = self.factory.create_texture(
             texture::Kind::D2(width as u16, height as u16, texture::AaMode::Multi(4)),
@@ -159,6 +178,7 @@ where   Device:                 gfx::Device,
     ///
     fn free_texture(&mut self, TextureId(texture_id): TextureId) {
         self.bgra_textures[texture_id] = None;
+        self.rgba_textures[texture_id] = None;
     }
 
     ///
@@ -196,9 +216,10 @@ where   Device:                 gfx::Device,
 
         // Create the render target
         let new_render_target           = self.factory.view_texture_as_render_target(&new_texture, 0, None).unwrap();
+        let new_render_target           = RenderTarget { render_target: new_render_target };
 
         // Store the resources
-        self.bgra_textures[texture_id]  = Some(new_texture);
+        self.rgba_textures[texture_id]  = Some(new_texture);
         self.render_targets[render_id]  = Some(new_render_target);
     }
 
