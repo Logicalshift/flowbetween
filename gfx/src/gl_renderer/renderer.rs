@@ -41,6 +41,19 @@ impl GlRenderer {
     }
 
     ///
+    /// Prepares to render to the active framebuffer
+    ///
+    pub fn prepare_to_render_to_active_framebuffer(&mut self, width: usize, height: usize) {
+        unsafe {
+            // Set the default render target to be a reference to the current render target
+            self.default_render_target = Some(RenderTarget::reference_to_current());
+
+            // Set the viewport to the specified width and height
+            gl::Viewport(0, 0, width as gl::types::GLsizei, height as gl::types::GLsizei);
+        }
+    }
+
+    ///
     /// Performs rendering of the specified actions to this device target
     ///
     pub fn render<Actions: IntoIterator<Item=GfxAction>>(&mut self, actions: Actions) {
@@ -155,7 +168,7 @@ impl GlRenderer {
         self.render_targets[render_id]  = None;
 
         // Create the new render target
-        let new_render_target = RenderTarget::new(width as u16, height as u16, render_type);
+        let new_render_target           = RenderTarget::new(width as u16, height as u16, render_type);
 
         // Store the properties of the new render target
         self.textures[texture_id]       = new_render_target.texture();

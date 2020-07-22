@@ -99,10 +99,12 @@ impl FloGfxCanvasWidget {
             let width           = allocation.width * scale;
             let height          = allocation.height * scale;
 
-            // core.use_current_framebuffer_as_main_render_target(dimensions);
-
             // Clear the view
             core.renderer.as_mut().map(|renderer| {
+                // Set up the renderer to render to the current framebuffer
+                renderer.prepare_to_render_to_active_framebuffer(width as usize, height as usize);
+
+                // Perform the rendering
                 renderer.render(vec![GfxAction::Clear(Rgba8([0, 0, 128, 255]))]);
                 renderer.flush();
             });

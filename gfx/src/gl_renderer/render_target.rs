@@ -91,6 +91,24 @@ impl RenderTarget {
     }
 
     ///
+    /// Creates a render target that's a reference to the currently active framebuffer
+    ///
+    /// (This won't be freed when the render target is dropped. It also has no way to know how
+    /// long the current framebuffer will exist for, so is marked as 'unsafe')
+    ///
+    pub unsafe fn reference_to_current() -> RenderTarget {
+        let mut current_frame_buffer = 0;
+        gl::GetIntegerv(gl::DRAW_FRAMEBUFFER_BINDING, &mut current_frame_buffer);
+
+        RenderTarget {
+            frame_buffer:       current_frame_buffer as u32,
+            texture:            None,
+            render_buffer:      None,
+            drop_frame_buffer:  false
+        }
+    }
+
+    ///
     /// Returns the texture associated with this render target
     ///
     pub fn texture(&self) -> Option<Texture> {
