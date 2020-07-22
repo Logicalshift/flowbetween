@@ -34,10 +34,7 @@ where   Device:     gfx::Device,
     encoder: gfx::Encoder<Device::Resources, Device::CommandBuffer>,
 
     /// The currently selected render target
-    active_render_target: Option<RenderTarget<Device>>,
-
-    /// The 'main' render target
-    main_render_target: Option<RenderTarget<Device>>,
+    active_render_target: usize,
 
     /// The 'main' depth stencil
     main_depth_stencil: Option<handle::DepthStencilView<Device::Resources, format::DepthStencil>>,
@@ -69,10 +66,9 @@ where   Device:                 gfx::Device,
             device:                 device,
             factory:                factory,
             encoder:                encoder,
-            active_render_target:   None,
-            main_render_target:     None,
+            active_render_target:   0,
             main_depth_stencil:     None,
-            render_targets:         vec![],
+            render_targets:         vec![None],
             vertex_buffers_2d:      vec![],
             bgra_textures:          vec![],
             rgba_textures:          vec![]
@@ -83,7 +79,7 @@ where   Device:                 gfx::Device,
     /// Updates the render target to use as the 'main' render target for this renderer
     ///
     pub fn set_main_render_target(&mut self, main_render_target: gfx::handle::RenderTargetView<Device::Resources, format::Bgra8>, main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, format::DepthStencil>) {
-        self.main_render_target = Some(RenderTarget { render_target: main_render_target });
+        self.render_targets[0]  = Some(RenderTarget { render_target: main_render_target });
         self.main_depth_stencil = Some(main_depth_stencil);
     }
 
@@ -99,8 +95,8 @@ where   Device:                 gfx::Device,
                 FreeVertexBuffer(id)                                                    => { self.free_vertex_buffer(id); }
                 CreateRenderTarget(render_id, texture_id, width, height, render_type)   => { self.create_render_target(render_id, texture_id, width, height, render_type); }
                 FreeRenderTarget(render_id)                                             => { self.free_render_target(render_id); }
-                SelectRenderTarget(render_id)                                           => { }
-                RenderToFrameBuffer                                                     => { }
+                SelectRenderTarget(render_id)                                           => { self.select_render_target(render_id); }
+                RenderToFrameBuffer                                                     => { self.select_main_frame_buffer(); }
                 ShowFrameBuffer                                                         => { /* This doesn't double-buffer so nothing to do */ }
                 CreateTextureBgra(texture_id, width, height)                            => { self.create_bgra_texture(texture_id, width, height); }
                 FreeTexture(texture_id)                                                 => { self.free_texture(texture_id); }
@@ -121,7 +117,7 @@ where   Device:                 gfx::Device,
         let encoder             = &mut self.encoder;
 
         // Send to the current render target
-        self.main_render_target.as_ref().map(|render_target| {
+        self.render_targets[self.active_render_target].as_ref().map(|render_target| {
             encoder.clear(&render_target.render_target, [r, g, b, a]);
         });
     }
@@ -185,6 +181,9 @@ where   Device:                 gfx::Device,
     /// Creates a new render target
     ///
     fn create_render_target(&mut self, RenderTargetId(render_id): RenderTargetId, TextureId(texture_id): TextureId, width: usize, height: usize, render_type: RenderTargetType) {
+        // We store the 'main' render target in ID 0 so we shift all IDs up by 1 to prevent overwriting it
+        let render_id = render_id + 1;
+
         // Extend the texture list if needed
         if self.bgra_textures.len() <= texture_id {
             self.bgra_textures.extend((self.bgra_textures.len()..(texture_id+1))
@@ -221,6 +220,23 @@ where   Device:                 gfx::Device,
         // Store the resources
         self.bgra_textures[texture_id]  = Some(new_texture);
         self.render_targets[render_id]  = Some(new_render_target);
+    }
+
+    ///
+    /// Chooses which buffer rendering instructions will be sent to
+    ///
+    fn select_render_target(&mut self, RenderTargetId(render_id): RenderTargetId) {
+        // We store the 'main' render target in ID 0 so we shift all IDs up by 1 to prevent overwriting it
+        let render_id = render_id + 1;
+
+        self.active_render_target = render_id;
+    }
+
+    ///
+    /// Sends rendering instructions to the primary frame buffer for display
+    ///
+    fn select_main_frame_buffer(&mut self) {
+        self.active_render_target = 0;
     }
 
     ///
