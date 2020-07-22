@@ -50,9 +50,9 @@ pub enum GfxAction {
     CreateTextureBgra(TextureId, usize, usize),
 
     ///
-    /// Loads byte data into the specifed texture, at the specified offset
+    /// Frees up an existing texture
     ///
-    LoadTextureData(TextureId, usize, Vec<u8>),
+    FreeTexture(TextureId),
 
     ///
     /// Clears the current render target to the specified colour

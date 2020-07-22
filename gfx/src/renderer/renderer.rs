@@ -1,7 +1,12 @@
 use crate::action::*;
+use crate::buffer::*;
 
 use gfx;
 use gfx::format;
+use gfx::handle;
+use gfx::memory;
+use gfx::texture;
+use gfx::traits::{FactoryExt};
 
 ///
 /// Renders GFX actions to a GFX device
@@ -19,10 +24,19 @@ where   Device:     gfx::Device,
     encoder: gfx::Encoder<Device::Resources, Device::CommandBuffer>,
 
     /// The 'main' render target
-    main_render_target: Option<gfx::handle::RenderTargetView<Device::Resources, format::Rgba8>>,
+    main_render_target: Option<handle::RenderTargetView<Device::Resources, format::Rgba8>>,
 
     /// The 'main' depth stencil
-    main_depth_stencil: Option<gfx::handle::DepthStencilView<Device::Resources, format::DepthStencil>>
+    main_depth_stencil: Option<handle::DepthStencilView<Device::Resources, format::DepthStencil>>,
+
+    /// Render targets created for this renderer
+    render_targets: Vec<Option<handle::RenderTargetView<Device::Resources, format::Bgra8>>>,
+
+    /// The vertex buffers that have been allocated (indexed by ID)
+    vertex_buffers_2d: Vec<Option<handle::Buffer<Device::Resources, Vertex2D>>>,
+
+    /// The BGRA format textures for this renderer
+    bgra_textures: Vec<Option<handle::Texture<Device::Resources, format::B8_G8_R8_A8>>>
 }
 
 impl<Device, Factory> Renderer<Device, Factory>
@@ -40,7 +54,10 @@ where   Device:                 gfx::Device,
             factory:            factory,
             encoder:            encoder,
             main_render_target: None,
-            main_depth_stencil: None
+            main_depth_stencil: None,
+            render_targets:     vec![],
+            vertex_buffers_2d:  vec![],
+            bgra_textures:      vec![]
         }
     }
 
@@ -60,15 +77,15 @@ where   Device:                 gfx::Device,
             use self::GfxAction::*;
 
             match action {
-                CreateVertex2DBuffer(id, vertices)                                      => { }
-                FreeVertexBuffer(id)                                                    => { }
-                CreateRenderTarget(render_id, texture_id, width, height, render_type)   => { }
-                FreeRenderTarget(render_id)                                             => { }
+                CreateVertex2DBuffer(id, vertices)                                      => { self.create_vertex_buffer_2d(id, vertices); }
+                FreeVertexBuffer(id)                                                    => { self.free_vertex_buffer(id); }
+                CreateRenderTarget(render_id, texture_id, width, height, render_type)   => { self.create_render_target(render_id, texture_id, width, height, render_type); }
+                FreeRenderTarget(render_id)                                             => { self.free_render_target(render_id); }
                 SelectRenderTarget(render_id)                                           => { }
                 RenderToFrameBuffer                                                     => { }
-                ShowFrameBuffer                                                         => { }
-                CreateTextureRgba(texture_id, width, height)                            => { }
-                LoadTextureData(texture_id, offset, data)                               => { }
+                ShowFrameBuffer                                                         => { /* This doesn't double-buffer so nothing to do */ }
+                CreateTextureBgra(texture_id, width, height)                            => { self.create_bgra_texture(texture_id, width, height); }
+                FreeTexture(texture_id)                                                 => { self.free_texture(texture_id); }
                 Clear(color)                                                            => { self.clear(color); }
             }
         }
@@ -91,6 +108,106 @@ where   Device:                 gfx::Device,
         });
     }
 
+    ///
+    /// Creates a 2D vertex buffer
+    ///
+    fn create_vertex_buffer_2d(&mut self, VertexBufferId(id): VertexBufferId, vertices: Vec<Vertex2D>) {
+        // Extend the vertex handle list if needed
+        if self.vertex_buffers_2d.len() <= id {
+            self.vertex_buffers_2d.extend((self.vertex_buffers_2d.len()..(id+1))
+                .into_iter().map(|_| None));
+        }
+
+        // Create a new buffer
+        self.vertex_buffers_2d[id] = None;
+
+        let new_buffer = self.factory.create_vertex_buffer(&vertices);
+        self.vertex_buffers_2d[id] = Some(new_buffer);
+    }
+
+    ///
+    /// Frees the vertex buffer with the specified ID
+    ///
+    fn free_vertex_buffer(&mut self, VertexBufferId(id): VertexBufferId) {
+        self.vertex_buffers_2d[id] = None;
+    }
+
+    ///
+    /// Creates a new BGRA texture
+    ///tz
+    fn create_bgra_texture(&mut self, TextureId(id): TextureId, width: usize, height: usize) {
+        // Extend the texture list if needed
+        if self.bgra_textures.len() <= id {
+            self.bgra_textures.extend((self.bgra_textures.len()..(id+1))
+                .into_iter().map(|_| None));
+        }
+
+        // Create a new texture
+        self.bgra_textures[id] = None;
+
+        let new_texture = self.factory.create_texture(
+            texture::Kind::D2(width as u16, height as u16, texture::AaMode::Multi(4)),
+            1,
+            memory::Bind::SHADER_RESOURCE,
+            memory::Usage::Upload,
+            None).unwrap();
+        self.bgra_textures[id] = Some(new_texture);
+    }
+
+    ///
+    /// Releases an existing render target
+    ///
+    fn free_texture(&mut self, TextureId(texture_id): TextureId) {
+        self.bgra_textures[texture_id] = None;
+    }
+
+    ///
+    /// Creates a new render target
+    ///
+    fn create_render_target(&mut self, RenderTargetId(render_id): RenderTargetId, TextureId(texture_id): TextureId, width: usize, height: usize, render_type: RenderTargetType) {
+        // Extend the texture list if needed
+        if self.bgra_textures.len() <= texture_id {
+            self.bgra_textures.extend((self.bgra_textures.len()..(texture_id+1))
+                .into_iter().map(|_| None));
+        }
+
+        // Extend the render target list if needed
+        if self.render_targets.len() <= render_id {
+            self.render_targets.extend((self.render_targets.len()..(render_id+1))
+                .into_iter().map(|_| None));
+        }
+
+        // Clear out any existing texture/render target
+        self.bgra_textures[texture_id] = None;
+        self.render_targets[render_id] = None;
+
+        let aa_mode = match render_type {
+            RenderTargetType::Standard      => texture::AaMode::Single,
+            RenderTargetType::Multisampled  => texture::AaMode::Multi(4)
+        };
+
+        // Create the backing texture
+        let new_texture                 = self.factory.create_texture(
+            texture::Kind::D2(width as u16, height as u16, aa_mode),
+            1,
+            memory::Bind::SHADER_RESOURCE,
+            memory::Usage::Upload,
+            None).unwrap();
+
+        // Create the render target
+        let new_render_target           = self.factory.view_texture_as_render_target(&new_texture, 0, None).unwrap();
+
+        // Store the resources
+        self.bgra_textures[texture_id]  = Some(new_texture);
+        self.render_targets[render_id]  = Some(new_render_target);
+    }
+
+    ///
+    /// Releases an existing render target
+    ///
+    fn free_render_target(&mut self, RenderTargetId(render_id): RenderTargetId) {
+        self.render_targets[render_id] = None;
+    }
 
     ///
     /// Flushes all changes to the device
