@@ -1,3 +1,6 @@
+use super::buffer::*;
+use super::vertex_array::*;
+
 use crate::action::*;
 use crate::buffer::*;
 
@@ -12,6 +15,11 @@ struct RenderTarget {
 /// OpenGL action renderer
 ///
 pub struct GlRenderer {
+    /// Definition of the Vertex2D array type
+    vertex_2d_array: VertexArray,
+
+    // The buffers allocated to this renderer
+    buffers: Vec<Option<Buffer>>
 }
 
 impl GlRenderer {
@@ -20,7 +28,8 @@ impl GlRenderer {
     ///
     pub fn new() -> GlRenderer {
         GlRenderer {
-
+            vertex_2d_array:    Vertex2D::define_vertex_array(),
+            buffers:            vec![]
         }
     }
 
@@ -56,17 +65,31 @@ impl GlRenderer {
     /// Creates a 2D vertex buffer
     ///
     fn create_vertex_buffer_2d(&mut self, VertexBufferId(id): VertexBufferId, vertices: Vec<Vertex2D>) {
+        // Extend the buffers array as needed
+        if id >= self.buffers.len() {
+            self.buffers.extend((self.buffers.len()..(id+1))
+                .into_iter()
+                .map(|_| None));
+        }
+
+        // Create a buffer containing these vertices
+        let mut buffer = Buffer::new();
+        buffer.static_draw(&vertices);
+
+        // Store in the buffers collections
+        self.buffers[id] = Some(buffer);
     }
 
     ///
     /// Frees the vertex buffer with the specified ID
     ///
     fn free_vertex_buffer(&mut self, VertexBufferId(id): VertexBufferId) {
+        self.buffers[id] = None;
     }
 
     ///
     /// Creates a new BGRA texture
-    ///tz
+    ///
     fn create_bgra_texture(&mut self, TextureId(id): TextureId, width: usize, height: usize) {
     }
 
