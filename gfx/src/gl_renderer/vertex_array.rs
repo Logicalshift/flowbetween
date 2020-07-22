@@ -6,7 +6,7 @@ use std::ops::{Deref};
 /// Abstraction for an OpenGL vertex array object
 ///
 pub struct VertexArray {
-    pub vertex_array_object: gl::types::GLuint
+    vertex_array_object: gl::types::GLuint
 }
 
 impl VertexArray {

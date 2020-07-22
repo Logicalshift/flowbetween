@@ -1,15 +1,9 @@
 use super::buffer::*;
+use super::texture::*;
 use super::vertex_array::*;
 
 use crate::action::*;
 use crate::buffer::*;
-
-///
-/// The data associated with a render target
-///
-#[derive(Clone)]
-struct RenderTarget {
-}
 
 ///
 /// OpenGL action renderer
@@ -18,8 +12,11 @@ pub struct GlRenderer {
     /// Definition of the Vertex2D array type
     vertex_2d_array: VertexArray,
 
-    // The buffers allocated to this renderer
-    buffers: Vec<Option<Buffer>>
+    /// The buffers allocated to this renderer
+    buffers: Vec<Option<Buffer>>,
+
+    /// The textures allocated to this renderer
+    textures: Vec<Option<Texture>>
 }
 
 impl GlRenderer {
@@ -29,7 +26,8 @@ impl GlRenderer {
     pub fn new() -> GlRenderer {
         GlRenderer {
             vertex_2d_array:    Vertex2D::define_vertex_array(),
-            buffers:            vec![]
+            buffers:            vec![],
+            textures:           vec![]
         }
     }
 
@@ -70,20 +68,23 @@ impl GlRenderer {
     ///
     /// Creates a 2D vertex buffer
     ///
-    fn create_vertex_buffer_2d(&mut self, VertexBufferId(id): VertexBufferId, vertices: Vec<Vertex2D>) {
+    fn create_vertex_buffer_2d(&mut self, VertexBufferId(buffer_id): VertexBufferId, vertices: Vec<Vertex2D>) {
         // Extend the buffers array as needed
-        if id >= self.buffers.len() {
-            self.buffers.extend((self.buffers.len()..(id+1))
+        if buffer_id >= self.buffers.len() {
+            self.buffers.extend((self.buffers.len()..(buffer_id+1))
                 .into_iter()
                 .map(|_| None));
         }
+
+        // Release the previous buffer
+        self.buffers[buffer_id] = None;
 
         // Create a buffer containing these vertices
         let mut buffer = Buffer::new();
         buffer.static_draw(&vertices);
 
         // Store in the buffers collections
-        self.buffers[id] = Some(buffer);
+        self.buffers[buffer_id] = Some(buffer);
     }
 
     ///
@@ -96,13 +97,30 @@ impl GlRenderer {
     ///
     /// Creates a new BGRA texture
     ///
-    fn create_bgra_texture(&mut self, TextureId(id): TextureId, width: usize, height: usize) {
+    fn create_bgra_texture(&mut self, TextureId(texture_id): TextureId, width: usize, height: usize) {
+        // Extend the textures array as needed
+        if texture_id >= self.textures.len() {
+            self.textures.extend((self.textures.len()..(texture_id+1))
+                .into_iter()
+                .map(|_| None));
+        }
+
+        // Free any existing texture
+        self.textures[texture_id] = None;
+
+        // Create a new texture
+        let mut new_texture = Texture::new();
+        new_texture.create_empty(width as u16, height as u16);
+
+        // Store the texture
+        self.textures[texture_id] = Some(new_texture);
     }
 
     ///
     /// Releases an existing render target
     ///
     fn free_texture(&mut self, TextureId(texture_id): TextureId) {
+        self.textures[texture_id] = None;
     }
 
     ///
