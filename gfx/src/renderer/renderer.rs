@@ -15,7 +15,7 @@ use gfx::traits::{FactoryExt};
 struct RenderTarget<Device> 
 where   Device:     gfx::Device {
     /// The render target view this will be rendering to
-    render_target: handle::RenderTargetView<Device::Resources, format::Rgba8>,
+    render_target: handle::RenderTargetView<Device::Resources, format::Bgra8>,
 }
 
 ///
@@ -82,7 +82,7 @@ where   Device:                 gfx::Device,
     ///
     /// Updates the render target to use as the 'main' render target for this renderer
     ///
-    pub fn set_main_render_target(&mut self, main_render_target: gfx::handle::RenderTargetView<Device::Resources, format::Rgba8>, main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, format::DepthStencil>) {
+    pub fn set_main_render_target(&mut self, main_render_target: gfx::handle::RenderTargetView<Device::Resources, format::Bgra8>, main_depth_stencil: gfx::handle::DepthStencilView<Device::Resources, format::DepthStencil>) {
         self.main_render_target = Some(RenderTarget { render_target: main_render_target });
         self.main_depth_stencil = Some(main_depth_stencil);
     }
@@ -219,7 +219,7 @@ where   Device:                 gfx::Device,
         let new_render_target           = RenderTarget { render_target: new_render_target };
 
         // Store the resources
-        self.rgba_textures[texture_id]  = Some(new_texture);
+        self.bgra_textures[texture_id]  = Some(new_texture);
         self.render_targets[render_id]  = Some(new_render_target);
     }
 
