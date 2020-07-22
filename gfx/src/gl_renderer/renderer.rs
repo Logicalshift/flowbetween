@@ -1,6 +1,7 @@
 use super::buffer::*;
 use super::texture::*;
 use super::vertex_array::*;
+use super::render_target::*;
 
 use crate::action::*;
 use crate::buffer::*;
@@ -16,7 +17,13 @@ pub struct GlRenderer {
     buffers: Vec<Option<Buffer>>,
 
     /// The textures allocated to this renderer
-    textures: Vec<Option<Texture>>
+    textures: Vec<Option<Texture>>,
+
+    /// The 'main' render target that represents the output for this renderer
+    default_render_target: Option<RenderTarget>,
+
+    /// The render targets assigned to this renderer
+    render_targets: Vec<Option<RenderTarget>>
 }
 
 impl GlRenderer {
@@ -25,9 +32,11 @@ impl GlRenderer {
     ///
     pub fn new() -> GlRenderer {
         GlRenderer {
-            vertex_2d_array:    Vertex2D::define_vertex_array(),
-            buffers:            vec![],
-            textures:           vec![]
+            vertex_2d_array:        Vertex2D::define_vertex_array(),
+            buffers:                vec![],
+            textures:               vec![],
+            default_render_target:  None,
+            render_targets:         vec![]
         }
     }
 
@@ -127,29 +136,67 @@ impl GlRenderer {
     /// Creates a new render target
     ///
     fn create_render_target(&mut self, RenderTargetId(render_id): RenderTargetId, TextureId(texture_id): TextureId, width: usize, height: usize, render_type: RenderTargetType) {
+        // Extend the textures array as needed
+        if texture_id >= self.textures.len() {
+            self.textures.extend((self.textures.len()..(texture_id+1))
+                .into_iter()
+                .map(|_| None));
+        }
+
+        // Extend the render targets array as needed
+        if render_id >= self.render_targets.len() {
+            self.render_targets.extend((self.render_targets.len()..(render_id+1))
+                .into_iter()
+                .map(|_| None));
+        }
+
+        // Free any existing texture and render target
+        self.textures[texture_id]       = None;
+        self.render_targets[render_id]  = None;
+
+        // Create the new render target
+        let new_render_target = RenderTarget::new(width as u16, height as u16, render_type);
+
+        // Store the properties of the new render target
+        self.textures[texture_id]       = new_render_target.texture();
+        self.render_targets[render_id]  = Some(new_render_target);
     }
 
     ///
     /// Chooses which buffer rendering instructions will be sent to
     ///
     fn select_render_target(&mut self, RenderTargetId(render_id): RenderTargetId) {
+        self.render_targets[render_id].as_ref().map(|render_target| {
+            unsafe {
+                gl::BindFramebuffer(gl::FRAMEBUFFER, **render_target)
+            }
+        });
     }
 
     ///
     /// Sends rendering instructions to the primary frame buffer for display
     ///
     fn select_main_frame_buffer(&mut self) {
+        self.default_render_target.as_ref().map(|render_target| {
+            unsafe {
+                gl::BindFramebuffer(gl::FRAMEBUFFER, **render_target)
+            }
+        });
     }
 
     ///
     /// Releases an existing render target
     ///
     fn free_render_target(&mut self, RenderTargetId(render_id): RenderTargetId) {
+        self.render_targets[render_id] = None;
     }
 
     ///
     /// Flushes all changes to the device
     ///
     pub fn flush(&mut self) {
+        unsafe {
+            gl::Flush();
+        }
     }
 }
