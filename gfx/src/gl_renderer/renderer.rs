@@ -14,9 +14,6 @@ use std::ffi::{CString};
 /// OpenGL action renderer
 ///
 pub struct GlRenderer {
-    /// Definition of the Vertex2D array type
-    vertex_2d_array: VertexArray,
-
     /// The buffers allocated to this renderer
     buffers: Vec<Option<Buffer>>,
 
@@ -43,7 +40,6 @@ impl GlRenderer {
         let simple_shader           = ShaderProgram::from_shaders(vec![simple_vertex_shader, simple_fragment_shader]);
 
         GlRenderer {
-            vertex_2d_array:        Vertex2D::define_vertex_array(),
             buffers:                vec![],
             textures:               vec![],
             default_render_target:  None,
@@ -121,9 +117,11 @@ impl GlRenderer {
 
             gl::Enable(gl::BLEND);
 
-            gl::BindVertexArray(*self.vertex_2d_array);
+            let vertex_array = VertexArray::new();
+            gl::BindVertexArray(*vertex_array);
             gl::BindBuffer(gl::ARRAY_BUFFER, *buffer);
 
+            Vertex2D::define_attributes();
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
 
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
