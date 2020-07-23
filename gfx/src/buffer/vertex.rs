@@ -1,8 +1,8 @@
 ///
 /// 2D vertex representation
 ///
-#[repr(C)]
 #[derive(Clone, Copy, PartialEq, Debug)]
+#[repr(C, packed)]
 pub struct Vertex2D {
     pub pos:        [f32; 2],
     pub tex_coord:  [f32; 2],

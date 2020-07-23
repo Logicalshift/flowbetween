@@ -1,10 +1,12 @@
-#version 150 core
+#version 330 core
 
-in vec2 v_TexCoord;
-in vec4 v_Color;
+in VS_OUTPUT {
+    vec4 v_Color;
+    vec2 v_TexCoord;
+} IN;
 
-out vec4 finalColor;
+out vec4 f_Color;
 
 void main() {
-    finalColor = v_Color;
+    f_Color = IN.v_Color;
 }
