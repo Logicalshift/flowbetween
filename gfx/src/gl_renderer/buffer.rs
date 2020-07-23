@@ -32,7 +32,12 @@ impl Buffer {
     pub fn static_draw<TData>(&mut self, data: &[TData])
     where TData: Sized {
         unsafe {
-            gl::NamedBufferData(self.buffer, (mem::size_of::<TData>() * data.len()) as isize, data.as_ptr() as *const c_void, gl::STATIC_DRAW);
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.buffer);
+            gl::BufferData(
+                gl::ARRAY_BUFFER, 
+                (mem::size_of::<TData>() * data.len()) as isize, 
+                data.as_ptr() as *const c_void, 
+                gl::STATIC_DRAW);
         }
     }
 }
