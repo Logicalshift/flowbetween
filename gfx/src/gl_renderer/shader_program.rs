@@ -35,6 +35,15 @@ impl ShaderProgram {
                 gl::AttachShader(shader_program, **shader);
             }
 
+            // Link the program
+            gl::LinkProgram(shader_program);
+
+            let mut success = 1;
+            gl::GetProgramiv(shader_program, gl::LINK_STATUS, &mut success);
+            if success == 0 {
+                panic!("Failed to link shader program");
+            }
+
             // Bind the attributes
             let mut next_attribute_id   = 0;
             let mut attributes          = vec![];
