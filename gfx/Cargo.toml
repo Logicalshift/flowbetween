@@ -7,7 +7,7 @@ edition     = "2018"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Streaming API for the Rust GFX library"
 
-include     = [ "Cargo.toml", "src/**/*", "svg/**/*" ]
+include     = [ "Cargo.toml", "src/**/*", "shaders/**/*" ]
 
 [dependencies]
 gl          = "0.14"

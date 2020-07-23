@@ -1,7 +1,9 @@
 use super::buffer::*;
+use super::shader::*;
 use super::texture::*;
 use super::vertex_array::*;
 use super::render_target::*;
+use super::shader_program::*;
 
 use crate::action::*;
 use crate::buffer::*;
@@ -23,7 +25,10 @@ pub struct GlRenderer {
     default_render_target: Option<RenderTarget>,
 
     /// The render targets assigned to this renderer
-    render_targets: Vec<Option<RenderTarget>>
+    render_targets: Vec<Option<RenderTarget>>,
+
+    /// The simple shader program
+    simple_shader: ShaderProgram
 }
 
 impl GlRenderer {
@@ -31,12 +36,17 @@ impl GlRenderer {
     /// Creates a new renderer that will render to the specified device and factory
     ///
     pub fn new() -> GlRenderer {
+        let simple_vertex_shader    = Shader::compile(&String::from_utf8(include_bytes!["../../shaders/simple/simple.glslv"].to_vec()).unwrap(), ShaderType::Vertex, vec!["a_Pos", "a_Color", "a_TexCoord"]);
+        let simple_fragment_shader  = Shader::compile(&String::from_utf8(include_bytes!["../../shaders/simple/simple.glslf"].to_vec()).unwrap(), ShaderType::Fragment, vec![]);
+        let simple_shader           = ShaderProgram::from_shaders(vec![simple_vertex_shader, simple_fragment_shader]);
+
         GlRenderer {
             vertex_2d_array:        Vertex2D::define_vertex_array(),
             buffers:                vec![],
             textures:               vec![],
             default_render_target:  None,
-            render_targets:         vec![]
+            render_targets:         vec![],
+            simple_shader:          simple_shader
         }
     }
 
