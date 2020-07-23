@@ -8,6 +8,8 @@ use super::shader_program::*;
 use crate::action::*;
 use crate::buffer::*;
 
+use std::ffi::{CString};
+
 ///
 /// OpenGL action renderer
 ///
@@ -94,7 +96,38 @@ impl GlRenderer {
         let b = (b as f32)/255.0;
         let a = (a as f32)/255.0;
 
-        unsafe { gl::ClearBufferfv(gl::COLOR, 0, &[r, g, b, a][0]); }
+        unsafe { 
+            // Clear the buffer
+            gl::ClearBufferfv(gl::COLOR, 0, &[r, g, b, a][0]); 
+
+            // Draw a test triangle
+            let mut buffer  = Buffer::new();
+            let vertices    = vec![
+                Vertex2D { pos: [0.0, 1.0],     tex_coord: [0.0, 0.0], color: [255, 0, 0, 255] },
+                Vertex2D { pos: [-1.0, -1.0],   tex_coord: [0.0, 0.0], color: [0, 255, 0, 255] },
+                Vertex2D { pos: [1.0, -1.0],    tex_coord: [0.0, 0.0], color: [0, 0, 255, 255] }
+            ];
+            buffer.static_draw(&vertices);
+
+            gl::UseProgram(*self.simple_shader);
+
+            let transform_loc = gl::GetUniformLocation(*self.simple_shader, CString::new("u_Transform").unwrap().as_ptr());
+            gl::UniformMatrix4fv(transform_loc, 1, gl::FALSE, [
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0 
+            ].as_ptr());
+
+            gl::Enable(gl::BLEND);
+
+            gl::BindVertexArray(*self.vertex_2d_array);
+            gl::BindBuffer(gl::ARRAY_BUFFER, *buffer);
+
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+
+            gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+        }
     }
 
     ///
