@@ -14,8 +14,8 @@ use std::ffi::{CString};
 /// OpenGL action renderer
 ///
 pub struct GlRenderer {
-    /// The buffers allocated to this renderer
-    buffers: Vec<Option<Buffer>>,
+    /// The buffers allocated to this renderer and their corresponding vertex array object
+    buffers: Vec<Option<(VertexArray, Buffer)>>,
 
     /// The textures allocated to this renderer
     textures: Vec<Option<Texture>>,
@@ -143,11 +143,24 @@ impl GlRenderer {
         self.buffers[buffer_id] = None;
 
         // Create a buffer containing these vertices
-        let mut buffer = Buffer::new();
+        let mut buffer          = Buffer::new();
+        let vertex_array        = VertexArray::new();
         buffer.static_draw(&vertices);
 
+        unsafe {
+            // Bind a vertex array object to it
+            gl::BindVertexArray(*vertex_array);
+            gl::BindBuffer(gl::ARRAY_BUFFER, *buffer);
+
+            Vertex2D::define_attributes();
+
+            // Clear the bindings
+            gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+            gl::BindVertexArray(0);
+        }
+
         // Store in the buffers collections
-        self.buffers[buffer_id] = Some(buffer);
+        self.buffers[buffer_id] = Some((vertex_array, buffer));
     }
 
     ///
