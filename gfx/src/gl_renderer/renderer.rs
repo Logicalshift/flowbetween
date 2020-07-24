@@ -8,6 +8,7 @@ use super::shader_program::*;
 use crate::action::*;
 use crate::buffer::*;
 
+use std::ops::{Range};
 use std::ffi::{CString};
 
 ///
@@ -65,6 +66,9 @@ impl GlRenderer {
     /// Performs rendering of the specified actions to this device target
     ///
     pub fn render<Actions: IntoIterator<Item=GfxAction>>(&mut self, actions: Actions) {
+        // Enable options
+        self.enable_options();
+
         for action in actions {
             use self::GfxAction::*;
 
@@ -79,7 +83,35 @@ impl GlRenderer {
                 CreateTextureBgra(texture_id, width, height)                            => { self.create_bgra_texture(texture_id, width, height); }
                 FreeTexture(texture_id)                                                 => { self.free_texture(texture_id); }
                 Clear(color)                                                            => { self.clear(color); }
+                DrawTriangles(buffer_id, buffer_range)                                  => { self.draw_triangles(buffer_id, buffer_range); }
             }
+        }
+
+        // Reset options
+        self.disable_options();
+    }
+
+    ///
+    /// Sets the GL options that apply across all operations for this renderer
+    ///
+    fn enable_options(&self) {
+        unsafe {
+            // Turn on blending
+            gl::Enable(gl::BLEND);
+            gl::BlendFuncSeparate(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA, gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+            gl::BlendEquationSeparate(gl::FUNC_ADD, gl::FUNC_ADD);
+
+            // Use the basic shader program by default
+            gl::UseProgram(*self.simple_shader);
+        }
+    }
+
+    ///
+    /// Disables the GL options enabled by enable_options
+    ///
+    fn disable_options(&self) {
+        unsafe {
+            gl::Disable(gl::BLEND);
         }
     }
 
@@ -100,8 +132,8 @@ impl GlRenderer {
             let mut buffer  = Buffer::new();
             let vertices    = vec![
                 Vertex2D { pos: [0.0, 1.0],     tex_coord: [0.0, 0.0], color: [255, 0, 0, 255] },
-                Vertex2D { pos: [-1.0, -1.0],   tex_coord: [0.0, 0.0], color: [0, 255, 0, 255] },
-                Vertex2D { pos: [1.0, -1.0],    tex_coord: [0.0, 0.0], color: [0, 0, 255, 255] }
+                Vertex2D { pos: [-1.0, -1.0],   tex_coord: [0.0, 0.0], color: [0, 255, 0, 0] },
+                Vertex2D { pos: [1.0, -1.0],    tex_coord: [0.0, 0.0], color: [0, 0, 255, 128] }
             ];
             buffer.static_draw(&vertices);
 
@@ -256,6 +288,21 @@ impl GlRenderer {
     ///
     fn free_render_target(&mut self, RenderTargetId(render_id): RenderTargetId) {
         self.render_targets[render_id] = None;
+    }
+
+    ///
+    /// Draw triangles from a buffer
+    ///
+    fn draw_triangles(&mut self, VertexBufferId(buffer_id): VertexBufferId, buffer_range: Range<usize>) {
+        unsafe {
+            if let Some((vertex_array, _buffer)) = &self.buffers[buffer_id] {
+                // Draw the triangles
+                gl::BindVertexArray(**vertex_array);
+                gl::DrawArrays(gl::TRIANGLES, buffer_range.start as gl::types::GLint, buffer_range.len() as gl::types::GLsizei);
+
+                gl::BindVertexArray(0);
+            }
+        }
     }
 
     ///

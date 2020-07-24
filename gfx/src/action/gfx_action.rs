@@ -4,6 +4,8 @@ use super::color::*;
 
 use crate::buffer::*;
 
+use std::ops::{Range};
+
 ///
 /// Represents an action for a `gfx` target
 ///
@@ -57,5 +59,12 @@ pub enum GfxAction {
     ///
     /// Clears the current render target to the specified colour
     ///
-    Clear(Rgba8)
+    Clear(Rgba8),
+
+    ///
+    /// Renders triangles from a vertex buffer (with no texture)
+    ///
+    /// Parameters are the range of vertices to use
+    ///
+    DrawTriangles(VertexBufferId, Range<usize>)
 }
