@@ -127,36 +127,6 @@ impl GlRenderer {
         unsafe { 
             // Clear the buffer
             gl::ClearBufferfv(gl::COLOR, 0, &[r, g, b, a][0]); 
-
-            // Draw a test triangle
-            let mut buffer  = Buffer::new();
-            let vertices    = vec![
-                Vertex2D { pos: [0.0, 1.0],     tex_coord: [0.0, 0.0], color: [255, 0, 0, 255] },
-                Vertex2D { pos: [-1.0, -1.0],   tex_coord: [0.0, 0.0], color: [0, 255, 0, 0] },
-                Vertex2D { pos: [1.0, -1.0],    tex_coord: [0.0, 0.0], color: [0, 0, 255, 128] }
-            ];
-            buffer.static_draw(&vertices);
-
-            gl::UseProgram(*self.simple_shader);
-
-            let transform_loc = gl::GetUniformLocation(*self.simple_shader, CString::new("u_Transform").unwrap().as_ptr());
-            gl::UniformMatrix4fv(transform_loc, 1, gl::FALSE, [
-                1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                0.0, 0.0, 0.0, 1.0 
-            ].as_ptr());
-
-            gl::Enable(gl::BLEND);
-
-            let vertex_array = VertexArray::new();
-            gl::BindVertexArray(*vertex_array);
-            gl::BindBuffer(gl::ARRAY_BUFFER, *buffer);
-
-            Vertex2D::define_attributes();
-            gl::DrawArrays(gl::TRIANGLES, 0, 3);
-
-            gl::BindBuffer(gl::ARRAY_BUFFER, 0);
         }
     }
 
