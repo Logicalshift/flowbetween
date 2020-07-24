@@ -105,7 +105,15 @@ impl FloGfxCanvasWidget {
                 renderer.prepare_to_render_to_active_framebuffer(width as usize, height as usize);
 
                 // Perform the rendering
-                renderer.render(vec![GfxAction::Clear(Rgba8([0, 0, 128, 255]))]);
+                renderer.render(vec![
+                    GfxAction::Clear(Rgba8([0, 0, 0, 0])),
+                    GfxAction::CreateVertex2DBuffer(VertexBufferId(1), vec![
+                        Vertex2D { pos: [0.0, 1.0],     tex_coord: [0.0, 0.0], color: [255, 0, 0, 255] },
+                        Vertex2D { pos: [-1.0, -1.0],   tex_coord: [0.0, 0.0], color: [0, 255, 0, 0] },
+                        Vertex2D { pos: [1.0, -1.0],    tex_coord: [0.0, 0.0], color: [0, 0, 255, 128] }
+                    ]),
+                    GfxAction::DrawTriangles(VertexBufferId(1), 0..3)
+                ]);
                 renderer.flush();
             });
 
