@@ -951,6 +951,7 @@ dependencies = [
 name = "flo_gfx_canvas"
 version = "0.1.0"
 dependencies = [
+ "flo_canvas 0.2.0",
  "flo_gfx 0.1.0",
  "lyon 0.15.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
