@@ -7,10 +7,10 @@ use crate::buffer::*;
 use std::ops::{Range};
 
 ///
-/// Represents an action for a `gfx` target
+/// Represents an action for a render target
 ///
 #[derive(Clone, PartialEq, Debug)]
-pub enum GfxAction {
+pub enum RenderAction {
     ///
     /// Creates a vertex buffer with the specified 2D vertices in it (replacing any existing buffer)
     ///

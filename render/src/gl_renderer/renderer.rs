@@ -65,12 +65,12 @@ impl GlRenderer {
     ///
     /// Performs rendering of the specified actions to this device target
     ///
-    pub fn render<Actions: IntoIterator<Item=GfxAction>>(&mut self, actions: Actions) {
+    pub fn render<Actions: IntoIterator<Item=RenderAction>>(&mut self, actions: Actions) {
         // Enable options
         self.enable_options();
 
         for action in actions {
-            use self::GfxAction::*;
+            use self::RenderAction::*;
 
             match action {
                 CreateVertex2DBuffer(id, vertices)                                      => { self.create_vertex_buffer_2d(id, vertices); }

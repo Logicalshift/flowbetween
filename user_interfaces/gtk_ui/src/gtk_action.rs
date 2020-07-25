@@ -54,7 +54,7 @@ pub enum GtkWidgetType {
     CanvasDrawingArea,
     CanvasLayout,
     CanvasNanovg,
-    CanvasGfx
+    CanvasRender
 }
 
 ///

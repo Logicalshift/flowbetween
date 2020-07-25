@@ -12,8 +12,8 @@ flo_ui              = { path = "../../ui", version = "0.2" }
 flo_canvas          = { path = "../../canvas", version = "0.2" }
 flo_nanovg_canvas   = { path = "../nanovg_canvas", version = "0.2" }
 flo_stream          = { git = "https://github.com/Logicalshift/flo_stream", version = "0.5" }
-flo_gfx             = { path = "../../gfx", version = "0.1" }
-flo_gfx_canvas      = { path = "../../gfx_canvas", version = "0.1" }
+flo_render          = { path = "../../render", version = "0.1" }
+flo_render_canvas   = { path = "../../render_canvas", version = "0.1" }
 desync              = { git = "https://github.com/Logicalshift/desync", branch = "v0.7.0", version = "0.7" }
 
 gtk                 = { version = "0.9", features = ["v3_20"] }
