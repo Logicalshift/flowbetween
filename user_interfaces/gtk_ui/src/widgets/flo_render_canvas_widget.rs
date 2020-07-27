@@ -4,7 +4,7 @@ use crate::widgets::*;
 use crate::widgets::basic_widget::*;
 
 use flo_render;
-use flo_render::{Vertex2D, VertexBufferId, Rgba8, RenderAction};
+use flo_render::{Vertex2D, VertexBufferId, Rgba8, RenderAction, Matrix};
 use gtk::prelude::*;
 
 use std::cell::*;
@@ -108,6 +108,7 @@ impl FloRenderCanvasWidget {
                 // Perform the rendering
                 renderer.render(vec![
                     RenderAction::Clear(Rgba8([0, 0, 0, 0])),
+                    RenderAction::SetTransform(Matrix([[0.5, 0.0, 0.0, -0.5], [0.0, 0.5, 0.0, 0.5], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]])),
                     RenderAction::CreateVertex2DBuffer(VertexBufferId(1), vec![
                         Vertex2D { pos: [0.0, 1.0],     tex_coord: [0.0, 0.0], color: [255, 0, 0, 255] },
                         Vertex2D { pos: [-1.0, -1.0],   tex_coord: [0.0, 0.0], color: [0, 255, 0, 0] },
