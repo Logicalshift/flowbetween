@@ -15,6 +15,7 @@ use futures::executor;
 use std::cell::*;
 use std::rc::*;
 use std::mem;
+use std::time;
 
 ///
 /// Mutable data used by different parts of the hardware rendering widghet
@@ -101,8 +102,10 @@ impl FloRenderCanvasWidget {
     ///
     fn on_render(glarea: &mut gtk::GLArea, core: Rc<RefCell<FloRenderWidgetCore>>) {
         glarea.connect_render(move |gl_widget, _ctxt| {
-            // Borrow the core
-            let mut core = core.borrow_mut();
+            let start       = time::SystemTime::now();
+
+            // Borrow the core to use while rendering
+            let mut core    = core.borrow_mut();
 
             executor::block_on(async move {
                 // Borrowing trick here (DerefMut is not quite transparent and we need mutable references to multiple fields)
@@ -143,6 +146,11 @@ impl FloRenderCanvasWidget {
                     renderer.flush();
                 }
             });
+
+            let render_time = time::SystemTime::now().duration_since(start).unwrap();
+            if render_time.as_micros() > 16000 {
+                println!("Rendering took {} microseconds", render_time.as_micros());
+            }
 
             Inhibit(true)
         });
