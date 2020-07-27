@@ -165,7 +165,6 @@ impl GtkUiWidget for FloRenderCanvasWidget {
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
         match action {
             &GtkWidgetAction::Content(WidgetContent::Draw(ref drawing)) => { 
-                /*
                 let mut core = self.core.borrow_mut();
 
                 // Clear the entire list of things to render if there's a ClearCanvas anywhere in the drawing
@@ -177,7 +176,6 @@ impl GtkUiWidget for FloRenderCanvasWidget {
 
                 // Add to the list to render next time this control is updated
                 core.waiting_to_render.extend(drawing.into_iter().cloned());
-                */
 
                 // Mark the widget as needing a render
                 self.as_glarea.queue_render();
@@ -201,15 +199,12 @@ impl FloRenderWidgetCore {
     /// Creates a new render widget core
     ///
     pub fn new() -> FloRenderWidgetCore {
-        let mut test_draw = vec![Draw::ClearCanvas];
-        test_draw.canvas_height(400.0);
-        test_draw.circle(0.0, 0.0, 100.0);
-        test_draw.fill();
+        let mut default_render = vec![Draw::ClearCanvas];
 
         FloRenderWidgetCore {
             renderer:           None,
             canvas_renderer:    CanvasRenderer::new(),
-            waiting_to_render:  test_draw
+            waiting_to_render:  default_render
         }
     }
 }
