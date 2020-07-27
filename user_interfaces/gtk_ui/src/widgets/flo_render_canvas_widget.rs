@@ -156,7 +156,11 @@ impl GtkUiWidget for FloRenderCanvasWidget {
 
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
         match action {
-            &GtkWidgetAction::Content(WidgetContent::Draw(ref drawing)) => { },
+            &GtkWidgetAction::Content(WidgetContent::Draw(ref drawing)) => { 
+                let mut core = self.core.borrow_mut();
+                core.waiting_to_render.extend(drawing.into_iter().cloned());
+            },
+
             other_action                                                => process_basic_widget_action(self, flo_gtk, other_action)
         }
     }
