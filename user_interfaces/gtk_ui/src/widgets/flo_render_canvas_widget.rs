@@ -3,19 +3,31 @@ use crate::gtk_thread::*;
 use crate::widgets::*;
 use crate::widgets::basic_widget::*;
 
+use flo_canvas::*;
 use flo_render;
 use flo_render::{Vertex2D, VertexBufferId, Rgba8, RenderAction, Matrix};
+use flo_render_canvas::*;
 use gtk::prelude::*;
+
+use futures::prelude::*;
+use futures::executor;
 
 use std::cell::*;
 use std::rc::*;
+use std::mem;
 
 ///
 /// Mutable data used by different parts of the hardware rendering widghet
 ///
 struct FloRenderWidgetCore {
     /// The renderer for this widget
-    renderer: Option<flo_render::GlRenderer>
+    renderer: Option<flo_render::GlRenderer>,
+
+    /// The canvas renderer turns canvas instructions into renderer instructions
+    canvas_renderer: CanvasRenderer,
+
+    /// Any canvas operations that are waiting to be sent to the renderer
+    waiting_to_render: Vec<Draw>
 }
 
 ///
@@ -92,31 +104,44 @@ impl FloRenderCanvasWidget {
             // Borrow the core
             let mut core = core.borrow_mut();
 
-            // Get the current size of the control
-            let allocation      = gl_widget.get_allocation();
-            let scale           = gl_widget.get_scale_factor();
+            executor::block_on(async move {
+                // Borrowing trick here (DerefMut is not quite transparent and we need mutable references to multiple fields)
+                let core                = &mut *core;
 
-            // Set whatever is set as the current framebuffer as the render target
-            let width           = allocation.width * scale;
-            let height          = allocation.height * scale;
+                // Get the current size of the control
+                let allocation          = gl_widget.get_allocation();
+                let scale               = gl_widget.get_scale_factor();
 
-            // Clear the view
-            core.renderer.as_mut().map(|renderer| {
-                // Set up the renderer to render to the current framebuffer
-                renderer.prepare_to_render_to_active_framebuffer(width as usize, height as usize);
+                // Set whatever is set as the current framebuffer as the render target
+                let width               = allocation.width * scale;
+                let height              = allocation.height * scale;
 
-                // Perform the rendering
-                renderer.render(vec![
-                    RenderAction::Clear(Rgba8([0, 0, 0, 0])),
-                    RenderAction::SetTransform(Matrix([[0.5, 0.0, 0.0, -0.5], [0.0, 0.5, 0.0, 0.5], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]])),
-                    RenderAction::CreateVertex2DBuffer(VertexBufferId(1), vec![
-                        Vertex2D { pos: [0.0, 1.0],     tex_coord: [0.0, 0.0], color: [255, 0, 0, 255] },
-                        Vertex2D { pos: [-1.0, -1.0],   tex_coord: [0.0, 0.0], color: [0, 255, 0, 0] },
-                        Vertex2D { pos: [1.0, -1.0],    tex_coord: [0.0, 0.0], color: [0, 0, 255, 128] }
-                    ]),
-                    RenderAction::DrawTriangles(VertexBufferId(1), 0..3)
-                ]);
-                renderer.flush();
+                // Set up the canvas renderer
+                let canvas_renderer     = &mut core.canvas_renderer;
+                let waiting_to_render   = &mut core.waiting_to_render;
+                let renderer            = &mut core.renderer;
+
+                let window_width        = allocation.width as f32;
+                let window_height       = allocation.height as f32;
+                canvas_renderer.set_viewport(0.0..window_width, 0.0..window_height, window_width, window_height);
+
+                if let Some(renderer) = renderer {
+                    // Set up the renderer to render to the current framebuffer
+                    renderer.prepare_to_render_to_active_framebuffer(width as usize, height as usize);
+
+                    // Draw any pending instructions
+                    let mut pending_drawing = vec![];
+                    mem::swap(&mut pending_drawing, waiting_to_render);
+                    let render_stream       = canvas_renderer.draw(pending_drawing.into_iter());
+
+                    // Perform the rendering
+                    let render_actions      = render_stream.collect::<Vec<_>>().await;
+
+                    renderer.render(render_actions);
+
+                    // Finish up
+                    renderer.flush();
+                }
             });
 
             Inhibit(true)
@@ -150,8 +175,14 @@ impl FloRenderWidgetCore {
     /// Creates a new render widget core
     ///
     pub fn new() -> FloRenderWidgetCore {
+        let mut test_draw = vec![Draw::ClearCanvas];
+        test_draw.circle(100.0, 100.0, 100.0);
+        test_draw.fill();
+
         FloRenderWidgetCore {
-            renderer: None
+            renderer:           None,
+            canvas_renderer:    CanvasRenderer::new(),
+            waiting_to_render:  test_draw
         }
     }
 }
