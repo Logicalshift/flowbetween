@@ -168,6 +168,9 @@ impl GtkUiWidget for FloRenderCanvasWidget {
 
                 // Add to the list to render next time this control is updated
                 core.waiting_to_render.extend(drawing.into_iter().cloned());
+
+                // Mark the widget as needing a render
+                self.as_glarea.queue_render();
             },
 
             other_action                                                => process_basic_widget_action(self, flo_gtk, other_action)
