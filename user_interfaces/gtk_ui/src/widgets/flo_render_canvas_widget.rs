@@ -158,6 +158,15 @@ impl GtkUiWidget for FloRenderCanvasWidget {
         match action {
             &GtkWidgetAction::Content(WidgetContent::Draw(ref drawing)) => { 
                 let mut core = self.core.borrow_mut();
+
+                // Clear the entire list of things to render if there's a ClearCanvas anywhere in the drawing
+                for draw in drawing.iter() {
+                    if let Draw::ClearCanvas = draw {
+                        core.waiting_to_render = vec![];
+                    }
+                }
+
+                // Add to the list to render next time this control is updated
                 core.waiting_to_render.extend(drawing.into_iter().cloned());
             },
 
