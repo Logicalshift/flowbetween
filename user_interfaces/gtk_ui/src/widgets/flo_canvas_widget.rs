@@ -189,7 +189,7 @@ impl FloDrawingWidget {
     ///
     fn update_translation_matrix(&self, core: &DrawingCore) {
         // Get the transformation matrix: we store this as the translation matrix to use for paint events
-        let canvas_to_widget = core.pixbufs.get_matrix();
+        let canvas_to_widget    = core.pixbufs.get_matrix();
         let mut widget_to_canvas = canvas_to_widget;
 
         // Invert from canvas-to-screen to screen-to-canvas

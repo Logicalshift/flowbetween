@@ -8,6 +8,7 @@ use flo_render;
 use flo_render::{Vertex2D, VertexBufferId, Rgba8, RenderAction, Matrix};
 use flo_render_canvas::*;
 use gtk::prelude::*;
+use cairo;
 
 use futures::prelude::*;
 use futures::executor;
@@ -28,7 +29,13 @@ struct FloRenderWidgetCore {
     canvas_renderer: CanvasRenderer,
 
     /// Any canvas operations that are waiting to be sent to the renderer
-    waiting_to_render: Vec<Draw>
+    waiting_to_render: Vec<Draw>,
+
+    /// The data attached to the widget
+    widget_data: Rc<WidgetData>,
+
+    /// The ID of the widget that this core belongs to
+    widget_id: WidgetId
 }
 
 ///
@@ -52,12 +59,12 @@ impl FloRenderCanvasWidget {
     ///
     /// Creates a new hardware rendering canvas widget that renders to the specified GL area
     ///
-    pub fn new_opengl<W: Clone+Cast+IsA<gtk::GLArea>>(widget_id: WidgetId, widget: W) -> FloRenderCanvasWidget {
+    pub fn new_opengl<W: Clone+Cast+IsA<gtk::GLArea>>(widget_id: WidgetId, widget: W, data: Rc<WidgetData>) -> FloRenderCanvasWidget {
         // Get the widget as a GL area
         let id              = widget_id;
         let mut as_glarea   = widget.clone().upcast::<gtk::GLArea>();
         let as_widget       = as_glarea.clone().upcast::<gtk::Widget>();
-        let core            = Rc::new(RefCell::new(FloRenderWidgetCore::new()));
+        let core            = Rc::new(RefCell::new(FloRenderWidgetCore::new(widget_id, Rc::clone(&data))));
 
         // Set it up
         as_glarea.set_has_alpha(true);
@@ -144,6 +151,9 @@ impl FloRenderCanvasWidget {
 
                     // Finish up
                     renderer.flush();
+
+                    // Update the coordinates transform in the widget data
+                    core.update_widget_transform();
                 }
             });
 
@@ -198,13 +208,28 @@ impl FloRenderWidgetCore {
     ///
     /// Creates a new render widget core
     ///
-    pub fn new() -> FloRenderWidgetCore {
+    pub fn new(widget_id: WidgetId, data: Rc<WidgetData>) -> FloRenderWidgetCore {
         let mut default_render = vec![Draw::ClearCanvas];
 
         FloRenderWidgetCore {
             renderer:           None,
             canvas_renderer:    CanvasRenderer::new(),
-            waiting_to_render:  default_render
+            waiting_to_render:  default_render,
+            widget_data:        data,
+            widget_id:          widget_id
         }
+    }
+
+    ///
+    /// Updates the widget transform from the active transform for the renderer
+    ///
+    fn update_widget_transform(&self) {
+        let active_transform        = self.canvas_renderer.get_active_transform();
+        let active_transform        = active_transform;
+
+        let Transform2D([a, b, _c]) = active_transform.invert().unwrap();
+        let cairo_matrix            = cairo::Matrix::new(a[0] as f64, b[0] as f64, a[1] as f64, b[1] as f64, a[2] as f64, b[2] as f64);
+
+        self.widget_data.set_widget_data(self.widget_id, cairo_matrix);
     }
 }
