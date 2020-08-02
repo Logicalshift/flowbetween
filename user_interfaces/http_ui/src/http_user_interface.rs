@@ -21,6 +21,7 @@ use std::sync::*;
 lazy_static! {
     ///
     /// The percent-encode set to use for UI queries (the full application/x-www-form-urlencoded percent-encode set)
+    /// See https://url.spec.whatwg.org/#fragment-percent-encode-set
     ///
     pub (super) static ref QUERY_PERCENT_ENCODE: AsciiSet = CONTROLS
         .add(b' ')

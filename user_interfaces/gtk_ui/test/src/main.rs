@@ -32,7 +32,7 @@ fn main() {
         ]),
 
         GtkAction::Widget(WidgetId::Assigned(2), vec![
-            GtkWidgetAction::New(GtkWidgetType::CanvasNanovg),
+            GtkWidgetAction::New(GtkWidgetType::CanvasRender),
             GtkWidgetAction::Layout(WidgetLayout::BoundingBox(Bounds {
                 x1: Position::Start,
                 y1: Position::Start,

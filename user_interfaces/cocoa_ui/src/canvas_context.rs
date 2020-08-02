@@ -185,14 +185,14 @@ impl CanvasContext {
                 }
                 MultiplyTransform(transform)                        => {
                     let current                 = self.state.current_transform();
-                    let Transform2D(a, b, _c)   = transform;
+                    let Transform2D([a, b, _c]) = transform;
                     let transform               = CGAffineTransform {
-                        a: a.0 as CGFloat,
-                        b: b.0 as CGFloat,
-                        c: a.1 as CGFloat,
-                        d: b.1 as CGFloat,
-                        tx: a.2 as CGFloat,
-                        ty: b.2 as CGFloat
+                        a: a[0] as CGFloat,
+                        b: b[0] as CGFloat,
+                        c: a[1] as CGFloat,
+                        d: b[1] as CGFloat,
+                        tx: a[2] as CGFloat,
+                        ty: b[2] as CGFloat
                     };
 
                     let transform               = CGAffineTransformConcat(transform, current);

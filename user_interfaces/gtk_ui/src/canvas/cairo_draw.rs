@@ -192,9 +192,9 @@ impl CairoDraw {
     /// Converts a Flo Transform2D to a Cairo matrix
     ///
     fn get_transform(transform: Transform2D) -> Matrix {
-        let Transform2D(a, b, _c) = transform;
+        let Transform2D([a, b, _c]) = transform;
 
-        Matrix::new(a.0 as f64, b.0 as f64, a.1 as f64, b.1 as f64, a.2 as f64, b.2 as f64)
+        Matrix::new(a[0] as f64, b[0] as f64, a[1] as f64, b[1] as f64, a[2] as f64, b[2] as f64)
     }
 
     ///
