@@ -3,6 +3,7 @@ use super::widget::*;
 use super::basic_widget::*;
 use super::flo_layout::*;
 use super::widget_data::*;
+use super::scroll_size::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 
@@ -160,16 +161,45 @@ impl FixedWidgetLayout for gtk::Fixed {
 }
 
 impl FixedWidgetLayout for gtk::Layout {
-    fn force_layout(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>, _widget_id: WidgetId, _widget_data: &Rc<WidgetData>) {
-        let allocation = layout_widget.get_allocation();
+    fn force_layout(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
+        let allocation          = layout_widget.get_allocation();
+        let mut layout_width    = allocation.width;
+        let mut layout_height   = allocation.height;
+
+        if let Some(scroll_size) = widget_data.get_widget_data::<ScrollSize>(widget_id) {
+            let scroll_size = scroll_size.borrow();
+
+            layout_width    = layout_width.max(scroll_size.width);
+            layout_height   = layout_height.max(scroll_size.height);
+
+            if layout_widget.get_size() != (layout_width as u32, layout_height as u32) {
+                layout_widget.set_size(layout_width as u32, layout_height as u32);
+            }
+        }
 
         layout.borrow_mut().force_next_layout();
-        layout.borrow_mut().layout_in_layout(&layout_widget, (allocation.width, allocation.height));
+        layout.borrow_mut().layout_in_layout(&layout_widget, (layout_width, layout_height));
     }
 
-    fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>, _widget_id: WidgetId, _widget_data: &Rc<WidgetData>) {
+    fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
+        let widget_data = Rc::clone(widget_data);
+
         layout_widget.connect_size_allocate(move |layout_widget, allocation| {
-            layout.borrow_mut().layout_in_layout(layout_widget, (allocation.width, allocation.height));
+            let mut layout_width    = allocation.width;
+            let mut layout_height   = allocation.height;
+
+            if let Some(scroll_size) = widget_data.get_widget_data::<ScrollSize>(widget_id) {
+                let scroll_size = scroll_size.borrow();
+
+                layout_width    = layout_width.max(scroll_size.width);
+                layout_height   = layout_height.max(scroll_size.height);
+
+                if layout_widget.get_size() != (layout_width as u32, layout_height as u32) {
+                    layout_widget.set_size(layout_width as u32, layout_height as u32);
+                }
+            }
+
+            layout.borrow_mut().layout_in_layout(layout_widget, (layout_width, layout_height));
         });
     }
 }
