@@ -160,13 +160,15 @@ impl FixedWidgetLayout for gtk::Fixed {
 
 impl FixedWidgetLayout for gtk::Layout {
     fn force_layout(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>) {
+        let allocation = layout_widget.get_allocation();
+
         layout.borrow_mut().force_next_layout();
-        layout.borrow_mut().layout_in_layout(&layout_widget, layout_widget.get_allocation());
+        layout.borrow_mut().layout_in_layout(&layout_widget, (allocation.width, allocation.height));
     }
 
     fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>) {
         layout_widget.connect_size_allocate(move |layout_widget, allocation| {
-            layout.borrow_mut().layout_in_layout(layout_widget, *allocation);
+            layout.borrow_mut().layout_in_layout(layout_widget, (allocation.width, allocation.height));
         });
     }
 }
