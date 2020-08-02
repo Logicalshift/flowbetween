@@ -257,9 +257,9 @@ impl FloWidgetLayout {
         let (width, height)                 = target.get_size();
 
         let current_size                    = gtk::Rectangle {
-            x: left,
-            y: top,
-            width: (width as i32) - (left+right),
+            x:      left,
+            y:      top,
+            width:  (width as i32) - (left+right),
             height: (height as i32) - (top+bottom)
         };
 
@@ -282,8 +282,11 @@ impl FloWidgetLayout {
     fn layout_in_container<'a, T, MoveFn>(&'a self, target: &T, move_widget: MoveFn, min_x: i32, min_y: i32, width: i32, height: i32) 
     where   T:      Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>,
             MoveFn: 'a+Fn(&gtk::Widget, i32, i32) -> () {
+        let container_width     = width.max(1);
+        let container_height    = height.max(1);
+
         // Get the layout for this widget
-        let layout      = self.get_layout(width as f64, height as f64);
+        let layout      = self.get_layout(container_width as f64, container_height as f64);
 
         // Position each of the widgets
         let mut remaining: HashSet<_>   = target.get_children().into_iter().collect();
@@ -302,16 +305,39 @@ impl FloWidgetLayout {
                 let (x1, y1, x2, y2)            = (widget_layout.x1 as f64, widget_layout.y1 as f64, widget_layout.x2 as f64, widget_layout.y2 as f64);
 
                 // Convert to x, y and width and height
-                let mut x   = x1;
-                let mut y   = y1;
-                let width   = x2-x1;
-                let height  = y2-y1;
+                let mut x       = x1;
+                let mut y       = y1;
+                let mut width   = x2-x1;
+                let mut height  = y2-y1;
 
                 // Adjust by the floating position if there is one (this will be value as it was last updated via the viewmodel)
                 if let Some(floating) = self.widget_data.get_widget_data::<FloatingPosition>(widget_layout.id) {
                     let floating = floating.borrow();
                     x += floating.x as f64;
                     y += floating.y as f64;
+                }
+
+                // Must fit within min_x, min_y and max_x, max_y
+                if x < 0.0 {
+                    let adjust  = -x;
+                    x           += adjust;
+                    width       -= adjust;
+                }
+
+                if y < 0.0 {
+                    let adjust  = -y;
+                    y           += adjust;
+                    height      -= adjust;
+                }
+
+                if (x+width) > container_width as f64 {
+                    let adjust  = (x+width) - (container_width as f64);
+                    width       -= adjust;
+                }
+
+                if (y+height) > container_height as f64 {
+                    let adjust  = (y+height) - (container_height as f64);
+                    height      -= adjust;
                 }
 
                 // Borrow the widget and set its properties
@@ -323,7 +349,7 @@ impl FloWidgetLayout {
                 // Send a size request to the widget if its width or height has changed
                 let (new_x, new_y)          = (x.floor() as i32, y.floor() as i32);
                 let (new_x, new_y)          = (new_x + min_x, new_y + min_y);
-                let (new_width, new_height) = (width.floor().max(0.0) as i32, height.floor().max(0.0) as i32);
+                let (new_width, new_height) = (width.floor().max(1.0) as i32, height.floor().max(1.0) as i32);
 
                 // Resize the widget
                 let existing_allocation = underlying.get_allocation();
