@@ -178,7 +178,7 @@ impl FixedWidgetLayout for gtk::Layout {
         }
 
         layout.borrow_mut().force_next_layout();
-        layout.borrow_mut().layout_in_layout(&layout_widget, (layout_width, layout_height));
+        layout.borrow_mut().layout_in_layout(&layout_widget, (0, 0), (layout_width, layout_height));
     }
 
     fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
@@ -199,7 +199,7 @@ impl FixedWidgetLayout for gtk::Layout {
                 }
             }
 
-            layout.borrow_mut().layout_in_layout(layout_widget, (layout_width, layout_height));
+            layout.borrow_mut().layout_in_layout(layout_widget, (0, 0), (layout_width, layout_height));
         });
     }
 }

@@ -252,8 +252,10 @@ impl FloWidgetLayout {
     ///
     /// Lays out the widgets in a gtk::Layout continue
     ///
-    pub fn layout_in_layout(&mut self, target: &gtk::Layout, size: (i32, i32)) {
+    pub fn layout_in_layout(&mut self, target: &gtk::Layout, offset: (i32, i32), size: (i32, i32)) {
+        let (offset_x, offset_y)            = offset;
         let ((left, top), (right, bottom))  = self.get_padding();
+        let ((left, top), (right, bottom))  = ((left+offset_x, top+offset_y), (right+offset_x, bottom+offset_y));
         let (width, height)                 = size;
 
         let current_size                    = gtk::Rectangle {
