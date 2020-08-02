@@ -8,7 +8,6 @@
 
 extern crate flo_ui;
 extern crate flo_canvas;
-extern crate flo_nanovg_canvas;
 
 extern crate gtk;
 extern crate gdk;
@@ -23,7 +22,6 @@ extern crate itertools;
 extern crate gl;
 extern crate epoxy;
 extern crate shared_library;
-extern crate nanovg;
 extern crate time;
 
 mod gtk_thread;

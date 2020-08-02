@@ -7,7 +7,6 @@ use super::flo_scale_widget::*;
 use super::flo_rotor_widget::*;
 use super::flo_scroll_widget::*;
 use super::flo_canvas_widget::*;
-use super::flo_nanovg_widget::*;
 use super::flo_textbox_widget::*;
 use super::flo_checkbox_widget::*;
 use super::flo_render_canvas_widget::*;
@@ -50,7 +49,6 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
             let no_adjustment: Option<gtk::Adjustment> = None;
             Box::new(FloCanvasLayoutWidget::new(id, gtk::Layout::new(no_adjustment.as_ref(), no_adjustment.as_ref()), widget_data))
         },
-        CanvasNanovg        => Box::new(FloNanoVgWidget::new(id, gtk::GLArea::new())),
         CanvasRender        => Box::new(FloRenderCanvasWidget::new_opengl(id, gtk::GLArea::new(), widget_data)),
 
         Scale               => {
