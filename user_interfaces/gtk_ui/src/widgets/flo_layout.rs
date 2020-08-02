@@ -317,29 +317,6 @@ impl FloWidgetLayout {
                     y += floating.y as f64;
                 }
 
-                // Must fit within min_x, min_y and max_x, max_y
-                if x < 0.0 {
-                    let adjust  = -x;
-                    x           += adjust;
-                    width       -= adjust;
-                }
-
-                if y < 0.0 {
-                    let adjust  = -y;
-                    y           += adjust;
-                    height      -= adjust;
-                }
-
-                if (x+width) > container_width as f64 {
-                    let adjust  = (x+width) - (container_width as f64);
-                    width       -= adjust;
-                }
-
-                if (y+height) > container_height as f64 {
-                    let adjust  = (y+height) - (container_height as f64);
-                    height      -= adjust;
-                }
-
                 // Borrow the widget and set its properties
                 let widget      = widget.borrow();
                 let underlying  = widget.get_underlying();
