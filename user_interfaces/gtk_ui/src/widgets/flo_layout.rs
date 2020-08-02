@@ -363,7 +363,7 @@ impl FloWidgetLayout {
                     let _preferred_size = (underlying.get_preferred_width(), underlying.get_preferred_height());    // Side-effect: suppress warning about fixed layout
 
                     // Allocate the widget where we actually want it to go
-                    move_widget(&underlying, new_x, new_y);
+                    move_widget(&underlying, new_x - min_x, new_y - min_y);
                     underlying.size_allocate(&mut new_allocation);
                 }
 
@@ -385,7 +385,7 @@ impl FloWidgetLayout {
             let _preferred_size = (extra_widget.get_preferred_width(), extra_widget.get_preferred_height());    // Side-effect: suppress warning about fixed layout
 
             // Allocate the size for this widget
-            move_widget(&extra_widget, min_x, min_y);
+            move_widget(&extra_widget, 0, 0);
             extra_widget.size_allocate(&mut full_size.clone());
         }
     }
