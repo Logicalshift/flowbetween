@@ -107,7 +107,7 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
 ///
 /// Processes a layout command for a widget being managed by FlowBetween
 ///
-pub fn process_basic_widget_layout<W: WidgetExt>(id: WidgetId, widget: &W, flo_gtk: &mut FloGtk, layout: &WidgetLayout) {
+pub fn process_basic_widget_layout<W: Clone+WidgetExt+IsA<gtk::Widget>>(id: WidgetId, widget: &W, flo_gtk: &mut FloGtk, layout: &WidgetLayout) {
     // Fetch or create the layout for this widget
     let widget_data     = flo_gtk.widget_data();
     let widget_layout   = widget_data.get_widget_data_or_insert(id, || Layout::new());
@@ -134,7 +134,23 @@ pub fn process_basic_widget_layout<W: WidgetExt>(id: WidgetId, widget: &W, flo_g
             let width               = width.floor() as i32;
             let height              = height.floor() as i32;
 
+            // Size the widget
+            let widget              = widget.clone().upcast::<gtk::Widget>();
+            let parent              = widget.get_parent();
+            let event_box           = parent.as_ref().and_then(|parent| parent.clone().dynamic_cast::<gtk::EventBox>().ok());
+            let (parent, widget)    = if let Some(event_box) = event_box { (event_box.get_parent(), event_box.upcast()) } else { (parent, widget) };
+
+            let fixed       = parent.as_ref().and_then(|parent| parent.clone().dynamic_cast::<gtk::Fixed>().ok());
+            let layout      = parent.and_then(|parent| parent.dynamic_cast::<gtk::Layout>().ok());
+
             widget.size_allocate(&mut gtk::Rectangle { x: new_x, y: new_y, width: width, height: height });
+
+            if let Some(fixed) = fixed {
+                fixed.move_(&widget, new_x, new_y);
+            }
+            if let Some(layout) = layout {
+                layout.move_(&widget, new_x, new_y);
+            }
         }
     }
 
