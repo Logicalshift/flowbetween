@@ -63,14 +63,6 @@ impl FloScrollWidget {
         let no_adjustment: Option<gtk::Adjustment> = None;
         let layout          = gtk::Layout::new(no_adjustment.as_ref(), no_adjustment.as_ref());
 
-        // Ugly hack...
-        // Scroll windows try to shrink when you take controls out of them (for some reason, even with a layout with a set size).
-        // Telling the scroll window that its allocated size is the same as its minimum size prevents this
-        scroll_window.connect_size_allocate(|scroll_window, allocate| {
-            //scroll_window.set_min_content_width(allocate.width);
-            //scroll_window.set_min_content_height(allocate.height);
-        });
-
         // If the scroll window is created at 0 size, it generates a warning, so set a default min size to suppress it
         scroll_window.set_min_content_width(16);
         scroll_window.set_min_content_height(16);
