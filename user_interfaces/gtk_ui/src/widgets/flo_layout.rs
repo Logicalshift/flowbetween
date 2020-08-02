@@ -218,6 +218,13 @@ impl FloWidgetLayout {
     }
 
     ///
+    /// The next layout will be forced regardless of if the size has changed
+    ///
+    pub fn force_next_layout(&mut self) {
+        self.current_size = None;
+    }
+
+    ///
     /// Lays out the widgets in a particular container (with 'Fixed' semantics - ie, GtkFixed or GtkLayout)
     ///
     pub fn layout_fixed(&mut self, target: &gtk::Fixed) {
@@ -236,14 +243,11 @@ impl FloWidgetLayout {
 
         self.current_size = Some(current_size);
 
-        self.layout_in_container(target, allocation.x + left, allocation.y + top, allocation.width - (left+right), allocation.height - (top+bottom));
-    }
+        let move_fn     = |widget: &gtk::Widget, x, y| {
+            target.move_(widget, x, y);
+        };
 
-    ///
-    /// The next layout will be forced regardless of if the size has changed
-    ///
-    pub fn force_next_layout(&mut self) {
-        self.current_size = None;
+        self.layout_in_container(target, move_fn, allocation.x + left, allocation.y + top, allocation.width - (left+right), allocation.height - (top+bottom));
     }
 
     ///
@@ -264,15 +268,21 @@ impl FloWidgetLayout {
             return;
         }
 
+        let move_fn     = |widget: &gtk::Widget, x, y| {
+            target.move_(widget, x, y);
+        };
+
         self.current_size = Some(current_size);
 
-        self.layout_in_container(target, left, top, (width as i32) - (left+right), (height as i32) - (top+bottom));
+        self.layout_in_container(target, move_fn, left, top, (width as i32) - (left+right), (height as i32) - (top+bottom));
     }
 
     ///
     /// Performs container layout with a particular width and height
     ///
-    fn layout_in_container<T: Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>>(&self, target: &T, min_x: i32, min_y: i32, width: i32, height: i32) {
+    fn layout_in_container<'a, T, MoveFn>(&'a self, target: &T, move_widget: MoveFn, min_x: i32, min_y: i32, width: i32, height: i32) 
+    where   T:      Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>,
+            MoveFn: 'a+Fn(&gtk::Widget, i32, i32) -> () {
         // Get the layout for this widget
         let layout      = self.get_layout(width as f64, height as f64);
 
@@ -328,6 +338,7 @@ impl FloWidgetLayout {
                     let _preferred_size = (underlying.get_preferred_width(), underlying.get_preferred_height());    // Side-effect: suppress warning about fixed layout
 
                     // Allocate the widget where we actually want it to go
+                    move_widget(&underlying, new_x, new_y);
                     underlying.size_allocate(&mut new_allocation);
                 }
 
@@ -349,6 +360,7 @@ impl FloWidgetLayout {
             let _preferred_size = (extra_widget.get_preferred_width(), extra_widget.get_preferred_height());    // Side-effect: suppress warning about fixed layout
 
             // Allocate the size for this widget
+            move_widget(&extra_widget, min_x, min_y);
             extra_widget.size_allocate(&mut full_size.clone());
         }
     }
