@@ -38,6 +38,9 @@ pub struct WidgetPosition {
 /// Manages layout of a set of child widgets according to the standard flo layout rules
 ///
 pub struct FloWidgetLayout {
+    /// The most recent layout size of this widget (None if it's not laid out yet)
+    current_size: Option<gtk::Rectangle>,
+
     /// The ID of the parent widget
     parent_widget_id: WidgetId,
 
@@ -54,6 +57,7 @@ impl FloWidgetLayout {
     ///
     pub fn new(parent_widget_id: WidgetId, widget_data: Rc<WidgetData>) -> FloWidgetLayout {
         FloWidgetLayout {
+            current_size:       None,
             parent_widget_id:   parent_widget_id,
             child_widget_ids:   vec![],
             widget_data:        widget_data
@@ -64,7 +68,8 @@ impl FloWidgetLayout {
     /// Sets the ID of the child widgets that this will lay out
     ///
     pub fn set_children<W: IntoIterator<Item=WidgetId>>(&mut self, widgets: W) {
-        self.child_widget_ids = widgets.into_iter().collect();
+        self.current_size       = None;
+        self.child_widget_ids   = widgets.into_iter().collect();
     }
 
     ///
@@ -215,19 +220,51 @@ impl FloWidgetLayout {
     ///
     /// Lays out the widgets in a particular container (with 'Fixed' semantics - ie, GtkFixed or GtkLayout)
     ///
-    pub fn layout_fixed(&self, target: &gtk::Container) {
+    pub fn layout_fixed(&mut self, target: &gtk::Container) {
         let ((left, top), (right, bottom))  = self.get_padding();
         let allocation                      = target.get_allocation();
+        let current_size                    = gtk::Rectangle {
+            x:      allocation.x + left,
+            y:      allocation.y + top,
+            width:  allocation.width - (left+right),
+            height: allocation.height - (top+bottom)
+        };
+
+        if Some(current_size) == self.current_size {
+            return;
+        }
+
+        self.current_size = Some(current_size);
 
         self.layout_in_container(target, allocation.x + left, allocation.y + top, allocation.width - (left+right), allocation.height - (top+bottom));
     }
 
     ///
+    /// The next layout will be forced regardless of if the size has changed
+    ///
+    pub fn force_next_layout(&mut self) {
+        self.current_size = None;
+    }
+
+    ///
     /// Lays out the widgets in a gtk::Layout continue
     ///
-    pub fn layout_in_layout(&self, target: &gtk::Layout) {
+    pub fn layout_in_layout(&mut self, target: &gtk::Layout) {
         let ((left, top), (right, bottom))  = self.get_padding();
         let (width, height)                 = target.get_size();
+
+        let current_size                    = gtk::Rectangle {
+            x: left,
+            y: top,
+            width: (width as i32) - (left+right),
+            height: (height as i32) - (top+bottom)
+        };
+
+        if Some(current_size) == self.current_size {
+            return;
+        }
+
+        self.current_size = Some(current_size);
 
         self.layout_in_container(target, left, top, (width as i32) - (left+right), (height as i32) - (top+bottom));
     }

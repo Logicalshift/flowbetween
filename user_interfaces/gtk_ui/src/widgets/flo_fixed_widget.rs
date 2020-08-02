@@ -149,26 +149,28 @@ impl FixedWidgetLayout for gtk::Fixed {
     fn force_layout(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>) {
         let container = fixed.upcast::<gtk::Container>();
 
-        layout.borrow().layout_fixed(&container);
+        layout.borrow_mut().force_next_layout();
+        layout.borrow_mut().layout_fixed(&container);
     }
 
     fn attach_layout_signal(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>) {
         let container = fixed.upcast::<gtk::Container>();
 
         container.connect_size_allocate(move |container, _allocation| {
-            layout.borrow().layout_fixed(container);
+            layout.borrow_mut().layout_fixed(container);
         });
     }
 }
 
 impl FixedWidgetLayout for gtk::Layout {
     fn force_layout(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>) {
-        layout.borrow().layout_in_layout(&layout_widget);
+        layout.borrow_mut().force_next_layout();
+        layout.borrow_mut().layout_in_layout(&layout_widget);
     }
 
     fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>) {
         layout_widget.connect_size_allocate(move |layout_widget, _allocation| {
-            layout.borrow().layout_in_layout(layout_widget);
+            layout.borrow_mut().layout_in_layout(layout_widget);
         });
     }
 }
