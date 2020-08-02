@@ -307,8 +307,8 @@ impl FloWidgetLayout {
                 // Convert to x, y and width and height
                 let mut x       = x1;
                 let mut y       = y1;
-                let mut width   = x2-x1;
-                let mut height  = y2-y1;
+                let width       = x2-x1;
+                let height      = y2-y1;
 
                 // Adjust by the floating position if there is one (this will be value as it was last updated via the viewmodel)
                 if let Some(floating) = self.widget_data.get_widget_data::<FloatingPosition>(widget_layout.id) {
@@ -353,7 +353,7 @@ impl FloWidgetLayout {
         self.order_zindex(z_indices);
 
         // Make any remaining widget fill the entire container
-        let full_size = gtk::Rectangle { x: min_x, y: min_y, width: width, height: height };
+        let full_size = gtk::Rectangle { x: min_x, y: min_y, width: container_width, height: container_height };
         for extra_widget in remaining {
             // Set the size request for this widget
             extra_widget.set_size_request(full_size.width, full_size.height);
