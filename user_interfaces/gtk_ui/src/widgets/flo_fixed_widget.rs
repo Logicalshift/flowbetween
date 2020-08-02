@@ -50,8 +50,8 @@ pub struct FloFixedWidget {
 /// Trait used to describe how to perform layout in a fixed widget
 ///
 pub trait FixedWidgetLayout {
-    fn force_layout(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>);
-    fn attach_layout_signal(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>);
+    fn force_layout(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>);
+    fn attach_layout_signal(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>);
 }
 
 impl FloFixedWidget {
@@ -60,23 +60,24 @@ impl FloFixedWidget {
     ///
     pub fn new<Container: 'static+Cast+Clone+IsA<gtk::Container>+FixedWidgetLayout>(id: WidgetId, container_widget: Container, widget_data: Rc<WidgetData>) -> FloFixedWidget {
         // Cast the container to a gtk container
-        let container = container_widget.clone().upcast::<gtk::Container>();
+        let container   = container_widget.clone().upcast::<gtk::Container>();
 
         // Create the widget
-        let layout  = Rc::new(RefCell::new(FloWidgetLayout::new(id, Rc::clone(&widget_data))));
+        let layout      = Rc::new(RefCell::new(FloWidgetLayout::new(id, Rc::clone(&widget_data))));
 
         // Create the 'force relayout' function
         let force_relayout = {
             let container_widget    = container_widget.clone();
             let layout              = Rc::clone(&layout);
+            let layout_data         = Rc::clone(&widget_data);
 
             move || {
-                Container::force_layout(container_widget.clone(), layout.clone());
+                Container::force_layout(container_widget.clone(), layout.clone(), id, &layout_data);
             }
         };
 
         // Attach events to it
-        Container::attach_layout_signal(container_widget, Rc::clone(&layout));
+        Container::attach_layout_signal(container_widget, Rc::clone(&layout), id, &widget_data);
 
         // Build the final structure
         FloFixedWidget {
@@ -146,12 +147,12 @@ impl FloFixedWidget {
 }
 
 impl FixedWidgetLayout for gtk::Fixed {
-    fn force_layout(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>) {
+    fn force_layout(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>, _widget_id: WidgetId, _widget_data: &Rc<WidgetData>) {
         layout.borrow_mut().force_next_layout();
         layout.borrow_mut().layout_fixed(&fixed, fixed.get_allocation());
     }
 
-    fn attach_layout_signal(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>) {
+    fn attach_layout_signal(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>, _widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
         fixed.connect_size_allocate(move |fixed, allocation| {
             layout.borrow_mut().layout_fixed(fixed, *allocation);
         });
@@ -159,14 +160,14 @@ impl FixedWidgetLayout for gtk::Fixed {
 }
 
 impl FixedWidgetLayout for gtk::Layout {
-    fn force_layout(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>) {
+    fn force_layout(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>, _widget_id: WidgetId, _widget_data: &Rc<WidgetData>) {
         let allocation = layout_widget.get_allocation();
 
         layout.borrow_mut().force_next_layout();
         layout.borrow_mut().layout_in_layout(&layout_widget, (allocation.width, allocation.height));
     }
 
-    fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>) {
+    fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>, _widget_id: WidgetId, _widget_data: &Rc<WidgetData>) {
         layout_widget.connect_size_allocate(move |layout_widget, allocation| {
             layout.borrow_mut().layout_in_layout(layout_widget, (allocation.width, allocation.height));
         });
