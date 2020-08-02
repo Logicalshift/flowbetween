@@ -25,6 +25,7 @@ mod click;
 mod drag;
 mod paint;
 mod events;
+mod scroll_size;
 
 pub use self::image::*;
 pub use self::window::*;
