@@ -221,6 +221,7 @@ impl GtkUiWidget for FloFixedWidget {
         }
 
         // Queue a resize so the layout is done
+        self.layout.borrow_mut().force_next_layout();
         self.container.queue_resize();
     }
 
