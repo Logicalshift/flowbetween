@@ -147,17 +147,13 @@ impl FloFixedWidget {
 
 impl FixedWidgetLayout for gtk::Fixed {
     fn force_layout(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>) {
-        let container = fixed.upcast::<gtk::Container>();
-
         layout.borrow_mut().force_next_layout();
-        layout.borrow_mut().layout_fixed(&container);
+        layout.borrow_mut().layout_fixed(&fixed);
     }
 
     fn attach_layout_signal(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>) {
-        let container = fixed.upcast::<gtk::Container>();
-
-        container.connect_size_allocate(move |container, _allocation| {
-            layout.borrow_mut().layout_fixed(container);
+        fixed.connect_size_allocate(move |fixed, _allocation| {
+            layout.borrow_mut().layout_fixed(fixed);
         });
     }
 }

@@ -220,7 +220,7 @@ impl FloWidgetLayout {
     ///
     /// Lays out the widgets in a particular container (with 'Fixed' semantics - ie, GtkFixed or GtkLayout)
     ///
-    pub fn layout_fixed(&mut self, target: &gtk::Container) {
+    pub fn layout_fixed(&mut self, target: &gtk::Fixed) {
         let ((left, top), (right, bottom))  = self.get_padding();
         let allocation                      = target.get_allocation();
         let current_size                    = gtk::Rectangle {
