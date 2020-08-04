@@ -50,6 +50,8 @@ pub enum GtkWidgetType {
     ScrollArea,
     Popover,
 
+    Overlay,
+
     Rotor,
     CanvasDrawingArea,
     CanvasLayout,
