@@ -10,6 +10,7 @@ pub mod flo_scale_widget;
 pub mod flo_rotor_widget;
 pub mod flo_scroll_widget;
 pub mod flo_canvas_widget;
+pub mod flo_overlay_widget;
 pub mod flo_textbox_widget;
 pub mod flo_checkbox_widget;
 pub mod flo_render_canvas_widget;

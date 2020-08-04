@@ -7,6 +7,7 @@ use super::flo_scale_widget::*;
 use super::flo_rotor_widget::*;
 use super::flo_scroll_widget::*;
 use super::flo_canvas_widget::*;
+use super::flo_overlay_widget::*;
 use super::flo_textbox_widget::*;
 use super::flo_checkbox_widget::*;
 use super::flo_render_canvas_widget::*;
@@ -39,7 +40,7 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
         Label               => Box::new(FloLabelWidget::new(id, gtk::Label::new(None))),
         Popover             => Box::new(FloPopoverWidget::new(id, gtk::Layout::new::<gtk::Adjustment, gtk::Adjustment>(None, None), widget_data)),
 
-        Overlay             => Box::new(FloBinWidget::new(id, gtk::Overlay::new(), widget_data)),
+        Overlay             => Box::new(FloOverlayWidget::new(id, gtk::Overlay::new(), widget_data)),
 
         ScrollArea          => {
             let no_adjustment: Option<gtk::Adjustment> = None;
