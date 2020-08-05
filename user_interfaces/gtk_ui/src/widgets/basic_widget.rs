@@ -100,7 +100,7 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
             flo_gtk.get_window(window_id).map(|window| window.borrow_mut().set_root(flo_gtk, &widget));
         },
 
-        &Box                                        => { }
+        &IntoEventBox                               => { }
     }
 }
 

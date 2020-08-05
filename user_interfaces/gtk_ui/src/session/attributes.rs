@@ -131,7 +131,7 @@ impl ToGtkActions for Control {
 
         // Some controls need an event box (eg, to show a custom background or to allow for z-ordering)
         if needs_event_box(self) {
-            create_control.push(GtkWidgetAction::Box.into());
+            create_control.push(GtkWidgetAction::IntoEventBox.into());
         }
 
         // Controls have their own class for styling and are displayed by default

@@ -76,7 +76,7 @@ pub enum GtkWidgetAction {
     Show,
 
     /// Put this widget inside an event box
-    Box,
+    IntoEventBox,
 
     /// Updates the layout of this widget
     Layout(WidgetLayout),

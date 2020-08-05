@@ -121,7 +121,7 @@ fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<Gt
                 widget = None;
             },
 
-            &GtkWidgetAction::Box => {
+            &GtkWidgetAction::IntoEventBox => {
                 // Boxing a widget creates a new event box with the old widget inside
                 if let Some(widget_ref) = widget.as_ref() {
                     // Create a clone of the widget object
