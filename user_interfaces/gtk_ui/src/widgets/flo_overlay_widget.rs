@@ -6,7 +6,7 @@ use super::flo_fixed_widget::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 
-use flo_ui;
+use flo_ui as ui;
 
 use gtk;
 use gtk::prelude::*;
@@ -96,6 +96,16 @@ impl FloOverlayWidget {
 
         self.as_overlay.reorder_overlay(&self.overlaid_widget, 1);
     }
+
+    ///
+    /// Sets the image for this widget
+    ///
+    fn set_image(&mut self, new_image: ui::Resource<ui::Image>, flo_gtk: &mut FloGtk) {
+        let image_widget = image_from_image(new_image.clone());
+        image_widget.show();
+
+        self.set_overlaid_widget(image_widget.upcast());
+    }
 }
 
 impl GtkUiWidget for FloOverlayWidget {
@@ -107,7 +117,10 @@ impl GtkUiWidget for FloOverlayWidget {
         use self::GtkWidgetAction::*;
 
         match action {
-            // Showing the bin shows all the widgets
+            // Can set a background image (which becomes the overlaid widget)
+            &Appearance(flo_ui::Appearance::Image(ref new_image))   => { self.set_image(new_image.clone(), flo_gtk); }
+
+            // Showing the overlay shows all the widgets
             &Show                   => {
                 self.overlaid_widget.show();
                 self.layout.process(flo_gtk, action);
