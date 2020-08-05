@@ -40,7 +40,7 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
         Label               => Box::new(FloLabelWidget::new(id, gtk::Label::new(None))),
         Popover             => Box::new(FloPopoverWidget::new(id, gtk::Layout::new::<gtk::Adjustment, gtk::Adjustment>(None, None), widget_data)),
 
-        Overlay             => Box::new(FloOverlayWidget::new(id, gtk::Overlay::new(), widget_data)),
+        Overlay             => Box::new(FloOverlayWidget::new(id, gtk::Overlay::new(), gtk::Layout::new::<gtk::Adjustment, gtk::Adjustment>(None, None), widget_data)),
 
         ScrollArea          => {
             let no_adjustment: Option<gtk::Adjustment> = None;
