@@ -2,7 +2,7 @@ use super::viewmodel::*;
 use super::super::gtk_action::*;
 
 ///
-/// Represents a control within the
+/// Represents a control within the UI hierarchy
 ///
 pub struct GtkControl {
     /// The ID of the widget that is displaying the UI for this control
