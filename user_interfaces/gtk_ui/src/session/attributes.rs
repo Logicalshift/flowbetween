@@ -95,7 +95,7 @@ impl ToGtkActions for Control {
         // Convert the control type into the command to create the appropriate Gtk widget
         let create_new = match self.control_type() {
             Empty               => New(GtkWidgetType::Generic),
-            Container           => New(GtkWidgetType::Fixed),
+            Container           => New(GtkWidgetType::Overlay),
             CroppingContainer   => New(GtkWidgetType::Layout),
             ScrollingContainer  => New(GtkWidgetType::ScrollArea),
             Popup               => New(GtkWidgetType::Popover),
