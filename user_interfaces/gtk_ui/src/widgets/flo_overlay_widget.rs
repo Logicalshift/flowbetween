@@ -25,7 +25,7 @@ pub struct FloOverlayWidget {
     id: WidgetId,
 
     /// The overlay widget that this is managing
-    overlay: gtk::Overlay,
+    as_overlay: gtk::Overlay,
 
     /// The overlay again, but cast to a widget
     as_widget: gtk::Widget,
@@ -44,7 +44,7 @@ impl FloOverlayWidget {
     pub fn new<W: Clone+Cast+IsA<gtk::Overlay>+IsA<gtk::Widget>>(id: WidgetId, overlay_widget: W, widget_data: Rc<WidgetData>) -> FloOverlayWidget {
         FloOverlayWidget {
             id:             id,
-            overlay:        overlay_widget.clone().upcast::<gtk::Overlay>(),
+            as_overlay:     overlay_widget.clone().upcast::<gtk::Overlay>(),
             as_widget:      overlay_widget.upcast::<gtk::Widget>(),
             child_ids:      vec![],
             widget_data:    widget_data
@@ -69,7 +69,7 @@ impl GtkUiWidget for FloOverlayWidget {
 
     fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         let widget_data = &self.widget_data;
-        let container   = &self.overlay;
+        let container   = &self.as_overlay;
 
         // Remove any child widgets added by the previous call to this function
         self.child_ids.drain(..)
@@ -79,7 +79,7 @@ impl GtkUiWidget for FloOverlayWidget {
         // Add children to this widget
         self.child_ids.extend(children.iter().map(|child_widget| child_widget.borrow().id()));
         for child in children.iter() {
-            self.overlay.add(child.borrow().get_underlying());
+            self.as_overlay.add(child.borrow().get_underlying());
         }
     }
 
