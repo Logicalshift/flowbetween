@@ -64,6 +64,9 @@ impl FloOverlayWidget {
         overlay_widget.add(&overlaid_widget);
         overlay_widget.add(layout.get_underlying());
 
+        overlay_widget.reorder_overlay(&overlaid_widget, 1);
+        overlay_widget.reorder_overlay(layout.get_underlying(), 2);
+
         // Create the overlay
         FloOverlayWidget {
             id:                 id,
@@ -74,6 +77,24 @@ impl FloOverlayWidget {
             child_ids:          vec![],
             widget_data:        widget_data
         }
+    }
+
+    ///
+    /// Updates the widget we use for the overlay
+    ///
+    fn set_overlaid_widget(&mut self, new_overlaid_widget: gtk::Widget) {
+        // Remove both child widgets
+        self.as_overlay.remove(self.layout.get_underlying());
+        self.as_overlay.remove(&self.overlaid_widget);
+
+        self.overlaid_widget = new_overlaid_widget;
+
+        // Add the child widgets back again
+        self.as_overlay.add(&self.overlaid_widget);
+        self.as_overlay.add(self.layout.get_underlying());
+        self.overlaid_widget.show();
+
+        self.as_overlay.reorder_overlay(&self.overlaid_widget, 1);
     }
 }
 
