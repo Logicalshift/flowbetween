@@ -1,7 +1,7 @@
 use super::gtk_widget_event_type::*;
 
-use flo_ui::*;
-use flo_canvas::*;
+use flo_ui as ui;
+use flo_canvas as canvas;
 
 use gtk::*;
 
@@ -85,16 +85,16 @@ pub enum GtkWidgetAction {
     Content(WidgetContent),
 
     /// Updates the appearance of this widget
-    Appearance(Appearance),
+    Appearance(ui::Appearance),
 
     /// Updates the state of this widget
     State(WidgetState),
 
     /// Updates the font properties for this widget
-    Font(Font),
+    Font(ui::Font),
 
     /// Updates how the content of this widget scrolls
-    Scroll(Scroll),
+    Scroll(ui::Scroll),
 
     /// Controls the popup attributes of this widget
     Popup(WidgetPopup),
@@ -121,7 +121,7 @@ pub enum WidgetContent {
     RemoveClass(String),
 
     /// Specifies a drawing to perform on this widget
-    Draw(Vec<Draw>)
+    Draw(Vec<canvas::Draw>)
 }
 
 impl From<WidgetContent> for GtkWidgetAction {
@@ -136,7 +136,7 @@ impl From<WidgetContent> for GtkWidgetAction {
 #[derive(Clone, PartialEq, Debug)]
 pub enum WidgetLayout {
     /// Specifies how this widget should be laid out
-    BoundingBox(Bounds),
+    BoundingBox(ui::Bounds),
 
     /// Specifies the floating offset for this widget
     Floating(f64, f64),
@@ -199,7 +199,7 @@ impl From<WidgetState> for GtkWidgetAction {
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum WidgetPopup {
     /// Sets the direction this popup will open
-    SetDirection(PopupDirection),
+    SetDirection(ui::PopupDirection),
 
     /// Sets the size of this popup
     SetSize(u32, u32),
@@ -217,20 +217,20 @@ impl From<WidgetPopup> for GtkWidgetAction {
     }
 }
 
-impl From<Font> for GtkWidgetAction {
-    fn from(item: Font) -> GtkWidgetAction {
+impl From<ui::Font> for GtkWidgetAction {
+    fn from(item: ui::Font) -> GtkWidgetAction {
         GtkWidgetAction::Font(item)
     }
 }
 
-impl From<Appearance> for GtkWidgetAction {
-    fn from(item: Appearance) -> GtkWidgetAction {
+impl From<ui::Appearance> for GtkWidgetAction {
+    fn from(item: ui::Appearance) -> GtkWidgetAction {
         GtkWidgetAction::Appearance(item)
     }
 }
 
-impl From<Scroll> for GtkWidgetAction {
-    fn from(item: Scroll) -> GtkWidgetAction {
+impl From<ui::Scroll> for GtkWidgetAction {
+    fn from(item: ui::Scroll) -> GtkWidgetAction {
         GtkWidgetAction::Scroll(item)
     }
 }
