@@ -58,6 +58,23 @@ fn canvas_type_for_control(control: &Control) -> GtkWidgetType {
 }
 
 ///
+/// Determines if a control needs to use an overlay or not
+///
+fn needs_overlay(control: &Control) -> bool {
+    use self::ControlAttribute::*;
+
+    control.attributes().any(|attribute| {
+        match attribute {
+            // Images are drawn under any child controls, so an overlay should be used
+            &AppearanceAttr(Appearance::Image(_))   => true,
+
+            // Other controls do not need an event box
+            _                                       => false
+        }
+    })
+}
+
+///
 /// Determines if a control needs an event box or not
 ///
 fn needs_event_box(control: &Control) -> bool {
@@ -66,20 +83,20 @@ fn needs_event_box(control: &Control) -> bool {
     control.attributes().any(|attribute| {
         match attribute {
             // Controls with a background colour need an event box
-            &AppearanceAttr(Appearance::Background(_)) => true,
+            &AppearanceAttr(Appearance::Background(_))  => true,
 
             // Controls with a z-index need an event box
-            &ZIndex(_) => true,
+            &ZIndex(_)                                  => true,
 
             // Controls with painting need to turn off event compression
-            &Action(ActionTrigger::Paint(_), _) => true,
+            &Action(ActionTrigger::Paint(_), _)         => true,
 
             // Controls that can be clicked or dragged need an event box for their target
-            &Action(ActionTrigger::Click, _) => true,
-            &Action(ActionTrigger::Drag, _) => true,
+            &Action(ActionTrigger::Click, _)            => true,
+            &Action(ActionTrigger::Drag, _)             => true,
 
             // Other controls do not need an event box
-            _ => false
+            _                                           => false
         }
     })
 }
@@ -95,7 +112,7 @@ impl ToGtkActions for Control {
         // Convert the control type into the command to create the appropriate Gtk widget
         let create_new = match self.control_type() {
             Empty               => New(GtkWidgetType::Generic),
-            Container           => New(GtkWidgetType::Overlay),
+            Container           => if needs_overlay(self) { New(GtkWidgetType::Overlay) } else { New(GtkWidgetType::Fixed) },
             CroppingContainer   => New(GtkWidgetType::Layout),
             ScrollingContainer  => New(GtkWidgetType::ScrollArea),
             Popup               => New(GtkWidgetType::Popover),
