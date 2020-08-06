@@ -51,7 +51,10 @@ impl FloOverlayWidget {
     ///
     pub fn new<W, Container>(id: WidgetId, overlay_widget: W, container_widget: Container, widget_data: Rc<WidgetData>) -> FloOverlayWidget 
     where   W:          Clone+Cast+IsA<gtk::Overlay>+IsA<gtk::Widget>,
-            Container:  'static+Cast+Clone+IsA<gtk::Container>+FixedWidgetLayout {
+            Container:  'static+Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>+FixedWidgetLayout {
+        // Make sure the container is displayed
+        container_widget.show();
+
         // Create the container
         let layout          = FloFixedWidget::new(id, container_widget, Rc::clone(&widget_data));
 
@@ -81,7 +84,7 @@ impl FloOverlayWidget {
     ///
     /// Updates the widget we use for the overlay
     ///
-    fn set_overlaid_widget(&mut self, new_overlaid_widget: gtk::Widget) {
+    pub fn set_overlaid_widget(&mut self, new_overlaid_widget: gtk::Widget) {
         // Remove both child widgets
         self.as_overlay.remove(&self.overlaid_widget);
 

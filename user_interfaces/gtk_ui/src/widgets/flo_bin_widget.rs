@@ -2,7 +2,7 @@ use super::image::*;
 use super::widget::*;
 use super::widget_data::*;
 use super::basic_widget::*;
-use super::flo_fixed_widget::*;
+use super::flo_overlay_widget::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 
@@ -41,7 +41,7 @@ pub struct FloBinWidget {
     image: Option<(Resource<Image>, gtk::Image)>,
 
     /// If we have more child widgets, then we create a fixed widget to store them in
-    fixed: Option<FloFixedWidget>
+    overlay: Option<FloOverlayWidget>
 }
 
 impl FloBinWidget {
@@ -56,7 +56,7 @@ impl FloBinWidget {
             widget_data:    widget_data,
             label:          None,
             image:          None,
-            fixed:          None
+            overlay:        None
         }
     }
 
@@ -64,26 +64,28 @@ impl FloBinWidget {
     /// Creates the fixed widget, if it doesn't already exist
     ///
     fn make_fixed(&mut self, flo_gtk: &mut FloGtk) {
-        if self.fixed.is_none() {
+        if self.overlay.is_none() {
             // Create the fixed widget
-            let fixed_widget    = gtk::Fixed::new();
-            let mut fixed       = FloFixedWidget::new(self.id, fixed_widget.clone(), Rc::clone(&self.widget_data));
+            let fixed_widget    = gtk::Overlay::new();
+            let mut fixed       = FloOverlayWidget::new(self.id, fixed_widget.clone(), gtk::Fixed::new(), Rc::clone(&self.widget_data));
 
             fixed_widget.show();
 
             // Add labels and images if necessary (also removing the widgets)
             if let Some((label_text, label_widget)) = self.label.take() {
                 self.bin.remove(&label_widget);
-                fixed.process(flo_gtk, &WidgetContent::SetText(label_text).into());
+                label_widget.show();
+                fixed.set_overlaid_widget(label_widget.upcast());
             }
 
             if let Some((image_resource, image_widget)) = self.image.take() {
                 self.bin.remove(&image_widget);
-                fixed.process(flo_gtk, &Appearance::Image(image_resource).into());
+                image_widget.show();
+                fixed.set_overlaid_widget(image_widget.upcast());
             }
 
             // The fixed widget becomes the child of this widget
-            self.fixed = Some(fixed);
+            self.overlay = Some(fixed);
             self.bin.add(&fixed_widget);
         }
     }
@@ -96,7 +98,7 @@ impl FloBinWidget {
             // If there's already a label control, then update it
             label_widget.set_text(&new_label);
             *label_text = new_label;
-        } else if self.image.is_none() && self.fixed.is_none() {
+        } else if self.image.is_none() && self.overlay.is_none() {
             // If there's no label widget, create one
             let label_widget = gtk::Label::new(Some(new_label.as_str()));
             label_widget.show();
@@ -106,7 +108,7 @@ impl FloBinWidget {
         } else {
             // Send the request to the fixed object underneath this one
             self.make_fixed(flo_gtk);
-            self.fixed.as_mut().map(|fixed| fixed.process(flo_gtk, &WidgetContent::SetText(new_label).into()));
+            self.overlay.as_mut().map(|fixed| fixed.process(flo_gtk, &WidgetContent::SetText(new_label).into()));
         }
     }
 
@@ -119,7 +121,7 @@ impl FloBinWidget {
             self.bin.remove(&old_image_widget);
         }
 
-        if self.label.is_none() && self.fixed.is_none() {
+        if self.label.is_none() && self.overlay.is_none() {
             // If there's no image widget, create one
             let image_widget = image_from_image(new_image.clone());
             image_widget.show();
@@ -129,7 +131,7 @@ impl FloBinWidget {
         } else {
             // Send the request to the fixed object underneath this one
             self.make_fixed(flo_gtk);
-            self.fixed.as_mut().map(|fixed| fixed.process(flo_gtk, &Appearance::Image(new_image).into()));
+            self.overlay.as_mut().map(|fixed| fixed.process(flo_gtk, &Appearance::Image(new_image).into()));
         }
     }
 }
@@ -167,7 +169,7 @@ impl GtkUiWidget for FloBinWidget {
             // Showing the bin shows both this and the proxy widget
             &Show                   => {
                 process_basic_widget_action(self, flo_gtk, action);
-                self.fixed.as_mut().map(|fixed| fixed.process(flo_gtk, action));
+                self.overlay.as_mut().map(|fixed| fixed.process(flo_gtk, action));
             },
 
             // Deletions remove the bin widget and not the underlying one
@@ -175,7 +177,7 @@ impl GtkUiWidget for FloBinWidget {
 
             // Everything else is either passed to the fixed widget or processed via the normal steps
             _                       => {
-                if let Some(ref mut fixed) = self.fixed {
+                if let Some(ref mut fixed) = self.overlay {
                     fixed.process(flo_gtk, action);
                 } else {
                     process_basic_widget_action(self, flo_gtk, action);
@@ -186,7 +188,7 @@ impl GtkUiWidget for FloBinWidget {
 
     fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // Child widgets are always added to the fixed widget
-        self.fixed.as_mut().map(move |fixed| fixed.set_children(children));
+        self.overlay.as_mut().map(move |fixed| fixed.set_children(children));
     }
 
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
