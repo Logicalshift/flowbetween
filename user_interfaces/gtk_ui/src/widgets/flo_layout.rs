@@ -292,7 +292,7 @@ impl FloWidgetLayout {
         let container_height            = height.max(1);
 
         // Get the layout for this widget
-        let layout      = self.get_layout(container_width as f64, container_height as f64);
+        let layout                      = self.get_layout(container_width as f64, container_height as f64);
 
         // Position each of the widgets
         let mut remaining: HashSet<_>   = target.get_children().into_iter().collect();
