@@ -284,7 +284,7 @@ impl GtkSessionCore {
     /// Generates the actions to create a particular control, and binds it to the viewmodel to keep it up to
     /// date
     ///
-    fn create_control(&mut self, control: &Control, controller_path: Rc<Vec<String>>) -> (GtkControl, Vec<GtkAction>) {
+    fn create_control(&mut self, control: &Control, controller_path: Rc<Vec<String>>, is_root: bool) -> (GtkControl, Vec<GtkAction>) {
         // Assign an ID for this control
         let control_id      = self.create_widget_id();
         let mut gtk_control = GtkControl::new(control_id, control.controller().map(|controller| controller.to_string()));
@@ -293,7 +293,23 @@ impl GtkSessionCore {
         self.controller_for_widget.insert(control_id, Rc::clone(&controller_path));
 
         // Get the actions to create this control
-        let create_this_control = control.to_gtk_actions();
+        let mut create_this_control = control.to_gtk_actions();
+
+        // For the root control only we want to create a layout rather than a fixed container (so Gtk will let the user shrink the window)
+        if is_root {
+            create_this_control = create_this_control.into_iter()
+                .map(|action| {
+                    match action {
+                        PropertyAction::Unbound(GtkWidgetAction::New(GtkWidgetType::Fixed))     |
+                        PropertyAction::Unbound(GtkWidgetAction::New(GtkWidgetType::Overlay))   => {
+                            PropertyAction::Unbound(GtkWidgetAction::New(GtkWidgetType::Layout))
+                        }
+
+                        other => other
+                    }
+                })
+                .collect();
+        }
 
         // Bind any properties to the view model
         let mut create_this_control = self.bind_viewmodel(control_id, Rc::clone(&controller_path), create_this_control);
@@ -313,7 +329,7 @@ impl GtkSessionCore {
         let mut subcomponent_ids = vec![];
         for subcomponent in control.subcomponents().unwrap_or(&vec![]) {
             // Create the subcomponent
-            let (subcomponent, create_subcomponent) = self.create_control(subcomponent, Rc::clone(&subcomponents_controller_path));
+            let (subcomponent, create_subcomponent) = self.create_control(subcomponent, Rc::clone(&subcomponents_controller_path), false);
 
             // Store as a child control
             subcomponent_ids.push(subcomponent.widget_id);
@@ -492,7 +508,7 @@ impl GtkSessionCore {
         let controller_path = self.controller_path_for_address(&diff.address);
 
         // Create the actions to generate the control in this diff
-        let (new_control, new_control_actions) = self.create_control(&diff.new_ui, Rc::new(controller_path));
+        let (new_control, new_control_actions) = self.create_control(&diff.new_ui, Rc::new(controller_path), diff.address.len() == 0);
 
         // Replace the control at the specified address with our new control
         let replace_actions = self.replace_control(&diff.address, new_control);
