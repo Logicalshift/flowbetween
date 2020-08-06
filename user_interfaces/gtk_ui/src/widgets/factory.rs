@@ -27,12 +27,12 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
     use self::GtkWidgetType::*;
 
     match widget_type {
-        Generic             => Box::new(FloFixedWidget::new(id, gtk::Layout::new::<gtk::Adjustment, gtk::Adjustment>(None, None), widget_data)),
+        Generic             => Box::new(FloFixedWidget::new(id, gtk::Fixed::new(), widget_data)),
         Layout              => {
             let no_adjustment: Option<gtk::Adjustment> = None;
             Box::new(FloFixedWidget::new(id, gtk::Layout::new(no_adjustment.as_ref(), no_adjustment.as_ref()), widget_data))
         },
-        Fixed               => Box::new(FloFixedWidget::new(id, gtk::Layout::new::<gtk::Adjustment, gtk::Adjustment>(None, None), widget_data)),
+        Fixed               => Box::new(FloFixedWidget::new(id, gtk::Fixed::new(), widget_data)),
         Button              => Box::new(FloBinWidget::new(id, gtk::Button::new(), widget_data)),
         ToggleButton        => Box::new(FloBinWidget::new(id, gtk::ToggleButton::new(), widget_data)),
         CheckBox            => Box::new(FloCheckBoxWidget::new(id, gtk::CheckButton::new())),
