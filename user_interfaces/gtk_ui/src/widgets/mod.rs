@@ -27,6 +27,7 @@ mod drag;
 mod paint;
 mod events;
 mod scroll_size;
+mod max_layout_size;
 
 pub use self::image::*;
 pub use self::window::*;
