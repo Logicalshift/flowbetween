@@ -284,6 +284,8 @@ impl FloWidgetLayout {
     fn layout_in_container<'a, T, MoveFn>(&'a self, target: &T, move_widget: MoveFn, min_x: i32, min_y: i32, width: i32, height: i32) 
     where   T:      Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>,
             MoveFn: 'a+Fn(&gtk::Widget, i32, i32) -> () {
+        // When we call 'move_widget' the coordinate system goes from 0 - width, and when we call 'size_allocate' it goes from
+        // min_x - min_x+width. min_x here is the position + the padding so we need to add the padding in again when calling 'move'
         let ((pad_x, pad_y), (_, _))    = self.get_padding();
 
         let container_width             = width.max(1);
