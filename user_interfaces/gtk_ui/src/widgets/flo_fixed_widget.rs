@@ -148,14 +148,44 @@ impl FloFixedWidget {
 }
 
 impl FixedWidgetLayout for gtk::Fixed {
-    fn force_layout(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>, _widget_id: WidgetId, _widget_data: &Rc<WidgetData>) {
+    fn force_layout(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
+        let mut allocation = fixed.get_allocation();
+
+        if let Some(widget_layout) = widget_data.get_widget_data::<WidgetPosition>(widget_id) {
+            // If the layout has already decided on a maximum width, don't use a larger width than this (though we do allow the widget to shrink its contents if necessary)
+            let widget_layout   = widget_layout.borrow();
+            let max_width       = (widget_layout.x2-widget_layout.x1).max(1.0);
+            let max_height      = (widget_layout.y2-widget_layout.y1).max(1.0);
+            let max_width       = max_width as i32;
+            let max_height      = max_height as i32;
+
+            if allocation.width > max_width     { allocation.width = max_width; }
+            if allocation.height > max_height   { allocation.height = max_height; }
+        }
+
         layout.borrow_mut().force_next_layout();
-        layout.borrow_mut().layout_fixed(&fixed, fixed.get_allocation());
+        layout.borrow_mut().layout_fixed(&fixed, allocation);
     }
 
-    fn attach_layout_signal(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>, _widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
+    fn attach_layout_signal(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
+        let widget_data = widget_data.clone();
+
         fixed.connect_size_allocate(move |fixed, allocation| {
-            layout.borrow_mut().layout_fixed(fixed, *allocation);
+            let mut allocation = *allocation;
+
+            if let Some(widget_layout) = widget_data.get_widget_data::<WidgetPosition>(widget_id) {
+                // If the layout has already decided on a maximum width, don't use a larger width than this (though we do allow the widget to shrink its contents if necessary)
+                let widget_layout   = widget_layout.borrow();
+                let max_width       = (widget_layout.x2-widget_layout.x1).max(1.0);
+                let max_height      = (widget_layout.y2-widget_layout.y1).max(1.0);
+                let max_width       = max_width as i32;
+                let max_height      = max_height as i32;
+
+                if allocation.width > max_width     { allocation.width = max_width; }
+                if allocation.height > max_height   { allocation.height = max_height; }
+            }
+
+            layout.borrow_mut().layout_fixed(fixed, allocation);
         });
     }
 }
