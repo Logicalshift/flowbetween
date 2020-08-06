@@ -284,8 +284,10 @@ impl FloWidgetLayout {
     fn layout_in_container<'a, T, MoveFn>(&'a self, target: &T, move_widget: MoveFn, min_x: i32, min_y: i32, width: i32, height: i32) 
     where   T:      Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>,
             MoveFn: 'a+Fn(&gtk::Widget, i32, i32) -> () {
-        let container_width     = width.max(1);
-        let container_height    = height.max(1);
+        let ((pad_x, pad_y), (_, _))    = self.get_padding();
+
+        let container_width             = width.max(1);
+        let container_height            = height.max(1);
 
         // Get the layout for this widget
         let layout      = self.get_layout(container_width as f64, container_height as f64);
@@ -342,7 +344,7 @@ impl FloWidgetLayout {
                     let _preferred_size = (underlying.get_preferred_width(), underlying.get_preferred_height());    // Side-effect: suppress warning about fixed layout
 
                     // Allocate the widget where we actually want it to go
-                    move_widget(&underlying, new_x - min_x, new_y - min_y);
+                    move_widget(&underlying, new_x - min_x + pad_x, new_y - min_y + pad_y);
                     underlying.size_allocate(&mut new_allocation);
                 }
 
@@ -364,7 +366,7 @@ impl FloWidgetLayout {
             let _preferred_size = (extra_widget.get_preferred_width(), extra_widget.get_preferred_height());    // Side-effect: suppress warning about fixed layout
 
             // Allocate the size for this widget
-            move_widget(&extra_widget, 0, 0);
+            move_widget(&extra_widget, pad_x, pad_y);
             extra_widget.size_allocate(&mut full_size.clone());
         }
     }
