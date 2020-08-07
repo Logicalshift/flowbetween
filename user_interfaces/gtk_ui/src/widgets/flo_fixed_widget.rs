@@ -205,6 +205,15 @@ impl FixedWidgetLayout for gtk::Layout {
             if layout_widget.get_size() != (layout_width as u32, layout_height as u32) {
                 layout_widget.set_size(layout_width as u32, layout_height as u32);
             }
+        } else if let Some(widget_layout) = widget_data.get_widget_data::<WidgetPosition>(widget_id) {
+            let widget_layout =  widget_layout.borrow();
+
+            layout_width        = layout_width.max(widget_layout.width() as i32);
+            layout_height       = layout_height.max(widget_layout.height() as i32);
+
+            if layout_widget.get_size() != (layout_width as u32, layout_height as u32) {
+                layout_widget.set_size(layout_width as u32, layout_height as u32);
+            }
         }
 
         layout.borrow_mut().force_next_layout();
@@ -223,6 +232,15 @@ impl FixedWidgetLayout for gtk::Layout {
 
                 layout_width    = layout_width.max(scroll_size.width);
                 layout_height   = layout_height.max(scroll_size.height);
+
+                if layout_widget.get_size() != (layout_width as u32, layout_height as u32) {
+                    layout_widget.set_size(layout_width as u32, layout_height as u32);
+                }
+            } else if let Some(widget_layout) = widget_data.get_widget_data::<WidgetPosition>(widget_id) {
+                let widget_layout =  widget_layout.borrow();
+
+                layout_width        = layout_width.max(widget_layout.width() as i32);
+                layout_height       = layout_height.max(widget_layout.height() as i32);
 
                 if layout_widget.get_size() != (layout_width as u32, layout_height as u32) {
                     layout_widget.set_size(layout_width as u32, layout_height as u32);

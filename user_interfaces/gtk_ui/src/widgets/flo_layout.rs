@@ -51,6 +51,14 @@ pub struct FloWidgetLayout {
     widget_data: Rc<WidgetData>
 }
 
+impl WidgetPosition {
+    /// The width of the widget
+    pub fn width(&self) -> f64 { self.x2-self.x1 }
+
+    /// The height of the widget
+    pub fn height(&self) -> f64 { self.y2-self.y1 }
+}
+
 impl FloWidgetLayout {
     ///
     /// Creates a new Gtk widget layout object
