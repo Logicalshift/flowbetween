@@ -51,6 +51,9 @@ pub struct FloPopoverWidget {
     /// The base widget, used as the target for the popup
     widget: gtk::Widget,
 
+    /// The widget data object
+    widget_data: Rc<WidgetData>,
+
     /// Data shared with the layout routine
     popup_data: Rc<RefCell<FloPopoverData>>
 }
@@ -91,11 +94,12 @@ impl FloPopoverWidget {
         let content = FloFixedWidget::new(id, content, Rc::clone(&widget_data));
 
         FloPopoverWidget {
-            id:         id,
-            content:    content,
-            popover:    popover,
-            widget:     widget,
-            popup_data: popup_data
+            id:             id,
+            content:        content,
+            popover:        popover,
+            widget:         widget,
+            widget_data:    widget_data,
+            popup_data:     popup_data
         }
     }
 
@@ -194,6 +198,7 @@ impl GtkUiWidget for FloPopoverWidget {
             &Popup(SetDirection(direction)) => { self.popup_data.borrow_mut().direction = direction; self.popover.set_position(Self::position_for_direction(direction)); self.popup_data.borrow().position(&self.popover, &self.widget.get_allocation()); },
             &Popup(SetSize(width, height))  => { 
                 self.content.get_underlying().set_size_request(width as i32, height as i32);
+                self.widget_data.set_widget_data(self.id, ScrollSize { width: width as i32, height: height as i32 });
             },
             &Popup(SetOffset(offset))       => { self.popup_data.borrow_mut().offset = offset; self.popup_data.borrow().position(&self.popover, &self.widget.get_allocation()); },
 
