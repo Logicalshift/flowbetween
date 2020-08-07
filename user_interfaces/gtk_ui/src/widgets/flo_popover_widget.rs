@@ -62,7 +62,7 @@ impl FloPopoverWidget {
         // Create the various components
         let widget          = widget.upcast::<gtk::Widget>();
         let popover         = gtk::Popover::new(Some(&widget));
-        let content         = gtk::Fixed::new();
+        let content         = gtk::Layout::new::<gtk::Adjustment, gtk::Adjustment>(None, None);
 
         // Create the layout data
         let data    = Rc::new(RefCell::new(FloPopoverData {
@@ -191,7 +191,9 @@ impl GtkUiWidget for FloPopoverWidget {
 
         match action {
             &Popup(SetDirection(direction)) => { self.data.borrow_mut().direction = direction; self.popover.set_position(Self::position_for_direction(direction)); self.data.borrow().position(&self.popover, &self.widget.get_allocation()); },
-            &Popup(SetSize(width, height))  => { self.content.get_underlying().set_size_request(width as i32, height as i32); },
+            &Popup(SetSize(width, height))  => { 
+                self.content.get_underlying().set_size_request(width as i32, height as i32);
+            },
             &Popup(SetOffset(offset))       => { self.data.borrow_mut().offset = offset; self.data.borrow().position(&self.popover, &self.widget.get_allocation()); },
 
             &Popup(SetOpen(is_open))        => {
