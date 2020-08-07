@@ -1,5 +1,6 @@
 use super::widget::*;
 use super::widget_data::*;
+use super::scroll_size::*;
 use super::basic_widget::*;
 use super::flo_fixed_widget::*;
 use super::super::gtk_event::*;
@@ -51,7 +52,7 @@ pub struct FloPopoverWidget {
     widget: gtk::Widget,
 
     /// Data shared with the layout routine
-    data: Rc<RefCell<FloPopoverData>>
+    popup_data: Rc<RefCell<FloPopoverData>>
 }
 
 impl FloPopoverWidget {
@@ -65,7 +66,7 @@ impl FloPopoverWidget {
         let content         = gtk::Layout::new::<gtk::Adjustment, gtk::Adjustment>(None, None);
 
         // Create the layout data
-        let data    = Rc::new(RefCell::new(FloPopoverData {
+        let popup_data      = Rc::new(RefCell::new(FloPopoverData {
             direction:  PopupDirection::Below,
             offset:     0,
             is_open:    false,
@@ -77,8 +78,8 @@ impl FloPopoverWidget {
         popover.add(&content);
         popover.set_transitions_enabled(true);
 
-        Self::connect_position_on_size_allocate(&widget, popover.clone(), Rc::clone(&data));
-        Self::connect_reopen(&widget, popover.clone(), Rc::clone(&data));
+        Self::connect_position_on_size_allocate(&widget, popover.clone(), Rc::clone(&popup_data));
+        Self::connect_reopen(&widget, popover.clone(), Rc::clone(&popup_data));
 
         // TODO: somehow get the styles to cascade from the parent widget
         popover.override_background_color(gtk::StateFlags::NORMAL, Some(&gdk::RGBA { red: 0.20, green: 0.22, blue: 0.25, alpha: 0.94 }));
@@ -94,7 +95,7 @@ impl FloPopoverWidget {
             content:    content,
             popover:    popover,
             widget:     widget,
-            data:       data
+            popup_data: popup_data
         }
     }
 
@@ -190,15 +191,15 @@ impl GtkUiWidget for FloPopoverWidget {
         use WidgetPopup::*;
 
         match action {
-            &Popup(SetDirection(direction)) => { self.data.borrow_mut().direction = direction; self.popover.set_position(Self::position_for_direction(direction)); self.data.borrow().position(&self.popover, &self.widget.get_allocation()); },
+            &Popup(SetDirection(direction)) => { self.popup_data.borrow_mut().direction = direction; self.popover.set_position(Self::position_for_direction(direction)); self.popup_data.borrow().position(&self.popover, &self.widget.get_allocation()); },
             &Popup(SetSize(width, height))  => { 
                 self.content.get_underlying().set_size_request(width as i32, height as i32);
             },
-            &Popup(SetOffset(offset))       => { self.data.borrow_mut().offset = offset; self.data.borrow().position(&self.popover, &self.widget.get_allocation()); },
+            &Popup(SetOffset(offset))       => { self.popup_data.borrow_mut().offset = offset; self.popup_data.borrow().position(&self.popover, &self.widget.get_allocation()); },
 
             &Popup(SetOpen(is_open))        => {
                 // Store whether or not the popover is supposed to be open
-                self.data.borrow_mut().is_open = is_open;
+                self.popup_data.borrow_mut().is_open = is_open;
 
                 // Open the popup, if the backing widget has a parent
                 if self.widget.get_parent().is_some() {
@@ -214,7 +215,7 @@ impl GtkUiWidget for FloPopoverWidget {
                 let action_name = action_name.clone();
                 let sink        = flo_gtk.get_event_sink();
                 let widget_id   = self.id;
-                let data        = Rc::clone(&self.data);
+                let popup_data  = Rc::clone(&self.popup_data);
 
                 // Popover becomes modal again (it needs to be hidden/shown for this to take effect)
                 self.popover.hide();
@@ -223,7 +224,7 @@ impl GtkUiWidget for FloPopoverWidget {
 
                 // The hide event causes the popup to dismiss
                 self.popover.connect_hide(move |_widget| {
-                    let reopening = data.borrow().reopening;
+                    let reopening = popup_data.borrow().reopening;
 
                     if !reopening {
                         publish_event(&sink, GtkEvent::Event(widget_id, action_name.clone(), GtkEventParameter::None));
