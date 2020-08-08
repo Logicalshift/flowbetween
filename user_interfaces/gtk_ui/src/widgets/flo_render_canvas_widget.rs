@@ -129,12 +129,15 @@ impl FloRenderCanvasWidget {
                 let position            = core.widget_data.get_widget_data::<WidgetPosition>(core.widget_id);
                 let position            = match position { None => { return; }, Some(position) => position };
                 let position            = position.borrow();
+
                 let allocation          = gl_widget.get_allocation();
                 let scale               = gl_widget.get_scale_factor();
 
                 // Set whatever is set as the current framebuffer as the render target
-                let width               = allocation.width as f32;
-                let height              = allocation.height as f32;
+                let viewport_x          = allocation.x as f32;
+                let viewport_y          = allocation.y as f32;
+                let viewport_width      = allocation.width as f32;
+                let viewport_height     = allocation.height as f32;
 
                 // Set up the canvas renderer
                 let canvas_renderer     = &mut core.canvas_renderer;
@@ -143,11 +146,11 @@ impl FloRenderCanvasWidget {
 
                 let window_width        = (position.x2-position.x1) as f32;
                 let window_height       = (position.y2-position.y1) as f32;
-                canvas_renderer.set_viewport(0.0..width, 0.0..height, window_width, window_height);
+                canvas_renderer.set_viewport(viewport_x..viewport_width, viewport_y..viewport_height, window_width, window_height);
 
                 if let Some(renderer) = renderer {
                     // Set up the renderer to render to the current framebuffer
-                    renderer.prepare_to_render_to_active_framebuffer(width as usize, height as usize);
+                    renderer.prepare_to_render_to_active_framebuffer(viewport_width as usize, viewport_height as usize);
 
                     // Draw any pending instructions
                     let mut pending_drawing = vec![];
