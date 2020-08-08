@@ -59,7 +59,9 @@ impl WidgetData {
     ///
     pub fn register_widget<TWidget: 'static+GtkUiWidget>(&self, widget_id: WidgetId, widget: TWidget) {
         self.widgets.borrow_mut().insert(widget_id, Rc::new(RefCell::new(widget)));
-        self.widget_data.borrow_mut().insert(widget_id, AnyMap::new());
+        self.widget_data.borrow_mut()
+            .entry(widget_id)
+            .or_insert_with(|| AnyMap::new());
     }
 
     ///
@@ -91,8 +93,9 @@ impl WidgetData {
     ///
     pub fn set_widget_data<TData: 'static>(&self, widget_id: WidgetId, new_data: TData) {
         self.widget_data.borrow_mut()
-            .get_mut(&widget_id)
-            .map(move |anymap| anymap.insert(Rc::new(RefCell::new(new_data))));
+            .entry(widget_id)
+            .or_insert_with(|| AnyMap::new())
+            .insert(Rc::new(RefCell::new(new_data)));
     }
 
     ///
@@ -101,7 +104,7 @@ impl WidgetData {
     pub fn get_widget_data<'a, TData: 'static>(&'a self, widget_id: WidgetId) -> Option<WidgetDataEntry<TData>> {
         self.widget_data.borrow_mut()
             .get_mut(&widget_id)
-            .and_then(move |anymap| anymap.get_mut::<Rc<RefCell<TData>>>())
+            .and_then(move |anymap| anymap.get::<Rc<RefCell<TData>>>())
             .map(|data| WidgetDataEntry { data: Rc::clone(&data) })
     }
 
