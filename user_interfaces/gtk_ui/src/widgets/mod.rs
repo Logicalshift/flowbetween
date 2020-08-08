@@ -19,6 +19,7 @@ pub mod proxy_widget;
 pub mod flo_layout;
 mod custom_style;
 mod layout;
+mod layout_settings;
 mod run_action;
 mod factory;
 mod image;
