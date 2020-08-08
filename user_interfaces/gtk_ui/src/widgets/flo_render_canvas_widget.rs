@@ -70,6 +70,7 @@ impl FloRenderCanvasWidget {
         // This needs to be clipped to the viewport by whatever lays it out
         let layout_settings = LayoutSettings { clip_to_viewport: true };
         data.set_widget_data(widget_id, layout_settings);
+        debug_assert!(data.get_widget_data::<LayoutSettings>(widget_id).is_some());
 
         // Set it up
         as_glarea.set_has_alpha(true);
