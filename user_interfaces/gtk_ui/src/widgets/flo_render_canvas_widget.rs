@@ -1,6 +1,7 @@
 use crate::gtk_action::*;
 use crate::gtk_thread::*;
 use crate::widgets::*;
+use crate::widgets::flo_layout::*;
 use crate::widgets::basic_widget::*;
 use crate::widgets::layout_settings::*;
 
@@ -125,21 +126,24 @@ impl FloRenderCanvasWidget {
                 let core                = &mut *core;
 
                 // Get the current size of the control
+                let position            = core.widget_data.get_widget_data::<WidgetPosition>(core.widget_id);
+                let position            = match position { None => { return; }, Some(position) => position };
+                let position            = position.borrow();
                 let allocation          = gl_widget.get_allocation();
                 let scale               = gl_widget.get_scale_factor();
 
                 // Set whatever is set as the current framebuffer as the render target
-                let width               = allocation.width * scale;
-                let height              = allocation.height * scale;
+                let width               = allocation.width as f32;
+                let height              = allocation.height as f32;
 
                 // Set up the canvas renderer
                 let canvas_renderer     = &mut core.canvas_renderer;
                 let waiting_to_render   = &mut core.waiting_to_render;
                 let renderer            = &mut core.renderer;
 
-                let window_width        = allocation.width as f32;
-                let window_height       = allocation.height as f32;
-                canvas_renderer.set_viewport(0.0..window_width, 0.0..window_height, window_width, window_height);
+                let window_width        = (position.x2-position.x1) as f32;
+                let window_height       = (position.y2-position.y1) as f32;
+                canvas_renderer.set_viewport(0.0..width, 0.0..height, window_width, window_height);
 
                 if let Some(renderer) = renderer {
                     // Set up the renderer to render to the current framebuffer
