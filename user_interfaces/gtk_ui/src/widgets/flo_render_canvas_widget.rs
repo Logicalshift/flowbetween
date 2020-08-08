@@ -139,7 +139,7 @@ impl FloRenderCanvasWidget {
 
                 // Set whatever is set as the current framebuffer as the render target
                 let viewport_x          = viewport.x1 as f32;
-                let viewport_y          = viewport.y1 as f32;
+                let viewport_y          = (position.y2 - viewport.y1 - allocation.height as f64) as f32;
                 let viewport_width      = allocation.width as f32;
                 let viewport_height     = allocation.height as f32;
 
