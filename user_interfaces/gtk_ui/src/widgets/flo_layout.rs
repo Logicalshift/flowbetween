@@ -372,9 +372,17 @@ impl FloWidgetLayout {
 
                 // Clip the allocation to the viewport if necessary
                 if self.clips_to_viewport(widget.id()) {
-                    let viewport = viewport.get_or_insert_with(|| target.get_viewport());
+                    let ((vx1, vy1), (vx2, vy2)) = viewport.get_or_insert_with(|| target.get_viewport());
 
-                    println!("{:?}", viewport);
+                    let x1 = new_allocation.x.max(vx1.floor() as i32);
+                    let y1 = new_allocation.y.max(vy1.floor() as i32);
+                    let x2 = (new_allocation.x + new_allocation.width).min(vx2.ceil() as i32);
+                    let y2 = (new_allocation.y + new_allocation.height).min(vy2.ceil() as i32);
+
+                    new_allocation.x        = x1;
+                    new_allocation.y        = y1;
+                    new_allocation.width    = (x2-x1).max(1);
+                    new_allocation.height   = (y2-y1).max(1);
                 }
 
                 if existing_allocation != new_allocation {
