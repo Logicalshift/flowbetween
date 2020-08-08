@@ -37,6 +37,17 @@ pub struct WidgetPosition {
 }
 
 ///
+/// Specifies the viewport that's being displayed for a widget
+///
+#[derive(Clone, Copy, Debug)]
+pub struct ViewportPosition {
+    pub x1: f64,
+    pub y1: f64,
+    pub x2: f64,
+    pub y2: f64,
+}
+
+///
 /// Trait that returns the visible viewport of a widget
 ///
 pub trait LayoutViewport {
@@ -384,6 +395,8 @@ impl FloWidgetLayout {
                     let x2 = (new_allocation.x + new_allocation.width).min(vx2.ceil() as i32);
                     let y2 = (new_allocation.y + new_allocation.height).min(vy2.ceil() as i32);
 
+                    self.widget_data.set_widget_data(widget_layout.id, ViewportPosition { x1: x1 as f64, x2: x2 as f64, y1: y1 as f64, y2: y2 as f64 });
+
                     new_allocation.x        = x1;
                     new_allocation.y        = y1;
                     new_allocation.width    = (x2-x1).max(1);
@@ -469,6 +482,8 @@ impl FloWidgetLayout {
             let y1      = wy1.max(vy1.floor());
             let x2      = wx2.min(vx2.ceil());
             let y2      = wy2.min(vy2.ceil());
+
+            self.widget_data.set_widget_data(widget_layout.id, ViewportPosition { x1, x2, y1, y2 });
 
             let width   = (x2-x1).ceil().max(1.0);
             let height  = (y2-y1).ceil().max(1.0);

@@ -130,12 +130,16 @@ impl FloRenderCanvasWidget {
                 let position            = match position { None => { return; }, Some(position) => position };
                 let position            = position.borrow();
 
+                let viewport            = core.widget_data.get_widget_data::<ViewportPosition>(core.widget_id);
+                let viewport            = match viewport { None => { return; }, Some(viewport) => viewport };
+                let viewport            = viewport.borrow();
+
                 let allocation          = gl_widget.get_allocation();
                 let scale               = gl_widget.get_scale_factor();
 
                 // Set whatever is set as the current framebuffer as the render target
-                let viewport_x          = allocation.x as f32;
-                let viewport_y          = allocation.y as f32;
+                let viewport_x          = viewport.x1 as f32;
+                let viewport_y          = viewport.y1 as f32;
                 let viewport_width      = allocation.width as f32;
                 let viewport_height     = allocation.height as f32;
 
@@ -146,7 +150,7 @@ impl FloRenderCanvasWidget {
 
                 let window_width        = (position.x2-position.x1) as f32;
                 let window_height       = (position.y2-position.y1) as f32;
-                canvas_renderer.set_viewport(viewport_x..viewport_width, viewport_y..viewport_height, window_width, window_height);
+                canvas_renderer.set_viewport(viewport_x..(viewport_x+viewport_width), viewport_y..(viewport_y+viewport_height), window_width, window_height);
 
                 if let Some(renderer) = renderer {
                     // Set up the renderer to render to the current framebuffer
