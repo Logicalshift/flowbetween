@@ -39,11 +39,16 @@ pub struct WidgetPosition {
 ///
 /// Trait that returns the visible viewport of a widget
 ///
-trait LayoutViewport {
+pub trait LayoutViewport {
     ///
     /// Retrieves the visible region of this widget (top-left and lower-right coordinates)
     ///
     fn get_viewport(&self) -> ((f64, f64), (f64, f64));
+
+    ///
+    /// Moves a widget to a new position
+    ///
+    fn move_widget(&self, widget: &gtk::Widget, x: i32, y: i32);
 }
 
 ///
@@ -419,6 +424,63 @@ impl FloWidgetLayout {
             extra_widget.size_allocate(&mut full_size.clone());
         }
     }
+
+    ///
+    /// Moves any widget that's clipped to the viewport of this layout so it's still visible in the viewport
+    ///
+    pub fn layout_in_viewport<'a, T>(&'a self, target: &T, widget_id: WidgetId, widget_data: &Rc<WidgetData>) 
+    where   T:      Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>+LayoutViewport {
+        let mut viewport                = None;
+        let mut allocation              = target.get_allocation();
+
+        // Fetch the padding
+        let ((pad_x, pad_y), (_, _))    = self.get_padding();
+        let (pad_x, pad_y)              = (pad_x as f64, pad_y as f64);
+
+        // Iterate through the child widgets
+        for child_widget_id in self.child_widget_ids.iter() {
+            // Skip widgets that don't need to be clipped to the viewport
+            if !self.clips_to_viewport(*child_widget_id) {
+                continue;
+            }
+
+            // Fetch the widget data
+            let widget                      = self.widget_data.get_widget(*child_widget_id);
+            let widget                      = match widget { Some(widget) => widget, None => { continue; } };
+            let widget                      = widget.borrow();
+            let underlying                  = widget.get_underlying();
+
+            // For widgets that do need to be clipped, retrieve their layout and their viewport
+            let widget_layout               = widget_data.get_widget_data::<WidgetPosition>(*child_widget_id);
+            let widget_layout               = match widget_layout { Some(layout) => layout, None => { continue; } };
+            let widget_layout               = widget_layout.borrow();
+
+            // Viewport position
+            let ((vx1, vy1), (vx2, vy2))    = viewport.get_or_insert_with(|| target.get_viewport());
+
+            // Widget layout before clipping
+            let wx1                         = widget_layout.x1 as f64 + pad_x;
+            let wy1                         = widget_layout.y1 as f64 + pad_y;
+            let wx2                         = widget_layout.x2 as f64 + pad_x;
+            let wy2                         = widget_layout.y2 as f64 + pad_y;
+
+            // Clip the widget position
+            let x1      = wx1.max(vx1.floor());
+            let y1      = wy1.max(vy1.floor());
+            let x2      = wx2.min(vx2.ceil());
+            let y2      = wy2.min(vy2.ceil());
+
+            let width   = (x2-x1).ceil().max(1.0);
+            let height  = (y2-y1).ceil().max(1.0);
+
+            // Move the widget
+            underlying.set_size_request(width as i32, height as i32);
+            target.move_widget(underlying, x1.floor() as i32, y1.floor() as i32);
+
+            let widget_allocation = gtk::Rectangle { x: x1 as i32 + allocation.x, y: y1 as i32 + allocation.y, width: width as i32, height: height as i32 };
+            underlying.size_allocate(&widget_allocation);
+        }
+    }
 }
 
 impl LayoutViewport for gtk::Fixed {
@@ -426,6 +488,10 @@ impl LayoutViewport for gtk::Fixed {
         let allocation = self.get_allocation();
 
         ((0.0, 0.0), (allocation.width as f64, allocation.height as f64))
+    }
+
+    fn move_widget(&self, widget: &gtk::Widget, x: i32, y: i32) {
+        self.move_(widget, x, y);
     }
 }
 
@@ -441,6 +507,10 @@ impl LayoutViewport for gtk::Layout {
         let page_h      = v_adjust.get_page_size();
 
         ((page_x, page_y), (page_x+page_w, page_y+page_h))
+    }
+
+    fn move_widget(&self, widget: &gtk::Widget, x: i32, y: i32) {
+        self.move_(widget, x, y);
     }
 }
 

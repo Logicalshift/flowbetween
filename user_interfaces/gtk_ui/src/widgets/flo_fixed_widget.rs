@@ -195,6 +195,7 @@ impl FixedWidgetLayout for gtk::Fixed {
     }
 
     fn viewport_changed(layout_widget: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
+        layout.borrow_mut().layout_in_viewport(&layout_widget, widget_id, widget_data);
     }
 
     fn attach_layout_signal(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
@@ -251,6 +252,7 @@ impl FixedWidgetLayout for gtk::Layout {
     }
 
     fn viewport_changed(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
+        layout.borrow_mut().layout_in_viewport(&layout_widget, widget_id, widget_data);
     }
 
     fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
