@@ -90,7 +90,37 @@ impl FloScrollWidget {
             v_policy:       gtk::PolicyType::Always
         };
 
+        widget.connect_viewport_changed_on_resize();
+        widget.connect_viewport_changed_on_adjust(widget.layout.get_hadjustment().unwrap());
+        widget.connect_viewport_changed_on_adjust(widget.layout.get_vadjustment().unwrap());
+
         widget
+    }
+
+    ///
+    /// Tells the fixed widget that the viewport has changed when the scroll view has resized
+    ///
+    fn connect_viewport_changed_on_resize(&self) {
+        let fixed_widget = Rc::downgrade(&self.fixed_widget);
+
+        self.scroll_window.connect_size_allocate(move |_, _allocation| {
+            if let Some(fixed_widget) = fixed_widget.upgrade() {
+                fixed_widget.borrow().viewport_changed();
+            }
+        });
+    }
+    
+    ///
+    /// Tells the fixed widget that the viewport has changed when an adjustment changes
+    ///
+    fn connect_viewport_changed_on_adjust(&self, adjustment: gtk::Adjustment) {
+        let fixed_widget = Rc::downgrade(&self.fixed_widget);
+
+        adjustment.connect_value_changed(move |_| {
+            if let Some(fixed_widget) = fixed_widget.upgrade() {
+                fixed_widget.borrow().viewport_changed();
+            }
+        });
     }
 
     ///
