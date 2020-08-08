@@ -153,7 +153,7 @@ impl FloFixedWidget {
     /// Callback when the viewport of this widget changes (eg, because it's the layout widget for a scroll widget)
     ///
     pub fn viewport_changed(&self) {
-        //self.force_relayout();
+        self.force_relayout();
     }
 }
 
