@@ -427,10 +427,10 @@ impl LayoutViewport for gtk::Layout {
         let v_adjust    = self.get_vadjustment().unwrap();
 
         // Calculate the scroll position from the adjustments
-        let page_x      = h_adjust.get_value() as f64;
-        let page_y      = v_adjust.get_value() as f64;
-        let page_w      = h_adjust.get_page_size() as f64;
-        let page_h      = v_adjust.get_page_size() as f64;
+        let page_x      = h_adjust.get_value();
+        let page_y      = v_adjust.get_value();
+        let page_w      = h_adjust.get_page_size();
+        let page_h      = v_adjust.get_page_size();
 
         ((page_x, page_y), (page_x+page_w, page_y+page_h))
     }
