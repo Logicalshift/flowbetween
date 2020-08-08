@@ -1,6 +1,8 @@
 use super::layout::*;
 use super::widget_data::*;
-use super::super::gtk_action::*;
+use super::layout_settings::*;
+
+use crate::gtk_action::*;
 
 use flo_ui::*;
 
@@ -105,6 +107,17 @@ impl FloWidgetLayout {
             &End                            => max_pos,
             &After                          => last_pos
         }
+    }
+
+    ///
+    /// Returns true if the specified widget should clip to the viewport
+    ///
+    fn clips_to_viewport(&self, widget_id: WidgetId) -> bool {
+        let layout_settings = self.widget_data.get_widget_data::<LayoutSettings>(widget_id);
+
+        layout_settings
+            .map(|settings| settings.borrow().clip_to_viewport)
+            .unwrap_or(false)
     }
 
     ///
@@ -305,6 +318,7 @@ impl FloWidgetLayout {
         // When we call 'move_widget' the coordinate system goes from 0 - width, and when we call 'size_allocate' it goes from
         // min_x - min_x+width. min_x here is the position + the padding so we need to add the padding in again when calling 'move'
         let ((pad_x, pad_y), (_, _))    = self.get_padding();
+        let mut viewport                = None;
 
         let container_width             = width.max(1);
         let container_height            = height.max(1);
@@ -356,6 +370,13 @@ impl FloWidgetLayout {
                 let existing_allocation = underlying.get_allocation();
                 let mut new_allocation  = gtk::Rectangle { x: new_x, y: new_y, width: new_width, height: new_height };
 
+                // Clip the allocation to the viewport if necessary
+                if self.clips_to_viewport(widget.id()) {
+                    let viewport = viewport.get_or_insert_with(|| target.get_viewport());
+
+                    println!("{:?}", viewport);
+                }
+
                 if existing_allocation != new_allocation {
                     // Make sure that the 'default' size is at least this big (so GTK won't shrink the widget)
                     underlying.set_size_request(new_allocation.width, new_allocation.height);
@@ -389,6 +410,29 @@ impl FloWidgetLayout {
             move_widget(&extra_widget, pad_x, pad_y);
             extra_widget.size_allocate(&mut full_size.clone());
         }
+    }
+}
+
+impl LayoutViewport for gtk::Fixed {
+    fn get_viewport(&self) -> ((f64, f64), (f64,f64)) {
+        let allocation = self.get_allocation();
+
+        ((0.0, 0.0), (allocation.width as f64, allocation.height as f64))
+    }
+}
+
+impl LayoutViewport for gtk::Layout {
+    fn get_viewport(&self) -> ((f64, f64), (f64, f64)) {
+        let h_adjust    = self.get_hadjustment().unwrap();
+        let v_adjust    = self.get_vadjustment().unwrap();
+
+        // Calculate the scroll position from the adjustments
+        let page_x      = h_adjust.get_value() as f64;
+        let page_y      = v_adjust.get_value() as f64;
+        let page_w      = h_adjust.get_page_size() as f64;
+        let page_h      = v_adjust.get_page_size() as f64;
+
+        ((page_x, page_y), (page_x+page_w, page_y+page_h))
     }
 }
 
@@ -459,28 +503,5 @@ mod test {
         assert!(new_layout[2].id == bottom);
         assert!(new_layout[2].x1 == 0.0);   assert!(new_layout[2].x2 == 1920.0);
         assert!(new_layout[2].y1 == 824.0); assert!(new_layout[2].y2 == 1080.0);
-    }
-}
-
-impl LayoutViewport for gtk::Fixed {
-    fn get_viewport(&self) -> ((f64, f64), (f64,f64)) {
-        let allocation = self.get_allocation();
-
-        ((0.0, 0.0), (allocation.width as f64, allocation.height as f64))
-    }
-}
-
-impl LayoutViewport for gtk::Layout {
-    fn get_viewport(&self) -> ((f64, f64), (f64, f64)) {
-        let h_adjust    = self.get_hadjustment().unwrap();
-        let v_adjust    = self.get_vadjustment().unwrap();
-
-        // Calculate the scroll position from the adjustments
-        let page_x      = h_adjust.get_value() as f64;
-        let page_y      = v_adjust.get_value() as f64;
-        let page_w      = h_adjust.get_page_size() as f64;
-        let page_h      = v_adjust.get_page_size() as f64;
-
-        ((page_x, page_y), (page_x+page_w, page_y+page_h))
     }
 }
