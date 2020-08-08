@@ -2,6 +2,7 @@ use crate::gtk_action::*;
 use crate::gtk_thread::*;
 use crate::widgets::*;
 use crate::widgets::basic_widget::*;
+use crate::widgets::layout_settings::*;
 
 use flo_canvas::*;
 use flo_render;
@@ -65,6 +66,10 @@ impl FloRenderCanvasWidget {
         let mut as_glarea   = widget.clone().upcast::<gtk::GLArea>();
         let as_widget       = as_glarea.clone().upcast::<gtk::Widget>();
         let core            = Rc::new(RefCell::new(FloRenderWidgetCore::new(widget_id, Rc::clone(&data))));
+
+        // This needs to be clipped to the viewport by whatever lays it out
+        let layout_settings = LayoutSettings { clip_to_viewport: true };
+        data.set_widget_data(widget_id, layout_settings);
 
         // Set it up
         as_glarea.set_has_alpha(true);
