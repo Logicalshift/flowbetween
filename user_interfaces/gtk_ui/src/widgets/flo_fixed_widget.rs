@@ -25,6 +25,9 @@ pub struct FloFixedWidget {
     /// Callback that forces a re-layout of the widget
     force_relayout_fn: Box<dyn Fn() -> ()>,
 
+    /// Callback that handles a change in the widget's viewport
+    viewport_changed_fn: Box<dyn Fn() -> ()>,
+
     /// Widget data
     widget_data: Rc<WidgetData>,
 
@@ -56,6 +59,9 @@ pub trait FixedWidgetLayout {
 
     /// Attaches the layout signal to this widget
     fn attach_layout_signal(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>);
+
+    /// Moves anything in the layout that's attached to the viewport
+    fn viewport_changed(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>);
 }
 
 impl FloFixedWidget {
@@ -80,20 +86,31 @@ impl FloFixedWidget {
             }
         };
 
+        let viewport_changed = {
+            let container_widget    = container_widget.clone();
+            let layout              = Rc::clone(&layout);
+            let layout_data         = Rc::clone(&widget_data);
+
+            move || {
+                Container::viewport_changed(container_widget.clone(), layout.clone(), id, &layout_data);
+            }
+        };
+
         // Attach events to it
         Container::attach_layout_signal(container_widget, Rc::clone(&layout), id, &widget_data);
 
         // Build the final structure
         FloFixedWidget {
-            id:                 id,
-            widget_data:        widget_data,
-            force_relayout_fn:  Box::new(force_relayout),
-            child_ids:          vec![],
-            container:          container.clone(),
-            as_widget:          container.upcast::<gtk::Widget>(),
-            text:               None,
-            image:              None,
-            layout:             layout
+            id:                     id,
+            widget_data:            widget_data,
+            force_relayout_fn:      Box::new(force_relayout),
+            viewport_changed_fn:    Box::new(viewport_changed),
+            child_ids:              vec![],
+            container:              container.clone(),
+            as_widget:              container.upcast::<gtk::Widget>(),
+            text:                   None,
+            image:                  None,
+            layout:                 layout
         }
     }
 
@@ -153,7 +170,7 @@ impl FloFixedWidget {
     /// Callback when the viewport of this widget changes (eg, because it's the layout widget for a scroll widget)
     ///
     pub fn viewport_changed(&self) {
-        self.force_relayout();
+        (self.viewport_changed_fn)();
     }
 }
 
@@ -175,6 +192,9 @@ impl FixedWidgetLayout for gtk::Fixed {
 
         layout.borrow_mut().force_next_layout();
         layout.borrow_mut().layout_fixed(&fixed, allocation);
+    }
+
+    fn viewport_changed(layout_widget: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
     }
 
     fn attach_layout_signal(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
@@ -228,6 +248,9 @@ impl FixedWidgetLayout for gtk::Layout {
 
         layout.borrow_mut().force_next_layout();
         layout.borrow_mut().layout_in_layout(&layout_widget, (0, 0), (layout_width, layout_height));
+    }
+
+    fn viewport_changed(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
     }
 
     fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>) {
