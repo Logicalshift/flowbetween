@@ -51,7 +51,10 @@ pub struct FloFixedWidget {
 /// Trait used to describe how to perform layout in a fixed widget
 ///
 pub trait FixedWidgetLayout {
+    /// Forces this widget to lay out in a particular area
     fn force_layout(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>);
+
+    /// Attaches the layout signal to this widget
     fn attach_layout_signal(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>, widget_id: WidgetId, widget_data: &Rc<WidgetData>);
 }
 

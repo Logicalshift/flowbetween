@@ -35,6 +35,16 @@ pub struct WidgetPosition {
 }
 
 ///
+/// Trait that returns the visible viewport of a widget
+///
+trait LayoutViewport {
+    ///
+    /// Retrieves the visible region of this widget (top-left and lower-right coordinates)
+    ///
+    fn get_viewport(&self) -> ((f64, f64), (f64, f64));
+}
+
+///
 /// Manages layout of a set of child widgets according to the standard flo layout rules
 ///
 pub struct FloWidgetLayout {
@@ -290,7 +300,7 @@ impl FloWidgetLayout {
     /// Performs container layout with a particular width and height
     ///
     fn layout_in_container<'a, T, MoveFn>(&'a self, target: &T, move_widget: MoveFn, min_x: i32, min_y: i32, width: i32, height: i32) 
-    where   T:      Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>,
+    where   T:      Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>+LayoutViewport,
             MoveFn: 'a+Fn(&gtk::Widget, i32, i32) -> () {
         // When we call 'move_widget' the coordinate system goes from 0 - width, and when we call 'size_allocate' it goes from
         // min_x - min_x+width. min_x here is the position + the padding so we need to add the padding in again when calling 'move'
@@ -449,5 +459,28 @@ mod test {
         assert!(new_layout[2].id == bottom);
         assert!(new_layout[2].x1 == 0.0);   assert!(new_layout[2].x2 == 1920.0);
         assert!(new_layout[2].y1 == 824.0); assert!(new_layout[2].y2 == 1080.0);
+    }
+}
+
+impl LayoutViewport for gtk::Fixed {
+    fn get_viewport(&self) -> ((f64, f64), (f64,f64)) {
+        let allocation = self.get_allocation();
+
+        ((0.0, 0.0), (allocation.width as f64, allocation.height as f64))
+    }
+}
+
+impl LayoutViewport for gtk::Layout {
+    fn get_viewport(&self) -> ((f64, f64), (f64, f64)) {
+        let h_adjust    = self.get_hadjustment().unwrap();
+        let v_adjust    = self.get_vadjustment().unwrap();
+
+        // Calculate the scroll position from the adjustments
+        let page_x      = h_adjust.get_value() as f64;
+        let page_y      = v_adjust.get_value() as f64;
+        let page_w      = h_adjust.get_page_size() as f64;
+        let page_h      = v_adjust.get_page_size() as f64;
+
+        ((page_x, page_y), (page_x+page_w, page_y+page_h))
     }
 }
