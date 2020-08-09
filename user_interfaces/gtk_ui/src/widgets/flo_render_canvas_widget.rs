@@ -33,11 +33,14 @@ struct FloRenderWidgetCore {
     /// Any canvas operations that are waiting to be sent to the renderer
     waiting_to_render: Vec<Draw>,
 
+    /// The scale applied to the widget
+    scale: f32,
+
     /// The data attached to the widget
     widget_data: Rc<WidgetData>,
 
     /// The ID of the widget that this core belongs to
-    widget_id: WidgetId
+    widget_id: WidgetId,
 }
 
 ///
@@ -153,6 +156,7 @@ impl FloRenderCanvasWidget {
 
                 // Multiply everything by the scale to get native resolution
                 let scale               = scale as f32;
+                core.scale              = scale;
 
                 let viewport_x          = viewport_x * scale;
                 let viewport_y          = viewport_y * scale;
@@ -243,6 +247,7 @@ impl FloRenderWidgetCore {
             renderer:           None,
             canvas_renderer:    CanvasRenderer::new(),
             waiting_to_render:  default_render,
+            scale:              1.0,
             widget_data:        data,
             widget_id:          widget_id
         }
