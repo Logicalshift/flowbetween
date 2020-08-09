@@ -150,6 +150,17 @@ impl FloRenderCanvasWidget {
 
                 let window_width        = (position.x2-position.x1) as f32;
                 let window_height       = (position.y2-position.y1) as f32;
+
+                // Multiply everything by the scale to get native resolution
+                let scale               = scale as f32;
+
+                let viewport_x          = viewport_x * scale;
+                let viewport_y          = viewport_y * scale;
+                let viewport_width      = viewport_width * scale;
+                let viewport_height     = viewport_height * scale;
+                let window_width        = window_width * scale;
+                let window_height       = window_height * scale;
+
                 canvas_renderer.set_viewport(viewport_x..(viewport_x+viewport_width), viewport_y..(viewport_y+viewport_height), window_width, window_height);
 
                 if let Some(renderer) = renderer {
