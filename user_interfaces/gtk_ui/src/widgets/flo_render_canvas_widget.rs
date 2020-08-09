@@ -165,7 +165,7 @@ impl FloRenderCanvasWidget {
                 let window_width        = window_width * scale;
                 let window_height       = window_height * scale;
 
-                canvas_renderer.set_viewport(viewport_x..(viewport_x+viewport_width), viewport_y..(viewport_y+viewport_height), window_width, window_height);
+                canvas_renderer.set_viewport(viewport_x..(viewport_x+viewport_width), viewport_y..(viewport_y+viewport_height), window_width, window_height, scale);
 
                 if let Some(renderer) = renderer {
                     // Set up the renderer to render to the current framebuffer
