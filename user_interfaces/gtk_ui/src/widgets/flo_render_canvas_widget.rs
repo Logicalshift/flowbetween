@@ -264,7 +264,7 @@ impl FloRenderWidgetCore {
         let flip_window                 = Transform2D::scale(1.0, -1.0) * Transform2D::translate(0.0, -height);
 
         // The coordinates are relative to the GL area, which has a fixed viewport
-        let add_viewport                = Transform2D::translate(viewport_x.start, -viewport_y.start);
+        let add_viewport                = Transform2D::translate(viewport_x.start/self.scale, -viewport_y.start/self.scale);
 
         // Invert to get the transformation from canvas coordinates to window coordinates
         let active_transform            = (flip_window*add_viewport*active_transform).invert().unwrap();
