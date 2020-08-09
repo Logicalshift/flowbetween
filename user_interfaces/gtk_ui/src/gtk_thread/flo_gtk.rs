@@ -7,6 +7,7 @@ use super::super::widgets::*;
 use flo_stream::*;
 
 use gtk;
+use gtk::prelude::*;
 use glib;
 use futures::prelude::*;
 use futures::stream::{BoxStream};
@@ -153,12 +154,15 @@ impl FloGtk {
     /// Creates a new FloGtk instance
     ///
     pub fn new(event_sink: GtkEventSink) -> FloGtk {
+        let mut style_provider = gtk::CssProvider::new();
+        style_provider.load_from_data(include_bytes!["../../style/flo.css"]).unwrap();
+
         FloGtk {
             pending_messages:   MessageQueue::new(),
             windows:            HashMap::new(),
             widget_data:        Rc::new(WidgetData::new()),
             event_sink:         event_sink,
-            style_provider:     gtk::CssProvider::new()
+            style_provider:     style_provider
         }
     }
 
