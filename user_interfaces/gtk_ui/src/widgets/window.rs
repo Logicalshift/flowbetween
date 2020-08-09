@@ -32,10 +32,11 @@ impl GtkUiWindow for gtk::Window {
         }
     }
 
-    fn set_root(&mut self, _flo_gtk: &mut FloGtk, widget: &gtk::Widget) {
+    fn set_root(&mut self, flo_gtk: &mut FloGtk, widget: &gtk::Widget) {
         // Replace any existing child of this window with the specified widget
         self.get_child().map(|child| self.remove(&child));
         self.add(widget);
+
         widget.show_all();
     }
 }

@@ -58,15 +58,15 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
                 let icon = pixbuf_from_png(&*ICON_IMAGE);
                 new_window.set_icon(Some(&icon));
 
-                // Add our style context
-                new_window.get_style_context()
-                    .add_provider(flo_gtk.style_provider(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
-
                 // New windows with no content get a generic message initially
                 new_window.add(&gtk::Label::new(Some("Flo: This space left blank")));
 
                 // Wire up events
                 wire_up_window(&new_window, window_id, flo_gtk);
+
+                // Add our style context
+                new_window.get_style_context()
+                    .add_provider(flo_gtk.style_provider(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
 
                 // Register the window
                 flo_gtk.register_window(window_id, new_window);
@@ -113,6 +113,10 @@ fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<Gt
 
                 // Call the factory method to create a new widget
                 let new_widget = create_widget(widget_id, widget_type, Rc::clone(&widget_data));
+
+                // Add our standard style provider
+                new_widget.get_underlying().get_style_context()
+                    .add_provider(flo_gtk.style_provider(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
 
                 // Register with the widget data
                 widget_data.register_widget(widget_id, new_widget);
