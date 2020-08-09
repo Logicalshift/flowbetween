@@ -24,6 +24,9 @@ extern crate epoxy;
 extern crate shared_library;
 extern crate time;
 
+#[macro_use]
+extern crate lazy_static;
+
 mod gtk_thread;
 mod gtk_event;
 mod gtk_event_parameter;

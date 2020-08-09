@@ -66,7 +66,7 @@ fn bytes_from_data(image_data: &dyn ImageData) -> glib::Bytes {
 ///
 /// Creates a pixbuf from PNG data
 ///
-fn pixbuf_from_png(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
+pub fn pixbuf_from_png(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
     let bytes           = bytes_from_data(image_data);
     let input_stream    = gio::MemoryInputStream::from_bytes(&bytes);
     let not_cancellable: Option<gio::Cancellable> = None;
@@ -77,7 +77,7 @@ fn pixbuf_from_png(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
 ///
 /// Creates a pixbuf from SVG data
 ///
-fn pixbuf_from_svg(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
+pub fn pixbuf_from_svg(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
     let bytes           = bytes_from_data(image_data);
     let input_stream    = gio::MemoryInputStream::from_bytes(&bytes);
     let not_cancellable: Option<gio::Cancellable> = None;

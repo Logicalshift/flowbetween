@@ -1,3 +1,4 @@
+use super::image::*;
 use super::factory::*;
 use super::super::gtk_event::*;
 use super::super::gtk_thread::*;
@@ -5,10 +6,17 @@ use super::super::gtk_action::*;
 use super::super::widgets::custom_style::*;
 use super::super::widgets::proxy_widget::*;
 
+use flo_ui::*;
+
 use gtk;
 use gtk::prelude::*;
 
 use std::rc::*;
+
+lazy_static! {
+    /// Hard coded icon we use (should make this selectable through the UI interface)
+    static ref ICON_IMAGE: StaticImageData = StaticImageData::new(include_bytes!["../../../../png/Flo-Orb-small.png"]);
+}
 
 ///
 /// Executes a Gtk action
@@ -45,6 +53,10 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
             &GtkWindowAction::New(ref window_type) => {
                 // For new window actions, we need to create the window before we can send actions to it
                 let new_window = gtk::Window::new(window_type.clone());
+
+                // Set the icon
+                let icon = pixbuf_from_png(&*ICON_IMAGE);
+                new_window.set_icon(Some(&icon));
 
                 // Add our style context
                 new_window.get_style_context()
