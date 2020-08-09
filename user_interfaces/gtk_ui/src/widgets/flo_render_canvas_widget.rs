@@ -252,17 +252,21 @@ impl FloRenderWidgetCore {
     /// Updates the widget transform from the active transform for the renderer
     ///
     fn update_widget_transform(&self, height: f32) {
-        let active_transform        = self.canvas_renderer.get_active_transform();
+        let active_transform            = self.canvas_renderer.get_active_transform();
+        let (viewport_x, viewport_y)    = self.canvas_renderer.get_viewport();
 
         // GTK uses flipped coordinates
-        let flip_window             = Transform2D::scale(1.0, -1.0) * Transform2D::translate(0.0, -height);
+        let flip_window                 = Transform2D::scale(1.0, -1.0) * Transform2D::translate(0.0, -height);
+
+        // The coordinates are relative to the GL area, which has a fixed viewport
+        let add_viewport                = Transform2D::translate(viewport_x.start, -viewport_y.start);
 
         // Invert to get the transformation from canvas coordinates to window coordinates
-        let active_transform        = (flip_window*active_transform).invert().unwrap();
+        let active_transform            = (flip_window*add_viewport*active_transform).invert().unwrap();
 
         // Flip the inverted transform and convert the matrix to the format used by Gtk
-        let Transform2D([a, b, _c]) = active_transform;
-        let cairo_matrix            = cairo::Matrix::new(a[0] as f64, b[0] as f64, a[1] as f64, b[1] as f64, a[2] as f64, b[2] as f64);
+        let Transform2D([a, b, _c])     = active_transform;
+        let cairo_matrix                = cairo::Matrix::new(a[0] as f64, b[0] as f64, a[1] as f64, b[1] as f64, a[2] as f64, b[2] as f64);
 
         self.widget_data.set_widget_data(self.widget_id, cairo_matrix);
     }
