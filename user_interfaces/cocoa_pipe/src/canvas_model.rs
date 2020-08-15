@@ -3,8 +3,6 @@ use super::action::*;
 use flo_ui::*;
 use flo_canvas::*;
 
-use itertools::*;
-
 use std::iter;
 use std::collections::{HashMap, HashSet};
 
@@ -60,19 +58,19 @@ impl CanvasModel {
     ///
     /// Retrieves the actions to perform for an update on a canvas that (might be) in this model
     ///
-    pub fn actions_for_update(&self, canvas_name: String, actions: Vec<Draw>) -> impl Iterator<Item=AppAction> {
+    pub fn actions_for_update<'a>(&'a self, canvas_name: String, actions: Vec<Draw>) -> impl 'a+Iterator<Item=AppAction> {
         let result: Box<dyn Iterator<Item=AppAction>>;
 
         if let Some(views) = self.views_with_canvas.get(&canvas_name) {
             // Supply the actions to each view
             if views.len() == 1 {
                 // No need to clone the actions
-                result = Box::new(iter::once(AppAction::View(views[0], ViewAction::Draw(actions))));
+                result = Box::new(iter::once(self.action_for_view(views[0], actions)));
             } else {
                 // Each view needs its own set of drawing actions
                 result = Box::new(views.clone()
                     .into_iter()
-                    .map(move |view_id| AppAction::View(view_id, ViewAction::Draw(actions.clone()))));
+                    .map(move |view_id| self.action_for_view(view_id, actions.clone())));
             }
         } else {
             // No views attached to this canvas
@@ -80,6 +78,17 @@ impl CanvasModel {
         }
 
         result
+    }
+
+    ///
+    /// Generates actions for a particular view
+    ///
+    fn action_for_view(&self, view_id: usize, actions: Vec<Draw>) -> AppAction {
+        if self.gpu_views.contains(&view_id) {
+            AppAction::View(view_id, ViewAction::DrawGpu(actions))
+        } else {
+            AppAction::View(view_id, ViewAction::Draw(actions))
+        }
     }
 
     ///
