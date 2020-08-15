@@ -150,6 +150,9 @@ pub enum ViewAction {
     /// Draws on the canvas for this view
     Draw(Vec<Draw>),
 
+    /// Draws on the hardware-accellerated canvas for this view
+    DrawGpu(Vec<Draw>),
+
     /// Sets part of the state of this view
     SetState(ViewStateUpdate),
 

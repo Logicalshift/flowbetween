@@ -346,6 +346,10 @@ impl CocoaSession {
                         let view = view.clone();
                         self.draw(view_id, &view, canvas_actions);
                     }
+
+                    DrawGpu(_canvas_actions)                => {
+                        // TODO
+                    }
                 }
             }
         }
