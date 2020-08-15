@@ -9,6 +9,8 @@ use ::desync::*;
 use flo_stream::*;
 use flo_canvas::*;
 use flo_cocoa_pipe::*;
+use flo_render::*;
+use flo_render_canvas::*;
 
 use futures::*;
 use futures::task;
@@ -54,6 +56,9 @@ pub struct CocoaSession {
     /// Maps view IDs to their canvas states
     canvases: HashMap<usize, ViewCanvas>,
 
+    /// Maps canvases to hardware renderer
+    gpu_canvases: HashMap<usize, (CanvasRenderer, MetalRenderer)>,
+
     /// Publisher where we send the actions to
     action_publisher: Publisher<Vec<AppAction>>,
 
@@ -91,6 +96,7 @@ impl CocoaSession {
             view_events:        HashMap::new(),
             viewmodels:         HashMap::new(),
             canvases:           HashMap::new(),
+            gpu_canvases:       HashMap::new(),
             actions:            None,
             action_publisher:   Publisher::new(1),
             events:             Desync::new(Publisher::new(20))
