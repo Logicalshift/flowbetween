@@ -61,22 +61,25 @@ impl CanvasModel {
     /// Retrieves the actions to perform for an update on a canvas that (might be) in this model
     ///
     pub fn actions_for_update(&self, canvas_name: String, actions: Vec<Draw>) -> impl Iterator<Item=AppAction> {
+        let result: Box<dyn Iterator<Item=AppAction>>;
+
         if let Some(views) = self.views_with_canvas.get(&canvas_name) {
             // Supply the actions to each view
-            Either::Left(
-                if views.len() == 1 {
-                    // No need to clone the actions
-                    Either::Left(iter::once(AppAction::View(views[0], ViewAction::Draw(actions))))
-                } else {
-                    // Each view needs its own set of drawing actions
-                    Either::Right(views.clone()
-                        .into_iter()
-                        .map(move |view_id| AppAction::View(view_id, ViewAction::Draw(actions.clone()))))
-                })
+            if views.len() == 1 {
+                // No need to clone the actions
+                result = Box::new(iter::once(AppAction::View(views[0], ViewAction::Draw(actions))));
+            } else {
+                // Each view needs its own set of drawing actions
+                result = Box::new(views.clone()
+                    .into_iter()
+                    .map(move |view_id| AppAction::View(view_id, ViewAction::Draw(actions.clone()))));
+            }
         } else {
             // No views attached to this canvas
-            Either::Right(iter::empty())
+            result = Box::new(iter::empty());
         }
+
+        result
     }
 
     ///
