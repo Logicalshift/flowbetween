@@ -6,7 +6,7 @@ use flo_canvas::*;
 use itertools::*;
 
 use std::iter;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 ///
 /// Describes the canvases attached to a particular controller
@@ -14,6 +14,9 @@ use std::collections::HashMap;
 pub struct CanvasModel {
     /// The canvas attached to the specified view
     canvas_for_view: HashMap<usize, Resource<BindingCanvas>>,
+
+    /// The views that use GPU updates instead of Quartz updates
+    gpu_views: HashSet<usize>,
 
     /// The views that should receive updates for a particular canvas
     views_with_canvas: HashMap<String, Vec<usize>>
@@ -25,8 +28,9 @@ impl CanvasModel {
     ///
     pub fn new() -> CanvasModel {
         CanvasModel {
-            canvas_for_view: HashMap::new(),
-            views_with_canvas: HashMap::new()
+            canvas_for_view:    HashMap::new(),
+            gpu_views:          HashSet::new(),
+            views_with_canvas:  HashMap::new()
         }
     }
 
@@ -82,6 +86,7 @@ impl CanvasModel {
         if let Some(canvas_name) = self.canvas_for_view.get(&view_id).map(|canvas| Self::name_for_canvas(canvas)) {
             // Remove the association with the view ID
             self.canvas_for_view.remove(&view_id);
+            self.gpu_views.remove(&view_id);
 
             // Remove from the list of views that use this canvas
             self.views_with_canvas.get_mut(&canvas_name)
