@@ -359,9 +359,10 @@ impl AppState {
             let canvas_models       = &mut self.canvas_models;
             let controller_canvases = canvas_models.entry(controller_path.clone())
                 .or_insert_with(|| CanvasModel::new());
+            let fast_drawing        = control.attributes().any(|attr| attr == &ControlAttribute::HintAttr(Hint::FastDrawing));
 
             // Associate the canvas with the new view
-            controller_canvases.set_canvas_for_view(view_id, canvas.clone());
+            controller_canvases.set_canvas_for_view(view_id, canvas.clone(), fast_drawing);
             view_state.set_canvas_name(CanvasModel::name_for_canvas(canvas));
         }
 

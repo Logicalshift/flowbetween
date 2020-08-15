@@ -46,13 +46,17 @@ impl CanvasModel {
     ///
     /// Associates a canvas with a particular view ID
     ///
-    pub fn set_canvas_for_view(&mut self, view_id: usize, canvas: Resource<BindingCanvas>) {
+    pub fn set_canvas_for_view(&mut self, view_id: usize, canvas: Resource<BindingCanvas>, use_gpu: bool) {
         let canvas_name = Self::name_for_canvas(&canvas);
 
         self.canvas_for_view.insert(view_id, canvas);
         self.views_with_canvas.entry(canvas_name)
             .or_insert_with(|| vec![])
             .push(view_id);
+
+        if use_gpu {
+            self.gpu_views.insert(view_id);
+        }
     }
 
     ///
