@@ -45,7 +45,8 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
             Id(id)                                  => vec![ViewAction::SetId(id.clone())],
             Controller(_name)                       => vec![],
             Action(trigger, name)                   => event_actions(trigger, name),
-            Canvas(canvas_resource)                 => vec![ViewAction::Draw(canvas_resource.get_drawing())],
+
+            Canvas(_canvas_resource)                => vec![],              // Can send the whole canvas here, but more consistent if it's done in the same place it's attached
 
             SubComponents(_components)              => vec![]               // Handled separately by ViewState
         }
