@@ -97,8 +97,8 @@ class FloMetalCanvasLayer : CAMetalLayer {
                 
                 // Send it to be redrawn via the events
                 flo_events.redrawGpuCanvas(with: unsafe_drawable,
-                       size: NSSize(width: 1980, height: 1080),
-                       viewport: NSRect(x: 0, y: 0, width: 1920, height: 1080));
+                       size: _size,
+                       viewport: _visibleRect);
             }
         }
     }
