@@ -361,8 +361,9 @@ impl CocoaSession {
                         self.draw(view_id, &view, canvas_actions);
                     }
 
-                    DrawGpu(_canvas_actions)                => {
-                        // TODO
+                    DrawGpu(canvas_actions)                => {
+                        let view = view.clone();
+                        self.draw_gpu(view_id, &view, canvas_actions);
                     }
                 }
             }
@@ -483,6 +484,44 @@ impl CocoaSession {
             // Finished drawing
             let _: () = msg_send!(**view, viewFinishedDrawing);
             let _: () = msg_send!(**view, viewSetTransform: canvas.get_transform());
+        }
+    }
+
+    ///
+    /// Performs some drawing actions using the hardware accellerated canas
+    ///
+    fn draw_gpu(&mut self, view_id: usize, view: &StrongPtr, actions: Vec<Draw>) {
+        unsafe {
+            // Create the GPU canvas if needed
+            let gpu_canvas = self.gpu_canvases.entry(view_id)
+                .or_insert_with(|| Self::create_gpu_canvas(view));
+
+            // Add to the list of pending drawing instructions for the GPU canvas
+            gpu_canvas.pending_drawing.extend(actions);
+
+            // Request a redraw event
+            let _: () = msg_send!(**view, viewRequestGpuCanvasRedraw);
+        }
+    }
+
+    ///
+    /// Creates a new GPU canvas for the specified view
+    ///
+    fn create_gpu_canvas(view: &StrongPtr) -> GpuCanvas {
+        unsafe {
+            // Ask the view to set up a GPU drawing layer
+            let _: () = msg_send!(**view, viewInitialiseGpuCanvas);
+
+            // Create the canvas structures
+            let metal_renderer  = MetalRenderer::with_default_device();
+            let canvas_renderer = CanvasRenderer::new();
+
+            // Build the GPU canvas
+            GpuCanvas {
+                metal_renderer:     metal_renderer,
+                canvas_renderer:    canvas_renderer,
+                pending_drawing:    vec![]
+            }
         }
     }
 
