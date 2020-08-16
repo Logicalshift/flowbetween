@@ -955,6 +955,7 @@ public class FloView : NSObject, FloViewDelegate {
             if visibleRect.size.height < 1.0 { visibleRect.size.height = 1.0 }
 
             layer.frame         = visibleRect
+            layer.drawableSize  = visibleRect.size
 
             CATransaction.commit()
 
