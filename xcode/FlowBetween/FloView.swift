@@ -894,6 +894,7 @@ public class FloView : NSObject, FloViewDelegate {
 
                 RunLoop.main.perform(inModes: [.default, .eventTracking], block: {
                     willChangeBounds = false
+                    this?.metalLayerBoundsChanged(newBounds);
                     this?.viewRequestGpuCanvasRedraw();
                 })
             }
@@ -909,6 +910,7 @@ public class FloView : NSObject, FloViewDelegate {
         layer.drawsAsynchronously   = false
         layer.setNeedsDisplay()
 
+        // Reset the layer size whe
         RunLoop.main.perform(inModes: [.default, .modalPanel, .eventTracking], block: { self._view.setCanvasLayer(layer)
         })
 
@@ -921,5 +923,43 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     @objc public func viewRequestGpuCanvasRedraw() {
         self._metalLayer?.queueRedraw()
+    }
+
+    ///
+    /// Updates the bounds of the metal layer (and its context) after the view bounds change
+    ///
+    func metalLayerBoundsChanged(_ newBounds: ContainerBounds) {
+        autoreleasepool {
+            let layer = _metalLayer!
+
+            // Work out the screen resolution of the current window
+            var resolutionMultiplier = CGFloat(1.0)
+            if let window = _view.asView.window {
+                if let screen = window.screen {
+                    resolutionMultiplier = screen.backingScaleFactor
+                }
+            }
+
+            // Perform the action instantly rather than with the default animation
+            CATransaction.begin()
+            CATransaction.setAnimationDuration(0.0)
+            CATransaction.setDisableActions(true)
+
+            // Move the layer so that it fills the visible bounds of the view
+            let parentBounds    = _view.asView.layer!.bounds
+            var visibleRect     = newBounds.visibleRect
+
+            visibleRect.origin.x += parentBounds.origin.x
+            visibleRect.origin.y += parentBounds.origin.y
+            if visibleRect.size.width < 1.0 { visibleRect.size.width = 1.0 }
+            if visibleRect.size.height < 1.0 { visibleRect.size.height = 1.0 }
+
+            layer.frame         = visibleRect
+
+            CATransaction.commit()
+
+            // Regenerate the graphics context so that it's the appropriate size for the layer
+            //layer.setVisibleArea(bounds: newBounds, resolution: resolutionMultiplier)
+        }
     }
 }
