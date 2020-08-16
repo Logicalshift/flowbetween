@@ -354,7 +354,7 @@ pub fn declare_flo_events_class() -> &'static Class {
         extern fn redraw_gpu_canvas_with_drawable(this: &mut Object, _sel: Sel, drawable: *mut Object, size: CGSize, bounds: CGRect) {
             unsafe {
                 // The drawable object should be a CAMetalDrawable
-                let drawable = mem::transmute::<_, *mut metal::CoreAnimationDrawableRef>(drawable);
+                let drawable = mem::transmute::<_, *mut metal::CoreAnimationDrawable>(drawable);
 
                 if let Some(drawable) = drawable.as_ref() {
                     let drawable = drawable.to_owned();
