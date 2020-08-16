@@ -903,6 +903,7 @@ public class FloView : NSObject, FloViewDelegate {
         if initialSize.width < 1 { initialSize.width = 1 }
         if initialSize.height < 1 { initialSize.height = 1 }
 
+        layer.device                = MTLCreateSystemDefaultDevice();
         layer.backgroundColor       = CGColor.clear
         layer.frame                 = CGRect(size: initialSize)
         layer.drawsAsynchronously  = true
