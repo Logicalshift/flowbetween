@@ -238,14 +238,14 @@ impl CanvasRenderer {
         gc.fill_color(Color::Rgba(0.1, 0.1, 0.1, 0.4));
         gc.new_path();
         gc.rect(0.0, 0.0-offset, width+offset, height);
-        // gc.fill();
+        gc.fill();
 
         // Draw the canvas background
         gc.fill_color(Color::Rgba(1.0, 1.0, 1.0, 1.0));
         gc.new_path();
         gc.rect(0.0, 0.0, width, height);
-        //gc.fill();
-        //gc.stroke();
+        gc.fill();
+        gc.stroke();
     }
 
     ///
