@@ -40,6 +40,9 @@ public class FloView : NSObject, FloViewDelegate {
 
     /// The layer to draw on, if there is one
     fileprivate var _drawingLayer: FloCanvasLayer?
+    
+    /// A GPU-accellerated drawing layer
+    fileprivate var _metalLayer: FloMetalCanvasLayer?;
 
     override init() {
         _bounds = Bounds(
@@ -861,5 +864,63 @@ public class FloView : NSObject, FloViewDelegate {
         }
 
         return nil
+    }
+
+    ///
+    /// Initialiases a layer to do drawing on via the GPU
+    ///
+    @objc public func viewInitialiseGpuCanvas() {
+        // Create the layer
+        let layer       = FloMetalCanvasLayer()
+
+        // Layer should not animate its contents
+        layer.actions = [
+            "onOrderIn":    NSNull(),
+            "onOrderOut":   NSNull(),
+            "sublayers":    NSNull(),
+            "contents":     NSNull(),
+            "bounds":       NSNull(),
+            "frame":        NSNull()
+        ]
+
+        _metalLayer = layer
+
+        // Reset the layer size when the bounds change
+        weak var this = self
+        var willChangeBounds = false
+        _view.boundsChanged = { newBounds in
+            if !willChangeBounds {
+                willChangeBounds = true
+
+                RunLoop.main.perform(inModes: [.default, .eventTracking], block: {
+                    willChangeBounds = false
+                    this?.viewRequestGpuCanvasRedraw();
+                })
+            }
+        }
+
+        var initialSize = _view.layoutSize
+        if initialSize.width < 1 { initialSize.width = 1 }
+        if initialSize.height < 1 { initialSize.height = 1 }
+
+        layer.backgroundColor       = CGColor.clear
+        layer.frame                 = CGRect(size: initialSize)
+        layer.drawsAsynchronously  = true
+        layer.setNeedsDisplay()
+
+        RunLoop.main.perform(inModes: [.default, .modalPanel, .eventTracking], block: { self._view.setCanvasLayer(layer)
+        })
+
+        // Draw the canvas layer
+        viewRequestGpuCanvasRedraw();
+    }
+    
+    ///
+    /// Requests a callback to redraw the GPU layer
+    ///
+    @objc public func viewRequestGpuCanvasRedraw() {
+        if let metalLayer = _metalLayer {
+
+        }
     }
 }
