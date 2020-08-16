@@ -493,8 +493,11 @@ impl CocoaSession {
     fn draw_gpu(&mut self, view_id: usize, view: &StrongPtr, actions: Vec<Draw>) {
         unsafe {
             // Create the GPU canvas if needed
+            let flo_events = self.events_for_view(view_id);
             let gpu_canvas = self.gpu_canvases.entry(view_id)
-                .or_insert_with(|| Self::create_gpu_canvas(view));
+                .or_insert_with(move || {
+                    Self::create_gpu_canvas(view, flo_events)
+                });
 
             // Add to the list of pending drawing instructions for the GPU canvas
             gpu_canvas.pending_drawing.extend(actions);
@@ -507,10 +510,10 @@ impl CocoaSession {
     ///
     /// Creates a new GPU canvas for the specified view
     ///
-    fn create_gpu_canvas(view: &StrongPtr) -> GpuCanvas {
+    fn create_gpu_canvas(view: &StrongPtr, flo_events: StrongPtr) -> GpuCanvas {
         unsafe {
             // Ask the view to set up a GPU drawing layer
-            let _: () = msg_send!(**view, viewInitialiseGpuCanvas);
+            let _: () = msg_send!(**view, viewInitialiseGpuCanvas: flo_events);
 
             // Create the canvas structures
             let metal_renderer  = MetalRenderer::with_default_device();

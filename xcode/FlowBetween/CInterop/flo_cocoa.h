@@ -22,6 +22,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
+#import <QuartzCore/QuartzCore.h>
 
 ///
 /// Data returned as part of a painting event
@@ -56,7 +57,7 @@ typedef struct AppPainting AppPainting;
 - (void) sendPaintFinishForDevice: (uint32_t) deviceId name: (NSString*) name action: (AppPainting) action;
 - (void) sendPaintCancelForDevice: (uint32_t) deviceId name: (NSString*) name action: (AppPainting) action;
 - (void) redrawCanvasWithSize: (NSSize) size viewport: (NSRect) viewport;
-- (void) redrawGpuCanvasWithDrawable: (CAMetalDrawable*) drawable size: (NSSize) size viewport: (NSRect) viewport;
+- (void) redrawGpuCanvasWithDrawable: (id<CAMetalDrawable>*) drawable size: (NSSize) size viewport: (NSRect) viewport;
 
 @end
 
@@ -129,7 +130,7 @@ typedef struct AppPainting AppPainting;
 - (void) viewSetPopupSizeWithWidth: (double) width height: (double) height;
 - (void) viewSetPopupOffset: (double) offset;
 
-- (void) viewInitialiseGpuCanvas;
+- (void) viewInitialiseGpuCanvas: (FloEvents*) events;
 - (void) viewRequestGpuCanvasRedraw;
 - (CGContextRef) viewGetCanvasForDrawing: (FloEvents*) events layer: (uint32_t) layer_id;
 - (FloCacheLayer*) viewCopyLayerWithId: (uint32_t) layer_id;

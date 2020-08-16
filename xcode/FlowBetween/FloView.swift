@@ -869,7 +869,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     /// Initialiases a layer to do drawing on via the GPU
     ///
-    @objc public func viewInitialiseGpuCanvas() {
+    @objc public func viewInitialiseGpuCanvas(_ events: FloEvents) {
         // Create the layer
         let layer       = FloMetalCanvasLayer()
 
