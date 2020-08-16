@@ -534,8 +534,11 @@ impl CocoaSession {
     /// Draws a GPU canvas for a particular view
     ///
     pub fn redraw_gpu_canvas_for_view(&mut self, view_id: usize, drawable: metal::CoreAnimationDrawable, size: CGSize, bounds: CGRect, scale: f64) {
+        let gpu_canvases    = &mut self.gpu_canvases;
+        let views           = &self.views;
+
         // Fetch the canvas
-        if let Some(gpu_canvas) = self.gpu_canvases.get_mut(&view_id) {
+        if let Some(gpu_canvas) = gpu_canvases.get_mut(&view_id) {
             // Get the pending drawing instructions from the canvas (they'll be flushed as we do the redraw)
             let mut pending = vec![];
             mem::swap(&mut pending, &mut gpu_canvas.pending_drawing);
@@ -567,6 +570,41 @@ impl CocoaSession {
 
                 // Pass on to the GPU
                 gpu_canvas.metal_renderer.render(render_actions, &target_drawable, &target_texture);
+
+                // Update the view transform
+                let view                        = views.get(&view_id);
+
+                let active_transform            = gpu_canvas.canvas_renderer.get_active_transform();
+                let (viewport_x, viewport_y)    = gpu_canvas.canvas_renderer.get_viewport();
+
+                // OS X uses flipped coordinates
+                let flip_window                 = Transform2D::scale(1.0, -1.0) * Transform2D::translate(0.0, -viewport_height/scale);
+
+                // The coordinates are relative to the GL area, which has a fixed viewport
+                let scale                       = scale as f32;
+                let add_viewport                = Transform2D::translate(viewport_x.start/scale, -viewport_y.start/scale);
+
+                // Invert to get the transformation from canvas coordinates to window coordinates
+                let active_transform            = (flip_window*add_viewport*active_transform).invert().unwrap();
+
+                // Convert to a CGAffineTransform
+                let Transform2D([
+                    [a, c, tx],
+                    [b, d, ty],
+                    [_, _, _]]) = active_transform;
+                let a   = a as f64;
+                let b   = b as f64;
+                let c   = c as f64;
+                let d   = d as f64;
+                let tx  = tx as f64;
+                let ty  = ty as f64;
+                let active_transform = CGAffineTransform { a, b, c, d, tx, ty };
+
+                if let Some(view) = view {
+                    unsafe {
+                        let _: () = msg_send!(**view, viewSetTransform: active_transform);
+                    }
+                }
             });
         }
     }
