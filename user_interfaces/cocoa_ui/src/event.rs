@@ -354,16 +354,18 @@ pub fn declare_flo_events_class() -> &'static Class {
         extern fn redraw_gpu_canvas_with_drawable(this: &mut Object, _sel: Sel, drawable: *mut Object, size: CGSize, bounds: CGRect) {
             unsafe {
                 // The drawable object should be a CAMetalDrawable
-                let drawable = mem::transmute::<_, metal::CoreAnimationDrawableRef>(drawable);
+                let drawable = mem::transmute::<_, *mut metal::CoreAnimationDrawableRef>(drawable);
 
-                // Fetch the session and view
-                let session_id  = get_session_id(this);
-                let view_id     = get_view_id(this);
+                if let Some(drawable) = drawable.as_ref() {
+                    // Fetch the session and view
+                    let session_id  = get_session_id(this);
+                    let view_id     = get_view_id(this);
 
-                if let (Some(session_id), Some(view_id)) = (session_id, view_id) {
-                    if let Some(session) = get_cocoa_session_with_id(session_id) {
-                        // Send the request to do the redraw to the appropriate session
-                        session.lock().unwrap().redraw_gpu_canvas_for_view(view_id, drawable, size, bounds);
+                    if let (Some(session_id), Some(view_id)) = (session_id, view_id) {
+                        if let Some(session) = get_cocoa_session_with_id(session_id) {
+                            // Send the request to do the redraw to the appropriate session
+                            session.lock().unwrap().redraw_gpu_canvas_for_view(view_id, drawable, size, bounds);
+                        }
                     }
                 }
             }

@@ -533,7 +533,7 @@ impl CocoaSession {
     ///
     /// Draws a GPU canvas for a particular view
     ///
-    pub fn redraw_gpu_canvas_for_view(&mut self, view_id: usize, drawable: metal::CoreAnimationDrawableRef, size: CGSize, bounds: CGRect) {
+    pub fn redraw_gpu_canvas_for_view(&mut self, view_id: usize, drawable: &metal::CoreAnimationDrawableRef, size: CGSize, bounds: CGRect) {
         // Fetch the canvas
         if let Some(gpu_canvas) = self.gpu_canvases.get_mut(&view_id) {
             // Get the penidng drawing instructions from the canvas (they'll be flushed as we do the redraw)
@@ -541,7 +541,8 @@ impl CocoaSession {
             mem::swap(&mut pending, &mut gpu_canvas.pending_drawing);
 
             // Fetch the drawable and the texture
-            let target_texture  = drawable.texture();
+            let target_texture  = drawable.texture().to_owned();
+            let target_drawable = (**drawable).to_owned();
 
             // Perform the redraw using a future
             executor::block_on(async move {
@@ -564,7 +565,7 @@ impl CocoaSession {
                 let render_actions      = render_stream.collect::<Vec<_>>().await;
 
                 // Pass on to the GPU
-                gpu_canvas.metal_renderer.render(render_actions, *drawable, target_texture);
+                gpu_canvas.metal_renderer.render(render_actions, &target_drawable, &target_texture);
             });
         }
     }
