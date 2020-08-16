@@ -31,8 +31,8 @@ class FloMetalCanvasLayer : CAMetalLayer {
     init(events: FloEvents) {
         _drawPending    = false
         _events         = events
-        _visibleRect    = CGRect(x: 0, y: 0, width: 1920, height: 1080)
-        _size           = CGSize(width: 1920, height: 1080)
+        _visibleRect    = CGRect(x: 0, y: 0, width: 500, height: 500)
+        _size           = CGSize(width: 500, height: 500)
         _resolution     = 1.0
 
         super.init()
