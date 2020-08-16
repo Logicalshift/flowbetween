@@ -350,6 +350,11 @@ pub fn declare_flo_events_class() -> &'static Class {
             }
         }
 
+        // Redraws the canvas for the view using a Metal drawable
+        extern fn redraw_gpu_canvas_with_drawable(this: &mut Object, _sel: Sel, drawable: *mut Object, size: CGSize, bounds: CGRect) {
+
+        }
+
         // Clears the list of pending events
         extern fn finish_sending_events(this: &mut Object, _sel: Sel) {
             unsafe {
@@ -400,6 +405,7 @@ pub fn declare_flo_events_class() -> &'static Class {
         flo_events.add_method(sel!(sendPaintFinishForDevice:name:action:), send_paint_finish as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
         flo_events.add_method(sel!(sendPaintCancelForDevice:name:action:), send_paint_cancel as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
         flo_events.add_method(sel!(redrawCanvasWithSize:viewport:), redraw_canvas as extern fn(&mut Object, Sel, CGSize, CGRect));
+        flo_events.add_method(sel!(redrawGpuCanvasWithDrawable:size:viewport:), redraw_gpu_canvas_with_drawable as extern fn(&mut Object, Sel, *mut Object, CGSize, CGRect));
     }
 
     // Finalize the class

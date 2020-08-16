@@ -56,7 +56,7 @@ typedef struct AppPainting AppPainting;
 - (void) sendPaintFinishForDevice: (uint32_t) deviceId name: (NSString*) name action: (AppPainting) action;
 - (void) sendPaintCancelForDevice: (uint32_t) deviceId name: (NSString*) name action: (AppPainting) action;
 - (void) redrawCanvasWithSize: (NSSize) size viewport: (NSRect) viewport;
-- (void) redrawGpuCanvasWithDrawable: (NSSize) size viewport: (NSRect) viewport drawable: CAMetalDrawable;
+- (void) redrawGpuCanvasWithDrawable: (CAMetalDrawable*) drawable size: (NSSize) size viewport: (NSRect) viewport;
 
 @end
 
