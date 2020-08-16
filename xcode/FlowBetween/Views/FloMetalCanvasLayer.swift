@@ -98,7 +98,8 @@ class FloMetalCanvasLayer : CAMetalLayer {
                 // Send it to be redrawn via the events
                 flo_events.redrawGpuCanvas(with: unsafe_drawable,
                        size: _size,
-                       viewport: _visibleRect);
+                       viewport: _visibleRect,
+                       resolution: _resolution);
             }
         }
     }
@@ -113,8 +114,8 @@ class FloMetalCanvasLayer : CAMetalLayer {
             
             _visibleRect.origin.y   = _size.height - (bounds.visibleRect.maxY)
             
-            _resolution             = 1.0
-            contentsScale           = 1.0
+            _resolution             = resolution
+            contentsScale           = resolution
         }
     }
 }

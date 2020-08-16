@@ -533,7 +533,7 @@ impl CocoaSession {
     ///
     /// Draws a GPU canvas for a particular view
     ///
-    pub fn redraw_gpu_canvas_for_view(&mut self, view_id: usize, drawable: metal::CoreAnimationDrawable, size: CGSize, bounds: CGRect) {
+    pub fn redraw_gpu_canvas_for_view(&mut self, view_id: usize, drawable: metal::CoreAnimationDrawable, size: CGSize, bounds: CGRect, scale: f64) {
         // Fetch the canvas
         if let Some(gpu_canvas) = self.gpu_canvases.get_mut(&view_id) {
             // Get the pending drawing instructions from the canvas (they'll be flushed as we do the redraw)
@@ -547,13 +547,14 @@ impl CocoaSession {
             // Perform the redraw using a future
             executor::block_on(async move {
                 // Get the bounds of the view
-                let window_width        = size.width as f32;
-                let window_height       = size.height as f32;
-                let viewport_x          = bounds.origin.x as f32;
-                let viewport_y          = bounds.origin.y as f32;
-                let viewport_width      = bounds.size.width as f32;
-                let viewport_height     = bounds.size.height as f32;
-                let scale               = 1.0;
+                let scale               = scale as f32;
+
+                let window_width        = size.width as f32 * scale;
+                let window_height       = size.height as f32 * scale;
+                let viewport_x          = bounds.origin.x as f32 * scale;
+                let viewport_y          = bounds.origin.y as f32 * scale;
+                let viewport_width      = bounds.size.width as f32 * scale;
+                let viewport_height     = bounds.size.height as f32 * scale;
 
                 // Set up the viewport
                 gpu_canvas.canvas_renderer.set_viewport(viewport_x..(viewport_x+viewport_width), viewport_y..(viewport_y+viewport_height), window_width, window_height, scale);

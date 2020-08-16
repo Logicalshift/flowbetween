@@ -351,7 +351,7 @@ pub fn declare_flo_events_class() -> &'static Class {
         }
 
         // Redraws the canvas for the view using a Metal drawable
-        extern fn redraw_gpu_canvas_with_drawable(this: &mut Object, _sel: Sel, drawable: *mut Object, size: CGSize, bounds: CGRect) {
+        extern fn redraw_gpu_canvas_with_drawable(this: &mut Object, _sel: Sel, drawable: *mut Object, size: CGSize, bounds: CGRect, resolution: f64) {
             unsafe {
                 // The drawable object should be a CAMetalDrawable
                 let drawable = mem::transmute::<_, *mut metal::CoreAnimationDrawable>(drawable);
@@ -366,7 +366,7 @@ pub fn declare_flo_events_class() -> &'static Class {
                     if let (Some(session_id), Some(view_id)) = (session_id, view_id) {
                         if let Some(session) = get_cocoa_session_with_id(session_id) {
                             // Send the request to do the redraw to the appropriate session
-                            session.lock().unwrap().redraw_gpu_canvas_for_view(view_id, drawable, size, bounds);
+                            session.lock().unwrap().redraw_gpu_canvas_for_view(view_id, drawable, size, bounds, resolution);
                         }
                     }
                 }
@@ -423,7 +423,7 @@ pub fn declare_flo_events_class() -> &'static Class {
         flo_events.add_method(sel!(sendPaintFinishForDevice:name:action:), send_paint_finish as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
         flo_events.add_method(sel!(sendPaintCancelForDevice:name:action:), send_paint_cancel as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
         flo_events.add_method(sel!(redrawCanvasWithSize:viewport:), redraw_canvas as extern fn(&mut Object, Sel, CGSize, CGRect));
-        flo_events.add_method(sel!(redrawGpuCanvasWithDrawable:size:viewport:), redraw_gpu_canvas_with_drawable as extern fn(&mut Object, Sel, *mut Object, CGSize, CGRect));
+        flo_events.add_method(sel!(redrawGpuCanvasWithDrawable:size:viewport:resolution:), redraw_gpu_canvas_with_drawable as extern fn(&mut Object, Sel, *mut Object, CGSize, CGRect, f64));
     }
 
     // Finalize the class
