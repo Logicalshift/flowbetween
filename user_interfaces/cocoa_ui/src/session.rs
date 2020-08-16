@@ -20,7 +20,9 @@ use cocoa::base::{id, nil};
 use cocoa::foundation::NSString;
 use objc::rc::*;
 use objc::runtime::*;
+use metal;
 
+use std::mem;
 use std::sync::*;
 use std::collections::HashMap;
 
@@ -525,6 +527,45 @@ impl CocoaSession {
                 canvas_renderer:    canvas_renderer,
                 pending_drawing:    vec![]
             }
+        }
+    }
+
+    ///
+    /// Draws a GPU canvas for a particular view
+    ///
+    pub fn redraw_gpu_canvas_for_view(&mut self, view_id: usize, drawable: metal::CoreAnimationDrawableRef, size: CGSize, bounds: CGRect) {
+        // Fetch the canvas
+        if let Some(gpu_canvas) = self.gpu_canvases.get_mut(&view_id) {
+            // Get the penidng drawing instructions from the canvas (they'll be flushed as we do the redraw)
+            let mut pending = vec![];
+            mem::swap(&mut pending, &mut gpu_canvas.pending_drawing);
+
+            // Fetch the drawable and the texture
+            let target_texture  = drawable.texture();
+
+            // Perform the redraw using a future
+            executor::block_on(async move {
+                // Get the bounds of the view
+                let window_width        = size.width as f32;
+                let window_height       = size.height as f32;
+                let viewport_x          = bounds.origin.x as f32;
+                let viewport_y          = bounds.origin.y as f32;
+                let viewport_width      = bounds.size.width as f32;
+                let viewport_height     = bounds.size.height as f32;
+                let scale               = 1.0;
+
+                // Set up the viewport
+                gpu_canvas.canvas_renderer.set_viewport(viewport_x..(viewport_x+viewport_width), viewport_y..(viewport_y+viewport_height), window_width, window_height, scale);
+
+                //  Send the pending canvas actions to the renderer
+                let render_stream       = gpu_canvas.canvas_renderer.draw(pending.into_iter());
+
+                // Retrieve the resulting render actions
+                let render_actions      = render_stream.collect::<Vec<_>>().await;
+
+                // Pass on to the GPU
+                gpu_canvas.metal_renderer.render(render_actions, *drawable, target_texture);
+            });
         }
     }
 

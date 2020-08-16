@@ -913,13 +913,13 @@ public class FloView : NSObject, FloViewDelegate {
         })
 
         // Draw the canvas layer
-        viewRequestGpuCanvasRedraw();
+        viewRequestGpuCanvasRedraw()
     }
     
     ///
     /// Requests a callback to redraw the GPU layer
     ///
     @objc public func viewRequestGpuCanvasRedraw() {
-        self._metalLayer?.queueRedraw();
+        self._metalLayer?.queueRedraw()
     }
 }
