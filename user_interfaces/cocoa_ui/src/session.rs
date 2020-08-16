@@ -533,10 +533,10 @@ impl CocoaSession {
     ///
     /// Draws a GPU canvas for a particular view
     ///
-    pub fn redraw_gpu_canvas_for_view(&mut self, view_id: usize, drawable: &metal::CoreAnimationDrawableRef, size: CGSize, bounds: CGRect) {
+    pub fn redraw_gpu_canvas_for_view(&mut self, view_id: usize, drawable: metal::CoreAnimationDrawable, size: CGSize, bounds: CGRect) {
         // Fetch the canvas
         if let Some(gpu_canvas) = self.gpu_canvases.get_mut(&view_id) {
-            // Get the penidng drawing instructions from the canvas (they'll be flushed as we do the redraw)
+            // Get the pending drawing instructions from the canvas (they'll be flushed as we do the redraw)
             let mut pending = vec![];
             mem::swap(&mut pending, &mut gpu_canvas.pending_drawing);
 

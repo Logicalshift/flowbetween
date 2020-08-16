@@ -357,6 +357,8 @@ pub fn declare_flo_events_class() -> &'static Class {
                 let drawable = mem::transmute::<_, *mut metal::CoreAnimationDrawableRef>(drawable);
 
                 if let Some(drawable) = drawable.as_ref() {
+                    let drawable = drawable.to_owned();
+
                     // Fetch the session and view
                     let session_id  = get_session_id(this);
                     let view_id     = get_view_id(this);
