@@ -108,11 +108,13 @@ class FloMetalCanvasLayer : CAMetalLayer {
     ///
     func setVisibleArea(bounds: ContainerBounds, resolution: CGFloat) {
         autoreleasepool {
-            _size               = bounds.totalSize
-            _visibleRect        = bounds.visibleRect
+            _size                   = bounds.totalSize
+            _visibleRect            = bounds.visibleRect
             
-            _resolution         = 1.0
-            contentsScale       = 1.0
+            _visibleRect.origin.y   = _size.height - (bounds.visibleRect.maxY)
+            
+            _resolution             = 1.0
+            contentsScale           = 1.0
         }
     }
 }
