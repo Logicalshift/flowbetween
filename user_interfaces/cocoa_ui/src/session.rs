@@ -502,7 +502,7 @@ impl CocoaSession {
                 });
 
             // Add to the list of pending drawing instructions for the GPU canvas
-            gpu_canvas.pending_drawing.extend(actions);
+            // gpu_canvas.pending_drawing.extend(actions);
 
             // Request a redraw event
             let _: () = msg_send!(**view, viewRequestGpuCanvasRedraw);
@@ -521,11 +521,16 @@ impl CocoaSession {
             let metal_renderer  = MetalRenderer::with_default_device();
             let canvas_renderer = CanvasRenderer::new();
 
+            let mut test_draw = vec![Draw::ClearCanvas];
+            test_draw.fill_color(Color::Rgba(1.0, 1.0, 0.0, 1.0));
+            test_draw.circle(100.0, 100.0, 100.0);
+            test_draw.fill();
+
             // Build the GPU canvas
             GpuCanvas {
                 metal_renderer:     metal_renderer,
                 canvas_renderer:    canvas_renderer,
-                pending_drawing:    vec![]
+                pending_drawing:    test_draw
             }
         }
     }
