@@ -960,7 +960,7 @@ public class FloView : NSObject, FloViewDelegate {
             CATransaction.commit()
 
             // Regenerate the graphics context so that it's the appropriate size for the layer
-            //layer.setVisibleArea(bounds: newBounds, resolution: resolutionMultiplier)
+            layer.setVisibleArea(bounds: newBounds, resolution: resolutionMultiplier)
         }
     }
 }

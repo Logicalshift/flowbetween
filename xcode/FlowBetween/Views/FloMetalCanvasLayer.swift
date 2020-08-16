@@ -14,33 +14,54 @@ import Metal
 ///
 class FloMetalCanvasLayer : CAMetalLayer {
     /// True if a draw action is pending
-    fileprivate var _drawPending: Bool;
+    fileprivate var _drawPending: Bool
 
     /// The events for this layer
-    fileprivate weak var _events: FloEvents?;
+    fileprivate weak var _events: FloEvents?
+    
+    /// The visibile area of the canvas
+    fileprivate var _visibleRect: CGRect
+    
+    /// The total size of the canvas
+    fileprivate var _size: CGSize
+    
+    /// The resolution multiplier
+    fileprivate var _resolution: CGFloat
     
     init(events: FloEvents) {
-        _drawPending    = false;
-        _events         = events;
+        _drawPending    = false
+        _events         = events
+        _visibleRect    = CGRect(x: 0, y: 0, width: 1, height: 1)
+        _size           = CGSize(width: 1, height: 1)
+        _resolution     = 1.0
 
         super.init()
     }
     
     override init(layer: Any) {
-        _drawPending    = false;
-        _events         = nil;
-        
+        _drawPending    = false
+        _events         = nil
+        _visibleRect    = CGRect(x: 0, y: 0, width: 1, height: 1)
+        _size           = CGSize(width: 1, height: 1)
+        _resolution     = 1.0
+
         super.init(layer: layer);
 
         if let layer = layer as? FloMetalCanvasLayer {
-            _events     = layer._events;
+            _events         = layer._events
+            _visibleRect    = layer._visibleRect
+            _size           = layer._size
+            _resolution     = layer._resolution
         }
     }
 
     required init?(coder aDecoder: NSCoder) {
-        _drawPending    = false;
-        _events         = nil;
-        
+        _drawPending    = false
+        _events         = nil
+        _visibleRect    = CGRect(x: 0, y: 0, width: 1, height: 1)
+        _size           = CGSize(width: 1, height: 1)
+        _resolution     = 1.0
+
         super.init(coder: aDecoder)
     }
     
@@ -53,8 +74,8 @@ class FloMetalCanvasLayer : CAMetalLayer {
             _drawPending = true;
             RunLoop.main.perform(inModes: [.default, .modalPanel, .eventTracking], block: {
                 if self._drawPending {
-                    self._drawPending = false;
-                    self.performRedraw();
+                    self._drawPending = false
+                    self.performRedraw()
                 }
             })
         }
@@ -69,16 +90,29 @@ class FloMetalCanvasLayer : CAMetalLayer {
         
         // Fetch the next drawable
         if let flo_events = _events {
-            let drawable = nextDrawable();
+            let drawable = nextDrawable()
             
             if var drawable = drawable {
-                let unsafe_drawable = AutoreleasingUnsafeMutablePointer<CAMetalDrawable?>(&drawable);
+                let unsafe_drawable = AutoreleasingUnsafeMutablePointer<CAMetalDrawable?>(&drawable)
                 
                 // Send it to be redrawn via the events
                 flo_events.redrawGpuCanvas(with: unsafe_drawable,
                        size: NSSize(width: 1980, height: 1080),
                        viewport: NSRect(x: 0, y: 0, width: 1920, height: 1080));
             }
+        }
+    }
+
+    ///
+    /// Updates the area of the canvas that this layer should display
+    ///
+    func setVisibleArea(bounds: ContainerBounds, resolution: CGFloat) {
+        autoreleasepool {
+            _size               = bounds.totalSize
+            _visibleRect        = bounds.visibleRect
+            
+            _resolution         = 1.0
+            contentsScale       = 1.0
         }
     }
 }
