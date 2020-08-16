@@ -79,9 +79,6 @@ class FloMetalCanvasLayer : CAMetalLayer {
                        size: NSSize(width: 1980, height: 1080),
                        viewport: NSRect(x: 0, y: 0, width: 1920, height: 1080));
             }
-            
-            // Present the drawable after rendering
-            drawable?.present();
         }
     }
 }
