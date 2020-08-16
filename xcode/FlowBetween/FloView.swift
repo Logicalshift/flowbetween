@@ -871,7 +871,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     @objc public func viewInitialiseGpuCanvas(_ events: FloEvents) {
         // Create the layer
-        let layer       = FloMetalCanvasLayer()
+        let layer       = FloMetalCanvasLayer(events: events);
 
         // Layer should not animate its contents
         layer.actions = [
@@ -919,8 +919,6 @@ public class FloView : NSObject, FloViewDelegate {
     /// Requests a callback to redraw the GPU layer
     ///
     @objc public func viewRequestGpuCanvasRedraw() {
-        if let metalLayer = _metalLayer {
-
-        }
+        self._metalLayer?.queueRedraw();
     }
 }
