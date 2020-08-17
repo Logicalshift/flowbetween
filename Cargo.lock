@@ -1159,6 +1159,7 @@ version = "0.1.0"
 dependencies = [
  "bindgen 0.54.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cocoa 0.23.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "flo_canvas 0.2.0",
  "gl 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "metal 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
