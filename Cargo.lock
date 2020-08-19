@@ -1212,7 +1212,7 @@ dependencies = [
 [[package]]
 name = "flo_stream"
 version = "0.5.0"
-source = "git+https://github.com/Logicalshift/flo_stream#a6d6c0150a4e9dbad78acc26a287a9a6776ab746"
+source = "git+https://github.com/Logicalshift/flo_stream#5f3adbe70b6d40ff1fdcb6aaefdd9c142587ae97"
 dependencies = [
  "futures 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
