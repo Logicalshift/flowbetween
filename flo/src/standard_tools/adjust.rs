@@ -95,6 +95,44 @@ impl Adjust {
     }
 
     ///
+    /// Writes out a control point sprite for a bezier point
+    ///
+    fn declare_bezier_point_sprite(sprite_id: SpriteId) -> Vec<Draw> {
+        let mut draw = vec![];
+
+        draw.sprite(sprite_id);
+
+        draw.stroke_color(SELECTION_OUTLINE);
+        draw.line_width_pixels(1.0);
+
+        draw.circle(0.0, 0.0, 5.0);
+        draw.fill_color(CP_BEZIER);
+        draw.fill();
+        draw.stroke();
+
+        draw
+    }
+
+    ///
+    /// Writes out a control point sprite for a bezier control point
+    ///
+    fn declare_bezier_control_point_sprite(sprite_id: SpriteId) -> Vec<Draw> {
+        let mut draw = vec![];
+
+        draw.sprite(sprite_id);
+
+        draw.stroke_color(SELECTION_OUTLINE);
+        draw.line_width_pixels(1.0);
+
+        draw.rect(0.0-3.0, 0.0-3.0, 0.0+3.0, 0.0+3.0);
+        draw.fill_color(CP_BEZIER_CP);
+        draw.fill();
+        draw.stroke();
+
+        draw
+    }
+
+    ///
     /// Draws an element control point
     ///
     pub fn draw_control_point(cp: &ControlPoint) -> Vec<Draw> {
