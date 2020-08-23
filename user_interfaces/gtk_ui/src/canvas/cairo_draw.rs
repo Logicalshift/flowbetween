@@ -385,6 +385,11 @@ impl CairoDraw {
                 self.ctxt.set_operator(Operator::Over);
                 self.ctxt.set_matrix(self.initial_matrix);
             }
+
+            Sprite(sprite_id)                           => { unimplemented!(); },
+            ClearSprite                                 => { unimplemented!(); },
+            SpriteTransform(transform)                  => { unimplemented!(); },
+            DrawSprite(sprite_id)                       => { unimplemented!(); },
         }
     }
 }
