@@ -123,7 +123,7 @@ impl StreamAnimation {
                 properties = FileProperties::deserialize(&mut props.chars()).expect("Could not parse file properties");
             }
 
-            _ => panic!("Unexpected response while reading file properties")
+            unknown => panic!("Unexpected response {:?} while reading file properties", unknown)
         }
 
         properties
