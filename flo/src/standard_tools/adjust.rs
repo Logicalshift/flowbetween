@@ -299,6 +299,9 @@ impl Adjust {
                 // Clear the layer we're going to draw the control points on
                 draw_control_points.layer(0);
                 draw_control_points.clear_layer();
+                draw_control_points.extend(Self::declare_bezier_point_sprite(SPRITE_BEZIER_POINT));
+                draw_control_points.extend(Self::declare_bezier_control_point_sprite(SPRITE_BEZIER_CONTROL_POINT));
+                draw_control_points.layer(0);
 
                 // Draw the control points for the selected elements
                 for (vector, properties) in selected_elements.iter() {
@@ -424,6 +427,9 @@ impl Adjust {
                         // Clear the edit layer
                         draw_drag.layer(1);
                         draw_drag.clear_layer();
+                        draw_drag.extend(Self::declare_bezier_point_sprite(SPRITE_BEZIER_POINT));
+                        draw_drag.extend(Self::declare_bezier_control_point_sprite(SPRITE_BEZIER_CONTROL_POINT));
+                        draw_drag.layer(1);
 
                         // Edit the elements
                         let elements_to_draw    = elements.iter().filter(|(vector, _)|          vector.id() == element_id);
