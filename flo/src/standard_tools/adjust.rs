@@ -101,6 +101,7 @@ impl Adjust {
         let mut draw = vec![];
 
         draw.sprite(sprite_id);
+        draw.clear_sprite();
 
         draw.stroke_color(SELECTION_OUTLINE);
         draw.line_width_pixels(1.0);
@@ -120,6 +121,7 @@ impl Adjust {
         let mut draw = vec![];
 
         draw.sprite(sprite_id);
+        draw.clear_sprite();
 
         draw.stroke_color(SELECTION_OUTLINE);
         draw.line_width_pixels(1.0);
