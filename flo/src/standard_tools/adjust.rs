@@ -142,17 +142,15 @@ impl Adjust {
 
         match cp {
             ControlPoint::BezierPoint(x, y) => {
-                draw.circle(*x, *y, 5.0);
-                draw.fill_color(CP_BEZIER);
-                draw.fill();
-                draw.stroke();
+                draw.sprite_transform(SpriteTransform::Identity);
+                draw.sprite_transform(SpriteTransform::Translate(*x, *y));
+                draw.draw_sprite(SPRITE_BEZIER_POINT);
             },
 
             ControlPoint::BezierControlPoint(x, y) => {
-                draw.rect(x-3.0, y-3.0, x+3.0, y+3.0);
-                draw.fill_color(CP_BEZIER_CP);
-                draw.fill();
-                draw.stroke();
+                draw.sprite_transform(SpriteTransform::Identity);
+                draw.sprite_transform(SpriteTransform::Translate(*x, *y));
+                draw.draw_sprite(SPRITE_BEZIER_CONTROL_POINT);
             }
         };
 
@@ -184,6 +182,7 @@ impl Adjust {
 
         let control_points = element.control_points(properties);
 
+        /*
         // Draw the control point connecting lines
         draw.new_path();
         for (prev, next) in control_points.iter().tuple_windows() {
@@ -204,11 +203,9 @@ impl Adjust {
         draw.line_width_pixels(1.0);
         draw.stroke_color(CP_LINES);
         draw.stroke();
+        */
 
         // Draw the control points themselves
-        draw.stroke_color(SELECTION_OUTLINE);
-        draw.line_width_pixels(1.0);
-
         for cp in control_points.iter() {
             draw.extend(Self::draw_control_point(cp));
         }
