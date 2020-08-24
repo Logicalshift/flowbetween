@@ -206,6 +206,10 @@ impl CanvasContext {
                 }
                 Layer(_layer_id)                                    => { /* Layers need to be implemented elsewhere */ }
                 LayerBlend(_layer_id, _blend)                       => { /* Layers need to be implemented elsewhere */ }
+                Sprite(_sprite_id)                                  => { unimplemented!() }
+                SpriteTransform(_transform)                         => { unimplemented!() }
+                ClearSprite                                         => { unimplemented!() }
+                DrawSprite(_sprite_id)                              => { unimplemented!() }
             }
         }
     }
