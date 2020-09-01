@@ -596,6 +596,18 @@ let flo_canvas = (function() {
             line_width(1.0);
         }
 
+        function sprite(sprite_id) {
+
+        }
+
+        function clear_sprite() {
+
+        }
+
+        function draw_sprite(sprite_id) {
+            
+        }
+
         function rewind_to_last_store() {
             if (last_store_pos !== null) {
                 while (replay.length > last_store_pos) {
@@ -689,6 +701,9 @@ let flo_canvas = (function() {
             layer_blend:        (layer_id, blend_mode) => { replay.push([layer_blend, [layer_id, blend_mode], -1]);         layer_blend(layer_id, blend_mode); },
             clear_layer:        ()              => { replay.push([clear_layer, [], current_layer_id]);                      clear_layer();                  },
             clear_canvas:       ()              => { replay = [ [clear_canvas, [], current_layer_id] ];                     clear_canvas();                 },
+            sprite:             (sprite_id)     => { replay = [ [sprite, [], current_layer_id] ];                           sprite(sprite_id);              },
+            clear_sprite:       ()              => { replay = [ [clear_sprite, [], current_layer_id] ];                     clear_sprite();                 },
+            draw_sprite:        (sprite_id)     => { replay = [ [draw_sprite, [sprite_id], current_layer_id] ];             draw_sprite(sprite_id);         },
 
             replay_drawing:     replay_drawing,
             map_coords:         map_coords,
@@ -802,7 +817,7 @@ let flo_canvas = (function() {
             let read_truncated_u64 = () => {
                 let result  = 0;
                 let shift   = 0;
-                
+
                 for (;;) {
                     let next_val    = fragment_val(read_char());
                     let val_part    = next_val & 0x1f;
@@ -845,7 +860,7 @@ let flo_canvas = (function() {
                 case 'l':   draw.layer(read_u32()); break;
                 case 'b':   draw.layer_blend(read_u32(), decode_blend_mode()); break;
                 case 'C':   draw.clear_layer();     break;
-                case 's':   draw.create_sprite(read_sprite_id()); break;
+                case 's':   draw.sprite(read_sprite_id()); break;
                 }
             };
 
