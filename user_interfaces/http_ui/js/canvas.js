@@ -656,7 +656,20 @@ let flo_canvas = (function() {
             },
 
             draw_sprite: (sprite_id) => {
-                
+                let sprite = sprites[sprite_id];
+                if (sprite) {
+                    // Push the state before the sprite
+                    layer_renderer.push_state();
+
+                    // Apply the sprite transform
+                    layer_renderer.multiply_transform(sprite_transform);
+
+                    // Run the sprite commands
+                    sprite.forEach(item => item[0].apply(null, item[1]));
+
+                    // Restore the state as it was before the sprite
+                    layer_renderer.pop_state();
+                }
             },
 
             sprite_transform_identity: () => {
