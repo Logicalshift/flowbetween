@@ -946,6 +946,12 @@ let flo_canvas = (function() {
                 }
             };
 
+            let read_matrix = () => {
+                let transform = [ 1,0,0, 0,1,0, 0,0,1 ];
+                for (let p=0; p<9; ++p) transform[p] = read_float();
+                return transform;
+            };
+
             let decode_clip = () => {
                 switch (read_char()) {
                 case 'c':   draw.clip();                break;
@@ -961,6 +967,16 @@ let flo_canvas = (function() {
                 case 'C':   draw.clear_sprite();        break;
                 case 'T':   decode_sprite_transform();  break;
                 case 'D':   draw.draw_sprite(read_sprite_id()); break;
+                }
+            };
+
+            let decode_sprite_transform = () => {
+                switch (read_char()) {
+                case 'i':   draw.sprite_transform_identity();   break;
+                case 't':   draw.sprite_transform_translate(read_float(), read_float());    break;
+                case 's':   draw.sprite_transform_scale(read_float(), read_float());        break;
+                case 'r':   draw.sprite_transform_rotate(read_float());                     break;
+                case 'T':   draw.sprite_transform_matrix(read_matrix());                    break;
                 }
             };
             
