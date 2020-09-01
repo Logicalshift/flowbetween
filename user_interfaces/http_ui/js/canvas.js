@@ -159,6 +159,8 @@ let flo_canvas = (function() {
         let layer_canvases              = null;
         let blend_for_layer             = {};
         let current_layer_id            = 0;
+        let current_sprite              = [ ];
+        let sprites                     = { };
 
         ///
         /// Sets the current transform (lack of browser support for currentTransform means we have to track this independently)
@@ -245,7 +247,12 @@ let flo_canvas = (function() {
             return new_layer;
         }
 
-        let layer_renderer = {
+        // Specify the rendering functions (there are two sets: the layer renderers write straight to canvases, and the sprite renderer records rendering actions for later replay)
+        let render          = null;
+        let layer_renderer  = null;
+        let sprite_renderer = null;
+
+        layer_renderer = {
             new_path: ()                             => { context.beginPath(); current_path = []; },
             move_to: (x,y)                           => { context.moveTo(x, y); current_path.push(() => context.moveTo(x, y) ); },
             line_to: (x,y)                           => { context.lineTo(x, y); current_path.push(() => context.lineTo(x, y) ); },
@@ -513,6 +520,9 @@ let flo_canvas = (function() {
                 // Clear any existing clipping rect
                 unclip();
 
+                // Switch to layer rendering
+                render = layer_renderer;
+
                 // Set up layers if none are defined
                 if (!layer_canvases) {
                     layer_canvases = {};
@@ -581,6 +591,7 @@ let flo_canvas = (function() {
                 context             = canvas.getContext('2d');
                 blend_for_layer     = {};
                 current_layer_id    = 0;
+                render              = layer_renderer;
 
                 // Clear
                 context.setTransform(1,0, 0,1, 0,0);
@@ -601,11 +612,19 @@ let flo_canvas = (function() {
             },
 
             sprite: (sprite_id) => {
+                // Switch to sprite rendering
+                render = sprite_renderer;
 
+                // Select the specified sprite
+                if (!sprites[sprite_id]) {
+                    sprites[sprite_id] = [ ];
+                }
+
+                current_sprite = sprites[sprite_id];
             },
 
             clear_sprite: () => {
-
+                current_sprite.length = 0;
             },
 
             draw_sprite: (sprite_id) => {
@@ -693,8 +712,53 @@ let flo_canvas = (function() {
             }
         }
 
+        // The sprite renderer just records actions in the current sprite
+        sprite_renderer = { 
+            new_path:                       ()                          => { current_sprite.push([new_path, []]); },
+            move_to:                        (x, y)                      => { current_sprite.push([move_to, [x, y]]); },
+            line_to:                        (x, y)                      => { current_sprite.push([line_to, [x, y]]); },
+            bezier_curve:                   (x1, y1, x2, y2, x3, y3)    => { current_sprite.push([bezier_curve, [x1, y1, x2, y2, x3, y3]]); },
+            close_path:                     ()                          => { current_sprite.push([close_path, []]); },
+            fill:                           ()                          => { current_sprite.push([fill, []]); },
+            stroke:                         ()                          => { current_sprite.push([stroke, []]); },
+            line_width:                     (width)                     => { current_sprite.push([line_width, [width]]); },
+            line_width_pixels:              (width)                     => { current_sprite.push([line_width_pixels, [width]]); },
+            line_join:                      (join)                      => { current_sprite.push([line_join, [join]]); },
+            line_cap:                       (cap)                       => { current_sprite.push([line_cap, [cap]]); },
+            new_dash_pattern:               ()                          => { current_sprite.push([new_dash_pattern, []]); },
+            dash_length:                    (length)                    => { current_sprite.push([dash_length, [length]]); },
+            dash_offset:                    (offset)                    => { current_sprite.push([dash_offset, [offset]]); },
+            fill_color:                     (r, g, b, a)                => { current_sprite.push([fill_color, [r, g, b, a]]); },
+            stroke_color:                   (r, g, b, a)                => { current_sprite.push([stroke_color, [r, g, b, a]]); },
+            blend_mode:                     (mode)                      => { current_sprite.push([blend_mode, [mode]]); },
+            identity_transform:             ()                          => { current_sprite.push([identity_transform, []]); },
+            canvas_height:                  (height)                    => { current_sprite.push([canvas_height, [height]]); },
+            center_region:                  (x1, y1, x2, y2)            => { current_sprite.push([center_region, [x1, y1, x2, y2]]); },
+            multiply_transform:             (transform)                 => { current_sprite.push([multiply_transform, [transform]]); },
+            unclip:                         ()                          => { current_sprite.push([unclip, []]); },
+            clip:                           ()                          => { current_sprite.push([clip, []]); },
+            store:                          ()                          => { current_sprite.push([store, []]); },
+            restore:                        ()                          => { current_sprite.push([restore, []]); },
+            free_stored_buffer:             ()                          => { current_sprite.push([free_stored_buffer, []]); },
+            push_state:                     ()                          => { current_sprite.push([push_state, []]); },
+            pop_state:                      ()                          => { current_sprite.push([pop_state, []]); },
+            layer_blend:                    (blend_mode)                => { current_sprite.push([layer_blend, [blend_mode]]); },
+            clear_layer:                    ()                          => { current_sprite.push([clear_layer, []]); },
+            clear_canvas:                   ()                          => { current_sprite.push([clear_canvas, []]); },
+            clear_sprite:                   ()                          => { current_sprite.push([clear_sprite, []]); },
+            draw_sprite:                    (sprite_id)                 => { current_sprite.push([draw_sprite, [sprite_id]]); },
+            sprite_transform_identity:      ()                          => { current_sprite.push([sprite_transform_identity, []]); },
+            sprite_transform_translate:     (x, y)                      => { current_sprite.push([sprite_transform_translate, [x, y]]); },
+            sprite_transform_scale:         (x, y)                      => { current_sprite.push([sprite_transform_scale, [x, y]]); },
+            sprite_transform_rotate:        (angle)                     => { current_sprite.push([sprite_transform_rotate, [angle]]); },
+            sprite_transform_matrix:        (matrix)                    => { current_sprite.push([sprite_transform_matrix, [matrix]]); },
+
+            layer:                          (layer_id)                  => { layer_renderer.layer(layer_id); },
+            sprite:                         (sprite_id)                 => { layer_renderer.sprite(sprite_id); }
+        };
+
         // Render points to the active set of rendering functions
-        let render  = layer_renderer;
+        render      = layer_renderer;
 
         // This set of functions encapsulate the render state and are used when replaying actions
         function new_path()                             { render.new_path(); }
