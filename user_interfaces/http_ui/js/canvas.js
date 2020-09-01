@@ -652,7 +652,6 @@ let flo_canvas = (function() {
             },
 
             clear_sprite: () => {
-                current_sprite.length = 0;
             },
 
             draw_sprite: (sprite_id) => {
@@ -803,7 +802,6 @@ let flo_canvas = (function() {
             layer_blend:                    (blend_mode)                => { current_sprite.push([layer_blend, [blend_mode]]); },
             clear_layer:                    ()                          => { current_sprite.push([clear_layer, []]); },
             clear_canvas:                   ()                          => { current_sprite.push([clear_canvas, []]); },
-            clear_sprite:                   ()                          => { current_sprite.push([clear_sprite, []]); },
             draw_sprite:                    (sprite_id)                 => { current_sprite.push([draw_sprite, [sprite_id]]); },
             sprite_transform_identity:      ()                          => { current_sprite.push([sprite_transform_identity, []]); },
             sprite_transform_translate:     (x, y)                      => { current_sprite.push([sprite_transform_translate, [x, y]]); },
@@ -812,7 +810,8 @@ let flo_canvas = (function() {
             sprite_transform_matrix:        (matrix)                    => { current_sprite.push([sprite_transform_matrix, [matrix]]); },
 
             layer:                          (layer_id)                  => { layer_renderer.layer(layer_id); },
-            sprite:                         (sprite_id)                 => { layer_renderer.sprite(sprite_id); }
+            sprite:                         (sprite_id)                 => { layer_renderer.sprite(sprite_id); },
+            clear_sprite:                   ()                          => { current_sprite.length = 0; },
         };
 
         // Render points to the active set of rendering functions
