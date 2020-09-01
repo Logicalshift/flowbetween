@@ -896,7 +896,7 @@ let flo_canvas = (function() {
             layer_blend:        (layer_id, blend_mode) => { replay.push([layer_blend, [layer_id, blend_mode], -1]);         render.layer_blend(layer_id, blend_mode); },
             clear_layer:        ()              => { replay.push([clear_layer, [], current_layer_id]);                      render.clear_layer();                  },
             clear_canvas:       ()              => { replay = [ [clear_canvas, [], current_layer_id] ];                     render.clear_canvas();                 },
-            sprite:             (sprite_id)     => { replay = [ [sprite, [], current_layer_id] ];                           render.sprite(sprite_id);              },
+            sprite:             (sprite_id)     => { replay = [ [sprite, [sprite_id], current_layer_id] ];                  render.sprite(sprite_id);              },
             clear_sprite:       ()              => { replay = [ [clear_sprite, [], current_layer_id] ];                     render.clear_sprite();                 },
             draw_sprite:        (sprite_id)     => { replay = [ [draw_sprite, [sprite_id], current_layer_id] ];             render.draw_sprite(sprite_id);         },
 
