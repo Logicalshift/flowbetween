@@ -608,6 +608,26 @@ let flo_canvas = (function() {
             
         }
 
+        function sprite_transform_identity() {
+
+        }
+
+        function sprite_transform_translate() {
+
+        }
+
+        function sprite_transform_scale() {
+
+        }
+
+        function sprite_transform_rotate() {
+
+        }
+
+        function sprite_transform_matrix() {
+
+        }
+
         function rewind_to_last_store() {
             if (last_store_pos !== null) {
                 while (replay.length > last_store_pos) {
@@ -704,6 +724,12 @@ let flo_canvas = (function() {
             sprite:             (sprite_id)     => { replay = [ [sprite, [], current_layer_id] ];                           sprite(sprite_id);              },
             clear_sprite:       ()              => { replay = [ [clear_sprite, [], current_layer_id] ];                     clear_sprite();                 },
             draw_sprite:        (sprite_id)     => { replay = [ [draw_sprite, [sprite_id], current_layer_id] ];             draw_sprite(sprite_id);         },
+
+            sprite_transform_identity:  ()          => { replay = [ [sprite_transform_identity, [], current_layer_id] ];        sprite_transform_identity();        },
+            sprite_transform_translate: (x, y)      => { replay = [ [sprite_transform_translate, [x, y], current_layer_id ] ];  sprite_transform_translate(x, y);   },
+            sprite_transform_scale:     (x, y)      => { replay = [ [sprite_transform_scale, [x, y], current_layer_id] ];       sprite_transform_scale(x, y);       },
+            sprite_transform_rotate:    (angle)     => { replay = [ [sprite_transform_rotate, [angle], current_layer_id] ];     sprite_transform_rotate(angle);     },
+            sprite_transform_matrix:    (matrix)    => { replay = [ [sprite_transform_matrix, [matrix], current_layer_id] ];    sprite_transform_matrix(matrix);    },
 
             replay_drawing:     replay_drawing,
             map_coords:         map_coords,
