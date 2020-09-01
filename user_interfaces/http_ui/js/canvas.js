@@ -161,6 +161,7 @@ let flo_canvas = (function() {
         let current_layer_id            = 0;
         let current_sprite              = [ ];
         let sprites                     = { };
+        let sprite_transform            = [1,0,0, 0,1,0, 0,0,1];
 
         ///
         /// Sets the current transform (lack of browser support for currentTransform means we have to track this independently)
@@ -192,6 +193,31 @@ let flo_canvas = (function() {
             ];
 
             transform           = res;
+            inverse_transform   = null;
+        }
+
+        ///
+        /// Multiplies the sprite transformation matrix
+        ///
+        function sprite_transform_multiply(new_transform) {
+            let t1 = sprite_transform;
+            let t2 = new_transform;
+
+            let res = [
+                t1[0]*t2[0] + t1[1]*t2[3] + t1[2]*t2[6],
+                t1[0]*t2[1] + t1[1]*t2[4] + t1[2]*t2[7],
+                t1[0]*t2[2] + t1[1]*t2[5] + t1[2]*t2[8],
+
+                t1[3]*t2[0] + t1[4]*t2[3] + t1[5]*t2[6],
+                t1[3]*t2[1] + t1[4]*t2[4] + t1[5]*t2[7],
+                t1[3]*t2[2] + t1[4]*t2[5] + t1[5]*t2[8],
+
+                t1[6]*t2[0] + t1[7]*t2[3] + t1[8]*t2[6],
+                t1[6]*t2[1] + t1[7]*t2[4] + t1[8]*t2[7],
+                t1[6]*t2[2] + t1[7]*t2[5] + t1[8]*t2[8],
+            ];
+
+            sprite_transform    = res;
             inverse_transform   = null;
         }
 
@@ -376,7 +402,7 @@ let flo_canvas = (function() {
                 let x_offset = cur_x - center_x;
                 let y_offset = cur_y - center_y;
 
-                multiply_transform([
+                layer_renderer.multiply_transform([
                     1, 0, x_offset,
                     0, 1, y_offset,
                     0, 0, 1
@@ -463,14 +489,15 @@ let flo_canvas = (function() {
 
             push_state: () => {
                 // Push the current clipping path and dash pattern
-                let restore_clip_stack      = clip_stack.slice();
-                let restore_dash_pattern    = dash_pattern.slice();
-                let restore_stored_pixels   = stored_pixels;
-                let restore_gen_buffer      = generate_buffer_on_store;
-                let restore_have_image      = have_stored_image;
-                let restore_layer_id        = current_layer_id;
-                let restore_last_store_pos  = last_store_pos;
-                let restore_transform       = transform.slice();
+                let restore_clip_stack          = clip_stack.slice();
+                let restore_dash_pattern        = dash_pattern.slice();
+                let restore_stored_pixels       = stored_pixels;
+                let restore_gen_buffer          = generate_buffer_on_store;
+                let restore_have_image          = have_stored_image;
+                let restore_layer_id            = current_layer_id;
+                let restore_last_store_pos      = last_store_pos;
+                let restore_transform           = transform.slice();
+                let restore_sprite_transform    = sprite_transform.slice();
                 context_stack.push(() => {
                     clip_stack                  = restore_clip_stack;
                     dash_pattern                = restore_dash_pattern;
@@ -480,6 +507,7 @@ let flo_canvas = (function() {
                     current_layer_id            = restore_layer_id;
                     last_store_pos              = restore_last_store_pos;
                     transform                   = restore_transform;
+                    sprite_transform            = restore_sprite_transform;
                     set_dash_pattern            = true;
                 });
 
@@ -632,23 +660,40 @@ let flo_canvas = (function() {
             },
 
             sprite_transform_identity: () => {
+                sprite_transform = [1,0,0, 0,1,0, 0,0,1];
+            },
+
+            sprite_transform_translate: (x, y) => {
+                sprite_transform_multiply([
+                    1, 0, x,
+                    0, 1, y,
+                    0, 0, 1
+                ]);
+            },
+
+            sprite_transform_scale: (x, y) => {
+                sprite_transform_multiply([
+                    x, 0, 0,
+                    0, y, 0,
+                    0, 0, 1
+                ]);
 
             },
 
-            sprite_transform_translate: () => {
+            sprite_transform_rotate: (angle) => {
+                let radians = angle / 180.0 * Math.PI;
+                let cos     = Math.cos(radians);
+                let sin     = Math.sin(radians);
 
+                sprite_transform_multiply([
+                    [cos,   -sin,   0.0],
+                    [sin,   cos,    0.0],
+                    [0.0,   0.0,    1.0]
+                ]);
             },
 
-            sprite_transform_scale: () => {
-
-            },
-
-            sprite_transform_rotate: () => {
-
-            },
-
-            sprite_transform_matrix: () => {
-
+            sprite_transform_matrix: (matrix) => {
+                sprite_transform_multiply(matrix);
             }
         };
 
