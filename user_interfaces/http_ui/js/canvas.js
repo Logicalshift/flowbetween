@@ -143,9 +143,6 @@ let flo_canvas = (function() {
     /// Creates the drawing functions for a canvas
     ///
     function create_drawing_functions(canvas) {
-        // The replay log will replay the actions that draw this canvas (for example when resizing)
-        let replay  = [ [ clear_canvas, [] ] ];
-
         let context                     = canvas.getContext('2d');
         let current_path                = [];
         let context_stack               = [];
@@ -196,140 +193,19 @@ let flo_canvas = (function() {
             inverse_transform   = null;
         }
 
-        function new_path()                             { context.beginPath(); current_path = []; }
-        function move_to(x,y)                           { context.moveTo(x, y); current_path.push(() => context.moveTo(x, y) ); }
-        function line_to(x,y)                           { context.lineTo(x, y); current_path.push(() => context.lineTo(x, y) ); }
-        function bezier_curve(x1, y1, x2, y2, x3, y3)   { context.bezierCurveTo(x2, y2, x3, y3, x1, y1); current_path.push(() => context.bezierCurveTo(x2, y2, x3, y3, x1, y1) ); }
-        function close_path()                           { context.closePath(); }
-        function fill()                                 { context.fill(); }
+        ///
+        /// Copies the contents of one canvas to another one
+        ///
+        function copy_canvas(src_canvas, target_canvas) {
+            let target_context = target_canvas.getContext('2d');
 
-        function stroke() {
-            if (set_dash_pattern) {
-                set_dash_pattern = false;
-                context.setLineDash(dash_pattern);
-            }
+            target_context.save();
+            target_context.setTransform(1,0, 0,1, 0,0);
+            target_context.globalCompositeOperation = 'copy';
 
-            context.stroke(); 
-        }
+            target_context.drawImage(src_canvas, 0,0, src_canvas.width, src_canvas.height);
 
-        function fill_color(r, g, b, a) {
-            r = Math.floor(r*255.0);
-            g = Math.floor(g*255.0);
-            b = Math.floor(b*255.0);
-
-            context.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
-        }
-
-        function stroke_color(r, g, b, a) {
-            r = Math.floor(r*255.0);
-            g = Math.floor(g*255.0);
-            b = Math.floor(b*255.0);
-
-            context.strokeStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
-        }
-
-        function line_width(width) {
-            context.lineWidth = width;
-        }
-
-        function line_width_pixels(width) {
-            // Length of the first column of the transformation matrix is the scale factor (for the width)
-            let scale = Math.sqrt(transform[0]*transform[0] + transform[3]*transform[3]);
-            if (scale === 0) scale = 1;
-            //scale /= window.devicePixelRatio || 1;
-
-            // Scale the width down according to this factor (we'll always use the horizontal scale factor)
-            context.lineWidth = width / scale;
-        }
-
-        function line_join(join) {
-            context.lineJoin = join;
-        }
-
-        function line_cap(cap) {
-            context.lineCap = cap;
-        }
-
-        function new_dash_pattern() {
-            dash_pattern        = [];
-            set_dash_pattern    = true;
-        }
-
-        function dash_length(length) {
-            context.lineDashOffset = length;
-        }
-
-        function dash_offset(offset) {
-            dash_pattern.push(offset);
-            set_dash_pattern = true;
-        }
-
-        function blend_mode(blend_mode) {
-            context.globalCompositeOperation = blend_mode;
-        }
-
-        function identity_transform() {
-            canvas_height(2.0);
-        }
-
-        function canvas_height(height) {
-            let pixel_width     = canvas.width;
-            let pixel_height    = canvas.height;
-
-            let ratio_x         = pixel_height/height;
-            let ratio_y         = -ratio_x;
-
-            if (height < 0) {
-                // Using a negative heights flips coordinates vertically but not horizontally
-                ratio_x = -ratio_x;
-            }
-
-            context.setTransform(
-                ratio_x,            0, 
-                0,                  ratio_y, 
-                pixel_width/2.0,    pixel_height/2.0
-            );
-
-            transform_set([ 
-                ratio_x,    0,          pixel_width/2.0,
-                0,          ratio_y,    pixel_height/2.0, 
-                0,          0,          1
-            ]);
-        }
-
-        function center_region(minx, miny, maxx, maxy) {
-            let pixel_width     = canvas.width;
-            let pixel_height    = canvas.height;
-
-            // Get the current scaling of this canvas
-            let xscale = Math.sqrt(transform[0]*transform[0] + transform[3]*transform[3]);
-            let yscale = Math.sqrt(transform[1]*transform[1] + transform[4]*transform[4]);
-            if (xscale === 0) xscale = 1;
-            if (yscale === 0) yscale = 1;
-
-            // Current X, Y coordinates (centered)
-            let cur_x = (transform[2]-(pixel_width/2.0))/xscale;
-            let cur_y = (transform[5]-(pixel_height/2.0))/yscale;
-            
-            // New center coordinates
-            let center_x = (minx+maxx)/2.0;
-            let center_y = (miny+maxy)/2.0;
-
-            // Compute the offsets and transform the canvas
-            let x_offset = cur_x - center_x;
-            let y_offset = cur_y - center_y;
-
-            multiply_transform([
-                1, 0, x_offset,
-                0, 1, y_offset,
-                0, 0, 1
-            ]);
-        }
-
-        function multiply_transform(transform) {
-            // Rotated transformation matrix
-            context.transform(transform[0], transform[3], transform[1], transform[4], transform[2], transform[5]);
-            transform_multiply(transform);
+            target_context.restore();
         }
 
         ///
@@ -358,133 +234,9 @@ let flo_canvas = (function() {
             }
         }
 
-        function unclip() {
-            // Stop clipping and clear the stack
-            remove_clip();
-            clip_stack = [];
-        }
-
-        function clip() {
-            // Make sure the clipping path is turned on
-            restore_clip();
-
-            // Need to be able to restore the clipping path
-            let clip_path = current_path.slice();
-            clip_stack.push(() => {
-                clip_path.forEach(fn => fn());
-                context.clip();
-            });
-
-            // Add the current path to the context
-            context.clip();
-        }
-
-        function store() {
-            if (generate_buffer_on_store) {
-                stored_pixels = document.createElement('canvas');
-            }
-
-            // Update the size of the backing buffer
-            let width       = canvas.width;
-            let height      = canvas.height;
-
-            if (width !== stored_pixels.width)      { stored_pixels.width = canvas.width; }
-            if (height !== stored_pixels.height)    { stored_pixels.height = canvas.height; }
-
-            let source_canvas = canvas;
-            if (layer_canvases) {
-                source_canvas = layer_canvases[current_layer_id];
-            }
-            
-            // Remember where the store was in the replay (so we can rewind)
-            last_store_pos  = replay.length;
-
-            // Draw the canvas to the backing buffer (we use a backing canvas because getImageData is very slow on all browsers)
-            let stored_context = stored_pixels.getContext('2d');
-            stored_context.globalCompositeOperation = 'copy';
-            stored_context.drawImage(source_canvas, 0, 0);
-            have_stored_image = true;
-        }
-
-        function restore() {
-            // Reset the image data to how it was at the last point it was used
-            if (have_stored_image) {
-                context.save();
-
-                context.globalCompositeOperation = 'copy';
-                context.setTransform(
-                    1,  0, 
-                    0,  1, 
-                    0,  0
-                );
-                context.drawImage(stored_pixels, 0, 0);
-
-                context.restore();
-            }
-        }
-
-        function free_stored_buffer() {
-            // Set that we no longer have a stored image
-            if (have_stored_image) {
-                have_stored_image   = false;
-            }
-        }
-
-        function push_state() {
-            // Push the current clipping path and dash pattern
-            let restore_clip_stack      = clip_stack.slice();
-            let restore_dash_pattern    = dash_pattern.slice();
-            let restore_stored_pixels   = stored_pixels;
-            let restore_gen_buffer      = generate_buffer_on_store;
-            let restore_have_image      = have_stored_image;
-            let restore_layer_id        = current_layer_id;
-            let restore_last_store_pos  = last_store_pos;
-            let restore_transform       = transform.slice();
-            context_stack.push(() => {
-                clip_stack                  = restore_clip_stack;
-                dash_pattern                = restore_dash_pattern;
-                stored_pixels               = restore_stored_pixels;
-                generate_buffer_on_store    = restore_gen_buffer;
-                have_stored_image           = restore_have_image;
-                current_layer_id            = restore_layer_id;
-                last_store_pos              = restore_last_store_pos;
-                transform                   = restore_transform;
-                set_dash_pattern            = true;
-            });
-
-            // Cannot rewind the replay if we restore pixels pushed before this state (while the state is in effect)
-            last_store_pos = null;
-            
-            // If we store a new buffered image while a state is pushed, then we need a new canvas to store it in
-            if (have_stored_image) {
-                generate_buffer_on_store = true;
-            }
-
-            // Save the context with no clipping path (so we can unclip)
-            remove_clip();
-            context.save();
-            restore_clip();
-        }
-
-        function pop_state() {
-            if (context_stack.length === 0) {
-                console.warn('Tried to pop state while stack was empty');
-                return;
-            }
-
-            // Remove any clipping we have
-            remove_clip();
-
-            // Restore state not saved in context
-            context_stack.pop()();
-
-            // Restore context state
-            context.restore();
-
-            // Reinstate the clipping
-            restore_clip();
-        }
-
+        ///
+        /// Creates a new layer
+        ///
         function create_layer() {
             let new_layer       = document.createElement('canvas');
             new_layer.width     = canvas.width;
@@ -493,140 +245,393 @@ let flo_canvas = (function() {
             return new_layer;
         }
 
-        function copy_canvas(src_canvas, target_canvas) {
-            let target_context = target_canvas.getContext('2d');
+        let layer_renderer = {
+            new_path: ()                             => { context.beginPath(); current_path = []; },
+            move_to: (x,y)                           => { context.moveTo(x, y); current_path.push(() => context.moveTo(x, y) ); },
+            line_to: (x,y)                           => { context.lineTo(x, y); current_path.push(() => context.lineTo(x, y) ); },
+            bezier_curve: (x1, y1, x2, y2, x3, y3)   => { context.bezierCurveTo(x2, y2, x3, y3, x1, y1); current_path.push(() => context.bezierCurveTo(x2, y2, x3, y3, x1, y1) ); },
+            close_path: ()                           => { context.closePath(); },
+            fill: ()                                 => { context.fill(); },
 
-            target_context.save();
-            target_context.setTransform(1,0, 0,1, 0,0);
-            target_context.globalCompositeOperation = 'copy';
+            stroke: () => {
+                if (set_dash_pattern) {
+                    set_dash_pattern = false;
+                    context.setLineDash(dash_pattern);
+                }
 
-            target_context.drawImage(src_canvas, 0,0, src_canvas.width, src_canvas.height);
+                context.stroke(); 
+            },
 
-            target_context.restore();
-        }
+            fill_color: (r, g, b, a) => {
+                r = Math.floor(r*255.0);
+                g = Math.floor(g*255.0);
+                b = Math.floor(b*255.0);
 
-        function layer(layer_id) {
-            // Clear any existing clipping rect
-            unclip();
+                context.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+            },
 
-            // Set up layers if none are defined
-            if (!layer_canvases) {
-                layer_canvases = {};
+            stroke_color: (r, g, b, a) => {
+                r = Math.floor(r*255.0);
+                g = Math.floor(g*255.0);
+                b = Math.floor(b*255.0);
 
-                // Create the initial layer
-                layer_canvases[0] = create_layer();
-                copy_canvas(canvas, layer_canvases[0]);
+                context.strokeStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+            },
 
-                // Clear the main context
+            line_width: (width) => {
+                context.lineWidth = width;
+            },
+
+            line_width_pixels: (width) => {
+                // Length of the first column of the transformation matrix is the scale factor (for the width)
+                let scale = Math.sqrt(transform[0]*transform[0] + transform[3]*transform[3]);
+                if (scale === 0) scale = 1;
+                //scale /= window.devicePixelRatio || 1;
+
+                // Scale the width down according to this factor (we'll always use the horizontal scale factor)
+                context.lineWidth = width / scale;
+            },
+
+            line_join: (join) => {
+                context.lineJoin = join;
+            },
+
+            line_cap: (cap) => {
+                context.lineCap = cap;
+            },
+
+            new_dash_pattern: () => {
+                dash_pattern        = [];
+                set_dash_pattern    = true;
+            },
+
+            dash_length: (length) => {
+                context.lineDashOffset = length;
+            },
+
+            dash_offset: (offset) => {
+                dash_pattern.push(offset);
+                set_dash_pattern = true;
+            },
+
+            blend_mode: (blend_mode) => {
+                context.globalCompositeOperation = blend_mode;
+            },
+
+            identity_transform: () => {
+                canvas_height(2.0);
+            },
+
+            canvas_height: (height) => {
+                let pixel_width     = canvas.width;
+                let pixel_height    = canvas.height;
+
+                let ratio_x         = pixel_height/height;
+                let ratio_y         = -ratio_x;
+
+                if (height < 0) {
+                    // Using a negative heights flips coordinates vertically but not horizontally
+                    ratio_x = -ratio_x;
+                }
+
+                context.setTransform(
+                    ratio_x,            0, 
+                    0,                  ratio_y, 
+                    pixel_width/2.0,    pixel_height/2.0
+                );
+
+                transform_set([ 
+                    ratio_x,    0,          pixel_width/2.0,
+                    0,          ratio_y,    pixel_height/2.0, 
+                    0,          0,          1
+                ]);
+            },
+
+            center_region: (minx, miny, maxx, maxy) => {
+                let pixel_width     = canvas.width;
+                let pixel_height    = canvas.height;
+
+                // Get the current scaling of this canvas
+                let xscale = Math.sqrt(transform[0]*transform[0] + transform[3]*transform[3]);
+                let yscale = Math.sqrt(transform[1]*transform[1] + transform[4]*transform[4]);
+                if (xscale === 0) xscale = 1;
+                if (yscale === 0) yscale = 1;
+
+                // Current X, Y coordinates (centered)
+                let cur_x = (transform[2]-(pixel_width/2.0))/xscale;
+                let cur_y = (transform[5]-(pixel_height/2.0))/yscale;
+                
+                // New center coordinates
+                let center_x = (minx+maxx)/2.0;
+                let center_y = (miny+maxy)/2.0;
+
+                // Compute the offsets and transform the canvas
+                let x_offset = cur_x - center_x;
+                let y_offset = cur_y - center_y;
+
+                multiply_transform([
+                    1, 0, x_offset,
+                    0, 1, y_offset,
+                    0, 0, 1
+                ]);
+            },
+
+            multiply_transform: (transform) => {
+                // Rotated transformation matrix
+                context.transform(transform[0], transform[3], transform[1], transform[4], transform[2], transform[5]);
+                transform_multiply(transform);
+            },
+
+            unclip: () => {
+                // Stop clipping and clear the stack
+                remove_clip();
+                clip_stack = [];
+            },
+
+            clip: () => {
+                // Make sure the clipping path is turned on
+                restore_clip();
+
+                // Need to be able to restore the clipping path
+                let clip_path = current_path.slice();
+                clip_stack.push(() => {
+                    clip_path.forEach(fn => fn());
+                    context.clip();
+                });
+
+                // Add the current path to the context
+                context.clip();
+            },
+
+            store: () => {
+                if (generate_buffer_on_store) {
+                    stored_pixels = document.createElement('canvas');
+                }
+
+                // Update the size of the backing buffer
+                let width       = canvas.width;
+                let height      = canvas.height;
+
+                if (width !== stored_pixels.width)      { stored_pixels.width = canvas.width; }
+                if (height !== stored_pixels.height)    { stored_pixels.height = canvas.height; }
+
+                let source_canvas = canvas;
+                if (layer_canvases) {
+                    source_canvas = layer_canvases[current_layer_id];
+                }
+                
+                // Remember where the store was in the replay (so we can rewind)
+                last_store_pos  = replay.length;
+
+                // Draw the canvas to the backing buffer (we use a backing canvas because getImageData is very slow on all browsers)
+                let stored_context = stored_pixels.getContext('2d');
+                stored_context.globalCompositeOperation = 'copy';
+                stored_context.drawImage(source_canvas, 0, 0);
+                have_stored_image = true;
+            },
+
+            restore: () => {
+                // Reset the image data to how it was at the last point it was used
+                if (have_stored_image) {
+                    context.save();
+
+                    context.globalCompositeOperation = 'copy';
+                    context.setTransform(
+                        1,  0, 
+                        0,  1, 
+                        0,  0
+                    );
+                    context.drawImage(stored_pixels, 0, 0);
+
+                    context.restore();
+                }
+            },
+
+            free_stored_buffer: () => {
+                // Set that we no longer have a stored image
+                if (have_stored_image) {
+                    have_stored_image   = false;
+                }
+            },
+
+            push_state: () => {
+                // Push the current clipping path and dash pattern
+                let restore_clip_stack      = clip_stack.slice();
+                let restore_dash_pattern    = dash_pattern.slice();
+                let restore_stored_pixels   = stored_pixels;
+                let restore_gen_buffer      = generate_buffer_on_store;
+                let restore_have_image      = have_stored_image;
+                let restore_layer_id        = current_layer_id;
+                let restore_last_store_pos  = last_store_pos;
+                let restore_transform       = transform.slice();
+                context_stack.push(() => {
+                    clip_stack                  = restore_clip_stack;
+                    dash_pattern                = restore_dash_pattern;
+                    stored_pixels               = restore_stored_pixels;
+                    generate_buffer_on_store    = restore_gen_buffer;
+                    have_stored_image           = restore_have_image;
+                    current_layer_id            = restore_layer_id;
+                    last_store_pos              = restore_last_store_pos;
+                    transform                   = restore_transform;
+                    set_dash_pattern            = true;
+                });
+
+                // Cannot rewind the replay if we restore pixels pushed before this state (while the state is in effect)
+                last_store_pos = null;
+                
+                // If we store a new buffered image while a state is pushed, then we need a new canvas to store it in
+                if (have_stored_image) {
+                    generate_buffer_on_store = true;
+                }
+
+                // Save the context with no clipping path (so we can unclip)
+                remove_clip();
+                context.save();
+                restore_clip();
+            },
+
+            pop_state: () => {
+                if (context_stack.length === 0) {
+                    console.warn('Tried to pop state while stack was empty');
+                    return;
+                }
+
+                // Remove any clipping we have
+                remove_clip();
+
+                // Restore state not saved in context
+                context_stack.pop()();
+
+                // Restore context state
+                context.restore();
+
+                // Reinstate the clipping
+                restore_clip();
+            },
+
+            layer: (layer_id) => {
+                // Clear any existing clipping rect
+                unclip();
+
+                // Set up layers if none are defined
+                if (!layer_canvases) {
+                    layer_canvases = {};
+
+                    // Create the initial layer
+                    layer_canvases[0] = create_layer();
+                    copy_canvas(canvas, layer_canvases[0]);
+
+                    // Clear the main context
+                    context.setTransform(1,0, 0,1, 0,0);
+                    context.resetTransform();
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                }
+
+                // Create a new layer if this ID doesn't exist
+                let existing_layer = layer_canvases[layer_id];
+                if (!existing_layer) {
+                    existing_layer = layer_canvases[layer_id] = create_layer();
+                }
+
+                // Set the context to this layer
+                context             = existing_layer.getContext('2d');
+                current_layer_id    = layer_id;
+
+                // Copy the transform to this layer
+                context.setTransform(
+                    transform[0],transform[3], 
+                    transform[1],transform[4], 
+                    transform[2],transform[5]
+                );
+            },
+
+            clear_layer: () => {
+                // Clear the current layer
+                context.resetTransform();
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                context.setTransform(
+                    transform[0],transform[3], 
+                    transform[1],transform[4], 
+                    transform[2],transform[5]
+                );
+
+                // Reset the blend mode
+                blend_for_layer[current_layer_id] = 'source-over';
+
+                // Remove everything from the canvas that was on this layer
+                for (let index=1; index<replay.length; ++index) {
+                    if (replay[index][2] === current_layer_id) {
+                        replay[index] = null;
+                        replay.splice(index, 1);
+                        --index;
+                    }
+                }
+
+                // Add a 'set layer' command to the replay
+                replay.push([layer, [current_layer_id], current_layer_id]);
+            },
+
+            layer_blend: (layer_id, blend_mode) => {
+                blend_for_layer[layer_id] = blend_mode;
+            },
+
+            clear_canvas: () => {
+                // Clear layers
+                layer_canvases      = null;
+                context             = canvas.getContext('2d');
+                blend_for_layer     = {};
+                current_layer_id    = 0;
+
+                // Clear
                 context.setTransform(1,0, 0,1, 0,0);
                 context.resetTransform();
                 context.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Reset the transformation and state
+                current_path    = [];
+                clip_stack      = [];
+
+                stored_pixels.width  = 1;
+                stored_pixels.height = 1;
+
+                identity_transform();
+                fill_color(0,0,0,1);
+                stroke_color(0,0,0,1);
+                line_width(1.0);
+            },
+
+            sprite: (sprite_id) => {
+
+            },
+
+            clear_sprite: () => {
+
+            },
+
+            draw_sprite: (sprite_id) => {
+                
+            },
+
+            sprite_transform_identity: () => {
+
+            },
+
+            sprite_transform_translate: () => {
+
+            },
+
+            sprite_transform_scale: () => {
+
+            },
+
+            sprite_transform_rotate: () => {
+
+            },
+
+            sprite_transform_matrix: () => {
+
             }
-
-            // Create a new layer if this ID doesn't exist
-            let existing_layer = layer_canvases[layer_id];
-            if (!existing_layer) {
-                existing_layer = layer_canvases[layer_id] = create_layer();
-            }
-
-            // Set the context to this layer
-            context             = existing_layer.getContext('2d');
-            current_layer_id    = layer_id;
-
-            // Copy the transform to this layer
-            context.setTransform(
-                transform[0],transform[3], 
-                transform[1],transform[4], 
-                transform[2],transform[5]
-            );
-        }
-
-        function clear_layer() {
-            // Clear the current layer
-            context.resetTransform();
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.setTransform(
-                transform[0],transform[3], 
-                transform[1],transform[4], 
-                transform[2],transform[5]
-            );
-
-            // Reset the blend mode
-            blend_for_layer[current_layer_id] = 'source-over';
-
-            // Remove everything from the canvas that was on this layer
-            for (let index=1; index<replay.length; ++index) {
-                if (replay[index][2] === current_layer_id) {
-                    replay[index] = null;
-                    replay.splice(index, 1);
-                    --index;
-                }
-            }
-
-            // Add a 'set layer' command to the replay
-            replay.push([layer, [current_layer_id], current_layer_id]);
-        }
-
-        function layer_blend(layer_id, blend_mode) {
-            blend_for_layer[layer_id] = blend_mode;
-        }
-
-        function clear_canvas() {
-            // Clear layers
-            layer_canvases      = null;
-            context             = canvas.getContext('2d');
-            blend_for_layer     = {};
-            current_layer_id    = 0;
-
-            // Clear
-            context.setTransform(1,0, 0,1, 0,0);
-            context.resetTransform();
-            context.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Reset the transformation and state
-            current_path    = [];
-            clip_stack      = [];
-
-            stored_pixels.width  = 1;
-            stored_pixels.height = 1;
-
-            identity_transform();
-            fill_color(0,0,0,1);
-            stroke_color(0,0,0,1);
-            line_width(1.0);
-        }
-
-        function sprite(sprite_id) {
-
-        }
-
-        function clear_sprite() {
-
-        }
-
-        function draw_sprite(sprite_id) {
-            
-        }
-
-        function sprite_transform_identity() {
-
-        }
-
-        function sprite_transform_translate() {
-
-        }
-
-        function sprite_transform_scale() {
-
-        }
-
-        function sprite_transform_rotate() {
-
-        }
-
-        function sprite_transform_matrix() {
-
-        }
+        };
 
         function rewind_to_last_store() {
             if (last_store_pos !== null) {
@@ -688,48 +693,96 @@ let flo_canvas = (function() {
             }
         }
 
-        return {
-            new_path:           ()              => { replay.push([new_path, [], current_layer_id]);                         new_path();                     },
-            move_to:            (x, y)          => { replay.push([move_to, [x, y], current_layer_id]);                      move_to(x, y);                  },
-            line_to:            (x, y)          => { replay.push([line_to, [x, y], current_layer_id]);                      line_to(x, y);                  },
-            bezier_curve:       (x1, y1, x2, y2, x3, y3) => { replay.push([bezier_curve, [x1, y1, x2, y2, x3, y3], current_layer_id]); bezier_curve(x1, y1, x2, y2, x3, y3); },
-            close_path:         ()              => { replay.push([close_path, [], current_layer_id]);                       close_path();                   },
-            fill:               ()              => { replay.push([fill, [], current_layer_id]);                             fill();                         },
-            stroke:             ()              => { replay.push([stroke, [], current_layer_id]);                           stroke();                       },
-            line_width:         (width)         => { replay.push([line_width, [width], current_layer_id]);                  line_width(width);              },
-            line_width_pixels:  (width)         => { replay.push([line_width_pixels, [width], current_layer_id]);           line_width_pixels(width);       },
-            line_join:          (join)          => { replay.push([line_join, [join], current_layer_id]);                    line_join(join);                },
-            line_cap:           (cap)           => { replay.push([line_cap, [cap], current_layer_id]);                      line_cap(cap);                  },
-            new_dash_pattern:   ()              => { replay.push([new_dash_pattern, [], current_layer_id]);                 new_dash_pattern();             },
-            dash_length:        (length)        => { replay.push([dash_length, [length], current_layer_id]);                dash_length(length);            },
-            dash_offset:        (offset)        => { replay.push([dash_offset, [offset], current_layer_id]);                dash_length(offset);            },
-            fill_color:         (r, g, b, a)    => { replay.push([fill_color, [r, g, b, a], current_layer_id]);             fill_color(r, g, b, a);         },
-            stroke_color:       (r, g, b, a)    => { replay.push([stroke_color, [r, g, b, a], current_layer_id]);           stroke_color(r, g, b, a);       },
-            blend_mode:         (mode)          => { replay.push([blend_mode, [mode], current_layer_id]);                   blend_mode(mode);               },
-            identity_transform: ()              => { replay.push([identity_transform, [], current_layer_id]);               identity_transform();           },
-            canvas_height:      (height)        => { replay.push([canvas_height, [height], current_layer_id]);              canvas_height(height);          },
-            center_region:      (x1, y1, x2, y2) => { replay.push([center_region, [x1, y1, x2, y2], current_layer_id]);     center_region(x1, y1, x2, y2);  },
-            multiply_transform: (transform)     => { replay.push([multiply_transform, [transform], current_layer_id]);      multiply_transform(transform);  },
-            unclip:             ()              => { replay.push([unclip, [], current_layer_id]);                           unclip();                       },
-            clip:               ()              => { replay.push([clip, [], current_layer_id]);                             clip();                         },
-            store:              ()              => { replay.push([store, [], current_layer_id]);                            store();                        },
-            restore:            ()              => { replay.push([restore, [], current_layer_id]); rewind_to_last_store();  restore();                      },
-            free_stored_buffer: ()              => { replay.push([free_stored_buffer, [], current_layer_id]); rewind_free_stored(); free_stored_buffer();   },
-            push_state:         ()              => { replay.push([push_state, [], current_layer_id]);                       push_state();                   },
-            pop_state:          ()              => { replay.push([pop_state, [], current_layer_id]);                        pop_state();                    },
-            layer:              (layer_id)      => { replay.push([layer, [layer_id], layer]);                               layer(layer_id);                },
-            layer_blend:        (layer_id, blend_mode) => { replay.push([layer_blend, [layer_id, blend_mode], -1]);         layer_blend(layer_id, blend_mode); },
-            clear_layer:        ()              => { replay.push([clear_layer, [], current_layer_id]);                      clear_layer();                  },
-            clear_canvas:       ()              => { replay = [ [clear_canvas, [], current_layer_id] ];                     clear_canvas();                 },
-            sprite:             (sprite_id)     => { replay = [ [sprite, [], current_layer_id] ];                           sprite(sprite_id);              },
-            clear_sprite:       ()              => { replay = [ [clear_sprite, [], current_layer_id] ];                     clear_sprite();                 },
-            draw_sprite:        (sprite_id)     => { replay = [ [draw_sprite, [sprite_id], current_layer_id] ];             draw_sprite(sprite_id);         },
+        // Render points to the active set of rendering functions
+        let render  = layer_renderer;
 
-            sprite_transform_identity:  ()          => { replay = [ [sprite_transform_identity, [], current_layer_id] ];        sprite_transform_identity();        },
-            sprite_transform_translate: (x, y)      => { replay = [ [sprite_transform_translate, [x, y], current_layer_id ] ];  sprite_transform_translate(x, y);   },
-            sprite_transform_scale:     (x, y)      => { replay = [ [sprite_transform_scale, [x, y], current_layer_id] ];       sprite_transform_scale(x, y);       },
-            sprite_transform_rotate:    (angle)     => { replay = [ [sprite_transform_rotate, [angle], current_layer_id] ];     sprite_transform_rotate(angle);     },
-            sprite_transform_matrix:    (matrix)    => { replay = [ [sprite_transform_matrix, [matrix], current_layer_id] ];    sprite_transform_matrix(matrix);    },
+        // This set of functions encapsulate the render state and are used when replaying actions
+        function new_path()                             { render.new_path(); }
+        function move_to(x, y)                          { render.move_to(x, y); }
+        function line_to(x, y)                          { render.line_to(x, y); }
+        function bezier_curve(x1, y1, x2, y2, x3, y3)   { render.bezier_curve(x1, y1, x2, y2, x3, y3); }
+        function close_path()                           { render.close_path(); }
+        function fill()                                 { render.fill(); }
+        function stroke()                               { render.stroke(); }
+        function line_width(width)                      { render.line_width(width); }
+        function line_width_pixels(width)               { render.line_width_pixels(width); }
+        function line_join(join)                        { render.line_join(join); }
+        function line_cap(cap)                          { render.line_cap(cap); }
+        function new_dash_pattern()                     { render.new_dash_pattern(); }
+        function dash_length(length)                    { render.dash_length(length); }
+        function dash_offset(offset)                    { render.dash_offset(offset); }
+        function fill_color(r, g, b, a)                 { render.fill_color(r, g, b, a); }
+        function stroke_color(r, g, b, a)               { render.stroke_color(r, g, b, a); }
+        function blend_mode(mode)                       { render.blend_mode(mode); }
+        function identity_transform()                   { render.identity_transform(); }
+        function canvas_height(height)                  { render.canvas_height(height); }
+        function center_region(x1, y1, x2, y2)          { render.center_region(x1, y1, x2, y2); }
+        function multiply_transform(transform)          { render.multiply_transform(transform); }
+        function unclip()                               { render.unclip(); }
+        function clip()                                 { render.clip(); }
+        function store()                                { render.store(); }
+        function restore()                              { render.restore(); }
+        function free_stored_buffer()                   { render.free_stored_buffer(); }
+        function push_state()                           { render.push_state(); }
+        function pop_state()                            { render.pop_state(); }
+        function layer(layer_id)                        { render.layer(layer_id); }
+        function layer_blend(blend_mode)                { render.layer_blend(blend_mode); }
+        function clear_layer()                          { render.clear_layer(); }
+        function clear_canvas()                         { render.clear_canvas(); }
+        function sprite(sprite_id)                      { render.sprite(sprite_id); }
+        function clear_sprite()                         { render.clear_sprite(); }
+        function draw_sprite(sprite_id)                 { render.draw_sprite(sprite_id); }
+        function sprite_transform_identity()            { render.sprite_transform_identity(); }
+        function sprite_transform_translate(x, y)       { render.sprite_transform_translate(x, y); }
+        function sprite_transform_scale(x, y)           { render.sprite_transform_scale(x, y); }
+        function sprite_transform_rotate(angle)         { render.sprite_transform_rotate(angle); }
+        function sprite_transform_matrix(matrix)        { render.sprite_transform_matrix(matrix); }        
+
+        // The replay log will replay the actions that draw this canvas (for example when resizing)
+        let replay  = [ [ clear_canvas, [] ] ];
+
+        return {
+            new_path:           ()              => { replay.push([new_path, [], current_layer_id]);                         render.new_path();                     },
+            move_to:            (x, y)          => { replay.push([move_to, [x, y], current_layer_id]);                      render.move_to(x, y);                  },
+            line_to:            (x, y)          => { replay.push([line_to, [x, y], current_layer_id]);                      render.line_to(x, y);                  },
+            bezier_curve:       (x1, y1, x2, y2, x3, y3) => { replay.push([bezier_curve, [x1, y1, x2, y2, x3, y3], current_layer_id]); render.bezier_curve(x1, y1, x2, y2, x3, y3); },
+            close_path:         ()              => { replay.push([close_path, [], current_layer_id]);                       render.close_path();                   },
+            fill:               ()              => { replay.push([fill, [], current_layer_id]);                             render.fill();                         },
+            stroke:             ()              => { replay.push([stroke, [], current_layer_id]);                           render.stroke();                       },
+            line_width:         (width)         => { replay.push([line_width, [width], current_layer_id]);                  render.line_width(width);              },
+            line_width_pixels:  (width)         => { replay.push([line_width_pixels, [width], current_layer_id]);           render.line_width_pixels(width);       },
+            line_join:          (join)          => { replay.push([line_join, [join], current_layer_id]);                    render.line_join(join);                },
+            line_cap:           (cap)           => { replay.push([line_cap, [cap], current_layer_id]);                      render.line_cap(cap);                  },
+            new_dash_pattern:   ()              => { replay.push([new_dash_pattern, [], current_layer_id]);                 render.new_dash_pattern();             },
+            dash_length:        (length)        => { replay.push([dash_length, [length], current_layer_id]);                render.dash_length(length);            },
+            dash_offset:        (offset)        => { replay.push([dash_offset, [offset], current_layer_id]);                render.dash_length(offset);            },
+            fill_color:         (r, g, b, a)    => { replay.push([fill_color, [r, g, b, a], current_layer_id]);             render.fill_color(r, g, b, a);         },
+            stroke_color:       (r, g, b, a)    => { replay.push([stroke_color, [r, g, b, a], current_layer_id]);           render.stroke_color(r, g, b, a);       },
+            blend_mode:         (mode)          => { replay.push([blend_mode, [mode], current_layer_id]);                   render.blend_mode(mode);               },
+            identity_transform: ()              => { replay.push([identity_transform, [], current_layer_id]);               render.identity_transform();           },
+            canvas_height:      (height)        => { replay.push([canvas_height, [height], current_layer_id]);              render.canvas_height(height);          },
+            center_region:      (x1, y1, x2, y2) => { replay.push([center_region, [x1, y1, x2, y2], current_layer_id]);     render.center_region(x1, y1, x2, y2);  },
+            multiply_transform: (transform)     => { replay.push([multiply_transform, [transform], current_layer_id]);      render.multiply_transform(transform);  },
+            unclip:             ()              => { replay.push([unclip, [], current_layer_id]);                           render.unclip();                       },
+            clip:               ()              => { replay.push([clip, [], current_layer_id]);                             render.clip();                         },
+            store:              ()              => { replay.push([store, [], current_layer_id]);                            render.store();                        },
+            restore:            ()              => { replay.push([restore, [], current_layer_id]); rewind_to_last_store();  render.restore();                      },
+            free_stored_buffer: ()              => { replay.push([free_stored_buffer, [], current_layer_id]); rewind_free_stored(); render.free_stored_buffer();   },
+            push_state:         ()              => { replay.push([push_state, [], current_layer_id]);                       render.push_state();                   },
+            pop_state:          ()              => { replay.push([pop_state, [], current_layer_id]);                        render.pop_state();                    },
+            layer:              (layer_id)      => { replay.push([layer, [layer_id], layer]);                               render.layer(layer_id);                },
+            layer_blend:        (layer_id, blend_mode) => { replay.push([layer_blend, [layer_id, blend_mode], -1]);         render.layer_blend(layer_id, blend_mode); },
+            clear_layer:        ()              => { replay.push([clear_layer, [], current_layer_id]);                      render.clear_layer();                  },
+            clear_canvas:       ()              => { replay = [ [clear_canvas, [], current_layer_id] ];                     render.clear_canvas();                 },
+            sprite:             (sprite_id)     => { replay = [ [sprite, [], current_layer_id] ];                           render.sprite(sprite_id);              },
+            clear_sprite:       ()              => { replay = [ [clear_sprite, [], current_layer_id] ];                     render.clear_sprite();                 },
+            draw_sprite:        (sprite_id)     => { replay = [ [draw_sprite, [sprite_id], current_layer_id] ];             render.draw_sprite(sprite_id);         },
+
+            sprite_transform_identity:  ()          => { replay = [ [sprite_transform_identity, [], current_layer_id] ];        render.sprite_transform_identity();        },
+            sprite_transform_translate: (x, y)      => { replay = [ [sprite_transform_translate, [x, y], current_layer_id ] ];  render.sprite_transform_translate(x, y);   },
+            sprite_transform_scale:     (x, y)      => { replay = [ [sprite_transform_scale, [x, y], current_layer_id] ];       render.sprite_transform_scale(x, y);       },
+            sprite_transform_rotate:    (angle)     => { replay = [ [sprite_transform_rotate, [angle], current_layer_id] ];     render.sprite_transform_rotate(angle);     },
+            sprite_transform_matrix:    (matrix)    => { replay = [ [sprite_transform_matrix, [matrix], current_layer_id] ];    render.sprite_transform_matrix(matrix);    },
 
             replay_drawing:     replay_drawing,
             map_coords:         map_coords,
