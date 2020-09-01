@@ -797,6 +797,33 @@ let flo_canvas = (function() {
             };
 
             ///
+            /// Reads a u64 stored in 'truncated' format
+            ///
+            let read_truncated_u64 = () => {
+                let result  = 0;
+                let shift   = 0;
+                
+                for (;;) {
+                    let next_val    = fragment_val(read_char());
+                    let val_part    = next_val & 0x1f;
+                    let more_vals   = next_val & 0x20;
+
+                    result |= val_part << shift;
+
+                    if (more_vals === 0) {
+                        break;
+                    }
+
+                    shift += 5;
+                    if (shift >= 64) { break; }
+                }
+
+                return result;
+            };
+
+            let read_sprite_id = read_truncated_u64;
+
+            ///
             /// Reads a RGBA colour
             ///
             let read_rgba = () => {
@@ -818,6 +845,7 @@ let flo_canvas = (function() {
                 case 'l':   draw.layer(read_u32()); break;
                 case 'b':   draw.layer_blend(read_u32(), decode_blend_mode()); break;
                 case 'C':   draw.clear_layer();     break;
+                case 's':   draw.create_sprite(read_sprite_id()); break;
                 }
             };
 
@@ -912,6 +940,14 @@ let flo_canvas = (function() {
                 case 'f':   draw.free_stored_buffer();  break;
                 }
             };
+
+            let decode_sprite = () => {
+                switch (read_char()) {
+                case 'C':   draw.clear_sprite();        break;
+                case 'T':   decode_sprite_transform();  break;
+                case 'D':   draw.draw_sprite(read_sprite_id()); break;
+                }
+            };
             
             let decode_dash         = () => { throw 'Not implemented'; };
             
@@ -940,6 +976,7 @@ let flo_canvas = (function() {
                 case 'Z':   decode_clip();                              break;
                 case 'P':   draw.push_state();                          break;
                 case 'p':   draw.pop_state();                           break;
+                case 's':   decode_sprite();                            break;
 
                 default:    throw 'Unknown instruction \'' + instruction + '\' at ' + pos;
                 }
