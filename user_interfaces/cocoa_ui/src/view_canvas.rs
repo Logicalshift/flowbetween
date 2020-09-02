@@ -238,6 +238,26 @@ impl ViewCanvas {
                     context.get_state().set_sprite_transform(old_transform * new_transform);
                 }
 
+                DrawSprite(sprite_id) => {
+                    // Push the existing state
+                    context.draw(&PushState);
+
+                    // Apply the sprite transform
+                    let sprite_transform = context.get_state().sprite_transform();
+                    context.draw(&MultiplyTransform(sprite_transform));
+
+                    // Draw the sprite actions
+                    self.sprites.get(&sprite_id)
+                        .map(|sprite_drawing| {
+                            for sprite_draw in sprite_drawing.iter() {
+                                context.draw(sprite_draw);
+                            }
+                        });
+
+                    // Restore the state as it was before drawing the sprite
+                    context.draw(&PopState);
+                }
+
                 // Other actions are just sent straight to the current context
                 other_action => {
                     if let Some(sprite) = context.get_state().sprite() {
