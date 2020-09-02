@@ -10,7 +10,7 @@ use flo_canvas::*;
 /// This assumes that all the commands are intended for a specific layer in the canvas: ie, layer switch commands
 /// are ignored.
 ///
-pub struct CanvasContext {
+pub struct QuartzContext {
     /// The location of the viewport origin for this canvas layer (the point that we should consider as 0,0)
     viewport_origin: (f64, f64),
 
@@ -27,18 +27,18 @@ pub struct CanvasContext {
     context: CFRef<CGContextRef>
 }
 
-impl CanvasContext {
+impl QuartzContext {
     ///
     /// Creates a new canvas layer that will render to the specified context
     ///
-    pub unsafe fn new(context: CFRef<CGContextRef>, viewport_origin: (f64, f64), viewport_size: (f64, f64), canvas_size: (f64, f64)) -> CanvasContext {
+    pub unsafe fn new(context: CFRef<CGContextRef>, viewport_origin: (f64, f64), viewport_size: (f64, f64), canvas_size: (f64, f64)) -> QuartzContext {
         // Colours are in the SRGB colourspace
         let srgb        = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
         let mut state   = CanvasState::new(CFRef::from(srgb));
 
         state.activate_context(context.clone());
 
-        let mut new_layer = CanvasContext {
+        let mut new_layer = QuartzContext {
             viewport_origin:    viewport_origin,
             viewport_size:      viewport_size,
             canvas_size:        canvas_size,

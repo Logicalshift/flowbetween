@@ -11,7 +11,7 @@ mod session;
 mod cocoa_ui;
 mod property;
 mod canvas_state;
-mod canvas_context;
+mod quartz_context;
 mod canvas_transform;
 mod view_canvas;
 

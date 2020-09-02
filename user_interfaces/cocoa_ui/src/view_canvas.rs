@@ -1,5 +1,5 @@
 use super::canvas_state::*;
-use super::canvas_context::*;
+use super::quartz_context::*;
 use super::core_graphics_ffi::*;
 
 use flo_canvas::*;
@@ -94,7 +94,7 @@ impl ViewCanvas {
         let viewport_size   = (self.visible.size.width as f64, self.visible.size.height as f64);
         let canvas_size     = (self.size.width as f64, self.size.height as f64);
 
-        let mut context     = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
+        let mut context     = unsafe { QuartzContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
 
         // Update the context state
         if let Some(state) = self.state.take() {
@@ -103,7 +103,7 @@ impl ViewCanvas {
             if let Some(layer_context) = layer_context {
                 // The canvas context doesn't deactivate itself on drop, so force it to deactivate by going through to_state
                 context.to_state();
-                context = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
+                context = unsafe { QuartzContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
             }
 
             // Set the initial state of the context
@@ -125,7 +125,7 @@ impl ViewCanvas {
                         let layer_context = context_for_layer(0);
                         if let Some(layer_context) = layer_context {
                             // The canvas context doesn't deactivate itself on drop, so force it to deactivate by going through to_state
-                            context = CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size);
+                            context = QuartzContext::new(layer_context, viewport_origin, viewport_size, canvas_size);
                         } else {
                             // Stop drawing
                             return;
@@ -147,7 +147,7 @@ impl ViewCanvas {
                     let layer_context = context_for_layer(new_layer_id);
                     if let Some(layer_context) = layer_context {
                         // Create the context for the new layer and send the state there
-                        context = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
+                        context = unsafe { QuartzContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
                         context.set_state(state);
                     } else {
                         // Stop drawing if we can't get a context for the layer
