@@ -4,6 +4,8 @@ use flo_canvas::*;
 
 use objc::rc::*;
 
+use std::collections::{HashMap};
+
 ///
 /// Possible actions stored in the path for this state
 ///
@@ -31,7 +33,8 @@ struct CanvasStateValues {
     line_width:     CGFloat,
     path:           Vec<PathAction>,
     stored_layer:   Option<StrongPtr>,
-    clip:           Option<Vec<PathAction>>
+    clip:           Option<Vec<PathAction>>,
+    sprites:        HashMap<SpriteId, Vec<Draw>>
 }
 
 ///
@@ -68,7 +71,8 @@ impl CanvasState {
                     line_width:     1.0,
                     path:           vec![],
                     stored_layer:   None,
-                    clip:           None
+                    clip:           None,
+                    sprites:        HashMap::new()
                 },
                 stack:      vec![]
             }

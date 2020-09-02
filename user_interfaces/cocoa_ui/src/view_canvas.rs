@@ -87,14 +87,14 @@ impl ViewCanvas {
             // Nothing to do if we can't get the context for layer 0
             return;
         }
-        let layer_context = layer_context.unwrap();
+        let layer_context   = layer_context.unwrap();
 
         // Create the drawing context
         let viewport_origin = (self.visible.origin.x as f64, self.visible.origin.y as f64);
         let viewport_size   = (self.visible.size.width as f64, self.visible.size.height as f64);
         let canvas_size     = (self.size.width as f64, self.size.height as f64);
 
-        let mut context = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
+        let mut context     = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
 
         // Update the context state
         if let Some(state) = self.state.take() {

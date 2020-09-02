@@ -113,7 +113,7 @@ impl CanvasContext {
     ///
     /// Retrieves the transformation needed to move the center of the canvas to the specified point
     ///
-    pub fn get_center_transform(&self, minx: f64, miny: f64, maxx: f64, maxy: f64) -> CGAffineTransform {
+    fn get_center_transform(&self, minx: f64, miny: f64, maxx: f64, maxy: f64) -> CGAffineTransform {
         canvas_center_transform(self.viewport_origin, self.canvas_size, self.state.current_transform(), minx, miny, maxx, maxy)
     }
 
