@@ -6,6 +6,7 @@ use flo_canvas::*;
 
 use objc::rc::*;
 
+use std::f32;
 use std::collections::{HashMap};
 
 ///
@@ -206,6 +207,36 @@ impl ViewCanvas {
                     context.draw(&Draw::Restore)
                 }
 
+                ClearSprite => {
+                    context.get_state().sprite()
+                        .and_then(|sprite| self.sprites.get_mut(&sprite))
+                        .map(|sprite| *sprite = vec![]);
+                }
+
+                SpriteTransform(flo_canvas::SpriteTransform::Identity) => {
+                    context.get_state().set_sprite_transform(Transform2D::identity());
+                }
+
+                SpriteTransform(flo_canvas::SpriteTransform::Translate(x, y)) => {
+                    let transform = context.get_state().sprite_transform();
+                    context.get_state().set_sprite_transform(transform * Transform2D::translate(x, y));
+                }
+
+                SpriteTransform(flo_canvas::SpriteTransform::Scale(x, y)) => {
+                    let transform = context.get_state().sprite_transform();
+                    context.get_state().set_sprite_transform(transform * Transform2D::scale(x, y));
+                }
+
+                SpriteTransform(flo_canvas::SpriteTransform::Rotate(degrees)) => {
+                    let radians     = degrees / 180.0 * f32::consts::PI;
+                    let transform   = context.get_state().sprite_transform();
+                    context.get_state().set_sprite_transform(transform * Transform2D::rotate(radians));
+                }
+
+                SpriteTransform(flo_canvas::SpriteTransform::Transform2D(new_transform)) => {
+                    let old_transform   = context.get_state().sprite_transform();
+                    context.get_state().set_sprite_transform(old_transform * new_transform);
+                }
 
                 // Other actions are just sent straight to the current context
                 other_action => {
