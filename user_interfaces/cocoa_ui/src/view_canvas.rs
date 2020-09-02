@@ -167,6 +167,7 @@ impl ViewCanvas {
                 },
 
                 Sprite(new_sprite_id) => {
+                    self.sprites.entry(new_sprite_id).or_insert_with(|| vec![]);
                     context.get_state().set_sprite(Some(new_sprite_id));
                 },
 
@@ -207,7 +208,15 @@ impl ViewCanvas {
 
 
                 // Other actions are just sent straight to the current context
-                other_action => context.draw(&other_action)
+                other_action => {
+                    if let Some(sprite) = context.get_state().sprite() {
+                        // Save the action in the sprite
+                        self.sprites.get_mut(&sprite).map(move |sprite| sprite.push(other_action));
+                    } else {
+                        // Draw to the context
+                        context.draw(&other_action)
+                    }
+                }
             }
         }
 
