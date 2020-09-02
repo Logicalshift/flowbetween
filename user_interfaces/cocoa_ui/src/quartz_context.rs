@@ -152,9 +152,9 @@ impl QuartzContext {
                 BlendMode(blend)                                    => { self.state.set_blend_mode(blend); }
                 Unclip                                              => { self.state.unclip(); }
                 Clip                                                => { self.state.clip(); }
-                Store                                               => { /* TODO */ }
-                Restore                                             => { /* TODO */ }
-                FreeStoredBuffer                                    => { /* TODO */ }
+                Store                                               => { /* See view_canvas */ }
+                Restore                                             => { /* See view_canvas */ }
+                FreeStoredBuffer                                    => { /* See view_canvas */ }
                 PushState                                           => { self.state.push_state(); }
                 PopState                                            => { self.state.pop_state(); }
 

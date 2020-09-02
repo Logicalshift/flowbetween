@@ -6,6 +6,8 @@ use flo_canvas::*;
 
 use objc::rc::*;
 
+use std::collections::{HashMap};
+
 ///
 /// Stores the state associated with a canvas specified for a view
 ///
@@ -32,7 +34,11 @@ pub struct ViewCanvas {
     update_layer: Box<dyn FnMut(u32, StrongPtr) -> ()>,
 
     /// Callback function to restore the state of a layer from a copy created previously with copy_layer
-    restore_layer: Box<dyn FnMut(u32, StrongPtr) -> ()>
+    restore_layer: Box<dyn FnMut(u32, StrongPtr) -> ()>,
+
+    /// Sprites defined for the canvas
+    sprites: HashMap<SpriteId, Vec<Draw>>
+
 }
 
 impl ViewCanvas {
@@ -52,7 +58,8 @@ impl ViewCanvas {
             clear_canvas:   Box::new(clear_canvas),
             copy_layer:     Box::new(copy_layer),
             update_layer:   Box::new(update_layer),
-            restore_layer:  Box::new(restore_layer)
+            restore_layer:  Box::new(restore_layer),
+            sprites:        HashMap::new()
         }
     }
 
@@ -142,6 +149,7 @@ impl ViewCanvas {
 
                     // Update the layer ID
                     state.set_layer_id(new_layer_id);
+                    state.set_sprite(None);
 
                     // Create a new context for the layer
                     let layer_context = context_for_layer(new_layer_id);
@@ -156,6 +164,10 @@ impl ViewCanvas {
 
                     // Pass the request on to the context
                     context.draw(&Draw::Layer(new_layer_id));
+                },
+
+                Sprite(new_sprite_id) => {
+                    context.get_state().set_sprite(Some(new_sprite_id));
                 },
 
                 Store => {

@@ -4,8 +4,6 @@ use flo_canvas::*;
 
 use objc::rc::*;
 
-use std::collections::{HashMap};
-
 ///
 /// Possible actions stored in the path for this state
 ///
@@ -22,6 +20,7 @@ enum PathAction {
 ///
 #[derive(Clone)]
 struct CanvasStateValues {
+    sprite:         Option<SpriteId>,
     color_space:    CFRef<CGColorSpaceRef>,
     fill_color:     CFRef<CGColorRef>,
     stroke_color:   CFRef<CGColorRef>,
@@ -33,8 +32,7 @@ struct CanvasStateValues {
     line_width:     CGFloat,
     path:           Vec<PathAction>,
     stored_layer:   Option<StrongPtr>,
-    clip:           Option<Vec<PathAction>>,
-    sprites:        HashMap<SpriteId, Vec<Draw>>
+    clip:           Option<Vec<PathAction>>
 }
 
 ///
@@ -60,6 +58,7 @@ impl CanvasState {
             CanvasState {
                 context:    None,
                 values:     CanvasStateValues {
+                    sprite:         None,
                     color_space:    color_space,
                     fill_color:     fill_color,
                     stroke_color:   stroke_color,
@@ -71,8 +70,7 @@ impl CanvasState {
                     line_width:     1.0,
                     path:           vec![],
                     stored_layer:   None,
-                    clip:           None,
-                    sprites:        HashMap::new()
+                    clip:           None
                 },
                 stack:      vec![]
             }
@@ -419,6 +417,20 @@ impl CanvasState {
     ///
     pub fn layer_id(&self) -> u32 {
         self.values.layer_id
+    }
+
+    ///
+    /// Sets the sprite that render operations should be sent to
+    ///
+    pub fn set_sprite(&mut self, sprite_id: Option<SpriteId>) {
+        self.values.sprite = sprite_id;
+    }
+
+    ///
+    /// Retrieves the sprite that rendering has been redirected to
+    ///
+    pub fn sprite(&self) -> Option<SpriteId> {
+        self.values.sprite
     }
 
     ///
