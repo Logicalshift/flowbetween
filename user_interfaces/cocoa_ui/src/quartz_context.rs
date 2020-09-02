@@ -54,7 +54,7 @@ impl QuartzContext {
     ///
     /// Resets the state back to the default
     ///
-    pub fn reset_state(&mut self) {
+    fn reset_state(&mut self) {
         unsafe {
             // Deactivate the original state (which will also clear any stack associated with it)
             self.state.deactivate_context();
