@@ -20,19 +20,20 @@ enum PathAction {
 ///
 #[derive(Clone)]
 struct CanvasStateValues {
-    sprite:         Option<SpriteId>,
-    color_space:    CFRef<CGColorSpaceRef>,
-    fill_color:     CFRef<CGColorRef>,
-    stroke_color:   CFRef<CGColorRef>,
-    transform:      CGAffineTransform,
-    blend_mode:     CGBlendMode,
-    line_join:      CGLineJoin,
-    line_cap:       CGLineCap,
-    layer_id:       u32,
-    line_width:     CGFloat,
-    path:           Vec<PathAction>,
-    stored_layer:   Option<StrongPtr>,
-    clip:           Option<Vec<PathAction>>
+    sprite:             Option<SpriteId>,
+    color_space:        CFRef<CGColorSpaceRef>,
+    fill_color:         CFRef<CGColorRef>,
+    stroke_color:       CFRef<CGColorRef>,
+    transform:          CGAffineTransform,
+    blend_mode:         CGBlendMode,
+    line_join:          CGLineJoin,
+    line_cap:           CGLineCap,
+    layer_id:           u32,
+    line_width:         CGFloat,
+    sprite_transform:   Transform2D,
+    path:               Vec<PathAction>,
+    stored_layer:       Option<StrongPtr>,
+    clip:               Option<Vec<PathAction>>
 }
 
 ///
@@ -58,19 +59,20 @@ impl CanvasState {
             CanvasState {
                 context:    None,
                 values:     CanvasStateValues {
-                    sprite:         None,
-                    color_space:    color_space,
-                    fill_color:     fill_color,
-                    stroke_color:   stroke_color,
-                    transform:      transform,
-                    blend_mode:     CGBlendMode::Normal,
-                    line_join:      CGLineJoin::Round,
-                    line_cap:       CGLineCap::Butt,
-                    layer_id:       0,
-                    line_width:     1.0,
-                    path:           vec![],
-                    stored_layer:   None,
-                    clip:           None
+                    sprite:             None,
+                    color_space:        color_space,
+                    fill_color:         fill_color,
+                    stroke_color:       stroke_color,
+                    transform:          transform,
+                    blend_mode:         CGBlendMode::Normal,
+                    line_join:          CGLineJoin::Round,
+                    line_cap:           CGLineCap::Butt,
+                    sprite_transform:   Transform2D::identity(),
+                    layer_id:           0,
+                    line_width:         1.0,
+                    path:               vec![],
+                    stored_layer:       None,
+                    clip:               None
                 },
                 stack:      vec![]
             }
@@ -431,6 +433,20 @@ impl CanvasState {
     ///
     pub fn sprite(&self) -> Option<SpriteId> {
         self.values.sprite
+    }
+
+    ///
+    /// Sets the sprite transform for the state
+    ///
+    pub fn set_sprite_transform(&mut self, sprite_transform: Transform2D) {
+        self.values.sprite_transform = sprite_transform;
+    }
+
+    ///
+    /// Retrieves the sprite transform set for the state
+    ///
+    pub fn sprite_transform(&self) -> Transform2D {
+        self.values.sprite_transform
     }
 
     ///
