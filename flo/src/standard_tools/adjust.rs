@@ -95,6 +95,46 @@ impl Adjust {
     }
 
     ///
+    /// Writes out a control point sprite for a bezier point
+    ///
+    fn declare_bezier_point_sprite(sprite_id: SpriteId) -> Vec<Draw> {
+        let mut draw = vec![];
+
+        draw.sprite(sprite_id);
+        draw.clear_sprite();
+
+        draw.stroke_color(SELECTION_OUTLINE);
+        draw.line_width_pixels(1.0);
+
+        draw.circle(0.0, 0.0, 5.0);
+        draw.fill_color(CP_BEZIER);
+        draw.fill();
+        draw.stroke();
+
+        draw
+    }
+
+    ///
+    /// Writes out a control point sprite for a bezier control point
+    ///
+    fn declare_bezier_control_point_sprite(sprite_id: SpriteId) -> Vec<Draw> {
+        let mut draw = vec![];
+
+        draw.sprite(sprite_id);
+        draw.clear_sprite();
+
+        draw.stroke_color(SELECTION_OUTLINE);
+        draw.line_width_pixels(1.0);
+
+        draw.rect(0.0-3.0, 0.0-3.0, 0.0+3.0, 0.0+3.0);
+        draw.fill_color(CP_BEZIER_CP);
+        draw.fill();
+        draw.stroke();
+
+        draw
+    }
+
+    ///
     /// Draws an element control point
     ///
     pub fn draw_control_point(cp: &ControlPoint) -> Vec<Draw> {
@@ -104,17 +144,15 @@ impl Adjust {
 
         match cp {
             ControlPoint::BezierPoint(x, y) => {
-                draw.circle(*x, *y, 5.0);
-                draw.fill_color(CP_BEZIER);
-                draw.fill();
-                draw.stroke();
+                draw.sprite_transform(SpriteTransform::Identity);
+                draw.sprite_transform(SpriteTransform::Translate(*x, *y));
+                draw.draw_sprite(SPRITE_BEZIER_POINT);
             },
 
             ControlPoint::BezierControlPoint(x, y) => {
-                draw.rect(x-3.0, y-3.0, x+3.0, y+3.0);
-                draw.fill_color(CP_BEZIER_CP);
-                draw.fill();
-                draw.stroke();
+                draw.sprite_transform(SpriteTransform::Identity);
+                draw.sprite_transform(SpriteTransform::Translate(*x, *y));
+                draw.draw_sprite(SPRITE_BEZIER_CONTROL_POINT);
             }
         };
 
@@ -146,6 +184,7 @@ impl Adjust {
 
         let control_points = element.control_points(properties);
 
+        /*
         // Draw the control point connecting lines
         draw.new_path();
         for (prev, next) in control_points.iter().tuple_windows() {
@@ -166,11 +205,9 @@ impl Adjust {
         draw.line_width_pixels(1.0);
         draw.stroke_color(CP_LINES);
         draw.stroke();
+        */
 
         // Draw the control points themselves
-        draw.stroke_color(SELECTION_OUTLINE);
-        draw.line_width_pixels(1.0);
-
         for cp in control_points.iter() {
             draw.extend(Self::draw_control_point(cp));
         }
@@ -261,6 +298,9 @@ impl Adjust {
                 // Clear the layer we're going to draw the control points on
                 draw_control_points.layer(0);
                 draw_control_points.clear_layer();
+                draw_control_points.extend(Self::declare_bezier_point_sprite(SPRITE_BEZIER_POINT));
+                draw_control_points.extend(Self::declare_bezier_control_point_sprite(SPRITE_BEZIER_CONTROL_POINT));
+                draw_control_points.layer(0);
 
                 // Draw the control points for the selected elements
                 for (vector, properties) in selected_elements.iter() {
@@ -386,6 +426,9 @@ impl Adjust {
                         // Clear the edit layer
                         draw_drag.layer(1);
                         draw_drag.clear_layer();
+                        draw_drag.extend(Self::declare_bezier_point_sprite(SPRITE_BEZIER_POINT));
+                        draw_drag.extend(Self::declare_bezier_control_point_sprite(SPRITE_BEZIER_CONTROL_POINT));
+                        draw_drag.layer(1);
 
                         // Edit the elements
                         let elements_to_draw    = elements.iter().filter(|(vector, _)|          vector.id() == element_id);

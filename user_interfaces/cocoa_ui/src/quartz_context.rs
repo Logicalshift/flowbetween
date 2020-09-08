@@ -10,7 +10,7 @@ use flo_canvas::*;
 /// This assumes that all the commands are intended for a specific layer in the canvas: ie, layer switch commands
 /// are ignored.
 ///
-pub struct CanvasContext {
+pub struct QuartzContext {
     /// The location of the viewport origin for this canvas layer (the point that we should consider as 0,0)
     viewport_origin: (f64, f64),
 
@@ -27,18 +27,18 @@ pub struct CanvasContext {
     context: CFRef<CGContextRef>
 }
 
-impl CanvasContext {
+impl QuartzContext {
     ///
     /// Creates a new canvas layer that will render to the specified context
     ///
-    pub unsafe fn new(context: CFRef<CGContextRef>, viewport_origin: (f64, f64), viewport_size: (f64, f64), canvas_size: (f64, f64)) -> CanvasContext {
+    pub unsafe fn new(context: CFRef<CGContextRef>, viewport_origin: (f64, f64), viewport_size: (f64, f64), canvas_size: (f64, f64)) -> QuartzContext {
         // Colours are in the SRGB colourspace
         let srgb        = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
         let mut state   = CanvasState::new(CFRef::from(srgb));
 
         state.activate_context(context.clone());
 
-        let mut new_layer = CanvasContext {
+        let mut new_layer = QuartzContext {
             viewport_origin:    viewport_origin,
             viewport_size:      viewport_size,
             canvas_size:        canvas_size,
@@ -54,7 +54,7 @@ impl CanvasContext {
     ///
     /// Resets the state back to the default
     ///
-    pub fn reset_state(&mut self) {
+    fn reset_state(&mut self) {
         unsafe {
             // Deactivate the original state (which will also clear any stack associated with it)
             self.state.deactivate_context();
@@ -113,7 +113,7 @@ impl CanvasContext {
     ///
     /// Retrieves the transformation needed to move the center of the canvas to the specified point
     ///
-    pub fn get_center_transform(&self, minx: f64, miny: f64, maxx: f64, maxy: f64) -> CGAffineTransform {
+    fn get_center_transform(&self, minx: f64, miny: f64, maxx: f64, maxy: f64) -> CGAffineTransform {
         canvas_center_transform(self.viewport_origin, self.canvas_size, self.state.current_transform(), minx, miny, maxx, maxy)
     }
 
@@ -152,9 +152,9 @@ impl CanvasContext {
                 BlendMode(blend)                                    => { self.state.set_blend_mode(blend); }
                 Unclip                                              => { self.state.unclip(); }
                 Clip                                                => { self.state.clip(); }
-                Store                                               => { /* TODO */ }
-                Restore                                             => { /* TODO */ }
-                FreeStoredBuffer                                    => { /* TODO */ }
+                Store                                               => { /* See view_canvas */ }
+                Restore                                             => { /* See view_canvas */ }
+                FreeStoredBuffer                                    => { /* See view_canvas */ }
                 PushState                                           => { self.state.push_state(); }
                 PopState                                            => { self.state.pop_state(); }
 
@@ -206,6 +206,10 @@ impl CanvasContext {
                 }
                 Layer(_layer_id)                                    => { /* Layers need to be implemented elsewhere */ }
                 LayerBlend(_layer_id, _blend)                       => { /* Layers need to be implemented elsewhere */ }
+                Sprite(_sprite_id)                                  => { unimplemented!() }
+                SpriteTransform(_transform)                         => { unimplemented!() }
+                ClearSprite                                         => { unimplemented!() }
+                DrawSprite(_sprite_id)                              => { unimplemented!() }
             }
         }
     }

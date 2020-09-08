@@ -1,10 +1,13 @@
 use super::canvas_state::*;
-use super::canvas_context::*;
+use super::quartz_context::*;
 use super::core_graphics_ffi::*;
 
 use flo_canvas::*;
 
 use objc::rc::*;
+
+use std::f32;
+use std::collections::{HashMap};
 
 ///
 /// Stores the state associated with a canvas specified for a view
@@ -32,7 +35,11 @@ pub struct ViewCanvas {
     update_layer: Box<dyn FnMut(u32, StrongPtr) -> ()>,
 
     /// Callback function to restore the state of a layer from a copy created previously with copy_layer
-    restore_layer: Box<dyn FnMut(u32, StrongPtr) -> ()>
+    restore_layer: Box<dyn FnMut(u32, StrongPtr) -> ()>,
+
+    /// Sprites defined for the canvas
+    sprites: HashMap<SpriteId, Vec<Draw>>
+
 }
 
 impl ViewCanvas {
@@ -52,7 +59,8 @@ impl ViewCanvas {
             clear_canvas:   Box::new(clear_canvas),
             copy_layer:     Box::new(copy_layer),
             update_layer:   Box::new(update_layer),
-            restore_layer:  Box::new(restore_layer)
+            restore_layer:  Box::new(restore_layer),
+            sprites:        HashMap::new()
         }
     }
 
@@ -87,14 +95,14 @@ impl ViewCanvas {
             // Nothing to do if we can't get the context for layer 0
             return;
         }
-        let layer_context = layer_context.unwrap();
+        let layer_context   = layer_context.unwrap();
 
         // Create the drawing context
         let viewport_origin = (self.visible.origin.x as f64, self.visible.origin.y as f64);
         let viewport_size   = (self.visible.size.width as f64, self.visible.size.height as f64);
         let canvas_size     = (self.size.width as f64, self.size.height as f64);
 
-        let mut context = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
+        let mut context     = unsafe { QuartzContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
 
         // Update the context state
         if let Some(state) = self.state.take() {
@@ -103,7 +111,7 @@ impl ViewCanvas {
             if let Some(layer_context) = layer_context {
                 // The canvas context doesn't deactivate itself on drop, so force it to deactivate by going through to_state
                 context.to_state();
-                context = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
+                context = unsafe { QuartzContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
             }
 
             // Set the initial state of the context
@@ -125,7 +133,7 @@ impl ViewCanvas {
                         let layer_context = context_for_layer(0);
                         if let Some(layer_context) = layer_context {
                             // The canvas context doesn't deactivate itself on drop, so force it to deactivate by going through to_state
-                            context = CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size);
+                            context = QuartzContext::new(layer_context, viewport_origin, viewport_size, canvas_size);
                         } else {
                             // Stop drawing
                             return;
@@ -142,12 +150,13 @@ impl ViewCanvas {
 
                     // Update the layer ID
                     state.set_layer_id(new_layer_id);
+                    state.set_sprite(None);
 
                     // Create a new context for the layer
                     let layer_context = context_for_layer(new_layer_id);
                     if let Some(layer_context) = layer_context {
                         // Create the context for the new layer and send the state there
-                        context = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
+                        context = unsafe { QuartzContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
                         context.set_state(state);
                     } else {
                         // Stop drawing if we can't get a context for the layer
@@ -156,6 +165,11 @@ impl ViewCanvas {
 
                     // Pass the request on to the context
                     context.draw(&Draw::Layer(new_layer_id));
+                },
+
+                Sprite(new_sprite_id) => {
+                    self.sprites.entry(new_sprite_id).or_insert_with(|| vec![]);
+                    context.get_state().set_sprite(Some(new_sprite_id));
                 },
 
                 Store => {
@@ -193,9 +207,67 @@ impl ViewCanvas {
                     context.draw(&Draw::Restore)
                 }
 
+                ClearSprite => {
+                    context.get_state().sprite()
+                        .and_then(|sprite| self.sprites.get_mut(&sprite))
+                        .map(|sprite| *sprite = vec![]);
+                }
+
+                SpriteTransform(flo_canvas::SpriteTransform::Identity) => {
+                    context.get_state().set_sprite_transform(Transform2D::identity());
+                }
+
+                SpriteTransform(flo_canvas::SpriteTransform::Translate(x, y)) => {
+                    let transform = context.get_state().sprite_transform();
+                    context.get_state().set_sprite_transform(transform * Transform2D::translate(x, y));
+                }
+
+                SpriteTransform(flo_canvas::SpriteTransform::Scale(x, y)) => {
+                    let transform = context.get_state().sprite_transform();
+                    context.get_state().set_sprite_transform(transform * Transform2D::scale(x, y));
+                }
+
+                SpriteTransform(flo_canvas::SpriteTransform::Rotate(degrees)) => {
+                    let radians     = degrees / 180.0 * f32::consts::PI;
+                    let transform   = context.get_state().sprite_transform();
+                    context.get_state().set_sprite_transform(transform * Transform2D::rotate(radians));
+                }
+
+                SpriteTransform(flo_canvas::SpriteTransform::Transform2D(new_transform)) => {
+                    let old_transform   = context.get_state().sprite_transform();
+                    context.get_state().set_sprite_transform(old_transform * new_transform);
+                }
+
+                DrawSprite(sprite_id) => {
+                    // Push the existing state
+                    context.draw(&PushState);
+
+                    // Apply the sprite transform
+                    let sprite_transform = context.get_state().sprite_transform();
+                    context.draw(&MultiplyTransform(sprite_transform));
+
+                    // Draw the sprite actions
+                    self.sprites.get(&sprite_id)
+                        .map(|sprite_drawing| {
+                            for sprite_draw in sprite_drawing.iter() {
+                                context.draw(sprite_draw);
+                            }
+                        });
+
+                    // Restore the state as it was before drawing the sprite
+                    context.draw(&PopState);
+                }
 
                 // Other actions are just sent straight to the current context
-                other_action => context.draw(&other_action)
+                other_action => {
+                    if let Some(sprite) = context.get_state().sprite() {
+                        // Save the action in the sprite
+                        self.sprites.get_mut(&sprite).map(move |sprite| sprite.push(other_action));
+                    } else {
+                        // Draw to the context
+                        context.draw(&other_action)
+                    }
+                }
             }
         }
 
