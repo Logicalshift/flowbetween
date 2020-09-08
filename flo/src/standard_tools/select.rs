@@ -428,8 +428,6 @@ impl Select {
         drawing.push_state();
         drawing.transform(Transform2D::translate(drag_point.0-initial_point.0, drag_point.1-initial_point.1));
         drawing.sprite_transform(SpriteTransform::Identity);
-        // TODO: this will make the sprite draw correctly, but it should take account of the active transform too..
-        // drawing.sprite_transform(SpriteTransform::Translate(drag_point.0-initial_point.0, drag_point.1-initial_point.1));
 
         // Draw the 'shadows' of the elements
         if data.selected_elements_draw.len() > 0 {
