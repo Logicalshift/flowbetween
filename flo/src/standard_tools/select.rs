@@ -427,6 +427,9 @@ impl Select {
         // Draw everything translated by the drag distance
         drawing.push_state();
         drawing.transform(Transform2D::translate(drag_point.0-initial_point.0, drag_point.1-initial_point.1));
+        drawing.sprite_transform(SpriteTransform::Identity);
+        // TODO: this will make the sprite draw correctly, but it should take account of the active transform too..
+        // drawing.sprite_transform(SpriteTransform::Translate(drag_point.0-initial_point.0, drag_point.1-initial_point.1));
 
         // Draw the 'shadows' of the elements
         if data.selected_elements_draw.len() > 0 {
@@ -864,7 +867,16 @@ impl Select {
                     .collect();
                 let render              = Self::rendering_for_elements(&new_data, &selected);
 
-                new_data.selected_elements_draw = Arc::new(render);
+                // Define the rendering as the selection sprite
+                actions.push(ToolAction::Overlay(OverlayAction::Draw(
+                    vec![Draw::Sprite(SPRITE_SELECTION_OUTLINE)].into_iter()
+                        .chain(render.into_iter())
+                        .chain(vec![Draw::Layer(0)])
+                        .collect()
+
+                )));
+
+                new_data.selected_elements_draw = Arc::new(vec![Draw::DrawSprite(SPRITE_SELECTION_OUTLINE)]);
 
                 // Update the tool data
                 actions.push(ToolAction::Data(new_data.clone()));
