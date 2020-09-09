@@ -867,7 +867,7 @@ impl Select {
 
                 // Define the rendering as the selection sprite
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(
-                    vec![Draw::Sprite(SPRITE_SELECTION_OUTLINE)].into_iter()
+                    vec![Draw::Sprite(SPRITE_SELECTION_OUTLINE), Draw::ClearSprite].into_iter()
                         .chain(render.into_iter())
                         .chain(vec![Draw::Layer(0)])
                         .collect()
