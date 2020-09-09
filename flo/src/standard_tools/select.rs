@@ -536,6 +536,7 @@ impl Select {
         // Draw everything translated by the drag distance
         drawing.push_state();
         drawing.transform(transform.clone().into());
+        drawing.sprite_transform(SpriteTransform::Identity);
 
         // Draw the 'shadows' of the elements
         if data.selected_elements_draw.len() > 0 {
