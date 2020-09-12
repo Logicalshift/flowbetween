@@ -12,17 +12,34 @@ use rusqlite::{Connection, OpenFlags};
 pub fn sqlite_animation_loader() -> impl FileAnimation {
     AnimationLoader(|path| {
         // Connect to the database
-        let storage = if path.exists() {
+        let opening_existing = path.exists();
+
+        let storage = if opening_existing {
             // Open/restore an existing animation
             let connection  = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_WRITE).unwrap();
-            SqliteAnimationStorage::from_connection(connection)
+            let storage     = SqliteAnimationStorage::from_connection(connection);
+
+            storage
         } else {
             // Create a new animation
             let connection  = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_CREATE).unwrap();
-            SqliteAnimationStorage::new_from_connection(connection)
+            let storage     = SqliteAnimationStorage::new_from_connection(connection);
+
+            storage
         };
 
         // Create the editor for this animation
-        create_animation_editor(move |commands| storage.get_responses(commands).boxed())
+        let editor      = create_animation_editor(move |commands| storage.get_responses(commands).boxed());
+
+        if !opening_existing {
+            // Set up a default animation
+            editor.perform_edits(vec![
+                AnimationEdit::SetSize(1920.0, 1080.0),
+                AnimationEdit::AddNewLayer(0),
+                AnimationEdit::Layer(0, LayerEdit::SetName("Layer 1".to_string()))
+            ]);
+        }
+
+        editor
     })
 }
