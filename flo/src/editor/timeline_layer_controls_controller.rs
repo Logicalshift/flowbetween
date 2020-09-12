@@ -112,6 +112,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                 let _ = self.edit.future(move |animation| {
                     animation.publish(Arc::new(vec![
                         AnimationEdit::AddNewLayer(new_layer_id),
+                        AnimationEdit::Layer(new_layer_id, LayerEdit::SetName(format!("Layer {}", new_layer_id+1)))
                     ]))
                 });
                 self.edit.sync(|_| {});
