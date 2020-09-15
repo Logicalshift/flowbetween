@@ -183,6 +183,7 @@ impl ToGtkActions for ControlAttribute {
             &PopupAttr(ref popup)                   => popup.to_gtk_actions(),
             &AppearanceAttr(ref appearance)         => appearance.to_gtk_actions(),
             &ScrollAttr(ref scroll)                 => scroll.to_gtk_actions(),
+            &HoverAttr(ref hover)                   => hover.to_gtk_actions(),
             &HintAttr(ref hint)                     => hint.to_gtk_actions(),
 
             &Id(ref id)                             => vec![ WidgetContent::AddClass(id.clone()).into() ].into_actions(),
@@ -304,6 +305,16 @@ impl ToGtkActions for Font {
 impl ToGtkActions for Appearance {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
         vec![ self.clone().into() ].into_actions()
+    }
+}
+
+impl ToGtkActions for Hover {
+    fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
+        use self::Hover::*;
+
+        match self {
+            Tooltip(tooltip)    => { /* TODO */ vec![] }
+        }
     }
 }
 

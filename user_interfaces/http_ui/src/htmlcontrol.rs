@@ -200,6 +200,7 @@ impl ToHtml for ControlAttribute {
             &StateAttr(ref state)           => state.to_html_subcomponent(base_path, controller_path),
             &PopupAttr(ref popup)           => popup.to_html_subcomponent(base_path, controller_path),
             &ScrollAttr(ref scroll)         => scroll.to_html_subcomponent(base_path, controller_path),
+            &HoverAttr(ref hover)           => hover.to_html_subcomponent(base_path, controller_path),
             &HintAttr(ref hint)             => hint.to_html_subcomponent(base_path, controller_path),
 
             &BoundingBox(_) => DomEmpty::new(),
@@ -239,6 +240,16 @@ impl ToHtml for Scroll {
             &Fix(FixedAxis::Both)                                   => DomAttribute::new("flo-scroll-fix", "horiz vert"),
 
             _ => DomEmpty::new()
+        }
+    }
+}
+
+impl ToHtml for Hover {
+    fn to_html_subcomponent(&self, _base_path: &str, _controller_path: &str) -> DomNode {
+        use ui::Hover::*;
+
+        match self {
+            Tooltip(tooltip)                                        => DomAttribute::new("title", tooltip)
         }
     }
 }

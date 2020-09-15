@@ -36,6 +36,7 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
             PopupAttr(popup_attr)                   => popup_attr.actions_from(bind_property),
             AppearanceAttr(appearance_attr)         => appearance_attr.actions_from(bind_property),
             ScrollAttr(scroll_attr)                 => scroll_attr.actions_from(bind_property),
+            HoverAttr(hover_attr)                   => { /* TODO */ vec![] }
             HintAttr(hint_attr)                     => hint_attr.actions_from(bind_property),
 
             BoundingBox(bounds)                     => vec![ViewAction::SetBounds(make_app_bounds(bounds, bind_property))],
