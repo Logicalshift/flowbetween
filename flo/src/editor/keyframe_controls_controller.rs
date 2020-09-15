@@ -131,6 +131,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
                                 .with(vec![Control::empty().with(previous_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((9, 4), (4, 4)))
                                 .with(State::Enabled(Property::bound("CanMoveToPreviousKeyFrame")))
+                                .with(Hover::Tooltip("Go to previous keyframe".to_string()))
                                 .with((ActionTrigger::Click, "MoveToPreviousKeyFrame"))
                                 .with(Bounds::next_horiz(22.0)),
 
@@ -138,6 +139,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
                                 .with(vec![Control::empty().with(new_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
                                 .with(State::Enabled(Property::bound("CanCreateKeyFrame")))
+                                .with(Hover::Tooltip("Create keyframe at this time".to_string()))
                                 .with((ActionTrigger::Click, "CreateKeyFrame"))
                                 .with(Bounds::next_horiz(22.0)),
 
@@ -146,6 +148,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
                                 .with(State::Selected(Property::bound("ShowOnionSkinsSelected")))
                                 .with(State::Enabled(Property::Bool(true)))
+                                .with(Hover::Tooltip("Show onion skins".to_string()))
                                 .with((ActionTrigger::Click, "ToggleShowOnionSkins"))
                                 .with(Bounds::next_horiz(22.0)),
 
@@ -154,6 +157,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
                                 .with(State::Selected(Property::bound("CreateKeyFrameOnDrawSelected")))
                                 .with(State::Enabled(Property::Bool(true)))
+                                .with(Hover::Tooltip("Create new keyframes on drawing".to_string()))
                                 .with((ActionTrigger::Click, "ToggleCreateKeyFrameOnDraw"))
                                 .with(Bounds::next_horiz(22.0)),
 
@@ -161,6 +165,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
                                 .with(vec![Control::empty().with(next_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (9, 4)))
                                 .with(State::Enabled(Property::bound("CanMoveToNextKeyFrame")))
+                                .with(Hover::Tooltip("Go to the next keyframe".to_string()))
                                 .with((ActionTrigger::Click, "MoveToNextKeyFrame"))
                                 .with(Bounds::next_horiz(22.0)),
                         ])
