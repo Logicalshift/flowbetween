@@ -12,6 +12,7 @@ mod hint_attr;
 mod state_attr;
 mod popup_attr;
 mod attributes;
+mod hover_attr;
 mod scroll_attr;
 mod appearance_attr;
 
@@ -29,6 +30,7 @@ pub use self::hint_attr::*;
 pub use self::state_attr::*;
 pub use self::popup_attr::*;
 pub use self::attributes::*;
+pub use self::hover_attr::*;
 pub use self::scroll_attr::*;
 pub use self::appearance_attr::*;
 

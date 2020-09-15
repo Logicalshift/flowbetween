@@ -5,6 +5,7 @@ use super::font_attr::*;
 use super::hint_attr::*;
 use super::state_attr::*;
 use super::popup_attr::*;
+use super::hover_attr::*;
 use super::scroll_attr::*;
 use super::appearance_attr::*;
 
@@ -47,6 +48,9 @@ pub enum ControlAttribute {
 
     /// Specifies how the contents of this control will scroll
     ScrollAttr(Scroll),
+
+    /// Specifies the behaviour when the mouse is hovered over this control
+    HoverAttr(Hover),
 
     /// Specifies a hint on how this control should be treated
     HintAttr(Hint),
@@ -221,6 +225,16 @@ impl ControlAttribute {
     }
 
     ///
+    /// The attributes that apply when the user hovers over this control
+    ///
+    pub fn hover<'a>(&'a self) -> Option<&'a Hover> {
+        match self {
+            HoverAttr(hover)    => Some(hover),
+            _                   => None
+        }
+    }
+
+    ///
     /// If this is a hint attribute, returns the hint, otherwise returns nothing
     ///
     pub fn hint<'a>(&'a self) -> Option<&'a Hint> {
@@ -249,6 +263,7 @@ impl ControlAttribute {
             &Canvas(ref canvas_resource)        => Some(canvas_resource) != compare_to.canvas(),
             &AppearanceAttr(ref appearance)     => Some(appearance) != compare_to.appearance(),
             &ScrollAttr(ref scroll)             => Some(scroll) != compare_to.scroll(),
+            &HoverAttr(ref hover)               => Some(hover) != compare_to.hover(),
             &HintAttr(ref hint)                 => Some(hint) != compare_to.hint(),
 
             // For the subcomponents we only care about the number as we don't want to recurse

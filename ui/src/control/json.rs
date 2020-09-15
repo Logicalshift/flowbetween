@@ -27,6 +27,7 @@ impl ToJsonValue for ControlAttribute {
             Id(id)                                  => json!({ "Id": id }),
             Controller(name)                        => json!({ "Controller": name }),
             Action(trigger, action)                 => json!({ "Action": (trigger, action) }),
+            HoverAttr(hover)                        => json!({ "Hover": hover }),
             HintAttr(hint)                          => json!({ "Hint": hint }),
 
             SubComponents(components)               => {
