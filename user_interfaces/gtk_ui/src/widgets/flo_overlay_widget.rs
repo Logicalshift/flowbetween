@@ -98,7 +98,7 @@ impl FloOverlayWidget {
     ///
     /// Sets the image for this widget
     ///
-    fn set_image(&mut self, new_image: ui::Resource<ui::Image>, flo_gtk: &mut FloGtk) {
+    fn set_image(&mut self, new_image: ui::Resource<ui::Image>, _flo_gtk: &mut FloGtk) {
         let image_widget = image_from_image(new_image.clone());
         image_widget.show();
 

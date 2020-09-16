@@ -441,7 +441,7 @@ impl FloWidgetLayout {
     ///
     /// Moves any widget that's clipped to the viewport of this layout so it's still visible in the viewport
     ///
-    pub fn layout_in_viewport<'a, T>(&'a self, target: &T, widget_id: WidgetId, widget_data: &Rc<WidgetData>) 
+    pub fn layout_in_viewport<'a, T>(&'a self, target: &T, _widget_id: WidgetId, widget_data: &Rc<WidgetData>) 
     where   T:      Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>+LayoutViewport {
         let mut viewport                = None;
         let allocation                  = target.get_allocation();
