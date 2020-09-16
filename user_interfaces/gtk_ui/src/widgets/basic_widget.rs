@@ -183,6 +183,10 @@ pub fn process_basic_widget_content<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mu
         &SetChildren(ref children)      => set_widget_parent(widget, children, flo_gtk),
         &SetText(ref _text)             => () /* Standard gtk widgets can't have text in them */,
         &Draw(ref _drawing)             => () /* Drawing requires support from the widget */,
+        &Tooltip(ref tooltip)           => {
+            let widget = widget.get_underlying();
+            widget.set_tooltip_text(tooltip.as_ref().map(|text| text.as_str()));
+        }
 
         &AddClass(ref class_name)       => {
             let widget          = widget.get_underlying();

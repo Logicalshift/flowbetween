@@ -313,7 +313,7 @@ impl ToGtkActions for Hover {
         use self::Hover::*;
 
         match self {
-            Tooltip(tooltip)    => { /* TODO */ vec![] }
+            Tooltip(tooltip)    => { vec![ GtkWidgetAction::Content(WidgetContent::Tooltip(Some(tooltip.clone()))) ].into_actions() }
         }
     }
 }

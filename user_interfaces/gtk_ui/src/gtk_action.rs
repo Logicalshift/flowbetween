@@ -120,6 +120,9 @@ pub enum WidgetContent {
     /// Removes a class from this widget
     RemoveClass(String),
 
+    /// Sets the tooltip for this control to the specified text
+    Tooltip(Option<String>),
+
     /// Specifies a drawing to perform on this widget
     Draw(Vec<canvas::Draw>)
 }
