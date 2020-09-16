@@ -125,7 +125,7 @@ impl GtkMessageTarget {
 
         // Park the thread until the result is available
         // (If unpark is called before park, the park call should return immediately)
-        while { our_result.lock().unwrap().is_none() } {
+        while our_result.lock().unwrap().is_none() {
             thread::park();
         }
 
@@ -154,7 +154,7 @@ impl FloGtk {
     /// Creates a new FloGtk instance
     ///
     pub fn new(event_sink: GtkEventSink) -> FloGtk {
-        let mut style_provider = gtk::CssProvider::new();
+        let style_provider = gtk::CssProvider::new();
         style_provider.load_from_data(include_bytes!["../../style/flo.css"]).unwrap();
 
         FloGtk {

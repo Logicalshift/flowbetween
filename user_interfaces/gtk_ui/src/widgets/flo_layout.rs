@@ -444,7 +444,7 @@ impl FloWidgetLayout {
     pub fn layout_in_viewport<'a, T>(&'a self, target: &T, widget_id: WidgetId, widget_data: &Rc<WidgetData>) 
     where   T:      Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>+LayoutViewport {
         let mut viewport                = None;
-        let mut allocation              = target.get_allocation();
+        let allocation                  = target.get_allocation();
 
         // Fetch the padding
         let ((pad_x, pad_y), (_, _))    = self.get_padding();

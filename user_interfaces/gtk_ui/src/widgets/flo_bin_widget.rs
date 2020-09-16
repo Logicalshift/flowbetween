@@ -63,7 +63,7 @@ impl FloBinWidget {
     ///
     /// Creates the fixed widget, if it doesn't already exist
     ///
-    fn make_fixed(&mut self, flo_gtk: &mut FloGtk) {
+    fn make_fixed(&mut self, _flo_gtk: &mut FloGtk) {
         if self.overlay.is_none() {
             // Create the fixed widget
             let fixed_widget    = gtk::Overlay::new();
@@ -72,13 +72,13 @@ impl FloBinWidget {
             fixed_widget.show();
 
             // Add labels and images if necessary (also removing the widgets)
-            if let Some((label_text, label_widget)) = self.label.take() {
+            if let Some((_label_text, label_widget)) = self.label.take() {
                 self.bin.remove(&label_widget);
                 label_widget.show();
                 fixed.set_overlaid_widget(label_widget.upcast());
             }
 
-            if let Some((image_resource, image_widget)) = self.image.take() {
+            if let Some((_image_resource, image_widget)) = self.image.take() {
                 self.bin.remove(&image_widget);
                 image_widget.show();
                 fixed.set_overlaid_widget(image_widget.upcast());

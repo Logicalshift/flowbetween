@@ -4,7 +4,6 @@ use super::cairo_draw::*;
 use flo_canvas::*;
 
 use cairo;
-use cairo::*;
 
 use std::collections::HashMap;
 

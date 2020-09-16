@@ -7,7 +7,6 @@ use crate::widgets::layout_settings::*;
 
 use flo_canvas::*;
 use flo_render;
-use flo_render::{Vertex2D, VertexBufferId, Rgba8, RenderAction, Matrix};
 use flo_render_canvas::*;
 use gtk::prelude::*;
 use cairo;
@@ -99,12 +98,6 @@ impl FloRenderCanvasWidget {
         glarea.connect_realize(move |gl_widget| { 
             // Borrow the core
             let mut core = core.borrow_mut();
-
-            // Get the window dimensions
-            let allocation      = gl_widget.get_allocation();
-            let scale           = gl_widget.get_scale_factor();
-            let width           = allocation.width * scale;
-            let height          = allocation.height * scale;
 
             // Make the context the current context
             gl_widget.make_current();
