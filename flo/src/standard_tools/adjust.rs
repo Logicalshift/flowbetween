@@ -11,7 +11,6 @@ use flo_animation::*;
 use futures::*;
 use futures::stream;
 use futures::stream::{BoxStream};
-use itertools::*;
 
 use std::f32;
 use std::sync::*;
