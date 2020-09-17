@@ -103,13 +103,15 @@ impl Adjust {
         draw.sprite(sprite_id);
         draw.clear_sprite();
 
-        draw.stroke_color(SELECTION_OUTLINE);
-        draw.line_width_pixels(1.0);
+        draw.new_path();
+        draw.circle(0.0, 0.0, 5.5);
+        draw.fill_color(SELECTION_OUTLINE);
+        draw.fill();
 
-        draw.circle(0.0, 0.0, 5.0);
+        draw.new_path();
+        draw.circle(0.0, 0.0, 4.5);
         draw.fill_color(CP_BEZIER);
         draw.fill();
-        draw.stroke();
 
         draw
     }
@@ -126,10 +128,15 @@ impl Adjust {
         draw.stroke_color(SELECTION_OUTLINE);
         draw.line_width_pixels(1.0);
 
-        draw.rect(0.0-3.0, 0.0-3.0, 0.0+3.0, 0.0+3.0);
+        draw.new_path();
+        draw.rect(0.0-2.5, 0.0-2.5, 0.0+2.5, 0.0+2.5);
+        draw.fill_color(SELECTION_OUTLINE);
+        draw.fill();
+
+        draw.new_path();
+        draw.rect(0.0-3.5, 0.0-3.5, 0.0+3.5, 0.0+3.5);
         draw.fill_color(CP_BEZIER_CP);
         draw.fill();
-        draw.stroke();
 
         draw
     }
