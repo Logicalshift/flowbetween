@@ -4,10 +4,19 @@ use flo_animation::*;
 
 use std::sync::*;
 
+/// An identifier for a toolset
+#[derive(Clone, PartialEq, PartialOrd, Hash, Debug)]
+pub struct ToolSetId(pub String);
+
 ///
 /// Represents a grouped set of tools
 ///
 pub trait ToolSet<Anim: Animation>: Send+Sync {
+    ///
+    /// The ID for this toolset
+    ///
+    fn id(&self) -> ToolSetId;
+
     ///
     /// Retrieves the name of this tool set
     ///

@@ -5,6 +5,11 @@ use flo_animation::*;
 
 use std::sync::*;
 
+lazy_static! {
+    pub static ref SELECTION_TOOLSET_ID: ToolSetId   = ToolSetId(String::from("52E89E39-2955-4330-841C-70E679EA6B5E"));
+    pub static ref PAINT_TOOLSET_ID: ToolSetId       = ToolSetId(String::from("4795326D-9A7B-45D0-A6EF-13BD2648699D"));
+}
+
 ///
 /// The selection toolset
 ///
@@ -44,6 +49,8 @@ impl<Anim: Animation> PaintTools<Anim> {
 }
 
 impl<Anim: Animation> ToolSet<Anim> for SelectionTools<Anim> {
+    fn id(&self) -> ToolSetId { SELECTION_TOOLSET_ID.clone() }
+
     fn set_name(&self) -> String { "Selection".to_string() }
 
     fn tools(&self) -> Vec<Arc<FloTool<Anim>>> {
@@ -56,6 +63,8 @@ impl<Anim: Animation> ToolSet<Anim> for SelectionTools<Anim> {
 }
 
 impl<Anim: Animation> ToolSet<Anim> for PaintTools<Anim> {
+    fn id(&self) -> ToolSetId { PAINT_TOOLSET_ID.clone() }
+
     fn set_name(&self) -> String { "Paint".to_string() }
 
     fn tools(&self) -> Vec<Arc<FloTool<Anim>>> {

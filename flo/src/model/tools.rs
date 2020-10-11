@@ -25,6 +25,12 @@ pub struct ToolModel<Anim: Animation> {
     /// The tool sets available for selection
     pub tool_sets: Binding<Vec<Arc<dyn ToolSet<Anim>>>>,
 
+    /// The name of the currently selected toolset
+    pub selected_tool_set: Binding<Option<ToolSetId>>,
+
+    /// The selected tool for the toolset with the specified name
+    selected_tool_for_set: Arc<Mutex<HashMap<ToolSetId, Binding<Arc<FloTool<Anim>>>>>>,
+
     /// The models for each tool in the toolsets
     tool_models: Arc<Mutex<HashMap<String, Arc<GenericToolModel>>>>
 }
@@ -42,6 +48,8 @@ impl<Anim: EditableAnimation+Animation+'static> ToolModel<Anim> {
 
         // Create the bindings
         let selected_tool               = bind(None);
+        let selected_tool_set           = bind(None);
+        let selected_tool_for_set       = Arc::new(Mutex::new(HashMap::new()));
         let tool_sets                   = bind(default_tool_sets);
         let current_pointer             = bind((PaintDevice::Mouse(MouseButton::Left), 0));
         let tool_models                 = Arc::new(Mutex::new(HashMap::new()));
@@ -52,6 +60,8 @@ impl<Anim: EditableAnimation+Animation+'static> ToolModel<Anim> {
             effective_tool:             effective_tool,
             selected_tool:              selected_tool,
             tool_sets:                  tool_sets,
+            selected_tool_set:          selected_tool_set,
+            selected_tool_for_set:      selected_tool_for_set,
             current_pointer:            current_pointer,
             tool_models:                tool_models
         }
@@ -132,6 +142,8 @@ impl<Anim: Animation> Clone for ToolModel<Anim> {
             tool_sets:                  Binding::clone(&self.tool_sets),
             current_pointer:            Binding::clone(&self.current_pointer),
             effective_tool:             BindRef::clone(&self.effective_tool),
+            selected_tool_set:          Binding::clone(&self.selected_tool_set),
+            selected_tool_for_set:      Arc::clone(&self.selected_tool_for_set),
             tool_models:                Arc::clone(&self.tool_models)
         }
     }
