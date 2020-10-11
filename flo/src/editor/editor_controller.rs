@@ -119,7 +119,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
             .with(Bounds {
                 x1: Start,
                 y1: After,
-                x2: Offset(48.0),
+                x2: Offset(TOOL_CONTROL_SIZE),
                 y2: End
             })
             .with_controller(&serde_json::to_string(&SubController::Toolbox).unwrap())

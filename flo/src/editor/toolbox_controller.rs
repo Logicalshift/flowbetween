@@ -8,6 +8,8 @@ use flo_animation::*;
 
 use std::sync::*;
 
+pub const TOOL_CONTROL_SIZE: f32 = 32.0;
+
 ///
 /// The toolbox controller allows the user to pick which tool they
 /// are using to edit the canvas
@@ -163,7 +165,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
             .with((Click, name))
             .with(State::Badged(Property::Bind(badged_property_name)))
             .with(State::Selected(Property::Bind(selected_property_name)))
-            .with(Bounds::next_vert(48.0))
+            .with(Bounds::next_vert(TOOL_CONTROL_SIZE))
             .with(Hint::Class("tool-button".to_string()))
             .with(vec![
                 Control::empty()
