@@ -5,7 +5,7 @@ use flo_animation::*;
 use std::sync::*;
 
 /// An identifier for a toolset
-#[derive(Clone, PartialEq, PartialOrd, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Hash, Debug)]
 pub struct ToolSetId(pub String);
 
 ///
