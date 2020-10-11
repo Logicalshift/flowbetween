@@ -78,8 +78,14 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
             // Put the controls into a container
             Control::container()
                 .with(Bounds::fill_all())
+                .with(vec![
+                    Control::container()
+                        .with(Bounds::stretch_vert(1.0))
+                        .with(tools_for_sets),
+                    Control::container()
+                        .with(Bounds::stretch_vert(1.0))
+                ])
                 .with(Appearance::Background(TOOLS_BACKGROUND))
-                .with(tools_for_sets)
         }))
     }
 
