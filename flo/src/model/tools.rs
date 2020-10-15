@@ -117,6 +117,24 @@ impl<Anim: EditableAnimation+Animation+'static> ToolModel<Anim> {
     }
 
     ///
+    /// Returns a binding that indicates which tools are available for the currently selected toolset
+    ///
+    pub fn tools_for_selected_set(&self) -> impl Bound<Vec<Arc<FloTool<Anim>>>> {
+        let selected_tool_set   = self.selected_tool_set.clone();
+        let tool_sets           = self.tool_sets.clone();
+
+        computed(move || {
+            let selected_tool_set_id    = selected_tool_set.get();
+            let tool_sets               = tool_sets.get();
+            let tool_set                = tool_sets.iter().filter(|set| Some(set.id()) == selected_tool_set_id).nth(0);
+
+            tool_set
+                .map(|tool_set| tool_set.tools())
+                .unwrap_or_else(|| vec![])
+        })
+    }
+
+    ///
     /// Finds the tool with the specified name and marks it as active
     ///
     pub fn choose_tool_with_name(&self, name: &str) {
