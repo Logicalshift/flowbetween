@@ -117,9 +117,33 @@ impl<Anim: EditableAnimation+Animation+'static> ToolModel<Anim> {
     }
 
     ///
+    /// Returns the selected tool for a particular toolset
+    ///
+    pub fn selected_tool_for_set(&self, toolset: ToolSetId) -> BindRef<Arc<FloTool<Anim>>> {
+        let tool_sets       = self.tool_sets.clone();
+        let selected_tool   = self.selected_tool_for_set.lock().unwrap()
+            .get(&toolset)
+            .unwrap()
+            .clone();
+
+        computed(move || {
+            selected_tool.get()
+                .unwrap_or_else(|| {
+                    let tool_sets   = tool_sets.get();
+                    let toolset     = tool_sets.iter()
+                        .filter(|set| set.id() == toolset)
+                        .nth(0)
+                        .unwrap();
+
+                    toolset.tools()[0].clone()
+                })
+        }).into()
+    }
+
+    ///
     /// Returns a binding that indicates which tools are available for the currently selected toolset
     ///
-    pub fn tools_for_selected_set(&self) -> impl Bound<Vec<Arc<FloTool<Anim>>>> {
+    pub fn tools_for_selected_set(&self) -> BindRef<Vec<Arc<FloTool<Anim>>>> {
         let selected_tool_set   = self.selected_tool_set.clone();
         let tool_sets           = self.tool_sets.clone();
 
@@ -131,7 +155,7 @@ impl<Anim: EditableAnimation+Animation+'static> ToolModel<Anim> {
             tool_set
                 .map(|tool_set| tool_set.tools())
                 .unwrap_or_else(|| vec![])
-        })
+        }).into()
     }
 
     ///
