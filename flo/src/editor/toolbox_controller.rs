@@ -105,6 +105,9 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
 
         // Load the tool images
         for tool_set in tools.tool_sets.get().iter() {
+            // TODO: really want to be able to bind the tool images dynamically here 
+            // (we can add extra sets by editing the model but the images won't load in: need to make the resource manager
+            // dynamic to support this)
             for tool in tool_set.tools() {
                 if let Some(image) = tool.image() {
                     // Give the image a name (the tool- suffix ensures that we can register other images without causing a clash)
