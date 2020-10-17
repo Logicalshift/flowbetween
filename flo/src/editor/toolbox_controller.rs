@@ -86,7 +86,8 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
                 .flat_map(|tool_set| {
                     // Get the currently selected tool
                     let selected_tool = selected_tool_for_set.lock().unwrap()
-                        .get(&tool_set.id())?
+                        .entry(tool_set.id())
+                        .or_insert_with(|| bind(None))
                         .get()
                         .or_else(|| tool_set.tools().iter().nth(0).cloned())?;
 
