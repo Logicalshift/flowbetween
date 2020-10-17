@@ -97,10 +97,11 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
 
                     let ToolSetId(toolset_id)   = tool_set.id();
                     let selected_property_name  = format!("toolset-selected-{}", toolset_id);
+                    let click_action            = format!("toolset-{}", toolset_id);
 
                     // Turn into a control
                     let control     =         Control::button()
-                        /* .with((Click, name)) */
+                        .with((ActionTrigger::Click, click_action))
                         .with(State::Selected(Property::Bind(selected_property_name)))
                         .with(Bounds::next_vert(TOOL_CONTROL_SIZE))
                         .with(Hint::Class("tool-button".to_string()))
@@ -244,11 +245,19 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for ToolboxController
     }
 
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
-        // Set the selected tool in the UI view model
-        self.view_model.set_property("SelectedTool", PropertyValue::String(String::from(action_id)));
+        if action_id.starts_with("toolset-") {
+            // Select the requested toolset
+            let toolset_id = ToolSetId(action_id["toolset-".len()..].into());
+            self.anim_model.tools().selected_tool_set.set(Some(toolset_id))
 
-        // Update the animation view model with the newly selected tool
-        self.anim_model.tools().choose_tool_with_name(action_id);
+        } else {
+
+            // Set the requested tool in the UI view model
+            self.view_model.set_property("SelectedTool", PropertyValue::String(String::from(action_id)));
+
+            // Update the animation view model with the newly selected tool
+            self.anim_model.tools().choose_tool_with_name(action_id);
+        }
     }
 
     fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
