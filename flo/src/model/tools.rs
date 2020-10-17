@@ -26,7 +26,7 @@ pub struct ToolModel<Anim: Animation> {
     pub selected_tool_set: Binding<Option<ToolSetId>>,
 
     /// The selected tool for the toolset with the specified name
-    selected_tool_for_set: Arc<Mutex<HashMap<ToolSetId, Binding<Option<Arc<FloTool<Anim>>>>>>>,
+    pub selected_tool_for_set: Arc<Mutex<HashMap<ToolSetId, Binding<Option<Arc<FloTool<Anim>>>>>>>,
 
     /// The models for each tool in the toolsets
     tool_models: Arc<Mutex<HashMap<String, Arc<GenericToolModel>>>>

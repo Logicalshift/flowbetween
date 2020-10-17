@@ -60,8 +60,65 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
     fn create_ui(anim_model: &FloModel<Anim>, viewmodel: Arc<DynamicViewModel>, images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
         let tools                   = anim_model.tools();
 
-        let tools_for_selected_set  = tools.tools_for_selected_set();
+        // Create a control binding for each toolset
+        let selected_tool_set       = tools.selected_tool_set.clone();
+        let selected_tool_for_set   = tools.selected_tool_for_set.clone();
         let tool_sets               = tools.tool_sets.clone();
+        let binding_viewmodel       = viewmodel.clone();
+        let binding_images          = images.clone();
+
+        let tool_set_selector       = computed(move || {
+            // Fetch the tool sets
+            let tool_sets = tool_sets.get();
+
+            // Create selected indicators for each toolset (TODO: should really be outside of the 'computed' block)
+            for set in tool_sets.iter() {
+                let selected_tool_set   = selected_tool_set.clone();
+                let ToolSetId(id)       = set.id();
+
+                binding_viewmodel.set_computed(&format!("toolset-selected-{}", id), move || {
+                    PropertyValue::Bool(selected_tool_set.get() == Some(ToolSetId(id.clone())))
+                });
+            }
+
+            // Create the tool sets themselves
+            let tool_set_controls = tool_sets.iter()
+                .flat_map(|tool_set| {
+                    // Get the currently selected tool
+                    let selected_tool = selected_tool_for_set.lock().unwrap()
+                        .get(&tool_set.id())?
+                        .get()
+                        .or_else(|| tool_set.tools().iter().nth(0).cloned())?;
+
+                    // Fetch the image for the selected tool (this is what we use to represent the tool set, as it's the tool you get if you select this set)
+                    let image_name              = format!("tool-{}", selected_tool.tool_name());
+                    let image                   = binding_images.get_named_resource(&image_name);
+
+                    let ToolSetId(toolset_id)   = tool_set.id();
+                    let selected_property_name  = format!("toolset-selected-{}", toolset_id);
+
+                    // Turn into a control
+                    let control     =         Control::button()
+                        /* .with((Click, name)) */
+                        .with(State::Selected(Property::Bind(selected_property_name)))
+                        .with(Bounds::next_vert(TOOL_CONTROL_SIZE))
+                        .with(Hint::Class("tool-button".to_string()))
+                        .with(vec![
+                            Control::empty()
+                                .with(Bounds::fill_all())
+                                .with(image)
+                        ]);
+
+                    Some(control)
+                });
+
+            tool_set_controls.collect::<Vec<_>>()
+        });
+
+        // Create the main control binding
+        let tool_sets               = tools.tool_sets.clone();
+        let tools_for_selected_set  = tools.tools_for_selected_set();
+        let viewmodel               = viewmodel.clone();
 
         BindRef::from(computed(move || {
             // Convert the tool sets into tools (with separators between each individual set)
@@ -91,6 +148,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
                         .with(tools_for_sets),
                     Control::container()
                         .with(Bounds::stretch_vert(1.0))
+                        .with(tool_set_selector.get())
                 ])
                 .with(Appearance::Background(TOOLS_BACKGROUND))
         }))
