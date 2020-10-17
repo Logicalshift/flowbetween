@@ -109,7 +109,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for FloodFill {
 
     fn tool_name(&self) -> String { "Flood Fill".to_string() }
 
-    fn image_name(&self) -> String { "floodfill".to_string() }
+    fn image(&self) -> Option<Image> { Some(svg_static(include_bytes!("../../svg/tools/floodfill.svg"))) }
 
     fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> FloodFillModel {
         FloodFillModel::new()

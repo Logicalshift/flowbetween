@@ -111,7 +111,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
     ///
     /// Retrieves the name of the image that is associated with this tool
     ///
-    fn image_name(&self) -> String { "ink".to_string() }
+    fn image(&self) -> Option<Image> { Some(svg_static(include_bytes!("../../svg/tools/ink.svg"))) }
 
     ///
     /// Creates a new instance of the UI model for this tool

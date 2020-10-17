@@ -135,8 +135,8 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
         self.tool.tool_name()
     }
 
-    fn image_name(&self) -> String {
-        self.tool.image_name()
+    fn image(&self) -> Option<Image> {
+        self.tool.image()
     }
 
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> GenericToolModel {
@@ -196,7 +196,7 @@ mod test {
 
         fn tool_name(&self) -> String { "test".to_string() }
 
-        fn image_name(&self) -> String { "test".to_string() }
+        fn image(&self) -> Option<Image> { None }
 
         fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> i32 { 94 }
 

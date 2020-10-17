@@ -1,6 +1,7 @@
 use super::super::tools::*;
 use super::super::model::*;
 
+use flo_ui::*;
 use flo_animation::*;
 
 use std::sync::*;
@@ -25,7 +26,7 @@ impl<Anim: Animation> Tool<Anim> for Pan {
 
     fn tool_name(&self) -> String { "Pan".to_string() }
 
-    fn image_name(&self) -> String { "pan".to_string() }
+    fn image(&self) -> Option<Image> { Some(svg_static(include_bytes!("../../svg/tools/pan.svg"))) }
 
     fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> () { }
 

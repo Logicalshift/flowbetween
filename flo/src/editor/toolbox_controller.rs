@@ -41,10 +41,10 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
         anim_model.tools().choose_tool_with_name(&viewmodel.get_property("SelectedTool").get().string().unwrap_or("".to_string()));
 
         // Some images for the root controller
-        let images  = Arc::new(Self::create_images());
+        let images  = Arc::new(Self::create_images(anim_model));
 
         // Set up the tools
-        let ui = Self::create_ui(anim_model.tools().tool_sets.clone(), Arc::clone(&viewmodel), Arc::clone(&images));
+        let ui = Self::create_ui(anim_model, Arc::clone(&viewmodel), Arc::clone(&images));
 
         ToolboxController {
             view_model:         viewmodel,
@@ -57,13 +57,18 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
     ///
     /// Creates the UI binding
     ///
-    fn create_ui(tool_sets: Binding<Vec<Arc<dyn ToolSet<Anim>>>>, viewmodel: Arc<DynamicViewModel>, images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
+    fn create_ui(anim_model: &FloModel<Anim>, viewmodel: Arc<DynamicViewModel>, images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
+        let tools                   = anim_model.tools();
+
+        let tools_for_selected_set  = tools.tools_for_selected_set();
+        let tool_sets               = tools.tool_sets.clone();
+
         BindRef::from(computed(move || {
             // Convert the tool sets into tools (with separators between each individual set)
             let tools_for_sets: Vec<_> = tool_sets.get().iter()
                 .map(|toolset| {
                     let tools: Vec<_> = toolset.tools().iter()
-                        .map(|tool| Self::make_tool(&tool.tool_name(), &viewmodel, images.get_named_resource(&tool.image_name())))
+                        .map(|tool| Self::make_tool(&tool.tool_name(), &viewmodel, &*images))
                         .collect();
 
                     tools
@@ -94,28 +99,23 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
     ///
     /// Creates the image resources for this controller
     ///
-    fn create_images() -> ResourceManager<Image> {
+    fn create_images(anim_model: &FloModel<Anim>) -> ResourceManager<Image> {
         let images  = ResourceManager::new();
+        let tools   = anim_model.tools();
 
         // Load the tool images
-        let select      = images.register(svg_static(include_bytes!("../../svg/tools/select.svg")));
-        let adjust      = images.register(svg_static(include_bytes!("../../svg/tools/adjust.svg")));
-        let pan         = images.register(svg_static(include_bytes!("../../svg/tools/pan.svg")));
+        for tool_set in tools.tool_sets.get().iter() {
+            for tool in tool_set.tools() {
+                if let Some(image) = tool.image() {
+                    // Give the image a name (the tool- suffix ensures that we can register other images without causing a clash)
+                    let image_name      = format!("tool-{}", tool.tool_name());
+                    let image_resource  = images.register(image);
 
-        let pencil      = images.register(svg_static(include_bytes!("../../svg/tools/pencil.svg")));
-        let ink         = images.register(svg_static(include_bytes!("../../svg/tools/ink.svg")));
-        let eraser      = images.register(svg_static(include_bytes!("../../svg/tools/eraser.svg")));
-        let floodfill   = images.register(svg_static(include_bytes!("../../svg/tools/floodfill.svg")));
-
-        // Assign names to them
-        images.assign_name(&select, "select");
-        images.assign_name(&adjust, "adjust");
-        images.assign_name(&pan, "pan");
-
-        images.assign_name(&pencil, "pencil");
-        images.assign_name(&ink, "ink");
-        images.assign_name(&eraser, "eraser");
-        images.assign_name(&floodfill, "floodfill");
+                    // Assign a name to this tool
+                    images.assign_name(&image_resource, &image_name);
+                }
+            }
+        }
 
         images
     }
@@ -131,11 +131,12 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
     ///
     /// Creates a new tool control
     ///
-    fn make_tool(name: &str, viewmodel: &DynamicViewModel, image: Option<Resource<Image>>) -> Control {
+    fn make_tool(name: &str, viewmodel: &DynamicViewModel, images: &ResourceManager<Image>) -> Control {
         use self::ActionTrigger::*;
 
         // Decide if this is the selected tool
         let selected_tool   = viewmodel.get_property("SelectedTool");
+        let tool_image      = images.get_named_resource(&format!("tool-{}", name));
 
         // The tool has a '-selected' binding that we use to cause it to highlight
         let compare_name            = String::from(name);
@@ -170,7 +171,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
             .with(vec![
                 Control::empty()
                     .with(Bounds::fill_all())
-                    .with(image)
+                    .with(tool_image)
             ])
     }
 }

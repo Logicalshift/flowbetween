@@ -586,7 +586,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
 
     fn tool_name(&self) -> String { "Adjust".to_string() }
 
-    fn image_name(&self) -> String { "adjust".to_string() }
+    fn image(&self) -> Option<Image> { Some(svg_static(include_bytes!("../../svg/tools/adjust.svg"))) }
 
     fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> () { }
 

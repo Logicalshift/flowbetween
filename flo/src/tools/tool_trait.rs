@@ -36,9 +36,9 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     fn tool_name(&self) -> String;
 
     ///
-    /// Retrieves the name of the image that is associated with this tool
+    /// Retrieves the image that represents this tool in the toolbar
     ///
-    fn image_name(&self) -> String;
+    fn image(&self) -> Option<Image>;
 
     ///
     /// Creates a new instance of the UI model for this tool

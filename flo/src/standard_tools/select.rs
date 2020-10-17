@@ -1002,7 +1002,9 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
 
     fn tool_name(&self) -> String { "Select".to_string() }
 
-    fn image_name(&self) -> String { "select".to_string() }
+    fn image(&self) -> Option<Image> {
+        Some(svg_static(include_bytes!("../../svg/tools/select.svg")))
+    }
 
     ///
     /// Creates the model for the Select tool

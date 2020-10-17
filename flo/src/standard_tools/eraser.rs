@@ -45,7 +45,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
 
     fn tool_name(&self) -> String { "Eraser".to_string() }
 
-    fn image_name(&self) -> String { "eraser".to_string() }
+    fn image(&self) -> Option<Image> { Some(svg_static(include_bytes!("../../svg/tools/eraser.svg"))) }
 
     fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> InkModel {
         let model = InkModel::new();
