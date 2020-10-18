@@ -149,6 +149,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
                         .with(Bounds::stretch_vert(1.0))
                         .with(vec![Control::container().with(Bounds::stretch_vert(1.0))].into_iter()
                             .chain(tool_set_selector.get()).collect::<Vec<_>>()),
+                    Self::make_separator(),
                     Control::container()
                         .with(Bounds::stretch_vert(1.0))
                         .with(tools_for_sets),
