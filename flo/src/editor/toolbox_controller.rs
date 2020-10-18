@@ -118,28 +118,14 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
         });
 
         // Create the main control binding
-        let tool_sets               = tools.tool_sets.clone();
         let tools_for_selected_set  = tools.tools_for_selected_set();
         let viewmodel               = viewmodel.clone();
 
         BindRef::from(computed(move || {
             // Convert the tool sets into tools (with separators between each individual set)
-            let tools_for_sets: Vec<_> = tool_sets.get().iter()
-                .map(|toolset| {
-                    let tools: Vec<_> = toolset.tools().iter()
-                        .map(|tool| Self::make_tool(&tool.tool_name(), &viewmodel, &*images))
-                        .collect();
-
-                    tools
-                }).fold(vec![], |mut result, new_items| {
-                    // Separator between toolsets after the first set
-                    if result.len() > 0 { result.push(Self::make_separator()); }
-
-                    // Add the new items
-                    result.extend(new_items.into_iter());
-
-                    result
-                });
+            let tools_for_sets: Vec<_> = tools_for_selected_set.get().iter()
+                .map(|tool| Self::make_tool(&tool.tool_name(), &viewmodel, &*images))
+                .collect();
 
             // Put the controls into a container
             Control::container()
