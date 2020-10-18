@@ -236,7 +236,25 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for ToolboxController
         if action_id.starts_with("toolset-") {
             // Select the requested toolset
             let toolset_id = ToolSetId(action_id["toolset-".len()..].into());
-            self.anim_model.tools().selected_tool_set.set(Some(toolset_id))
+            self.anim_model.tools().selected_tool_set.set(Some(toolset_id.clone()));
+
+            // If this enables a tool, update the effective tool
+            let effective_tool = self.anim_model.tools().effective_tool.get();
+            if let Some(effective_tool) = effective_tool {
+                // Make the effective tool the currently selected tool
+                self.view_model.set_property("SelectedTool", PropertyValue::String(String::from(effective_tool.tool_name())));
+            } else {
+                // Select the first tool in this set
+                let tool_sets       = self.anim_model.tools().tool_sets.get();
+                let selected_tool   = tool_sets.iter().filter(|tool_set| tool_set.id() == toolset_id)
+                    .nth(0)
+                    .and_then(|tool_set| tool_set.tools().iter().nth(0).cloned());
+
+                if let Some(selected_tool) = selected_tool {
+                    self.anim_model.tools().choose_tool_with_name(&selected_tool.tool_name());
+                    self.view_model.set_property("SelectedTool", PropertyValue::String(selected_tool.tool_name()));
+                }
+            }
 
         } else {
 
