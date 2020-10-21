@@ -517,55 +517,19 @@ public class FloView : NSObject, FloViewDelegate {
         })
     }
 
-    var _image: NSImage?
-    var _imageView: NSView?
-    var _imageLayer: CALayer?
-    var _imageResolution: CGFloat = 1.0
-
-    ///
-    /// Sets the position of the image view within the main view
-    ///
-    func repositionImageView(_ bounds: ContainerBounds) {
-        if let imageLayer = _imageLayer {
-            if let screen = _view.asView.window?.screen {
-                // Work out how to scale the image (so that it can be displayed by the view)
-                let resolution  = screen.backingScaleFactor
-
-                // Reset the image contents
-                if resolution != _imageResolution {
-                    _imageResolution = resolution
-                    imageLayer.contentsScale    = resolution
-                    imageLayer.contentsGravity  = CALayerContentsGravity.resizeAspect
-                    imageLayer.contents         = _image?.layerContents(forContentsScale: resolution)
-                }
-            }
-        }
-    }
+    var _imageView: FloImageView?
 
     ///
     /// Sets the image for the view
     ///
     @objc public func viewSetImage(_ image: NSImage!) {
-        _image = image
-
         // Add an image view to this view if one does not already exist
         if _imageView == nil {
-            _imageView              = NSView()
-            _imageView!.wantsLayer  = true
-
-            _imageLayer             = _imageView!.layer!
-
+            _imageView              = FloImageView()
             _view.addContainerSubview(_imageView!)
         }
-
-        // Update the image when the view bounds change
-        _imageResolution = 0.0
-
-        weak var this = self
-        _view.boundsChanged = { newBounds in
-            this?.repositionImageView(newBounds)
-        }
-        _view.triggerBoundsChanged()
+        
+        _imageView?.image = image;
     }
 
     ///
