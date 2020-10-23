@@ -55,7 +55,9 @@ class FloContainerButton : NSView, FloContainerView {
     /// Updates the frame size of this control
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize)
+
         triggerBoundsChanged()
+        performLayout?(layoutSize)
     }
 
     /// Updates the tracking area for this view

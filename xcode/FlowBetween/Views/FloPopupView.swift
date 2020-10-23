@@ -57,6 +57,7 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize)
         _popupWindow.updatePosition()
+        performLayout?(layoutSize)
     }
 
     /// Adds a subview to this container view
