@@ -21,6 +21,7 @@ pub const TIMESCALE_ONION_INDICATOR:        Color = Color::Rgba(0.9, 0.6, 0.5, 1
 pub const TIMESCALE_ONION_INDICATOR_OUTER:  Color = Color::Rgba(1.0, 0.7, 0.6, 1.0);
 pub const TIMESCALE_ONION_INDICATOR_INNER:  Color = Color::Rgba(0.4, 0.3, 0.2, 1.0);
 pub const MENU_BACKGROUND:                  Color = Color::Rgba(0.20, 0.22, 0.25, 1.0);
+pub const TOOLSET_BACKGROUND:               Color = Color::Rgba(0.30, 0.32, 0.35, 1.0);
 pub const TOOLS_BACKGROUND:                 Color = Color::Rgba(0.20, 0.22, 0.25, 1.0);
 pub const MENU_BACKGROUND_ALT:              Color = Color::Rgba(0.24, 0.26, 0.30, 1.0);
 

@@ -133,14 +133,16 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
                 .with(vec![
                     Control::container()
                         .with(Bounds::stretch_vert(1.0))
+                        .with(Appearance::Background(TOOLSET_BACKGROUND))
                         .with(vec![Control::container().with(Bounds::stretch_vert(1.0))].into_iter()
                             .chain(tool_set_selector.get()).collect::<Vec<_>>()),
-                    Self::make_separator(),
+                    Self::make_separator()
+                        .with(Appearance::Background(TOOLSET_BACKGROUND)),
                     Control::container()
                         .with(Bounds::stretch_vert(1.0))
+                        .with(Appearance::Background(TOOLS_BACKGROUND))
                         .with(tools_for_sets),
                 ])
-                .with(Appearance::Background(TOOLS_BACKGROUND))
         }))
     }
 
