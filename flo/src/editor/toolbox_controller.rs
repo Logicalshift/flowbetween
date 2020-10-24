@@ -137,6 +137,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
                         .with(vec![Control::container().with(Bounds::stretch_vert(1.0))].into_iter()
                             .chain(tool_set_selector.get()).collect::<Vec<_>>()),
                     Self::make_separator()
+                        .with(images.get_named_resource("toolset-divider"))
                         .with(Appearance::Background(TOOLSET_BACKGROUND)),
                     Control::container()
                         .with(Bounds::stretch_vert(1.0))
@@ -152,6 +153,10 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
     fn create_images(anim_model: &FloModel<Anim>) -> ResourceManager<Image> {
         let images  = ResourceManager::new();
         let tools   = anim_model.tools();
+
+        // Load the decal images
+        let toolset_divider = images.register(svg_static(include_bytes!("../../svg/control_decals/toolset_divider.svg")));
+        images.assign_name(&toolset_divider, "toolset-divider");
 
         // Load the tool images
         for tool_set in tools.tool_sets.get().iter() {
@@ -178,7 +183,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
     ///
     fn make_separator() -> Control {
         Control::empty()
-            .with(Bounds::next_vert(12.0))
+            .with(Bounds::next_vert(24.0))
     }
 
     ///
