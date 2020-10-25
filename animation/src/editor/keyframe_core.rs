@@ -731,6 +731,11 @@ impl KeyFrameCore {
                     self.initial_element = wrapper.order_before;
                 }
 
+                // If this is the last element, the previous element becomes the last element
+                if self.last_element == Some(element_id) {
+                    self.last_element = wrapper.order_after;
+                }
+
                 // We'll need to process the before/after versions next
                 let previous_id = wrapper.order_after;
                 let next_id     = wrapper.order_before;
