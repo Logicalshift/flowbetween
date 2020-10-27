@@ -2,6 +2,8 @@ use super::super::source::*;
 use super::super::target::*;
 use super::super::super::traits::*;
 
+use std::sync::*;
+
 impl LayerEdit {
     ///
     /// Generates a serialized version of this edit on the specified data target
@@ -51,6 +53,24 @@ impl LayerEdit {
             '-' => { Some(LayerEdit::RemoveKeyFrame(data.next_duration())) }
             'N' => { Some(LayerEdit::SetName(data.next_string())) }
             'O' => { Some(LayerEdit::SetOrdering(data.next_u64())) }
+
+            'c' => {
+                let inside_group    = ElementId::deserialize(data)?;
+                let outside_group   = ElementId::deserialize(data)?;
+                let path_len        = data.next_usize();
+
+                let mut last_point  = PathPoint::new(0.0, 0.0);
+                let mut components  = vec![];
+                for _component_num in 0..path_len {
+                    let (component, next_point) = PathComponent::deserialize_next(&last_point, data)?;
+                    components.push(component);
+                    last_point = next_point;
+                }
+
+                let path            = Arc::new(components);
+
+                Some(LayerEdit::Cut { path, inside_group, outside_group })
+            }
 
             _   => None
         }
@@ -111,6 +131,19 @@ mod test {
     fn set_ordering() {
         let mut encoded = String::new();
         let edit        = LayerEdit::SetOrdering(42);
+        edit.serialize(&mut encoded);
+
+        assert!(LayerEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+
+    #[test]
+    fn cut() {
+        let mut encoded = String::new();
+        let edit        = LayerEdit::Cut { 
+            path:           Arc::new(vec![PathComponent::Move(PathPoint::new(1.0, 2.0)), PathComponent::Line(PathPoint::new(2.0, 3.0)), PathComponent::Bezier(PathPoint::new(4.0, 5.0), PathPoint::new(6.0, 7.0), PathPoint::new(8.0, 9.0)), PathComponent::Close]),
+            inside_group:   ElementId::Assigned(1),
+            outside_group:  ElementId::Assigned(2)
+        };
         edit.serialize(&mut encoded);
 
         assert!(LayerEdit::deserialize(&mut encoded.chars()) == Some(edit));
