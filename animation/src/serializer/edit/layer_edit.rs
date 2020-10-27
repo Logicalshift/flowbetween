@@ -10,12 +10,25 @@ impl LayerEdit {
         use self::LayerEdit::*;
 
         match self {
-            Paint(when, edit)       => { data.write_chr('P'); data.write_duration(*when); edit.serialize(data); },
-            Path(when, edit)        => { data.write_chr('p'); data.write_duration(*when); edit.serialize(data); },
-            AddKeyFrame(when)       => { data.write_chr('+'); data.write_duration(*when); },
-            RemoveKeyFrame(when)    => { data.write_chr('-'); data.write_duration(*when); },
-            SetName(name)           => { data.write_chr('N'); data.write_str(name); },
-            SetOrdering(ordering)   => { data.write_chr('O'); data.write_u64(*ordering); }
+            Paint(when, edit)                           => { data.write_chr('P'); data.write_duration(*when); edit.serialize(data); },
+            Path(when, edit)                            => { data.write_chr('p'); data.write_duration(*when); edit.serialize(data); },
+            AddKeyFrame(when)                           => { data.write_chr('+'); data.write_duration(*when); },
+            RemoveKeyFrame(when)                        => { data.write_chr('-'); data.write_duration(*when); },
+            SetName(name)                               => { data.write_chr('N'); data.write_str(name); },
+            SetOrdering(ordering)                       => { data.write_chr('O'); data.write_u64(*ordering); }
+
+            Cut { path, inside_group, outside_group }   => { 
+                data.write_chr('c'); 
+                inside_group.serialize(data);
+                outside_group.serialize(data);
+
+                data.write_usize(path.len()); 
+
+                let mut last_point = PathPoint::new(0.0, 0.0);
+                for component in path.iter() {
+                    last_point = component.serialize_next(&last_point, data);
+                }
+            }
         }
     }
 

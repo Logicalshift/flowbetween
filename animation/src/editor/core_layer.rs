@@ -14,12 +14,13 @@ impl StreamAnimationCore {
 
         async move {
             match layer_edit {
-                Paint(when, paint_edit)     => { self.paint_edit(layer_id, *when, paint_edit).await }
-                Path(when, path_edit)       => { self.path_edit(layer_id, *when, path_edit).await }
-                AddKeyFrame(when)           => { self.add_key_frame(layer_id, *when).await }
-                RemoveKeyFrame(when)        => { self.remove_key_frame(layer_id, *when).await }
-                SetName(new_name)           => { self.set_layer_name(layer_id, new_name).await }
-                SetOrdering(ordering)       => { self.set_layer_ordering(layer_id, *ordering).await }
+                Paint(when, paint_edit)                     => { self.paint_edit(layer_id, *when, paint_edit).await }
+                Path(when, path_edit)                       => { self.path_edit(layer_id, *when, path_edit).await }
+                AddKeyFrame(when)                           => { self.add_key_frame(layer_id, *when).await }
+                RemoveKeyFrame(when)                        => { self.remove_key_frame(layer_id, *when).await }
+                SetName(new_name)                           => { self.set_layer_name(layer_id, new_name).await }
+                SetOrdering(ordering)                       => { self.set_layer_ordering(layer_id, *ordering).await }
+                Cut { path, inside_group, outside_group }   => { unimplemented!() }
             }
         }
     }

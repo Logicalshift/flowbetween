@@ -132,6 +132,10 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
                     advance_edit_counter = true;
                 }
 
+                Layer(_, Cut { path: _, inside_group: _, outside_group: _ }) => {
+                    advance_edit_counter = true;
+                },
+
                 Layer(_, AddKeyFrame(_))    |
                 Layer(_, RemoveKeyFrame(_)) => {
                     advance_edit_counter = true;
