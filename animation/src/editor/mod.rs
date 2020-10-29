@@ -13,6 +13,7 @@ mod keyframe_core;
 mod keyframe_raycast;
 mod pending_storage_change;
 mod paint_fill;
+mod layer_cut;
 mod element_wrapper;
 mod element_collide;
 mod element_transform;
