@@ -66,6 +66,22 @@ impl ElementWrapper {
     }
 
     ///
+    /// Creates an element wrapper that's a clone of the current wrapper except for the element it contains
+    ///
+    pub fn clone_with_element(&self, element: Vector, unattached: bool) -> ElementWrapper {
+        ElementWrapper {
+            element:        element,
+            start_time:     self.start_time,
+            attachments:    self.attachments.clone(),
+            attached_to:    vec![],
+            unattached:     unattached,
+            parent:         None,
+            order_before:   None,
+            order_after:    None
+        }
+    }
+
+    ///
     /// Creates an 'error' element wrapper
     ///
     pub fn error() -> ElementWrapper {
