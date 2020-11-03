@@ -3,8 +3,6 @@ use super::properties::*;
 use super::control_point::*;
 use super::vector_element::*;
 use super::path_conversion_options::*;
-use super::brush_definition_element::*;
-use super::brush_properties_element::*;
 use super::super::path::*;
 use super::super::edit::*;
 
@@ -24,25 +22,17 @@ pub struct PathElement {
     id: ElementId,
 
     /// The components that make up this path
-    path: Path,
-
-    /// The brush to use for this path
-    brush: Arc<BrushDefinitionElement>,
-
-    /// The properties to use for this path
-    brush_properties: Arc<BrushPropertiesElement>
+    path: Path
 }
 
 impl PathElement {
     ///
     /// Creates a new path element with the specified properties
     ///
-    pub fn new(id: ElementId, path: Path, brush: Arc<BrushDefinitionElement>, brush_properties: Arc<BrushPropertiesElement>) -> PathElement {
+    pub fn new(id: ElementId, path: Path) -> PathElement {
         PathElement {
             id,
-            path,
-            brush,
-            brush_properties
+            path
         }
     }
 
@@ -51,20 +41,6 @@ impl PathElement {
     ///
     pub fn path(&self) -> &Path {
         &self.path
-    }
-
-    ///
-    /// Returns the brush definition for this path element
-    ///
-    pub fn brush(&self) -> Arc<BrushDefinitionElement> {
-        Arc::clone(&self.brush)
-    }
-
-    ///
-    /// Returns the properties for this path element
-    ///
-    pub fn properties(&self) -> Arc<BrushPropertiesElement> {
-        Arc::clone(&self.brush_properties)
     }
 }
 
@@ -122,9 +98,6 @@ impl VectorElement for PathElement {
     /// Updates the vector properties for future elements
     ///
     fn update_properties(&self, properties: Arc<VectorProperties>, when: Duration) -> Arc<VectorProperties> {
-        let properties = self.brush.update_properties(properties, when);
-        let properties = self.brush_properties.update_properties(properties, when);
-
         properties
     }
 
@@ -203,10 +176,8 @@ impl VectorElement for PathElement {
             .collect();
 
         Vector::Path(PathElement {
-            id:                 self.id,
-            brush:              Arc::clone(&self.brush),
-            brush_properties:   Arc::clone(&self.brush_properties),
-            path:               Path::from_elements_arc(Arc::new(new_elements))
+            id:     self.id,
+            path:   Path::from_elements_arc(Arc::new(new_elements))
         })
     }
 }
