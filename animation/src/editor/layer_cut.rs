@@ -152,11 +152,7 @@ impl StreamAnimationCore {
                                 inside_path.push(interior);
                             }
                         }
-
-                        // TODO: Either move the whole element into the 'inside' or the 'outside' group (with properties if needed?) or 
-                        // create new path elements to do the same
                     }
-
 
                     LayerCut {
                         outside_path: Some(outside_path),
