@@ -36,8 +36,8 @@ fn translate_path() {
     let attachments         = frame.attached_elements(ElementId::Assigned(100));
 
     // Should be a transformation attached
-    assert!(attachments.len() == 1);
-    let attached_element    =  frame.element_with_id(attachments[0].0).unwrap();
+    assert!(attachments.len() == 3);
+    let attached_element    =  frame.element_with_id(attachments[2].0).unwrap();
 
     assert!(if let Vector::Transformation((_, _)) = attached_element { true } else { false });
 
@@ -97,8 +97,8 @@ fn align_paths_left() {
     let attachments         = frame.attached_elements(ElementId::Assigned(100));
 
     // Should be a transformation attached to element ID 100
-    assert!(attachments.len() == 1);
-    let attached_element    =  frame.element_with_id(attachments[0].0).unwrap();
+    assert!(attachments.len() == 3);
+    let attached_element    =  frame.element_with_id(attachments[2].0).unwrap();
 
     assert!(if let Vector::Transformation((_, _)) = attached_element { true } else { false });
 
@@ -159,8 +159,8 @@ fn align_paths_top() {
     let attachments         = frame.attached_elements(ElementId::Assigned(100));
 
     // Should be a transformation attached to element ID 100
-    assert!(attachments.len() == 1);
-    let attached_element    =  frame.element_with_id(attachments[0].0).unwrap();
+    assert!(attachments.len() == 3);
+    let attached_element    =  frame.element_with_id(attachments[2].0).unwrap();
 
     assert!(if let Vector::Transformation((_, _)) = attached_element { true } else { false });
 
@@ -220,8 +220,8 @@ fn align_paths_center() {
     let attachments         = frame.attached_elements(ElementId::Assigned(100));
 
     // Should be a transformation attached to element ID 100
-    assert!(attachments.len() == 1);
-    let attached_element    =  frame.element_with_id(attachments[0].0).unwrap();
+    assert!(attachments.len() == 3);
+    let attached_element    =  frame.element_with_id(attachments[2].0).unwrap();
 
     assert!(if let Vector::Transformation((_, _)) = attached_element { true } else { false });
 
