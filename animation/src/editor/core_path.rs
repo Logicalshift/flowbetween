@@ -34,22 +34,30 @@ impl StreamAnimationCore {
                         return;
                     };
 
+                    let (defn_id, props_id) = if let (Some(defn_id), Some(props_id)) = (defn.id().id(), props.id().id()) {
+                        (defn_id, props_id)
+                    } else {
+                        return;
+                    };
+
                     // Create the path element
-                    let element = PathElement::new(element_id, Path::from_elements(components.iter().cloned()), defn.clone(), props.clone());
+                    let element = PathElement::new(element_id, Path::from_elements(components.iter().cloned()));
                     let element = Vector::Path(element);
 
                     // Edit the keyframe
                     let storage_updates = current_keyframe.future(move |current_keyframe| {
                         async move {
                             // Add to a wrapper
-                            let wrapper         = ElementWrapper::attached_with_element(element, when);
+                            let mut wrapper     = ElementWrapper::attached_with_element(element, when);
+                            wrapper.attachments.push(ElementId::Assigned(defn_id));
+                            wrapper.attachments.push(ElementId::Assigned(props_id));
 
                             // Append to the current keyframe and return the list of storage commands
                             let mut add_element = current_keyframe.add_element_to_end(element_id, wrapper);
 
                             // Make sure the definition and properties are attached to the keyframe so the path can find them later on
-                            add_element.push(StorageCommand::AttachElementToLayer(layer_id, defn.id().id().unwrap_or(0), when));
-                            add_element.push(StorageCommand::AttachElementToLayer(layer_id, props.id().id().unwrap_or(0), when));
+                            add_element.push(StorageCommand::AttachElementToLayer(layer_id, defn_id, when));
+                            add_element.push(StorageCommand::AttachElementToLayer(layer_id, props_id, when));
 
                             add_element
                         }.boxed()
