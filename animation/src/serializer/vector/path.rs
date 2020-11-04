@@ -1,4 +1,3 @@
-use super::resolve_element::*;
 use super::super::source::*;
 use super::super::target::*;
 use super::super::super::traits::*;
@@ -11,29 +10,20 @@ impl PathElement {
     /// Generates a serialized version of this path element on the specified data target
     ///
     pub fn serialize<Tgt: AnimationDataTarget>(&self, data: &mut Tgt) {
-        // v0
-        data.write_small_u64(0);
-
-        // Write out the IDs of the property elements
-        self.brush().id().serialize(data);
-        self.properties().id().serialize(data);
-
-        // If the IDs are unassigned then include the properties/brush directly
-        if self.brush().id().is_unassigned() {
-            self.brush().serialize(data);
-        }
-        if self.properties().id().is_unassigned() {
-            self.properties().serialize(data);
-        }
+        // v1
+        data.write_small_u64(1);
 
         // Write out the path components
         self.path().serialize(data);
     }
 
     ///
-    /// Deserializes a path element from the data source
+    /// Deserializes a path element from the data source, returning the element an any extra attachments it may have
     ///
-    pub fn deserialize(element_id: ElementId, data: &mut Chars) -> Option<impl ResolveElements<PathElement>> {
+    /// (Older versions of FlowBetween stored the attachments inside the element, so the list will be empty in most
+    /// cases)
+    ///
+    pub fn deserialize(element_id: ElementId, data: &mut Chars) -> Option<(PathElement, Vec<ElementId>)> {
         match data.next_small_u64() {
             0 => {
                 // Fetch the brush and properties IDs
@@ -41,12 +31,12 @@ impl PathElement {
                 let properties_id   = ElementId::deserialize(data)?;
 
                 // Fetch the brush and properties if the IDs are unassigned
-                let brush           = if brush_id.is_unassigned() {
+                let _brush           = if brush_id.is_unassigned() {
                     Some(Vector::BrushDefinition(BrushDefinitionElement::deserialize(ElementId::Unassigned, data)?))
                 } else {
                     None
                 };
-                let properties      = if properties_id.is_unassigned() {
+                let _properties      = if properties_id.is_unassigned() {
                     Some(Vector::BrushProperties(BrushPropertiesElement::deserialize(ElementId::Unassigned, data)?))
                 } else {
                     None
@@ -54,17 +44,13 @@ impl PathElement {
 
                 let path            = Path::deserialize(data)?;
 
-                // Generate the resolver
-                Some(ElementResolver(move |mapper| {
-                    // Resolve the brush and properties
-                    let brush       = brush.or_else(|| mapper(brush_id))?;
-                    let properties  = properties.or_else(|| mapper(properties_id))?;
-                    let brush       = brush.extract_brush_definition()?;
-                    let properties  = properties.extract_brush_properties()?;
+                // Create the element
+                Some((PathElement::new(element_id, path), vec![brush_id, properties_id]))
+            }
 
-                    // Generate the path
-                    Some(PathElement::new(element_id, path, Arc::new(brush), Arc::new(properties)))
-                }))
+            1 => {
+                let path            = Path::deserialize(data)?;
+                Some((PathElement::new(element_id, path), vec![]))
             }
 
             _ => None
