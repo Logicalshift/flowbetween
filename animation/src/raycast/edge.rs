@@ -46,7 +46,7 @@ impl RaycastEdge {
 
             Vector::Transformed(transform)      => { Self::from_transformed(transform, properties) }
             Vector::BrushStroke(brush_stroke)   => { Self::from_brush_stroke(brush_stroke, properties) }
-            Vector::Path(path)                  => { Box::new(Self::from_path_element(path)) }
+            Vector::Path(path)                  => { Box::new(Self::from_path_element(path, properties)) }
             Vector::Group(group_element)        => { Box::new(Self::from_group(group_element, properties)) }
         }
     }
@@ -82,8 +82,8 @@ impl RaycastEdge {
     ///
     /// Retrieves the edges corresponding to a path element
     ///
-    pub fn from_path_element<'a>(vector: &'a PathElement) -> impl 'a+Iterator<Item=Self> {
-        match vector.brush().drawing_style() {
+    pub fn from_path_element<'a>(vector: &'a PathElement, properties: Arc<VectorProperties>) -> impl 'a+Iterator<Item=Self> {
+        match properties.brush.drawing_style() {
             BrushDrawingStyle::Erase    => { Self::from_path(vector.id(), vector.path(), RaycastEdgeKind::EraseContents) }
             BrushDrawingStyle::Draw     => { Self::from_path(vector.id(), vector.path(), RaycastEdgeKind::Solid) }
         }

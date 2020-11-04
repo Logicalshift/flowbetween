@@ -9,7 +9,6 @@ use flo_curves::bezier::path::algorithms::*;
 
 use futures::prelude::*;
 
-use std::sync::*;
 use std::time::{Duration};
 use std::collections::{HashSet};
 
