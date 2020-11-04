@@ -38,20 +38,11 @@ impl StreamAnimationCore {
 
                     // Create the vector properties by applying all the attachments for the element
                     let mut vector_properties   = Arc::new(VectorProperties::default());
-                    let mut brush_definition    = BrushDefinitionElement::default();
-                    let mut brush_properties    = BrushPropertiesElement::default();
 
                     for attachment_id in wrapper.attachments.iter() {
                         if let Some(attachment) = frame.elements.get(attachment_id) {
                             // Apply the properties from this
                             vector_properties = attachment.element.update_properties(vector_properties, frame.start);
-
-                            // Capture brush definition & properties elements
-                            match &attachment.element {
-                                Vector::BrushDefinition(brush_defn)     => { brush_definition = brush_defn.clone(); },
-                                Vector::BrushProperties(brush_props)    => { brush_properties = brush_props.clone(); },
-                                _                                       => { }
-                            }
                         }
                     }
 
@@ -63,7 +54,7 @@ impl StreamAnimationCore {
                     let path        = path.collect::<Vec<_>>();
                     let path        = Path::from_elements(path);
 
-                    let path        = PathElement::new(wrapper.element.id(), path, Arc::new(brush_definition), Arc::new(brush_properties));
+                    let path        = PathElement::new(wrapper.element.id(), path);
                     let path        = Vector::Path(path);
 
                     // Update the wrapper

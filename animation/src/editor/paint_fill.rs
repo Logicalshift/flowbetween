@@ -52,10 +52,6 @@ impl StreamAnimationCore {
             // Generate a path element by performing the fill
             let updates = frame.future(move |frame| {
                 async move {
-                    // Fetch the brush properties from the frame
-                    let brush_props         = frame.elements.get(&brush_props_id).and_then(|props| props.element.clone().extract_brush_properties())?;
-                    let brush_defn          = frame.elements.get(&brush_defn_id).and_then(|defn| defn.element.clone().extract_brush_definition())?;
-
                     // Generate a ray-casting function from the current frame
                     let ray_casting_fn      = frame.raycast(when);
 
@@ -109,7 +105,7 @@ impl StreamAnimationCore {
                     let fill_path           = Path::from_paths(fill_path.iter());
 
                     // Create a new path element from the fill path we just generated
-                    let path_element        = PathElement::new(path_id, fill_path, Arc::new(brush_defn), Arc::new(brush_props));
+                    let path_element        = PathElement::new(path_id, fill_path);
                     let element             = Vector::Path(path_element);
                     let mut wrapper         = ElementWrapper::attached_with_element(element, when);
 

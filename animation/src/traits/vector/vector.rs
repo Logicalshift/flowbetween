@@ -105,7 +105,7 @@ impl Vector {
             Vector::Path(path_element) => {
                 // Create a clone of the path element with the new properties
                 let new_path            = Path::from_elements(path_components);
-                let new_path_element    = PathElement::new(path_element.id(), new_path, path_element.brush(), path_element.properties());
+                let new_path_element    = PathElement::new(path_element.id(), new_path);
 
                 Vector::new(new_path_element)
             },
