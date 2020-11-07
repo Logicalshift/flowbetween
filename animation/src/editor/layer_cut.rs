@@ -20,7 +20,10 @@ pub (super) struct LayerCut {
     pub inside_path: Option<Vec<ElementWrapper>>,
 
     /// The elements that should be removed from the layer and replaced with the inside/outside groups
-    pub replaced_elements: Vec<ElementId>
+    pub replaced_elements: Vec<ElementId>,
+
+    /// The elements that have been moved into either the inside or outside path
+    pub moved_elements: Vec<ElementId>
 }
 
 impl LayerCut {
@@ -31,7 +34,8 @@ impl LayerCut {
         LayerCut {
             outside_path:       None,
             inside_path:        None,
-            replaced_elements:  vec![]
+            replaced_elements:  vec![],
+            moved_elements:     vec![]
         }
     }
 }
@@ -56,6 +60,7 @@ impl StreamAnimationCore {
             let layer_cut = frame.future(move |frame| {
                 async move {
                     let mut replaced_elements   = vec![];
+                    let mut moved_elements      = vec![];
                     let mut inside_path         = vec![];
                     let mut outside_path        = vec![];
 
@@ -101,7 +106,7 @@ impl StreamAnimationCore {
                                 continue;
                             } else if cut.exterior_path.len() == 0 {
                                 // All elements inside
-                                replaced_elements.push(current_element_id);
+                                moved_elements.push(current_element_id);
 
                                 let mut inside_element      = current_element.clone();
                                 inside_element.parent       = None;
@@ -127,7 +132,8 @@ impl StreamAnimationCore {
                     LayerCut {
                         outside_path: Some(outside_path),
                         inside_path: Some(inside_path),
-                        replaced_elements
+                        replaced_elements,
+                        moved_elements
                     }
                 }.boxed()
             }).await;
