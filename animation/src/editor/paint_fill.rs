@@ -16,11 +16,11 @@ impl StreamAnimationCore {
     ///
     /// Provides an implementaton of the fill operation
     ///
-    pub (super) fn paint_fill<'a>(&'a mut self, layer_id: u64, when: Duration, path_id: ElementId, point: RawPoint, options: &'a Vec<FillOption>) -> impl 'a+Future<Output=Option<ElementWrapper>> {
+    pub (super) fn paint_fill<'a>(&'a mut self, layer_id: u64, when: Duration, path_id: ElementId, point: RawPoint, options: &'a Vec<FillOption>) -> impl 'a+Future<Output=()> {
         async move {
             // Fetch the brush properties
-            let brush_defn_id       = self.brush_defn?;
-            let brush_props_id      = self.brush_props?;
+            let brush_defn_id       = if let Some(brush_defn) = self.brush_defn { brush_defn } else { return; };
+            let brush_props_id      = if let Some(brush_props) = self.brush_props { brush_props } else { return; };
 
             // Decide on the fill options
             let mut gap_size        = 10.0;
@@ -46,7 +46,7 @@ impl StreamAnimationCore {
 
             // Fetch the frame that we're going to add this fill to
             let frame = self.edit_keyframe(layer_id, when).await;
-            let frame = match frame { Some(frame) => frame, None => { return None; } };
+            let frame = match frame { Some(frame) => frame, None => { return; } };
 
             // Generate a path element by performing the fill
             let updates = frame.future(move |frame| {
@@ -126,8 +126,6 @@ impl StreamAnimationCore {
 
             // Send the updates to storage
             self.request(updates.unwrap_or_else(|| PendingStorageChange::new())).await;
-
-            None
         }
     }
 }

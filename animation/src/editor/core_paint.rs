@@ -62,7 +62,8 @@ impl StreamAnimationCore {
 
                 Fill(element_id, point, options)        => {
                     let element_id = element_id.id().unwrap_or(0);
-                    (element_id, self.paint_fill(layer_id, when, ElementId::Assigned(element_id), *point, options).await)
+                    self.paint_fill(layer_id, when, ElementId::Assigned(element_id), *point, options).await;
+                    (element_id, None)
                 }
             };
 
