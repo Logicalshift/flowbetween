@@ -189,7 +189,7 @@ impl StreamAnimationCore {
             // Create the inside elements (all those without an assigned element ID)
             let mut inside_group    = vec![];
             let mut inside_when     = when;
-            for inside_element_wrapper in inside_path {
+            for mut inside_element_wrapper in inside_path {
                 // Assign an ID to this element
                 let id = if let ElementId::Assigned(id) = inside_element_wrapper.element.id() {
                     id
@@ -198,8 +198,8 @@ impl StreamAnimationCore {
                 };
 
                 // Add the element to the group
-                let mut group_element = inside_element_wrapper.element.clone();
-                group_element.set_id(ElementId::Assigned(id));
+                inside_element_wrapper.element.set_id(ElementId::Assigned(id));
+                let group_element = inside_element_wrapper.element.clone();
                 inside_group.push(group_element);
 
                 // Add this element to the pending list
@@ -213,7 +213,7 @@ impl StreamAnimationCore {
             // Create the outside elements (all those without an assigned element ID)
             let mut outside_group   = vec![];
             let mut outside_when    = when;
-            for outside_element_wrapper in outside_path {
+            for mut outside_element_wrapper in outside_path {
                 // Assign an ID to this element
                 let id = if let ElementId::Assigned(id) = outside_element_wrapper.element.id() {
                     id
@@ -222,8 +222,8 @@ impl StreamAnimationCore {
                 };
 
                 // Add the element to the group
-                let mut group_element = outside_element_wrapper.element.clone();
-                group_element.set_id(ElementId::Assigned(id));
+                outside_element_wrapper.element.set_id(ElementId::Assigned(id));
+                let group_element = outside_element_wrapper.element.clone();
                 outside_group.push(group_element);
 
                 // Add this element to the pending list
