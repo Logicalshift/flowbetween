@@ -237,6 +237,8 @@ impl StreamAnimationCore {
             // Put the inside and outside elements into groups, and add those groups to the layer
             let inside_group_id     = self.assign_element_id(inside_group_id).await;
             let outside_group_id    = self.assign_element_id(outside_group_id).await;
+            let inside_group_len    = inside_group.len();
+            let outside_group_len   = outside_group.len();
 
             let inside_group        = GroupElement::new(inside_group_id, GroupType::Normal, Arc::new(inside_group));
             let outside_group       = GroupElement::new(outside_group_id, GroupType::Normal, Arc::new(outside_group));
@@ -247,8 +249,8 @@ impl StreamAnimationCore {
             // Add the two groups to the frame
             let pending = frame.future(move |frame| {
                 async move {
-                    pending.extend(frame.add_element_to_end(inside_group.element.id(), inside_group));
-                    pending.extend(frame.add_element_to_end(outside_group.element.id(), outside_group));
+                    if inside_group_len > 0 { pending.extend(frame.add_element_to_end(inside_group.element.id(), inside_group)); }
+                    if outside_group_len > 0 { pending.extend(frame.add_element_to_end(outside_group.element.id(), outside_group)); }
 
                     pending
                 }.boxed()
