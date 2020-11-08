@@ -162,6 +162,9 @@ impl StreamAnimationCore {
             let frame           = self.edit_keyframe(layer_id, when).await;
             let frame           = match frame { Some(frame) => frame, None => { return; } };
 
+            let replaced_ids        = replaced_elements.iter().map(|elem_id| elem_id.id()).flatten().collect::<Vec<_>>();
+            self.remove_from_attachments(&replaced_ids).await;
+
             // Unlink the moved and removed elements
             let mut pending     = frame.future(move |frame| {
                 async move {
