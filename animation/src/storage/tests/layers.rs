@@ -417,4 +417,7 @@ fn cut_square_into_doughnut() {
 
     assert!(elements.len() != 1);
     assert!(elements.len() == 2);
+
+    assert!(elements[0].id() == ElementId::Assigned(100));
+    assert!(elements[1].id() == ElementId::Assigned(101));
 }
