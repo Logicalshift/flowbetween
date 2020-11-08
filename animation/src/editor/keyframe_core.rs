@@ -135,8 +135,10 @@ impl KeyFrameCore {
             for element_id in element_ids.iter() {
                 if let Some(element_wrapper) = resolved.get(element_id) {
                     if element_wrapper.parent.is_none() && element_wrapper.order_after.is_none() && !element_wrapper.unattached {
-                        initial_element = Some(*element_id);
-                        break;
+                        if Some(*element_id) > initial_element {
+                            // If there are multiple possible initial elements, use the one with the highest element ID so the behaviour is at least consistent
+                            initial_element = Some(*element_id);
+                        }
                     }
                 }
             }
