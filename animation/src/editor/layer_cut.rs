@@ -116,7 +116,8 @@ impl StreamAnimationCore {
                                 inside_element.order_before = None;
                                 inside_element.order_after  = None;
                                 inside_element.unattached   = true;
-                                inside_path.push(current_element.clone());
+                                
+                                inside_path.push(inside_element);
                             } else {
                                 // Path cut in two: remove the old element and replace with two path elements
                                 replaced_elements.push(current_element_id);
