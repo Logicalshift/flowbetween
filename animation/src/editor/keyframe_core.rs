@@ -141,6 +141,22 @@ impl KeyFrameCore {
                 }
             }
 
+            // In tests, check that there is only one initial element
+            #[cfg(test)]
+            {
+                let mut num_initial_elements = 0;
+
+                for element_id in element_ids.iter() {
+                    if let Some(element_wrapper) = resolved.get(element_id) {
+                        if element_wrapper.parent.is_none() && element_wrapper.order_after.is_none() && !element_wrapper.unattached {
+                            num_initial_elements += 1;
+                        }
+                    }
+                }
+
+                assert!(num_initial_elements <= 1);
+            }
+
             // The final element is found by following the links of 'after' elements from the 'before' element
             let last_element = if let Some(initial_element) = initial_element {
                 // Hash set to prevent a bad file from causing us to ente an infinite loop
