@@ -315,6 +315,52 @@ fn get_active_brush() {
 }
 
 #[test]
+fn delete_last_item() {
+    let anim = create_animation();
+
+    // Create a square
+    let square = Arc::new(vec![
+        PathComponent::Move(PathPoint::new(100.0, 100.0)),
+        PathComponent::Line(PathPoint::new(200.0, 100.0)),
+        PathComponent::Line(PathPoint::new(200.0, 200.0)),
+        PathComponent::Line(PathPoint::new(100.0, 200.0)),
+        PathComponent::Line(PathPoint::new(100.0, 100.0))
+    ]);
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+        AnimationEdit::Layer(2, LayerEdit::Path(Duration::from_millis(0), PathEdit::SelectBrush(
+                ElementId::Assigned(1),
+                BrushDefinition::Ink(InkDefinition::default()),
+                BrushDrawingStyle::Draw
+            ))),
+        AnimationEdit::Layer(2, LayerEdit::Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(2), BrushProperties::new()))),
+        AnimationEdit::Layer(2, LayerEdit::Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(3), square)))
+    ]);
+
+    // Layer should contain the square
+    let layer       = anim.get_layer_with_id(2).unwrap();
+    let frame       = layer.get_frame_at_time(Duration::from_millis(0));
+    let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+    assert!(elements.len() == 1);
+
+    // Delete the square
+    anim.perform_edits(vec![
+        AnimationEdit::Element(vec![ElementId::Assigned(3)], ElementEdit::Delete)
+    ]);
+
+    // Layer should contain 2 groups with the inside and outside elements in it
+    let layer       = anim.get_layer_with_id(2).unwrap();
+    let frame       = layer.get_frame_at_time(Duration::from_millis(0));
+    let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+    assert!(elements.len() != 1);
+    assert!(elements.len() == 0);
+}
+
+#[test]
 fn cut_square_into_doughnut() {
     let anim = create_animation();
 
