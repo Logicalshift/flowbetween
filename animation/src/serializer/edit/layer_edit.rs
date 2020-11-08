@@ -143,6 +143,7 @@ mod test {
         let mut encoded = String::new();
         let edit        = LayerEdit::Cut { 
             path:           Arc::new(vec![PathComponent::Move(PathPoint::new(1.0, 2.0)), PathComponent::Line(PathPoint::new(2.0, 3.0)), PathComponent::Bezier(PathPoint::new(4.0, 5.0), PathPoint::new(6.0, 7.0), PathPoint::new(8.0, 9.0)), PathComponent::Close]),
+            when:           Duration::from_millis(4200),
             inside_group:   ElementId::Assigned(1),
             outside_group:  ElementId::Assigned(2)
         };
