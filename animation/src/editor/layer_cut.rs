@@ -187,8 +187,9 @@ impl StreamAnimationCore {
             }).await.unwrap();
 
             // Create the inside elements (all those without an assigned element ID)
-            let mut inside_group    = vec![];
-            let mut inside_when     = when;
+            let mut updated_elements    = vec![];
+            let mut inside_group        = vec![];
+            let mut inside_when         = when;
             for mut inside_element_wrapper in inside_path {
                 // Assign an ID to this element
                 let id = if let ElementId::Assigned(id) = inside_element_wrapper.element.id() {
@@ -204,6 +205,7 @@ impl StreamAnimationCore {
 
                 // Add this element to the pending list
                 let when = inside_element_wrapper.start_time;
+                updated_elements.push(inside_element_wrapper.clone());
                 pending.push_element(id, inside_element_wrapper);
                 pending.push(StorageCommand::AttachElementToLayer(layer_id, id, when));
 
@@ -228,11 +230,22 @@ impl StreamAnimationCore {
 
                 // Add this element to the pending list
                 let when = outside_element_wrapper.start_time;
+                updated_elements.push(outside_element_wrapper.clone());
                 pending.push_element(id, outside_element_wrapper);
                 pending.push(StorageCommand::AttachElementToLayer(layer_id, id, when));
 
                 outside_when = outside_when.min(when);
             }
+
+            // Update the elements in the core
+            frame.future(move |frame| {
+                async move {
+                    for wrapper in updated_elements {
+                        let element_id = wrapper.element.id();
+                        frame.elements.insert(element_id, wrapper);
+                    }
+                }.boxed()
+            }).await.ok();
 
             // Put the inside and outside elements into groups, and add those groups to the layer
             let inside_group_id     = self.assign_element_id(inside_group_id).await;
