@@ -39,9 +39,9 @@ impl<Anim: EditableAnimation+Animation+'static> ToolModel<Anim> {
     pub fn new() -> ToolModel<Anim> {
         // Create the initial set of tools
         let default_tool_sets: Vec<Arc<dyn ToolSet<Anim>>> = vec![
-            Arc::new(CanvasTools::new()),
+            Arc::new(PaintTools::new()),
             Arc::new(SelectionTools::new()),
-            Arc::new(PaintTools::new())
+            Arc::new(CanvasTools::new())
         ];
 
         // Create the bindings
