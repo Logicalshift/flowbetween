@@ -115,16 +115,20 @@ impl StreamAnimationCore {
                                 inside_element.parent       = None;
                                 inside_element.order_before = None;
                                 inside_element.order_after  = None;
+                                inside_element.unattached   = true;
                                 inside_path.push(current_element.clone());
                             } else {
                                 // Path cut in two: remove the old element and replace with two path elements
                                 replaced_elements.push(current_element_id);
 
-                                let exterior    = PathElement::new(ElementId::Unassigned, Path::from_paths(&cut.exterior_path));
-                                let interior    = PathElement::new(ElementId::Unassigned, Path::from_paths(&cut.interior_path));
+                                let exterior        = PathElement::new(ElementId::Unassigned, Path::from_paths(&cut.exterior_path));
+                                let interior        = PathElement::new(ElementId::Unassigned, Path::from_paths(&cut.interior_path));
 
-                                let exterior    = current_element.clone_with_element(Vector::Path(exterior), false);
-                                let interior    = current_element.clone_with_element(Vector::Path(interior), false);
+                                let mut exterior    = current_element.clone_with_element(Vector::Path(exterior), false);
+                                let mut interior    = current_element.clone_with_element(Vector::Path(interior), false);
+
+                                exterior.unattached = true;
+                                interior.unattached = true;
 
                                 outside_path.push(exterior);
                                 inside_path.push(interior);
