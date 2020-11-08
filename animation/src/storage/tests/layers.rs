@@ -336,7 +336,7 @@ fn delete_last_item() {
                 BrushDrawingStyle::Draw
             ))),
         AnimationEdit::Layer(2, LayerEdit::Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(2), BrushProperties::new()))),
-        AnimationEdit::Layer(2, LayerEdit::Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(3), square)))
+        AnimationEdit::Layer(2, LayerEdit::Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(3), square.clone())))
     ]);
 
     // Layer should contain the square
@@ -346,9 +346,11 @@ fn delete_last_item() {
 
     assert!(elements.len() == 1);
 
-    // Delete the square
+    // Delete the square, and add it back twice
     anim.perform_edits(vec![
-        AnimationEdit::Element(vec![ElementId::Assigned(3)], ElementEdit::Delete)
+        AnimationEdit::Element(vec![ElementId::Assigned(3)], ElementEdit::Delete),
+        AnimationEdit::Layer(2, LayerEdit::Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(4), square.clone()))),
+        AnimationEdit::Layer(2, LayerEdit::Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(5), square.clone())))
     ]);
 
     // Layer should contain 2 groups with the inside and outside elements in it
@@ -357,7 +359,10 @@ fn delete_last_item() {
     let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
 
     assert!(elements.len() != 1);
-    assert!(elements.len() == 0);
+    assert!(elements.len() == 2);
+
+    assert!(elements[0].id() == ElementId::Assigned(4));
+    assert!(elements[1].id() == ElementId::Assigned(5));
 }
 
 #[test]
