@@ -19,8 +19,9 @@ impl LayerEdit {
             SetName(name)                               => { data.write_chr('N'); data.write_str(name); },
             SetOrdering(ordering)                       => { data.write_chr('O'); data.write_u64(*ordering); }
 
-            Cut { path, inside_group, outside_group }   => { 
+            Cut { path, when, inside_group, outside_group }   => { 
                 data.write_chr('c'); 
+                data.write_duration(*when);
                 inside_group.serialize(data);
                 outside_group.serialize(data);
 
@@ -55,6 +56,7 @@ impl LayerEdit {
             'O' => { Some(LayerEdit::SetOrdering(data.next_u64())) }
 
             'c' => {
+                let when            = data.next_duration();
                 let inside_group    = ElementId::deserialize(data)?;
                 let outside_group   = ElementId::deserialize(data)?;
                 let path_len        = data.next_usize();
@@ -69,7 +71,7 @@ impl LayerEdit {
 
                 let path            = Arc::new(components);
 
-                Some(LayerEdit::Cut { path, inside_group, outside_group })
+                Some(LayerEdit::Cut { path, when, inside_group, outside_group })
             }
 
             _   => None
