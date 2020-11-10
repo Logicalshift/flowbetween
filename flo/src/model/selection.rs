@@ -18,6 +18,9 @@ pub struct SelectionModel {
     /// The selected elements as they are ordered in the current frame (selected elements not in the current frame are excluded)
     pub selection_in_order: BindRef<Arc<Vec<ElementId>>>,
 
+    /// The currently selected path (if this is set and the selected elements is empty, then the path has not yet been cut out from the layer)
+    pub selected_path: Binding<Option<Arc<Path>>>,
+
     /// The binding for the selected element (used when updating)
     selected_elements_binding: Binding<Arc<HashSet<ElementId>>>
 }
@@ -31,10 +34,12 @@ impl SelectionModel {
         let selected_elements_binding   = bind(Arc::new(HashSet::new()));
         let selected_elements           = BindRef::new(&selected_elements_binding);
         let selection_in_order          = Self::selection_in_order(selected_elements.clone(), frame_model, timeline_model);
+        let selected_path               = bind(None);
 
         SelectionModel {
             selected_elements:          selected_elements,
             selected_elements_binding:  selected_elements_binding,
+            selected_path:              selected_path,
             selection_in_order:         selection_in_order
         }
     }

@@ -16,7 +16,7 @@ use std::sync::*;
 ///
 /// Represents a vector path
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Path {
     pub elements: Arc<Vec<PathComponent>>
 }
