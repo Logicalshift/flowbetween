@@ -20,7 +20,8 @@ pub struct CanvasTools<Anim: 'static+Animation> {
 ///
 pub struct SelectionTools<Anim: 'static+Animation> {
     select: Arc<FloTool<Anim>>,
-    adjust: Arc<FloTool<Anim>>
+    adjust: Arc<FloTool<Anim>>,
+    lasso: Arc<FloTool<Anim>>
 }
 
 ///
@@ -44,7 +45,8 @@ impl<Anim: EditableAnimation+Animation> SelectionTools<Anim> {
     pub fn new() -> SelectionTools<Anim> {
         SelectionTools {
             select: Select::new().to_flo_tool(),
-            adjust: Adjust::new().to_flo_tool()
+            adjust: Adjust::new().to_flo_tool(),
+            lasso: Lasso::new().to_flo_tool()
         }
     }
 }
@@ -79,7 +81,8 @@ impl<Anim: Animation> ToolSet<Anim> for SelectionTools<Anim> {
     fn tools(&self) -> Vec<Arc<FloTool<Anim>>> {
         vec![
             Arc::clone(&self.select),
-            Arc::clone(&self.adjust)
+            Arc::clone(&self.adjust),
+            Arc::clone(&self.lasso)
         ]
     }
 }
