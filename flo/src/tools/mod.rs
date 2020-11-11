@@ -7,6 +7,7 @@ mod tool_set;
 mod generic_tool;
 mod tool_runner;
 mod convert;
+mod tool_future;
 mod tool_sprite;
 
 pub use self::tool_action::*;
@@ -18,4 +19,5 @@ pub use self::tool_set::*;
 pub use self::generic_tool::*;
 pub use self::tool_runner::*;
 pub use self::convert::*;
+pub use self::tool_future::*;
 pub use self::tool_sprite::*;
