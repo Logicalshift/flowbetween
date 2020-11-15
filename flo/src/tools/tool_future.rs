@@ -60,16 +60,21 @@ where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublishe
             self.tool_input = None;
         }
 
-        // Create a new future
-        let (tool_input, tool_input_core) = create_tool_input_stream();
-        self.tool_input         = Some(tool_input_core);
+        // The tool input stream is used to send data from actions_for_input to the future
+        let (tool_input, tool_input_core)   = create_tool_input_stream();
 
-        let action_publisher    = create_tool_action_publisher();
+        // The action stream is returned from this function, and the publisher is used to send actions to the future
+        let (action_stream, action_core)    = create_tool_action_stream(&tool_input_core);
+        let action_publisher                = create_tool_action_publisher(&action_core);
 
-        let new_future          = (self.create_future)(tool_input.boxed(), action_publisher);
+        // Create the new future
+        let new_future                      = (self.create_future)(tool_input.boxed(), action_publisher);
 
-        // TODO: return an action stream (which polls the future above)
-        Box::pin(stream::empty())
+        // Store the results in this structure
+        self.tool_input                     = Some(tool_input_core);
+
+        // The action stream is the end result
+        action_stream.boxed()
     }
 
     ///

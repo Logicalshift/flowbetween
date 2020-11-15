@@ -33,8 +33,15 @@ pub (super) struct ToolStreamCore<ToolData> {
 /// Sends tool actions from a ToolFuture to the rest of the FlowBetween runtime
 ///
 pub struct ToolActionPublisher<ToolData> {
-    /// The actions that are waiting to be sent
-    pending: VecDeque<ToolAction<ToolData>>
+    core: Arc<Mutex<ToolStreamCore<ToolAction<ToolData>>>>
+}
+
+///
+/// Stream of actions published by the action publisher
+///
+pub (super) struct ToolActionStream<ToolData> {
+    action_core:    Arc<Mutex<ToolStreamCore<ToolAction<ToolData>>>>,
+    input_core:     Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>
 }
 
 ///
@@ -68,11 +75,59 @@ impl<ToolData> Stream for ToolInputStream<ToolData> {
     }
 }
 
+impl<ToolData> Stream for ToolActionStream<ToolData> {
+    type Item = ToolAction<ToolData>;
+
+    fn poll_next(self: Pin<&mut Self>, context: &mut task::Context) -> Poll<Option<ToolAction<ToolData>>> {
+        // Claim access to the core
+        let mut action_core = self.action_core.lock().unwrap();
+
+        // Any existing waker is invalidated
+        action_core.waker = None;
+
+        if let Some(next_item) = action_core.pending.pop_front() {
+            // Return the next pending item if there is one
+            Poll::Ready(Some(next_item))
+        } else if action_core.closed {
+            // Indicate that the stream is closed if anything 
+            Poll::Ready(None)
+        } else {
+            // Awaken the stream when data becomes available (or it is closed)
+            action_core.waker = Some(context.waker().clone());
+            Poll::Pending
+        }
+    }
+}
+
 ///
-/// Creates a new tool action publisher
+/// Creates a new tool action stream
 ///
-pub (super) fn create_tool_action_publisher<ToolData>() -> ToolActionPublisher<ToolData> {
-    unimplemented!()
+pub (super) fn create_tool_action_stream<ToolData>(input_core: &Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>) -> (ToolActionStream<ToolData>, Arc<Mutex<ToolStreamCore<ToolAction<ToolData>>>>) {
+    // Create the core and wrap it in a mutex
+    let core = ToolStreamCore {
+        pending:    VecDeque::new(),
+        closed:     false,
+        waker:      None
+    };
+    let core = Arc::new(Mutex::new(core));
+
+    // Create the stream
+    let stream = ToolActionStream {
+        action_core:    core.clone(),
+        input_core:     input_core.clone()
+    };
+
+    (stream, core)
+}
+
+
+///
+/// Creates a tool action publisher to pass into the future
+///
+pub (super) fn create_tool_action_publisher<ToolData>(core: &Arc<Mutex<ToolStreamCore<ToolAction<ToolData>>>>) -> ToolActionPublisher<ToolData> {
+    ToolActionPublisher {
+        core: Arc::clone(core)
+    }
 }
 
 ///
