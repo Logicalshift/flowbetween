@@ -23,7 +23,10 @@ pub struct ToolFuture<CreateFutureFn> {
     create_future: CreateFutureFn,
 
     /// The active input stream core (or none if one doesn't exist)
-    tool_input: Option<Arc<Mutex<ToolStreamCore<ToolInput<()>>>>>
+    tool_input: Option<Arc<Mutex<ToolStreamCore<ToolInput<()>>>>>,
+
+    /// The active action stream core (or none if one doesn't exist)
+    tool_actions: Option<Arc<Mutex<ToolStreamCore<ToolAction<()>>>>>
 }
 
 impl<CreateFutureFn, FutureResult> ToolFuture<CreateFutureFn>
@@ -43,7 +46,8 @@ where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublishe
     pub fn new(create_future: CreateFutureFn) -> ToolFuture<CreateFutureFn> {
         ToolFuture {
             create_future:  create_future,
-            tool_input:     None
+            tool_input:     None,
+            tool_actions:   None
         }
     }
 
@@ -72,6 +76,7 @@ where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublishe
 
         // Store the results in this structure
         self.tool_input                     = Some(tool_input_core);
+        self.tool_actions                   = Some(action_core);
 
         // The action stream is the end result
         action_stream.boxed()
