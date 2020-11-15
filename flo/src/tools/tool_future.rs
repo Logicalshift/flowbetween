@@ -10,6 +10,7 @@ use futures::stream;
 use futures::stream::{BoxStream};
 
 use std::iter;
+use std::pin::*;
 use std::sync::*;
 
 ///
@@ -31,7 +32,7 @@ pub struct ToolFuture<CreateFutureFn> {
 
 impl<CreateFutureFn, FutureResult> ToolFuture<CreateFutureFn>
 where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublisher<()>) -> FutureResult + Send+Sync+'static,
-        FutureResult:   Future<Output=()> + Send+Sync+'static {
+        FutureResult:   Unpin+Future<Output=()> + Send+Sync+'static {
     ///
     /// Creates a new ToolFuture from a future factory function
     ///
@@ -73,6 +74,10 @@ where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublishe
 
         // Create the new future
         let new_future                      = (self.create_future)(tool_input.boxed(), action_publisher);
+
+        // The future is run as a side-effect of polling the stream
+        let mut action_stream               = action_stream;
+        action_stream.set_future(new_future);
 
         // Store the results in this structure
         self.tool_input                     = Some(tool_input_core);

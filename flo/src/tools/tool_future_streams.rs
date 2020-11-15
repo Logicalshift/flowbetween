@@ -39,9 +39,11 @@ pub struct ToolActionPublisher<ToolData> {
 ///
 /// Stream of actions published by the action publisher
 ///
-pub (super) struct ToolActionStream<ToolData> {
+pub (super) struct ToolActionStream<ToolData, ToolFuture> {
     action_core:    Arc<Mutex<ToolStreamCore<ToolAction<ToolData>>>>,
-    input_core:     Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>
+    input_core:     Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>,
+
+    future:         Option<ToolFuture>
 }
 
 ///
@@ -75,10 +77,16 @@ impl<ToolData> Stream for ToolInputStream<ToolData> {
     }
 }
 
-impl<ToolData> Stream for ToolActionStream<ToolData> {
+impl<ToolData, ToolFuture> Stream for ToolActionStream<ToolData, ToolFuture> 
+where ToolFuture: Unpin+Future<Output=()> {
     type Item = ToolAction<ToolData>;
 
-    fn poll_next(self: Pin<&mut Self>, context: &mut task::Context) -> Poll<Option<ToolAction<ToolData>>> {
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut task::Context) -> Poll<Option<ToolAction<ToolData>>> {
+        // Poll the tool future
+        if let Some(Poll::Ready(())) = self.future.as_mut().map(|future| future.poll_unpin(context)) {
+            self.future = None;
+        }
+
         // Claim access to the core
         let mut action_core = self.action_core.lock().unwrap();
 
@@ -99,10 +107,20 @@ impl<ToolData> Stream for ToolActionStream<ToolData> {
     }
 }
 
+impl<ToolData, ToolFuture> ToolActionStream<ToolData, ToolFuture> 
+where ToolFuture: Unpin+Future<Output=()> {
+    ///
+    /// Sets the future that generates results for this stream
+    ///
+    pub (super) fn set_future(&mut self, future: ToolFuture)  {
+        self.future = Some(future);
+    }
+}
+
 ///
 /// Creates a new tool action stream
 ///
-pub (super) fn create_tool_action_stream<ToolData>(input_core: &Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>) -> (ToolActionStream<ToolData>, Arc<Mutex<ToolStreamCore<ToolAction<ToolData>>>>) {
+pub (super) fn create_tool_action_stream<ToolData, ToolFuture>(input_core: &Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>) -> (ToolActionStream<ToolData, ToolFuture>, Arc<Mutex<ToolStreamCore<ToolAction<ToolData>>>>) {
     // Create the core and wrap it in a mutex
     let core = ToolStreamCore {
         pending:    VecDeque::new(),
@@ -114,7 +132,8 @@ pub (super) fn create_tool_action_stream<ToolData>(input_core: &Arc<Mutex<ToolSt
     // Create the stream
     let stream = ToolActionStream {
         action_core:    core.clone(),
-        input_core:     input_core.clone()
+        input_core:     input_core.clone(),
+        future:         None
     };
 
     (stream, core)
