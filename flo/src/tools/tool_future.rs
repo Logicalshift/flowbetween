@@ -23,7 +23,7 @@ pub struct ToolFuture<CreateFutureFn> {
     create_future: CreateFutureFn,
 
     /// The active input stream core (or none if one doesn't exist)
-    tool_input: Option<Arc<Mutex<ToolInputStreamCore<()>>>>
+    tool_input: Option<Arc<Mutex<ToolStreamCore<ToolInput<()>>>>>
 }
 
 impl<CreateFutureFn, FutureResult> ToolFuture<CreateFutureFn>
@@ -61,7 +61,7 @@ where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublishe
         }
 
         // Create a new future
-        let (tool_input, tool_input_core) = create_tool_stream();
+        let (tool_input, tool_input_core) = create_tool_input_stream();
         self.tool_input         = Some(tool_input_core);
 
         let action_publisher    = create_tool_action_publisher();

@@ -16,19 +16,11 @@ use std::sync::*;
 use std::collections::{VecDeque};
 
 ///
-/// Sends tool actions from a ToolFuture to the rest of the FlowBetween runtime
+/// Shared core for the tool streams
 ///
-pub struct ToolActionPublisher<ToolData> {
-    /// The actions that are waiting to be sent
-    pending: VecDeque<ToolAction<ToolData>>
-}
-
-///
-/// Shared core for the tool input stream
-///
-pub (super) struct ToolInputStreamCore<ToolData> {
+pub (super) struct ToolStreamCore<ToolData> {
     /// Any input waiting to be consumed
-    pending: VecDeque<ToolInput<ToolData>>,
+    pending: VecDeque<ToolData>,
 
     /// Set to true if the stream is closed
     closed: bool,
@@ -38,15 +30,22 @@ pub (super) struct ToolInputStreamCore<ToolData> {
 }
 
 ///
+/// Sends tool actions from a ToolFuture to the rest of the FlowBetween runtime
+///
+pub struct ToolActionPublisher<ToolData> {
+    /// The actions that are waiting to be sent
+    pending: VecDeque<ToolAction<ToolData>>
+}
+
+///
 /// Buffering stream that sends tool input to a tool future
 ///
 pub struct ToolInputStream<ToolData> {
-    core: Arc<Mutex<ToolInputStreamCore<ToolData>>>
+    core: Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>
 }
 
 impl<ToolData> Stream for ToolInputStream<ToolData> {
     type Item = ToolInput<ToolData>;
-
 
     fn poll_next(self: Pin<&mut Self>, context: &mut task::Context) -> Poll<Option<ToolInput<ToolData>>> {
         // Claim access to the core
@@ -79,9 +78,9 @@ pub (super) fn create_tool_action_publisher<ToolData>() -> ToolActionPublisher<T
 ///
 /// Creates a new tool input stream and its core
 ///
-pub (super) fn create_tool_stream<ToolData>() -> (ToolInputStream<ToolData>, Arc<Mutex<ToolInputStreamCore<ToolData>>>) {
+pub (super) fn create_tool_input_stream<ToolData>() -> (ToolInputStream<ToolData>, Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>) {
     // Create the core and wrap it in a mutex
-    let core = ToolInputStreamCore {
+    let core = ToolStreamCore {
         pending:    VecDeque::new(),
         closed:     false,
         waker:      None
@@ -99,8 +98,8 @@ pub (super) fn create_tool_stream<ToolData>() -> (ToolInputStream<ToolData>, Arc
 ///
 /// Sends some tool input to the input stream for processing
 ///
-pub (super) fn send_tool_input<ToolData, InputIterator>(input_stream: &Arc<Mutex<ToolInputStreamCore<ToolData>>>, input: InputIterator)
-where InputIterator: IntoIterator<Item=ToolInput<ToolData>> {
+pub (super) fn send_tool_input<ToolData, InputIterator>(input_stream: &Arc<Mutex<ToolStreamCore<ToolData>>>, input: InputIterator)
+where InputIterator: IntoIterator<Item=ToolData> {
     // Send the input and retrieve the waker if there is one
     let waker = {
         // Fetch the core
@@ -120,7 +119,7 @@ where InputIterator: IntoIterator<Item=ToolInput<ToolData>> {
 ///
 /// Marks a tool input stream as closed
 ///
-pub (super) fn close_tool_input<ToolData>(input_stream: &Arc<Mutex<ToolInputStreamCore<ToolData>>>) {
+pub (super) fn close_tool_input<ToolData>(input_stream: &Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>) {
     // Send the input and retrieve the waker if there is one
     let waker = {
         // Fetch the core
