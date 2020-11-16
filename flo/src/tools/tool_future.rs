@@ -6,11 +6,8 @@ use crate::model::*;
 use flo_animation::*;
 
 use futures::prelude::*;
-use futures::stream;
 use futures::stream::{BoxStream};
 
-use std::iter;
-use std::pin::*;
 use std::sync::*;
 
 ///
@@ -100,7 +97,9 @@ where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublishe
         // Send the input to the future if there is one. This can run the action stream as a side-effect
         self.tool_input.as_ref().map(|tool_input| send_tool_stream(tool_input, input));
 
-        // TODO: return any pending actions from the future immediately
-        Box::new(iter::empty())
+        // Return any pending actions from the future immediately
+        self.tool_actions.as_ref()
+            .map(|tool_actions| Box::new(drain_tool_stream(tool_actions).into_iter()))
+            .unwrap_or_else(|| Box::new(vec![].into_iter()))
     }
 }

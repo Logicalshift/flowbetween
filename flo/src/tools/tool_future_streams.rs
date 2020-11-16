@@ -1,16 +1,10 @@
 use super::tool_input::*;
 use super::tool_action::*;
-use crate::model::*;
-
-use flo_animation::*;
 
 use futures::prelude::*;
 use futures::task;
 use futures::task::{Poll, Waker};
-use futures::stream;
-use futures::stream::{BoxStream};
 
-use std::iter;
 use std::pin::*;
 use std::sync::*;
 use std::collections::{VecDeque};
@@ -188,6 +182,17 @@ where InputIterator: IntoIterator<Item=ToolData> {
 
     // Wake anything that's waiting for input from the stream
     waker.map(|waker| waker.wake());
+}
+
+///
+/// Reads out any pending items from the specified tool stream
+///
+pub (super) fn drain_tool_stream<ToolData>(input_stream: &Arc<Mutex<ToolStreamCore<ToolData>>>) -> Vec<ToolData> {
+    // Grab the core
+    let mut core = input_stream.lock().unwrap();
+
+    // Read the pending values
+    core.pending.drain(..).collect()
 }
 
 ///
