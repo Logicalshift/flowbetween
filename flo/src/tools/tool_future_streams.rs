@@ -172,7 +172,7 @@ pub (super) fn create_tool_input_stream<ToolData>() -> (ToolInputStream<ToolData
 ///
 /// Sends some tool input to the input stream for processing
 ///
-pub (super) fn send_tool_input<ToolData, InputIterator>(input_stream: &Arc<Mutex<ToolStreamCore<ToolData>>>, input: InputIterator)
+pub (super) fn send_tool_stream<ToolData, InputIterator>(input_stream: &Arc<Mutex<ToolStreamCore<ToolData>>>, input: InputIterator)
 where InputIterator: IntoIterator<Item=ToolData> {
     // Send the input and retrieve the waker if there is one
     let waker = {
@@ -193,7 +193,7 @@ where InputIterator: IntoIterator<Item=ToolData> {
 ///
 /// Marks a tool input stream as closed
 ///
-pub (super) fn close_tool_input<ToolData>(input_stream: &Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>) {
+pub (super) fn close_tool_stream<ToolData>(input_stream: &Arc<Mutex<ToolStreamCore<ToolData>>>) {
     // Send the input and retrieve the waker if there is one
     let waker = {
         // Fetch the core

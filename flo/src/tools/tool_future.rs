@@ -61,8 +61,13 @@ where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublishe
 
         // Close any existing input stream, stopping the future from running
         if let Some(tool_input) = self.tool_input.take() {
-            close_tool_input(&tool_input);
+            close_tool_stream(&tool_input);
             self.tool_input = None;
+        }
+
+        if let Some(tool_actions) = self.tool_actions.take() {
+            close_tool_stream(&tool_actions);
+            self.tool_actions = None;
         }
 
         // The tool input stream is used to send data from actions_for_input to the future
@@ -93,7 +98,7 @@ where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublishe
     pub fn actions_for_input<'a, Anim>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<()>>, input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<()>>>
     where Anim: 'static+Animation+EditableAnimation {
         // Send the input to the future if there is one. This can run the action stream as a side-effect
-        self.tool_input.as_ref().map(|tool_input| send_tool_input(tool_input, input));
+        self.tool_input.as_ref().map(|tool_input| send_tool_stream(tool_input, input));
 
         // TODO: return any pending actions from the future immediately
         Box::new(iter::empty())
