@@ -54,8 +54,6 @@ where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublishe
     ///
     pub fn actions_for_model<ToolModel, Anim>(&mut self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &ToolModel) -> BoxStream<'static, ToolAction<()>> 
     where Anim: 'static+Animation+EditableAnimation {
-        // TODO: when the returned stream is dropped, close the input stream
-
         // Close any existing input stream, stopping the future from running
         if let Some(tool_input) = self.tool_input.take() {
             close_tool_stream(&tool_input);

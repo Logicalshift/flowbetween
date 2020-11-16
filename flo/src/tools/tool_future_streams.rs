@@ -111,6 +111,13 @@ where ToolFuture: Unpin+Future<Output=()> {
     }
 }
 
+impl<ToolData, ToolFuture> Drop for ToolActionStream<ToolData, ToolFuture> {
+    fn drop(&mut self) {
+        // Closing the input stream will indicate to the future that it's time to stop running
+        close_tool_stream(&self.input_core)
+    }
+}
+
 ///
 /// Creates a new tool action stream
 ///
@@ -132,7 +139,6 @@ pub (super) fn create_tool_action_stream<ToolData, ToolFuture>(input_core: &Arc<
 
     (stream, core)
 }
-
 
 ///
 /// Creates a tool action publisher to pass into the future
