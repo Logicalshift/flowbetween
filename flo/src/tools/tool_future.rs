@@ -133,7 +133,7 @@ mod test {
                 }
             });
 
-            // Retrieve the input stream
+            // Create the action stream
             let model               = create_model();
             let mut action_stream   = tool_future.actions_for_model(model, &());
 
@@ -142,6 +142,9 @@ mod test {
             assert!(action_stream.next().await == Some(ToolAction::ClearSelection));
             assert!(action_stream.next().await == Some(ToolAction::Select(ElementId::Assigned(0))));
             assert!(action_stream.next().await == Some(ToolAction::Select(ElementId::Assigned(1))));
+
+            // The stream should close once the future ends
+            assert!(action_stream.next().await == None);
         });
     }
 }

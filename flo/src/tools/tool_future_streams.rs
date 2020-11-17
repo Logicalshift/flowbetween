@@ -87,7 +87,9 @@ impl<ToolData> Stream for ToolActionStream<ToolData> {
     fn poll_next(mut self: Pin<&mut Self>, context: &mut task::Context) -> Poll<Option<ToolAction<ToolData>>> {
         // Poll the tool future
         if let Some(Poll::Ready(())) = self.future.as_mut().map(|future| future.poll_unpin(context)) {
+            // Future has finished: unset it and mark the action stream as closed
             self.future = None;
+            close_tool_stream(&self.action_core);
         }
 
         // Claim access to the core
