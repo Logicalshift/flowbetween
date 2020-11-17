@@ -47,6 +47,15 @@ pub struct ToolInputStream<ToolData> {
     core: Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>
 }
 
+impl<ToolData> ToolActionPublisher<ToolData> {
+    ///
+    /// Publishes some tool actions to the rest of the FlowBetween UI
+    ///
+    pub fn send_actions<ActionIter: IntoIterator<Item=ToolAction<ToolData>>>(&self, actions: ActionIter) {
+        send_tool_stream(&self.core, actions)
+    }
+}
+
 impl<ToolData> Stream for ToolInputStream<ToolData> {
     type Item = ToolInput<ToolData>;
 
