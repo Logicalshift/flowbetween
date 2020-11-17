@@ -29,7 +29,7 @@ pub struct ToolFuture<CreateFutureFn> {
 
 impl<CreateFutureFn, FutureResult> ToolFuture<CreateFutureFn>
 where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublisher<()>) -> FutureResult + Send+Sync+'static,
-        FutureResult:   Unpin+Future<Output=()> + Send+Sync+'static {
+        FutureResult:   Future<Output=()> + Send+Sync+'static {
     ///
     /// Creates a new ToolFuture from a future factory function
     ///

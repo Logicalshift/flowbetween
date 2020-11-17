@@ -4,6 +4,7 @@ use super::tool_action::*;
 use futures::prelude::*;
 use futures::task;
 use futures::task::{Poll, Waker};
+use futures::future::{BoxFuture};
 
 use std::pin::*;
 use std::sync::*;
@@ -33,11 +34,11 @@ pub struct ToolActionPublisher<ToolData> {
 ///
 /// Stream of actions published by the action publisher
 ///
-pub (super) struct ToolActionStream<ToolData, ToolFuture> {
+pub (super) struct ToolActionStream<ToolData> {
     action_core:    Arc<Mutex<ToolStreamCore<ToolAction<ToolData>>>>,
     input_core:     Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>,
 
-    future:         Option<ToolFuture>
+    future:         Option<BoxFuture<'static, ()>>
 }
 
 ///
@@ -80,8 +81,7 @@ impl<ToolData> Stream for ToolInputStream<ToolData> {
     }
 }
 
-impl<ToolData, ToolFuture> Stream for ToolActionStream<ToolData, ToolFuture> 
-where ToolFuture: Unpin+Future<Output=()> {
+impl<ToolData> Stream for ToolActionStream<ToolData> {
     type Item = ToolAction<ToolData>;
 
     fn poll_next(mut self: Pin<&mut Self>, context: &mut task::Context) -> Poll<Option<ToolAction<ToolData>>> {
@@ -110,17 +110,17 @@ where ToolFuture: Unpin+Future<Output=()> {
     }
 }
 
-impl<ToolData, ToolFuture> ToolActionStream<ToolData, ToolFuture> 
-where ToolFuture: Unpin+Future<Output=()> {
+impl<ToolData> ToolActionStream<ToolData> {
     ///
     /// Sets the future that generates results for this stream
     ///
-    pub (super) fn set_future(&mut self, future: ToolFuture)  {
-        self.future = Some(future);
+    pub (super) fn set_future<ToolFuture>(&mut self, future: ToolFuture)
+    where ToolFuture: 'static+Send+Future<Output=()> {
+        self.future = Some(future.boxed());
     }
 }
 
-impl<ToolData, ToolFuture> Drop for ToolActionStream<ToolData, ToolFuture> {
+impl<ToolData> Drop for ToolActionStream<ToolData> {
     fn drop(&mut self) {
         // Closing the input stream will indicate to the future that it's time to stop running
         close_tool_stream(&self.input_core)
@@ -130,7 +130,7 @@ impl<ToolData, ToolFuture> Drop for ToolActionStream<ToolData, ToolFuture> {
 ///
 /// Creates a new tool action stream
 ///
-pub (super) fn create_tool_action_stream<ToolData, ToolFuture>(input_core: &Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>) -> (ToolActionStream<ToolData, ToolFuture>, Arc<Mutex<ToolStreamCore<ToolAction<ToolData>>>>) {
+pub (super) fn create_tool_action_stream<ToolData>(input_core: &Arc<Mutex<ToolStreamCore<ToolInput<ToolData>>>>) -> (ToolActionStream<ToolData>, Arc<Mutex<ToolStreamCore<ToolAction<ToolData>>>>) {
     // Create the core and wrap it in a mutex
     let core = ToolStreamCore {
         pending:    VecDeque::new(),
