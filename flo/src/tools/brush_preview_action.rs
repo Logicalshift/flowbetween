@@ -3,7 +3,7 @@ use flo_animation::*;
 ///
 /// Action that updates the brush preview
 ///
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum BrushPreviewAction {
     /// Clears any existing brush preview
     Clear,

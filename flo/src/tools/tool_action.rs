@@ -6,7 +6,7 @@ use flo_animation::*;
 ///
 /// Represents an editing action for a tool
 ///
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ToolAction<ToolData> {
     /// Changes the data that will be specified at the start of the next tool input stream
     Data(ToolData),
