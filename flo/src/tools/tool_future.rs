@@ -28,7 +28,7 @@ pub struct ToolFuture<CreateFutureFn> {
 }
 
 impl<CreateFutureFn, FutureResult> ToolFuture<CreateFutureFn>
-where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublisher<()>) -> FutureResult + Send+Sync+'static,
+where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> FutureResult + Send+Sync+'static,
         FutureResult:   Future<Output=()> + Send+Sync+'static {
     ///
     /// Creates a new ToolFuture from a future factory function
@@ -73,7 +73,7 @@ where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublishe
         let action_publisher                = create_tool_action_publisher(&action_core);
 
         // Create the new future
-        let new_future                      = (self.create_future)(tool_input.boxed(), action_publisher);
+        let new_future                      = (self.create_future)(tool_input, action_publisher);
 
         // The future is run as a side-effect of polling the stream
         let mut action_stream               = action_stream;
