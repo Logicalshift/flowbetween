@@ -101,3 +101,47 @@ where   CreateFutureFn: Fn(BoxStream<'static, ToolInput<()>>, ToolActionPublishe
             .unwrap_or_else(|| Box::new(vec![].into_iter()))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use flo_animation::editor::*;
+    use flo_animation::storage::*;
+
+    use futures::executor;
+
+    ///
+    /// Creates an animation model to use in the tests
+    ///
+    fn create_model() -> Arc<FloModel<impl 'static+Animation+EditableAnimation>> {
+        // Create an animation
+        let in_memory_store = InMemoryStorage::new();
+        let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
+        let model           = FloModel::new(animation);
+
+        Arc::new(model)
+    }
+
+    #[test]
+    fn generate_tool_actions() {
+        executor::block_on(async move {
+            // Create a new tool future that sends some actions
+            let mut tool_future     = ToolFuture::new(|_input_stream, action_output| {
+                async move {
+                    action_output.send_actions(vec![ToolAction::InvalidateFrame, ToolAction::ClearSelection]);
+                    action_output.send_actions(vec![ToolAction::Select(ElementId::Assigned(0)), ToolAction::Select(ElementId::Assigned(1))]);
+                }
+            });
+
+            // Retrieve the input stream
+            let model               = create_model();
+            let mut action_stream   = tool_future.actions_for_model(model, &());
+
+            // Check that the actions arrive in the expected order
+            assert!(action_stream.next().await == Some(ToolAction::InvalidateFrame));
+            assert!(action_stream.next().await == Some(ToolAction::ClearSelection));
+            assert!(action_stream.next().await == Some(ToolAction::Select(ElementId::Assigned(0))));
+            assert!(action_stream.next().await == Some(ToolAction::Select(ElementId::Assigned(1))));
+        });
+    }
+}
