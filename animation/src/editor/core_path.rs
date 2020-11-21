@@ -45,7 +45,7 @@ impl StreamAnimationCore {
                     let element = Vector::Path(element);
 
                     // Edit the keyframe
-                    let storage_updates = current_keyframe.future(move |current_keyframe| {
+                    let storage_updates = current_keyframe.future_sync(move |current_keyframe| {
                         async move {
                             // Add to a wrapper
                             let mut wrapper     = ElementWrapper::attached_with_element(element, when);

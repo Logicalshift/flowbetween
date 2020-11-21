@@ -60,7 +60,7 @@ impl StreamAnimationCore {
             let frame       = match frame { Some(frame) => frame, None => { return LayerCut::empty(); } };
 
             // Cut the elements that intersect with the path
-            let layer_cut = frame.future(move |frame| {
+            let layer_cut = frame.future_sync(move |frame| {
                 async move {
                     let mut replaced_elements   = vec![];
                     let mut moved_elements      = vec![];
@@ -171,7 +171,7 @@ impl StreamAnimationCore {
             self.remove_from_attachments(&replaced_ids).await;
 
             // Unlink the moved and removed elements
-            let mut pending     = frame.future(move |frame| {
+            let mut pending     = frame.future_sync(move |frame| {
                 async move {
                     // Unlink all the elements in the replaced and moved lists
                     for unlink_element_id in replaced_elements.iter().chain(moved_elements.iter()) {
@@ -239,7 +239,7 @@ impl StreamAnimationCore {
             }
 
             // Update the elements in the core
-            frame.future(move |frame| {
+            frame.future_sync(move |frame| {
                 async move {
                     for wrapper in updated_elements {
                         let element_id = wrapper.element.id();
@@ -261,7 +261,7 @@ impl StreamAnimationCore {
             let outside_group       = ElementWrapper::attached_with_element(Vector::Group(outside_group), outside_when);
 
             // Add the two groups to the frame
-            let pending = frame.future(move |frame| {
+            let pending = frame.future_sync(move |frame| {
                 async move {
                     if inside_group_len > 0 { pending.extend(frame.add_element_to_end(inside_group.element.id(), inside_group)); }
                     if outside_group_len > 0 { pending.extend(frame.add_element_to_end(outside_group.element.id(), outside_group)); }

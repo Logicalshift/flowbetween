@@ -16,7 +16,7 @@ impl StreamAnimationCore {
     ///
     fn frame_elements_with_properties(frame: Arc<Desync<KeyFrameCore>>, when: Duration) -> impl Send+Future<Output=Vec<(ElementWrapper, Arc<VectorProperties>)>> {
         async move {
-            frame.future(move |frame| {
+            frame.future_sync(move |frame| {
                 async move {
                     // Start with the default properties
                     let mut current_properties  = Arc::new(VectorProperties::default());
@@ -59,7 +59,7 @@ impl StreamAnimationCore {
 
             if let Some(frame) = self.edit_keyframe_for_element(assigned_element_id).await {
                 // We need to know the properties of all of the elements in the current frame (we need to work backwards to generate the grouped element)
-                let when                        = frame.future(|frame| async move { frame.start }.boxed()).await.unwrap();
+                let when                        = frame.future_sync(|frame| async move { frame.start }.boxed()).await.unwrap();
                 let elements_with_properties    = Self::frame_elements_with_properties(Arc::clone(&frame), when).await;
 
                 // Nothing to do if there are no properties
@@ -67,7 +67,7 @@ impl StreamAnimationCore {
                     return;
                 }
 
-                let updates = frame.future(move |frame| {
+                let updates = frame.future_sync(move |frame| {
                     async move {
                         // Find the brush properties for the selected element. These are usually at the end, so a linear search like this should be fine
                         let source_element_properties = elements_with_properties.iter().rev()

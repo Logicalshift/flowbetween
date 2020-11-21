@@ -47,7 +47,7 @@ impl StreamAnimationCore {
 
                 BrushStroke(element_id, points)         => {
                     // Create a brush stroke element, using the current brush for the layer
-                    let active_brush    = current_keyframe.future(|keyframe| async move { keyframe.get_active_brush() }.boxed()).await.unwrap();
+                    let active_brush    = current_keyframe.future_sync(|keyframe| async move { keyframe.get_active_brush() }.boxed()).await.unwrap();
                     let points          = active_brush.brush_points_for_raw_points(points);
                     let brush_element   = BrushElement::new(*element_id, Arc::new(points));
                     let element         = Vector::BrushStroke(brush_element);
@@ -69,7 +69,7 @@ impl StreamAnimationCore {
 
             if let Some(wrapper) = wrapper {
                 // Edit the keyframe
-                let storage_updates = current_keyframe.future(move |current_keyframe| {
+                let storage_updates = current_keyframe.future_sync(move |current_keyframe| {
                     async move {
                         // Append to the current keyframe and return the list of storage commands
                         current_keyframe.add_element_to_end(ElementId::Assigned(id), wrapper)

@@ -98,7 +98,7 @@ impl StreamAnimation {
 
         // Create a desync and wait for the 'when_empty' signal to show up (indicating all the edits have been sent to the core)
         let wait_for_edits  = Desync::new(());
-        let _               = wait_for_edits.future(move |_| async move { when_empty.await; }.boxed());
+        let _               = wait_for_edits.future_desync(move |_| async move { when_empty.await; }.boxed());
 
         // Synchronise after the future has completed
         wait_for_edits.sync(|_| { });
@@ -304,9 +304,9 @@ impl EditableAnimation for StreamAnimation {
         let request = Desync::new(None);
 
         // Perform the request
-        let _ = request.future(|result| {
+        let _ = request.future_desync(|result| {
             async move {
-                *result = Some(core.future(|core| core.assign_element_id(ElementId::Unassigned).boxed()).await.unwrap())
+                *result = Some(core.future_sync(|core| core.assign_element_id(ElementId::Unassigned).boxed()).await.unwrap())
             }.boxed()
         });
 
@@ -347,7 +347,7 @@ impl EditableAnimation for StreamAnimation {
         });
 
         // Queue a request
-        let _ = sync_request.future(move |_| {
+        let _ = sync_request.future_desync(move |_| {
             async move {
                 // Publish the edits
                 publisher.publish(Arc::new(edits)).await;
@@ -388,9 +388,9 @@ impl AnimationMotion for StreamAnimation {
         let core            = Arc::clone(&self.core);
         let keyframe_req    = Desync::new(None);
 
-        let _               = keyframe_req.future(move |result| {
+        let _               = keyframe_req.future_desync(move |result| {
             async move {
-                *result = core.future(move |core| core.edit_keyframe_for_element(element_id).boxed()).await.unwrap();
+                *result = core.future_sync(move |core| core.edit_keyframe_for_element(element_id).boxed()).await.unwrap();
             }.boxed()
         });
         let keyframe        = keyframe_req.sync(|result| result.take());
@@ -464,9 +464,9 @@ impl AnimationMotion for StreamAnimation {
         let core            = Arc::clone(&self.core);
         let keyframe_req    = Desync::new(None);
 
-        let _               = keyframe_req.future(move |result| {
+        let _               = keyframe_req.future_desync(move |result| {
             async move {
-                *result = core.future(move |core| core.edit_keyframe_for_element(element_id).boxed()).await.unwrap();
+                *result = core.future_sync(move |core| core.edit_keyframe_for_element(element_id).boxed()).await.unwrap();
             }.boxed()
         });
         let keyframe        = keyframe_req.sync(|result| result.take());

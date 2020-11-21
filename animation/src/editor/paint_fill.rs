@@ -49,7 +49,7 @@ impl StreamAnimationCore {
             let frame = match frame { Some(frame) => frame, None => { return; } };
 
             // Generate a path element by performing the fill
-            let updates = frame.future(move |frame| {
+            let updates = frame.future_sync(move |frame| {
                 async move {
                     // Generate a ray-casting function from the current frame
                     let ray_casting_fn      = frame.raycast(when);

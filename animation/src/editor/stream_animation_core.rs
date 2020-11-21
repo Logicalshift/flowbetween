@@ -17,7 +17,7 @@ use std::time::{Duration};
 /// Performs an asynchronous request on a storage layer for this animation
 ///
 pub (super) fn request_core_async(core: &Arc<Desync<StreamAnimationCore>>, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {
-    core.future(move |core| {
+    core.future_desync(move |core| {
         async move {
             core.storage_requests.publish(request).await;
             core.storage_responses.next().await
@@ -47,9 +47,9 @@ pub (super) fn request_core_sync(core: Arc<Desync<StreamAnimationCore>>, idle_sy
     });
 
     // Queue a request
-    let _ = sync_request.future(move |data| {
+    let _ = sync_request.future_desync(move |data| {
         async move {
-            let result = core.future(|core| {
+            let result = core.future_sync(|core| {
                 async move {
                     core.storage_requests.publish(request).await;
                     core.storage_responses.next().await
@@ -251,7 +251,7 @@ impl StreamAnimationCore {
         async move {
             // Return the cached keyframe if it matches the layer and time
             if let Some(keyframe) = self.cached_keyframe.as_ref() {
-                let (frame_layer_id, start, end) = keyframe.future(|keyframe| future::ready((keyframe.layer_id, keyframe.start, keyframe.end)).boxed()).await.unwrap();
+                let (frame_layer_id, start, end) = keyframe.future_sync(|keyframe| future::ready((keyframe.layer_id, keyframe.start, keyframe.end)).boxed()).await.unwrap();
 
                 if frame_layer_id == layer_id && start <= when && (end > when || start == when) {
                     return Some(Arc::clone(keyframe));

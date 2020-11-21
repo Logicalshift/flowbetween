@@ -95,7 +95,7 @@ impl StreamAnimationCore {
                             let new_points  = new_points.clone();
 
                             // Use the frame to update the element
-                            let element_updates = frame.future(move |frame| {
+                            let element_updates = frame.future_sync(move |frame| {
                                 async move {
                                     // Fetch the element wrapper
                                     let mut wrapper = frame.elements.get(&ElementId::Assigned(element_id))?.clone();
@@ -320,7 +320,7 @@ impl StreamAnimationCore {
                 ElementUpdate::Unlink => {
                     if let Some(keyframe) = keyframe {
                         // Generate the unlink updates on the keyframe
-                        let unlink_updates = keyframe.future(move |frame| {
+                        let unlink_updates = keyframe.future_sync(move |frame| {
                             async move {
                                 frame.unlink_element(ElementId::Assigned(element_id))
                             }.boxed()
@@ -361,7 +361,7 @@ impl StreamAnimationCore {
 
                     for element_id in to_process {
                         // Try to retrieve the element from the keyframe
-                        let existing_element = keyframe.future(move |keyframe| {
+                        let existing_element = keyframe.future_sync(move |keyframe| {
                             async move {
                                 keyframe.elements.get(&ElementId::Assigned(element_id)).cloned()
                             }.boxed()
@@ -430,7 +430,7 @@ impl StreamAnimationCore {
                 None        => { return; }
             };
 
-            let updates = frame.future(move |frame| {
+            let updates = frame.future_sync(move |frame| {
                 async move {
                     let mut updates         = PendingStorageChange::new();
                     let mut group_elements  = vec![];
@@ -523,7 +523,7 @@ impl StreamAnimationCore {
             };
 
             // Modify the frame
-            let updates = frame.future(move |frame| {
+            let updates = frame.future_sync(move |frame| {
                 async move {
                     // The updates that will be performed
                     let mut updates = vec![];

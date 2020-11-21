@@ -55,7 +55,7 @@ impl CanvasCache for StreamLayerCache {
         cache_type.serialize(&mut key);
 
         // Ask the core to delete the cached value
-        let _       = self.core.future(move |core| {
+        let _       = self.core.future_desync(move |core| {
             async move {
                 core.storage_requests.publish(vec![StorageCommand::DeleteLayerCache(layer_id, when, key)]).await;
                 core.storage_responses.next().await;
@@ -78,7 +78,7 @@ impl CanvasCache for StreamLayerCache {
         items.encode_canvas(&mut drawing);
 
         // Ask the core to store the cached value
-        let _               = self.core.future(move |core| {
+        let _               = self.core.future_desync(move |core| {
             async move {
                 core.storage_requests.publish(vec![StorageCommand::WriteLayerCache(layer_id, when, key, drawing)]).await;
                 core.storage_responses.next().await;
@@ -99,10 +99,10 @@ impl CanvasCache for StreamLayerCache {
         // Retrieve the value via a desync
         let core        = Arc::clone(&self.core);
         let value       = Desync::new(None);
-        let _           = value.future(move |value| { 
+        let _           = value.future_desync(move |value| { 
             async move {
                 // Ask the core for the cache value
-                let response = core.future(move |core| {
+                let response = core.future_sync(move |core| {
                     async move {
                         core.storage_requests.publish(vec![StorageCommand::ReadLayerCache(layer_id, when, key)]).await;
                         core.storage_responses.next().await
@@ -151,14 +151,14 @@ impl CanvasCache for StreamLayerCache {
 
             CacheProcess::Process(async move {
                 // Generate the drawing
-                let drawing         = generator.future(move |_| async move { generate() }.boxed()).await.unwrap();
+                let drawing         = generator.future_sync(move |_| async move { generate() }.boxed()).await.unwrap();
 
                 // Serialize the drawing
                 let mut serialized  = String::new();
                 drawing.encode_canvas(&mut serialized);
 
                 // Store using the core
-                let _ = core.future(move |core| {
+                let _ = core.future_desync(move |core| {
                     async move {
                         core.storage_requests.publish(vec![StorageCommand::WriteLayerCache(layer_id, when, key, serialized)]).await;
                         core.storage_responses.next().await;

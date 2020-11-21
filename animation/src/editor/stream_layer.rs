@@ -86,9 +86,9 @@ impl Layer for StreamLayer {
         let keyframe_core   = Desync::new(None);
 
         // Load into the keyframe_core desync
-        let _               = keyframe_core.future(move |frame| {
+        let _               = keyframe_core.future_desync(move |frame| {
             async move {
-                *frame = core.future(move |core| {
+                *frame = core.future_desync(move |core| {
                     async move {
                         core.load_keyframe(layer_id, time_index).await
                     }.boxed()
@@ -216,16 +216,16 @@ impl VectorLayer for StreamLayer {
         let core        = Arc::clone(&self.core);
 
         // Start loading the result into the desync
-        let _ = result.future(move |result| {
+        let _ = result.future_desync(move |result| {
             async move {
                 // Store the result from the core
-                *result = core.future(move |core| {
+                *result = core.future_sync(move |core| {
                     async move {
                         // Fetch the keyframe at this time
                         let frame = core.edit_keyframe(layer_id, when).await?;
 
                         // The last brush stroke element in the frame will indicate the active brush
-                        let last_brush_properties = frame.future(move |frame| {
+                        let last_brush_properties = frame.future_sync(move |frame| {
                             async move {
                                 // Fetch the last brush stroke from the frame
                                 let last_brush_stroke = frame.vector_elements(when)

@@ -28,7 +28,7 @@ impl StreamAnimationCore {
                 None            => { return; }
             };
 
-            let updates = frame.future(move |frame| {
+            let updates = frame.future_sync(move |frame| {
                 async move {
                     // Fetch the element from the frame
                     let mut wrapper = match frame.elements.get(&convert_element_id) {
