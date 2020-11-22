@@ -301,17 +301,10 @@ impl EditableAnimation for StreamAnimation {
     fn assign_element_id(&self) -> ElementId {
         // Create a queue to run the 'assign element ID' future on
         let core    = Arc::clone(&self.core);
-        let request = Desync::new(None);
 
-        // Perform the request
-        let _ = request.future_desync(|result| {
-            async move {
-                *result = Some(core.future_sync(|core| core.assign_element_id(ElementId::Unassigned).boxed()).await.unwrap())
-            }.boxed()
-        });
-
-        // Retrieve the result
-        request.sync(|result| result.take()).unwrap()
+        // Perform the request and retrieve the result
+        core.future_desync(|core| core.assign_element_id(ElementId::Unassigned).boxed())
+            .sync().unwrap()
     }
 
     ///
@@ -386,14 +379,8 @@ impl AnimationMotion for StreamAnimation {
 
         // Request the keyframe that contains this element
         let core            = Arc::clone(&self.core);
-        let keyframe_req    = Desync::new(None);
 
-        let _               = keyframe_req.future_desync(move |result| {
-            async move {
-                *result = core.future_sync(move |core| core.edit_keyframe_for_element(element_id).boxed()).await.unwrap();
-            }.boxed()
-        });
-        let keyframe        = keyframe_req.sync(|result| result.take());
+        let keyframe        = core.future_desync(move |core| core.edit_keyframe_for_element(element_id).boxed()).sync().unwrap();
         let keyframe        = match keyframe {
             Some(keyframe)  => keyframe,
             None            => { return vec![]; }
@@ -462,14 +449,8 @@ impl AnimationMotion for StreamAnimation {
 
         // Request the keyframe that contains this element
         let core            = Arc::clone(&self.core);
-        let keyframe_req    = Desync::new(None);
 
-        let _               = keyframe_req.future_desync(move |result| {
-            async move {
-                *result = core.future_sync(move |core| core.edit_keyframe_for_element(element_id).boxed()).await.unwrap();
-            }.boxed()
-        });
-        let keyframe        = keyframe_req.sync(|result| result.take());
+        let keyframe        = core.future_desync(move |core| core.edit_keyframe_for_element(element_id).boxed()).sync().unwrap();
         let keyframe        = match keyframe {
             Some(keyframe)  => keyframe,
             None            => { return None; }

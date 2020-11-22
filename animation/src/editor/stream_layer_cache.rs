@@ -98,31 +98,22 @@ impl CanvasCache for StreamLayerCache {
 
         // Retrieve the value via a desync
         let core        = Arc::clone(&self.core);
-        let value       = Desync::new(None);
-        let _           = value.future_desync(move |value| { 
-            async move {
-                // Ask the core for the cache value
-                let response = core.future_sync(move |core| {
-                    async move {
-                        core.storage_requests.publish(vec![StorageCommand::ReadLayerCache(layer_id, when, key)]).await;
-                        core.storage_responses.next().await
-                    }.boxed()
-                }).await.unwrap();
 
-                // Check the responses to generate the value
-                *value = response
-                    .and_then(|mut response| response.pop())
-                    .and_then(|response| {
-                        match response {
-                            StorageResponse::LayerCache(cache_value)    => Some(cache_value),
-                            _                                           => None
-                        }
-                    });
-            }.boxed()
-        });
-
-        // Retrieve the value returned from the core
-        let value       = value.sync(|value| value.take());
+        // Request the value from the storage layer
+        let value       = core.future_desync(move |core| {
+                async move {
+                    core.storage_requests.publish(vec![StorageCommand::ReadLayerCache(layer_id, when, key)]).await;
+                    core.storage_responses.next().await
+                }.boxed()
+            })
+            .sync().unwrap()
+            .and_then(|mut response| response.pop())
+            .and_then(|response| {
+                match response {
+                    StorageResponse::LayerCache(cache_value)    => Some(cache_value),
+                    _                                           => None
+                }
+            });
 
         // Try to deserialize as a canvas
         let value       = value.and_then(|value| decode_drawing(value.chars()).collect::<Result<Vec<_>, _>>().ok());
