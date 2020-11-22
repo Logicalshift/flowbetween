@@ -83,21 +83,13 @@ impl Layer for StreamLayer {
         // Retrieve the keyframe from the core
         let core            = Arc::clone(&self.core);
         let layer_id        = self.layer_id;
-        let keyframe_core   = Desync::new(None);
-
-        // Load into the keyframe_core desync
-        let _               = keyframe_core.future_desync(move |frame| {
-            async move {
-                *frame = core.future_desync(move |core| {
-                    async move {
-                        core.load_keyframe(layer_id, time_index).await
-                    }.boxed()
-                }).await.unwrap_or(None);
-            }.boxed()
-        });
 
         // Retrieve the result when the future completes
-        let keyframe_core   = keyframe_core.sync(|frame| frame.take());
+        let keyframe_core   = core.future_desync(move |core| {
+            async move {
+                core.load_keyframe(layer_id, time_index).await
+            }.boxed()
+        }).sync().unwrap_or(None);
 
         // Create a frame with the keyframe core
         Arc::new(StreamFrame::new(time_index, keyframe_core))
