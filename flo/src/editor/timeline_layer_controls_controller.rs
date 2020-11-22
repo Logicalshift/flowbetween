@@ -109,7 +109,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                 let new_layer_id = self.animation.get_layer_ids().into_iter().max().unwrap_or(0) + 1;
 
                 // Send to the animation
-                let _ = self.edit.future(move |animation| {
+                let _ = self.edit.future_desync(move |animation| {
                     animation.publish(Arc::new(vec![
                         AnimationEdit::AddNewLayer(new_layer_id),
                         AnimationEdit::Layer(new_layer_id, LayerEdit::SetName(format!("Layer {}", new_layer_id+1)))
@@ -135,7 +135,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                     let layer_to_remove = layer_to_remove.unwrap();
 
                     // Remove the layer
-                    let _ = self.edit.future(move |animation| {
+                    let _ = self.edit.future_desync(move |animation| {
                         animation.publish(Arc::new(vec![
                             AnimationEdit::RemoveLayer(layer_to_remove)
                         ]))

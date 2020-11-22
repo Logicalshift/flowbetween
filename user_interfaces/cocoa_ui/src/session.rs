@@ -646,7 +646,7 @@ impl CocoaSession {
     /// Sends a tick event
     ///
     pub fn tick(&mut self) {
-        let _ = self.events.future(|events| {
+        let _ = self.events.future_desync(|events| {
             events.publish(vec![AppEvent::Tick])
         });
     }

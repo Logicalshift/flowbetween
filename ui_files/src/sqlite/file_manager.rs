@@ -221,7 +221,7 @@ impl FileManager for SqliteFileManager {
         let log_path         = full_path.clone();
         let mut filename_buf = PathBuf::new();
         filename_buf.push(filename);
-        let _ = self.core.future(move |core| {
+        let _ = self.core.future_desync(move |core| {
             core.log.log((Level::Info, format!("Created new file at `{}`", log_path.to_str().unwrap_or("<Missing path>"))));
 
             core.file_list.add_path(filename_buf.as_path()).unwrap();
@@ -249,7 +249,7 @@ impl FileManager for SqliteFileManager {
         let update  = FileUpdate::ChangedOrder(path.clone(), after.clone());
 
         // Update the file list
-        let _ = self.core.future(move |core| {
+        let _ = self.core.future_desync(move |core| {
             let after = after.as_ref();
             let after = after.map(|after| after.as_path());
             core.file_list.order_path_after(path.as_path(), after).unwrap();
@@ -269,7 +269,7 @@ impl FileManager for SqliteFileManager {
         if let Some(path) = path {
             let update = FileUpdate::SetDisplayName(PathBuf::from(full_path), display_name.clone());
 
-            let _ = self.core.future(move |core| {
+            let _ = self.core.future_desync(move |core| {
                 core.file_list.set_display_name_for_path(path.as_path(), &display_name).unwrap();
                 Box::pin(core.send_update(update))
             });
@@ -300,7 +300,7 @@ impl FileManager for SqliteFileManager {
             // Start deleting it if we find it
             let update = FileUpdate::RemovedFile(full_path.clone());
 
-            let _ = self.core.future(move |core| {
+            let _ = self.core.future_desync(move |core| {
                 core.log.log((Level::Info, format!("Deleting file at path `{}`", full_path.to_str().unwrap_or("<Missing path>"))));
 
                 // Delete from the file list

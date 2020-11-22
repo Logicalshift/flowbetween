@@ -99,7 +99,7 @@ impl LogPublisher {
         let message = LogMsg::from(message);
 
         // Desync will run the future regardless of whether or not we await the return value, so we can throw it away
-        let _ = self.context.future(move |context| {
+        let _ = self.context.future_desync(move |context| {
             // Messages are delivered as Arc<Log>s to prevent them being copied around when there's a complicated hierarchy
             async move { Self::log_in_context(context, message).await }.boxed()
         });

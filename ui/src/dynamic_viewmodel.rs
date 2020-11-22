@@ -249,7 +249,7 @@ impl DynamicViewModel {
     fn follow_binding<TBinding: 'static+Bound<PropertyValue>>(&self, property_name: &str, binding: TBinding) {
         // Use a future to publish the property
         let property_name   = String::from(property_name);
-        let _future         = self.new_properties.future(move |new_properties| {
+        let _future         = self.new_properties.future_desync(move |new_properties| {
             new_properties.publish((String::from(property_name), BindRef::from_arc(Arc::new(binding))))
         });
 

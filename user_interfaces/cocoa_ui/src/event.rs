@@ -388,7 +388,7 @@ pub fn declare_flo_events_class() -> &'static Class {
                     mem::swap(&mut pending, &mut flo_events.pending_events);
                     flo_events.queued_update = false;
 
-                    let _               = flo_events.events_publisher.future(move |events_publisher| {
+                    let _               = flo_events.events_publisher.future_desync(move |events_publisher| {
                         // Send to the publisher
                         events_publisher.publish(pending)
                     });

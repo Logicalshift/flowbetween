@@ -15,7 +15,7 @@ pub type GtkActionSink = Arc<Desync<WeakPublisher<Vec<GtkAction>>>>;
 /// Publishes a list of actions to the specified action sink
 ///
 pub fn publish_actions(sink: &GtkActionSink, actions: Vec<GtkAction>) {
-    let _ = sink.future(move |sink| async move {
+    let _ = sink.future_desync(move |sink| async move {
         sink.publish(actions).await
     }.boxed());
 }

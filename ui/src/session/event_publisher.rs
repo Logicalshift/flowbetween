@@ -76,7 +76,7 @@ pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreCo
                 if let Some(core_events) = core_events {
                     let core_controller = Arc::clone(&controller);
 
-                    core.future(move |core| {
+                    core.future_sync(move |core| {
                         let core_events = core.reduce_events(core_events);
                         async move { core.dispatch_event(core_events, &*core_controller).await }.boxed()
                     }).await.ok();
@@ -90,7 +90,7 @@ pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreCo
             
             // Resume updates after the events we just received
             let core_controller = Arc::clone(&controller);
-            core.future(move |core| {
+            core.future_sync(move |core| {
                 async move { core.dispatch_event(vec![UiEvent::ResumeUpdates], &*core_controller).await }.boxed()
             }).await.ok();
         }

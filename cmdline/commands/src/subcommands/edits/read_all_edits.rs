@@ -18,7 +18,7 @@ pub fn read_all_edits<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'
         // Read the edits from it
         let mut edit_output = output.republish();
         let mut edits       = state.edit_buffer().clone();
-        let edits           = input.future(move |input| {
+        let edits           = input.future_sync(move |input| {
             // Read all of the edits from the input stream
             let num_edits       = input.get_num_edits();
             let mut edit_stream = input.read_edit_log(0..num_edits);

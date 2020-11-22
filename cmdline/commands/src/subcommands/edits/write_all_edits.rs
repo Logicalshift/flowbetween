@@ -19,7 +19,7 @@ pub fn write_all_edits<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &
         // Write the edit buffer to it
         let mut edit_output = output.republish();
         let edits           = state.edit_buffer().clone();
-        let edits           = output_anim.future(move |output_anim| {
+        let edits           = output_anim.future_sync(move |output_anim| {
             // Write edits one at a time to the output animation
             async move {
                 edit_output.publish(FloCommandOutput::StartTask("Read edit log".to_string())).await;

@@ -408,13 +408,13 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
                 // TODO: brush elements have styles implied by the order that the elements are in the keyframe, so we need a way of editing the brush styles of the elements after re-ordering them here
 
                 if apply_in_reverse {
-                    let _ = self.edit.future(move |animation| {
+                    let _ = self.edit.future_desync(move |animation| {
                         animation.publish(Arc::new(vec![
                                 AnimationEdit::Element(selection.iter().rev().cloned().collect(), ElementEdit::Order(ordering))
                             ]))
                         });
                 } else {
-                    let _ = self.edit.future(move |animation| {
+                    let _ = self.edit.future_desync(move |animation| {
                         animation.publish(Arc::new(vec![
                                 AnimationEdit::Element(selection.iter().cloned().collect(), ElementEdit::Order(ordering))
                             ]))
@@ -442,7 +442,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
                 };
 
                 // Send the edit
-                let _ = self.edit.future(move |animation| {
+                let _ = self.edit.future_desync(move |animation| {
                     animation.publish(Arc::new(vec![AnimationEdit::Element(selection.iter().cloned().collect(), 
                         ElementEdit::Transform(vec![ElementTransform::Align(element_align)]))]))
                 });
@@ -454,7 +454,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
             "FlipHorizontal" => {
                 let selection   = self.selection_in_order.get();
 
-                let _           = self.edit.future(move |animation| {
+                let _           = self.edit.future_desync(move |animation| {
                     animation.publish(Arc::new(vec![AnimationEdit::Element(selection.iter().cloned().collect(), 
                         ElementEdit::Transform(vec![ElementTransform::FlipHorizontal]))]))
                 });
@@ -465,7 +465,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
             "FlipVertical" => {
                 let selection   = self.selection_in_order.get();
 
-                let _           = self.edit.future(move |animation| {
+                let _           = self.edit.future_desync(move |animation| {
                     animation.publish(Arc::new(vec![AnimationEdit::Element(selection.iter().cloned().collect(), 
                         ElementEdit::Transform(vec![ElementTransform::FlipVertical]))]))
                 });

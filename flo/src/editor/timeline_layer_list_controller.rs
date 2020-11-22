@@ -142,7 +142,7 @@ impl Controller for TimelineLayerListController {
                 if let (ActionParameter::Value(PropertyValue::String(new_name)), Some(layer_id)) = (action_parameter, self.selected_layer_id.get()) {
                     // Send the 'rename layer' command to the edit sink
                     let new_name = new_name.clone();
-                    let _ = self.edit_sink.future(move |edit_sink| {
+                    let _ = self.edit_sink.future_desync(move |edit_sink| {
                         edit_sink.publish(Arc::new(vec![
                             AnimationEdit::Layer(layer_id, LayerEdit::SetName(new_name))
                         ]))
