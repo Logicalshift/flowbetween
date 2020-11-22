@@ -24,9 +24,6 @@ pub struct StreamLayer {
 
     /// The properties for this layer
     properties: LayerProperties,
-
-    /// Available synchronous requests
-    idle_sync_requests: Desync<Vec<Desync<Option<Vec<StorageResponse>>>>>,
 }
 
 impl StreamLayer {
@@ -37,8 +34,7 @@ impl StreamLayer {
         StreamLayer {
             core:               core,
             layer_id:           layer_id,
-            properties:         properties,
-            idle_sync_requests: Desync::new(vec![])
+            properties:         properties
         }
     }
 
@@ -48,7 +44,7 @@ impl StreamLayer {
     /// Synchronous requests are fairly slow, so should be avoided in inner loops
     ///
     fn request_sync(&self, request: Vec<StorageCommand>) -> Option<Vec<StorageResponse>> {
-        request_core_sync(Arc::clone(&self.core), &self.idle_sync_requests, request)
+        request_core_sync(Arc::clone(&self.core), request)
     }
 }
 

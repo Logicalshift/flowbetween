@@ -86,7 +86,7 @@ impl StreamAnimation {
     /// Synchronous requests are fairly slow, so should be avoided in inner loops
     ///
     pub (super) fn request_sync<Commands: Send+IntoIterator<Item=StorageCommand>>(&self, request: Commands) -> Option<Vec<StorageResponse>> {
-        request_core_sync(Arc::clone(&self.core), &self.idle_sync_requests, request.into_iter().collect())
+        request_core_sync(Arc::clone(&self.core), request.into_iter().collect())
     }
 
     ///
@@ -340,7 +340,7 @@ impl EditableAnimation for StreamAnimation {
         });
 
         // Queue a request
-        let _ = sync_request.future_desync(move |_| {
+        sync_request.future_desync(move |_| {
             async move {
                 // Publish the edits
                 publisher.publish(Arc::new(edits)).await;
@@ -348,10 +348,7 @@ impl EditableAnimation for StreamAnimation {
                 // Wait for them to be processed
                 publisher.when_empty().await;
             }.boxed()
-        });
-
-        // Wait for the edits to complete
-        sync_request.sync(|_| { });
+        }).sync().ok();
 
         // Return the sync_request to the pool
         self.idle_sync_requests.desync(move |reqs| { reqs.push(sync_request) });

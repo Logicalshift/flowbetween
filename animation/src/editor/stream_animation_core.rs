@@ -32,39 +32,14 @@ pub (super) fn request_core_async(core: &Arc<Desync<StreamAnimationCore>>, reque
 /// 
 /// Synchronous requests are fairly slow, so should be avoided in inner loops
 ///
-pub (super) fn request_core_sync(core: Arc<Desync<StreamAnimationCore>>, idle_sync_requests: &Desync<Vec<Desync<Option<Vec<StorageResponse>>>>>, request: Vec<StorageCommand>) -> Option<Vec<StorageResponse>> {
-    // Get an idle sync request desync
-    //   We use desync instead of the futures executor as the executor will panic if we are called from within another future
-    //   (desync provides a way around this problem)
-    let sync_request = idle_sync_requests.sync(|reqs| {
-        let next_request = reqs.pop();
-        if let Some(next_request) = next_request {
-            next_request
-        } else {
-            let req = Desync::new(None);
-            req
-        }
-    });
-
-    // Queue a request
-    let _ = sync_request.future_desync(move |data| {
+pub (super) fn request_core_sync(core: Arc<Desync<StreamAnimationCore>>, request: Vec<StorageCommand>) -> Option<Vec<StorageResponse>> {
+    // Queue the request
+    let result = core.future_desync(|core| {
         async move {
-            let result = core.future_sync(|core| {
-                async move {
-                    core.storage_requests.publish(request).await;
-                    core.storage_responses.next().await
-                }.boxed()
-            }).await;
-
-            *data = result.unwrap_or(None);
+            core.storage_requests.publish(request).await;
+            core.storage_responses.next().await
         }.boxed()
-    });
-
-    // Retrieve the result
-    let result = sync_request.sync(|req| req.take());
-
-    // Return the sync_request to the pool
-    idle_sync_requests.desync(move |reqs| { reqs.push(sync_request) });
+    }).sync().unwrap_or(None);
 
     // Return the result of the request
     result
