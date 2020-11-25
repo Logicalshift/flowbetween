@@ -2,7 +2,9 @@
 
 CARGO=${HOME}/.cargo/bin/cargo
 
-case ${ARCHS} in
+for ARCH in ${ARCHS}
+do
+case ${ARCH} in
     arm64*)
         echo -- BUILDING RUST COMPONENTS FOR ARM ARCHITECTURE
 
@@ -43,7 +45,8 @@ case ${ARCHS} in
 
     *)
         env | sort
-        echo Unknown architecture ${ARCHS}
+        echo Unknown architecture ${ARCH}
         exit 1
         ;;
 esac
+done
