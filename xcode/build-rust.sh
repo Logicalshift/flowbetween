@@ -6,7 +6,7 @@ case ${ARCHS} in
     arm64*)
         echo -- BUILDING RUST COMPONENTS FOR ARM ARCHITECTURE
 
-        ${CARGO} +nightly build -p flo_cocoa --target aarch64-apple-darwin --features cocoa --target-dir ${BUILD_DIR}/target-arm64
+        ${CARGO} +nightly build -p flo_cocoa --target aarch64-apple-darwin --features cocoa --target-dir ${BUILD_DIR}/target-arm64 ${CARGO_OPTIONS}
         
         mkdir ${BUILT_PRODUCTS_DIR}/debug
         mkdir ${BUILT_PRODUCTS_DIR}/debug/arm64
@@ -25,7 +25,7 @@ case ${ARCHS} in
     x86_64*)
         echo -- BUILDING RUST COMPONENTS FOR X86 ARCHITECTURE
 
-        ${CARGO} build -p flo_cocoa --target x86_64-apple-darwin --features cocoa --target-dir ${BUILD_DIR}/target-x64
+        ${CARGO} build -p flo_cocoa --target x86_64-apple-darwin --features cocoa --target-dir ${BUILD_DIR}/target-x64 ${CARGO_OPTIONS}
         
         mkdir ${BUILT_PRODUCTS_DIR}/debug
         mkdir ${BUILT_PRODUCTS_DIR}/debug/x64
