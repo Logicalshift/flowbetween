@@ -294,8 +294,6 @@
 		4B1E8C0621DCE1C5006861A8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		4B1E8C0821DCE1C5006861A8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4B1E8C0921DCE1C5006861A8 /* FlowBetween.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FlowBetween.entitlements; sourceTree = "<group>"; };
-		4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; name = libflo_cocoa.a; path = ../target/debug/libflo_cocoa.a; sourceTree = "<group>"; };
-		4B1E8C1A21DD1228006861A8 /* libflo_cocoa.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libflo_cocoa.dylib; path = ../target/debug/libflo_cocoa.dylib; sourceTree = "<group>"; };
 		4B1E8C2421DD1668006861A8 /* flo_cocoa.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = flo_cocoa.h; sourceTree = "<group>"; };
 		4B1E8C2521DD16DC006861A8 /* FlowBetween.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FlowBetween.h; sourceTree = "<group>"; };
 		4B1E8C2621DD5B7E006861A8 /* FloWindowDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloWindowDelegate.swift; sourceTree = "<group>"; };
@@ -332,6 +330,10 @@
 		4B79EADF220F92C50019D660 /* FloContainerButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloContainerButton.swift; sourceTree = "<group>"; };
 		4B79EAE1220F92D70019D660 /* FloContainerButtonLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloContainerButtonLayer.swift; sourceTree = "<group>"; };
 		4B7DE8C925402DF300C1B4E7 /* FloImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloImageView.swift; sourceTree = "<group>"; };
+		4B8EC360256EF04700C8D9B8 /* libflo_cocoa.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libflo_cocoa.dylib; path = "debug/x64/libflo_cocoa.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4B8EC361256EF04700C8D9B8 /* libflo_cocoa.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libflo_cocoa.a; path = "debug/x64/libflo_cocoa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4B8EC362256EF05000C8D9B8 /* libflo_cocoa.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libflo_cocoa.dylib; path = "debug/arm64/libflo_cocoa.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4B8EC363256EF05000C8D9B8 /* libflo_cocoa.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libflo_cocoa.a; path = "debug/arm64/libflo_cocoa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BAC98F921E0FBD100CEB87B /* Lato-Thin.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Thin.woff2"; sourceTree = "<group>"; };
 		4BAC98FA21E0FBD100CEB87B /* Lato-Regular.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Regular.woff2"; sourceTree = "<group>"; };
 		4BAC98FB21E0FBD100CEB87B /* README-WEB.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "README-WEB.txt"; sourceTree = "<group>"; };
@@ -400,11 +402,11 @@
 		4B1E8C1521DD1024006861A8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4B8EC35D256EF03B00C8D9B8 /* X64 */,
+				4B8EC35C256EF03300C8D9B8 /* ARM */,
 				4B5C498421F131BC00B39B68 /* CocoaLumberjack.framework */,
 				4B56206A21F0858D0078392F /* SVGKit-iOS.xcodeproj */,
 				4B5620A021F0859A0078392F /* SVGKit-iOS.xcodeproj */,
-				4B1E8C1A21DD1228006861A8 /* libflo_cocoa.dylib */,
-				4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -505,6 +507,26 @@
 			);
 			name = Products;
 			sourceTree = "<group>";
+		};
+		4B8EC35C256EF03300C8D9B8 /* ARM */ = {
+			isa = PBXGroup;
+			children = (
+				4B8EC362256EF05000C8D9B8 /* libflo_cocoa.dylib */,
+				4B8EC363256EF05000C8D9B8 /* libflo_cocoa.a */,
+			);
+			name = ARM;
+			path = debug/arm64;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		4B8EC35D256EF03B00C8D9B8 /* X64 */ = {
+			isa = PBXGroup;
+			children = (
+				4B8EC360256EF04700C8D9B8 /* libflo_cocoa.dylib */,
+				4B8EC361256EF04700C8D9B8 /* libflo_cocoa.a */,
+			);
+			name = X64;
+			path = debug/x64;
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		4BAC98F721E0FBAF00CEB87B /* Fonts */ = {
 			isa = PBXGroup;
@@ -1037,7 +1059,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				"LIBRARY_SEARCH_PATHS[arch=*]" = ../target/debug;
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "${BUILT_PRODUCTS_DIR}/debug/arm64";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "${BUILT_PRODUCTS_DIR}/debug/x64";
 				OTHER_LDFLAGS = "-lflo_cocoa";
 				PRODUCT_BUNDLE_IDENTIFIER = io.logicalshift.FlowBetween;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1060,7 +1083,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				"LIBRARY_SEARCH_PATHS[arch=*]" = ../target/release;
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "${BUILT_PRODUCTS_DIR}/release/arm64";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "${BUILT_PRODUCTS_DIR}/release/x64";
 				OTHER_LDFLAGS = "-lflo_cocoa";
 				PRODUCT_BUNDLE_IDENTIFIER = io.logicalshift.FlowBetween;
 				PRODUCT_NAME = "$(TARGET_NAME)";
