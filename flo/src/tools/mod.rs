@@ -1,4 +1,5 @@
 mod tool_action;
+mod shared_future;
 mod brush_preview_action;
 mod overlay_action;
 mod tool_input;
