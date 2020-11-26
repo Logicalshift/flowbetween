@@ -66,7 +66,7 @@ impl<TFuture: 'static+Send+Future> SharedFuture<TFuture> {
     pub fn check(&self) -> task::Poll<TFuture::Output> {
         // Retrieve the future to poll
         let future = {
-            let mut core        = self.core.lock().unwrap();
+            let core            = self.core.lock().unwrap();
             Arc::clone(&core.future)
         };
 
@@ -92,7 +92,7 @@ where TFuture: 'static+Send+Future {
             let mut core        = self.core.lock().unwrap();
 
             // Store the actual future waker
-            core.waker              = Some(context.waker().clone());
+            core.waker          = Some(context.waker().clone());
 
             Arc::clone(&core.future)
         };
