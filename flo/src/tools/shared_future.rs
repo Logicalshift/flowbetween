@@ -26,10 +26,17 @@ struct SharedFutureWaker<TFuture: Send+Future> {
 ///
 /// A future that can be polled as a normal future or checked from single-threaded contexts to move execution on
 ///
-#[derive(Clone)]
-pub struct SharedFuture<TFuture: Send+Future> {
+pub struct SharedFuture<TFuture: 'static+Send+Future> {
     /// The core of this future
     core: Arc<Mutex<SharedFutureCore<TFuture>>>
+}
+
+impl<TFuture: 'static+Send+Future> Clone for SharedFuture<TFuture> {
+    fn clone(&self) -> SharedFuture<TFuture> {
+        SharedFuture {
+            core: self.core.clone()
+        }
+    }
 }
 
 impl<TFuture: 'static+Send+Future> SharedFuture<TFuture> {

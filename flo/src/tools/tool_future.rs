@@ -1,11 +1,13 @@
 use super::tool_input::*;
 use super::tool_action::*;
+use super::shared_future::*;
 use super::tool_future_streams::*;
 use crate::model::*;
 
 use flo_animation::*;
 
 use futures::prelude::*;
+use futures::task::{Poll};
 use futures::stream::{BoxStream};
 
 use std::sync::*;
@@ -16,7 +18,9 @@ use std::sync::*;
 /// This can be used as the tool model for tools that want to use an 'async' function to manage their state instead of
 /// implementing a tool model and tool data structure and performing manual state transitions
 ///
-pub struct ToolFuture<CreateFutureFn> {
+pub struct ToolFuture<CreateFutureFn, FutureResult>
+where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> FutureResult + Send+Sync+'static,
+        FutureResult:   Future<Output=()> + Send+Sync+'static {
     /// Function that creates a new future to run the tool
     create_future: CreateFutureFn,
 
@@ -24,10 +28,13 @@ pub struct ToolFuture<CreateFutureFn> {
     tool_input: Option<Arc<Mutex<ToolStreamCore<ToolInput<()>>>>>,
 
     /// The active action stream core (or none if one doesn't exist)
-    tool_actions: Option<Arc<Mutex<ToolStreamCore<ToolAction<()>>>>>
+    tool_actions: Option<Arc<Mutex<ToolStreamCore<ToolAction<()>>>>>,
+
+    /// The active future, if there is one
+    future: Option<SharedFuture<FutureResult>>
 }
 
-impl<CreateFutureFn, FutureResult> ToolFuture<CreateFutureFn>
+impl<CreateFutureFn, FutureResult> ToolFuture<CreateFutureFn, FutureResult>
 where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> FutureResult + Send+Sync+'static,
         FutureResult:   Future<Output=()> + Send+Sync+'static {
     ///
@@ -41,11 +48,12 @@ where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> Futu
     /// time for any reason. In particular, this means that any state that needs to preserved from one activation to another must be
     /// stored in either the tool model or the main FloModel.
     ///
-    pub fn new(create_future: CreateFutureFn) -> ToolFuture<CreateFutureFn> {
+    pub fn new(create_future: CreateFutureFn) -> ToolFuture<CreateFutureFn, FutureResult> {
         ToolFuture {
             create_future:  create_future,
             tool_input:     None,
-            tool_actions:   None
+            tool_actions:   None,
+            future:         None
         }
     }
 
@@ -55,6 +63,8 @@ where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> Futu
     pub fn actions_for_model<ToolModel, Anim>(&mut self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &ToolModel) -> BoxStream<'static, ToolAction<()>> 
     where Anim: 'static+Animation+EditableAnimation {
         // Close any existing input stream, stopping the future from running
+        self.future = None;
+
         if let Some(tool_input) = self.tool_input.take() {
             close_tool_stream(&tool_input);
             self.tool_input = None;
@@ -74,6 +84,8 @@ where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> Futu
 
         // Create the new future
         let new_future                      = (self.create_future)(tool_input, action_publisher);
+        let new_future                      = SharedFuture::new(new_future);
+        self.future                         = Some(new_future.clone());
 
         // The future is run as a side-effect of polling the stream
         let mut action_stream               = action_stream;
@@ -94,6 +106,17 @@ where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> Futu
     where Anim: 'static+Animation+EditableAnimation {
         // Send the input to the future if there is one. This can run the action stream as a side-effect
         self.tool_input.as_ref().map(|tool_input| send_tool_stream(tool_input, input));
+
+        // Give the future a chance to run
+        if let Some(Poll::Ready(())) = self.future.as_ref().map(|future| future.check()) {
+            // Shut the future down if it stops as a result of this request
+            self.future = None;
+
+            if let Some(tool_input) = self.tool_input.take() {
+                close_tool_stream(&tool_input);
+                self.tool_input = None;
+            }
+        }
 
         // Return any pending actions from the future immediately
         self.tool_actions.as_ref()
@@ -168,9 +191,6 @@ mod test {
             // Create the action stream, so the tool is running
             let model               = create_model();
             let _action_stream      = tool_future.actions_for_model(model.clone(), &());
-
-            // TODO: problem here is that we need to poll the future to generate the actions, which is currently only done in the stream
-            // so if the stream has not been polled or has been polled but hasn't returned 'pending' yet, no actions are generated
 
             // When we send input requests, we should generate the actions immediately here (as the future awaits nothing before sending the output)
             assert!(tool_future.actions_for_input(model.clone(), None, Box::new(vec![ToolInput::Select].into_iter())).collect::<Vec<_>>() == vec![ToolAction::Select(ElementId::Assigned(0))]);
