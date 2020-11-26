@@ -147,4 +147,33 @@ mod test {
             assert!(action_stream.next().await == None);
         });
     }
+
+    #[test]
+    fn tool_input_generates_actions_immediately() {
+        executor::block_on(async move {
+            // Create a new tool future that sends some actions
+            let mut tool_future     = ToolFuture::new(|input_stream, action_output| {
+                async move {
+                    let mut input_stream    = input_stream;
+                    let mut counter         = 0;
+
+                    while let Some(action) = input_stream.next().await {
+                        println!("Send action {:?}", counter);
+                        action_output.send_actions(vec![ToolAction::Select(ElementId::Assigned(counter))]);
+                        counter += 1;
+                    }
+                }
+            });
+
+            // Create the action stream, so the tool is running
+            let model               = create_model();
+            let _action_stream      = tool_future.actions_for_model(model.clone(), &());
+
+            // TODO: problem here is that we need to poll the future to generate the actions, which is currently only done in the stream
+            // so if the stream has not been polled or has been polled but hasn't returned 'pending' yet, no actions are generated
+
+            // When we send input requests, we should generate the actions immediately here (as the future awaits nothing before sending the output)
+            assert!(tool_future.actions_for_input(model.clone(), None, Box::new(vec![ToolInput::Select].into_iter())).collect::<Vec<_>>() == vec![ToolAction::Select(ElementId::Assigned(0))]);
+        });
+    }
 }
