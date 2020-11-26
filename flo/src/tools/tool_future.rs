@@ -109,13 +109,7 @@ where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> Futu
 
         // Give the future a chance to run
         if let Some(Poll::Ready(())) = self.future.as_ref().map(|future| future.check()) {
-            // Shut the future down if it stops as a result of this request
-            self.future = None;
-
-            if let Some(tool_input) = self.tool_input.take() {
-                close_tool_stream(&tool_input);
-                self.tool_input = None;
-            }
+            // TODO: Shut the future down if it stops as a result of this request
         }
 
         // Return any pending actions from the future immediately
