@@ -46,8 +46,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Lasso {
     /// Retrieves the image that represents this tool in the toolbar
     ///
     fn image(&self) -> Option<Image> {
-        // TODO
-        None
+        Some(svg_static(include_bytes!("../../svg/tools/lasso.svg")))
     }
 
     ///
