@@ -8,6 +8,7 @@ use flo_animation::*;
 
 use futures::prelude::*;
 use futures::task::{Poll};
+use futures::future::{BoxFuture};
 use futures::stream::{BoxStream};
 
 use std::sync::*;
@@ -18,11 +19,9 @@ use std::sync::*;
 /// This can be used as the tool model for tools that want to use an 'async' function to manage their state instead of
 /// implementing a tool model and tool data structure and performing manual state transitions
 ///
-pub struct ToolFuture<CreateFutureFn, FutureResult>
-where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> FutureResult + Send+Sync+'static,
-        FutureResult:   Future<Output=()> + Send+Sync+'static {
+pub struct ToolFuture {
     /// Function that creates a new future to run the tool
-    create_future: CreateFutureFn,
+    create_future: Box<dyn Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> BoxFuture<'static, ()> + Send+Sync>,
 
     /// The active input stream core (or none if one doesn't exist)
     tool_input: Option<Arc<Mutex<ToolStreamCore<ToolInput<()>>>>>,
@@ -34,9 +33,7 @@ where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> Futu
     future: Option<SharedFuture<()>>
 }
 
-impl<CreateFutureFn, FutureResult> ToolFuture<CreateFutureFn, FutureResult>
-where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> FutureResult + Send+Sync+'static,
-        FutureResult:   Future<Output=()> + Send+Sync+'static {
+impl ToolFuture {
     ///
     /// Creates a new ToolFuture from a future factory function
     ///
@@ -48,9 +45,11 @@ where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> Futu
     /// time for any reason. In particular, this means that any state that needs to preserved from one activation to another must be
     /// stored in either the tool model or the main FloModel.
     ///
-    pub fn new(create_future: CreateFutureFn) -> ToolFuture<CreateFutureFn, FutureResult> {
+    pub fn new<CreateFutureFn, FutureResult>(create_future: CreateFutureFn) -> ToolFuture
+    where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> FutureResult + Send+Sync+'static,
+            FutureResult:   Future<Output=()> + Send+Sync+'static {
         ToolFuture {
-            create_future:  create_future,
+            create_future:  Box::new(move |input_stream, action_publisher| (create_future)(input_stream, action_publisher).boxed()),
             tool_input:     None,
             tool_actions:   None,
             future:         None

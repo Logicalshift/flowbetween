@@ -3,11 +3,19 @@ use crate::model::*;
 
 use flo_ui::*;
 use flo_animation::*;
+use ::desync::*;
 
 use futures::stream;
 use futures::stream::{BoxStream};
 
 use std::sync::*;
+
+///
+/// The data stored for the Lasso tool
+///
+pub struct LassoModel {
+    future: Desync<ToolFuture>
+}
 
 ///
 /// The lasso tool
@@ -33,7 +41,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Lasso {
     ///
     /// The type of the model used by the UI elements of this tool
     ///
-    type Model = ();
+    type Model = LassoModel;
 
     ///
     /// Retrieves the name of this tool
@@ -53,7 +61,9 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Lasso {
     /// Creates a new instance of the UI model for this tool
     ///
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> Self::Model {
-        ()
+        LassoModel {
+            future: Desync::new(ToolFuture::new(|_input, _actions| { async move { } }))
+        }
     }
 
     ///
