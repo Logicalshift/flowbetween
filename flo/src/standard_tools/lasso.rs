@@ -3,9 +3,7 @@ use crate::model::*;
 
 use flo_ui::*;
 use flo_animation::*;
-use ::desync::*;
 
-use futures::stream;
 use futures::stream::{BoxStream};
 
 use std::sync::*;
@@ -14,7 +12,7 @@ use std::sync::*;
 /// The data stored for the Lasso tool
 ///
 pub struct LassoModel {
-    future: Desync<ToolFuture>
+    future: Mutex<ToolFuture>
 }
 
 ///
@@ -62,7 +60,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Lasso {
     ///
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> Self::Model {
         LassoModel {
-            future: Desync::new(ToolFuture::new(|_input, _actions| { async move { } }))
+            future: Mutex::new(ToolFuture::new(|_input, _actions| { async move { } }))
         }
     }
 
@@ -76,15 +74,15 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Lasso {
     ///
     /// Returns a stream of tool actions that result from changes to the model
     ///
-    fn actions_for_model(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> BoxStream<'static, ToolAction<Self::ToolData>> {
-        Box::pin(stream::empty())
+    fn actions_for_model(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &Self::Model) -> BoxStream<'static, ToolAction<Self::ToolData>> {
+        tool_model.future.lock().unwrap().actions_for_model()
     }
 
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     ///
-    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model, data: Option<Arc<Self::ToolData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<Self::ToolData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<Self::ToolData>>> {
-        Box::new(vec![].into_iter())
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, tool_model: &Self::Model, data: Option<Arc<Self::ToolData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<Self::ToolData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<Self::ToolData>>> {
+        Box::new(tool_model.future.lock().unwrap().actions_for_input(input).into_iter())
     }
 }
 

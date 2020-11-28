@@ -100,7 +100,7 @@ impl ToolFuture {
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     ///
-    pub fn actions_for_input<'a>(&'a self, input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<()>>> {
+    pub fn actions_for_input<'a>(&'a self, input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Vec<ToolAction<()>> {
         // Send the input to the future if there is one. This can run the action stream as a side-effect
         self.tool_input.as_ref().map(|tool_input| send_tool_stream(tool_input, input));
 
@@ -111,8 +111,8 @@ impl ToolFuture {
 
         // Return any pending actions from the future immediately
         self.tool_actions.as_ref()
-            .map(|tool_actions| Box::new(drain_tool_stream(tool_actions).into_iter()))
-            .unwrap_or_else(|| Box::new(vec![].into_iter()))
+            .map(|tool_actions| drain_tool_stream(tool_actions))
+            .unwrap_or_else(|| vec![])
     }
 }
 
@@ -184,7 +184,7 @@ mod test {
             let _action_stream      = tool_future.actions_for_model();
 
             // When we send input requests, we should generate the actions immediately here (as the future awaits nothing before sending the output)
-            assert!(tool_future.actions_for_input(Box::new(vec![ToolInput::Select].into_iter())).collect::<Vec<_>>() == vec![ToolAction::Select(ElementId::Assigned(0))]);
+            assert!(tool_future.actions_for_input(Box::new(vec![ToolInput::Select].into_iter())) == vec![ToolAction::Select(ElementId::Assigned(0))]);
         });
     }
 }
