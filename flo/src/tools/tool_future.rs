@@ -59,8 +59,7 @@ impl ToolFuture {
     ///
     /// Returns a stream of tool actions that result from changes to the model
     ///
-    pub fn actions_for_model<ToolModel, Anim>(&mut self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &ToolModel) -> BoxStream<'static, ToolAction<()>> 
-    where Anim: 'static+Animation+EditableAnimation {
+    pub fn actions_for_model(&mut self) -> BoxStream<'static, ToolAction<()>> {
         // Close any existing input stream, stopping the future from running
         self.future = None;
 
@@ -101,8 +100,7 @@ impl ToolFuture {
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     ///
-    pub fn actions_for_input<'a, Anim>(&'a self, _flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<()>>, input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<()>>>
-    where Anim: 'static+Animation+EditableAnimation {
+    pub fn actions_for_input<'a>(&'a self, input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<()>>> {
         // Send the input to the future if there is one. This can run the action stream as a side-effect
         self.tool_input.as_ref().map(|tool_input| send_tool_stream(tool_input, input));
 
@@ -151,7 +149,7 @@ mod test {
 
             // Create the action stream
             let model               = create_model();
-            let mut action_stream   = tool_future.actions_for_model(model, &());
+            let mut action_stream   = tool_future.actions_for_model();
 
             // Check that the actions arrive in the expected order
             assert!(action_stream.next().await == Some(ToolAction::InvalidateFrame));
@@ -183,10 +181,10 @@ mod test {
 
             // Create the action stream, so the tool is running
             let model               = create_model();
-            let _action_stream      = tool_future.actions_for_model(model.clone(), &());
+            let _action_stream      = tool_future.actions_for_model();
 
             // When we send input requests, we should generate the actions immediately here (as the future awaits nothing before sending the output)
-            assert!(tool_future.actions_for_input(model.clone(), None, Box::new(vec![ToolInput::Select].into_iter())).collect::<Vec<_>>() == vec![ToolAction::Select(ElementId::Assigned(0))]);
+            assert!(tool_future.actions_for_input(Box::new(vec![ToolInput::Select].into_iter())).collect::<Vec<_>>() == vec![ToolAction::Select(ElementId::Assigned(0))]);
         });
     }
 }
