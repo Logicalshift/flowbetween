@@ -97,7 +97,7 @@ where TOutput: Clone {
 }
 
 impl<TOutput> Future for SharedFuture<TOutput>
-where TOutput: 'static+Send {
+where TOutput: 'static+Send+Clone {
     type Output = TOutput;
 
     fn poll(self: Pin<&mut Self>, context: &mut task::Context) -> task::Poll<Self::Output> {
@@ -119,6 +119,16 @@ where TOutput: 'static+Send {
         // Poll the future (locked separately to the core so we won't deadlock if the waker is triggered)
         let mut future          = future.lock().unwrap();
         let poll_result         = future.poll_unpin(&mut shared_context);
+
+        // If the result was successful, replace the future in the core with one that's already ready
+        if let task::Poll::Ready(result) = &poll_result {
+            // Create a ready future
+            let ready_future = future::ready(result.clone());
+
+            // Substitute into the active future
+            *future = ready_future.boxed();
+        }
+
         poll_result
     }
 }
