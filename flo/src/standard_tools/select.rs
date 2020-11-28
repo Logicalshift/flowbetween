@@ -1138,7 +1138,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
     ///
     /// Returns the actions that result from a particular inpiut
     ///
-    fn actions_for_input<'a>(&self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<SelectData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<SelectData>>>) -> Box<dyn Iterator<Item=ToolAction<SelectData>>> {
+    fn actions_for_input<'a>(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model, data: Option<Arc<SelectData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<SelectData>>>) -> Box<dyn Iterator<Item=ToolAction<SelectData>>> {
         if let Some(mut data) = data {
             // We build up a vector of actions to perform as we go
             let mut actions = vec![];

@@ -79,14 +79,14 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
         Box::pin(follow(ink_data).map(|ink_data| ToolAction::Data(ink_data)))
     }
 
-    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<InkData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<InkData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<InkData>>> {
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, tool_model: &Self::Model, data: Option<Arc<InkData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<InkData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<InkData>>> {
         use self::ToolAction::*;
         use self::BrushPreviewAction::*;
 
         let ink: &dyn Tool<Anim, ToolData=InkData, Model=InkModel> = &self.ink;
 
         // As for the ink tool, except that we use the eraser drawing style
-        let actions = ink.actions_for_input(flo_model, data, input)
+        let actions = ink.actions_for_input(flo_model, tool_model, data, input)
             .map(|action| {
                 match action {
                     BrushPreview(BrushDefinition(brush, BrushDrawingStyle::Draw)) => BrushPreview(BrushDefinition(brush, BrushDrawingStyle::Erase)),

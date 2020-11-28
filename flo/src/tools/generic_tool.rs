@@ -11,6 +11,7 @@ use futures::stream;
 use futures::stream::{BoxStream};
 
 use std::fmt;
+use std::iter;
 use std::any::*;
 use std::sync::*;
 use std::marker::PhantomData;
@@ -159,17 +160,23 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
             .unwrap_or_else(|| Box::pin(stream::empty()))
     }
 
-    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<GenericToolData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<GenericToolData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<GenericToolData>>> {
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel, data: Option<Arc<GenericToolData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<GenericToolData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<GenericToolData>>> {
         // Generic data items from other tools don't generate data for this tool
-        let data    = data.and_then(|data| data.convert_ref());
-        let input   = Box::new(input
+        let data        = data.and_then(|data| data.convert_ref());
+        let input       = Box::new(input
             .map(|input_item|       GenericToolData::convert_input_from_generic(input_item))
             .filter(|maybe_data|    maybe_data.is_some())
             .map(|definitely_data|  definitely_data.unwrap()));
 
+        let tool_model  = tool_model.get_ref();
+
         // Map the actions back to generic actions
-        Box::new(self.tool.actions_for_input(flo_model, data, input)
-            .map(|action| GenericToolData::convert_action_to_generic(action)))
+        if let Some(tool_model) = tool_model {
+            Box::new(self.tool.actions_for_input(flo_model, &*tool_model, data, input)
+                .map(|action| GenericToolData::convert_action_to_generic(action)))
+        } else {
+            Box::new(iter::empty())
+        }
     }
 }
 

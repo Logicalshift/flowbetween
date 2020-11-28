@@ -126,7 +126,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                 let tool_model = self.animation.tools().model_for_tool(&*effective_tool, Arc::clone(&self.animation));
 
                 // Load into the tool runner
-                self.tool_runner.set_tool(&effective_tool, &*tool_model);
+                self.tool_runner.set_tool(&effective_tool, tool_model);
 
                 // Clear the tool overlay
                 renderer.overlay(canvas, OVERLAY_TOOL, vec![Draw::ClearCanvas]);

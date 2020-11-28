@@ -30,7 +30,7 @@ impl<Anim: Animation> Tool<Anim> for Pan {
 
     fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> () { }
 
-    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<()>>, _input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn Iterator<Item=ToolAction<()>>> {
+    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model, _data: Option<Arc<()>>, _input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn Iterator<Item=ToolAction<()>>> {
         Box::new(vec![].into_iter())
     }
 }

@@ -145,7 +145,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for FloodFill {
         Box::pin(follow(fill_data).map(|fill_data| ToolAction::Data(fill_data)))
     }
 
-    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<FloodFillData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<FloodFillData>>>) -> Box<dyn Iterator<Item=ToolAction<FloodFillData>>> {
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model, data: Option<Arc<FloodFillData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<FloodFillData>>>) -> Box<dyn Iterator<Item=ToolAction<FloodFillData>>> {
         Box::new(
             input.flat_map(move |action| {
                 let actions : Box<dyn Iterator<Item=ToolAction<FloodFillData>>> =

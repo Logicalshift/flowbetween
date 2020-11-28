@@ -24,6 +24,9 @@ pub struct ToolRunner<Anim: Animation> {
     /// Most recent tool data from the current tool
     tool_data: Option<Arc<GenericToolData>>,
 
+    /// Most recent tool model for the current tool
+    tool_model: Option<Arc<GenericToolModel>>,
+
     /// True if the tool data has been updated since the last ToolInput::Data event was generated
     tool_data_updated: bool,
 
@@ -42,7 +45,8 @@ impl<Anim: Animation> ToolRunner<Anim> {
             view_model:         view_model,
             current_tool:       None,
             tool_data:          None,
-            tool_data_updated: false,
+            tool_model:         None,
+            tool_data_updated:  false,
             model_actions:      None
         }
     }
@@ -50,14 +54,15 @@ impl<Anim: Animation> ToolRunner<Anim> {
     ///
     /// Sets the tool that this will use to run its actions on
     ///
-    pub fn set_tool(&mut self, new_tool: &Arc<FloTool<Anim>>, tool_model: &GenericToolModel) {
+    pub fn set_tool(&mut self, new_tool: &Arc<FloTool<Anim>>, tool_model: Arc<GenericToolModel>) {
         // Free the data for the current tool
         self.tool_data          = None;
         self.model_actions      = None;
         self.tool_data_updated  = false;
+        self.tool_model         = Some(Arc::clone(&tool_model));
 
         // Set the new tool
-        let model_actions   = new_tool.actions_for_model(Arc::clone(&self.view_model), tool_model);
+        let model_actions   = new_tool.actions_for_model(Arc::clone(&self.view_model), &*tool_model);
         self.current_tool   = Some(Arc::clone(&new_tool));
 
         // Start the actions running for the new tool
@@ -121,7 +126,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
             }
         }
 
-        if let Some(ref tool) = self.current_tool {
+        if let (Some(tool), Some(tool_model)) = (&self.current_tool, &self.tool_model) {
             // If the tool data has been updated since the last data input event, then send a new one
             if let Some((true, new_tool_data)) = self.tool_data.as_ref().map(|tool_data| (self.tool_data_updated, tool_data)) {
                 data_input.push(ToolInput::Data(Arc::clone(new_tool_data)));
@@ -133,7 +138,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
             let input = Box::new(input);
 
             // Call the tool to get the actions
-            let tool_actions = tool.actions_for_input(self.view_model.clone(), self.tool_data.clone(), input);
+            let tool_actions = tool.actions_for_input(self.view_model.clone(), &*tool_model, self.tool_data.clone(), input);
 
             // Process any data actions and return the remainder
             for action in tool_actions {

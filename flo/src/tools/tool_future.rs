@@ -101,7 +101,7 @@ impl ToolFuture {
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     ///
-    pub fn actions_for_input<'a, Anim>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<()>>, input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<()>>>
+    pub fn actions_for_input<'a, Anim>(&'a self, _flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<()>>, input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<()>>>
     where Anim: 'static+Animation+EditableAnimation {
         // Send the input to the future if there is one. This can run the action stream as a side-effect
         self.tool_input.as_ref().map(|tool_input| send_tool_stream(tool_input, input));
