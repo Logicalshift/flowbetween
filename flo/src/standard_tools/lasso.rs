@@ -4,6 +4,7 @@ use crate::model::*;
 use flo_ui::*;
 use flo_animation::*;
 
+use futures::prelude::*;
 use futures::stream::{BoxStream};
 
 use std::sync::*;
@@ -26,6 +27,21 @@ impl Lasso {
     ///
     pub fn new() -> Lasso {
         Lasso { }
+    }
+
+    ///
+    /// Implementation of the logic for the lasso tool
+    ///
+    pub async fn run(input: ToolInputStream<()>, actions: ToolActionPublisher<()>) {
+        let mut input = input;
+
+        println!("New");
+
+        while let Some(input) = input.next().await {
+            println!("{:?}", input);
+        }
+
+        println!("Done");
     }
 }
 
@@ -60,7 +76,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Lasso {
     ///
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> Self::Model {
         LassoModel {
-            future: Mutex::new(ToolFuture::new(|_input, _actions| { async move { } }))
+            future: Mutex::new(ToolFuture::new(move |input, actions| { Self::run(input, actions) }))
         }
     }
 
