@@ -2,9 +2,6 @@ use super::tool_input::*;
 use super::tool_action::*;
 use super::shared_future::*;
 use super::tool_future_streams::*;
-use crate::model::*;
-
-use flo_animation::*;
 
 use futures::prelude::*;
 use futures::task::{Poll};
@@ -129,6 +126,8 @@ impl ToolFuture {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::model::*;
+    use flo_animation::*;
     use flo_animation::editor::*;
     use flo_animation::storage::*;
 

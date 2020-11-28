@@ -55,6 +55,9 @@ impl<Anim: Animation> ToolRunner<Anim> {
     /// Sets the tool that this will use to run its actions on
     ///
     pub fn set_tool(&mut self, new_tool: &Arc<FloTool<Anim>>, tool_model: Arc<GenericToolModel>) {
+        // Flush any remaining actions for the old tool (these are all ignored)
+        let _flushed_actions = self.model_actions();
+
         // Free the data for the current tool
         self.tool_data          = None;
         self.model_actions      = None;
