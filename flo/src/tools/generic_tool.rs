@@ -207,7 +207,7 @@ mod test {
 
         fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> i32 { 94 }
 
-        fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<i32>>, input: Box<dyn 'a+Iterator<Item=ToolInput<i32>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<i32>>> {
+        fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, _model: &i32, _data: Option<Arc<i32>>, input: Box<dyn 'a+Iterator<Item=ToolInput<i32>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<i32>>> {
             let input: Vec<_> = input.collect();
 
             if input.len() == 1 {
@@ -240,7 +240,8 @@ mod test {
         let in_memory_store = InMemoryStorage::new();
         let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
         let animation       = Arc::new(FloModel::new(animation));
-        let actions         = generic_tool.actions_for_input(animation, None, Box::new(vec![].into_iter()));
+        let model           = generic_tool.create_model(Arc::clone(&animation));
+        let actions         = generic_tool.actions_for_input(animation, &model, None, Box::new(vec![].into_iter()));
         let actions: Vec<_> = actions.collect();
 
         assert!(actions.len() == 1);
@@ -257,7 +258,8 @@ mod test {
         let in_memory_store     = InMemoryStorage::new();
         let animation           = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
         let animation           = Arc::new(FloModel::new(animation));
-        let actions             = generic_tool.actions_for_input(animation.clone(), None, Box::new(vec![].into_iter()));
+        let model               = generic_tool.create_model(Arc::clone(&animation));
+        let actions             = generic_tool.actions_for_input(animation.clone(), &model, None, Box::new(vec![].into_iter()));
         let mut actions: Vec<_> = actions.collect();
 
         // Should return a data element of '42'
@@ -267,7 +269,7 @@ mod test {
         }.unwrap();
 
         // Feed this back into the tool: should generate a 'clear' brush preview action as a result (see tool definition)
-        let feedback_actions            = generic_tool.actions_for_input(animation.clone(), None, Box::new(vec![ToolInput::Data(data)].into_iter()));
+        let feedback_actions            = generic_tool.actions_for_input(animation.clone(), &model, None, Box::new(vec![ToolInput::Data(data)].into_iter()));
         let feedback_actions: Vec<_>    = feedback_actions.collect();
 
         assert!(feedback_actions.len() == 1);
