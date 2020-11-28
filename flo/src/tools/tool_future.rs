@@ -33,6 +33,13 @@ pub struct ToolFuture {
     future: Option<SharedFuture<()>>
 }
 
+impl Drop for ToolFuture {
+    fn drop(&mut self) {
+        // If there's an existing future, check it to give it a chance to shut down
+        self.future.as_ref().map(|future| future.check());
+    }
+}
+
 impl ToolFuture {
     ///
     /// Creates a new ToolFuture from a future factory function
@@ -60,6 +67,9 @@ impl ToolFuture {
     /// Returns a stream of tool actions that result from changes to the model
     ///
     pub fn actions_for_model(&mut self) -> BoxStream<'static, ToolAction<()>> {
+        // If there's an existing future, check it to give it a chance to shut down
+        self.future.as_ref().map(|future| future.check());
+
         // Close any existing input stream, stopping the future from running
         self.future = None;
 
