@@ -31,7 +31,7 @@ where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> Futu
     tool_actions: Option<Arc<Mutex<ToolStreamCore<ToolAction<()>>>>>,
 
     /// The active future, if there is one
-    future: Option<SharedFuture<FutureResult>>
+    future: Option<SharedFuture<()>>
 }
 
 impl<CreateFutureFn, FutureResult> ToolFuture<CreateFutureFn, FutureResult>
