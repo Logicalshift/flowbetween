@@ -73,7 +73,7 @@ impl Lasso {
         }
 
         // Fit the points to make a path
-        let path = fit_curve::<Curve<PathPoint>>(&averaged_points, 1.0);
+        let path = Curve::<PathPoint>::fit_from_points(&averaged_points, 2.0);
         return path;
     }
 
