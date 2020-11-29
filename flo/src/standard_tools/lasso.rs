@@ -7,6 +7,7 @@ use flo_animation::*;
 use flo_canvas::*;
 use flo_curves::*;
 use flo_curves::bezier::*;
+use flo_curves::bezier::path::*;
 use flo_binding::*;
 
 use futures::prelude::*;
@@ -129,6 +130,27 @@ impl Lasso {
     }
 
     ///
+    /// Creates an animation path from the iytoyt of fit_path
+    ///
+    fn path_for_path(path: &Vec<Curve<PathPoint>>) -> Path {
+        // Start building a path
+        let mut builder = BezierPathBuilder::<Path>::start(path[0].start_point());
+
+        // Add the curves from the list
+        for point in path.iter() {
+            let ep          = point.end_point();
+            let (cp1, cp2)  = point.control_points();
+
+            builder = builder.curve_to((cp1, cp2), ep);
+        }
+
+        builder = builder.line_to(path[0].start_point());
+
+        // Finish building the path
+        builder.build()
+    }
+
+    ///
     /// A function that keeps the selected path binding rendered and up to date
     ///
     pub async fn render_selection_path(selected_path: BindRef<Option<Arc<Path>>>, actions: ToolActionPublisher<()>, layer: u32) {
@@ -242,7 +264,7 @@ impl Lasso {
     ///
     /// Handles the lasso tool's input
     ///
-    pub async fn handle_input(input: ToolInputStream<()>, actions: ToolActionPublisher<()>) {
+    pub async fn handle_input(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, selection_model: SelectionModel) {
         use self::ToolInput::*;
 
         let mut input   = input;
@@ -256,8 +278,17 @@ impl Lasso {
                 Data(_)         => { }
                 PaintDevice(_)  => { }
 
-                Paint(painting) => { 
-                    Self::select_area(painting, &mut input, &mut actions).await;
+                Paint(painting) => {
+                    // Clear the existing selected path
+                    selection_model.selected_path.set(None);
+                    selection_model.clear_selection();
+
+                    // Select an area
+                    let new_selection = Self::select_area(painting, &mut input, &mut actions).await;
+
+                    // Set as the selected path
+                    let new_selection_path = new_selection.map(|selection| Arc::new(Self::path_for_path(&selection)));
+                    selection_model.selected_path.set(new_selection_path);
                 }
             }
         }
@@ -268,11 +299,13 @@ impl Lasso {
     ///
     pub fn run(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, selection_model: SelectionModel) -> impl Future<Output=()>+Send {
         async move {
+            let input_selection_model   = selection_model.clone();
+
             // Task that renders the selection path whenever it changes
             let render_selection_path   = Self::render_selection_path(BindRef::from(&selection_model.selected_path), actions.clone(), LAYER_SELECTION);
 
             // Task to handle the input from the user
-            let handle_input            = Self::handle_input(input, actions);
+            let handle_input            = Self::handle_input(input, actions, input_selection_model);
 
             // Finish when either of the futures finish
             future::select_all(vec![render_selection_path.boxed(), handle_input.boxed()]).await;
