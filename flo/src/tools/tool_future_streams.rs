@@ -27,6 +27,7 @@ pub (super) struct ToolStreamCore<ToolData> {
 ///
 /// Sends tool actions from a ToolFuture to the rest of the FlowBetween runtime
 ///
+#[derive(Clone)]
 pub struct ToolActionPublisher<ToolData> {
     core: Arc<Mutex<ToolStreamCore<ToolAction<ToolData>>>>
 }
