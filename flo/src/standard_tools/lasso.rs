@@ -147,7 +147,11 @@ impl Lasso {
         builder = builder.line_to(path[0].start_point());
 
         // Finish building the path
-        builder.build()
+        let path = builder.build();
+        let path = path_remove_interior_points(&vec![path], 0.01);
+        let path = Path::from_paths(path.iter());
+
+        path
     }
 
     ///
