@@ -86,7 +86,7 @@ impl Lasso {
     ///
     /// Returns how a preview path should be rendered
     ///
-    fn drawing_for_path(path: Option<Vec<Curve<PathPoint>>>) -> Vec<Draw> {
+    fn drawing_for_path(path: &Option<Vec<Curve<PathPoint>>>) -> Vec<Draw> {
         // Result is a drawing
         let mut path_drawing = vec![];
 
@@ -180,7 +180,7 @@ impl Lasso {
     ///
     /// After the user starts drawing, selects an area on the canvas
     ///
-    pub async fn select_area(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>) {
+    pub async fn select_area(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>) -> Option<Vec<Curve<PathPoint>>> {
         use self::ToolInput::*;
 
         // Start with a point that's just at the initial location
@@ -205,19 +205,19 @@ impl Lasso {
                         points.push(next_point.location);
                     }
 
-                    // Stop if the actgion is cancelled
+                    // Stop if the action is cancelled
                     if next_point.action == PaintAction::Cancel {
                         actions.send_actions(vec![
                             ToolAction::Overlay(OverlayAction::Draw(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]))
                         ]);
-                        return;
+                        return None;
                     }
 
                     // Fit a path to the points being selected
                     let select_path     = Self::fit_path(points.iter().cloned().chain(predicted_points.iter().cloned()));
 
                     // Draw the selection path
-                    let select_drawing  = Self::drawing_for_path(select_path);
+                    let select_drawing  = Self::drawing_for_path(&select_path);
                     actions.send_actions(vec![
                         ToolAction::Overlay(OverlayAction::Draw(select_drawing))
                     ]);
@@ -227,7 +227,7 @@ impl Lasso {
                         actions.send_actions(vec![
                             ToolAction::Overlay(OverlayAction::Draw(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]))
                         ]);
-                        return;
+                        return select_path;
                     }
                 }
 
@@ -235,6 +235,8 @@ impl Lasso {
                 _           => { }
             }
         }
+
+        None
     }
 
     ///
