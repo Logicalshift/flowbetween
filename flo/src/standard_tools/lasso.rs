@@ -7,13 +7,19 @@ use flo_animation::*;
 use flo_canvas::*;
 use flo_curves::*;
 use flo_curves::bezier::*;
+use flo_binding::*;
 
 use futures::prelude::*;
+use futures::future;
 use futures::stream::{BoxStream};
 
 use std::sync::*;
 
-const LAYER_PREVIEW: u32 = 0;
+/// Layer where the current selection is drawn
+const LAYER_SELECTION: u32 = 0;
+
+/// Layer where the preview of the region the user is dragging is drawn
+const LAYER_PREVIEW: u32 = 1;
 
 ///
 /// The data stored for the Lasso tool
@@ -123,9 +129,58 @@ impl Lasso {
     }
 
     ///
+    /// A function that keeps the selected path binding rendered and up to date
+    ///
+    pub async fn render_selection_path(selected_path: BindRef<Option<Arc<Path>>>, actions: ToolActionPublisher<()>, layer: u32) {
+        // Convert the binding to a stream
+        let mut selected_path = follow(selected_path);
+
+        // Re-render the selected path every time it changes
+        while let Some(selected_path) = selected_path.next().await {
+            // Draw the selected path
+            let mut draw_selected_path = vec![];
+
+            draw_selected_path.layer(layer);
+            draw_selected_path.clear_layer();
+
+            if let Some(selected_path) = selected_path {
+                draw_selected_path.new_path();
+
+                for path_component in selected_path.elements() {
+                    use self::PathComponent::*;
+
+                    match path_component {
+                        Move(PathPoint { position: (x, y)} )        => draw_selected_path.move_to(x as f32, y as f32),
+                        Line(PathPoint { position: (x, y)} )        => draw_selected_path.line_to(x as f32, y as f32),
+                        Bezier(
+                            PathPoint { position: (tx, ty) }, 
+                            PathPoint { position: (cp1x, cp1y) }, 
+                            PathPoint { position: (cp2x, cp2y) })   => draw_selected_path.bezier_curve_to(tx as f32, ty as f32, cp1x as f32, cp1y as f32, cp2x as f32, cp2y as f32),
+                        Close                                       => draw_selected_path.close_path()
+                    }
+                }
+
+                // Render twice to generate the selection effect
+                draw_selected_path.line_width_pixels(3.0);
+                draw_selected_path.stroke_color(SELECTION_OUTLINE);
+                draw_selected_path.stroke();
+
+                draw_selected_path.line_width_pixels(1.0);
+                draw_selected_path.stroke_color(SELECTION_BBOX);
+                draw_selected_path.stroke();
+            }
+
+            // Publish an action to draw the path
+            actions.send_actions(vec![
+                ToolAction::Overlay(OverlayAction::Draw(draw_selected_path))
+            ]);
+        }
+    }
+
+    ///
     /// After the user starts drawing, selects an area on the canvas
     ///
-    pub async fn select_area(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>)  {
+    pub async fn select_area(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>) {
         use self::ToolInput::*;
 
         // Start with a point that's just at the initial location
@@ -183,9 +238,9 @@ impl Lasso {
     }
 
     ///
-    /// Implementation of the logic for the lasso tool
+    /// Handles the lasso tool's input
     ///
-    pub async fn run(input: ToolInputStream<()>, actions: ToolActionPublisher<()>) {
+    pub async fn handle_input(input: ToolInputStream<()>, actions: ToolActionPublisher<()>) {
         use self::ToolInput::*;
 
         let mut input   = input;
@@ -203,6 +258,22 @@ impl Lasso {
                     Self::select_area(painting, &mut input, &mut actions).await;
                 }
             }
+        }
+    }
+
+    ///
+    /// Runs the lasso tool
+    ///
+    pub fn run(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, selection_model: SelectionModel) -> impl Future<Output=()>+Send {
+        async move {
+            // Task that renders the selection path whenever it changes
+            let render_selection_path   = Self::render_selection_path(BindRef::from(&selection_model.selected_path), actions.clone(), LAYER_SELECTION);
+
+            // Task to handle the input from the user
+            let handle_input            = Self::handle_input(input, actions);
+
+            // Finish when either of the futures finish
+            future::select_all(vec![render_selection_path.boxed(), handle_input.boxed()]).await;
         }
     }
 }
@@ -237,8 +308,10 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Lasso {
     /// Creates a new instance of the UI model for this tool
     ///
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> Self::Model {
+        let selection_model = flo_model.selection().clone();
+
         LassoModel {
-            future: Mutex::new(ToolFuture::new(move |input, actions| { Self::run(input, actions) }))
+            future: Mutex::new(ToolFuture::new(move |input, actions| { Self::run(input, actions, selection_model.clone()) }))
         }
     }
 
