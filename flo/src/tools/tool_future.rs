@@ -51,7 +51,7 @@ impl ToolFuture {
     ///
     pub fn new<CreateFutureFn, FutureResult>(create_future: CreateFutureFn) -> ToolFuture
     where   CreateFutureFn: Fn(ToolInputStream<()>, ToolActionPublisher<()>) -> FutureResult + Send+Sync+'static,
-            FutureResult:   Future<Output=()> + Send+Sync+'static {
+            FutureResult:   Future<Output=()> + Send+'static {
         ToolFuture {
             create_future:  Box::new(move |input_stream, action_publisher| (create_future)(input_stream, action_publisher).boxed()),
             tool_input:     None,
