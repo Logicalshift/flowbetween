@@ -293,6 +293,7 @@ impl Lasso {
                     // Set as the selected path
                     let new_selection_path = new_selection.map(|selection| Arc::new(Self::path_for_path(&selection)));
                     selection_model.selected_path.set(new_selection_path);
+                    selection_model.cut_selection();
                 }
             }
         }
