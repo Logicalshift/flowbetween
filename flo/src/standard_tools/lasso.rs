@@ -268,7 +268,7 @@ impl Lasso {
     ///
     /// Handles the lasso tool's input
     ///
-    pub async fn handle_input(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, selection_model: SelectionModel) {
+    pub async fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, selection_model: SelectionModel<Anim>) {
         use self::ToolInput::*;
 
         let mut input   = input;
@@ -301,7 +301,7 @@ impl Lasso {
     ///
     /// Runs the lasso tool
     ///
-    pub fn run(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, selection_model: SelectionModel) -> impl Future<Output=()>+Send {
+    pub fn run<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, selection_model: SelectionModel<Anim>) -> impl Future<Output=()>+Send {
         async move {
             let input_selection_model   = selection_model.clone();
 
@@ -317,7 +317,7 @@ impl Lasso {
     }
 }
 
-impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Lasso {
+impl<Anim: 'static+EditableAnimation> Tool<Anim> for Lasso {
     ///
     /// Represents data for the tool at a point in time (typically a snapshot
     /// of the model)

@@ -1,6 +1,7 @@
 use super::super::model::*;
 
 use flo_binding::*;
+use flo_animation::*;
 
 ///
 /// Model representing the state of the selection tools
@@ -18,7 +19,7 @@ impl SelectToolModel {
     ///
     /// Creates a new SelectModel
     ///
-    pub fn new(selection_model: &SelectionModel) -> SelectToolModel {
+    pub fn new<Anim: Animation>(selection_model: &SelectionModel<Anim>) -> SelectToolModel {
         // Binding tracking the number of selected elements
         let selection               = selection_model.selected_elements.clone();
         let num_elements_selected   = computed(move || selection.get().len() as u64);

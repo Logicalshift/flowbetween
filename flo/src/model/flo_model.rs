@@ -32,7 +32,7 @@ pub struct FloModel<Anim: Animation> {
     frame: FrameModel,
 
     /// The selection model
-    selection: SelectionModel,
+    selection: SelectionModel<Anim>,
 
     /// The onion skin model
     onion_skin: OnionSkinModel<Anim>,
@@ -61,7 +61,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
         let timeline            = TimelineModel::new(Arc::clone(&animation), edit_publisher.subscribe());
         let frame_edit_counter  = bind(0);
         let frame               = FrameModel::new(Arc::clone(&animation), edit_publisher.subscribe(), BindRef::new(&timeline.current_time), BindRef::new(&frame_edit_counter), BindRef::new(&timeline.selected_layer));
-        let selection           = SelectionModel::new(&frame, &timeline);
+        let selection           = SelectionModel::new(Arc::clone(&animation), &frame, &timeline);
         let onion_skin          = OnionSkinModel::new(Arc::clone(&animation), &timeline);
 
         let size_binding        = bind(animation.size());
@@ -202,7 +202,7 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     ///
     /// Retrieves the selection model for this animation
     ///
-    pub fn selection(&self) -> &SelectionModel {
+    pub fn selection(&self) -> &SelectionModel<Anim> {
         &self.selection
     }
 

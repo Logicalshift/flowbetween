@@ -10,8 +10,7 @@ use std::collections::HashSet;
 ///
 /// Model representing the item that the user has selected
 ///
-#[derive(Clone)]
-pub struct SelectionModel {
+pub struct SelectionModel<Anim: Animation> {
     /// The list of selected elements
     pub selected_elements: BindRef<Arc<HashSet<ElementId>>>,
 
@@ -22,14 +21,33 @@ pub struct SelectionModel {
     pub selected_path: Binding<Option<Arc<Path>>>,
 
     /// The binding for the selected element (used when updating)
-    selected_elements_binding: Binding<Arc<HashSet<ElementId>>>
+    selected_elements_binding: Binding<Arc<HashSet<ElementId>>>,
+
+    /// The animation this model is for
+    animation: Arc<Anim>,
+
+    /// The layers in the current frame
+    layers: BindRef<Vec<FrameLayerModel>>,
 }
 
-impl SelectionModel {
+impl<Anim: Animation> Clone for SelectionModel<Anim> {
+    fn clone(&self) -> Self {
+        SelectionModel {
+            selected_elements:          self.selected_elements.clone(),
+            selection_in_order:         self.selection_in_order.clone(),
+            selected_path:              self.selected_path.clone(),
+            selected_elements_binding:  self.selected_elements_binding.clone(),
+            animation:                  self.animation.clone(),
+            layers:                     self.layers.clone()
+        }
+    }
+}
+
+impl<Anim: 'static+Animation> SelectionModel<Anim> {
     ///
     /// Creates a new selection model
     ///
-    pub fn new<Anim: Animation>(frame_model: &FrameModel, timeline_model: &TimelineModel<Anim>) -> SelectionModel {
+    pub fn new(animation: Arc<Anim>, frame_model: &FrameModel, timeline_model: &TimelineModel<Anim>) -> SelectionModel<Anim> {
         // Create the binding for the selected element
         let selected_elements_binding   = bind(Arc::new(HashSet::new()));
         let selected_elements           = BindRef::new(&selected_elements_binding);
@@ -40,14 +58,16 @@ impl SelectionModel {
             selected_elements:          selected_elements,
             selected_elements_binding:  selected_elements_binding,
             selected_path:              selected_path,
-            selection_in_order:         selection_in_order
+            selection_in_order:         selection_in_order,
+            animation:                  animation,
+            layers:                     frame_model.layers.clone()
         }
     }
 
     ///
     /// Creates a binding of the selection in back-to-front order
     ///
-    fn selection_in_order<Anim: Animation>(selection: BindRef<Arc<HashSet<ElementId>>>, frame_model: &FrameModel, timeline_model: &TimelineModel<Anim>) -> BindRef<Arc<Vec<ElementId>>> {
+    fn selection_in_order(selection: BindRef<Arc<HashSet<ElementId>>>, frame_model: &FrameModel, timeline_model: &TimelineModel<Anim>) -> BindRef<Arc<Vec<ElementId>>> {
         let frame               = frame_model.frame.clone();
         let invalidation_count  = timeline_model.canvas_invalidation_count.clone();
 
@@ -95,5 +115,17 @@ impl SelectionModel {
     ///
     pub fn clear_selection(&self) {
         self.selected_elements_binding.set(Arc::new(HashSet::new()));
+    }
+}
+
+impl<Anim: 'static+EditableAnimation> SelectionModel<Anim> {
+    ///
+    /// Performs a cut operation using the current selection path on the specified layer, adding the elements inside
+    /// the path to the current selection.
+    ///
+    /// Usually you should check that there are no selected elements and a path set before calling this.
+    ///
+    pub fn cut_selection(&self, layer: u64) {
+
     }
 }
