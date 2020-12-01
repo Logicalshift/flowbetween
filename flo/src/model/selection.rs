@@ -5,6 +5,7 @@ use flo_binding::*;
 use flo_animation::*;
 
 use std::sync::*;
+use std::time::{Duration};
 use std::collections::HashSet;
 
 ///
@@ -28,6 +29,9 @@ pub struct SelectionModel<Anim: Animation> {
 
     /// The layers in the current frame
     layers: BindRef<Vec<FrameLayerModel>>,
+
+    /// The currently selected time
+    current_time: BindRef<Duration>,
 }
 
 impl<Anim: Animation> Clone for SelectionModel<Anim> {
@@ -38,7 +42,8 @@ impl<Anim: Animation> Clone for SelectionModel<Anim> {
             selected_path:              self.selected_path.clone(),
             selected_elements_binding:  self.selected_elements_binding.clone(),
             animation:                  self.animation.clone(),
-            layers:                     self.layers.clone()
+            layers:                     self.layers.clone(),
+            current_time:               self.current_time.clone(),
         }
     }
 }
@@ -60,7 +65,8 @@ impl<Anim: 'static+Animation> SelectionModel<Anim> {
             selected_path:              selected_path,
             selection_in_order:         selection_in_order,
             animation:                  animation,
-            layers:                     frame_model.layers.clone()
+            layers:                     frame_model.layers.clone(),
+            current_time:               BindRef::from(&timeline_model.current_time)
         }
     }
 
@@ -125,7 +131,35 @@ impl<Anim: 'static+EditableAnimation> SelectionModel<Anim> {
     ///
     /// Usually you should check that there are no selected elements and a path set before calling this.
     ///
-    pub fn cut_selection(&self, layer: u64) {
+    pub fn cut_selection(&self, layer_id: u64) {
+        // Selection is cleared as a result of this operation
+        self.selected_elements_binding.set(Arc::new(HashSet::new()));
 
+        // Gather information required to make the cut action
+        let path            = if let Some(path) = self.selected_path.get() { path } else { return; };
+        let path            = Arc::new(path.elements().collect());
+        let when            = self.current_time.get();
+        let inside_group    = self.animation.assign_element_id();
+        let outside_group   = self.animation.assign_element_id();
+
+        // Send the edits to the animation
+        self.animation.perform_edits(vec![AnimationEdit::Layer(layer_id, LayerEdit::Cut {
+            path, when, inside_group, outside_group
+        })]);
+
+        // Read the contents of the inner group (cut has no effect if applied to a non-existent layer)
+        let layers          = self.layers.get();
+        let frame           = layers.iter().filter(|layer| layer.layer_id == layer_id).nth(0);
+        let frame           = if let Some(frame) = frame { frame.frame.get() } else { return; };
+        let frame           = if let Some(frame) = frame { frame } else { return; };
+
+        let cut_elements    = frame.element_with_id(inside_group);
+        let cut_elements    = if let Some(Vector::Group(cut_elements)) = &cut_elements { cut_elements.elements().collect::<Vec<_>>() } else { vec![] };
+
+        // Ungroup the two cut groups
+        self.animation.perform_edits(vec![AnimationEdit::Element(vec![inside_group, outside_group], ElementEdit::Ungroup)]);
+
+        // Set the selection to be the cut elements
+        self.selected_elements_binding.set(Arc::new(cut_elements.into_iter().map(|elem| elem.id()).collect::<HashSet<_>>()));
     }
 }
