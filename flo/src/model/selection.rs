@@ -32,6 +32,9 @@ pub struct SelectionModel<Anim: Animation> {
 
     /// The currently selected time
     current_time: BindRef<Duration>,
+
+    /// The currently selected layer
+    selected_layer: BindRef<Option<u64>>,
 }
 
 impl<Anim: Animation> Clone for SelectionModel<Anim> {
@@ -44,6 +47,7 @@ impl<Anim: Animation> Clone for SelectionModel<Anim> {
             animation:                  self.animation.clone(),
             layers:                     self.layers.clone(),
             current_time:               self.current_time.clone(),
+            selected_layer:             self.selected_layer.clone(),
         }
     }
 }
@@ -66,7 +70,8 @@ impl<Anim: 'static+Animation> SelectionModel<Anim> {
             selection_in_order:         selection_in_order,
             animation:                  animation,
             layers:                     frame_model.layers.clone(),
-            current_time:               BindRef::from(&timeline_model.current_time)
+            current_time:               BindRef::from(&timeline_model.current_time),
+            selected_layer:             BindRef::from(&timeline_model.selected_layer),
         }
     }
 
@@ -131,7 +136,7 @@ impl<Anim: 'static+EditableAnimation> SelectionModel<Anim> {
     ///
     /// Usually you should check that there are no selected elements and a path set before calling this.
     ///
-    pub fn cut_selection(&self, layer_id: u64) {
+    pub fn cut_selection(&self) {
         // Selection is cleared as a result of this operation
         self.selected_elements_binding.set(Arc::new(HashSet::new()));
 
@@ -141,6 +146,8 @@ impl<Anim: 'static+EditableAnimation> SelectionModel<Anim> {
         let when            = self.current_time.get();
         let inside_group    = self.animation.assign_element_id();
         let outside_group   = self.animation.assign_element_id();
+        let layer_id        = self.selected_layer.get();
+        let layer_id        = if let Some(layer_id) = layer_id { layer_id } else { return; };
 
         // Send the edits to the animation
         self.animation.perform_edits(vec![AnimationEdit::Layer(layer_id, LayerEdit::Cut {
