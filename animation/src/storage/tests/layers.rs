@@ -412,7 +412,6 @@ fn cut_square_into_doughnut() {
     ]);
 
     // Layer should contain 2 groups with the inside and outside elements in it
-    let layer       = anim.get_layer_with_id(2).unwrap();
     let frame       = layer.get_frame_at_time(Duration::from_millis(0));
     let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
 
