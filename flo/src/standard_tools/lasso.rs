@@ -283,17 +283,27 @@ impl Lasso {
                 PaintDevice(_)  => { }
 
                 Paint(painting) => {
-                    // Clear the existing selected path
-                    selection_model.selected_path.set(None);
-                    selection_model.clear_selection();
+                    if painting.action == PaintAction::Start {
+                        let (x, y) = painting.location;
 
-                    // Select an area
-                    let new_selection = Self::select_area(painting, &mut input, &mut actions).await;
+                        if selection_model.point_in_selection_path(x as f64, y as f64) {
+                            // Clicking inside the path: drag the selection
+                            selection_model.cut_selection();
+                        } else {
+                            // Clicking outside of the path: create a new selection
 
-                    // Set as the selected path
-                    let new_selection_path = new_selection.map(|selection| Arc::new(Self::path_for_path(&selection)));
-                    selection_model.selected_path.set(new_selection_path);
-                    selection_model.cut_selection();
+                            // Clear the existing selected path
+                            selection_model.selected_path.set(None);
+                            selection_model.clear_selection();
+
+                            // Select an area
+                            let new_selection = Self::select_area(painting, &mut input, &mut actions).await;
+
+                            // Set as the selected path
+                            let new_selection_path = new_selection.map(|selection| Arc::new(Self::path_for_path(&selection)));
+                            selection_model.selected_path.set(new_selection_path);
+                        }
+                    }
                 }
             }
         }

@@ -3,6 +3,7 @@ use super::timeline::*;
 
 use flo_binding::*;
 use flo_animation::*;
+use flo_curves::bezier::path::*;
 
 use std::sync::*;
 use std::time::{Duration};
@@ -126,6 +127,17 @@ impl<Anim: 'static+Animation> SelectionModel<Anim> {
     ///
     pub fn clear_selection(&self) {
         self.selected_elements_binding.set(Arc::new(HashSet::new()));
+    }
+
+    ///
+    /// Returns true if the specified point is within the selection path
+    ///
+    pub fn point_in_selection_path(&self, x: f64, y: f64) -> bool {
+        if let Some(path) = self.selected_path.get() {
+            path_contains_point(&*path, &PathPoint { position: (x, y) })
+        } else {
+            false
+        }
     }
 }
 
