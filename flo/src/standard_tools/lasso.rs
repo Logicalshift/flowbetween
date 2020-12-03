@@ -300,8 +300,10 @@ impl Lasso {
 
                         if selection_model.point_in_selection_path(x as f64, y as f64) {
                             // Clicking inside the path: drag the selection
-                            // TODO: only if nothing is selected yet (if something is selected the path is already cut)
-                            selection_model.cut_selection();
+                            if selection_model.selected_elements.get().len() == 0 {
+                                // (If we've generated the selection, then don't cut again)
+                                selection_model.cut_selection();
+                            }
 
                             // Drag the selection
                             let translate = super::select::Select::drag_selection(painting, &mut input, &mut actions, &*model, LAYER_PREVIEW).await;
