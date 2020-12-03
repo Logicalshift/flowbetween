@@ -294,9 +294,18 @@ impl Lasso {
                             selection_model.cut_selection();
 
                             // Drag the selection
-                            super::select::Select::drag_selection(painting, &mut input, &mut actions, &*model, LAYER_PREVIEW).await;
+                            let translate = super::select::Select::drag_selection(painting, &mut input, &mut actions, &*model, LAYER_PREVIEW).await;
 
-                            // TODO: translate the selection via the drag result
+                            if let Some((dx, dy)) = translate {
+                                // Translate the selection via the drag result
+                                let selected_elements = selection_model.selected_elements.get().iter().cloned().collect();
+                                model.perform_edits(vec![
+                                    AnimationEdit::Element(selected_elements, ElementEdit::Transform(vec![
+                                        ElementTransform::SetAnchor(0.0, 0.0),
+                                        ElementTransform::MoveTo(dx as f64, dy as f64)
+                                    ]))
+                                ])
+                            }
                         } else {
                             // Clicking outside of the path: create a new selection
 
