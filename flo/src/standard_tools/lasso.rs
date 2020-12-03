@@ -294,7 +294,7 @@ impl Lasso {
                             selection_model.cut_selection();
 
                             // Drag the selection
-                            super::select::Select::drag_selection(painting, &mut input, &mut actions, &model, LAYER_PREVIEW).await;
+                            super::select::Select::drag_selection(painting, &mut input, &mut actions, &*model, LAYER_PREVIEW).await;
 
                             // TODO: translate the selection via the drag result
                         } else {

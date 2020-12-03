@@ -152,15 +152,14 @@ impl Select {
     }
 
     ///
-    /// Drags-to-move the current selection, returning the offset to apply if the operation is completed
+    /// Generates the selection preview drawing actions from a model
     ///
-    pub async fn drag_selection<Anim: 'static+EditableAnimation>(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>, flo_model: &Arc<FloModel<Anim>>, preview_layer: u32) -> Option<(f32, f32)> {
+    fn generate_selection_preview<Anim: 'static+EditableAnimation>(flo_model: &FloModel<Anim>) -> Vec<Draw> {
         // Determine the selected elements from the model
         let current_frame           = flo_model.frame().frame.get();
         let selected_elements       = flo_model.selection().selected_elements.get();
 
         // Fetch the elements from the frame and determine how to draw the highlight for them
-        // (TODO: extract this into its own function)
         let mut selection_drawing   = vec![];
         let mut bounds              = Rect::empty();
 
@@ -198,6 +197,15 @@ impl Select {
             selection_drawing.extend(Self::scaling_handles_for_bounding_box(&bounds));
             selection_drawing.extend(Self::rotation_handle_for_bounding_box(&bounds));
         }
+
+        selection_drawing
+    }
+
+    ///
+    /// Drags-to-move the current selection, returning the offset to apply if the operation is completed
+    ///
+    pub async fn drag_selection<Anim: 'static+EditableAnimation>(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>, flo_model: &FloModel<Anim>, preview_layer: u32) -> Option<(f32, f32)> {
+        let selection_drawing = Self::generate_selection_preview(flo_model);
 
         // Draw the initial selection by defining it as a sprite
         actions.send_actions(vec![
