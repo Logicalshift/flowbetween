@@ -240,7 +240,6 @@ impl Select {
 
                         PaintAction::Finish     => {
                             // The drag offset is the result
-                            println!("Drag finish at {:?}", drag_offset);
                             actions.send_actions(vec![
                                 ToolAction::Overlay(OverlayAction::Draw(vec![Draw::Layer(preview_layer), Draw::ClearLayer]))
                             ]);
@@ -257,7 +256,6 @@ impl Select {
                     }
 
                     // Redraw the selection
-                    println!("Render at {:?}", drag_offset);
                     actions.send_actions(vec![
                         ToolAction::Overlay(OverlayAction::Draw(vec![
                             Draw::Layer(preview_layer), 

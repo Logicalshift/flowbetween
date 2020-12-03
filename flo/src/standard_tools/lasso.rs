@@ -1,3 +1,5 @@
+use super::select::*;
+
 use crate::tools::*;
 use crate::model::*;
 use crate::style::*;
@@ -268,11 +270,12 @@ impl Lasso {
     ///
     /// Handles the lasso tool's input
     ///
-    pub async fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, selection_model: SelectionModel<Anim>) {
+    pub async fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, model: Arc<FloModel<Anim>>) {
         use self::ToolInput::*;
 
-        let mut input   = input;
-        let mut actions = actions;
+        let mut input       = input;
+        let mut actions     = actions;
+        let selection_model = model.selection();
 
         while let Some(input_event) = input.next().await {
             // Main input loop
@@ -289,6 +292,11 @@ impl Lasso {
                         if selection_model.point_in_selection_path(x as f64, y as f64) {
                             // Clicking inside the path: drag the selection
                             selection_model.cut_selection();
+
+                            // Drag the selection
+                            super::select::Select::drag_selection(painting, &mut input, &mut actions, &model, LAYER_PREVIEW).await;
+
+                            // TODO: translate the selection via the drag result
                         } else {
                             // Clicking outside of the path: create a new selection
 
@@ -312,15 +320,13 @@ impl Lasso {
     ///
     /// Runs the lasso tool
     ///
-    pub fn run<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, selection_model: SelectionModel<Anim>) -> impl Future<Output=()>+Send {
+    pub fn run<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, model: Arc<FloModel<Anim>>) -> impl Future<Output=()>+Send {
         async move {
-            let input_selection_model   = selection_model.clone();
-
             // Task that renders the selection path whenever it changes
-            let render_selection_path   = Self::render_selection_path(BindRef::from(&selection_model.selected_path), actions.clone(), LAYER_SELECTION);
+            let render_selection_path   = Self::render_selection_path(BindRef::from(&model.selection().selected_path), actions.clone(), LAYER_SELECTION);
 
             // Task to handle the input from the user
-            let handle_input            = Self::handle_input(input, actions, input_selection_model);
+            let handle_input            = Self::handle_input(input, actions, Arc::clone(&model));
 
             // Finish when either of the futures finish
             future::select_all(vec![render_selection_path.boxed(), handle_input.boxed()]).await;
@@ -358,10 +364,8 @@ impl<Anim: 'static+EditableAnimation> Tool<Anim> for Lasso {
     /// Creates a new instance of the UI model for this tool
     ///
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> Self::Model {
-        let selection_model = flo_model.selection().clone();
-
         LassoModel {
-            future: Mutex::new(ToolFuture::new(move |input, actions| { Self::run(input, actions, selection_model.clone()) }))
+            future: Mutex::new(ToolFuture::new(move |input, actions| { Self::run(input, actions, Arc::clone(&flo_model)) }))
         }
     }
 
@@ -382,7 +386,7 @@ impl<Anim: 'static+EditableAnimation> Tool<Anim> for Lasso {
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     ///
-    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, tool_model: &Self::Model, data: Option<Arc<Self::ToolData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<Self::ToolData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<Self::ToolData>>> {
+    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, tool_model: &Self::Model, _data: Option<Arc<Self::ToolData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<Self::ToolData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<Self::ToolData>>> {
         Box::new(tool_model.future.lock().unwrap().actions_for_input(input).into_iter())
     }
 }
