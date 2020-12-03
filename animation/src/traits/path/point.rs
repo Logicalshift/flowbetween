@@ -22,6 +22,15 @@ impl PathPoint {
         }
     }
 
+    ///
+    /// Returns a translated path point
+    ///
+    pub fn translate(&self, dx: f64, dy: f64) -> PathPoint {
+        PathPoint {
+            position: (self.position.0 + dx, self.position.1 + dy)
+        }
+    }
+
     pub fn x(&self) -> f32 {
         self.position.0 as f32
     }

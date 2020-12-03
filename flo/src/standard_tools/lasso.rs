@@ -318,7 +318,13 @@ impl Lasso {
                                     ]))
                                 ]);
 
-                                // TODO: translate the selection path too
+                                // Translate the selection path too
+                                let translated_path = selection_model.selected_path.get()
+                                    .map(|path| {
+                                        Path::from_elements(path.elements()
+                                            .map(|component| component.translate(dx as f64, dy as f64)))
+                                    }).map(|path| Arc::new(path));
+                                selection_model.selected_path.set(translated_path);
                             }
                         } else {
                             // Clicking outside of the path: create a new selection

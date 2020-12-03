@@ -20,6 +20,20 @@ pub enum PathComponent {
 
 impl PathComponent {
     ///
+    /// Returns a path component that has been translated by the specified vector
+    ///
+    pub fn translate(&self, dx: f64, dy: f64) -> PathComponent {
+        use self::PathComponent::*;
+
+        match self {
+            Close               => Close,
+            Move(point)         => Move(point.translate(dx, dy)),
+            Line(point)         => Line(point.translate(dx, dy)),
+            Bezier(p1, p2, p3)  => Bezier(p1.translate(dx, dy), p2.translate(dx, dy), p3.translate(dx, dy)),
+        }
+    }
+
+    ///
     /// Returns the number of points a particular path component will use in the database
     ///
     pub fn num_points(&self) -> usize {
