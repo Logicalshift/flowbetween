@@ -152,6 +152,137 @@ impl Select {
     }
 
     ///
+    /// Drags-to-move the current selection, returning the offset to apply if the operation is completed
+    ///
+    pub async fn drag_selection<Anim: 'static+EditableAnimation>(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>, flo_model: &Arc<FloModel<Anim>>, preview_layer: u32) -> Option<(f32, f32)> {
+        // Determine the selected elements from the model
+        let current_frame           = flo_model.frame().frame.get();
+        let selected_elements       = flo_model.selection().selected_elements.get();
+
+        // Fetch the elements from the frame and determine how to draw the highlight for them
+        // (TODO: extract this into its own function)
+        let mut selection_drawing   = vec![];
+        let mut bounds              = Rect::empty();
+
+        if let Some(current_frame) = current_frame.as_ref() {
+            for selected_id in selected_elements.iter() {
+                let element = current_frame.element_with_id(*selected_id);
+
+                if let Some(element) = element {
+                    // Update the properties according to this element
+                    let properties  = current_frame.apply_properties_for_element(&element, Arc::new(VectorProperties::default()));
+
+                    // Draw the highlight for it
+                    let (drawing, bounding_box) = Self::highlight_for_selection(&element, &properties);
+                    selection_drawing.extend(drawing);
+                    bounds = bounds.union(bounding_box);
+                }
+            }
+        }
+
+        // Draw a bounding box around the whole thing
+        if !bounds.is_zero_size() {
+            let bounds = bounds.inset(-2.0, -2.0);
+
+            bounds.draw(&mut selection_drawing);
+
+            selection_drawing.line_width_pixels(2.0);
+            selection_drawing.stroke_color(SELECTION_OUTLINE);
+            selection_drawing.stroke();
+
+            selection_drawing.line_width_pixels(0.5);
+            selection_drawing.stroke_color(SELECTION_BBOX);
+            selection_drawing.stroke();
+
+            // Draw the scaling handles (TODO: except when the user is dragging the selection)
+            selection_drawing.extend(Self::scaling_handles_for_bounding_box(&bounds));
+            selection_drawing.extend(Self::rotation_handle_for_bounding_box(&bounds));
+        }
+
+        // Draw the initial selection by defining it as a sprite
+        actions.send_actions(vec![
+            ToolAction::Overlay(OverlayAction::Draw(vec![
+                Draw::Sprite(SPRITE_SELECTION_OUTLINE),
+                Draw::ClearSprite
+            ])),
+            ToolAction::Overlay(OverlayAction::Draw(selection_drawing.clone())),
+            ToolAction::Overlay(OverlayAction::Draw(vec![
+                Draw::Layer(preview_layer), 
+                Draw::ClearLayer,
+                Draw::SpriteTransform(SpriteTransform::Identity),
+                Draw::DrawSprite(SPRITE_SELECTION_OUTLINE)
+            ])),
+        ]);
+
+        // The drag is relative to the initial drag event
+        let initial_position    = initial_event.location;
+        let pointer_id          = initial_event.pointer_id;
+
+        // Loop until the drag operation finishes
+        while let Some(input_event) = input.next().await {
+            match input_event {
+                ToolInput::Paint(painting) => {
+                    // Only tracking events for the pointer used to start the drag
+                    if painting.pointer_id != pointer_id {
+                        continue;
+                    }
+                    
+                    // Compute the drag offset
+                    let position    = painting.location;
+                    let drag_offset = (position.0-initial_position.0, position.1-initial_position.1);
+
+                    // Determine what to do for this drag event
+                    match painting.action {
+                        PaintAction::Start      => { },
+                        
+                        PaintAction::Continue |
+                        PaintAction::Prediction => { },
+
+                        PaintAction::Finish     => {
+                            // The drag offset is the result
+                            println!("Drag finish at {:?}", drag_offset);
+                            actions.send_actions(vec![
+                                ToolAction::Overlay(OverlayAction::Draw(vec![Draw::Layer(preview_layer), Draw::ClearLayer]))
+                            ]);
+                            return Some(drag_offset);
+                        }
+
+                        PaintAction::Cancel     => {
+                            // No drag action if the drag is cancelled
+                            actions.send_actions(vec![
+                                ToolAction::Overlay(OverlayAction::Draw(vec![Draw::Layer(preview_layer), Draw::ClearLayer]))
+                            ]);
+                            return None;
+                        }
+                    }
+
+                    // Redraw the selection
+                    println!("Render at {:?}", drag_offset);
+                    actions.send_actions(vec![
+                        ToolAction::Overlay(OverlayAction::Draw(vec![
+                            Draw::Layer(preview_layer), 
+                            Draw::ClearLayer,
+                            Draw::SpriteTransform(SpriteTransform::Identity),
+                            Draw::PushState,
+                            Draw::MultiplyTransform(Transform2D::translate(drag_offset.0, drag_offset.1)),
+                            Draw::DrawSprite(SPRITE_SELECTION_OUTLINE),
+                            Draw::PopState
+                        ]))
+                    ]);
+                }
+
+                _ => { }
+            }
+        }
+
+        // The tool was switched while dragging
+        actions.send_actions(vec![
+            ToolAction::Overlay(OverlayAction::Draw(vec![Draw::Layer(preview_layer), Draw::ClearLayer]))
+        ]);
+        None
+    }
+
+    ///
     /// Returns the list of commands to set up for drawing some selections
     ///
     fn selection_drawing_settings() -> Vec<Draw> {
