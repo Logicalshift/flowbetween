@@ -291,6 +291,7 @@ impl Lasso {
 
                         if selection_model.point_in_selection_path(x as f64, y as f64) {
                             // Clicking inside the path: drag the selection
+                            // TODO: only if nothing is selected yet (if something is selected the path is already cut)
                             selection_model.cut_selection();
 
                             // Drag the selection
@@ -304,7 +305,9 @@ impl Lasso {
                                         ElementTransform::SetAnchor(0.0, 0.0),
                                         ElementTransform::MoveTo(dx as f64, dy as f64)
                                     ]))
-                                ])
+                                ]);
+
+                                // TODO: translate the selection path too
                             }
                         } else {
                             // Clicking outside of the path: create a new selection
