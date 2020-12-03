@@ -204,8 +204,8 @@ impl Select {
             ToolAction::Overlay(OverlayAction::Draw(vec![
                 Draw::Sprite(SPRITE_SELECTION_OUTLINE),
                 Draw::ClearSprite
-            ])),
-            ToolAction::Overlay(OverlayAction::Draw(selection_drawing.clone())),
+            ].into_iter()
+            .chain(selection_drawing.iter().cloned()).collect())),
             ToolAction::Overlay(OverlayAction::Draw(vec![
                 Draw::Layer(preview_layer), 
                 Draw::ClearLayer,
