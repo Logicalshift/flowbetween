@@ -1,5 +1,3 @@
-use super::select::*;
-
 use crate::tools::*;
 use crate::model::*;
 use crate::style::*;
@@ -157,6 +155,40 @@ impl Lasso {
     }
 
     ///
+    /// Returns the rendering operations for a selected path
+    ///
+    pub fn drawing_for_selection_path(selected_path: &Path) -> Vec<Draw> {
+        let mut draw_selected_path = vec![];
+
+        draw_selected_path.new_path();
+
+        for path_component in selected_path.elements() {
+            use self::PathComponent::*;
+
+            match path_component {
+                Move(PathPoint { position: (x, y)} )        => draw_selected_path.move_to(x as f32, y as f32),
+                Line(PathPoint { position: (x, y)} )        => draw_selected_path.line_to(x as f32, y as f32),
+                Bezier(
+                    PathPoint { position: (tx, ty) }, 
+                    PathPoint { position: (cp1x, cp1y) }, 
+                    PathPoint { position: (cp2x, cp2y) })   => draw_selected_path.bezier_curve_to(tx as f32, ty as f32, cp1x as f32, cp1y as f32, cp2x as f32, cp2y as f32),
+                Close                                       => draw_selected_path.close_path()
+            }
+        }
+
+        // Render twice to generate the selection effect
+        draw_selected_path.line_width_pixels(3.0);
+        draw_selected_path.stroke_color(SELECTION_OUTLINE);
+        draw_selected_path.stroke();
+
+        draw_selected_path.line_width_pixels(1.0);
+        draw_selected_path.stroke_color(SELECTION_BBOX);
+        draw_selected_path.stroke();
+
+        draw_selected_path
+    }
+
+    ///
     /// A function that keeps the selected path binding rendered and up to date
     ///
     pub async fn render_selection_path(selected_path: BindRef<Option<Arc<Path>>>, actions: ToolActionPublisher<()>, layer: u32) {
@@ -172,30 +204,7 @@ impl Lasso {
             draw_selected_path.clear_layer();
 
             if let Some(selected_path) = selected_path {
-                draw_selected_path.new_path();
-
-                for path_component in selected_path.elements() {
-                    use self::PathComponent::*;
-
-                    match path_component {
-                        Move(PathPoint { position: (x, y)} )        => draw_selected_path.move_to(x as f32, y as f32),
-                        Line(PathPoint { position: (x, y)} )        => draw_selected_path.line_to(x as f32, y as f32),
-                        Bezier(
-                            PathPoint { position: (tx, ty) }, 
-                            PathPoint { position: (cp1x, cp1y) }, 
-                            PathPoint { position: (cp2x, cp2y) })   => draw_selected_path.bezier_curve_to(tx as f32, ty as f32, cp1x as f32, cp1y as f32, cp2x as f32, cp2y as f32),
-                        Close                                       => draw_selected_path.close_path()
-                    }
-                }
-
-                // Render twice to generate the selection effect
-                draw_selected_path.line_width_pixels(3.0);
-                draw_selected_path.stroke_color(SELECTION_OUTLINE);
-                draw_selected_path.stroke();
-
-                draw_selected_path.line_width_pixels(1.0);
-                draw_selected_path.stroke_color(SELECTION_BBOX);
-                draw_selected_path.stroke();
+                draw_selected_path.extend(Self::drawing_for_selection_path(&*selected_path));
             }
 
             // Publish an action to draw the path
