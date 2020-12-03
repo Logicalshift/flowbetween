@@ -1,3 +1,4 @@
+use super::lasso::*;
 use super::select_tool_model::*;
 use crate::menu::*;
 use crate::tools::*;
@@ -158,6 +159,7 @@ impl Select {
         // Determine the selected elements from the model
         let current_frame           = flo_model.frame().frame.get();
         let selected_elements       = flo_model.selection().selected_elements.get();
+        let selected_path           = flo_model.selection().selected_path.get();
 
         // Fetch the elements from the frame and determine how to draw the highlight for them
         let mut selection_drawing   = vec![];
@@ -177,6 +179,16 @@ impl Select {
                     bounds = bounds.union(bounding_box);
                 }
             }
+        }
+
+        // Draw the selected path if it exists
+        if let Some(selected_path) = selected_path {
+            // Draw the selected path
+            selection_drawing.extend(Lasso::drawing_for_selection_path(&*selected_path));
+
+            // Incorporate the selected path bounds
+            let selected_path_bounds = selected_path.bounding_box();
+            bounds = bounds.union(selected_path_bounds);
         }
 
         // Draw a bounding box around the whole thing
