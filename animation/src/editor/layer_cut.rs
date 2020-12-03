@@ -80,6 +80,7 @@ impl StreamAnimationCore {
                         next_element_id         = current_element.order_before;
 
                         // Update the properties for this element
+                        properties              = Arc::new(VectorProperties::default());
                         for attachment_id in current_element.attachments.iter() {
                             let attachment  = frame.elements.get(attachment_id);
                             let attachment  = if let Some(attachment) = attachment { attachment } else { continue; };
