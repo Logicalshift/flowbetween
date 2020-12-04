@@ -1,6 +1,7 @@
 use super::point::*;
 use super::curve::*;
 use super::component::*;
+use super::super::vector::*;
 
 use flo_canvas::*;
 use flo_curves::geo::*;
@@ -51,6 +52,31 @@ impl Path {
     pub fn from_elements<Elements: IntoIterator<Item=PathComponent>>(elements: Elements) -> Path {
         Path {
             elements: Arc::new(elements.into_iter().collect())
+        }
+    }
+
+    ///
+    /// Applies the transformations specified in a set of properties
+    ///
+    pub fn apply_transformations(&mut self, properties: &VectorProperties) {
+        if properties.transformations.len() > 0 {
+            for transform in properties.transformations.iter() {
+                *self = transform.transform_path(self);
+            }
+        }
+    }
+
+    ///
+    /// Removes the transformations specified in a set of properties
+    ///
+    pub fn unapply_transformations(&mut self, properties: &VectorProperties) {
+        if properties.transformations.len() > 0 {
+            for transform in properties.transformations.iter() {
+                let transform   = transform.invert();
+                if let Some(transform) = transform {
+                    *self       = transform.transform_path(self);
+                }
+            }
         }
     }
 

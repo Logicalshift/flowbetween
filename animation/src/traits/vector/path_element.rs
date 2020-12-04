@@ -76,19 +76,11 @@ impl VectorElement for PathElement {
 
         // Apply any transformations in the properties
         path.map(|path| {
-            let path = if properties.transformations.len() > 0 {
-                let mut path = path;
+            let mut path = path;
 
-                for transform in properties.transformations.iter() {
-                    for path_component in path.iter_mut() {
-                        *path_component = transform.transform_path(path_component);
-                    }
-                }
-
-                path
-            } else {
-                path
-            };
+            for path_component in path.iter_mut() {
+                path_component.apply_transformations(properties);
+            }
 
             path
         })
@@ -109,11 +101,8 @@ impl VectorElement for PathElement {
 
         if properties.transformations.len() > 0 {
             // Transform the path
-            let mut path = properties.transformations[0].transform_path(&self.path);
-
-            for transform in properties.transformations.iter().skip(1) {
-                path = transform.transform_path(&path);
-            }
+            let mut path = self.path.clone();
+            path.apply_transformations(properties);
 
             // Draw the transformed path
             gc.draw_list(properties.brush.render_path(&properties.brush_properties, &path));
