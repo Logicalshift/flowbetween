@@ -90,7 +90,7 @@ impl StreamAnimationCore {
 
                         // TODO: if the element is a 'standard' group - ie, not one that's already doing path arithmetic, recurse into it
 
-                        // Get the path for this element (for the cut operation, we need  the interior points to be removed)
+                        // Get the path for this element (for the cut operation, we need the interior points to be removed)
                         let element_path        = current_element.element.to_path(&properties, PathConversion::RemoveInteriorPoints);
                         let element_path        = if let Some(element_path) = element_path { element_path } else { continue; };
 
