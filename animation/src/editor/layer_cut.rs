@@ -123,8 +123,12 @@ impl StreamAnimationCore {
                                 // Path cut in two: remove the old element and replace with two path elements
                                 replaced_elements.push(current_element_id);
 
-                                let exterior        = PathElement::new(ElementId::Unassigned, Path::from_paths(&cut.exterior_path));
-                                let interior        = PathElement::new(ElementId::Unassigned, Path::from_paths(&cut.interior_path));
+                                let mut exterior    = Path::from_paths(&cut.exterior_path);
+                                let mut interior    = Path::from_paths(&cut.interior_path);
+                                exterior.unapply_transformations(&*properties);
+                                interior.unapply_transformations(&*properties);
+                                let exterior        = PathElement::new(ElementId::Unassigned, exterior);
+                                let interior        = PathElement::new(ElementId::Unassigned, interior);
 
                                 let mut exterior    = current_element.clone_with_element(Vector::Path(exterior), false);
                                 let mut interior    = current_element.clone_with_element(Vector::Path(interior), false);
