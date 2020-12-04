@@ -559,6 +559,34 @@ impl KeyFrameCore {
     }
 
     ///
+    /// Ensures that the 'attached_to' value is set correctly for all of the attachments that belong to the specified element
+    ///
+    pub fn update_attachments(&mut self, element_id: ElementId) -> PendingStorageChange {
+        let mut updates     = PendingStorageChange::new();
+        let mut attachments = vec![];
+
+        // Get the list of attachments for this element
+        if let Some(element_wrapper) = self.elements.get(&element_id) {
+            attachments = element_wrapper.attachments.clone();
+        }
+
+        // Ensure that the element is included in the 'attached_to' list for each of its attachments
+        for attachment_id in attachments {
+            // Fetch the attachment
+            if let (Some(attachment_wrapper), Some(attachment_id)) = (self.elements.get_mut(&attachment_id), attachment_id.id()) {
+                // Check that the element is attached
+                if !attachment_wrapper.attached_to.contains(&element_id) {
+                    // Add to the list of attachments if it's not
+                    attachment_wrapper.attached_to.push(element_id);
+                    updates.push_element(attachment_id, attachment_wrapper.clone());
+                }
+            }
+        }
+
+        updates
+    }
+
+    ///
     /// Given an element that may contain child items (eg, a group), checks that all the child elements have the
     /// appropriate parent, recursively
     ///

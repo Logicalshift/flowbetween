@@ -244,14 +244,21 @@ impl StreamAnimationCore {
             }
 
             // Update the elements in the core
-            frame.future_sync(move |frame| {
+            let updates = frame.future_sync(move |frame| {
                 async move {
+                    let mut updates = PendingStorageChange::new();
+
                     for wrapper in updated_elements {
                         let element_id = wrapper.element.id();
                         frame.elements.insert(element_id, wrapper);
+
+                        updates.extend(frame.update_attachments(element_id));
                     }
+
+                    updates
                 }.boxed()
-            }).await.ok();
+            }).await.unwrap();
+            pending.extend(updates);
 
             // Put the inside and outside elements into groups, and add those groups to the layer
             let inside_group_id     = self.assign_element_id(inside_group_id).await;
@@ -268,8 +275,8 @@ impl StreamAnimationCore {
             // Add the two groups to the frame
             let pending = frame.future_sync(move |frame| {
                 async move {
-                    if inside_group_len > 0 { pending.extend(frame.add_element_to_end(inside_group.element.id(), inside_group)); }
-                    if outside_group_len > 0 { pending.extend(frame.add_element_to_end(outside_group.element.id(), outside_group)); }
+                    if inside_group_len > 0     { pending.extend(frame.add_element_to_end(inside_group.element.id(), inside_group)); }
+                    if outside_group_len > 0    { pending.extend(frame.add_element_to_end(outside_group.element.id(), outside_group)); }
 
                     pending
                 }.boxed()
