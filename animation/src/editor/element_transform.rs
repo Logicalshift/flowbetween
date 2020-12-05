@@ -281,6 +281,10 @@ impl StreamAnimationCore {
                 if let (Some(new_transformations), Some(frame)) = (element_transforms.transformations_for_element.get(element_id), self.edit_keyframe_for_element(*element_id).await) {
                     // Create a new transformation if there's none yet attached to the element, update the existing one if there is
                     if let Some(existing_attachment_id) = element_transforms.current_transform_element_id.get(element_id) {
+                        // Combine any transformations that we can
+                        let mut new_transformations = new_transformations.clone();
+                        Transformation::compact(&mut new_transformations);
+
                         // Replace the transformation element with a new one
                         frame.sync(|frame| {
                             let transform_wrapper       = frame.elements.get_mut(existing_attachment_id)?;
