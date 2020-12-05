@@ -300,14 +300,21 @@ impl StreamAnimationCore {
 
                                 update_elements.push(StorageCommand::WriteElement(transform_id, transform_wrapper.serialize_to_string()));
                             } else {
+                                // Clone the transformation wrapper
+                                let mut transform_wrapper = transform_wrapper.clone();
+
                                 // Write the transformation to a new attachment
                                 transform_wrapper.element   = Vector::Transformation((new_attachment_id, new_transformations.clone()));
 
                                 update_elements.push(StorageCommand::WriteElement(new_attachment_id.id().unwrap(), transform_wrapper.serialize_to_string()));
                                 update_elements.push(StorageCommand::AttachElementToLayer(frame.layer_id, new_attachment_id.id().unwrap(), frame.start));
 
+                                // Remove and add the attachments
                                 new_attachments.insert(*element_id, new_attachment_id);
                                 remove_attachments.insert(*element_id, *existing_attachment_id);
+
+                                // Add the new attachment to the frame
+                                frame.elements.insert(new_attachment_id, transform_wrapper);
                             }
 
                             Some(())
