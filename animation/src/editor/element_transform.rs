@@ -273,16 +273,20 @@ impl StreamAnimationCore {
             }
 
             // Update or create the attachments for each of the elements
-            let mut new_attachments = HashMap::new();
-            let mut update_elements = vec![];
+            let mut new_attachments     = HashMap::new();
+            let mut remove_attachments  = HashMap::new();
+            let mut update_elements     = vec![];
 
             for element_id in element_ids.iter() {
                 // Get the transforms and the frame for thie element
                 if let (Some(new_transformations), Some(frame)) = (element_transforms.transformations_for_element.get(element_id), self.edit_keyframe_for_element(*element_id).await) {
                     // Create a new transformation if there's none yet attached to the element, update the existing one if there is
                     if let Some(existing_attachment_id) = element_transforms.current_transform_element_id.get(element_id) {
-                        // Combine any transformations that we can
-                        let mut new_transformations = new_transformations.clone();
+                        // Assign a new attachment ID in case we can't edit the existing attachment
+                        let new_attachment_id           = self.assign_element_id(ElementId::Unassigned).await;
+
+                        // Combine any transformations that we can to shorten the number in the attachments
+                        let mut new_transformations     = new_transformations.clone();
                         Transformation::compact(&mut new_transformations);
 
                         // Replace the transformation element with a new one
@@ -291,7 +295,17 @@ impl StreamAnimationCore {
                             let transform_id            = existing_attachment_id.id()?;
                             transform_wrapper.element   = Vector::Transformation((transform_wrapper.element.id(), new_transformations.clone()));
 
-                            update_elements.push(StorageCommand::WriteElement(transform_id, transform_wrapper.serialize_to_string()));
+                            if transform_wrapper.attached_to == vec![ElementId::Assigned(*element_id)] {
+                                // The existing attachment is only attached to the element being edited, so we can edit just the attachment
+                                update_elements.push(StorageCommand::WriteElement(transform_id, transform_wrapper.serialize_to_string()));
+                            } else {
+                                // Write the transformation to a new attachment
+                                update_elements.push(StorageCommand::WriteElement(new_attachment_id.id().unwrap(), transform_wrapper.serialize_to_string()));
+                                update_elements.push(StorageCommand::AttachElementToLayer(frame.layer_id, new_attachment_id.id().unwrap(), frame.start));
+
+                                new_attachments.insert(*element_id, new_attachment_id);
+                                remove_attachments.insert(*element_id, *existing_attachment_id);
+                            }
 
                             Some(())
                         });
@@ -317,8 +331,15 @@ impl StreamAnimationCore {
             self.request(update_elements).await;
 
             // Update any elements that need new attachments
-            self.update_elements(new_attachments.keys().cloned().collect::<Vec<_>>(), 
-                |wrapper| ElementUpdate::AddAttachments(vec![new_attachments.get(&wrapper.element.id().id().unwrap()).unwrap().clone()])).await;
+            if remove_attachments.len() > 0 {
+                self.update_elements(remove_attachments.keys().cloned().collect::<Vec<_>>(), 
+                    |wrapper| ElementUpdate::RemoveAttachments(vec![remove_attachments.get(&wrapper.element.id().id().unwrap()).unwrap().clone()])).await;
+            }
+
+            if new_attachments.len() > 0 {
+                self.update_elements(new_attachments.keys().cloned().collect::<Vec<_>>(), 
+                    |wrapper| ElementUpdate::AddAttachments(vec![new_attachments.get(&wrapper.element.id().id().unwrap()).unwrap().clone()])).await;
+            }
         }
     }
 }
