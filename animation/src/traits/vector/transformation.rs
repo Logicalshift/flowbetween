@@ -12,6 +12,7 @@ use flo_canvas::*;
 
 use smallvec::*;
 
+use std::iter;
 use std::sync::*;
 use std::time::{Duration};
 
@@ -272,6 +273,54 @@ impl Transformation {
         // Build into a new path
         Path::from_elements(new_elements)
     }
+
+    ///
+    /// Performs a matrix multiplication operation on two transformation matrices
+    ///
+    fn matrix_multiply(a: &[[f64; 3]; 3], b: &[[f64; 3]; 3]) -> [[f64; 3]; 3] {
+        [
+            [a[0][0]*b[0][0] + a[0][1]*b[1][0] + a[0][2]*b[2][0], a[0][0]*b[0][1] + a[0][1]*b[1][1] + a[0][2]*b[2][1], a[0][0]*b[0][2] + a[0][1]*b[1][2] + a[0][2]*b[2][2]],
+            [a[1][0]*b[0][0] + a[1][1]*b[1][0] + a[1][2]*b[2][0], a[1][0]*b[0][1] + a[1][1]*b[1][1] + a[1][2]*b[2][1], a[1][0]*b[0][2] + a[1][1]*b[1][2] + a[1][2]*b[2][2]],
+            [a[2][0]*b[0][0] + a[2][1]*b[1][0] + a[2][2]*b[2][0], a[2][0]*b[0][1] + a[2][1]*b[1][1] + a[2][2]*b[2][1], a[2][0]*b[0][2] + a[2][1]*b[1][2] + a[2][2]*b[2][2]],
+        ]
+    }
+
+    ///
+    /// If possible, combines two transformations into one
+    ///
+    pub fn fold(&self, second: &Transformation) -> Option<Transformation> {
+        use self::Transformation::*;
+
+        match (self, second) {
+            (Matrix(m1), Matrix(m2))                    => Some(Matrix(Self::matrix_multiply(m1, m2))),
+            (other, Matrix(m2))                         => other.get_matrix().map(|m1| Matrix(Self::matrix_multiply(&m1, m2))),
+            (Matrix(m1), other)                         => other.get_matrix().map(|m2| Matrix(Self::matrix_multiply(m1, &m2))),
+
+            (Translate(x1, y1), Translate(x2, y2))      => Some(Translate(x1+x2, y1+y2)),
+            (Rotate(r1, p1), Rotate(r2, p2))            => if p1 == p2 { Some(Rotate(r1+r2, *p1)) } else { None },
+            (Scale(sx1, sy1, p1), Scale(sx2, sy2, p2))  => if p1 == p2 { Some(Scale(sx1*sx2, sy1*sy2, *p1)) } else { None },
+
+            _ => None
+        }
+    }
+
+    ///
+    /// Compacts a vector of transformations by combining any that can be `fold`ed
+    ///
+    pub fn compact(transformations: &mut Vec<Transformation>) {
+        let mut pos = 0;
+
+        while pos < (transformations.len()-1) {
+            let t1 = &transformations[pos];
+            let t2 = &transformations[pos+1];
+
+            if let Some(folded) = t1.fold(t2) {
+                transformations.splice(pos..=pos+1, iter::once(folded));
+            } else {
+                pos += 1;
+            }
+        }
+    }
 }
 
 impl VectorElement for (ElementId, SmallVec<[Transformation; 2]>) {
@@ -463,5 +512,10 @@ mod test {
 
         assert!((translated_point.x() - 40.0).abs() < 0.001);
         assert!((translated_point.y() - 45.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn fold_translation() {
+        assert!(Transformation::Translate(3.0, 4.0).fold(&Transformation::Translate(5.0, 6.0)) == Some(Transformation::Translate(8.0, 10.0)));
     }
 }
