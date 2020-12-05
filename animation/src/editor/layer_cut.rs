@@ -68,7 +68,6 @@ impl StreamAnimationCore {
                     let mut outside_path        = vec![];
 
                     let mut next_element_id     = frame.initial_element;
-                    let mut properties          = Arc::new(VectorProperties::default());
 
                     // Iterate through all the elements in the frame
                     while let Some(current_element_id) = next_element_id {
@@ -80,7 +79,7 @@ impl StreamAnimationCore {
                         next_element_id         = current_element.order_before;
 
                         // Update the properties for this element
-                        properties              = Arc::new(VectorProperties::default());
+                        let mut properties      = Arc::new(VectorProperties::default());
                         for attachment_id in current_element.attachments.iter() {
                             let attachment  = frame.elements.get(attachment_id);
                             let attachment  = if let Some(attachment) = attachment { attachment } else { continue; };
