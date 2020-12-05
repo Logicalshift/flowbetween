@@ -325,6 +325,9 @@ impl Lasso {
                                             .map(|component| component.translate(dx as f64, dy as f64)))
                                     }).map(|path| Arc::new(path));
                                 selection_model.selected_path.set(translated_path);
+
+                                // Invalidate the canvas to show the updated view
+                                model.timeline().invalidate_canvas();
                             }
                         } else {
                             // Clicking outside of the path: create a new selection
