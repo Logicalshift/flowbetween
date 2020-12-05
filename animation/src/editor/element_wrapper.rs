@@ -84,24 +84,6 @@ impl ElementWrapper {
     }
 
     ///
-    /// Removes any attachments in this element that represent transformations (by looking them up in a frame)
-    ///
-    pub (super) fn remove_transformations(&mut self, keyframe_core: &KeyFrameCore) {
-        self.attachments.retain(|attachment_id| {
-            if let Some(attachment) = keyframe_core.elements.get(attachment_id) {
-                // Remove any element that transforms this vector
-                match attachment.element {
-                    Vector::Transformation(_)       => false,
-                    _                               => true
-                }
-            } else {
-                // Attachment not found
-                true
-            }
-        });
-    }
-
-    ///
     /// Creates an 'error' element wrapper
     ///
     pub fn error() -> ElementWrapper {
