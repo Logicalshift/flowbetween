@@ -12,7 +12,6 @@ use flo_canvas::*;
 
 use smallvec::*;
 
-use std::iter;
 use std::sync::*;
 use std::time::{Duration};
 
@@ -307,7 +306,7 @@ impl Transformation {
     ///
     /// Compacts a vector of transformations by combining any that can be `fold`ed
     ///
-    pub fn compact(transformations: &mut Vec<Transformation>) {
+    pub fn compact(transformations: &mut SmallVec<[Transformation; 2]>) {
         let mut pos = 0;
 
         while pos < (transformations.len()-1) {
@@ -315,7 +314,8 @@ impl Transformation {
             let t2 = &transformations[pos+1];
 
             if let Some(folded) = t1.fold(t2) {
-                transformations.splice(pos..=pos+1, iter::once(folded));
+                transformations[pos] = folded;
+                transformations.remove(pos+1);
             } else {
                 pos += 1;
             }
