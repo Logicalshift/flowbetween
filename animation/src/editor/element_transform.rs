@@ -293,13 +293,16 @@ impl StreamAnimationCore {
                         frame.sync(|frame| {
                             let transform_wrapper       = frame.elements.get_mut(existing_attachment_id)?;
                             let transform_id            = existing_attachment_id.id()?;
-                            transform_wrapper.element   = Vector::Transformation((transform_wrapper.element.id(), new_transformations.clone()));
 
                             if transform_wrapper.attached_to == vec![ElementId::Assigned(*element_id)] {
                                 // The existing attachment is only attached to the element being edited, so we can edit just the attachment
+                                transform_wrapper.element   = Vector::Transformation((*existing_attachment_id, new_transformations.clone()));
+
                                 update_elements.push(StorageCommand::WriteElement(transform_id, transform_wrapper.serialize_to_string()));
                             } else {
                                 // Write the transformation to a new attachment
+                                transform_wrapper.element   = Vector::Transformation((new_attachment_id, new_transformations.clone()));
+
                                 update_elements.push(StorageCommand::WriteElement(new_attachment_id.id().unwrap(), transform_wrapper.serialize_to_string()));
                                 update_elements.push(StorageCommand::AttachElementToLayer(frame.layer_id, new_attachment_id.id().unwrap(), frame.start));
 
