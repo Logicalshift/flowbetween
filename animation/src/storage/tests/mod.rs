@@ -5,6 +5,7 @@ use futures::*;
 
 mod animation_properties;
 mod layers;
+mod cut_paths;
 mod edit_log;
 mod frame_edits;
 mod motion;
