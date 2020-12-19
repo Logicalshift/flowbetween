@@ -1,3 +1,4 @@
+use crate::menu::*;
 use crate::tools::*;
 use crate::model::*;
 use crate::style::*;
@@ -404,8 +405,12 @@ impl<Anim: 'static+EditableAnimation> Tool<Anim> for Lasso {
     ///
     /// Creates the menu controller for this tool (or None if this tool has no menu controller)
     ///
-    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> Option<Arc<dyn Controller>> {
-        None
+    fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> Option<Arc<dyn Controller>> {
+        // Fetch the model
+        let lasso_mode      = Binding::new(LassoMode::Select);
+        let selected_path   = flo_model.selection().selected_path.clone();
+
+        Some(Arc::new(LassoMenuController::new(&lasso_mode, &selected_path)))
     }
 
     ///

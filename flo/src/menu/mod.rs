@@ -5,6 +5,7 @@ mod eraser;
 mod flood_fill;
 mod select;
 mod adjust;
+mod lasso;
 
 pub use self::empty::*;
 pub use self::ink::*;
@@ -12,3 +13,4 @@ pub use self::eraser::*;
 pub use self::flood_fill::*;
 pub use self::select::*;
 pub use self::adjust::*;
+pub use self::lasso::*;
