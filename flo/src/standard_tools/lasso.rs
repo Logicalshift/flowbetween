@@ -309,9 +309,13 @@ impl Lasso {
 
                 Paint(painting) => {
                     if painting.action == PaintAction::Start {
-                        let (x, y) = painting.location;
+                        // Fetch the state at the start of the paint action
+                        let (x, y)          = painting.location;
+                        let existing_path   = selection_model.selected_path.get();
+                        let mode            = tool_bindings.lasso_mode.get();
+                        let mode            = if existing_path.is_none() { LassoMode::Select } else { mode };
 
-                        if selection_model.point_in_selection_path(x as f64, y as f64) {
+                        if mode == LassoMode::Select && selection_model.point_in_selection_path(x as f64, y as f64) {
                             // Clicking inside the path: drag the selection
                             if selection_model.selected_elements.get().len() == 0 {
                                 // (If we've generated the selection, then don't cut again)
@@ -332,7 +336,7 @@ impl Lasso {
                                 ]);
 
                                 // Translate the selection path too
-                                let translated_path = selection_model.selected_path.get()
+                                let translated_path = existing_path
                                     .map(|path| {
                                         Path::from_elements(path.elements()
                                             .map(|component| component.translate(dx as f64, dy as f64)))
@@ -345,16 +349,47 @@ impl Lasso {
                         } else {
                             // Clicking outside of the path: create a new selection
 
-                            // Clear the existing selected path
-                            selection_model.selected_path.set(None);
-                            selection_model.clear_selection();
+                            if mode == LassoMode::Select {
+                                // Clear the existing selected path
+                                selection_model.selected_path.set(None);
+                                selection_model.clear_selection();
+                            }
 
                             // Select an area
                             let new_selection = Self::select_area_freehand(painting, &mut input, &mut actions).await;
 
-                            // Set as the selected path
+                            // Action depends on the lasso mode
                             let new_selection_path = new_selection.map(|selection| Arc::new(Self::path_for_path(&selection)));
-                            selection_model.selected_path.set(new_selection_path);
+                            match mode {
+                                LassoMode::Select => {
+                                    // Set as the selected path
+                                    selection_model.selected_path.set(new_selection_path);
+                                },
+
+                                LassoMode::Add => {
+                                    let new_path = existing_path
+                                        .and_then(|existing_path| new_selection_path.map(move |selection_path| (existing_path, selection_path)))
+                                        .map(|(existing_path, selection_path)| path_add(&vec![&*existing_path], &vec![&*selection_path], 0.01))
+                                        .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())));
+                                    selection_model.selected_path.set(new_path);
+                                },
+
+                                LassoMode::Subtract => {
+                                    let new_path = existing_path
+                                        .and_then(|existing_path| new_selection_path.map(move |selection_path| (existing_path, selection_path)))
+                                        .map(|(existing_path, selection_path)| path_sub(&vec![&*existing_path], &vec![&*selection_path], 0.01))
+                                        .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())));
+                                    selection_model.selected_path.set(new_path);
+                                },
+
+                                LassoMode::Intersect => {
+                                    let new_path = existing_path
+                                        .and_then(|existing_path| new_selection_path.map(move |selection_path| (existing_path, selection_path)))
+                                        .map(|(existing_path, selection_path)| path_intersect(&vec![&*existing_path], &vec![&*selection_path], 0.01))
+                                        .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())));
+                                    selection_model.selected_path.set(new_path);
+                                }
+                            }
                         }
                     }
                 }
