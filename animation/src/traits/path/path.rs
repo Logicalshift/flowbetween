@@ -341,6 +341,27 @@ impl BezierPath for Path {
     }
 }
 
+impl<'a> Geo for &'a Path {
+    type Point = PathPoint;
+}
+
+impl<'a> BezierPath for &'a Path {
+    /// Type of an iterator over the points in this curve. This tuple contains the points ordered as a hull: ie, two control points followed by a point on the curve
+    type PointIter = Box<dyn Iterator<Item=(Self::Point, Self::Point, Self::Point)>>;
+
+    ///
+    /// Retrieves the initial point of this path
+    /// 
+    #[inline]
+    fn start_point(&self) -> Self::Point { (**self).start_point() }
+
+    ///
+    /// Retrieves an iterator over the points in this path
+    /// 
+    #[inline]
+    fn points(&self) -> Self::PointIter { (**self).points() }
+}
+
 impl BezierPathFactory for Path {
     ///
     /// Creates a new instance of this path from a set of points
