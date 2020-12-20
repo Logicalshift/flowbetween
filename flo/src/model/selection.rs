@@ -134,7 +134,9 @@ impl<Anim: 'static+Animation> SelectionModel<Anim> {
     ///
     pub fn point_in_selection_path(&self, x: f64, y: f64) -> bool {
         if let Some(path) = self.selected_path.get() {
-            path_contains_point(&*path, &PathPoint { position: (x, y) })
+            let subpaths = path.to_subpaths();
+            subpaths.into_iter()
+                .any(|subpath| path_contains_point(&subpath, &PathPoint { position: (x, y) }))
         } else {
             false
         }
