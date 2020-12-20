@@ -45,6 +45,8 @@ pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProce
                 // Add this element to the onion skin path
                 if let Some(element_path) = element.to_path(&properties, PathConversion::RemoveInteriorPoints) {
                     if element_path.len() > 0 && (element_path.len() != 1 || element_path[0].len() > 0) {
+                        let element_path = element_path.into_iter().flat_map(|path| path.to_subpaths()).collect();
+
                         match (*properties).brush.drawing_style() {
                             BrushDrawingStyle::Draw     => { waiting_to_add.push(element_path); }
                             BrushDrawingStyle::Erase    => {
