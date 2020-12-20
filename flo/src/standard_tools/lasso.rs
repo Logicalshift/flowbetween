@@ -27,7 +27,11 @@ const LAYER_PREVIEW: u32 = 1;
 /// The data stored for the Lasso tool
 ///
 pub struct LassoModel {
-    future: Mutex<ToolFuture>
+    /// The future that is running the Lasso tool at the moment
+    future: Mutex<ToolFuture>,
+
+    /// How the selection is updated when using the lasso on an existing selection
+    lasso_mode: Binding<LassoMode>,
 }
 
 ///
@@ -398,19 +402,20 @@ impl<Anim: 'static+EditableAnimation> Tool<Anim> for Lasso {
     ///
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> Self::Model {
         LassoModel {
-            future: Mutex::new(ToolFuture::new(move |input, actions| { Self::run(input, actions, Arc::clone(&flo_model)) }))
+            future:     Mutex::new(ToolFuture::new(move |input, actions| { Self::run(input, actions, Arc::clone(&flo_model)) })),
+            lasso_mode: Binding::new(LassoMode::Select)
         }
     }
 
     ///
     /// Creates the menu controller for this tool (or None if this tool has no menu controller)
     ///
-    fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> Option<Arc<dyn Controller>> {
+    fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &Self::Model) -> Option<Arc<dyn Controller>> {
         // Fetch the model
-        let lasso_mode      = Binding::new(LassoMode::Select);
+        let lasso_mode      = &tool_model.lasso_mode;
         let selected_path   = flo_model.selection().selected_path.clone();
 
-        Some(Arc::new(LassoMenuController::new(&lasso_mode, &selected_path)))
+        Some(Arc::new(LassoMenuController::new(lasso_mode, &selected_path)))
     }
 
     ///
