@@ -62,7 +62,7 @@ impl LassoMenuController {
     fn images() -> ResourceManager<Image> {
         let images = ResourceManager::new();
 
-        let select                  = images.register(svg_static(include_bytes!("../../svg/selection_controls/anchor.svg")));
+        let select                  = images.register(svg_static(include_bytes!("../../svg/selection_controls/lasso_cursor.svg")));
         let add                     = images.register(svg_static(include_bytes!("../../svg/selection_controls/add.svg")));
         let subtract                = images.register(svg_static(include_bytes!("../../svg/selection_controls/subtract.svg")));
         let intersect               = images.register(svg_static(include_bytes!("../../svg/selection_controls/intersect.svg")));
