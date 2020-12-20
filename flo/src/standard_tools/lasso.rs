@@ -368,24 +368,27 @@ impl Lasso {
 
                                 LassoMode::Add => {
                                     let new_path = existing_path
+                                        .map(|existing_path| existing_path.to_subpaths())
                                         .and_then(|existing_path| new_selection_path.map(move |selection_path| (existing_path, selection_path)))
-                                        .map(|(existing_path, selection_path)| path_add(&vec![&*existing_path], &vec![&*selection_path], 0.01))
+                                        .map(|(existing_path, selection_path)| path_add(&existing_path, &vec![&*selection_path], 0.01))
                                         .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())));
                                     selection_model.selected_path.set(new_path);
                                 },
 
                                 LassoMode::Subtract => {
                                     let new_path = existing_path
+                                        .map(|existing_path| existing_path.to_subpaths())
                                         .and_then(|existing_path| new_selection_path.map(move |selection_path| (existing_path, selection_path)))
-                                        .map(|(existing_path, selection_path)| path_sub(&vec![&*existing_path], &vec![&*selection_path], 0.01))
+                                        .map(|(existing_path, selection_path)| path_sub(&existing_path, &vec![&*selection_path], 0.01))
                                         .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())));
                                     selection_model.selected_path.set(new_path);
                                 },
 
                                 LassoMode::Intersect => {
                                     let new_path = existing_path
+                                        .map(|existing_path| existing_path.to_subpaths())
                                         .and_then(|existing_path| new_selection_path.map(move |selection_path| (existing_path, selection_path)))
-                                        .map(|(existing_path, selection_path)| path_intersect(&vec![&*existing_path], &vec![&*selection_path], 0.01))
+                                        .map(|(existing_path, selection_path)| path_intersect(&existing_path, &vec![&*selection_path], 0.01))
                                         .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())));
                                     selection_model.selected_path.set(new_path);
                                 }
