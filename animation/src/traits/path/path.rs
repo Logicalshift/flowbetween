@@ -14,6 +14,10 @@ use itertools::*;
 use std::iter;
 use std::sync::*;
 
+// TODO: this would be better if we divided into Paths and SubPaths so when multiple paths have been combined
+// into one we can more easily extract them (and avoid the common gotcha where 'to_subpaths' is not called before
+// doing path arithmetic)
+
 ///
 /// Represents a vector path
 ///

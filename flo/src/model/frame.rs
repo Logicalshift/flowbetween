@@ -371,7 +371,9 @@ impl FrameModel {
 
                 // Convert the element to paths and check if the point is inside
                 let paths                           = vector.to_path(properties, PathConversion::Fastest);
-                let inside_path                     = paths.map(|paths| paths.into_iter().any(|path| path_contains_point(&path, &path_point))).unwrap_or(false);
+                let inside_path                     = paths.map(|paths| paths.into_iter()
+                    .flat_map(|path| path.to_subpaths())
+                    .any(|path| path_contains_point(&path, &path_point))).unwrap_or(false);
 
                 // Any match inside the bounds is a match, but we often treat a point inside the path as a stronger match
                 if inside_path {
