@@ -67,10 +67,18 @@ impl LassoMenuController {
         let subtract                = images.register(svg_static(include_bytes!("../../svg/selection_controls/subtract.svg")));
         let intersect               = images.register(svg_static(include_bytes!("../../svg/selection_controls/intersect.svg")));
 
+        let freehand                = images.register(svg_static(include_bytes!("../../svg/selection_controls/lasso_freehand.svg")));
+        let rectangle               = images.register(svg_static(include_bytes!("../../svg/selection_controls/lasso_rectangle.svg")));
+        let ellipse                 = images.register(svg_static(include_bytes!("../../svg/selection_controls/lasso_ellipse.svg")));
+
         images.assign_name(&select,     "Select");
         images.assign_name(&add,        "Add");
         images.assign_name(&subtract,   "Subtract");
         images.assign_name(&intersect,  "Intersect");
+
+        images.assign_name(&freehand,   "Freehand");
+        images.assign_name(&rectangle,  "Rectangle");
+        images.assign_name(&ellipse,    "Ellipse");
 
         images
     }
@@ -85,7 +93,6 @@ impl LassoMenuController {
         let mode = lasso_mode.clone(); let path = selected_path.clone(); view_model.set_computed("ModeAdd",         move || PropertyValue::Bool(path.get().is_some() && mode.get() == LassoMode::Add));
         let mode = lasso_mode.clone(); let path = selected_path.clone(); view_model.set_computed("ModeSubtract",    move || PropertyValue::Bool(path.get().is_some() && mode.get() == LassoMode::Subtract));
         let mode = lasso_mode.clone(); let path = selected_path.clone(); view_model.set_computed("ModeIntersect",   move || PropertyValue::Bool(path.get().is_some() && mode.get() == LassoMode::Intersect));
-
 
         let path = selected_path.clone(); view_model.set_computed("EnableAdd",         move || PropertyValue::Bool(path.get().is_some()));
         let path = selected_path.clone(); view_model.set_computed("EnableSubtract",    move || PropertyValue::Bool(path.get().is_some()));
@@ -107,19 +114,23 @@ impl LassoMenuController {
         let subtract    = images.get_named_resource("Subtract");
         let intersect   = images.get_named_resource("Intersect");
 
+        let freehand    = images.get_named_resource("Freehand");
+        let rectangle   = images.get_named_resource("Rectangle");
+        let ellipse     = images.get_named_resource("Ellipse");
+
         // Build the UI
         BindRef::from(computed(move || {
             let mode_control = Control::container()
                 .with(Hint::Class("button-group".to_string()))
                 .with(ControlAttribute::Padding((0,2), (0,2)))
                 .with(Font::Size(9.0))
-                .with(Bounds::next_horiz(28.0*2.0))
+                .with(Bounds::next_horiz(28.0*4.0))
                 .with(vec![
                     Control::button()
                         .with(vec![Control::empty().with(select.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
                         .with(Font::Size(10.0))
                         .with((ActionTrigger::Click, "ModeSelect"))
-                        .with(Hover::Tooltip("Select new region".to_string()))
+                        .with(Hover::Tooltip("Select new region or edit existing region".to_string()))
                         .with(State::Selected(Property::bound("ModeSelect")))
                         .with(Bounds::next_horiz(28.0))
                         .with(ControlAttribute::Padding((7, 1), (1, 3))),
@@ -152,6 +163,38 @@ impl LassoMenuController {
                         .with(ControlAttribute::Padding((1, 1), (7, 3)))
                 ]);
 
+            let shape_control = Control::container()
+                .with(Hint::Class("button-group".to_string()))
+                .with(ControlAttribute::Padding((0,2), (0,2)))
+                .with(Font::Size(9.0))
+                .with(Bounds::next_horiz(28.0*3.0))
+                .with(vec![
+                    Control::button()
+                        .with(vec![Control::empty().with(freehand.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                        .with(Font::Size(10.0))
+                        .with((ActionTrigger::Click, "ShapeFreehand"))
+                        .with(Hover::Tooltip("Freehand selection".to_string()))
+                        .with(State::Selected(Property::bound("ShapeFreehand")))
+                        .with(Bounds::next_horiz(28.0))
+                        .with(ControlAttribute::Padding((7, 1), (1, 3))),
+                    Control::button()
+                        .with(vec![Control::empty().with(rectangle.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                        .with(Font::Size(10.0))
+                        .with((ActionTrigger::Click, "ShapeRectangle"))
+                        .with(Hover::Tooltip("Select rectangular region".to_string()))
+                        .with(State::Selected(Property::bound("ShapeRectangle")))
+                        .with(Bounds::next_horiz(28.0))
+                        .with(ControlAttribute::Padding((1, 1), (1, 3))),
+                    Control::button()
+                        .with(vec![Control::empty().with(ellipse.clone()).with(TextAlign::Center).with(Bounds::fill_all())])
+                        .with(Font::Size(10.0))
+                        .with((ActionTrigger::Click, "ShapeEllipse"))
+                        .with(Hover::Tooltip("Select elliptical region".to_string()))
+                        .with(State::Selected(Property::bound("ShapeEllipse")))
+                        .with(Bounds::next_horiz(28.0))
+                        .with(ControlAttribute::Padding((1, 1), (7, 3)))
+                ]);
+
             Control::container()
                 .with(Bounds::fill_all())
                 .with(ControlAttribute::Padding((0, 3), (0, 3)))
@@ -166,9 +209,13 @@ impl LassoMenuController {
                         .with(Bounds::next_horiz(48.0)),
 
                     Control::empty()
-                        .with(Bounds::next_horiz(4.0)),
+                        .with(Bounds::next_horiz(8.0)),
 
-                    mode_control
+                    mode_control,
+
+                    controls::divider(),
+
+                    shape_control
                 ])
             }))
     }
