@@ -30,8 +30,16 @@ pub struct LassoModel {
     /// The future that is running the Lasso tool at the moment
     future: Mutex<ToolFuture>,
 
-    /// How the selection is updated when using the lasso on an existing selection
-    lasso_mode: Binding<LassoMode>,
+    /// The bindings for the lasso tool
+    tool_bindings: LassoBindings
+}
+
+///
+/// The bindings for the lasso tool model
+///
+#[derive(Clone)]
+pub struct LassoBindings {
+    lasso_mode: Binding<LassoMode>
 }
 
 ///
@@ -222,7 +230,7 @@ impl Lasso {
     ///
     /// After the user starts drawing, selects an area on the canvas
     ///
-    pub async fn select_area(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>) -> Option<Vec<Curve<PathPoint>>> {
+    pub async fn select_area_freehand(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>) -> Option<Vec<Curve<PathPoint>>> {
         use self::ToolInput::*;
 
         // Start with a point that's just at the initial location
@@ -284,12 +292,12 @@ impl Lasso {
     ///
     /// Handles the lasso tool's input
     ///
-    pub async fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, model: Arc<FloModel<Anim>>) {
+    pub async fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>, tool_bindings: LassoBindings) {
         use self::ToolInput::*;
 
         let mut input       = input;
         let mut actions     = actions;
-        let selection_model = model.selection();
+        let selection_model = flo_model.selection();
 
         while let Some(input_event) = input.next().await {
             // Main input loop
@@ -311,12 +319,12 @@ impl Lasso {
                             }
 
                             // Drag the selection
-                            let translate = super::select::Select::drag_selection(painting, &mut input, &mut actions, &*model, LAYER_PREVIEW).await;
+                            let translate = super::select::Select::drag_selection(painting, &mut input, &mut actions, &*flo_model, LAYER_PREVIEW).await;
 
                             if let Some((dx, dy)) = translate {
                                 // Translate the selection via the drag result
                                 let selected_elements = selection_model.selected_elements.get().iter().cloned().collect();
-                                model.perform_edits(vec![
+                                flo_model.perform_edits(vec![
                                     AnimationEdit::Element(selected_elements, ElementEdit::Transform(vec![
                                         ElementTransform::SetAnchor(0.0, 0.0),
                                         ElementTransform::MoveTo(dx as f64, dy as f64)
@@ -332,7 +340,7 @@ impl Lasso {
                                 selection_model.selected_path.set(translated_path);
 
                                 // Invalidate the canvas to show the updated view
-                                model.timeline().invalidate_canvas();
+                                flo_model.timeline().invalidate_canvas();
                             }
                         } else {
                             // Clicking outside of the path: create a new selection
@@ -342,7 +350,7 @@ impl Lasso {
                             selection_model.clear_selection();
 
                             // Select an area
-                            let new_selection = Self::select_area(painting, &mut input, &mut actions).await;
+                            let new_selection = Self::select_area_freehand(painting, &mut input, &mut actions).await;
 
                             // Set as the selected path
                             let new_selection_path = new_selection.map(|selection| Arc::new(Self::path_for_path(&selection)));
@@ -357,13 +365,13 @@ impl Lasso {
     ///
     /// Runs the lasso tool
     ///
-    pub fn run<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, model: Arc<FloModel<Anim>>) -> impl Future<Output=()>+Send {
+    pub fn run<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>, tool_bindings: LassoBindings) -> impl Future<Output=()>+Send {
         async move {
             // Task that renders the selection path whenever it changes
-            let render_selection_path   = Self::render_selection_path(BindRef::from(&model.selection().selected_path), actions.clone(), LAYER_SELECTION);
+            let render_selection_path   = Self::render_selection_path(BindRef::from(&flo_model.selection().selected_path), actions.clone(), LAYER_SELECTION);
 
             // Task to handle the input from the user
-            let handle_input            = Self::handle_input(input, actions, Arc::clone(&model));
+            let handle_input            = Self::handle_input(input, actions, Arc::clone(&flo_model), tool_bindings);
 
             // Finish when either of the futures finish
             future::select_all(vec![render_selection_path.boxed(), handle_input.boxed()]).await;
@@ -401,9 +409,14 @@ impl<Anim: 'static+EditableAnimation> Tool<Anim> for Lasso {
     /// Creates a new instance of the UI model for this tool
     ///
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> Self::Model {
-        LassoModel {
-            future:     Mutex::new(ToolFuture::new(move |input, actions| { Self::run(input, actions, Arc::clone(&flo_model)) })),
+        let tool_bindings       = LassoBindings {
             lasso_mode: Binding::new(LassoMode::Select)
+        };
+        let run_tool_bindings   = tool_bindings.clone();
+
+        LassoModel {
+            future:         Mutex::new(ToolFuture::new(move |input, actions| { Self::run(input, actions, Arc::clone(&flo_model), run_tool_bindings.clone()) })),
+            tool_bindings:  tool_bindings
         }
     }
 
@@ -412,7 +425,7 @@ impl<Anim: 'static+EditableAnimation> Tool<Anim> for Lasso {
     ///
     fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &Self::Model) -> Option<Arc<dyn Controller>> {
         // Fetch the model
-        let lasso_mode      = &tool_model.lasso_mode;
+        let lasso_mode      = &tool_model.tool_bindings.lasso_mode;
         let selected_path   = flo_model.selection().selected_path.clone();
 
         Some(Arc::new(LassoMenuController::new(lasso_mode, &selected_path)))
