@@ -327,7 +327,7 @@ impl CairoDraw {
             Line(x, y)                                  => { self.ctxt.line_to(x as f64, y as f64); },
             BezierCurve((x, y), (cx1, cy1), (cx2, cy2)) => { self.ctxt.curve_to(cx1 as f64, cy1 as f64, cx2 as f64, cy2 as f64, x as f64, y as f64); },
             ClosePath                                   => { self.ctxt.close_path(); },
-            Fill                                        => { self.set_color(ColorTarget::Fill); self.ctxt.fill_preserve(); },
+            Fill                                        => { self.set_color(ColorTarget::Fill); self.ctxt.set_fill_rule(FillRule::EvenOdd); self.ctxt.fill_preserve(); },
             Stroke                                      => { self.set_color(ColorTarget::Stroke); self.ctxt.stroke_preserve(); },
             LineWidth(width)                            => { self.ctxt.set_line_width(width as f64); },
             LineWidthPixels(pixels)                     => { self.set_line_width_pixels(pixels); },
