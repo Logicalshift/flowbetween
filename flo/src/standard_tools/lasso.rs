@@ -567,29 +567,32 @@ impl Lasso {
                                 },
 
                                 LassoMode::Add => {
-                                    let new_path = existing_path
+                                    let new_path = existing_path.as_ref()
                                         .map(|existing_path| existing_path.to_subpaths())
                                         .and_then(|existing_path| new_selection_path.map(move |selection_path| (existing_path, selection_path)))
                                         .map(|(existing_path, selection_path)| path_add(&existing_path, &vec![&*selection_path], 0.01))
-                                        .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())));
+                                        .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())))
+                                        .or_else(move || existing_path);
                                     selection_model.selected_path.set(new_path);
                                 },
 
                                 LassoMode::Subtract => {
-                                    let new_path = existing_path
+                                    let new_path = existing_path.as_ref()
                                         .map(|existing_path| existing_path.to_subpaths())
                                         .and_then(|existing_path| new_selection_path.map(move |selection_path| (existing_path, selection_path)))
                                         .map(|(existing_path, selection_path)| path_sub(&existing_path, &vec![&*selection_path], 0.01))
-                                        .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())));
+                                        .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())))
+                                        .or_else(move || existing_path);
                                     selection_model.selected_path.set(new_path);
                                 },
 
                                 LassoMode::Intersect => {
-                                    let new_path = existing_path
+                                    let new_path = existing_path.as_ref()
                                         .map(|existing_path| existing_path.to_subpaths())
                                         .and_then(|existing_path| new_selection_path.map(move |selection_path| (existing_path, selection_path)))
                                         .map(|(existing_path, selection_path)| path_intersect(&existing_path, &vec![&*selection_path], 0.01))
-                                        .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())));
+                                        .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())))
+                                        .or_else(move || existing_path);
                                     selection_model.selected_path.set(new_path);
                                 }
                             }
