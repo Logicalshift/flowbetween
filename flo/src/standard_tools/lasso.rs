@@ -563,6 +563,7 @@ impl Lasso {
                             match mode {
                                 LassoMode::Select => {
                                     // Set as the selected path
+                                    selection_model.clear_selection();
                                     selection_model.selected_path.set(new_selection_path);
                                 },
 
@@ -573,6 +574,7 @@ impl Lasso {
                                         .map(|(existing_path, selection_path)| path_add(&existing_path, &vec![&*selection_path], 0.01))
                                         .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())))
                                         .or_else(move || existing_path);
+                                    selection_model.clear_selection();
                                     selection_model.selected_path.set(new_path);
                                 },
 
@@ -583,6 +585,7 @@ impl Lasso {
                                         .map(|(existing_path, selection_path)| path_sub(&existing_path, &vec![&*selection_path], 0.01))
                                         .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())))
                                         .or_else(move || existing_path);
+                                    selection_model.clear_selection();
                                     selection_model.selected_path.set(new_path);
                                 },
 
@@ -593,6 +596,7 @@ impl Lasso {
                                         .map(|(existing_path, selection_path)| path_intersect(&existing_path, &vec![&*selection_path], 0.01))
                                         .map(|combined_path| Arc::new(Path::from_paths(combined_path.iter())))
                                         .or_else(move || existing_path);
+                                    selection_model.clear_selection();
                                     selection_model.selected_path.set(new_path);
                                 }
                             }
