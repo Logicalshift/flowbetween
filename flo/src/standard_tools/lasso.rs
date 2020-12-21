@@ -39,7 +39,8 @@ pub struct LassoModel {
 ///
 #[derive(Clone)]
 pub struct LassoBindings {
-    lasso_mode: Binding<LassoMode>
+    lasso_mode:     Binding<LassoMode>,
+    lasso_shape:    Binding<LassoShape>
 }
 
 ///
@@ -448,7 +449,8 @@ impl<Anim: 'static+EditableAnimation> Tool<Anim> for Lasso {
     ///
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> Self::Model {
         let tool_bindings       = LassoBindings {
-            lasso_mode: Binding::new(LassoMode::Select)
+            lasso_mode:     Binding::new(LassoMode::Select),
+            lasso_shape:    Binding::new(LassoShape::Freehand)
         };
         let run_tool_bindings   = tool_bindings.clone();
 
@@ -464,9 +466,10 @@ impl<Anim: 'static+EditableAnimation> Tool<Anim> for Lasso {
     fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &Self::Model) -> Option<Arc<dyn Controller>> {
         // Fetch the model
         let lasso_mode      = &tool_model.tool_bindings.lasso_mode;
+        let lasso_shape     = &tool_model.tool_bindings.lasso_shape;
         let selected_path   = flo_model.selection().selected_path.clone();
 
-        Some(Arc::new(LassoMenuController::new(lasso_mode, &selected_path)))
+        Some(Arc::new(LassoMenuController::new(lasso_mode, lasso_shape, &selected_path)))
     }
 
     ///

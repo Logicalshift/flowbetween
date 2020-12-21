@@ -25,34 +25,46 @@ pub enum LassoMode {
 }
 
 ///
+/// The shape of the region to select with the lasso
+///
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum LassoShape {
+    Freehand,
+    Rectangle,
+    Ellipse
+}
+
+///
 /// The menu controller for the lasso tool
 ///
 pub struct LassoMenuController {
-    /// How the selection is updated when using the lasso
-    lasso_mode: Binding<LassoMode>,
+    lasso_mode:     Binding<LassoMode>,
+    lasso_shape:    Binding<LassoShape>,
 
-    images:     Arc<ResourceManager<Image>>,
-    ui:         BindRef<Control>,
-    view_model: Arc<DynamicViewModel>,
+    images:         Arc<ResourceManager<Image>>,
+    ui:             BindRef<Control>,
+    view_model:     Arc<DynamicViewModel>,
 }
 
 impl LassoMenuController {
     ///
     /// Creates a new lasso menu controller
     ///
-    pub fn new(lasso_mode: &Binding<LassoMode>, selected_path: &Binding<Option<Arc<Path>>>) -> LassoMenuController {
+    pub fn new(lasso_mode: &Binding<LassoMode>, lasso_shape: &Binding<LassoShape>, selected_path: &Binding<Option<Arc<Path>>>) -> LassoMenuController {
         let images          = Arc::new(Self::images());
         let lasso_mode      = lasso_mode.clone();
+        let lasso_shape     = lasso_shape.clone();
         let selected_path   = selected_path.clone();
 
-        let view_model      = Self::view_model(&lasso_mode, &selected_path);
+        let view_model      = Self::view_model(&lasso_mode, &lasso_shape, &selected_path);
         let ui              = Self::ui(&images, &lasso_mode);
 
         LassoMenuController {
-            lasso_mode: lasso_mode,
-            images:     images,
-            view_model: view_model,
-            ui:         ui
+            lasso_mode:     lasso_mode,
+            lasso_shape:    lasso_shape,
+            images:         images,
+            view_model:     view_model,
+            ui:             ui
         }
     }
 
@@ -86,13 +98,17 @@ impl LassoMenuController {
     ///
     /// Creates the viewmodel for this controller
     ///
-    fn view_model(lasso_mode: &Binding<LassoMode>, selected_path: &Binding<Option<Arc<Path>>>) -> Arc<DynamicViewModel> {
+    fn view_model(lasso_mode: &Binding<LassoMode>, lasso_shape: &Binding<LassoShape>, selected_path: &Binding<Option<Arc<Path>>>) -> Arc<DynamicViewModel> {
         let view_model  = Arc::new(DynamicViewModel::new());
 
         let mode = lasso_mode.clone(); let path = selected_path.clone(); view_model.set_computed("ModeSelect",      move || PropertyValue::Bool(path.get().is_none() || mode.get() == LassoMode::Select));
         let mode = lasso_mode.clone(); let path = selected_path.clone(); view_model.set_computed("ModeAdd",         move || PropertyValue::Bool(path.get().is_some() && mode.get() == LassoMode::Add));
         let mode = lasso_mode.clone(); let path = selected_path.clone(); view_model.set_computed("ModeSubtract",    move || PropertyValue::Bool(path.get().is_some() && mode.get() == LassoMode::Subtract));
         let mode = lasso_mode.clone(); let path = selected_path.clone(); view_model.set_computed("ModeIntersect",   move || PropertyValue::Bool(path.get().is_some() && mode.get() == LassoMode::Intersect));
+
+        let shape = lasso_shape.clone(); view_model.set_computed("ShapeFreehand",   move || PropertyValue::Bool(shape.get() == LassoShape::Freehand));
+        let shape = lasso_shape.clone(); view_model.set_computed("ShapeRectangle",  move || PropertyValue::Bool(shape.get() == LassoShape::Rectangle));
+        let shape = lasso_shape.clone(); view_model.set_computed("ShapeEllipse",    move || PropertyValue::Bool(shape.get() == LassoShape::Ellipse));
 
         let path = selected_path.clone(); view_model.set_computed("EnableAdd",         move || PropertyValue::Bool(path.get().is_some()));
         let path = selected_path.clone(); view_model.set_computed("EnableSubtract",    move || PropertyValue::Bool(path.get().is_some()));
@@ -236,10 +252,14 @@ impl Controller for LassoMenuController {
 
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
         match action_id {
-            "ModeSelect"    => self.lasso_mode.set(LassoMode::Select),
-            "ModeAdd"       => self.lasso_mode.set(LassoMode::Add),
-            "ModeSubtract"  => self.lasso_mode.set(LassoMode::Subtract),
-            "ModeIntersect" => self.lasso_mode.set(LassoMode::Intersect),
+            "ModeSelect"        => self.lasso_mode.set(LassoMode::Select),
+            "ModeAdd"           => self.lasso_mode.set(LassoMode::Add),
+            "ModeSubtract"      => self.lasso_mode.set(LassoMode::Subtract),
+            "ModeIntersect"     => self.lasso_mode.set(LassoMode::Intersect),
+
+            "ShapeFreehand"     => self.lasso_shape.set(LassoShape::Freehand),
+            "ShapeRectangle"    => self.lasso_shape.set(LassoShape::Rectangle),
+            "ShapeEllipse"      => self.lasso_shape.set(LassoShape::Ellipse),
 
             _ => { }
         }
