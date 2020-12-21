@@ -101,7 +101,37 @@ impl Lasso {
     ///
     /// Returns how a preview path should be rendered
     ///
-    fn drawing_for_path(path: &Option<Vec<Curve<PathPoint>>>) -> Vec<Draw> {
+    fn drawing_for_path(path: &Option<Path>) -> Vec<Draw> {
+        // Result is a drawing
+        let mut path_drawing = vec![];
+
+        // Start by clearing the preview layer
+        path_drawing.layer(LAYER_PREVIEW);
+        path_drawing.clear_layer();
+
+        if let Some(path) = path {
+            // Set up to render the path
+            path_drawing.new_path();
+            path_drawing.extend(path.to_drawing());
+            path_drawing.close_path();
+
+            // Render twice to generate the selection effect
+            path_drawing.line_width_pixels(3.0);
+            path_drawing.stroke_color(SELECTION_OUTLINE);
+            path_drawing.stroke();
+
+            path_drawing.line_width_pixels(1.0);
+            path_drawing.stroke_color(SELECTION_BBOX);
+            path_drawing.stroke();
+        }
+
+        path_drawing
+    }
+
+    ///
+    /// Returns how a preview path should be rendered
+    ///
+    fn drawing_for_curves(path: &Option<Vec<Curve<PathPoint>>>) -> Vec<Draw> {
         // Result is a drawing
         let mut path_drawing = vec![];
 
@@ -229,7 +259,7 @@ impl Lasso {
     }
 
     ///
-    /// After the user starts drawing, selects an area on the canvas
+    /// After the user starts drawing, selects an area on the canvas as a freehand path
     ///
     pub async fn select_area_freehand(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>) -> Option<Vec<Curve<PathPoint>>> {
         use self::ToolInput::*;
@@ -266,6 +296,85 @@ impl Lasso {
 
                     // Fit a path to the points being selected
                     let select_path     = Self::fit_path(points.iter().cloned().chain(predicted_points.iter().cloned()));
+
+                    // Draw the selection path
+                    let select_drawing  = Self::drawing_for_curves(&select_path);
+                    actions.send_actions(vec![
+                        ToolAction::Overlay(OverlayAction::Draw(select_drawing))
+                    ]);
+
+                    // Return the resulting path if the action completes
+                    if next_point.action == PaintAction::Finish {
+                        actions.send_actions(vec![
+                            ToolAction::Overlay(OverlayAction::Draw(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]))
+                        ]);
+                        return select_path;
+                    }
+                }
+
+                Deselect    => { break; }
+                _           => { }
+            }
+        }
+
+        None
+    }
+
+    ///
+    /// Returns the path for a rectangle with an initial and a final point
+    ///
+    fn rectangle_path(initial_point: (f32, f32), end_point: (f32, f32)) -> Option<Path> {
+        let (x1, y1)            = initial_point;
+        let (x2, y2)            = end_point;
+
+        // Not a rectangle if the start and end points are too close together
+        let distance_squared    = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
+        if distance_squared <= 2.0 {
+            None
+        } else {
+            Some(Path::from_elements(vec![
+                PathComponent::Move(PathPoint::new(x1, y1)),
+                PathComponent::Line(PathPoint::new(x2, y1)),
+                PathComponent::Line(PathPoint::new(x2, y2)),
+                PathComponent::Line(PathPoint::new(x1, y2)),
+                PathComponent::Line(PathPoint::new(x1, y1)),
+                PathComponent::Close
+            ]))
+        }
+    }
+
+    ///
+    /// After the user starts drawing, selects an area on the canvas as a rectangular path
+    ///
+    pub async fn select_area_rectangle(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>) -> Option<Path> {
+        use self::ToolInput::*;
+
+        // Start with a point that's just at the initial location
+        let initial_point = initial_event.location;
+        let mut end_point = initial_point;
+
+        // Read input until the user releases the mouse pointer
+        while let Some(input) = input.next().await {
+            match input {
+                Paint(next_point) => {
+                    // Only track events corresponding to the same pointer device as the initial action
+                    if next_point.pointer_id != initial_event.pointer_id {
+                        continue;
+                    }
+
+                    // Stop if the action is cancelled
+                    if next_point.action == PaintAction::Cancel {
+                        actions.send_actions(vec![
+                            ToolAction::Overlay(OverlayAction::Draw(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]))
+                        ]);
+                        return None;
+                    }
+
+                    // Change the end point of the rectangle
+                    end_point           = next_point.location;
+
+                    // Create a rectangular path
+                    let select_path     = Self::rectangle_path(initial_point, end_point);
 
                     // Draw the selection path
                     let select_drawing  = Self::drawing_for_path(&select_path);
@@ -357,10 +466,13 @@ impl Lasso {
                             }
 
                             // Select an area
-                            let new_selection = Self::select_area_freehand(painting, &mut input, &mut actions).await;
+                            let new_selection_path = match tool_bindings.lasso_shape.get() {
+                                LassoShape::Freehand    => Self::select_area_freehand(painting, &mut input, &mut actions).await.map(|selection| Arc::new(Self::path_for_path(&selection))),
+                                LassoShape::Rectangle   => Self::select_area_rectangle(painting, &mut input, &mut actions).await.map(|selection| Arc::new(selection)),
+                                LassoShape::Ellipse     => Self::select_area_rectangle(painting, &mut input, &mut actions).await.map(|selection| Arc::new(selection)),
+                            };
 
                             // Action depends on the lasso mode
-                            let new_selection_path = new_selection.map(|selection| Arc::new(Self::path_for_path(&selection)));
                             match mode {
                                 LassoMode::Select => {
                                     // Set as the selected path
