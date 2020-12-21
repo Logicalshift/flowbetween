@@ -154,7 +154,11 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
                 // Pick the control sets based on the selection
                 let order_controls = if anything_selected { 
                     vec![
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
                         controls::divider(),
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
 
                         Control::label()
                             .with("Order:")
@@ -201,7 +205,11 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
 
                 let align_controls = if multi_select {
                     vec![
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
                         controls::divider(),
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
 
                         Control::label()
                             .with("Align:")
@@ -269,6 +277,8 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
 
                 let flip_controls = if anything_selected {
                     vec![
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
                         controls::divider(),
 
                         Control::empty()
@@ -299,7 +309,11 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
 
                 let group_controls = if multi_select {
                     vec![
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
                         controls::divider(),
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
 
                         Control::label()
                             .with("Group:")

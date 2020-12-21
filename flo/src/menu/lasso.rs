@@ -225,11 +225,15 @@ impl LassoMenuController {
                         .with(Bounds::next_horiz(48.0)),
 
                     Control::empty()
-                        .with(Bounds::next_horiz(8.0)),
+                        .with(Bounds::next_horiz(16.0)),
 
                     mode_control,
 
+                    Control::empty()
+                        .with(Bounds::next_horiz(4.0)),
                     controls::divider(),
+                    Control::empty()
+                        .with(Bounds::next_horiz(4.0)),
 
                     shape_control
                 ])
