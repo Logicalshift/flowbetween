@@ -284,7 +284,7 @@ let flo_canvas = (function() {
             line_to: (x,y)                           => { context.lineTo(x, y); current_path.push(() => context.lineTo(x, y) ); },
             bezier_curve: (x1, y1, x2, y2, x3, y3)   => { context.bezierCurveTo(x2, y2, x3, y3, x1, y1); current_path.push(() => context.bezierCurveTo(x2, y2, x3, y3, x1, y1) ); },
             close_path: ()                           => { context.closePath(); },
-            fill: ()                                 => { context.fill(); },
+            fill: ()                                 => { context.fill('evenodd'); },
 
             stroke: () => {
                 if (set_dash_pattern) {
