@@ -7,6 +7,7 @@ use flo_ui::*;
 use flo_animation::*;
 use flo_canvas::*;
 use flo_curves::*;
+use flo_curves::arc::*;
 use flo_curves::bezier::*;
 use flo_curves::bezier::path::*;
 use flo_binding::*;
@@ -343,6 +344,36 @@ impl Lasso {
         }
     }
 
+
+    ///
+    /// Returns the path for a rectangle with an initial and a final point
+    ///
+    fn ellipse_path(initial_point: (f32, f32), end_point: (f32, f32)) -> Option<Path> {
+        let (x1, y1)            = initial_point;
+        let (x2, y2)            = end_point;
+        let (x1, y1)            = (x1 as f64, y1 as f64);
+        let (x2, y2)            = (x2 as f64, y2 as f64);
+
+        // Not an ellipse if the start and end points are too close together
+        let distance_squared    = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
+        if distance_squared <= 2.0 {
+            None
+        } else {
+            // Create a new unit circle path
+            let circle      = Circle::new(PathPoint::new(0.0, 0.0), 0.5).to_path::<Path>();
+
+            // Convert to an ellipse by transforming it
+            let (cx, cy)    = ((x1+x2)*0.5, (y1+y2)*0.5);
+            let scale       = Transformation::Scale((x1-x2).abs(), (y1-y2).abs(), (0.0, 0.0));
+            let translate   = Transformation::Translate(cx, cy);
+
+            let circle      = scale.transform_path(&circle);
+            let circle      = translate.transform_path(&circle);
+
+            Some(circle)
+        }
+    }
+
     ///
     /// After the user starts drawing, selects an area on the canvas as a rectangular path
     ///
@@ -375,6 +406,62 @@ impl Lasso {
 
                     // Create a rectangular path
                     let select_path     = Self::rectangle_path(initial_point, end_point);
+
+                    // Draw the selection path
+                    let select_drawing  = Self::drawing_for_path(&select_path);
+                    actions.send_actions(vec![
+                        ToolAction::Overlay(OverlayAction::Draw(select_drawing))
+                    ]);
+
+                    // Return the resulting path if the action completes
+                    if next_point.action == PaintAction::Finish {
+                        actions.send_actions(vec![
+                            ToolAction::Overlay(OverlayAction::Draw(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]))
+                        ]);
+                        return select_path;
+                    }
+                }
+
+                Deselect    => { break; }
+                _           => { }
+            }
+        }
+
+        None
+    }
+
+    ///
+    /// After the user starts drawing, selects an area on the canvas as a rectangular path
+    ///
+    pub async fn select_area_ellipse(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>) -> Option<Path> {
+        use self::ToolInput::*;
+
+        // Start with a point that's just at the initial location
+        let initial_point = initial_event.location;
+        let mut end_point = initial_point;
+
+        // Read input until the user releases the mouse pointer
+        while let Some(input) = input.next().await {
+            match input {
+                Paint(next_point) => {
+                    // Only track events corresponding to the same pointer device as the initial action
+                    if next_point.pointer_id != initial_event.pointer_id {
+                        continue;
+                    }
+
+                    // Stop if the action is cancelled
+                    if next_point.action == PaintAction::Cancel {
+                        actions.send_actions(vec![
+                            ToolAction::Overlay(OverlayAction::Draw(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]))
+                        ]);
+                        return None;
+                    }
+
+                    // Change the end point of the rectangle
+                    end_point           = next_point.location;
+
+                    // Create a rectangular path
+                    let select_path     = Self::ellipse_path(initial_point, end_point);
 
                     // Draw the selection path
                     let select_drawing  = Self::drawing_for_path(&select_path);
@@ -469,7 +556,7 @@ impl Lasso {
                             let new_selection_path = match tool_bindings.lasso_shape.get() {
                                 LassoShape::Freehand    => Self::select_area_freehand(painting, &mut input, &mut actions).await.map(|selection| Arc::new(Self::path_for_path(&selection))),
                                 LassoShape::Rectangle   => Self::select_area_rectangle(painting, &mut input, &mut actions).await.map(|selection| Arc::new(selection)),
-                                LassoShape::Ellipse     => Self::select_area_rectangle(painting, &mut input, &mut actions).await.map(|selection| Arc::new(selection)),
+                                LassoShape::Ellipse     => Self::select_area_ellipse(painting, &mut input, &mut actions).await.map(|selection| Arc::new(selection)),
                             };
 
                             // Action depends on the lasso mode
