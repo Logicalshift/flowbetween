@@ -623,7 +623,7 @@ impl KeyFrameCore {
             }
         }
 
-        // The result is the listof updates
+        // The result is the list of updates
         updates
     }
 

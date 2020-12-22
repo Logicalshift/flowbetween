@@ -16,14 +16,11 @@ use std::time::{Duration};
 ///
 #[derive(Clone)]
 pub (super) struct LayerCut {
-    /// The group of elements that are outside of the path
-    pub outside_path: Vec<ElementWrapper>,
+    /// The group of elements that are outside of the path, and the element that they replace
+    pub outside_path: Vec<(ElementId, ElementWrapper)>,
 
     /// The group of elements that are inside of the path
     pub inside_path: Vec<ElementWrapper>,
-
-    /// The elements that should be removed from the layer and replaced with the inside/outside groups
-    pub replaced_elements: Vec<ElementId>,
 
     /// The elements that have been moved into either the inside or outside path
     pub moved_elements: Vec<ElementId>
@@ -37,7 +34,6 @@ impl LayerCut {
         LayerCut {
             outside_path:       vec![],
             inside_path:        vec![],
-            replaced_elements:  vec![],
             moved_elements:     vec![]
         }
     }
@@ -62,7 +58,6 @@ impl StreamAnimationCore {
             // Cut the elements that intersect with the path
             let layer_cut = frame.future_sync(move |frame| {
                 async move {
-                    let mut replaced_elements   = vec![];
                     let mut moved_elements      = vec![];
                     let mut inside_path         = vec![];
                     let mut outside_path        = vec![];
@@ -120,8 +115,6 @@ impl StreamAnimationCore {
                                 inside_path.push(inside_element);
                             } else {
                                 // Path cut in two: remove the old element and replace with two path elements
-                                replaced_elements.push(current_element_id);
-
                                 let mut exterior    = Path::from_paths(&cut.exterior_path);
                                 let mut interior    = Path::from_paths(&cut.interior_path);
                                 exterior.unapply_transformations(&*properties);
@@ -135,7 +128,7 @@ impl StreamAnimationCore {
                                 exterior.unattached = true;
                                 interior.unattached = true;
 
-                                outside_path.push(exterior);
+                                outside_path.push((current_element_id, exterior));
                                 inside_path.push(interior);
                             }
                         }
@@ -144,7 +137,6 @@ impl StreamAnimationCore {
                     LayerCut {
                         outside_path,
                         inside_path,
-                        replaced_elements,
                         moved_elements
                     }
                 }.boxed()
@@ -162,7 +154,6 @@ impl StreamAnimationCore {
             let mut pending         = PendingStorageChange::new();
 
             // Break apart the structure
-            let replaced_elements   = layer_cut.replaced_elements;
             let moved_elements      = layer_cut.moved_elements;
             let inside_path         = layer_cut.inside_path;
             let outside_path        = layer_cut.outside_path;
@@ -171,12 +162,45 @@ impl StreamAnimationCore {
             let frame           = self.edit_keyframe(layer_id, when).await;
             let frame           = match frame { Some(frame) => frame, None => { return; } };
 
-            let replaced_ids        = replaced_elements.iter().map(|elem_id| elem_id.id()).flatten().collect::<Vec<_>>();
+            // Remove the attachments from the elements that we'll be replacing
+            let replaced_ids        = outside_path.iter().map(|(elem_id, _)| elem_id.id()).flatten().collect::<Vec<_>>();
             self.remove_from_attachments(&replaced_ids).await;
+
+            // Assign element IDs to the outside elements if needed
+            let mut outside_path_with_ids = vec![];
+            for (replaced_element_id, outside_element_wrapper) in outside_path.into_iter() {
+                let id = self.assign_element_id(outside_element_wrapper.element.id()).await.id().unwrap();
+
+                outside_path_with_ids.push((replaced_element_id, id, outside_element_wrapper));
+            }
+
+            // Add the replacement elements after the elements they replace
+            let mut pending = frame.future_sync(move |frame| {
+                async move {
+                    // Iterate through the 'outside' elements in reverse order so they end up in the correct order relative to one another
+                    for (replaced_element_id, new_element_id, outside_element_wrapper) in outside_path_with_ids.into_iter().rev() {
+                        // Parent is same as the replaced element's parent
+                        let parent_id = frame.elements.get(&replaced_element_id)
+                            .and_then(|wrapper| wrapper.parent);
+
+                        // Add to the set of new elements
+                        pending.extend(frame.add_element_to_end(ElementId::Assigned(new_element_id), outside_element_wrapper));
+
+                        // Order after the replaced element
+                        pending.extend(frame.order_after(ElementId::Assigned(new_element_id), parent_id, Some(replaced_element_id)));
+                    }
+
+                    pending
+                }.boxed()
+            }).await.unwrap();
 
             // Unlink the moved and removed elements
             let mut pending     = frame.future_sync(move |frame| {
                 async move {
+                    let replaced_elements = replaced_ids.into_iter()
+                        .map(|id| ElementId::Assigned(id))
+                        .collect::<Vec<_>>();
+
                     // Unlink all the elements in the replaced and moved lists
                     for unlink_element_id in replaced_elements.iter().chain(moved_elements.iter()) {
                         pending.extend(frame.unlink_element(*unlink_element_id));
@@ -217,31 +241,6 @@ impl StreamAnimationCore {
                 inside_when = inside_when.min(when);
             }
 
-            // Create the outside elements (all those without an assigned element ID)
-            let mut outside_group   = vec![];
-            let mut outside_when    = when;
-            for mut outside_element_wrapper in outside_path {
-                // Assign an ID to this element
-                let id = if let ElementId::Assigned(id) = outside_element_wrapper.element.id() {
-                    id
-                } else {
-                    self.assign_element_id(ElementId::Unassigned).await.id().unwrap()
-                };
-
-                // Add the element to the group
-                outside_element_wrapper.element.set_id(ElementId::Assigned(id));
-                let group_element = outside_element_wrapper.element.clone();
-                outside_group.push(group_element);
-
-                // Add this element to the pending list
-                let when = outside_element_wrapper.start_time;
-                updated_elements.push(outside_element_wrapper.clone());
-                pending.push_element(id, outside_element_wrapper);
-                pending.push(StorageCommand::AttachElementToLayer(layer_id, id, when));
-
-                outside_when = outside_when.min(when);
-            }
-
             // Update the elements in the core
             let updates = frame.future_sync(move |frame| {
                 async move {
@@ -261,21 +260,17 @@ impl StreamAnimationCore {
 
             // Put the inside and outside elements into groups, and add those groups to the layer
             let inside_group_id     = self.assign_element_id(inside_group_id).await;
-            let outside_group_id    = self.assign_element_id(outside_group_id).await;
             let inside_group_len    = inside_group.len();
-            let outside_group_len   = outside_group.len();
 
             let inside_group        = GroupElement::new(inside_group_id, GroupType::Normal, Arc::new(inside_group));
-            let outside_group       = GroupElement::new(outside_group_id, GroupType::Normal, Arc::new(outside_group));
-
             let inside_group        = ElementWrapper::attached_with_element(Vector::Group(inside_group), inside_when);
-            let outside_group       = ElementWrapper::attached_with_element(Vector::Group(outside_group), outside_when);
 
             // Add the two groups to the frame
             let pending = frame.future_sync(move |frame| {
                 async move {
-                    if inside_group_len > 0     { pending.extend(frame.add_element_to_end(inside_group.element.id(), inside_group)); }
-                    if outside_group_len > 0    { pending.extend(frame.add_element_to_end(outside_group.element.id(), outside_group)); }
+                    if inside_group_len > 0 { 
+                        pending.extend(frame.add_element_to_end(inside_group.element.id(), inside_group));
+                    }
 
                     pending
                 }.boxed()
