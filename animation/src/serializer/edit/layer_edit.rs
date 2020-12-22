@@ -19,11 +19,11 @@ impl LayerEdit {
             SetName(name)                               => { data.write_chr('N'); data.write_str(name); },
             SetOrdering(ordering)                       => { data.write_chr('O'); data.write_u64(*ordering); }
 
-            Cut { path, when, inside_group, outside_group }   => { 
+            Cut { path, when, inside_group }   => { 
                 data.write_chr('c'); 
                 data.write_duration(*when);
                 inside_group.serialize(data);
-                outside_group.serialize(data);
+                ElementId::Unassigned.serialize(data);
 
                 data.write_usize(path.len()); 
 
@@ -58,7 +58,7 @@ impl LayerEdit {
             'c' => {
                 let when            = data.next_duration();
                 let inside_group    = ElementId::deserialize(data)?;
-                let outside_group   = ElementId::deserialize(data)?;
+                let _unused         = ElementId::deserialize(data)?;
                 let path_len        = data.next_usize();
 
                 let mut last_point  = PathPoint::new(0.0, 0.0);
@@ -71,7 +71,7 @@ impl LayerEdit {
 
                 let path            = Arc::new(components);
 
-                Some(LayerEdit::Cut { path, when, inside_group, outside_group })
+                Some(LayerEdit::Cut { path, when, inside_group })
             }
 
             _   => None
@@ -144,8 +144,7 @@ mod test {
         let edit        = LayerEdit::Cut { 
             path:           Arc::new(vec![PathComponent::Move(PathPoint::new(1.0, 2.0)), PathComponent::Line(PathPoint::new(2.0, 3.0)), PathComponent::Bezier(PathPoint::new(4.0, 5.0), PathPoint::new(6.0, 7.0), PathPoint::new(8.0, 9.0)), PathComponent::Close]),
             when:           Duration::from_millis(4200),
-            inside_group:   ElementId::Assigned(1),
-            outside_group:  ElementId::Assigned(2)
+            inside_group:   ElementId::Assigned(1)
         };
         edit.serialize(&mut encoded);
 

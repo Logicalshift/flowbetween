@@ -159,13 +159,12 @@ impl<Anim: 'static+EditableAnimation> SelectionModel<Anim> {
         let path            = Arc::new(path.elements().collect());
         let when            = self.current_time.get();
         let inside_group    = self.animation.assign_element_id();
-        let outside_group   = self.animation.assign_element_id();
         let layer_id        = self.selected_layer.get();
         let layer_id        = if let Some(layer_id) = layer_id { layer_id } else { return; };
 
         // Send the edits to the animation
         self.animation.perform_edits(vec![AnimationEdit::Layer(layer_id, LayerEdit::Cut {
-            path, when, inside_group, outside_group
+            path, when, inside_group
         })]);
 
         // Read the contents of the inner group (cut has no effect if applied to a non-existent layer)
@@ -178,7 +177,7 @@ impl<Anim: 'static+EditableAnimation> SelectionModel<Anim> {
         let cut_elements    = if let Some(Vector::Group(cut_elements)) = &cut_elements { cut_elements.elements().collect::<Vec<_>>() } else { vec![] };
 
         // Ungroup the two cut groups
-        self.animation.perform_edits(vec![AnimationEdit::Element(vec![inside_group, outside_group], ElementEdit::Ungroup)]);
+        self.animation.perform_edits(vec![AnimationEdit::Element(vec![inside_group], ElementEdit::Ungroup)]);
 
         // Set the selection to be the cut elements
         self.selected_elements_binding.set(Arc::new(cut_elements.into_iter().map(|elem| elem.id()).collect::<HashSet<_>>()));

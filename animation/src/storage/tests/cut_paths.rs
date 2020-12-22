@@ -46,7 +46,7 @@ fn cut_square_into_doughnut() {
     ]);
 
     anim.perform_edits(vec![
-        AnimationEdit::Layer(2, LayerEdit::Cut { path: center_square, when: Duration::from_millis(0), inside_group: ElementId::Assigned(100), outside_group: ElementId::Assigned(101) })
+        AnimationEdit::Layer(2, LayerEdit::Cut { path: center_square, when: Duration::from_millis(0), inside_group: ElementId::Assigned(100) })
     ]);
 
     // Layer should contain 2 groups with the inside and outside elements in it
@@ -103,7 +103,7 @@ fn include_entire_path_in_cut() {
     ]);
 
     anim.perform_edits(vec![
-        AnimationEdit::Layer(2, LayerEdit::Cut { path: center_square, when: Duration::from_millis(0), inside_group: ElementId::Assigned(100), outside_group: ElementId::Assigned(101) })
+        AnimationEdit::Layer(2, LayerEdit::Cut { path: center_square, when: Duration::from_millis(0), inside_group: ElementId::Assigned(100) })
     ]);
 
     // Layer should contain 2 groups with the inside and outside elements in it
@@ -159,7 +159,7 @@ fn include_nothing_in_cut() {
     ]);
 
     anim.perform_edits(vec![
-        AnimationEdit::Layer(2, LayerEdit::Cut { path: center_square, when: Duration::from_millis(0), inside_group: ElementId::Assigned(100), outside_group: ElementId::Assigned(101) })
+        AnimationEdit::Layer(2, LayerEdit::Cut { path: center_square, when: Duration::from_millis(0), inside_group: ElementId::Assigned(100) })
     ]);
 
     // Layer should contain 2 groups with the inside and outside elements in it
