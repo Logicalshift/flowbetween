@@ -199,6 +199,9 @@ impl StreamAnimationCore {
 
                         // Update the attachments for this element
                         pending.extend(frame.update_attachments(ElementId::Assigned(outside_element_id)));
+
+                        // Remove any attachments for the element that's being replaced (it will be unlinked and deleted later)
+                        pending.extend(frame.set_attachments(replaced_element_id, vec![]));
                     }
 
                     pending
