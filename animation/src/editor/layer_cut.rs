@@ -196,14 +196,14 @@ impl StreamAnimationCore {
 
                         // Order after the replaced element
                         pending.extend(frame.order_after(ElementId::Assigned(outside_element_id), parent_id, Some(replaced_element_id)));
+
+                        // Update the attachments for this element
+                        pending.extend(frame.update_attachments(ElementId::Assigned(outside_element_id)));
                     }
 
                     pending
                 }.boxed()
             }).await.unwrap();
-
-            // Remove the attachments from the elements that we'll be replacing
-            //self.remove_from_attachments(&replaced_ids).await;
 
             // Unlink the moved and removed elements
             let mut pending     = frame.future_sync(move |frame| {

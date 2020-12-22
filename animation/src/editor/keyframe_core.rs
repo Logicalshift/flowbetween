@@ -593,7 +593,7 @@ impl KeyFrameCore {
     pub fn update_parents(&mut self, element_id: ElementId) -> PendingStorageChange {
         // TODO: detect (and break?) loops
 
-        // Fetch the element whose attachments we'll be updated
+        // Fetch the element whose attachments will be updated
         let root_element = match self.elements.get(&element_id) {
             Some(element)   => element,
             None            => { return PendingStorageChange::new() }
