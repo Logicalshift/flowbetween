@@ -24,7 +24,7 @@ impl StreamAnimationCore {
                 SetOrdering(ordering)                       => { self.set_layer_ordering(layer_id, *ordering).await }
                 Cut { path, when, inside_group, outside_group }   => { 
                     let cut = self.layer_cut(layer_id, *when, Arc::clone(path)).await;
-                    self.apply_layer_cut(layer_id, *when, cut, *inside_group, *outside_group).await;
+                    self.apply_layer_cut(layer_id, *when, cut, *inside_group).await;
                 }
             }
         }

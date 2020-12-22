@@ -149,7 +149,7 @@ impl StreamAnimationCore {
     ///
     /// Applies a layer cut operation to a frame
     ///
-    pub (super) fn apply_layer_cut<'a>(&'a mut self, layer_id: u64, when: Duration, layer_cut: LayerCut, inside_group_id: ElementId, outside_group_id: ElementId) -> impl 'a + Future<Output=()> {
+    pub (super) fn apply_layer_cut<'a>(&'a mut self, layer_id: u64, when: Duration, layer_cut: LayerCut, inside_group_id: ElementId) -> impl 'a + Future<Output=()> {
         async move {
             let mut pending         = PendingStorageChange::new();
 
