@@ -164,7 +164,6 @@ impl StreamAnimationCore {
 
             // Remove the attachments from the elements that we'll be replacing
             let replaced_ids        = outside_path.iter().map(|(elem_id, _)| elem_id.id()).flatten().collect::<Vec<_>>();
-            self.remove_from_attachments(&replaced_ids).await;
 
             // Assign element IDs to the outside elements if needed
             let mut outside_path_with_ids = vec![];
@@ -202,6 +201,9 @@ impl StreamAnimationCore {
                     pending
                 }.boxed()
             }).await.unwrap();
+
+            // Remove the attachments from the elements that we'll be replacing
+            //self.remove_from_attachments(&replaced_ids).await;
 
             // Unlink the moved and removed elements
             let mut pending     = frame.future_sync(move |frame| {
