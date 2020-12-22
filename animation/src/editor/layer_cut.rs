@@ -178,16 +178,25 @@ impl StreamAnimationCore {
             let mut pending = frame.future_sync(move |frame| {
                 async move {
                     // Iterate through the 'outside' elements in reverse order so they end up in the correct order relative to one another
-                    for (replaced_element_id, new_element_id, outside_element_wrapper) in outside_path_with_ids.into_iter().rev() {
+                    for (replaced_element_id, outside_element_id, outside_element_wrapper) in outside_path_with_ids.into_iter().rev() {
                         // Parent is same as the replaced element's parent
                         let parent_id = frame.elements.get(&replaced_element_id)
                             .and_then(|wrapper| wrapper.parent);
 
-                        // Add to the set of new elements
-                        pending.extend(frame.add_element_to_end(ElementId::Assigned(new_element_id), outside_element_wrapper));
+                        // Wrapper starts unlinked
+                        let mut outside_element_wrapper         = outside_element_wrapper;
+                        outside_element_wrapper.order_before    = None;
+                        outside_element_wrapper.order_after     = None;
+                        outside_element_wrapper.parent          = None;
+
+                        // Add the element to the frame
+                        pending.push_element(outside_element_id, outside_element_wrapper.clone());
+                        pending.push(StorageCommand::AttachElementToLayer(layer_id, outside_element_id, when));
+
+                        frame.elements.insert(ElementId::Assigned(outside_element_id), outside_element_wrapper);
 
                         // Order after the replaced element
-                        pending.extend(frame.order_after(ElementId::Assigned(new_element_id), parent_id, Some(replaced_element_id)));
+                        pending.extend(frame.order_after(ElementId::Assigned(outside_element_id), parent_id, Some(replaced_element_id)));
                     }
 
                     pending
