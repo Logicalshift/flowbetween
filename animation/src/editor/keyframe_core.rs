@@ -559,6 +559,74 @@ impl KeyFrameCore {
     }
 
     ///
+    /// Sets the attachments for an element in this frame to a new value
+    ///
+    pub fn set_attachments<ElementIter: IntoIterator<Item=ElementId>>(&mut self, element_id: ElementId, attachments: ElementIter) -> PendingStorageChange {
+        let mut updates             = PendingStorageChange::new();
+
+        // Must be used with an assigned element ID
+        if !element_id.is_assigned() {
+            return updates;
+        }
+
+        // Get the element to edit (no action if the element is not in this frame)
+        let wrapper                 = self.elements.get_mut(&element_id);
+        let wrapper                 = if let Some(wrapper) = wrapper { wrapper } else { return updates; };
+
+        // Fetch the old attachments and work out the new and old sets
+        let original_attachments    = wrapper.attachments.iter().cloned().collect::<HashSet<_>>();
+        let mut new_attachments     = vec![];
+        let mut removed_attachments = original_attachments.clone();
+
+        // Clear the attachments for the element (we'll fill them back in as we go)
+        wrapper.attachments         = vec![];
+
+        for attachment_id in attachments {
+            if !attachment_id.is_assigned() { continue; }
+
+            // Add to the element attachments
+            wrapper.attachments.push(attachment_id);
+
+            // Modify the set of attachments we'll 
+            removed_attachments.remove(&attachment_id);
+            if !original_attachments.contains(&attachment_id) {
+                new_attachments.push(attachment_id);
+            }
+        }
+
+        if new_attachments.len() == 0 && removed_attachments.len() == 0 {
+            // No changes are being made
+            return updates;
+        }
+
+        // Update the element
+        updates.push_element(element_id.id().unwrap(), wrapper.clone());
+
+        // Remove or add the element from the 'attached_to' items for each attachment
+        for new_attachment_id in new_attachments {
+            if let Some(attachment) = self.elements.get_mut(&new_attachment_id) {
+                if !attachment.attached_to.contains(&element_id) {
+                    // Not marked as attached to this element
+                    attachment.attached_to.push(element_id);
+                    updates.push_element(new_attachment_id.id().unwrap(), attachment.clone());
+                }
+            }
+        }
+
+        for removed_attachment_id in removed_attachments {
+            if let Some(attachment) = self.elements.get_mut(&removed_attachment_id) {
+                if attachment.attached_to.contains(&element_id) {
+                    // Needs to be removed from the 'attached to' list for this element
+                    attachment.attached_to.retain(|attached_to| attached_to != &element_id);
+                    updates.push_element(removed_attachment_id.id().unwrap(), attachment.clone());
+                }
+            }
+        }
+
+        updates
+    }
+
+    ///
     /// Ensures that the 'attached_to' value is set correctly for all of the attachments that belong to the specified element
     ///
     pub fn update_attachments(&mut self, element_id: ElementId) -> PendingStorageChange {
