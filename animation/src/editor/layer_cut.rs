@@ -80,7 +80,22 @@ impl StreamAnimationCore {
                             properties      = attachment.element.update_properties(properties, when);
                         }
 
-                        // TODO: if the element is a 'standard' group - ie, not one that's already doing path arithmetic, recurse into it
+                        // If the element is a 'standard' group - ie, not one that's already doing path arithmetic, recurse into it
+                        if let Vector::Group(group_element) = &current_element.element {
+                            if group_element.group_type() == GroupType::Normal {
+                                // Process each element in the group individually (reversed, so we process the bottom-most first)
+                                // To deal with grouped elements correctly, the parent value must be set correctly for each element wrapper in the group
+                                let elements = group_element.elements().collect::<Vec<_>>();
+                                for subelement in elements.into_iter().rev() {
+                                    remaining_elements.push(subelement.id());
+                                }
+
+                                // Don't process this element as a normal path
+                                continue;
+                            }
+
+                            // Other group types are converted to paths
+                        }
 
                         // Get the path for this element (for the cut operation, we need the interior points to be removed)
                         let element_path        = current_element.element.to_path(&properties, PathConversion::RemoveInteriorPoints);
