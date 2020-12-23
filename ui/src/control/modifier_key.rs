@@ -6,6 +6,7 @@ pub enum ModifierKey {
     Shift,
     Ctrl,
     Alt,
+    Meta,
     Super,
     Hyper
 }

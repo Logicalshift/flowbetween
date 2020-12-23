@@ -32,6 +32,13 @@ let flo_paint = (function() {
         let x = mouse_event.clientX;
         let y = mouse_event.clientY;
 
+        // Work out the modifier keys
+        let modifier_keys = [];
+        if (mouse_event.altKey)     { modifier_keys.push('Alt'); }
+        if (mouse_event.shiftKey)   { modifier_keys.push('Shift'); }
+        if (mouse_event.ctrlKey)    { modifier_keys.push('Ctrl'); }
+        if (mouse_event.metaKey)    { modifier_keys.push('Meta'); }
+
         // Get the target element
         let client_rect = target_element.getBoundingClientRect();
 
@@ -50,7 +57,7 @@ let flo_paint = (function() {
         return {
             action:         action,
             pointer_id:     0,
-            modifier_keys:  [],
+            modifier_keys:  modifier_keys,
             location:       [x, y],
             pressure:       mouse_event.mozPressure || 0.5,
             tilt_x:         0,
@@ -66,6 +73,13 @@ let flo_paint = (function() {
     let touch_event_to_paint_event = (touch_event, action, target_element) => {
         // We always just track the first touch here
         let touch = touch_event.touches[0];
+
+        // Work out the modifier keys
+        let modifier_keys = [];
+        if (touch_event.altKey)     { modifier_keys.push('Alt'); }
+        if (touch_event.shiftKey)   { modifier_keys.push('Shift'); }
+        if (touch_event.ctrlKey)    { modifier_keys.push('Ctrl'); }
+        if (touch_event.metaKey)    { modifier_keys.push('Meta'); }
 
         // Get the coordinates of this event
         let x = touch.clientX;
@@ -89,7 +103,7 @@ let flo_paint = (function() {
         return {
             action:         action,
             pointer_id:     0,
-            modifier_keys:  [],
+            modifier_keys:  modifier_keys,
             location:       [x, y],
             pressure:       touch.force || 0.5,
             tilt_x:         0,
@@ -106,6 +120,13 @@ let flo_paint = (function() {
         // Get the coordinates of this event
         let x = pointer_event.clientX;
         let y = pointer_event.clientY;
+
+        // Work out the modifier keys
+        let modifier_keys = [];
+        if (pointer_event.altKey)   { modifier_keys.push('Alt'); }
+        if (pointer_event.shiftKey) { modifier_keys.push('Shift'); }
+        if (pointer_event.ctrlKey)  { modifier_keys.push('Ctrl'); }
+        if (pointer_event.metaKey)  { modifier_keys.push('Meta'); }
 
         // Get the target element
         let client_rect = target_element.getBoundingClientRect();
@@ -124,7 +145,7 @@ let flo_paint = (function() {
         return {
             action:         action,
             pointer_id:     pointer_event.pointerId,
-            modifier_keys:  [],
+            modifier_keys:  modifier_keys,
             location:       [x, y],
             pressure:       pointer_event.pressure,
             tilt_x:         pointer_event.tiltX,
