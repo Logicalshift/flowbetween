@@ -62,16 +62,14 @@ impl StreamAnimationCore {
                     let mut inside_path         = vec![];
                     let mut outside_path        = vec![];
 
-                    let mut next_element_id     = frame.initial_element;
+                    let mut remaining_elements  = frame.root_elements();
+                    remaining_elements.reverse();
 
                     // Iterate through all the elements in the frame
-                    while let Some(current_element_id) = next_element_id {
+                    while let Some(current_element_id) = remaining_elements.pop() {
                         // Fetch the wrapper for the current element
                         let current_element     = frame.elements.get(&current_element_id);
                         let current_element     = if let Some(current_element) = current_element { current_element } else { break; };
-
-                        // Update the next element (so we can cut the loop short later on)
-                        next_element_id         = current_element.order_before;
 
                         // Update the properties for this element
                         let mut properties      = Arc::new(VectorProperties::default());

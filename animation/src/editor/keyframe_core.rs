@@ -335,9 +335,24 @@ impl KeyFrameCore {
     }
 
     ///
+    /// Returns the root elements for this keyframe, in order
+    ///
+    pub fn root_elements(&self) -> Vec<ElementId> {
+        let mut next_element_id     = self.initial_element;
+        let mut root_elements       = vec![];
+
+        while let Some(element_id) = next_element_id {
+            root_elements.push(element_id);
+            next_element_id = self.elements.get(&element_id).and_then(|wrapper| wrapper.order_before);
+        }
+
+        root_elements
+    }
+
+    ///
     /// Returns the child element IDs for a parent element
     ///
-    fn child_elements_for_parent(&self, parent_element_id: ElementId) -> Vec<ElementId> {
+    pub fn child_elements_for_parent(&self, parent_element_id: ElementId) -> Vec<ElementId> {
         if let Some(parent_wrapper) = self.elements.get(&parent_element_id) {
             match &parent_wrapper.element {
                 Vector::Group(group)    => group.elements().map(|elem| elem.id()).collect(),
