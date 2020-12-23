@@ -105,6 +105,7 @@ impl VectorElement for PathElement {
             path.apply_transformations(properties);
 
             // Draw the transformed path
+            gc.winding_rule(WindingRule::EvenOdd);
             gc.draw_list(properties.brush.render_path(&properties.brush_properties, &path));
         } else {
             // No transformations: just render the path directly

@@ -421,6 +421,7 @@ impl Brush for InkBrush {
         // Upper portion
         let Coord2(x, y) = upper_curves[0][0].start_point();
         let preamble = vec![
+            Draw::WindingRule(WindingRule::NonZero),
             Draw::NewPath,
             Draw::Move(x as f32, y as f32)
         ];
