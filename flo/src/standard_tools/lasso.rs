@@ -512,6 +512,18 @@ impl Lasso {
                         let mode            = tool_bindings.lasso_mode.get();
                         let mode            = if existing_path.is_none() { LassoMode::Select } else { mode };
 
+                        // Apply the modifier keys
+                        let mode            = if existing_path.is_some() && painting.modifier_keys.len() == 1 {
+                            match painting.modifier_keys[0] {
+                                ModifierKey::Alt    => LassoMode::Add,
+                                ModifierKey::Ctrl   => LassoMode::Subtract,
+                                ModifierKey::Shift  => LassoMode::Select,
+                                _                   => mode
+                            }
+                        } else {
+                            mode
+                        };
+
                         if mode == LassoMode::Select && selection_model.point_in_selection_path(x as f64, y as f64) {
                             // Clicking inside the path: drag the selection
                             if selection_model.selected_elements.get().len() == 0 {
