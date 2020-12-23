@@ -147,6 +147,7 @@ let flo_canvas = (function() {
         let current_path                = [];
         let context_stack               = [];
         let clip_stack                  = [];
+        let fill_winding_rule           = 'nonzero';
         let clipped                     = false;
         let transform                   = [1,0,0, 0,1,0, 0,0,1];
         let inverse_transform           = null;
@@ -284,7 +285,7 @@ let flo_canvas = (function() {
             line_to: (x,y)                           => { context.lineTo(x, y); current_path.push(() => context.lineTo(x, y) ); },
             bezier_curve: (x1, y1, x2, y2, x3, y3)   => { context.bezierCurveTo(x2, y2, x3, y3, x1, y1); current_path.push(() => context.bezierCurveTo(x2, y2, x3, y3, x1, y1) ); },
             close_path: ()                           => { context.closePath(); },
-            fill: ()                                 => { context.fill('evenodd'); },
+            fill: ()                                 => { context.fill(fill_winding_rule); },
 
             stroke: () => {
                 if (set_dash_pattern) {
@@ -331,6 +332,10 @@ let flo_canvas = (function() {
 
             line_cap: (cap) => {
                 context.lineCap = cap;
+            },
+
+            winding_rule: (rule) => {
+                fill_winding_rule = rule;
             },
 
             new_dash_pattern: () => {
@@ -491,6 +496,7 @@ let flo_canvas = (function() {
                 // Push the current clipping path and dash pattern
                 let restore_clip_stack          = clip_stack.slice();
                 let restore_dash_pattern        = dash_pattern.slice();
+                let restore_winding_rule        = fill_winding_rule;
                 let restore_stored_pixels       = stored_pixels;
                 let restore_gen_buffer          = generate_buffer_on_store;
                 let restore_have_image          = have_stored_image;
@@ -501,6 +507,7 @@ let flo_canvas = (function() {
                 context_stack.push(() => {
                     clip_stack                  = restore_clip_stack;
                     dash_pattern                = restore_dash_pattern;
+                    fill_winding_rule           = restore_winding_rule;
                     stored_pixels               = restore_stored_pixels;
                     generate_buffer_on_store    = restore_gen_buffer;
                     have_stored_image           = restore_have_image;
@@ -782,6 +789,7 @@ let flo_canvas = (function() {
             line_width_pixels:              (width)                     => { current_sprite.push([line_width_pixels, [width]]); },
             line_join:                      (join)                      => { current_sprite.push([line_join, [join]]); },
             line_cap:                       (cap)                       => { current_sprite.push([line_cap, [cap]]); },
+            winding_rule:                   (rule)                      => { current_sprite.push([winding_rule, [rule]]); },
             new_dash_pattern:               ()                          => { current_sprite.push([new_dash_pattern, []]); },
             dash_length:                    (length)                    => { current_sprite.push([dash_length, [length]]); },
             dash_offset:                    (offset)                    => { current_sprite.push([dash_offset, [offset]]); },
@@ -829,6 +837,7 @@ let flo_canvas = (function() {
         function line_width_pixels(width)               { render.line_width_pixels(width); }
         function line_join(join)                        { render.line_join(join); }
         function line_cap(cap)                          { render.line_cap(cap); }
+        function winding_rule(rule)                     { render.winding_rule(rule); }
         function new_dash_pattern()                     { render.new_dash_pattern(); }
         function dash_length(length)                    { render.dash_length(length); }
         function dash_offset(offset)                    { render.dash_offset(offset); }
@@ -874,6 +883,7 @@ let flo_canvas = (function() {
             line_width_pixels:  (width)         => { replay.push([line_width_pixels, [width], current_layer_id]);           render.line_width_pixels(width);       },
             line_join:          (join)          => { replay.push([line_join, [join], current_layer_id]);                    render.line_join(join);                },
             line_cap:           (cap)           => { replay.push([line_cap, [cap], current_layer_id]);                      render.line_cap(cap);                  },
+            winding_rule:       (rule)          => { replay.push([winding_rule, [rule], current_layer_id]);                 render.winding_rule(rule);             },
             new_dash_pattern:   ()              => { replay.push([new_dash_pattern, [], current_layer_id]);                 render.new_dash_pattern();             },
             dash_length:        (length)        => { replay.push([dash_length, [length], current_layer_id]);                render.dash_length(length);            },
             dash_offset:        (offset)        => { replay.push([dash_offset, [offset], current_layer_id]);                render.dash_length(offset);            },
@@ -1179,6 +1189,13 @@ let flo_canvas = (function() {
                 case 'T':   draw.sprite_transform_matrix(read_matrix());                    break;
                 }
             };
+
+            let decode_winding_rule = () => {
+                switch (read_char()) {
+                    case 'n':   draw.winding_rule('nonzero');   break;
+                    case 'e':   draw.winding_rule('evenodd');   break;
+                }
+            }
             
             let decode_dash         = () => { throw 'Not implemented'; };
             
@@ -1208,6 +1225,7 @@ let flo_canvas = (function() {
                 case 'P':   draw.push_state();                          break;
                 case 'p':   draw.pop_state();                           break;
                 case 's':   decode_sprite();                            break;
+                case 'W':   decode_winding_rule();                      break;
 
                 default:    throw 'Unknown instruction \'' + instruction + '\' at ' + pos;
                 }
