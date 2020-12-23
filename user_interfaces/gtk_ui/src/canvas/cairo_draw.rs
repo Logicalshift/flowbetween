@@ -56,6 +56,7 @@ pub struct CairoState {
     line_width:     f64,
     line_join:      cairo::LineJoin,
     line_cap:       cairo::LineCap,
+    fill_rule:      cairo::FillRule,
     fill_color:     Color,
     stroke_color:   Color,
     dash_pattern:   Vec<f64>
@@ -141,6 +142,16 @@ impl CairoDraw {
             flo::LineCap::Butt      => cairo::LineCap::Butt,
             flo::LineCap::Round     => cairo::LineCap::Round,
             flo::LineCap::Square    => cairo::LineCap::Square
+        }
+    }
+
+    ///
+    /// Converts a flo winding rule into a Cairo winding rule
+    ///
+    fn get_fill_rule(winding_rule: flo::WindingRule) -> cairo::FillRule {
+        match winding_rule {
+            flo::WindingRule::NonZero => FillRule::Winding,
+            flo::WindingRule::EvenOdd => FillRule::EvenOdd
         }
     }
 
@@ -286,6 +297,7 @@ impl CairoDraw {
         let line_width      = self.ctxt.get_line_width();
         let line_join       = self.ctxt.get_line_join();
         let line_cap        = self.ctxt.get_line_cap();
+        let fill_rule       = self.ctxt.get_fill_rule();
         let fill_color      = self.fill_color;
         let stroke_color    = self.stroke_color;
         let dash_pattern    = self.dash_pattern.clone();
@@ -295,6 +307,7 @@ impl CairoDraw {
             line_width,
             line_join,
             line_cap,
+            fill_rule,
             fill_color,
             stroke_color,
             dash_pattern
@@ -309,6 +322,7 @@ impl CairoDraw {
         self.ctxt.set_line_width(state.line_width);
         self.ctxt.set_line_join(state.line_join);
         self.ctxt.set_line_cap(state.line_cap);
+        self.ctxt.set_fill_rule(state.fill_rule);
         self.fill_color     = state.fill_color;
         self.stroke_color   = state.stroke_color;
         self.dash_pattern   = state.dash_pattern.clone();
@@ -327,12 +341,13 @@ impl CairoDraw {
             Line(x, y)                                  => { self.ctxt.line_to(x as f64, y as f64); },
             BezierCurve((x, y), (cx1, cy1), (cx2, cy2)) => { self.ctxt.curve_to(cx1 as f64, cy1 as f64, cx2 as f64, cy2 as f64, x as f64, y as f64); },
             ClosePath                                   => { self.ctxt.close_path(); },
-            Fill                                        => { self.set_color(ColorTarget::Fill); self.ctxt.set_fill_rule(FillRule::EvenOdd); self.ctxt.fill_preserve(); },
+            Fill                                        => { self.set_color(ColorTarget::Fill); self.ctxt.fill_preserve(); },
             Stroke                                      => { self.set_color(ColorTarget::Stroke); self.ctxt.stroke_preserve(); },
             LineWidth(width)                            => { self.ctxt.set_line_width(width as f64); },
             LineWidthPixels(pixels)                     => { self.set_line_width_pixels(pixels); },
             LineJoin(join)                              => { self.ctxt.set_line_join(Self::get_join(join)); },
             LineCap(cap)                                => { self.ctxt.set_line_cap(Self::get_cap(cap)); },
+            WindingRule(rule)                           => { self.ctxt.set_fill_rule(Self::get_fill_rule(rule)); },
             NewDashPattern                              => { self.dash_pattern = vec![]; self.ctxt.set_dash(&[], 0.0); },
             DashLength(length)                          => { self.dash_pattern.push(length as f64); self.ctxt.set_dash(&self.dash_pattern, self.ctxt.get_dash_offset()); },
             DashOffset(offset)                          => { self.ctxt.set_dash(&self.dash_pattern, offset as f64); },
