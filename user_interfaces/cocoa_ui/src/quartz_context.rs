@@ -130,7 +130,15 @@ impl QuartzContext {
                 Line(x, y)                                          => { self.state.path_line(*x as CGFloat, *y as CGFloat); }
                 BezierCurve((ex, ey), (c1x, c1y), (c2x, c2y))       => { self.state.path_bezier_curve((*c1x as CGFloat, *c1y as CGFloat), (*c2x as CGFloat, *c2y as CGFloat), (*ex as CGFloat, *ey as CGFloat)); }
                 ClosePath                                           => { self.state.path_close(); }
-                Fill                                                => { self.state.load_path(); CGContextEOFillPath(*self.context); }
+                Fill                                                => { 
+                    use flo_canvas::WindingRule::*;
+
+                    self.state.load_path(); 
+                    match self.state.winding_rule() {
+                        NonZero => { CGContextFillPath(*self.context); },
+                        EvenOdd => { CGContextEOFillPath(*self.context); }
+                    }
+                }
                 Stroke                                              => { self.state.load_path(); CGContextStrokePath(*self.context); }
                 LineWidth(width)                                    => { self.state.set_line_width(*width as CGFloat); }
                 LineWidthPixels(width_pixels)                       => {
@@ -144,6 +152,7 @@ impl QuartzContext {
                 }
                 LineJoin(join)                                      => { self.state.set_line_join(join); }
                 LineCap(cap)                                        => { self.state.set_line_cap(cap); }
+                WindingRule(winding_rule)                           => { self.state.set_winding_rule(winding_rule); }
                 NewDashPattern                                      => { /* TODO */ }
                 DashLength(len)                                     => { /* TODO */ }
                 DashOffset(offset)                                  => { /* TODO */ }

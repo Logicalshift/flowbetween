@@ -28,6 +28,7 @@ struct CanvasStateValues {
     blend_mode:         CGBlendMode,
     line_join:          CGLineJoin,
     line_cap:           CGLineCap,
+    winding_rule:       WindingRule,
     layer_id:           u32,
     line_width:         CGFloat,
     sprite_transform:   Transform2D,
@@ -67,6 +68,7 @@ impl CanvasState {
                     blend_mode:         CGBlendMode::Normal,
                     line_join:          CGLineJoin::Round,
                     line_cap:           CGLineCap::Butt,
+                    winding_rule:       WindingRule::NonZero,
                     sprite_transform:   Transform2D::identity(),
                     layer_id:           0,
                     line_width:         1.0,
@@ -151,6 +153,13 @@ impl CanvasState {
     ///
     pub fn current_transform(&self) -> CGAffineTransform {
         self.values.transform
+    }
+
+    ///
+    /// Returns the current winding rule for this state
+    ///
+    pub fn winding_rule(&self) -> WindingRule {
+        self.values.winding_rule
     }
 
     ///
@@ -388,6 +397,13 @@ impl CanvasState {
                 CGContextSetLineCap(**context, self.values.line_cap);
             }
         }
+    }
+
+    ///
+    /// Sets the winding rule
+    ///
+    pub fn set_winding_rule(&mut self, winding_rule: &WindingRule) {
+        self.values.winding_rule = *winding_rule;
     }
 
     ///

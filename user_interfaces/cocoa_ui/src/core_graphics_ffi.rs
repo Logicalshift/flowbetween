@@ -162,6 +162,7 @@ extern {
     pub fn CGContextClosePath(ctxt: CGContextRef);
     pub fn CGContextAddCurveToPoint(ctxt: CGContextRef, cp1x: CGFloat, cp1y: CGFloat, cp2x: CGFloat, cp2y: CGFloat, x: CGFloat, y: CGFloat);
     pub fn CGContextFillPath(ctxt: CGContextRef);
+    pub fn CGContextEOFillPath(ctxt: CGContextRef);
     pub fn CGContextStrokePath(ctxt: CGContextRef);
     pub fn CGContextSetLineWidth(ctxt: CGContextRef, width: CGFloat);
     pub fn CGContextSetLineJoin(ctxt: CGContextRef, join: CGLineJoin);
