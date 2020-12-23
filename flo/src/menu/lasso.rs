@@ -123,7 +123,6 @@ impl LassoMenuController {
     fn ui(images: &Arc<ResourceManager<Image>>, lasso_mode: &Binding<LassoMode>) -> BindRef<Control> {
         // Copy the resources
         let images      = images.clone();
-        let lasso_mode  = lasso_mode.clone();
 
         let select      = images.get_named_resource("Select");
         let add         = images.get_named_resource("Add");
