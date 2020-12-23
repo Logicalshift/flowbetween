@@ -179,12 +179,13 @@ impl GtkPainting {
         let (x, y) = self.position;
 
         Painting {
-            action:     action,
-            pointer_id: 0,
-            location:   (x as f32, y as f32),
-            pressure:   self.pressure as f32,
-            tilt_x:     self.xtilt as f32,
-            tilt_y:     self.ytilt as f32
+            action:         action,
+            pointer_id:     0,
+            modifier_keys:  vec![],
+            location:       (x as f32, y as f32),
+            pressure:       self.pressure as f32,
+            tilt_x:         self.xtilt as f32,
+            tilt_y:         self.ytilt as f32
         }
     }
 }

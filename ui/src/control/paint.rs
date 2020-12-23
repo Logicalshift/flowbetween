@@ -1,4 +1,5 @@
 use super::mouse::*;
+use super::modifier_key::*;
 
 ///
 /// The device that caused a painting event
@@ -45,10 +46,13 @@ pub enum PaintAction {
 ///
 /// Data for a painting event
 ///
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct Painting {
     /// Action for this painting event
     pub action: PaintAction,
+
+    /// The modifier keys that were applied for this painting action
+    pub modifier_keys: Vec<ModifierKey>,
 
     /// In the event the user has multiple pointers (eg, multiple styluses on a tablet), this is the ID of the stylus that the user is using
     pub pointer_id: i32,

@@ -84,12 +84,13 @@ impl AppPainting {
     ///
     pub fn into_painting(&self, action: PaintAction) -> Painting {
         Painting {
-            action:     action,
-            pointer_id: self.pointer_id,
-            location:   (self.position_x as f32, self.position_y as f32),
-            pressure:   self.pressure as f32,
-            tilt_x:     self.tilt_x as f32,
-            tilt_y:     self.tilt_y as f32
+            action:         action,
+            pointer_id:     self.pointer_id,
+            modifier_keys:  vec![],
+            location:       (self.position_x as f32, self.position_y as f32),
+            pressure:       self.pressure as f32,
+            tilt_x:         self.tilt_x as f32,
+            tilt_y:         self.tilt_y as f32
         }
     }
 }

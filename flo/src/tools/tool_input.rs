@@ -53,7 +53,7 @@ impl<ToolData> ToolInput<ToolData> {
                     result.push(action);
                 },
 
-                Paint(paint) => {
+                Paint(ref paint) => {
                     match paint.action {
                         PaintAction::Continue => {
                             // This action is suppressed and becomes the last continue action

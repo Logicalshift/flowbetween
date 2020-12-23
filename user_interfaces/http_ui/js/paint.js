@@ -48,12 +48,13 @@ let flo_paint = (function() {
         // Generate the final event
         // TODO: can get tilt_x and tilt_y from azimuthAngle and altitudeAngle (but they aren't a direct mapping)
         return {
-            action:     action,
-            pointer_id: 0,
-            location:   [x, y],
-            pressure:   mouse_event.mozPressure || 0.5,
-            tilt_x:     0,
-            tilt_y:     0
+            action:         action,
+            pointer_id:     0,
+            modifier_keys:  [],
+            location:       [x, y],
+            pressure:       mouse_event.mozPressure || 0.5,
+            tilt_x:         0,
+            tilt_y:         0
         };
     };
 
@@ -86,12 +87,13 @@ let flo_paint = (function() {
         // Generate the final event
         // TODO: can get tilt_x and tilt_y from azimuthAngle and altitudeAngle (but they aren't a direct mapping)
         return {
-            action:     action,
-            pointer_id: 0,
-            location:   [x, y],
-            pressure:   touch.force || 0.5,
-            tilt_x:     0,
-            tilt_y:     0
+            action:         action,
+            pointer_id:     0,
+            modifier_keys:  [],
+            location:       [x, y],
+            pressure:       touch.force || 0.5,
+            tilt_x:         0,
+            tilt_y:         0
         };
     };
 
@@ -120,12 +122,13 @@ let flo_paint = (function() {
 
         // Generate the final event
         return {
-            action:     action,
-            pointer_id: pointer_event.pointerId,
-            location:   [x, y],
-            pressure:   pointer_event.pressure,
-            tilt_x:     pointer_event.tiltX,
-            tilt_y:     pointer_event.tiltY
+            action:         action,
+            pointer_id:     pointer_event.pointerId,
+            modifier_keys:  [],
+            location:       [x, y],
+            pressure:       pointer_event.pressure,
+            tilt_x:         pointer_event.tiltX,
+            tilt_y:         pointer_event.tiltY
         };
     };
 
