@@ -35,7 +35,9 @@ pub const SELECTION_HIGHLIGHT:              Color = Color::Rgba(0.6, 1.0, 1.0, 1
 pub const SELECTION_FILL:                   Color = Color::Rgba(0.6, 0.8, 0.9, 0.3);
 
 pub const CP_BEZIER:                        Color = Color::Rgba(1.0, 1.0, 1.0, 1.0);
+pub const CP_BEZIER_SELECTED:               Color = Color::Rgba(0.2, 0.2, 0.2, 1.0);
 pub const CP_BEZIER_OUTLINE:                Color = Color::Rgba(0.1, 0.4, 0.5, 0.85);
+pub const CP_BEZIER_SELECTED_OUTLINE:       Color = Color::Rgba(0.6, 0.9, 1.0, 1.0);
 pub const CP_BEZIER_CP:                     Color = Color::Rgba(0.0, 0.0, 0.0, 0.85);
 pub const CP_LINES:                         Color = Color::Rgba(0.6, 0.6, 0.6, 0.7);
 

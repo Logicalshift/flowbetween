@@ -14,7 +14,10 @@ use futures::prelude::*;
 use futures::stream::{BoxStream};
 
 use std::f32;
+use std::f64;
+use std::iter;
 use std::sync::*;
+use std::collections::{HashSet};
 
 /// Layer where the current selection is drawn
 const LAYER_SELECTION: u32 = 0;
@@ -33,6 +36,26 @@ struct AdjustControlPoint {
 }
 
 ///
+/// Identifier for a control point
+///
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+struct AdjustControlPointId {
+    owner:  ElementId,
+    index:  usize
+}
+
+///
+/// The current state of the input handler for the adjust tool
+///
+struct AdjustToolState<Anim: 'static+EditableAnimation> {
+    input:                      ToolInputStream<()>, 
+    actions:                    ToolActionPublisher<()>,
+    flo_model:                  Arc<FloModel<Anim>>,
+    control_points:             BindRef<Arc<Vec<AdjustControlPoint>>>,
+    selected_control_points:    Binding<HashSet<AdjustControlPointId>>,
+}
+
+///
 /// The model for the Adjust tool
 ///
 pub struct AdjustModel {
@@ -44,6 +67,34 @@ pub struct AdjustModel {
 /// The Adjust tool, which alters control points and lines
 ///
 pub struct Adjust { }
+
+impl<Anim: 'static+EditableAnimation> AdjustToolState<Anim> {
+    ///
+    /// Finds the control point nearest to the specified position
+    ///
+    pub fn control_point_at_position(&self, x: f64, y: f64) -> Option<AdjustControlPointId> {
+        const MIN_DISTANCE: f64         = 4.0;
+
+        let mut found_distance          = 1000.0;
+        let mut found_control_point     = None;
+
+        for cp in self.control_points.get().iter() {
+            if cp.control_point.is_control_point() { continue; }
+
+            let (cp_x, cp_y)        = cp.control_point.position();
+            let x_diff              = cp_x - x;
+            let y_diff              = cp_y - y;
+            let distance_squared    = (x_diff*x_diff) + (y_diff)*(y_diff);
+
+            if distance_squared < found_distance && distance_squared < MIN_DISTANCE*MIN_DISTANCE {
+                found_distance      = distance_squared;
+                found_control_point = Some(AdjustControlPointId { owner: cp.owner, index: cp.index });
+            }
+        }
+
+        found_control_point
+    }
+}
 
 impl Adjust {
     ///
@@ -86,7 +137,7 @@ impl Adjust {
     ///
     /// Writes out a control point sprite for a bezier point
     ///
-    fn declare_bezier_point_sprite(sprite_id: SpriteId) -> Vec<Draw> {
+    fn declare_bezier_point_sprite(sprite_id: SpriteId, selected: bool) -> Vec<Draw> {
         let mut draw            = vec![];
         const RADIUS: f32       = 3.0;
         const NUM_SIDES: u32    = 12;
@@ -103,7 +154,11 @@ impl Adjust {
             draw.line_to(angle.sin()*(RADIUS+1.0), angle.cos()*(RADIUS+1.0));
         }
         draw.close_path();
-        draw.fill_color(CP_BEZIER_OUTLINE);
+        if selected {
+            draw.fill_color(CP_BEZIER_SELECTED_OUTLINE);
+        } else {
+            draw.fill_color(CP_BEZIER_OUTLINE);
+        }
         draw.fill();
 
         draw.new_path();
@@ -113,20 +168,69 @@ impl Adjust {
             draw.line_to(angle.sin()*RADIUS, angle.cos()*RADIUS);
         }
         draw.close_path();
-        draw.fill_color(CP_BEZIER);
+        if selected {
+            draw.fill_color(CP_BEZIER_SELECTED);
+        } else {
+            draw.fill_color(CP_BEZIER);
+        }
         draw.fill();
 
         draw
     }
 
     ///
+    /// The user has begun a paint action on the canvas
+    ///
+    async fn click_or_drag_something<Anim: 'static+EditableAnimation>(state: &mut AdjustToolState<Anim>, initial_event: Painting) {
+        // Do nothing if this isn't a paint start event
+        if initial_event.action != PaintAction::Start {
+            return;
+        }
+
+        // Find the control point that was clicked on, and update the selected control point set if one is found
+        let clicked_control_point = state.control_point_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64);
+
+        if let Some(clicked_control_point) = clicked_control_point {
+            let selected_control_points = state.selected_control_points.get();
+
+            if !selected_control_points.contains(&clicked_control_point) {
+                if initial_event.modifier_keys == vec![ModifierKey::Shift] {
+                    // Add to the selected control points
+                    state.selected_control_points.set(iter::once(clicked_control_point).chain(selected_control_points.iter().cloned()).collect());
+                } else {
+                    // Select this control point
+                    state.selected_control_points.set(iter::once(clicked_control_point).collect());
+                }
+            }
+
+            // TODO: Try to drag the control point: immediately if the user re-clicked an already selected control point, or after a delay if not
+        } else {
+            // TODO: select a new shape
+        }
+    }
+
+    ///
     /// The main input loop for the adjust tool
     ///
-    fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>) -> impl Future<Output=()>+Send {
+    fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>, control_points: BindRef<Arc<Vec<AdjustControlPoint>>>, selected_control_points: Binding<HashSet<AdjustControlPointId>>) -> impl Future<Output=()>+Send {
         async move {
-            let mut input = input;
+            let mut state = AdjustToolState {
+                input:                      input,
+                actions:                    actions,
+                flo_model:                  flo_model, 
+                control_points:             control_points,
+                selected_control_points:    selected_control_points
+            };
 
-            while let Some(_input_event) = input.next().await {
+            while let Some(input_event) = state.input.next().await {
+                match input_event {
+                    ToolInput::Paint(paint_event) => {
+                        Self::click_or_drag_something(&mut state, paint_event).await;
+                    },
+
+                    // Ignore other events
+                    _ => { }
+                }
             }
         }
     }
@@ -165,16 +269,22 @@ impl Adjust {
     ///
     /// Renders the control points (without adjustment handles) for the current selection
     ///
-    fn generate_control_points(control_points: &Vec<AdjustControlPoint>) -> Vec<Draw> {
+    fn generate_control_points(control_points: &Vec<AdjustControlPoint>, selected_control_points: &HashSet<AdjustControlPointId>) -> Vec<Draw> {
         let mut drawing = vec![];
 
+        // Draw the main control points
         for cp in control_points.into_iter().filter(|cp| !cp.control_point.is_control_point()) {
             // Draw a control point sprite
             let (x, y) = cp.control_point.position();
 
             drawing.sprite_transform(SpriteTransform::Identity);
             drawing.sprite_transform(SpriteTransform::Translate(x as f32, y as f32));
-            drawing.draw_sprite(SPRITE_BEZIER_POINT);
+
+            if selected_control_points.contains(&AdjustControlPointId { owner: cp.owner, index: cp.index }) {
+                drawing.draw_sprite(SPRITE_SELECTED_BEZIER_POINT);
+            } else {
+                drawing.draw_sprite(SPRITE_BEZIER_POINT);
+            }
         }
 
         drawing
@@ -183,21 +293,21 @@ impl Adjust {
     ///
     /// Tracks the selection path and renders the control points and selection preview
     ///
-    async fn render_selection_path<Anim: 'static+EditableAnimation>(actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>, control_points: BindRef<Arc<Vec<AdjustControlPoint>>>) {
+    async fn render_selection_path<Anim: 'static+EditableAnimation>(actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>, control_points: BindRef<Arc<Vec<AdjustControlPoint>>>, selected_control_points: BindRef<HashSet<AdjustControlPointId>>) {
         // Create a binding that tracks the rendering actions for the current selection
         let model               = flo_model.clone();
         let selection_preview   = computed(move || Self::generate_selection_preview(&*model));
         let model               = flo_model.clone();
-        let cp_preview          = computed(move || Self::generate_control_points(&*control_points.get()));
+        let cp_preview          = computed(move || Self::generate_control_points(&*control_points.get(), &selected_control_points.get()));
 
         // Combine the two previews whenever the selection changes
         let preview             = computed(move || {
-            let selection_preview   = selection_preview.get();
-            let cp_preview          = cp_preview.get();
+            let selection_preview       = selection_preview.get();
+            let cp_preview              = cp_preview.get();
 
-            let mut preview         = vec![Draw::Layer(LAYER_SELECTION)];
+            let mut preview         = vec![Draw::Layer(LAYER_SELECTION), Draw::ClearLayer];
             preview.extend(selection_preview);
-            preview.push(Draw::Layer(LAYER_PREVIEW));
+            preview.extend(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]);
             preview.extend(cp_preview);
 
             preview
@@ -219,18 +329,20 @@ impl Adjust {
     fn run<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>) -> impl Future<Output=()>+Send {
         async move {
             // Create a control points binding
-            let model           = flo_model.clone();
-            let control_points  = computed(move || Arc::new(Self::control_points_for_selection(&*model)));
-            let control_points  = BindRef::from(control_points);
+            let model                   = flo_model.clone();
+            let control_points          = computed(move || Arc::new(Self::control_points_for_selection(&*model)));
+            let control_points          = BindRef::from(control_points);
+            let selected_control_points = Binding::new(HashSet::new());
 
             // Declare the sprites for the adjust tool
-            actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(Self::declare_bezier_point_sprite(SPRITE_BEZIER_POINT)))]);
+            actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(Self::declare_bezier_point_sprite(SPRITE_BEZIER_POINT, false)))],);
+            actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(Self::declare_bezier_point_sprite(SPRITE_SELECTED_BEZIER_POINT, true)))]);
 
             // Task that renders the selection path whenever it changes
-            let render_selection_path   = Self::render_selection_path(actions.clone(), flo_model.clone(), control_points.clone());
+            let render_selection_path   = Self::render_selection_path(actions.clone(), flo_model.clone(), control_points.clone(), BindRef::from(selected_control_points.clone()));
 
             // Task to handle the input from the user
-            let handle_input            = Self::handle_input(input, actions, Arc::clone(&flo_model));
+            let handle_input            = Self::handle_input(input, actions, Arc::clone(&flo_model), control_points, selected_control_points);
 
             // Finish when either of the futures finish
             future::select_all(vec![render_selection_path.boxed(), handle_input.boxed()]).await;
