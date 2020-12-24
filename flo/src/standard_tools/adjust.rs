@@ -306,6 +306,43 @@ impl Adjust {
     fn generate_control_points(control_points: &Vec<AdjustControlPoint>, selected_control_points: &HashSet<AdjustControlPointId>) -> Vec<Draw> {
         let mut drawing = vec![];
 
+        // Draw the control lines for the selected control point, if there is only one
+        if selected_control_points.len() == 1 {
+            let selected_control_point = selected_control_points.iter().nth(0).unwrap();
+
+            for cp_index in 1..(control_points.len()-1) {
+                let cp = &control_points[cp_index];
+                let (x1, y1) = cp.control_point.position();
+
+                if cp.owner == selected_control_point.owner && cp.index == selected_control_point.index {
+                    // Draw the control points for this CP (preceding and following point)
+                    let preceding = &control_points[cp_index-1];
+                    let following = &control_points[cp_index+1];
+
+                    drawing.line_width_pixels(1.0);
+                    drawing.stroke_color(CP_LINES);
+
+                    if preceding.control_point.is_control_point() {
+                        let (x2, y2) = preceding.control_point.position();
+
+                        drawing.new_path();
+                        drawing.move_to(x1 as f32, y1 as f32);
+                        drawing.line_to(x2 as f32, y2 as f32);
+                        drawing.stroke();
+                    }
+
+                    if following.control_point.is_control_point() {
+                        let (x2, y2) = following.control_point.position();
+
+                        drawing.new_path();
+                        drawing.move_to(x1 as f32, y1 as f32);
+                        drawing.line_to(x2 as f32, y2 as f32);
+                        drawing.stroke();
+                    }
+                }
+            }
+        }
+
         // Draw the main control points
         for cp in control_points.iter().filter(|cp| !cp.control_point.is_control_point()) {
             // Draw a control point sprite
