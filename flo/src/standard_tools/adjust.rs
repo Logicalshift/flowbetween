@@ -264,7 +264,7 @@ impl Adjust {
                     state.selected_control_points.set(iter::once(clicked_control_point).collect());
                 }
             } else if initial_event.modifier_keys == vec![ModifierKey::Shift] {
-                // Remove from the selected control points
+                // Remove from the selected control points (reverse of the 'add' operation above)
                 state.selected_control_points.set(selected_control_points.iter().filter(|cp| cp != &&clicked_control_point).cloned().collect());
             }
 
@@ -313,7 +313,7 @@ impl Adjust {
     ///
     /// Generates the selection preview drawing actions from a model
     ///
-    fn generate_selection_preview<Anim: 'static+EditableAnimation>(flo_model: &FloModel<Anim>) -> Vec<Draw> {
+    fn drawing_for_selection_preview<Anim: 'static+EditableAnimation>(flo_model: &FloModel<Anim>) -> Vec<Draw> {
         // Determine the selected elements from the model
         let current_frame           = flo_model.frame().frame.get();
         let selected_elements       = flo_model.selection().selected_elements.get();
@@ -344,7 +344,7 @@ impl Adjust {
     ///
     /// Renders the control points (without adjustment handles) for the current selection
     ///
-    fn generate_control_points(control_points: &Vec<AdjustControlPoint>, selected_control_points: &HashSet<AdjustControlPointId>) -> Vec<Draw> {
+    fn drawing_for_control_points(control_points: &Vec<AdjustControlPoint>, selected_control_points: &HashSet<AdjustControlPointId>) -> Vec<Draw> {
         let mut drawing = vec![];
 
         // Draw the control lines for the selected control point, if there is only one
@@ -438,9 +438,9 @@ impl Adjust {
     async fn render_selection_path<Anim: 'static+EditableAnimation>(actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>, control_points: BindRef<Arc<Vec<AdjustControlPoint>>>, selected_control_points: BindRef<HashSet<AdjustControlPointId>>) {
         // Create a binding that tracks the rendering actions for the current selection
         let model               = flo_model.clone();
-        let selection_preview   = computed(move || Self::generate_selection_preview(&*model));
+        let selection_preview   = computed(move || Self::drawing_for_selection_preview(&*model));
         let model               = flo_model.clone();
-        let cp_preview          = computed(move || Self::generate_control_points(&*control_points.get(), &selected_control_points.get()));
+        let cp_preview          = computed(move || Self::drawing_for_control_points(&*control_points.get(), &selected_control_points.get()));
 
         // Combine the two previews whenever the selection changes
         let preview             = computed(move || {
