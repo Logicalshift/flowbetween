@@ -131,9 +131,9 @@ impl VectorElement for BrushElement {
         self.points.iter()
             .flat_map(|brush_point| {
                 vec![
-                    ControlPoint::BezierControlPoint(brush_point.cp1.0, brush_point.cp1.1),
-                    ControlPoint::BezierControlPoint(brush_point.cp2.0, brush_point.cp2.1),
-                    ControlPoint::BezierPoint(brush_point.position.0, brush_point.position.1)
+                    ControlPoint::BezierControlPoint(brush_point.cp1.0 as f64, brush_point.cp1.1 as f64),
+                    ControlPoint::BezierControlPoint(brush_point.cp2.0 as f64, brush_point.cp2.1 as f64),
+                    ControlPoint::BezierPoint(brush_point.position.0 as f64, brush_point.position.1 as f64)
                 ]
             })
             .map(|cp| properties.transform_control_point(&cp))

@@ -4,10 +4,10 @@
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum ControlPoint {
     /// Represents a point on a bezier curve
-    BezierPoint(f32, f32),
+    BezierPoint(f64, f64),
 
     /// Represents a bezier control point
-    BezierControlPoint(f32, f32)
+    BezierControlPoint(f64, f64)
 }
 
 impl ControlPoint {
@@ -18,8 +18,8 @@ impl ControlPoint {
         use self::ControlPoint::*;
 
         match self {
-            BezierPoint(x, y)           => (*x as f64, *y as f64),
-            BezierControlPoint(x, y)    => (*x as f64, *y as f64)
+            BezierPoint(x, y)           => (*x, *y),
+            BezierControlPoint(x, y)    => (*x, *y)
         }
     }
 

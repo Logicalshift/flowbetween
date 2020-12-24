@@ -142,8 +142,8 @@ impl Transformation {
     ///
     pub fn transform_control_point(&self, point: &ControlPoint) -> ControlPoint {
         match point {
-            ControlPoint::BezierPoint(x, y)         => { let Coord2(x, y) = self.transform_point(&Coord2(*x as f64, *y as f64)); ControlPoint::BezierPoint(x as f32, y as f32) }
-            ControlPoint::BezierControlPoint(x, y)  => { let Coord2(x, y) = self.transform_point(&Coord2(*x as f64, *y as f64)); ControlPoint::BezierControlPoint(x as f32, y as f32) }
+            ControlPoint::BezierPoint(x, y)         => { let Coord2(x, y) = self.transform_point(&Coord2(*x, *y)); ControlPoint::BezierPoint(x, y) }
+            ControlPoint::BezierControlPoint(x, y)  => { let Coord2(x, y) = self.transform_point(&Coord2(*x, *y)); ControlPoint::BezierControlPoint(x, y) }
         }
     }
 

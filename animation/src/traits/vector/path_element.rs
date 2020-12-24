@@ -120,12 +120,12 @@ impl VectorElement for PathElement {
         self.path.elements_ref()
             .flat_map(|component| {
                 match component {
-                    PathComponent::Move(pos)                => vec![ControlPoint::BezierPoint(pos.x(), pos.y())],
-                    PathComponent::Line(pos)                => vec![ControlPoint::BezierPoint(pos.x(), pos.y())],
+                    PathComponent::Move(pos)                => vec![ControlPoint::BezierPoint(pos.x() as f64, pos.y() as f64)],
+                    PathComponent::Line(pos)                => vec![ControlPoint::BezierPoint(pos.x() as f64, pos.y() as f64)],
                     PathComponent::Bezier(pos, cp1, cp2)    => vec![
-                        ControlPoint::BezierControlPoint(cp1.x(), cp1.y()),
-                        ControlPoint::BezierControlPoint(cp2.x(), cp2.y()),
-                        ControlPoint::BezierPoint(pos.x(), pos.y())
+                        ControlPoint::BezierControlPoint(cp1.x() as f64, cp1.y() as f64),
+                        ControlPoint::BezierControlPoint(cp2.x() as f64, cp2.y() as f64),
+                        ControlPoint::BezierPoint(pos.x() as f64, pos.y() as f64)
                     ],
                     PathComponent::Close                    => vec![]
                 }
