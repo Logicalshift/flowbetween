@@ -440,6 +440,7 @@ impl Adjust {
                 // TODO: if the user drags an edge of an existing element, transform using edge dragging instead of changing the selection
                 state.flo_model.selection().clear_selection();
                 state.flo_model.selection().selected_path.set(None);
+                state.selected_control_points.set(HashSet::new());
             }
 
             state.flo_model.selection().toggle(selected_element);
