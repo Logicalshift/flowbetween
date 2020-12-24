@@ -726,7 +726,7 @@ impl Select {
     ///
     /// Returns the drawing actions to highlight the specified element
     ///
-    fn highlight_for_selection(element: &Vector, properties: &VectorProperties) -> (Vec<Draw>, Rect) {
+    pub fn highlight_for_selection(element: &Vector, properties: &VectorProperties) -> (Vec<Draw>, Rect) {
         // Get the paths for this element
         let paths = element.to_path(properties, PathConversion::Fastest);
         if let Some(paths) = paths {
