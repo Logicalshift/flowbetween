@@ -239,78 +239,6 @@ impl Adjust {
     }
 
     ///
-    /// The user has begun a paint action on the canvas
-    ///
-    async fn click_or_drag_something<Anim: 'static+EditableAnimation>(state: &mut AdjustToolState<Anim>, initial_event: Painting) {
-        // Do nothing if this isn't a paint start event
-        if initial_event.action != PaintAction::Start {
-            return;
-        }
-
-        // Find the control point that was clicked on, and update the selected control point set if one is found
-        // TODO: handle the case where there's a single selected point and allow the bezier points to be dragged
-        let clicked_control_point = state.control_point_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64);
-
-        if let Some(clicked_control_point) = clicked_control_point {
-            // The user has clicked on a control point
-            let selected_control_points = state.selected_control_points.get();
-
-            if !selected_control_points.contains(&clicked_control_point) {
-                if initial_event.modifier_keys == vec![ModifierKey::Shift] {
-                    // Add to the selected control points
-                    state.selected_control_points.set(iter::once(clicked_control_point).chain(selected_control_points.iter().cloned()).collect());
-                } else {
-                    // Select this control point
-                    state.selected_control_points.set(iter::once(clicked_control_point).collect());
-                }
-            } else if initial_event.modifier_keys == vec![ModifierKey::Shift] {
-                // Remove from the selected control points (reverse of the 'add' operation above)
-                state.selected_control_points.set(selected_control_points.iter().filter(|cp| cp != &&clicked_control_point).cloned().collect());
-            }
-
-            // TODO: Try to drag the control point: immediately if the user re-clicked an already selected control point, or after a delay if not
-        
-        } else if let Some(selected_element) = state.element_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64) {
-            // The user hasn't clicked on a control point but has clicked on another element that we could edit
-
-            if initial_event.modifier_keys != vec![ModifierKey::Shift] {
-                // Holding down shift will toggle the element's selection state
-                // TODO: if the user drags an edge of an existing element, transform using edge dragging instead of changing the selection
-                state.flo_model.selection().clear_selection();
-                state.flo_model.selection().selected_path.set(None);
-            }
-
-            state.flo_model.selection().toggle(selected_element);
-        }
-    }
-
-    ///
-    /// The main input loop for the adjust tool
-    ///
-    fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>, control_points: BindRef<Arc<Vec<AdjustControlPoint>>>, selected_control_points: Binding<HashSet<AdjustControlPointId>>) -> impl Future<Output=()>+Send {
-        async move {
-            let mut state = AdjustToolState {
-                input:                      input,
-                actions:                    actions,
-                flo_model:                  flo_model, 
-                control_points:             control_points,
-                selected_control_points:    selected_control_points
-            };
-
-            while let Some(input_event) = state.input.next().await {
-                match input_event {
-                    ToolInput::Paint(paint_event) => {
-                        Self::click_or_drag_something(&mut state, paint_event).await;
-                    },
-
-                    // Ignore other events
-                    _ => { }
-                }
-            }
-        }
-    }
-
-    ///
     /// Generates the selection preview drawing actions from a model
     ///
     fn drawing_for_selection_preview<Anim: 'static+EditableAnimation>(flo_model: &FloModel<Anim>) -> Vec<Draw> {
@@ -462,6 +390,78 @@ impl Adjust {
             actions.send_actions(vec![
                 ToolAction::Overlay(OverlayAction::Draw(new_preview))
             ])
+        }
+    }
+
+    ///
+    /// The user has begun a paint action on the canvas
+    ///
+    async fn click_or_drag_something<Anim: 'static+EditableAnimation>(state: &mut AdjustToolState<Anim>, initial_event: Painting) {
+        // Do nothing if this isn't a paint start event
+        if initial_event.action != PaintAction::Start {
+            return;
+        }
+
+        // Find the control point that was clicked on, and update the selected control point set if one is found
+        // TODO: handle the case where there's a single selected point and allow the bezier points to be dragged
+        let clicked_control_point = state.control_point_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64);
+
+        if let Some(clicked_control_point) = clicked_control_point {
+            // The user has clicked on a control point
+            let selected_control_points = state.selected_control_points.get();
+
+            if !selected_control_points.contains(&clicked_control_point) {
+                if initial_event.modifier_keys == vec![ModifierKey::Shift] {
+                    // Add to the selected control points
+                    state.selected_control_points.set(iter::once(clicked_control_point).chain(selected_control_points.iter().cloned()).collect());
+                } else {
+                    // Select this control point
+                    state.selected_control_points.set(iter::once(clicked_control_point).collect());
+                }
+            } else if initial_event.modifier_keys == vec![ModifierKey::Shift] {
+                // Remove from the selected control points (reverse of the 'add' operation above)
+                state.selected_control_points.set(selected_control_points.iter().filter(|cp| cp != &&clicked_control_point).cloned().collect());
+            }
+
+            // TODO: Try to drag the control point: immediately if the user re-clicked an already selected control point, or after a delay if not
+        
+        } else if let Some(selected_element) = state.element_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64) {
+            // The user hasn't clicked on a control point but has clicked on another element that we could edit
+
+            if initial_event.modifier_keys != vec![ModifierKey::Shift] {
+                // Holding down shift will toggle the element's selection state
+                // TODO: if the user drags an edge of an existing element, transform using edge dragging instead of changing the selection
+                state.flo_model.selection().clear_selection();
+                state.flo_model.selection().selected_path.set(None);
+            }
+
+            state.flo_model.selection().toggle(selected_element);
+        }
+    }
+
+    ///
+    /// The main input loop for the adjust tool
+    ///
+    fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>, control_points: BindRef<Arc<Vec<AdjustControlPoint>>>, selected_control_points: Binding<HashSet<AdjustControlPointId>>) -> impl Future<Output=()>+Send {
+        async move {
+            let mut state = AdjustToolState {
+                input:                      input,
+                actions:                    actions,
+                flo_model:                  flo_model, 
+                control_points:             control_points,
+                selected_control_points:    selected_control_points
+            };
+
+            while let Some(input_event) = state.input.next().await {
+                match input_event {
+                    ToolInput::Paint(paint_event) => {
+                        Self::click_or_drag_something(&mut state, paint_event).await;
+                    },
+
+                    // Ignore other events
+                    _ => { }
+                }
+            }
         }
     }
 
