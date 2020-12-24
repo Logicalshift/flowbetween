@@ -78,7 +78,7 @@ impl<Anim: 'static+EditableAnimation> AdjustToolState<Anim> {
         let mut found_distance          = 1000.0;
         let mut found_control_point     = None;
 
-        for cp in self.control_points.get().iter() {
+        for cp in self.control_points.get().iter().rev() {
             if cp.control_point.is_control_point() { continue; }
 
             let (cp_x, cp_y)        = cp.control_point.position();
