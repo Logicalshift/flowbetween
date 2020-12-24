@@ -279,34 +279,37 @@ impl Adjust {
         if selected_control_points.len() == 1 {
             let selected_control_point = selected_control_points.iter().nth(0).unwrap();
 
-            for cp_index in 1..(control_points.len()-1) {
+            for cp_index in 0..control_points.len() {
                 let cp = &control_points[cp_index];
                 let (x1, y1) = cp.control_point.position();
 
                 if cp.owner == selected_control_point.owner && cp.index == selected_control_point.index {
                     // Draw the control points for this CP (preceding and following point)
-                    let preceding = &control_points[cp_index-1];
-                    let following = &control_points[cp_index+1];
-
                     drawing.line_width_pixels(1.0);
                     drawing.stroke_color(CP_LINES);
 
-                    if preceding.control_point.is_control_point() {
-                        let (x2, y2) = preceding.control_point.position();
+                    if cp_index > 0 {
+                        let preceding = &control_points[cp_index-1];
+                        if preceding.control_point.is_control_point() {
+                            let (x2, y2) = preceding.control_point.position();
 
-                        drawing.new_path();
-                        drawing.move_to(x1 as f32, y1 as f32);
-                        drawing.line_to(x2 as f32, y2 as f32);
-                        drawing.stroke();
+                            drawing.new_path();
+                            drawing.move_to(x1 as f32, y1 as f32);
+                            drawing.line_to(x2 as f32, y2 as f32);
+                            drawing.stroke();
+                        }
                     }
 
-                    if following.control_point.is_control_point() {
-                        let (x2, y2) = following.control_point.position();
+                    if cp_index < control_points.len()-1 {
+                        let following = &control_points[cp_index+1];
+                        if following.control_point.is_control_point() {
+                            let (x2, y2) = following.control_point.position();
 
-                        drawing.new_path();
-                        drawing.move_to(x1 as f32, y1 as f32);
-                        drawing.line_to(x2 as f32, y2 as f32);
-                        drawing.stroke();
+                            drawing.new_path();
+                            drawing.move_to(x1 as f32, y1 as f32);
+                            drawing.line_to(x2 as f32, y2 as f32);
+                            drawing.stroke();
+                        }
                     }
                 }
             }
@@ -331,27 +334,31 @@ impl Adjust {
         if selected_control_points.len() == 1 {
             let selected_control_point = selected_control_points.iter().nth(0).unwrap();
 
-            for cp_index in 1..(control_points.len()-1) {
+            for cp_index in 0..control_points.len() {
                 let cp = &control_points[cp_index];
+
                 if cp.owner == selected_control_point.owner && cp.index == selected_control_point.index {
                     // Draw the control points for this CP (preceding and following point)
-                    let preceding = &control_points[cp_index-1];
-                    let following = &control_points[cp_index+1];
+                    if cp_index > 0 {
+                        let preceding = &control_points[cp_index-1];
+                        if preceding.control_point.is_control_point() {
+                            let (x, y) = preceding.control_point.position();
 
-                    if preceding.control_point.is_control_point() {
-                        let (x, y) = preceding.control_point.position();
-
-                        drawing.sprite_transform(SpriteTransform::Identity);
-                        drawing.sprite_transform(SpriteTransform::Translate(x as f32, y as f32));
-                        drawing.draw_sprite(SPRITE_BEZIER_CONTROL_POINT);
+                            drawing.sprite_transform(SpriteTransform::Identity);
+                            drawing.sprite_transform(SpriteTransform::Translate(x as f32, y as f32));
+                            drawing.draw_sprite(SPRITE_BEZIER_CONTROL_POINT);
+                        }
                     }
 
-                    if following.control_point.is_control_point() {
-                        let (x, y) = following.control_point.position();
+                    if cp_index < control_points.len()-1 {
+                        let following = &control_points[cp_index+1];
+                        if following.control_point.is_control_point() {
+                            let (x, y) = following.control_point.position();
 
-                        drawing.sprite_transform(SpriteTransform::Identity);
-                        drawing.sprite_transform(SpriteTransform::Translate(x as f32, y as f32));
-                        drawing.draw_sprite(SPRITE_BEZIER_CONTROL_POINT);
+                            drawing.sprite_transform(SpriteTransform::Identity);
+                            drawing.sprite_transform(SpriteTransform::Translate(x as f32, y as f32));
+                            drawing.draw_sprite(SPRITE_BEZIER_CONTROL_POINT);
+                        }
                     }
                 }
             }
