@@ -14,12 +14,12 @@ impl ControlPoint {
     ///
     /// Returns the x, y position of this control point
     ///
-    pub fn position(&self) -> (f32, f32) {
+    pub fn position(&self) -> (f64, f64) {
         use self::ControlPoint::*;
 
         match self {
-            BezierPoint(x, y)           => (*x, *y),
-            BezierControlPoint(x, y)    => (*x, *y)
+            BezierPoint(x, y)           => (*x as f64, *y as f64),
+            BezierControlPoint(x, y)    => (*x as f64, *y as f64)
         }
     }
 
