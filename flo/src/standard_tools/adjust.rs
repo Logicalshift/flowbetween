@@ -178,6 +178,40 @@ impl Adjust {
         draw
     }
 
+
+    ///
+    /// Writes out a control point sprite for a bezier point
+    ///
+    fn declare_control_point_sprite(sprite_id: SpriteId) -> Vec<Draw> {
+        let mut draw            = vec![];
+        const RADIUS: f32       = 2.0;
+
+        // Draw to the bezier sprite
+        draw.sprite(sprite_id);
+        draw.clear_sprite();
+
+        // Render as a polygon rather than a circle to reduce the number of triangles we'll need to render for this sprite
+        draw.new_path();
+        draw.move_to(-(RADIUS+1.0), RADIUS+1.0);
+        draw.line_to(RADIUS+1.0, RADIUS+1.0);
+        draw.line_to(RADIUS+1.0, -(RADIUS+1.0));
+        draw.line_to(-(RADIUS+1.0), -(RADIUS+1.0));
+        draw.close_path();
+        draw.fill_color(CP_BEZIER_OUTLINE);
+        draw.fill();
+
+        draw.new_path();
+        draw.move_to(-RADIUS, RADIUS);
+        draw.line_to(RADIUS, RADIUS);
+        draw.line_to(RADIUS, -RADIUS);
+        draw.line_to(-RADIUS, -RADIUS);
+        draw.close_path();
+        draw.fill_color(CP_BEZIER_CP);
+        draw.fill();
+
+        draw
+    }
+
     ///
     /// The user has begun a paint action on the canvas
     ///
@@ -273,7 +307,7 @@ impl Adjust {
         let mut drawing = vec![];
 
         // Draw the main control points
-        for cp in control_points.into_iter().filter(|cp| !cp.control_point.is_control_point()) {
+        for cp in control_points.iter().filter(|cp| !cp.control_point.is_control_point()) {
             // Draw a control point sprite
             let (x, y) = cp.control_point.position();
 
@@ -284,6 +318,36 @@ impl Adjust {
                 drawing.draw_sprite(SPRITE_SELECTED_BEZIER_POINT);
             } else {
                 drawing.draw_sprite(SPRITE_BEZIER_POINT);
+            }
+        }
+
+        // Draw the control points for the selected control point, if there is only one
+        if selected_control_points.len() == 1 {
+            let selected_control_point = selected_control_points.iter().nth(0).unwrap();
+
+            for cp_index in 1..(control_points.len()-1) {
+                let cp = &control_points[cp_index];
+                if cp.owner == selected_control_point.owner && cp.index == selected_control_point.index {
+                    // Draw the control points for this CP (preceding and following point)
+                    let preceding = &control_points[cp_index-1];
+                    let following = &control_points[cp_index+1];
+
+                    if preceding.control_point.is_control_point() {
+                        let (x, y) = preceding.control_point.position();
+
+                        drawing.sprite_transform(SpriteTransform::Identity);
+                        drawing.sprite_transform(SpriteTransform::Translate(x as f32, y as f32));
+                        drawing.draw_sprite(SPRITE_BEZIER_CONTROL_POINT);
+                    }
+
+                    if following.control_point.is_control_point() {
+                        let (x, y) = following.control_point.position();
+
+                        drawing.sprite_transform(SpriteTransform::Identity);
+                        drawing.sprite_transform(SpriteTransform::Translate(x as f32, y as f32));
+                        drawing.draw_sprite(SPRITE_BEZIER_CONTROL_POINT);
+                    }
+                }
             }
         }
 
@@ -337,6 +401,7 @@ impl Adjust {
             // Declare the sprites for the adjust tool
             actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(Self::declare_bezier_point_sprite(SPRITE_BEZIER_POINT, false)))],);
             actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(Self::declare_bezier_point_sprite(SPRITE_SELECTED_BEZIER_POINT, true)))]);
+            actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(Self::declare_control_point_sprite(SPRITE_BEZIER_CONTROL_POINT)))]);
 
             // Task that renders the selection path whenever it changes
             let render_selection_path   = Self::render_selection_path(actions.clone(), flo_model.clone(), control_points.clone(), BindRef::from(selected_control_points.clone()));
