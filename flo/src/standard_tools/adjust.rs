@@ -235,6 +235,9 @@ impl Adjust {
                     // Select this control point
                     state.selected_control_points.set(iter::once(clicked_control_point).collect());
                 }
+            } else if initial_event.modifier_keys == vec![ModifierKey::Shift] {
+                // Remove from the selected control points
+                state.selected_control_points.set(selected_control_points.iter().filter(|cp| cp != &&clicked_control_point).cloned().collect());
             }
 
             // TODO: Try to drag the control point: immediately if the user re-clicked an already selected control point, or after a delay if not
