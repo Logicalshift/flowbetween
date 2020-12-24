@@ -255,24 +255,24 @@ mod test {
         ];
         let element = BrushElement::new(ElementId::Assigned(5), Arc::new(points));
         let updated = element.with_adjusted_control_points(vec![
-            (1.1, 1.2),
-            (2.1, 2.2),
-            (3.1, 3.2),
-            (4.1, 4.2),
-            (5.1, 5.2),
-            (6.1, 6.2),
-            (7.1, 7.2)
+            (1.0, 1.0),
+            (2.0, 2.0),
+            (3.0, 3.0),
+            (4.0, 4.0),
+            (5.0, 5.0),
+            (6.0, 6.0),
+            (7.0, 7.0)
         ], &VectorProperties::default());
 
         let control_points = updated.control_points(&VectorProperties::default());
 
-        assert!(control_points[0] == ControlPoint::BezierPoint(1.1, 1.2));
-        assert!(control_points[1] == ControlPoint::BezierControlPoint(2.1, 2.2));
-        assert!(control_points[2] == ControlPoint::BezierControlPoint(3.1, 3.2));
-        assert!(control_points[3] == ControlPoint::BezierPoint(4.1, 4.2));
-        assert!(control_points[4] == ControlPoint::BezierControlPoint(5.1, 5.2));
-        assert!(control_points[5] == ControlPoint::BezierControlPoint(6.1, 6.2));
-        assert!(control_points[6] == ControlPoint::BezierPoint(7.1, 7.2));
+        assert!(control_points[0] == ControlPoint::BezierPoint(1.0, 1.0));
+        assert!(control_points[1] == ControlPoint::BezierControlPoint(2.0, 2.0));
+        assert!(control_points[2] == ControlPoint::BezierControlPoint(3.0, 3.0));
+        assert!(control_points[3] == ControlPoint::BezierPoint(4.0, 4.0));
+        assert!(control_points[4] == ControlPoint::BezierControlPoint(5.0, 5.0));
+        assert!(control_points[5] == ControlPoint::BezierControlPoint(6.0, 6.0));
+        assert!(control_points[6] == ControlPoint::BezierPoint(7.0, 7.0));
         assert!(control_points.len() == 7);
 
         if let Vector::BrushStroke(updated) = updated {
