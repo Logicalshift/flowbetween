@@ -123,6 +123,22 @@ impl<Anim: 'static+Animation> SelectionModel<Anim> {
     }
 
     ///
+    /// Adds a particular element to the selection if it's not already present, or removes it if it is present
+    ///
+    pub fn toggle(&self, element: ElementId) {
+        // Not *ideal* because there's a race condition here (between retrieving the hashset and writing it back again)
+        let existing_selection = self.selected_elements_binding.get();
+
+        let mut new_selection = (*existing_selection).clone();
+        if new_selection.contains(&element) {
+            new_selection.remove(&element);
+        } else {
+            new_selection.insert(element);
+        }
+        self.selected_elements_binding.set(Arc::new(new_selection));
+    }
+
+    ///
     /// Clears the current selection
     ///
     pub fn clear_selection(&self) {

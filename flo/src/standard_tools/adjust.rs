@@ -94,6 +94,32 @@ impl<Anim: 'static+EditableAnimation> AdjustToolState<Anim> {
 
         found_control_point
     }
+
+    ///
+    /// Finds the element at the specified position
+    ///
+    pub fn element_at_position(&self, x: f64, y: f64) -> Option<ElementId> {
+        // Find the elements at this point
+        let frame       = self.flo_model.frame();
+        let elements    = frame.elements_at_point((x as f32, y as f32));
+
+        // Search for an element to select
+        let mut selected_element = None;
+        for elem in elements {
+            match elem {
+                ElementMatch::InsidePath(element) => {
+                    selected_element = Some(element);
+                    break;
+                }
+
+                ElementMatch::OnlyInBounds(element) => {
+                    if selected_element.is_none() { selected_element = Some(element); }
+                }
+            }
+        }
+
+        selected_element
+    }
 }
 
 impl Adjust {
@@ -222,9 +248,11 @@ impl Adjust {
         }
 
         // Find the control point that was clicked on, and update the selected control point set if one is found
+        // TODO: handle the case where there's a single selected point and allow the bezier points to be dragged
         let clicked_control_point = state.control_point_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64);
 
         if let Some(clicked_control_point) = clicked_control_point {
+            // The user has clicked on a control point
             let selected_control_points = state.selected_control_points.get();
 
             if !selected_control_points.contains(&clicked_control_point) {
@@ -241,8 +269,18 @@ impl Adjust {
             }
 
             // TODO: Try to drag the control point: immediately if the user re-clicked an already selected control point, or after a delay if not
-        } else {
-            // TODO: select a new shape
+        
+        } else if let Some(selected_element) = state.element_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64) {
+            // The user hasn't clicked on a control point but has clicked on another element that we could edit
+
+            if initial_event.modifier_keys != vec![ModifierKey::Shift] {
+                // Holding down shift will toggle the element's selection state
+                // TODO: if the user drags an edge of an existing element, transform using edge dragging instead of changing the selection
+                state.flo_model.selection().clear_selection();
+                state.flo_model.selection().selected_path.set(None);
+            }
+
+            state.flo_model.selection().toggle(selected_element);
         }
     }
 
