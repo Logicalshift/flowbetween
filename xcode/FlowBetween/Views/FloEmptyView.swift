@@ -274,6 +274,31 @@ class FloEmptyView : NSView, FloContainerView {
             }
         }
     }
+    
+    ///
+    /// Works out the modifier flags corresponding to the specified event
+    ///
+    func modifierFlagsForEvent(event: NSEvent) -> uint32 {
+        var modifierFlags = uint32(0);
+        
+        if event.modifierFlags.contains(.shift) {
+            modifierFlags |= MODIFIER_SHIFT;
+        }
+        
+        if event.modifierFlags.contains(.option) {
+            modifierFlags |= MODIFIER_ALT;
+        }
+        
+        if event.modifierFlags.contains(.control) {
+            modifierFlags |= MODIFIER_CTRL;
+        }
+        
+        if event.modifierFlags.contains(.command) {
+            modifierFlags |= MODIFIER_META;
+        }
+        
+        return modifierFlags;
+    }
 
     ///
     /// Generates the AppPainting data from an NSEvent
@@ -284,6 +309,7 @@ class FloEmptyView : NSView, FloContainerView {
         let locationInWindow    = event.locationInWindow
         let locationInView      = self.convert(locationInWindow, from: nil)
         var locationInCanvas    = locationInView
+        let modifierFlags       = self.modifierFlagsForEvent(event: event);
 
         locationInCanvas.y      = bounds.height - locationInCanvas.y
 
@@ -301,7 +327,7 @@ class FloEmptyView : NSView, FloContainerView {
 
         return AppPainting(
             pointer_id:     0,
-            modifier_keys:  0,
+            modifier_keys:  modifierFlags,
             position_x:     Double(locationInCanvas.x),
             position_y:     Double(locationInCanvas.y),
             pressure:       Double(event.pressure),

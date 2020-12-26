@@ -32,7 +32,7 @@ unsafe impl objc::Encode for AppPainting {
 ///
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum EditAction {
-    /// View is being live edited
+    /// View is being live edited_
     LiveEditing = 0,
 
     /// View value is being set
@@ -89,10 +89,16 @@ impl AppPainting {
     /// Converts a cocoa painting event into a UI painting event
     ///
     pub fn into_painting(&self, action: PaintAction) -> Painting {
+        let mut modifier_keys = vec![];
+        if (self.modifier_keys & MODIFIER_SHIFT) != 0   { modifier_keys.push(ModifierKey::Shift); }
+        if (self.modifier_keys & MODIFIER_CTRL) != 0    { modifier_keys.push(ModifierKey::Ctrl); }
+        if (self.modifier_keys & MODIFIER_ALT) != 0     { modifier_keys.push(ModifierKey::Alt); }
+        if (self.modifier_keys & MODIFIER_META) != 0    { modifier_keys.push(ModifierKey::Meta); }
+
         Painting {
             action:         action,
             pointer_id:     self.pointer_id,
-            modifier_keys:  vec![],
+            modifier_keys:  modifier_keys,
             location:       (self.position_x as f32, self.position_y as f32),
             pressure:       self.pressure as f32,
             tilt_x:         self.tilt_x as f32,
