@@ -2,22 +2,28 @@ use super::action::*;
 
 use flo_ui::*;
 
+const MODIFIER_SHIFT: u32   = 1<<0;
+const MODIFIER_CTRL: u32    = 1<<1;
+const MODIFIER_ALT: u32     = 1<<2;
+const MODIFIER_META: u32    = 1<<3;
+
 ///
 /// Data provided by a point during a painting action
 ///
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)] pub struct AppPainting {
-    pub pointer_id: i32,
-    pub position_x: f64,
-    pub position_y: f64,
-    pub pressure:   f64,
-    pub tilt_x:     f64,
-    pub tilt_y:     f64
+    pub pointer_id:     i32,
+    pub modifier_keys:  u32,
+    pub position_x:     f64,
+    pub position_y:     f64,
+    pub pressure:       f64,
+    pub tilt_x:         f64,
+    pub tilt_y:         f64
 }
 
 unsafe impl objc::Encode for AppPainting {
     fn encode() -> objc::Encoding {
-        unsafe { objc::Encoding::from_str("{AppPainting=iddddd}") }
+        unsafe { objc::Encoding::from_str("{AppPainting=iIddddd}") }
     }
 }
 

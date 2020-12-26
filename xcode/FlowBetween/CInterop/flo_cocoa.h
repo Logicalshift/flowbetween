@@ -24,11 +24,17 @@
 #import <Metal/Metal.h>
 #import <QuartzCore/QuartzCore.h>
 
+static const uint32_t MODIFIER_SHIFT    = (1<<0);
+static const uint32_t MODIFIER_CTRL     = (1<<1);
+static const uint32_t MODIFIER_ALT      = (1<<2);
+static const uint32_t MODIFIER_META     = (1<<3);
+
 ///
 /// Data returned as part of a painting event
 ///
 struct AppPainting {
     int32_t pointer_id;
+    uint32_t modifier_keys;
     double position_x;
     double position_y;
     double pressure;

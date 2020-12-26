@@ -300,12 +300,13 @@ class FloEmptyView : NSView, FloContainerView {
         locationInCanvas = locationInCanvas.applying(_invertCanvasTransform)
 
         return AppPainting(
-            pointer_id: 0,
-            position_x: Double(locationInCanvas.x),
-            position_y: Double(locationInCanvas.y),
-            pressure:   Double(event.pressure),
-            tilt_x:     0.0,
-            tilt_y:     0.0
+            pointer_id:     0,
+            modifier_keys:  0,
+            position_x:     Double(locationInCanvas.x),
+            position_y:     Double(locationInCanvas.y),
+            pressure:       Double(event.pressure),
+            tilt_x:         0.0,
+            tilt_y:         0.0
         )
     }
 
