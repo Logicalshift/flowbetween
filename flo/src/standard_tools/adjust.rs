@@ -567,7 +567,7 @@ impl Adjust {
                             let mut preview = vec![Draw::Layer(LAYER_SELECTION), Draw::ClearLayer];
                             preview.extend(transformed_elements.iter().flat_map(|(element, properties)| Select::highlight_for_selection(element, properties, true).0));
                             preview.extend(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]);
-                            preview.extend(Self::drawing_for_control_points(&transformed_control_points, selected_control_points));
+                            preview.extend(Self::drawing_for_control_points(&transformed_control_points, &state.selected_control_points.get()));
 
                             state.actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(preview))]);
                         }
@@ -603,7 +603,7 @@ impl Adjust {
                             let mut preview = vec![Draw::Layer(LAYER_SELECTION), Draw::ClearLayer];
                             preview.extend(Self::drawing_for_selection_preview(&*state.flo_model));
                             preview.extend(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]);
-                            preview.extend(Self::drawing_for_control_points(&*state.control_points.get(), selected_control_points));
+                            preview.extend(Self::drawing_for_control_points(&*state.control_points.get(), &state.selected_control_points.get()));
 
                             state.actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(preview))]);
 
