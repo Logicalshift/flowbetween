@@ -57,7 +57,7 @@ impl LassoMenuController {
         let selected_path   = selected_path.clone();
 
         let view_model      = Self::view_model(&lasso_mode, &lasso_shape, &selected_path);
-        let ui              = Self::ui(&images, &lasso_mode);
+        let ui              = Self::ui(&images);
 
         LassoMenuController {
             lasso_mode:     lasso_mode,
@@ -120,7 +120,7 @@ impl LassoMenuController {
     ///
     /// Creates the UI binding for the lasso controler
     ///
-    fn ui(images: &Arc<ResourceManager<Image>>, lasso_mode: &Binding<LassoMode>) -> BindRef<Control> {
+    fn ui(images: &Arc<ResourceManager<Image>>) -> BindRef<Control> {
         // Copy the resources
         let images      = images.clone();
 

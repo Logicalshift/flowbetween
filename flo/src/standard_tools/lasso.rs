@@ -382,7 +382,6 @@ impl Lasso {
 
         // Start with a point that's just at the initial location
         let initial_point = initial_event.location;
-        let mut end_point = initial_point;
 
         // Read input until the user releases the mouse pointer
         while let Some(input) = input.next().await {
@@ -402,7 +401,7 @@ impl Lasso {
                     }
 
                     // Change the end point of the rectangle
-                    end_point           = next_point.location;
+                    let end_point       = next_point.location;
 
                     // Create a rectangular path
                     let select_path     = Self::rectangle_path(initial_point, end_point);
@@ -438,7 +437,6 @@ impl Lasso {
 
         // Start with a point that's just at the initial location
         let initial_point = initial_event.location;
-        let mut end_point = initial_point;
 
         // Read input until the user releases the mouse pointer
         while let Some(input) = input.next().await {
@@ -458,7 +456,7 @@ impl Lasso {
                     }
 
                     // Change the end point of the rectangle
-                    end_point           = next_point.location;
+                    let end_point       = next_point.location;
 
                     // Create a rectangular path
                     let select_path     = Self::ellipse_path(initial_point, end_point);
