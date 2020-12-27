@@ -681,7 +681,14 @@ impl Adjust {
             return;
         }
 
-        // Find the control point that was clicked on, and update the selected control point set if one is found
+        // A few behaviours are possible:
+        //  * Dragging a handle of the selected control point (if there's only one)
+        //  * Dragging a selected control point to move it
+        //  * Clicking on an unselected control point to select it (and optionally move it if dragged far enough)
+        //  * Clicking on an unselected element to select it and thus show its control points
+        //
+        // Shift can be used to select extra elements or control points
+
         if let Some(dragged_control_points) = state.drag_control_points(initial_event.location.0 as f64, initial_event.location.1 as f64) {
             
             // Drag this handle instead of the selected control point
