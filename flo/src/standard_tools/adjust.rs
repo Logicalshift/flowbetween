@@ -418,7 +418,9 @@ impl Adjust {
             if selected_control_points.contains(&cp_id) {
                 // Transform this control point
                 new_positions.push((cpx + dx, cpy + dy));
-            } else if cp.is_control_point() && selected_control_points.contains(&AdjustControlPointId { owner: element_id, index: cp_index+1 }) || (cp_index > 0 && selected_control_points.contains(&AdjustControlPointId { owner: element_id, index: cp_index-1 })) {
+            } else if cp.is_control_point() 
+                && (selected_control_points.contains(&AdjustControlPointId { owner: element_id, index: cp_index+1 }) && !original_control_points[cp_index+1].is_control_point()
+                    || (cp_index > 0 && selected_control_points.contains(&AdjustControlPointId { owner: element_id, index: cp_index-1 }) && !original_control_points[cp_index-1].is_control_point())) {
                 // Not selected, but the following CP is and this is a control point, so it transforms alongside it
                 new_positions.push((cpx + dx, cpy + dy));
             } else {
