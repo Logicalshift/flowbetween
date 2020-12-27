@@ -621,9 +621,7 @@ impl Adjust {
 
         // Find the control point that was clicked on, and update the selected control point set if one is found
         // TODO: handle the case where there's a single selected point and allow the bezier points to be dragged
-        let clicked_control_point = state.control_point_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64);
-
-        if let Some(clicked_control_point) = clicked_control_point {
+        if let Some(clicked_control_point) = state.control_point_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64) {
             // The user has clicked on a control point
             let selected_control_points = state.selected_control_points.get();
             let mut drag_immediate      = true;
