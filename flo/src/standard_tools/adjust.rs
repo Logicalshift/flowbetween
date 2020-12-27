@@ -17,7 +17,7 @@ use std::f32;
 use std::f64;
 use std::iter;
 use std::sync::*;
-use std::collections::{HashSet};
+use std::collections::{HashSet, HashMap};
 
 /// Layer where the current selection is drawn
 const LAYER_SELECTION: u32 = 0;
@@ -398,9 +398,145 @@ impl Adjust {
     }
 
     ///
+    /// Performs a drag on a set of control points
+    ///
+    async fn drag_control_points<Anim: 'static+EditableAnimation>(state: &mut AdjustToolState<Anim>, selected_control_points: &HashSet<AdjustControlPointId>, initial_event: Painting) {
+        // Fetch the elements being transformed and their properties
+        let mut elements    = HashMap::new();
+        let frame           = state.flo_model.frame().frame.get();
+        let frame           = if let Some(frame) = frame { frame } else { return; };
+
+        for cp in selected_control_points.iter() {
+            if !elements.contains_key(&cp.owner) {
+                // Fetch the element (ignore elements that don't exist in the frame)
+                let cp_element      = frame.element_with_id(cp.owner);
+                let cp_element      = if let Some(cp_element) = cp_element { cp_element } else { continue; };
+
+                // Calculate the properties for this element
+                let cp_properties   = frame.apply_properties_for_element(&cp_element, Arc::new(VectorProperties::default()));
+
+                // Store in the list of elements
+                elements.insert(cp.owner, (cp_element, cp_properties));
+            }
+        }
+
+        // Decompose the initial position
+        let (x1, y1) = initial_event.location;
+
+        // Read the inputs for the drag
+        while let Some(event) = state.input.next().await {
+            match event {
+                ToolInput::Paint(paint_event) => {
+                    if paint_event.pointer_id != initial_event.pointer_id {
+                        // Ignore events from other devices
+                        continue;
+                    }
+
+                    match paint_event.action {
+                        PaintAction::Continue |
+                        PaintAction::Prediction => {
+                            // Drag the control points and redraw the preview
+                            let (x2, y2) = paint_event.location;
+                            let (dx, dy) = (x2-x1, y2-y1);
+
+                            // Move the control points of each element in the selection
+                            let mut transformed_elements        = vec![];
+                            let mut transformed_control_points  = vec![];
+                            for (element, element_properties) in elements.values() {
+                                // Fetch the control points for this element
+                                let control_points  = element.control_points(&*element_properties);
+                                let element_id      = element.id();
+
+                                // Transform any control point that has changed
+                                let mut new_positions   = vec![];
+                                for cp_index in 0..control_points.len() {
+                                    let cp_id = AdjustControlPointId {
+                                        owner: element_id,
+                                        index: cp_index
+                                    };
+
+                                    let (cpx, cpy) = control_points[cp_index].position();
+                                    let (cpx, cpy) = (cpx as f32, cpy as f32);
+                                    if selected_control_points.contains(&cp_id) {
+                                        // Transform this control point
+                                        new_positions.push((cpx + dx, cpy + dy));
+                                    } else {
+                                        // Leave the control point alone
+                                        new_positions.push((cpx, cpy));
+                                    }
+                                }
+
+                                // Create an updated element with the new control points
+                                let transformed_element = element.with_adjusted_control_points(new_positions, &*element_properties);
+
+                                // Store the updated control points for the new element by re-reading them
+                                transformed_control_points.extend(transformed_element.control_points(&*element_properties)
+                                    .into_iter()
+                                    .enumerate()
+                                    .map(|(cp_index, cp)| AdjustControlPoint {
+                                        owner:          element_id,
+                                        index:          cp_index,
+                                        control_point:  cp
+                                    }));
+
+                                // Remember the updated element to render it later
+                                transformed_elements.push((transformed_element, Arc::clone(element_properties)));
+                            }
+
+                            // Draw the updated elements
+                            let mut preview = vec![Draw::Layer(LAYER_SELECTION), Draw::ClearLayer];
+                            // preview.extend(Self::drawing_for_selection_preview(&*state.flo_model)); -- TODO: draw via elements
+                            preview.extend(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]);
+                            preview.extend(Self::drawing_for_control_points(&transformed_control_points, selected_control_points));
+
+                            state.actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(preview))]);
+                        }
+
+                        PaintAction::Finish => {
+                            // Commit the drag to the drawing
+
+                            // Reset the preview
+                            let mut preview = vec![Draw::Layer(LAYER_SELECTION), Draw::ClearLayer];
+                            preview.extend(Self::drawing_for_selection_preview(&*state.flo_model));
+                            preview.extend(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]);
+                            preview.extend(Self::drawing_for_control_points(&*state.control_points.get(), selected_control_points));
+
+                            state.actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(preview))]);
+
+                            // Drag is finished
+                            return;
+                        }
+
+                        PaintAction::Start  |
+                        PaintAction::Cancel => {
+                            // Reset the preview
+                            let mut preview = vec![Draw::Layer(LAYER_SELECTION), Draw::ClearLayer];
+                            preview.extend(Self::drawing_for_selection_preview(&*state.flo_model));
+                            preview.extend(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]);
+                            preview.extend(Self::drawing_for_control_points(&*state.control_points.get(), selected_control_points));
+
+                            state.actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(preview))]);
+
+                            // Abort the drag
+                            return;
+                        }
+                    }
+                }
+
+                _ => { }
+            }
+        }
+
+        // Input stream ended prematurely
+    }
+
+    ///
     /// Starts a drag if the user moves far enough away from their current position (returning true if a drag was started)
     ///
-    async fn maybe_drag<Anim: 'static+EditableAnimation, ContinueFn: Fn(&mut AdjustToolState<Anim>, Painting) -> DragFuture, DragFuture: Future<Output=()>>(state: &mut AdjustToolState<Anim>, initial_event: Painting, on_drag: ContinueFn) -> bool {
+    async fn maybe_drag<'a, Anim, ContinueFn, DragFuture>(state: &'a mut AdjustToolState<Anim>, initial_event: Painting, on_drag: ContinueFn) -> bool 
+    where   Anim:       'static+EditableAnimation,
+            DragFuture: 'a+Future<Output=()>,
+            ContinueFn: FnOnce(&'a mut AdjustToolState<Anim>, Painting) -> DragFuture {
         // Distance the pointer should move to turn the gesture into a drag
         const DRAG_DISTANCE: f32    = 2.0;
         let (x1, y1)                = initial_event.location;
@@ -462,21 +598,33 @@ impl Adjust {
         if let Some(clicked_control_point) = clicked_control_point {
             // The user has clicked on a control point
             let selected_control_points = state.selected_control_points.get();
+            let mut drag_immediate      = true;
 
             if !selected_control_points.contains(&clicked_control_point) {
                 if initial_event.modifier_keys == vec![ModifierKey::Shift] {
                     // Add to the selected control points
                     state.selected_control_points.set(iter::once(clicked_control_point).chain(selected_control_points.iter().cloned()).collect());
+                    drag_immediate = false;
                 } else {
                     // Select this control point
                     state.selected_control_points.set(iter::once(clicked_control_point).collect());
+                    drag_immediate = false;
                 }
             } else if initial_event.modifier_keys == vec![ModifierKey::Shift] {
                 // Remove from the selected control points (reverse of the 'add' operation above)
                 state.selected_control_points.set(selected_control_points.iter().filter(|cp| cp != &&clicked_control_point).cloned().collect());
+                drag_immediate = false;
             }
 
-            // TODO: Try to drag the control point: immediately if the user re-clicked an already selected control point, or after a delay if not
+            // Try to drag the control point: immediately if the user re-clicked an already selected control point, or after a delay if not
+            let selected_control_points = state.selected_control_points.get();
+            if drag_immediate {
+                // Selection hasn't changed: treat as an immediate drag operation
+                Self::drag_control_points(state, &selected_control_points, initial_event).await;
+            } else {
+                // Selection has changed: drag is 'sticky'
+                Self::maybe_drag(state, initial_event, move |state, initial_event| async move { Self::drag_control_points(state, &selected_control_points, initial_event).await; }).await;
+            }
         
         } else if let Some(selected_element) = state.element_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64) {
             // The user hasn't clicked on a control point but has clicked on another element that we could edit
