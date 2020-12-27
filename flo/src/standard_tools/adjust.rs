@@ -45,6 +45,15 @@ struct AdjustControlPointId {
     index:  usize
 }
 
+impl From<&AdjustControlPoint> for AdjustControlPointId {
+    fn from(cp: &AdjustControlPoint) -> AdjustControlPointId {
+        AdjustControlPointId {
+            owner: cp.owner,
+            index: cp.index
+        }
+    }
+}
+
 ///
 /// The current state of the input handler for the adjust tool
 ///
@@ -94,6 +103,57 @@ impl<Anim: 'static+EditableAnimation> AdjustToolState<Anim> {
         }
 
         found_control_point
+    }
+
+    ///
+    /// The control points to drag at the specified position, if they're different to the selection
+    ///
+    pub fn drag_control_points(&self, x: f64, y: f64) -> Option<HashSet<AdjustControlPointId>> {
+        const MAX_DISTANCE: f64         = 4.0;
+        let selected_control_points     = self.selected_control_points.get();
+
+        if selected_control_points.len() == 1 {
+            // If only one control point is selected, the user might drag the handles on either side
+            let control_points  = self.control_points.get();
+            let center_cp       = selected_control_points.iter().nth(0).cloned().unwrap();
+
+            // Search for the center CP
+            for cp_index in 0..control_points.len() {
+                let cp = &control_points[cp_index];
+
+                if cp.owner == center_cp.owner && cp.index == center_cp.index {
+                    if cp.control_point.is_control_point() {
+                        // Doesn't have handles
+                        break;
+                    }
+
+                    // The left and right points might be the handles for this item
+                    if cp_index > 0 && control_points[cp_index-1].control_point.is_control_point() {
+                        // This CP is being dragged if it's within MAX_DISTANCE of the click
+                        let (x2, y2) = control_points[cp_index-1].control_point.position();
+                        let (dx, dy) = ((x-x2), (y-y2));
+
+                        if (dx*dx) + (dy*dy) <= MAX_DISTANCE { return Some(iter::once((&control_points[cp_index-1]).into()).collect()); }
+                    }
+
+                    if cp_index < control_points.len()-1 && control_points[cp_index+1].control_point.is_control_point() {
+                        // This CP is being dragged if it's within MAX_DISTANCE of the click
+                        let (x2, y2) = control_points[cp_index+1].control_point.position();
+                        let (dx, dy) = ((x-x2), (y-y2));
+
+                        if (dx*dx) + (dy*dy) <= MAX_DISTANCE { return Some(iter::once((&control_points[cp_index+1]).into()).collect()); }
+                    }
+
+                    // Found the control point: don't look at the others
+                    break;
+                }
+            }
+
+            None
+        } else {
+            // Drag all of the selected control points, or select new control points if more than one is selected (or if 0 are selected)
+            None
+        }
     }
 
     ///
@@ -622,8 +682,10 @@ impl Adjust {
         }
 
         // Find the control point that was clicked on, and update the selected control point set if one is found
-        // TODO: handle the case where there's a single selected point and allow the bezier points to be dragged
-        if let Some(clicked_control_point) = state.control_point_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64) {
+        if let Some(dragged_control_points) = state.drag_control_points(initial_event.location.0 as f64, initial_event.location.1 as f64) {
+            // Drag this handle instead of the selected control point
+            Self::drag_control_points(state, &dragged_control_points, initial_event).await;
+        } else if let Some(clicked_control_point) = state.control_point_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64) {
             // The user has clicked on a control point
             let selected_control_points = state.selected_control_points.get();
             let mut drag_immediate      = true;
