@@ -398,6 +398,55 @@ impl Adjust {
     }
 
     ///
+    /// Starts a drag if the user moves far enough away from their current position (returning true if a drag was started)
+    ///
+    async fn maybe_drag<Anim: 'static+EditableAnimation, ContinueFn: Fn(&mut AdjustToolState<Anim>, Painting) -> DragFuture, DragFuture: Future<Output=()>>(state: &mut AdjustToolState<Anim>, initial_event: Painting, on_drag: ContinueFn) -> bool {
+        // Distance the pointer should move to turn the gesture into a drag
+        const DRAG_DISTANCE: f32    = 2.0;
+        let (x1, y1)                = initial_event.location;
+
+        while let Some(event) = state.input.next().await {
+            match event {
+                ToolInput::Paint(paint_event) => {
+                    match paint_event.action {
+                        PaintAction::Continue   |
+                        PaintAction::Prediction  => {
+                            if paint_event.pointer_id != initial_event.pointer_id {
+                                // Changing pointer device cancels the drag
+                                return false;
+                            }
+
+                            // If the pointer has moved more than DRAG_DISTANCE then switch to the 
+                            let (x2, y2) = paint_event.location;
+                            let (dx, dy) = (x1-x2, y1-y2);
+                            let distance = ((dx*dx) + (dy*dy)).sqrt();
+
+                            if distance >= DRAG_DISTANCE {
+                                // Once the user moves more than a certain distance away, switch to dragging
+                                on_drag(state, initial_event).await;
+                                return true;
+                            }
+                        }
+
+                        // Finishing the existing paint action cancels the drag
+                        PaintAction::Finish => { return false; }
+
+                        // If the gesture is cancelled, no drag takes place
+                        PaintAction::Cancel => { return false; }
+
+                        // If a new paint event starts, then it's likely that an event has been missed somewhere
+                        PaintAction::Start  => { return false; }
+                    }
+                }
+
+                _ => { }
+            }
+        }
+
+        false
+    }
+
+    ///
     /// The user has begun a paint action on the canvas
     ///
     async fn click_or_drag_something<Anim: 'static+EditableAnimation>(state: &mut AdjustToolState<Anim>, initial_event: Painting) {
