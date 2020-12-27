@@ -398,6 +398,34 @@ impl Adjust {
     }
 
     ///
+    /// Returns the list of modified control points for an element
+    ///
+    fn adjusted_control_points(offset: (f32, f32), element_id: ElementId, original_control_points: &Vec<ControlPoint>, selected_control_points: &HashSet<AdjustControlPointId>) -> Vec<(f32, f32)> {
+        let (dx, dy) = offset;
+
+        // Transform any control point that has changed
+        let mut new_positions   = vec![];
+        for cp_index in 0..original_control_points.len() {
+            let cp_id = AdjustControlPointId {
+                owner: element_id,
+                index: cp_index
+            };
+
+            let (cpx, cpy) = original_control_points[cp_index].position();
+            let (cpx, cpy) = (cpx as f32, cpy as f32);
+            if selected_control_points.contains(&cp_id) {
+                // Transform this control point
+                new_positions.push((cpx + dx, cpy + dy));
+            } else {
+                // Leave the control point alone
+                new_positions.push((cpx, cpy));
+            }
+        }
+
+        new_positions
+    }
+
+    ///
     /// Performs a drag on a set of control points
     ///
     async fn drag_control_points<Anim: 'static+EditableAnimation>(state: &mut AdjustToolState<Anim>, selected_control_points: &HashSet<AdjustControlPointId>, initial_event: Painting) {
@@ -448,23 +476,7 @@ impl Adjust {
                                 let element_id      = element.id();
 
                                 // Transform any control point that has changed
-                                let mut new_positions   = vec![];
-                                for cp_index in 0..control_points.len() {
-                                    let cp_id = AdjustControlPointId {
-                                        owner: element_id,
-                                        index: cp_index
-                                    };
-
-                                    let (cpx, cpy) = control_points[cp_index].position();
-                                    let (cpx, cpy) = (cpx as f32, cpy as f32);
-                                    if selected_control_points.contains(&cp_id) {
-                                        // Transform this control point
-                                        new_positions.push((cpx + dx, cpy + dy));
-                                    } else {
-                                        // Leave the control point alone
-                                        new_positions.push((cpx, cpy));
-                                    }
-                                }
+                                let new_positions   = Self::adjusted_control_points((dx, dy), element_id, &control_points, selected_control_points);
 
                                 // Create an updated element with the new control points
                                 let transformed_element = element.with_adjusted_control_points(new_positions, &*element_properties);
