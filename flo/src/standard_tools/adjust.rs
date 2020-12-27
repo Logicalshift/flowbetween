@@ -503,7 +503,7 @@ impl Adjust {
 
                             // Draw the updated elements
                             let mut preview = vec![Draw::Layer(LAYER_SELECTION), Draw::ClearLayer];
-                            // preview.extend(Self::drawing_for_selection_preview(&*state.flo_model)); -- TODO: draw via elements
+                            preview.extend(transformed_elements.iter().flat_map(|(element, properties)| Select::highlight_for_selection(element, properties, true).0));
                             preview.extend(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]);
                             preview.extend(Self::drawing_for_control_points(&transformed_control_points, selected_control_points));
 
