@@ -412,10 +412,14 @@ impl Adjust {
                 index: cp_index
             };
 
-            let (cpx, cpy) = original_control_points[cp_index].position();
-            let (cpx, cpy) = (cpx as f32, cpy as f32);
+            let cp          = &original_control_points[cp_index];
+            let (cpx, cpy)  = cp.position();
+            let (cpx, cpy)  = (cpx as f32, cpy as f32);
             if selected_control_points.contains(&cp_id) {
                 // Transform this control point
+                new_positions.push((cpx + dx, cpy + dy));
+            } else if cp.is_control_point() && selected_control_points.contains(&AdjustControlPointId { owner: element_id, index: cp_index+1 }) || (cp_index > 0 && selected_control_points.contains(&AdjustControlPointId { owner: element_id, index: cp_index-1 })) {
+                // Not selected, but the following CP is and this is a control point, so it transforms alongside it
                 new_positions.push((cpx + dx, cpy + dy));
             } else {
                 // Leave the control point alone
