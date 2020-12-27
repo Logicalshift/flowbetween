@@ -109,7 +109,7 @@ impl<Anim: 'static+EditableAnimation> AdjustToolState<Anim> {
     /// The control points to drag at the specified position, if they're different to the selection
     ///
     pub fn drag_control_points(&self, x: f64, y: f64) -> Option<HashSet<AdjustControlPointId>> {
-        const MAX_DISTANCE: f64         = 4.0;
+        const MAX_DISTANCE: f64         = 8.0;
         let selected_control_points     = self.selected_control_points.get();
 
         if selected_control_points.len() == 1 {
