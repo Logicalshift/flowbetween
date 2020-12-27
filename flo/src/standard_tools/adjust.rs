@@ -683,9 +683,12 @@ impl Adjust {
 
         // Find the control point that was clicked on, and update the selected control point set if one is found
         if let Some(dragged_control_points) = state.drag_control_points(initial_event.location.0 as f64, initial_event.location.1 as f64) {
+            
             // Drag this handle instead of the selected control point
             Self::drag_control_points(state, &dragged_control_points, initial_event).await;
+        
         } else if let Some(clicked_control_point) = state.control_point_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64) {
+        
             // The user has clicked on a control point
             let selected_control_points = state.selected_control_points.get();
             let mut drag_immediate      = true;
@@ -717,6 +720,7 @@ impl Adjust {
             }
         
         } else if let Some(selected_element) = state.element_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64) {
+            
             // The user hasn't clicked on a control point but has clicked on another element that we could edit
 
             if initial_event.modifier_keys != vec![ModifierKey::Shift] {
