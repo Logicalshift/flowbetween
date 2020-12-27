@@ -174,7 +174,7 @@ impl Select {
                     let properties  = current_frame.apply_properties_for_element(&element, Arc::new(VectorProperties::default()));
 
                     // Draw the highlight for it
-                    let (drawing, bounding_box) = Self::highlight_for_selection(&element, &properties);
+                    let (drawing, bounding_box) = Self::highlight_for_selection(&element, &properties, true);
                     selection_drawing.extend(drawing);
                     bounds = bounds.union(bounding_box);
                 }
@@ -726,7 +726,7 @@ impl Select {
     ///
     /// Returns the drawing actions to highlight the specified element
     ///
-    pub fn highlight_for_selection(element: &Vector, properties: &VectorProperties) -> (Vec<Draw>, Rect) {
+    pub fn highlight_for_selection(element: &Vector, properties: &VectorProperties, fill: bool) -> (Vec<Draw>, Rect) {
         // Get the paths for this element
         let paths = element.to_path(properties, PathConversion::Fastest);
         if let Some(paths) = paths {
@@ -741,8 +741,10 @@ impl Select {
             path_draw.insert(0, Draw::NewPath);
 
             // Draw the outline
-            path_draw.push(Draw::FillColor(SELECTION_FILL));
-            path_draw.push(Draw::Fill);
+            if fill {
+                path_draw.push(Draw::FillColor(SELECTION_FILL));
+                path_draw.push(Draw::Fill);
+            }
 
             path_draw.push(Draw::StrokeColor(SELECTION_OUTLINE));
             path_draw.push(Draw::LineWidthPixels(2.0));
@@ -1196,7 +1198,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                             let properties  = current_frame.apply_properties_for_element(&element, Arc::new(VectorProperties::default()));
 
                             // Draw a highlight around it
-                            let (drawing, bounding_box) = Self::highlight_for_selection(&element, &properties);
+                            let (drawing, bounding_box) = Self::highlight_for_selection(&element, &properties, true);
                             selection.extend(drawing);
                             bounds = bounds.union(bounding_box);
                         }

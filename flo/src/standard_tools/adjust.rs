@@ -248,7 +248,6 @@ impl Adjust {
 
         // Fetch the elements from the frame and determine how to draw the highlight for them
         let mut selection_drawing   = vec![];
-        let mut bounds              = Rect::empty();
 
         if let Some(current_frame) = current_frame.as_ref() {
             for selected_id in selected_elements.iter() {
@@ -259,9 +258,8 @@ impl Adjust {
                     let properties  = current_frame.apply_properties_for_element(&element, Arc::new(VectorProperties::default()));
 
                     // Draw the highlight for it
-                    let (drawing, bounding_box) = Select::highlight_for_selection(&element, &properties);
+                    let (drawing, _bounds) = Select::highlight_for_selection(&element, &properties, false);
                     selection_drawing.extend(drawing);
-                    bounds = bounds.union(bounding_box);
                 }
             }
         }
@@ -374,7 +372,6 @@ impl Adjust {
         // Create a binding that tracks the rendering actions for the current selection
         let model               = flo_model.clone();
         let selection_preview   = computed(move || Self::drawing_for_selection_preview(&*model));
-        let model               = flo_model.clone();
         let cp_preview          = computed(move || Self::drawing_for_control_points(&*control_points.get(), &selected_control_points.get()));
 
         // Combine the two previews whenever the selection changes
