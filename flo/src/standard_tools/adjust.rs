@@ -806,11 +806,11 @@ impl<Anim: 'static+EditableAnimation> Tool<Anim> for Adjust {
     ///
     /// Returns a stream containing the actions for the view and tool model for the select tool
     ///
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &AdjustModel) -> BoxStream<'static, ToolAction<()>> {
+    fn actions_for_model(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &AdjustModel) -> BoxStream<'static, ToolAction<()>> {
         tool_model.future.lock().unwrap().actions_for_model()
     }
 
-    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, tool_model: &AdjustModel, _data: Option<Arc<()>>, input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<()>>> {
+    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, tool_model: &AdjustModel, _data: Option<Arc<()>>, input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<()>>> {
         Box::new(tool_model.future.lock().unwrap().actions_for_input(input).into_iter())
     }
 }
