@@ -523,17 +523,9 @@ impl Adjust {
                                 edits.push(AnimationEdit::Element(vec![element_id], ElementEdit::SetControlPoints(new_positions, when)));
                             }
 
-                            // Send to the animation
+                            // Send to the animation (invalidating the canvas will redraw the selection to its final value)
                             state.flo_model.edit().publish(Arc::new(edits)).await;
                             state.flo_model.timeline().invalidate_canvas();
-
-                            // Reset the preview
-                            let mut preview = vec![Draw::Layer(LAYER_SELECTION), Draw::ClearLayer];
-                            preview.extend(Self::drawing_for_selection_preview(&*state.flo_model));
-                            preview.extend(vec![Draw::Layer(LAYER_PREVIEW), Draw::ClearLayer]);
-                            preview.extend(Self::drawing_for_control_points(&*state.control_points.get(), selected_control_points));
-
-                            state.actions.send_actions(vec![ToolAction::Overlay(OverlayAction::Draw(preview))]);
 
                             // Drag is finished
                             return;
