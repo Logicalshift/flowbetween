@@ -6,6 +6,7 @@ use crate::model::*;
 use crate::style::*;
 
 use flo_ui::*;
+use flo_stream::*;
 use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
@@ -431,6 +432,7 @@ impl Adjust {
     async fn drag_control_points<Anim: 'static+EditableAnimation>(state: &mut AdjustToolState<Anim>, selected_control_points: &HashSet<AdjustControlPointId>, initial_event: Painting) {
         // Fetch the elements being transformed and their properties
         let mut elements    = HashMap::new();
+        let when            = state.flo_model.timeline().current_time.get();
         let frame           = state.flo_model.frame().frame.get();
         let frame           = if let Some(frame) = frame { frame } else { return; };
 
@@ -506,6 +508,24 @@ impl Adjust {
 
                         PaintAction::Finish => {
                             // Commit the drag to the drawing
+                            let (x2, y2) = paint_event.location;
+                            let (dx, dy) = (x2-x1, y2-y1);
+
+                            // Compile the edits
+                            let mut edits = vec![];
+                            for (element, element_properties) in elements.values() {
+                                // Fetch the control points for this element
+                                let control_points  = element.control_points(&*element_properties);
+                                let element_id      = element.id();
+
+                                // Transform any control point that has changed
+                                let new_positions   = Self::adjusted_control_points((dx, dy), element_id, &control_points, selected_control_points);
+                                edits.push(AnimationEdit::Element(vec![element_id], ElementEdit::SetControlPoints(new_positions, when)));
+                            }
+
+                            // Send to the animation
+                            state.flo_model.edit().publish(Arc::new(edits)).await;
+                            state.flo_model.timeline().invalidate_canvas();
 
                             // Reset the preview
                             let mut preview = vec![Draw::Layer(LAYER_SELECTION), Draw::ClearLayer];
