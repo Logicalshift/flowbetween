@@ -1092,7 +1092,7 @@ impl<Anim: 'static+EditableAnimation> Tool<Anim> for Adjust {
 
     fn tool_name(&self) -> String { "Adjust".to_string() }
 
-    fn image(&self) -> Option<Image> { Some(svg_static(include_bytes!("../../svg/tools/adjust.svg"))) }
+    fn image(&self) -> Option<Image> { Some(svg_static(include_bytes!("../../../svg/tools/adjust.svg"))) }
 
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> AdjustModel { 
         AdjustModel {
