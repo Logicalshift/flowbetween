@@ -26,6 +26,9 @@ const LAYER_SELECTION: u32 = 0;
 /// Layer where the control points and the preview of the region the user is dragging is drawn
 const LAYER_PREVIEW: u32 = 1;
 
+/// Proximity the pointer should be to a control point to interact with it
+const MIN_DISTANCE: f64 = 4.0;
+
 ///
 /// A control point for the adjust tool
 ///
@@ -83,8 +86,6 @@ impl<Anim: 'static+EditableAnimation> AdjustToolState<Anim> {
     /// Finds the control point nearest to the specified position
     ///
     pub fn control_point_at_position(&self, x: f64, y: f64) -> Option<AdjustControlPointId> {
-        const MIN_DISTANCE: f64         = 4.0;
-
         let mut found_distance          = 1000.0;
         let mut found_control_point     = None;
 
@@ -109,7 +110,7 @@ impl<Anim: 'static+EditableAnimation> AdjustToolState<Anim> {
     /// The control points to drag at the specified position, if they're different to the selection
     ///
     pub fn drag_control_points(&self, x: f64, y: f64) -> Option<HashSet<AdjustControlPointId>> {
-        const MAX_DISTANCE: f64         = 8.0;
+        const MAX_DISTANCE: f64         = MIN_DISTANCE * 2.0;
         let selected_control_points     = self.selected_control_points.get();
 
         if selected_control_points.len() == 1 {
@@ -628,7 +629,7 @@ impl Adjust {
             DragFuture: 'a+Future<Output=()>,
             ContinueFn: FnOnce(&'a mut AdjustToolState<Anim>, Painting) -> DragFuture {
         // Distance the pointer should move to turn the gesture into a drag
-        const DRAG_DISTANCE: f32    = 2.0;
+        const DRAG_DISTANCE: f32    = (MIN_DISTANCE as f32) / 2.0;
         let (x1, y1)                = initial_event.location;
 
         while let Some(event) = state.input.next().await {
