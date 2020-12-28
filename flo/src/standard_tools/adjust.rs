@@ -871,6 +871,7 @@ impl Adjust {
         // A few behaviours are possible:
         //  * Dragging a handle of the selected control point (if there's only one)
         //  * Dragging a selected control point to move it
+        //  * Clicking an edge to select the control points on either side or to drag it to a new position
         //  * Clicking on an unselected control point to select it (and optionally move it if dragged far enough)
         //  * Clicking on an unselected element to select it and thus show its control points
         //
@@ -912,7 +913,11 @@ impl Adjust {
                 // Selection has changed: drag is 'sticky'
                 Self::maybe_drag(state, initial_event, move |state, initial_event| async move { Self::drag_control_points(state, &selected_control_points, initial_event).await; }).await;
             }
-        
+
+        } else if let Some(selected_edge) = state.curve_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64) {
+
+            // The user has clicked on an edge
+
         } else if let Some(selected_element) = state.element_at_position(initial_event.location.0 as f64, initial_event.location.1 as f64) {
             
             // The user hasn't clicked on a control point but has clicked on another element that we could edit
