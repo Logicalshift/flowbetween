@@ -215,7 +215,7 @@ impl<Anim: 'static+EditableAnimation> AdjustToolState<Anim> {
 
         let initial_point   = Coord2(initial_point.0, initial_point.1);
         let cp1             = Coord2(cp1.0, cp1.1);
-        let cp2             = Coord2(cp2.0, cp1.1);
+        let cp2             = Coord2(cp2.0, cp2.1);
         let end_point       = Coord2(end_point.0, end_point.1);
 
         Some((Curve::from_points(initial_point, (cp1, cp2), end_point), end_point_id))
@@ -224,40 +224,35 @@ impl<Anim: 'static+EditableAnimation> AdjustToolState<Anim> {
     ///
     /// Returns the t value and distance to the closest point on the curve
     ///
-    fn closest_t<C: BezierCurve>(curve: &C, point: &C::Point) -> Option<(f64, f64)> {
+    fn closest_t<C: BezierCurve<Point=Coord2>>(curve: &C, point: &Coord2) -> Option<(f64, f64)> {
+        // Raycast to try to find the closet points (horizontally, vertically and at a 45 degree angle)
+        let rays = vec![
+                (Coord2(point.x(), point.y()), Coord2(point.x()-1.0, point.y())), 
+                (Coord2(point.x(), point.y()), Coord2(point.x(), point.y()-1.0)), 
+                (Coord2(point.x(), point.y()), Coord2(point.x()-1.0, point.y()-1.0)), 
+            ];
+
         let mut closest = None;
 
-        let p1              = curve.start_point();
-        let (p2, p3)        = curve.control_points();
-        let p4              = curve.end_point();
+        // Try each ray in turn
+        for ray in rays {
+            // Find the intersections of the curve with this ray
+            let intersections = curve_intersects_ray(curve, &ray);
 
-        // Solve the basis function for each of the point's dimensions and pick the first that appears close enough (and within the range 0-1)
-        for dimension in 0..(C::Point::len()) {
-            // Solve for this dimension
-            let (w1, w2, w3, w4)    = (p1.get(dimension), p2.get(dimension), p3.get(dimension), p4.get(dimension));
-            let possible_t_values   = solve_basis_for_t(w1, w2, w3, w4, point.get(dimension));
+            // See if any of these intersection points are closer than the closest we've found so far
+            for (curve_t, _line_t, intersection_point) in intersections.into_iter() {
+                let distance = intersection_point.distance_to(point);
 
-            for possible_t in possible_t_values {
-                // Ignore values outside the range of the curve
-                if possible_t < -0.001 || possible_t > 1.001 {
-                    continue;
-                }
-
-                // If this is an accurate enough solution, return this as the t value
-                let point_at_t  = curve.point_at_pos(possible_t);
-                let distance    = point_at_t.distance_to(point);
-
-                if let Some((closest_t, closest_distance)) = closest {
-                    if closest_distance > distance {
-                        closest = Some((possible_t, distance))
+                if let Some((_closest_t, closest_distance)) = closest {
+                    if distance < closest_distance {
+                        closest = Some((curve_t, distance));
                     }
                 } else {
-                    closest = Some((possible_t, distance))
+                    closest = Some((curve_t, distance));
                 }
             }
         }
-        
-        // Return the closest point we found
+
         closest
     }
 
@@ -289,7 +284,7 @@ impl<Anim: 'static+EditableAnimation> AdjustToolState<Anim> {
         }
 
         if let Some(closest) = closest {
-            if closest.distance <= MIN_DISTANCE {
+            if closest.distance <= MIN_DISTANCE*2.0 {
                 Some(closest)
             } else {
                 // Too far away
