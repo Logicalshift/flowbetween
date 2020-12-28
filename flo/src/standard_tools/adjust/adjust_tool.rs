@@ -480,7 +480,7 @@ impl Adjust {
     ///
     /// Performs a drag on an edge
     ///
-    async fn drag_edge<Anim: 'static+EditableAnimation>(state: &mut AdjustToolState<Anim>, selected_edge: AdjustCurvePoint, initial_event: Painting) {
+    async fn drag_edge<Anim: 'static+EditableAnimation>(state: &mut AdjustToolState<Anim>, selected_edge: AdjustEdgePoint, initial_event: Painting) {
         // Fetch the element being transformed and their properties
         let when                = state.flo_model.timeline().current_time.get();
         let frame               = state.flo_model.frame().frame.get();

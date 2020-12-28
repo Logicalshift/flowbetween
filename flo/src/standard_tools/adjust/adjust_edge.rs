@@ -4,7 +4,7 @@ use super::adjust_control_point::*;
 /// Describes a point on a curve
 ///
 #[derive(Clone, Debug, PartialEq)]
-pub (super) struct AdjustCurvePoint {
+pub (super) struct AdjustEdgePoint {
     /// The start point of the bezier curve section
     pub (super) start_point: AdjustControlPointId,
 
