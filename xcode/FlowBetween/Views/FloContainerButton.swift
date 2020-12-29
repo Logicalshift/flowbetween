@@ -14,6 +14,9 @@ import Cocoa
 class FloContainerButton : NSView, FloContainerView {
     /// The layer that the button is drawn on
     fileprivate let _backingLayer = FloContainerButtonLayer()
+    
+    /// The container view that presents the content of the button
+    fileprivate let _containerView = NSView();
 
     /// Layer that displays the badge for this button
     fileprivate var _badgeLayer: CALayer?
@@ -29,6 +32,8 @@ class FloContainerButton : NSView, FloContainerView {
         layer?.backgroundColor  = CGColor.clear
         layer?.isOpaque         = false
         layer?.setNeedsDisplay()
+        
+        addSubview(_containerView)
 
         viewState.isFirst.trackValue({ isFirst in this?._backingLayer.isFirst = isFirst.toBool(default: false) })
         viewState.isLast.trackValue({ isLast in this?._backingLayer.isLast = isLast.toBool(default: false) })
@@ -45,6 +50,8 @@ class FloContainerButton : NSView, FloContainerView {
         layer?.backgroundColor  = CGColor.clear
         layer?.isOpaque         = false
         layer?.setNeedsDisplay()
+        
+        addSubview(_containerView)
 
         viewState.isFirst.trackValue({ isFirst in this?._backingLayer.isFirst = isFirst.toBool(default: false) })
         viewState.isLast.trackValue({ isLast in this?._backingLayer.isLast = isLast.toBool(default: false) })
@@ -55,6 +62,13 @@ class FloContainerButton : NSView, FloContainerView {
     /// Updates the frame size of this control
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize)
+        
+        let bounds = self.bounds
+        if bounds.width > 2.0 && bounds.height > 2.0 {
+            _containerView.frame = bounds.insetBy(dx: 2.0, dy: 2.0)
+        } else {
+            _containerView.frame = bounds
+        }
 
         triggerBoundsChanged()
         performLayout?(layoutSize)
@@ -105,7 +119,7 @@ class FloContainerButton : NSView, FloContainerView {
 
     /// Adds a subview to this container view
     func addContainerSubview(_ subview: NSView) {
-        addSubview(subview)
+        _containerView.addSubview(subview)
     }
 
     /// Sets the layer displayed for the canvas
@@ -124,7 +138,7 @@ class FloContainerButton : NSView, FloContainerView {
 
     /// The size of the layout area for this view
     var layoutSize : NSSize {
-        return self.bounds.size
+        return _containerView.bounds.size
     }
 
     /// The FloView that owns this container view (should be a weak reference)
