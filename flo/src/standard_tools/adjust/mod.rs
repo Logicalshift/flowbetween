@@ -6,6 +6,7 @@ mod adjust_control_point;
 
 mod drawing;
 mod constants;
+mod drag_edge;
 mod drag_control_points;
 
 pub use self::adjust_tool::*;
