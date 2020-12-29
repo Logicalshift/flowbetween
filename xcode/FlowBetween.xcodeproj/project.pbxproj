@@ -426,7 +426,8 @@
 			children = (
 				4BAC98F821E0FBD100CEB87B /* lato */,
 			);
-			path = Fonts;
+			name = Fonts;
+			path = ../../static_files/fonts;
 			sourceTree = "<group>";
 		};
 		4BAC98F821E0FBD100CEB87B /* lato */ = {
@@ -441,8 +442,7 @@
 				4BAC98FC21E0FBD100CEB87B /* OFL.txt */,
 				4BAC98FD21E0FBD100CEB87B /* Lato-Bold.woff2 */,
 			);
-			name = lato;
-			path = ../../../static_files/fonts/lato;
+			path = lato;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
