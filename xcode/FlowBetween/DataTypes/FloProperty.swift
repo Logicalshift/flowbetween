@@ -124,7 +124,7 @@ public enum PropertyValue {
             if let viewModel = _viewModel {
                 viewModel.setPropertyValue(_bindingId!, value: newValue)
             } else {
-                _value = value
+                _value = newValue
                 _onChange?()
             }
         }
