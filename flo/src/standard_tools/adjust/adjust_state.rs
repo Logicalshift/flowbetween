@@ -1,3 +1,4 @@
+use super::constants::*;
 use super::adjust_edge::*;
 use super::adjust_control_point::*;
 
@@ -13,9 +14,6 @@ use std::f64;
 use std::iter;
 use std::sync::*;
 use std::collections::{HashSet};
-
-/// Proximity the pointer should be to a control point to interact with it
-const MIN_DISTANCE: f64 = 4.0;
 
 ///
 /// The current state of the input handler for the adjust tool
