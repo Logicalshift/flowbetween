@@ -30,6 +30,80 @@ pub struct BrushPoint {
     pub width: f32
 }
 
+impl BrushPoint {
+    ///
+    /// Creates a brush point from a path component
+    ///
+    pub fn from_path_component(last_point: &PathPoint, component: &PathComponent, width: f64) -> BrushPoint {
+        use self::PathComponent::*;
+
+        let (x1, y1) = last_point.position;
+
+        match component {
+            // Move or Line are both treated the same here
+            Move(point) | Line(point) => {
+                // Generate linear control points for this line
+                let (x2, y2)        = point.position;
+                let (cpx1, cpy1)    = ((x2-x1)*0.33333 + x1, (y2-y1)*0.33333);
+                let (cpx2, cpy2)    = ((x2-x1)*0.66666 + x1, (y2-y1)*0.66666);
+
+                // Create the brush pooint
+                BrushPoint {
+                    position:   (x2 as f32, y2 as f32),
+                    cp1:        (cpx1 as f32, cpy1 as f32),
+                    cp2:        (cpx2 as f32, cpy2 as f32),
+                    width:      width as f32
+                }
+            },
+
+            Bezier(target, cp1, cp2) => {
+                // Simple brush point
+                let (x2, y2)        = target.position;
+                let (cpx1, cpy1)    = cp1.position;
+                let (cpx2, cpy2)    = cp2.position;
+
+                BrushPoint {
+                    position:   (x2 as f32, y2 as f32),
+                    cp1:        (cpx1 as f32, cpy1 as f32),
+                    cp2:        (cpx2 as f32, cpy2 as f32),
+                    width:      width as f32
+                }
+            },
+
+            // Close is treated as a single point (ideally the caller should convert this to a line)
+            Close => { 
+                BrushPoint {
+                    position:   (x1 as f32, y1 as f32),
+                    cp1:        (x1 as f32, y1 as f32),
+                    cp2:        (x1 as f32, y1 as f32),
+                    width:      width as f32
+                }
+            }
+        }
+    }
+
+    ///
+    /// Creates a new brush point representing a line
+    ///
+    /// The 'from' point is represented by the last brush point
+    ///
+    pub fn from_line(from: (f64, f64), to: (f64, f64), width: f64) -> BrushPoint {
+        // Generate linear control points for this line
+        let (x1, y1)        = from;
+        let (x2, y2)        = to;
+        let (cpx1, cpy1)    = ((x2-x1)*0.33333 + x1, (y2-y1)*0.33333);
+        let (cpx2, cpy2)    = ((x2-x1)*0.66666 + x1, (y2-y1)*0.66666);
+
+        // Create the brush pooint
+        BrushPoint {
+            position:   (x2 as f32, y2 as f32),
+            cp1:        (cpx1 as f32, cpy1 as f32),
+            cp2:        (cpx2 as f32, cpy2 as f32),
+            width:      width as f32
+        }
+    }
+}
+
 ///
 /// Trait implemented by things that can draw brush strokes
 ///
