@@ -15,7 +15,7 @@ use std::time::{Duration};
 ///
 /// Shapes that can be represented by the shape element
 ///
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Shape {
     /// A circle
     Circle { center: (f64, f64), point: (f64, f64) },
@@ -44,6 +44,14 @@ pub struct ShapeElement {
 }
 
 impl ShapeElement {
+    pub fn new(element_id: ElementId, width: f64, shape: Shape) -> ShapeElement {
+        ShapeElement {
+            id:     element_id,
+            width:  width,
+            shape:  shape
+        }
+    }
+
     ///
     /// Creates a new circle shape
     ///
@@ -86,6 +94,20 @@ impl ShapeElement {
             Shape::Rectangle { center, point }      => self.brush_points_rectangle(center, point),
             Shape::Polygon { sides, center, point } => self.brush_points_polygon(sides, center, point)
         }
+    }
+
+    ///
+    /// Retrieves the shape represented by this element
+    ///
+    pub fn shape(&self) -> Shape {
+        self.shape
+    }
+
+    ///
+    /// Retrieves the line width that will be used with the brush applied to this element
+    ///
+    pub fn width(&self) -> f64 {
+        self.width
     }
 
     fn brush_points_circle(&self, center: (f64, f64), point: (f64, f64)) -> Vec<BrushPoint> {
@@ -223,8 +245,7 @@ impl VectorElement for ShapeElement {
     fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>, properties: &VectorProperties) -> Vector {
         if new_positions.len() != 2 {
             // Must be two adjusted control points
-            // self.clone()
-            todo!("Requires shape vector")
+            Vector::Shape(self.clone())
         } else {
             // Invert any transforms
             let transforms = properties.transformations.iter()
@@ -245,7 +266,7 @@ impl VectorElement for ShapeElement {
                 Shape::Polygon { sides, center: _center, point: _point }    => Self::polygon(self.id, control_points[0], control_points[1], sides)
             };
 
-            todo!("Requires shape vector")
+            Vector::Shape(new_shape)
         }
     }
 }

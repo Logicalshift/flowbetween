@@ -17,6 +17,9 @@ pub enum VectorType {
     /// Vector element representing a path
     Path,
 
+    /// Vector element representing a regular shape
+    Shape,
+
     /// Vector element representing the way something moves through space
     Motion,
 
@@ -40,6 +43,7 @@ impl From<&Vector> for VectorType {
             BrushProperties(_)              => VectorType::BrushProperties,
             BrushStroke(_)                  => VectorType::BrushStroke,
             Path(_)                         => VectorType::Path,
+            Shape(_)                        => VectorType::Shape,
             Motion(_)                       => VectorType::Motion,
             Group(_)                        => VectorType::Group,
             Transformation(_)               => VectorType::Transformation,

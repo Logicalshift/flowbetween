@@ -1,5 +1,6 @@
 mod path;
 mod group;
+mod shape;
 mod vector;
 mod motion;
 mod transformed;
@@ -12,6 +13,7 @@ mod brush_properties;
 
 pub use self::path::*;
 pub use self::group::*;
+pub use self::shape::*;
 pub use self::vector::*;
 pub use self::motion::*;
 pub use self::transformed::*;

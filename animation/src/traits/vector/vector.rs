@@ -1,5 +1,6 @@
 use super::path_element::*;
 use super::brush_element::*;
+use super::shape_element::*;
 use super::group_element::*;
 use super::error_element::*;
 use super::motion_element::*;
@@ -34,6 +35,9 @@ pub enum Vector {
 
     /// Path vector
     Path(PathElement),
+
+    /// Shape
+    Shape(ShapeElement),
 
     /// Element describing a motion
     Motion(MotionElement),
@@ -129,6 +133,7 @@ impl DerefMut for Vector {
             BrushStroke(elem)               => elem,
 
             Path(elem)                      => elem,
+            Shape(elem)                     => elem,
             Motion(elem)                    => elem,
             Group(elem)                     => elem,
             Transformation(elem)            => elem,
@@ -152,6 +157,7 @@ impl Deref for Vector {
             BrushStroke(elem)               => elem,
 
             Path(elem)                      => elem,
+            Shape(elem)                     => elem,
             Motion(elem)                    => elem,
             Group(elem)                     => elem,
             Transformation(transform)       => transform,

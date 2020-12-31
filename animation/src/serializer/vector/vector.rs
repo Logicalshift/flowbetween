@@ -27,6 +27,7 @@ impl Vector {
             BrushProperties(props)          => { data.write_chr('P'); props.serialize(data); }
             BrushStroke(brush)              => { data.write_chr('s'); brush.serialize(data); }
             Path(path)                      => { data.write_chr('p'); path.serialize(data); }
+            Shape(shape)                    => { data.write_chr('S'); shape.serialize(data); }
             Motion(motion)                  => { data.write_chr('m'); motion.serialize(data); }
             Group(group)                    => { data.write_chr('g'); group.serialize(data); }
             Error                           => { data.write_chr('?'); }
@@ -70,6 +71,12 @@ impl Vector {
 
                 Some(box_fn(move |_| {
                     Some(Vector::Path(path))
+                }))
+            }
+            'S' => {
+                let shape = ShapeElement::deserialize(element_id, data)?;
+                Some(box_fn(move |_| { 
+                    Some(Vector::Shape(shape))
                 }))
             }
             'm' => { 

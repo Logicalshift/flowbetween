@@ -46,6 +46,7 @@ impl RaycastEdge {
 
             Vector::Transformed(transform)      => { Self::from_transformed(transform, properties) }
             Vector::BrushStroke(brush_stroke)   => { Self::from_brush_stroke(brush_stroke, properties) }
+            Vector::Shape(shape)                => { Self::from_shape(shape, properties) }
             Vector::Path(path)                  => { Box::new(Self::from_path_element(path, properties)) }
             Vector::Group(group_element)        => { Box::new(Self::from_group(group_element, properties)) }
         }
@@ -121,6 +122,30 @@ impl RaycastEdge {
                 // A draw brush stroke just adds a single edge
                 let points  = brush_stroke.points();
                 let paths   = Self::from_brush_points(brush_stroke.id(), &*points, RaycastEdgeKind::Solid);
+                let paths   = paths.collect::<Vec<_>>();
+                Box::new(paths.into_iter())
+            }
+        }
+    }
+
+    ///
+    /// Returns the edges from a shape stroke element
+    ///
+    pub fn from_shape<'a>(shape: &'a ShapeElement, properties: Arc<VectorProperties>) -> Box<dyn 'a+Iterator<Item=Self>> {
+        match properties.brush.drawing_style() {
+            BrushDrawingStyle::Erase    => {
+                let element_id = shape.id();
+
+                // Ignore any elements underneath the entire path for an erasing brush stroke
+                Box::new(shape.to_path(&*properties, PathConversion::Fastest).unwrap()
+                    .into_iter()
+                    .flat_map(move |path| Self::from_path(element_id, &path, RaycastEdgeKind::EraseContents).collect::<Vec<_>>()))
+            }
+
+            BrushDrawingStyle::Draw     => {
+                // A draw brush stroke just adds a single edge
+                let points  = shape.brush_points();
+                let paths   = Self::from_brush_points(shape.id(), &*points, RaycastEdgeKind::Solid);
                 let paths   = paths.collect::<Vec<_>>();
                 Box::new(paths.into_iter())
             }
