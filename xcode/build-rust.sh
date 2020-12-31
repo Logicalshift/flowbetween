@@ -8,7 +8,7 @@ case ${ARCH} in
     arm64*)
         echo -- BUILDING RUST COMPONENTS FOR ARM ARCHITECTURE
 
-        ${CARGO} +beta build -p flo_cocoa --target aarch64-apple-darwin --features cocoa --target-dir ${BUILD_DIR}/target-arm64 ${CARGO_OPTIONS}
+        ${CARGO} build -p flo_cocoa --target aarch64-apple-darwin --features cocoa --target-dir ${BUILD_DIR}/target-arm64 ${CARGO_OPTIONS}
         
         mkdir ${BUILT_PRODUCTS_DIR}/debug
         mkdir ${BUILT_PRODUCTS_DIR}/debug/arm64
