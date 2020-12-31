@@ -19,6 +19,12 @@ fn describe_vector(vec: &Vector) -> String {
         BrushProperties(_props)         => { format!("Brush properties") }
         BrushStroke(brush_stroke)       => { format!("Brush stroke, {} points", brush_stroke.points().len()) }
         Path(path)                      => { format!("Path, {} elements", path.path().elements().count()) }
+        Shape(shape)                    => { format!("Shape, {}", match shape.shape() { 
+                    flo_animation::Shape::Circle { .. }    => "Circle", 
+                    flo_animation::Shape::Rectangle { .. } => "Rectangle",
+                    flo_animation::Shape::Polygon { .. }   => "Polygon",
+                })
+            }
         Motion(_motion)                 => { format!("Motion description") }
         Transformation(_transform)      => { format!("Transformation description") }
         Error                           => { format!("Error :-(") }
