@@ -1,5 +1,7 @@
 use flo_animation::*;
 
+use std::sync::*;
+
 ///
 /// Action that updates the brush preview
 ///
@@ -22,6 +24,9 @@ pub enum BrushPreviewAction {
 
     /// Adds a raw point to the brush preview
     AddPoint(RawPoint),
+
+    /// Sets the brush points to display for the preview
+    SetBrushPoints(Arc<Vec<BrushPoint>>),
 
     /// If any elements overlap the brush preview, combine them into a single element
     CombineCollidingElements,

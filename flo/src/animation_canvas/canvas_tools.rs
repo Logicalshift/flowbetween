@@ -248,9 +248,10 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
             BrushPreviewAction::BrushDefinition(defn, style)    => { self.brush_definition = (defn.clone(), style); self.preview.as_mut().map(move |preview| preview.select_brush(&defn, style)); },
             BrushPreviewAction::BrushProperties(props)          => { self.brush_properties = props; self.preview.as_mut().map(move |preview| preview.set_brush_properties(&props)); },
             BrushPreviewAction::AddPoint(point)                 => { self.preview.as_mut().map(move |preview| preview.continue_brush_stroke(point)); },
-            BrushPreviewAction::Commit                          => { self.commit_brush_preview(canvas, renderer) },
-            BrushPreviewAction::CommitAsPath                    => { self.commit_brush_preview_as_path(canvas, renderer) }
-            BrushPreviewAction::CombineCollidingElements        => { self.combine_colliding_elements() }
+            BrushPreviewAction::SetBrushPoints(brush_points)    => { self.preview.as_mut().map(move |preview| preview.set_brush_points(brush_points)); }
+            BrushPreviewAction::Commit                          => { self.commit_brush_preview(canvas, renderer); },
+            BrushPreviewAction::CommitAsPath                    => { self.commit_brush_preview_as_path(canvas, renderer); }
+            BrushPreviewAction::CombineCollidingElements        => { self.combine_colliding_elements(); }
         }
     }
 

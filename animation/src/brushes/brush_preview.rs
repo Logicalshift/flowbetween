@@ -13,6 +13,7 @@ pub struct BrushPreview {
     current_brush:          Arc<dyn Brush>,
     brush_properties:       BrushProperties,
     points:                 Vec<RawPoint>,
+    brush_points:           Option<Arc<Vec<BrushPoint>>>,
     combined_element:       Option<Vector>
 }
 
@@ -22,6 +23,7 @@ impl BrushPreview {
             current_brush:      create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw),
             brush_properties:   BrushProperties::new(),
             points:             vec![],
+            brush_points:       None,
             combined_element:   None
         }
     }
@@ -48,6 +50,7 @@ impl BrushPreview {
     ///
     pub fn continue_brush_stroke(&mut self, point: RawPoint) {
         // Add points to the active brush stroke
+        self.brush_points = None;
         self.points.push(point);
     }
 
@@ -56,6 +59,7 @@ impl BrushPreview {
     ///
     pub fn cancel_brush_stroke(&mut self) {
         self.points             = vec![];
+        self.brush_points       = None;
         self.combined_element   = None;
     }
 
@@ -75,12 +79,30 @@ impl BrushPreview {
     }
 
     ///
+    /// Returns the set of brush points for this element
+    ///
+    fn brush_points(&self) -> Arc<Vec<BrushPoint>> {
+        if let Some(brush_points) = &self.brush_points {
+            Arc::clone(brush_points)
+        } else {
+            Arc::new(self.current_brush.brush_points_for_raw_points(&self.points))
+        }
+    }
+
+    ///
+    /// Sets the brush points to use in the preview for this brush stroke
+    ///
+    pub fn set_brush_points(&mut self, brush_points: Arc<Vec<BrushPoint>>) {
+        self.brush_points = Some(brush_points);
+    }
+
+    ///
     /// Creates the brush element for the current brush stroke
     ///
     pub fn brush_element(&self) -> BrushElement {
-        let brush_points = self.current_brush.brush_points_for_raw_points(&self.points);
+        let brush_points = self.brush_points();
 
-        BrushElement::new(ElementId::Unassigned, Arc::new(brush_points))
+        BrushElement::new(ElementId::Unassigned, brush_points)
     }
 
     ///
