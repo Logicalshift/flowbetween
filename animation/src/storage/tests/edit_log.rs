@@ -206,6 +206,31 @@ fn read_element_delete_from_edit_log() {
 }
 
 #[test]
+fn draw_shape() {
+    let anim = create_animation();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+    ]);
+    anim.perform_edits(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
+                ElementId::Unassigned,
+                BrushDefinition::Ink(InkDefinition::default()),
+                BrushDrawingStyle::Draw
+            )
+        )),
+    ]);
+    anim.perform_edits(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
+            BrushProperties(ElementId::Unassigned, BrushProperties::new()))),
+    ]);
+    anim.perform_edits(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::CreateShape(ElementId::Unassigned, 0.5, Shape::Circle { center: (100.0, 110.0), point: (130.0, 140.0) }))),
+    ]);
+}
+
+#[test]
 fn will_assign_element_ids() {
     let animation = create_animation();
 

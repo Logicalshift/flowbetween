@@ -60,7 +60,15 @@ impl StreamAnimationCore {
                 }
 
                 CreateShape(element_id, width, shape)          => {
-                    unimplemented!()
+                    // Create a shape element, using the current brush for the layer
+                    let shape_element   = ShapeElement::new(*element_id, *width as f64, shape.clone());
+                    let element         = Vector::Shape(shape_element);
+                    let element_id      = element_id.id().unwrap_or(0);
+                    let mut wrapper     = ElementWrapper::attached_with_element(element, when);
+
+                    wrapper.attachments = vec![self.brush_defn, self.brush_props].into_iter().flatten().collect();
+
+                    (element_id, Some(wrapper))
                 }
 
                 Fill(element_id, point, options)        => {
