@@ -22,7 +22,7 @@ impl Shape {
     ///
     /// Deserializes a shape from a data source
     ///
-    pub fn deserialize(data: &mut Chars) -> Option<Shape> {
+    pub fn deserialize<Src: AnimationDataSource>(data: &mut Src) -> Option<Shape> {
         match data.next_small_u64() {
             0 => { 
                 match data.next_chr() {

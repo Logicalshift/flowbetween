@@ -36,6 +36,17 @@ impl PaintEdit {
                 }
             },
 
+            CreateShape(elem, width, shape)                 => {
+                data.write_chr('o');
+                elem.serialize(data);
+
+                // Version 0
+                data.write_small_u64(0);
+
+                data.write_f32(*width);
+                shape.serialize(data);
+            }
+
             Fill(elem, point, options)                      => {
                 data.write_chr('F');
                 elem.serialize(data);
@@ -98,6 +109,21 @@ impl PaintEdit {
                     })
             }
 
+            'o' => {
+                ElementId::deserialize(data).and_then(|elem_id| {
+                    match data.next_small_u64() {
+                        0 => {
+                            let width = data.next_f32();
+                            let shape = Shape::deserialize(data)?;
+
+                            Some(PaintEdit::CreateShape(elem_id, width, shape))
+                        }
+
+                        _ => None
+                    }
+                })
+            }
+
             'F' => {
                 let elem_id     = ElementId::deserialize(data)?;
                 let position    = (data.next_f64() as f32, data.next_f64() as f32);
@@ -145,6 +171,14 @@ mod test {
         PaintEdit::BrushStroke(ElementId::Assigned(42), Arc::new(vec![RawPoint::from((1.0, 2.0)), RawPoint::from((2.0, 3.0)), RawPoint::from((4.0, 5.0))])).serialize(&mut encoded);
 
         assert!(PaintEdit::deserialize(&mut encoded.chars()) == Some(PaintEdit::BrushStroke(ElementId::Assigned(42), Arc::new(vec![RawPoint::from((1.0, 2.0)), RawPoint::from((2.0, 3.0)), RawPoint::from((4.0, 5.0))]))));
+    }
+
+    #[test]
+    fn create_shape() {
+        let mut encoded = String::new();
+        PaintEdit::CreateShape(ElementId::Assigned(42), 0.25, Shape::Circle { center: (120.0, 130.0), point: (140.0, 150.0) }).serialize(&mut encoded);
+
+        assert!(PaintEdit::deserialize(&mut encoded.chars()) == Some(PaintEdit::CreateShape(ElementId::Assigned(42), 0.25, Shape::Circle { center: (120.0, 130.0), point: (140.0, 150.0) })));
     }
 
     #[test]

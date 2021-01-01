@@ -1,3 +1,4 @@
+use super::shape::*;
 use super::element_id::*;
 
 use super::super::path::*;
@@ -38,6 +39,9 @@ pub enum PaintEdit {
     /// Draws a brush stroke using the current brush and the specified set of input points
     BrushStroke(ElementId, Arc<Vec<RawPoint>>),
 
+    /// Creates a new shape element with the current brush and properties
+    CreateShape(ElementId, f32, Shape),
+
     /// Creates a path by flood-filling at the specified point on the current layer. The current brush/properties are used to generate
     /// the fill path, and some other options can be set in the fill options.
     Fill(ElementId, RawPoint, Vec<FillOption>)
@@ -54,6 +58,7 @@ impl PaintEdit {
             SelectBrush(id, _, _)   => *id,
             BrushProperties(id, _)  => *id,
             BrushStroke(id, _)      => *id,
+            CreateShape(id, _, _)   => *id,
             Fill(id, _, _)          => *id
         }
     }
@@ -70,6 +75,7 @@ impl PaintEdit {
             SelectBrush(Unassigned, brush_def, brush_style) => SelectBrush(Assigned(assign_element_id()), brush_def, brush_style),
             BrushProperties(Unassigned, brush_props)        => BrushProperties(Assigned(assign_element_id()), brush_props),
             BrushStroke(Unassigned, points)                 => BrushStroke(Assigned(assign_element_id()), points),
+            CreateShape(Unassigned, width, shape)           => CreateShape(Assigned(assign_element_id()), width, shape),
 
             assigned => assigned
         }

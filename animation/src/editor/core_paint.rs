@@ -59,6 +59,9 @@ impl StreamAnimationCore {
                     (element_id, Some(wrapper))
                 }
 
+                CreateShape(element_id, width, shape)          => {
+                    unimplemented!()
+                }
 
                 Fill(element_id, point, options)        => {
                     let element_id = element_id.id().unwrap_or(0);
