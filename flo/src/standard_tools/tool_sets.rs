@@ -2,6 +2,7 @@ use super::*;
 use super::super::tools::*;
 
 use flo_animation::*;
+use flo_ui::svg_static;
 
 use std::sync::*;
 
@@ -28,9 +29,12 @@ pub struct SelectionTools<Anim: 'static+Animation> {
 /// The paint toolset
 ///
 pub struct PaintTools<Anim: 'static+Animation> {
-    ink:        Arc<FloTool<Anim>>,
-    eraser:     Arc<FloTool<Anim>>,
-    flood_fill: Arc<FloTool<Anim>>
+    ink:                Arc<FloTool<Anim>>,
+    eraser:             Arc<FloTool<Anim>>,
+    shape_ellipse:      Arc<FloTool<Anim>>,
+    shape_rectangle:    Arc<FloTool<Anim>>,
+    shape_polygon:      Arc<FloTool<Anim>>,
+    flood_fill:         Arc<FloTool<Anim>>
 }
 
 impl<Anim: EditableAnimation+Animation> CanvasTools<Anim> {
@@ -51,12 +55,15 @@ impl<Anim: EditableAnimation+Animation> SelectionTools<Anim> {
     }
 }
 
-impl<Anim: Animation> PaintTools<Anim> {
+impl<Anim: EditableAnimation> PaintTools<Anim> {
     pub fn new() -> PaintTools<Anim> {
         PaintTools {
-            ink:        Ink::new().to_flo_tool(),
-            eraser:     Eraser::new().to_flo_tool(),
-            flood_fill: FloodFill::new().to_flo_tool()
+            ink:                Ink::new().to_flo_tool(),
+            eraser:             Eraser::new().to_flo_tool(),
+            flood_fill:         FloodFill::new().to_flo_tool(),
+            shape_ellipse:      ShapeTool::new("Shape-ellipse", svg_static(include_bytes!("../../svg/tools/shape_ellipse.svg"))).to_flo_tool(),
+            shape_rectangle:    ShapeTool::new("Shape-rectangle", svg_static(include_bytes!("../../svg/tools/shape_rectangle.svg"))).to_flo_tool(),
+            shape_polygon:      ShapeTool::new("Shape-polygon", svg_static(include_bytes!("../../svg/tools/shape_polygon.svg"))).to_flo_tool()
         }
     }
 }
@@ -96,6 +103,9 @@ impl<Anim: Animation> ToolSet<Anim> for PaintTools<Anim> {
         vec![
             Arc::clone(&self.ink),
             Arc::clone(&self.eraser),
+            Arc::clone(&self.shape_rectangle),
+            Arc::clone(&self.shape_ellipse),
+            Arc::clone(&self.shape_polygon),
             Arc::clone(&self.flood_fill)
         ]
     }

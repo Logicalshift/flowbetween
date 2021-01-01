@@ -19,21 +19,28 @@ pub struct ShapeModel {
 ///
 /// The Shape tool, which creates shapes
 ///
-pub struct Shape { }
+pub struct ShapeTool {
+    name: String,
+    icon: Image
+}
 
-impl Shape {
+impl ShapeTool {
     ///
     /// Creates the Shape tool
     ///
-    pub fn new() -> Shape {
-        Shape { 
+    pub fn new(name: &str, icon: Image) -> ShapeTool {
+        let name = name.to_string();
+
+        ShapeTool { 
+            name,
+            icon
         }
     }
 
     ///
     /// The main input loop for the shape tool
     ///
-    pub fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>) -> impl Future<Output=()>+Send {
+    pub fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, _actions: ToolActionPublisher<()>, _flo_model: Arc<FloModel<Anim>>) -> impl Future<Output=()>+Send {
         async move {
             let mut input = input;
 
@@ -55,13 +62,15 @@ impl Shape {
     }
 }
 
-impl<Anim: 'static+EditableAnimation> Tool<Anim> for Shape {
+impl<Anim: 'static+EditableAnimation> Tool<Anim> for ShapeTool {
     type ToolData   = ();
     type Model      = ShapeModel;
 
-    fn tool_name(&self) -> String { "".to_string() }
+    fn tool_name(&self) -> String {
+        self.name.clone()
+    }
 
-    fn image(&self) -> Option<Image> { Some(svg_static(include_bytes!("../../svg/tools/adjust.svg"))) }
+    fn image(&self) -> Option<Image> { Some(self.icon.clone()) }
 
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> ShapeModel { 
         ShapeModel {
