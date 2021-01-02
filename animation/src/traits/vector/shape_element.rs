@@ -153,16 +153,16 @@ impl ShapeElement {
 
         let (cx, cy)        = center;
         let (px, py)        = point;
-        let (dx, dy)        = ((cx-px).abs(), (cy-py).abs());
+        let (dx, dy)        = (cx-px, cy-py);
         let radius          = ((dx*dx)+(dy*dy)).sqrt();
         let initial_angle   = f64::atan2(dy, dx);
         let angle_per_side  = (2.0*f64::consts::PI) / (sides as f64);
 
-        for side in 0..sides {
+        for side in 0..=sides {
             let start_angle = (side as f64) * angle_per_side + initial_angle;
             let end_angle   = start_angle + angle_per_side;
 
-            brush_points.push(BrushPoint::from_line((start_angle.sin()*radius + cx, start_angle.cos()*radius + cy), (end_angle.sin()*radius + cx, end_angle.cos()*radius + cy), self.width));
+            brush_points.push(BrushPoint::from_line((start_angle.cos()*radius + cx, start_angle.sin()*radius + cy), (end_angle.cos()*radius + cx, end_angle.sin()*radius + cy), self.width));
         }
 
         brush_points
