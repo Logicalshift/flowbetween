@@ -2,6 +2,7 @@ use crate::tools::*;
 use crate::model::*;
 
 use flo_ui::*;
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 
@@ -49,9 +50,15 @@ impl ShapeTool {
     /// The use has started drawing a new shape
     ///
     async fn drag_new_shape<Anim: 'static+EditableAnimation>(initial_action: Painting, input: &mut ToolInputStream<()>, actions: &ToolActionPublisher<()>, flo_model: &Arc<FloModel<Anim>>) {
+        // Get the current settings for the animation
+        let layer   = flo_model.timeline().selected_layer.get();
+        let layer   = if let Some(layer) = layer { layer } else { return; };
+        let when    = flo_model.timeline().current_time.get();
+
+        // Set up the brush preview for the shape
         actions.send_actions(vec![
             ToolAction::BrushPreview(BrushPreviewAction::Clear),
-            ToolAction::BrushPreview(BrushPreviewAction::Layer(flo_model.timeline().selected_layer.get().unwrap_or(0))),
+            ToolAction::BrushPreview(BrushPreviewAction::Layer(layer)),
             ToolAction::BrushPreview(BrushPreviewAction::Clear),
             ToolAction::BrushPreview(BrushPreviewAction::BrushDefinition(BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw)),
             ToolAction::BrushPreview(BrushPreviewAction::BrushProperties(BrushProperties::new()))
@@ -65,22 +72,32 @@ impl ShapeTool {
                         break;
                     }
 
+                    // Construct the shape for this painting event
+                    let center          = (initial_action.location.0 as f64, initial_action.location.1 as f64);
+                    let point           = (painting.location.0 as f64, painting.location.1 as f64);
+
+                    let shape_element   = Self::create_shape_element(center, point);
+
                     match painting.action {
                         PaintAction::Continue |
                         PaintAction::Prediction => {
                             // Draw the shape as a brush preview
-                            let center          = (initial_action.location.0 as f64, initial_action.location.1 as f64);
-                            let point           = (painting.location.0 as f64, painting.location.1 as f64);
-
-                            let shape_element   = Self::create_shape_element(center, point);
-
-                            let brush_points    = shape_element.brush_points();
+                            let brush_points = shape_element.brush_points();
 
                             actions.send_actions(vec![ToolAction::BrushPreview(BrushPreviewAction::SetBrushPoints(Arc::new(brush_points)))]);
                         }
 
                         PaintAction::Finish => {
-                            // TODO: commit the shape
+                            // Commit the shape
+                            flo_model.edit().publish(Arc::new(vec![
+                                AnimationEdit::Layer(layer, LayerEdit::Paint(when, PaintEdit::CreateShape(ElementId::Unassigned, shape_element.width() as f32, shape_element.shape())))
+                            ])).await;
+
+                            // Reset the brush preview
+                            actions.send_actions(vec![
+                                ToolAction::BrushPreview(BrushPreviewAction::Clear),
+                                ToolAction::InvalidateFrame
+                            ]);
                             break;
                         }
 
