@@ -114,7 +114,10 @@ impl ShapeElement {
         let mut brush_points    = vec![];
         for component in circle.elements() {
             match component {
-                PathComponent::Move(point) => { last_point = point },
+                PathComponent::Move(point) => { 
+                    brush_points.push(BrushPoint::from_path_component(&last_point, &component, self.width));
+                    last_point = point 
+                },
                 PathComponent::Line(point) => {
                     brush_points.push(BrushPoint::from_path_component(&last_point, &component, self.width));
                     last_point = point;
@@ -144,6 +147,7 @@ impl ShapeElement {
         brush_points.push(BrushPoint::from_line((cx+dx, cy-dy), (cx+dx, cy+dy), self.width));
         brush_points.push(BrushPoint::from_line((cx+dx, cy+dy), (cx-dx, cy+dy), self.width));
         brush_points.push(BrushPoint::from_line((cx-dx, cy+dy), (cx-dx, cy-dy), self.width));
+        brush_points.push(BrushPoint::from_line((cx-dx, cy-dy), (cx+dx, cy-dy), self.width));
 
         brush_points
     }
