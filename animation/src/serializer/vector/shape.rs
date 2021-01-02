@@ -96,10 +96,12 @@ mod test {
         let mut encoded     = String::new();
         shape.serialize(&mut encoded);
 
-        let decoded         = ShapeElement::deserialize(ElementId::Assigned(42), &mut encoded.chars());
+        let mut chars       = encoded.chars();
+        let decoded         = ShapeElement::deserialize(ElementId::Assigned(42), &mut chars);
         let decoded         = decoded.unwrap();
 
         assert!(decoded == shape);
+        assert!(chars.next().is_none());
     }
 
     #[test]
@@ -108,10 +110,12 @@ mod test {
         let mut encoded     = String::new();
         shape.serialize(&mut encoded);
 
-        let decoded         = ShapeElement::deserialize(ElementId::Assigned(42), &mut encoded.chars());
+        let mut chars       = encoded.chars();
+        let decoded         = ShapeElement::deserialize(ElementId::Assigned(42), &mut chars);
         let decoded         = decoded.unwrap();
 
         assert!(decoded == shape);
+        assert!(chars.next().is_none());
     }
 
     #[test]
@@ -120,9 +124,11 @@ mod test {
         let mut encoded     = String::new();
         shape.serialize(&mut encoded);
 
-        let decoded         = ShapeElement::deserialize(ElementId::Assigned(42), &mut encoded.chars());
+        let mut chars       = encoded.chars();
+        let decoded         = ShapeElement::deserialize(ElementId::Assigned(42), &mut chars);
         let decoded         = decoded.unwrap();
 
         assert!(decoded == shape);
+        assert!(chars.next().is_none());
     }
 }
