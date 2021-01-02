@@ -91,8 +91,8 @@ impl BrushPoint {
         // Generate linear control points for this line
         let (x1, y1)        = from;
         let (x2, y2)        = to;
-        let (cpx1, cpy1)    = ((x2-x1)*0.33333 + x1, (y2-y1)*0.33333);
-        let (cpx2, cpy2)    = ((x2-x1)*0.66666 + x1, (y2-y1)*0.66666);
+        let (cpx1, cpy1)    = ((x2-x1)*0.33333 + x1, (y2-y1)*0.33333 + y1);
+        let (cpx2, cpy2)    = ((x2-x1)*0.66666 + x1, (y2-y1)*0.66666 + y1);
 
         // Create the brush pooint
         BrushPoint {
