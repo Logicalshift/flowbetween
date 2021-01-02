@@ -38,13 +38,83 @@ impl ShapeTool {
     }
 
     ///
+    /// Creates a shape element
+    ///
+    fn create_shape_element(center: (f64, f64), point: (f64, f64)) -> ShapeElement {
+        ShapeElement::new(ElementId::Unassigned, 0.5, Shape::Polygon { sides: 6, center, point })
+    }
+
+    ///
+    /// The use has started drawing a new shape
+    ///
+    async fn drag_new_shape<Anim: 'static+EditableAnimation>(initial_action: Painting, input: &mut ToolInputStream<()>, actions: &ToolActionPublisher<()>, flo_model: &Arc<FloModel<Anim>>) {
+        actions.send_actions(vec![
+            ToolAction::BrushPreview(BrushPreviewAction::Clear),
+            ToolAction::BrushPreview(BrushPreviewAction::BrushDefinition(BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw)),
+            ToolAction::BrushPreview(BrushPreviewAction::BrushProperties(BrushProperties::new()))
+        ]);
+
+        while let Some(input_event) = input.next().await {
+            match input_event {
+                ToolInput::Paint(painting) => {
+                    // Input from other pointing devices cancels the action
+                    if painting.pointer_id != initial_action.pointer_id {
+                        break;
+                    }
+
+                    match painting.action {
+                        PaintAction::Continue |
+                        PaintAction::Prediction => {
+                            // Draw the shape as a brush preview
+                            let center          = (initial_action.location.0 as f64, initial_action.location.1 as f64);
+                            let point           = (painting.location.0 as f64, painting.location.1 as f64);
+
+                            let shape_element   = Self::create_shape_element(center, point);
+
+                            let brush_points    = shape_element.brush_points();
+
+                            actions.send_actions(vec![ToolAction::BrushPreview(BrushPreviewAction::SetBrushPoints(Arc::new(brush_points)))]);
+                        }
+
+                        PaintAction::Finish => {
+                            // TODO: commit the shape
+                            break;
+                        }
+
+                        PaintAction::Cancel |
+                        PaintAction::Start => {
+                            // Just stop receiving events (start works the same as 'cancel' as it indicates we somehow got out of sync with the state of the button)
+                            break;
+                        }
+                    }
+                }
+
+                _ => { }
+            }
+        }
+
+        // Clear the brush preview
+        actions.send_actions(vec![ToolAction::BrushPreview(BrushPreviewAction::Clear)]);
+    }
+
+    ///
     /// The main input loop for the shape tool
     ///
-    pub fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, _actions: ToolActionPublisher<()>, _flo_model: Arc<FloModel<Anim>>) -> impl Future<Output=()>+Send {
+    pub fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>) -> impl Future<Output=()>+Send {
         async move {
             let mut input = input;
 
-            while let Some(_input_event) = input.next().await {
+            while let Some(input_event) = input.next().await {
+                match input_event {
+                    ToolInput::Paint(painting) => {
+                        if painting.action == PaintAction::Start {
+                            actions.send_actions(vec![ToolAction::BrushPreview(BrushPreviewAction::Clear)]);
+                            Self::drag_new_shape(painting, &mut input, &actions, &flo_model).await;
+                        }
+                    }
+
+                    _ => { }
+                }
             }
         }
     }
