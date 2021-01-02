@@ -2,7 +2,6 @@ use super::*;
 use super::super::tools::*;
 
 use flo_animation::*;
-use flo_ui::svg_static;
 
 use std::sync::*;
 
@@ -61,9 +60,9 @@ impl<Anim: EditableAnimation> PaintTools<Anim> {
             ink:                Ink::new().to_flo_tool(),
             eraser:             Eraser::new().to_flo_tool(),
             flood_fill:         FloodFill::new().to_flo_tool(),
-            shape_ellipse:      ShapeTool::new("Shape-ellipse", svg_static(include_bytes!("../../svg/tools/shape_ellipse.svg"))).to_flo_tool(),
-            shape_rectangle:    ShapeTool::new("Shape-rectangle", svg_static(include_bytes!("../../svg/tools/shape_rectangle.svg"))).to_flo_tool(),
-            shape_polygon:      ShapeTool::new("Shape-polygon", svg_static(include_bytes!("../../svg/tools/shape_polygon.svg"))).to_flo_tool()
+            shape_ellipse:      ShapeTool::ellipse().to_flo_tool(),
+            shape_rectangle:    ShapeTool::rectangle().to_flo_tool(),
+            shape_polygon:      ShapeTool::polygon().to_flo_tool()
         }
     }
 }
