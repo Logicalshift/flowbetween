@@ -149,6 +149,9 @@ impl StreamAnimationCore {
                 Layer(layer_id, Paint(when, BrushStroke(element, points))) =>
                     Layer(*layer_id, Paint(*when, BrushStroke(self.assign_element_id(*element).await, points.clone()))),
 
+                Layer(layer_id, Paint(when, CreateShape(element, width, shape))) =>
+                    Layer(*layer_id, Paint(*when, CreateShape(self.assign_element_id(*element).await, *width, shape.clone()))),
+
                 Layer(layer_id, Paint(when, Fill(element, point, options))) =>
                     Layer(*layer_id, Paint(*when, Fill(self.assign_element_id(*element).await, point.clone(), options.clone()))),
 
