@@ -109,7 +109,7 @@ impl BrushPreview {
     /// Draws this preview brush stroke to the specified graphics object
     ///
     pub fn draw_current_brush_stroke(&self, gc: &mut dyn GraphicsPrimitives, update_brush_definition: bool, update_properties: bool) {
-        if self.points.len() < 2 {
+        if self.points.len() < 2 && self.brush_points.is_none() {
             // Do nothing if there are no points in this brush preview
             return;
         }
