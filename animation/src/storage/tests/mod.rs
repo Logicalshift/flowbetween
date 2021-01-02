@@ -10,6 +10,7 @@ mod edit_log;
 mod frame_edits;
 mod motion;
 mod path;
+mod shape;
 mod caching;
 mod collide_paths;
 mod grouping;
