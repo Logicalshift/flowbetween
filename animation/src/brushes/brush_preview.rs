@@ -12,7 +12,7 @@ use std::time::Duration;
 pub struct BrushPreview {
     current_brush:          Arc<dyn Brush>,
     brush_properties:       BrushProperties,
-    points:                 Vec<RawPoint>,
+    raw_points:             Vec<RawPoint>,
     brush_points:           Option<Arc<Vec<BrushPoint>>>,
     combined_element:       Option<Vector>
 }
@@ -22,7 +22,7 @@ impl BrushPreview {
         Self {
             current_brush:      create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw),
             brush_properties:   BrushProperties::new(),
-            points:             vec![],
+            raw_points:         vec![],
             brush_points:       None,
             combined_element:   None
         }
@@ -51,14 +51,14 @@ impl BrushPreview {
     pub fn continue_brush_stroke(&mut self, point: RawPoint) {
         // Add points to the active brush stroke
         self.brush_points = None;
-        self.points.push(point);
+        self.raw_points.push(point);
     }
 
     ///
     /// Clears the preview
     ///
     pub fn cancel_brush_stroke(&mut self) {
-        self.points             = vec![];
+        self.raw_points         = vec![];
         self.brush_points       = None;
         self.combined_element   = None;
     }
@@ -85,7 +85,7 @@ impl BrushPreview {
         if let Some(brush_points) = &self.brush_points {
             Arc::clone(brush_points)
         } else {
-            Arc::new(self.current_brush.brush_points_for_raw_points(&self.points))
+            Arc::new(self.current_brush.brush_points_for_raw_points(&self.raw_points))
         }
     }
 
@@ -109,7 +109,7 @@ impl BrushPreview {
     /// Draws this preview brush stroke to the specified graphics object
     ///
     pub fn draw_current_brush_stroke(&self, gc: &mut dyn GraphicsPrimitives, update_brush_definition: bool, update_properties: bool) {
-        if self.points.len() < 2 && self.brush_points.is_none() {
+        if self.raw_points.len() < 2 && self.brush_points.is_none() {
             // Do nothing if there are no points in this brush preview
             return;
         }
@@ -148,7 +148,7 @@ impl BrushPreview {
         use LayerEdit::*;
         use PaintEdit::*;
 
-        if self.points.len() < 2 {
+        if self.raw_points.len() < 2 {
             // Do nothing if there are no points in this brush preview
             return vec![];
         }
@@ -171,7 +171,7 @@ impl BrushPreview {
         let element_id  = animation.assign_element_id();
         let mut points  = vec![];
         let _combined   = self.combined_element.take();
-        mem::swap(&mut self.points, &mut points);
+        mem::swap(&mut self.raw_points, &mut points);
         actions.push(Paint(when, BrushStroke(element_id, Arc::new(points))));
 
         // Perform the edit
