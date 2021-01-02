@@ -2,6 +2,7 @@ use crate::tools::*;
 use crate::model::*;
 
 use flo_ui::*;
+use flo_binding::*;
 use flo_animation::*;
 
 use futures::prelude::*;
@@ -49,6 +50,8 @@ impl ShapeTool {
     ///
     async fn drag_new_shape<Anim: 'static+EditableAnimation>(initial_action: Painting, input: &mut ToolInputStream<()>, actions: &ToolActionPublisher<()>, flo_model: &Arc<FloModel<Anim>>) {
         actions.send_actions(vec![
+            ToolAction::BrushPreview(BrushPreviewAction::Clear),
+            ToolAction::BrushPreview(BrushPreviewAction::Layer(flo_model.timeline().selected_layer.get().unwrap_or(0))),
             ToolAction::BrushPreview(BrushPreviewAction::Clear),
             ToolAction::BrushPreview(BrushPreviewAction::BrushDefinition(BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw)),
             ToolAction::BrushPreview(BrushPreviewAction::BrushProperties(BrushProperties::new()))
