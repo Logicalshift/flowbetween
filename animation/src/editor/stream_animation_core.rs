@@ -296,6 +296,7 @@ impl StreamAnimationCore {
     ///
     pub fn add_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
         async move {
+            self.cached_keyframe = None;
             self.request_one(StorageCommand::AddKeyFrame(layer_id, when)).await;
         } 
     }
@@ -305,6 +306,7 @@ impl StreamAnimationCore {
     ///
     pub fn remove_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
         async move {
+            self.cached_keyframe = None;
             self.request_one(StorageCommand::DeleteKeyFrame(layer_id, when)).await;
         } 
     }
