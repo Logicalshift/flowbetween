@@ -82,7 +82,8 @@ impl GenericToolData {
             Overlay(overlay)            => Overlay(overlay),
             Select(element)             => Select(element),
             ClearSelection              => ClearSelection,
-            InvalidateFrame             => InvalidateFrame
+            InvalidateFrame             => InvalidateFrame,
+            EditAnimation(edits)        => EditAnimation(edits.clone())
         }
     }
 

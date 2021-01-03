@@ -2,7 +2,6 @@ use crate::tools::*;
 use crate::model::*;
 
 use flo_ui::*;
-use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 
@@ -113,15 +112,10 @@ impl ShapeTool {
                             actions.send_actions(vec![
                                 ToolAction::CreateKeyFrameForDrawing,
                                 ToolAction::BrushPreview(BrushPreviewAction::Clear),
-                            ]);
-
-                            // Commit the shape
-                            flo_model.edit().publish(Arc::new(vec![
-                                AnimationEdit::Layer(layer, LayerEdit::Paint(when, PaintEdit::CreateShape(ElementId::Unassigned, shape_element.width() as f32, shape_element.shape())))
-                            ])).await;
-
-                            actions.send_actions(vec![
-                                ToolAction::InvalidateFrame,
+                                ToolAction::EditAnimation(Arc::new(vec![
+                                    AnimationEdit::Layer(layer, LayerEdit::Paint(when, PaintEdit::CreateShape(ElementId::Unassigned, shape_element.width() as f32, shape_element.shape())))
+                                ])),
+                                ToolAction::InvalidateFrame
                             ]);
                             break;
                         }

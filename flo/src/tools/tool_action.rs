@@ -3,6 +3,8 @@ use super::overlay_action::*;
 
 use flo_animation::*;
 
+use std::sync::*;
+
 ///
 /// Represents an editing action for a tool
 ///
@@ -10,6 +12,9 @@ use flo_animation::*;
 pub enum ToolAction<ToolData> {
     /// Changes the data that will be specified at the start of the next tool input stream
     Data(ToolData),
+
+    /// Sends some edits to the animation
+    EditAnimation(Arc<Vec<AnimationEdit>>),
 
     /// Invalidates the current frame (forcing it to be redrawn from scratch)
     InvalidateFrame,

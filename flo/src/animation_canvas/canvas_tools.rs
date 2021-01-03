@@ -193,6 +193,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                 ToolAction::ClearSelection              => self.animation.selection().clear_selection(),
                 ToolAction::InvalidateFrame             => self.animation.timeline().invalidate_canvas(),
                 ToolAction::CreateKeyFrameForDrawing    => if self.create_new_keyframe_if_required() { self.commit_brush_settings() }
+                ToolAction::EditAnimation(edits)        => self.animation.perform_edits(edits.to_vec())
             }
         }
 
