@@ -17,6 +17,9 @@ pub enum ToolAction<ToolData> {
     /// Specifies an edit to perform
     Edit(AnimationEdit),
 
+    /// Creates a new key frame if a keyframe is not selected and 'create keyframe on draw' is turned on, creates a new keyframe
+    CreateKeyFrameForDrawing,
+
     /// Specifies a brush preview action to perform
     BrushPreview(BrushPreviewAction),
 

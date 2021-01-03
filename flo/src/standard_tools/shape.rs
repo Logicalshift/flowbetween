@@ -78,6 +78,7 @@ impl ShapeTool {
             ToolAction::BrushPreview(BrushPreviewAction::Clear),
             ToolAction::BrushPreview(BrushPreviewAction::Layer(layer)),
             ToolAction::BrushPreview(BrushPreviewAction::Clear),
+            ToolAction::BrushPreview(BrushPreviewAction::Layer(layer)),
             ToolAction::BrushPreview(BrushPreviewAction::BrushDefinition(BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw)),
             ToolAction::BrushPreview(BrushPreviewAction::BrushProperties(BrushProperties::new()))
         ]);
@@ -106,18 +107,21 @@ impl ShapeTool {
                         }
 
                         PaintAction::Finish => {
-                            // TODO: new key frame if necessary
                             // TODO: set the brush properties
+
+                            // Reset the brush preview and create a new keyframe if needed
+                            actions.send_actions(vec![
+                                ToolAction::CreateKeyFrameForDrawing,
+                                ToolAction::BrushPreview(BrushPreviewAction::Clear),
+                            ]);
 
                             // Commit the shape
                             flo_model.edit().publish(Arc::new(vec![
                                 AnimationEdit::Layer(layer, LayerEdit::Paint(when, PaintEdit::CreateShape(ElementId::Unassigned, shape_element.width() as f32, shape_element.shape())))
                             ])).await;
 
-                            // Reset the brush preview
                             actions.send_actions(vec![
-                                ToolAction::BrushPreview(BrushPreviewAction::Clear),
-                                ToolAction::InvalidateFrame
+                                ToolAction::InvalidateFrame,
                             ]);
                             break;
                         }

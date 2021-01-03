@@ -106,6 +106,40 @@ impl BrushPreview {
     }
 
     ///
+    /// Writes the brush definition to the current layer
+    ///
+    pub fn commit_brush_definition(&self, when: Duration, layer_id: u64, animation: &dyn EditableAnimation) {
+        use LayerEdit::*;
+        use PaintEdit::*;
+
+        let (defn, drawing_style) = self.current_brush.to_definition();
+
+        animation.perform_edits(vec![
+            AnimationEdit::Layer(layer_id, Paint(when, SelectBrush(ElementId::Unassigned, defn, drawing_style)))
+        ]);
+    }
+
+    ///
+    /// Writes the brush properties to the current layer
+    ///
+    pub fn commit_brush_properties(&self, when: Duration, layer_id: u64, animation: &dyn EditableAnimation) {
+        use LayerEdit::*;
+        use PaintEdit::*;
+
+        animation.perform_edits(vec![
+            AnimationEdit::Layer(layer_id, Paint(when, BrushProperties(ElementId::Unassigned, self.brush_properties.clone())))
+        ]);
+    }
+
+    ///
+    /// Updates the brush settings for the current layer
+    ///
+    pub fn commit_brush_settings(&self, when: Duration, layer_id: u64, animation: &dyn EditableAnimation) {
+        self.commit_brush_definition(when, layer_id, animation);
+        self.commit_brush_properties(when, layer_id, animation);
+    }
+
+    ///
     /// Draws this preview brush stroke to the specified graphics object
     ///
     pub fn draw_current_brush_stroke(&self, gc: &mut dyn GraphicsPrimitives, update_brush_definition: bool, update_properties: bool) {

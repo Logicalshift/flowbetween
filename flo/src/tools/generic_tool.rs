@@ -75,13 +75,14 @@ impl GenericToolData {
         use self::ToolAction::*;
 
         match action {
-            Data(data)              => Data(GenericToolData(Mutex::new(Box::new(Arc::new(data))))),
-            Edit(edit)              => Edit(edit),
-            BrushPreview(preview)   => BrushPreview(preview),
-            Overlay(overlay)        => Overlay(overlay),
-            Select(element)         => Select(element),
-            ClearSelection          => ClearSelection,
-            InvalidateFrame         => InvalidateFrame
+            Data(data)                  => Data(GenericToolData(Mutex::new(Box::new(Arc::new(data))))),
+            Edit(edit)                  => Edit(edit),
+            BrushPreview(preview)       => BrushPreview(preview),
+            CreateKeyFrameForDrawing    => CreateKeyFrameForDrawing,
+            Overlay(overlay)            => Overlay(overlay),
+            Select(element)             => Select(element),
+            ClearSelection              => ClearSelection,
+            InvalidateFrame             => InvalidateFrame
         }
     }
 

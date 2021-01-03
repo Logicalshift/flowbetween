@@ -185,13 +185,14 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
         for action in actions {
             match action {
-                ToolAction::Data(data)              => self.tool_runner.set_tool_data(data),
-                ToolAction::Edit(edit)              => animation_edits.push(edit),
-                ToolAction::BrushPreview(preview)   => self.process_brush_preview(canvas, renderer, preview),
-                ToolAction::Overlay(overlay)        => self.process_overlay(canvas, renderer, overlay),
-                ToolAction::Select(element)         => self.animation.selection().select(element),
-                ToolAction::ClearSelection          => self.animation.selection().clear_selection(),
-                ToolAction::InvalidateFrame         => self.animation.timeline().invalidate_canvas()
+                ToolAction::Data(data)                  => self.tool_runner.set_tool_data(data),
+                ToolAction::Edit(edit)                  => animation_edits.push(edit),
+                ToolAction::BrushPreview(preview)       => self.process_brush_preview(canvas, renderer, preview),
+                ToolAction::Overlay(overlay)            => self.process_overlay(canvas, renderer, overlay),
+                ToolAction::Select(element)             => self.animation.selection().select(element),
+                ToolAction::ClearSelection              => self.animation.selection().clear_selection(),
+                ToolAction::InvalidateFrame             => self.animation.timeline().invalidate_canvas(),
+                ToolAction::CreateKeyFrameForDrawing    => if self.create_new_keyframe_if_required() { self.commit_brush_settings() }
             }
         }
 
@@ -382,6 +383,17 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
             }
 
             self.animation.perform_edits(path_edits);
+        }
+    }
+
+    ///
+    /// Writes the brush settings from the brush preview to the current layer
+    ///
+    fn commit_brush_settings(&mut self) {
+        if let (Some(preview), Some(preview_layer)) = (&self.preview, self.preview_layer) {
+            let current_time    = self.current_time.get();
+
+            preview.commit_brush_settings(current_time, preview_layer, &*self.animation);
         }
     }
 
