@@ -31,25 +31,25 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
         use self::ControlAttribute::*;
 
         match self {
-            FontAttr(font_attr)                     => font_attr.actions_from(bind_property),
-            StateAttr(state_attr)                   => state_attr.actions_from(bind_property),
-            PopupAttr(popup_attr)                   => popup_attr.actions_from(bind_property),
-            AppearanceAttr(appearance_attr)         => appearance_attr.actions_from(bind_property),
-            ScrollAttr(scroll_attr)                 => scroll_attr.actions_from(bind_property),
-            HoverAttr(hover_attr)                   => { /* TODO */ vec![] }
-            HintAttr(hint_attr)                     => hint_attr.actions_from(bind_property),
+            FontAttr(font_attr)                         => font_attr.actions_from(bind_property),
+            StateAttr(state_attr)                       => state_attr.actions_from(bind_property),
+            PopupAttr(popup_attr)                       => popup_attr.actions_from(bind_property),
+            AppearanceAttr(appearance_attr)             => appearance_attr.actions_from(bind_property),
+            ScrollAttr(scroll_attr)                     => scroll_attr.actions_from(bind_property),
+            HoverAttr(hover_attr)                       => { /* TODO */ vec![] }
+            HintAttr(hint_attr)                         => hint_attr.actions_from(bind_property),
 
-            BoundingBox(bounds)                     => vec![ViewAction::SetBounds(make_app_bounds(bounds, bind_property))],
-            ZIndex(z_index)                         => vec![ViewAction::SetZIndex(*z_index as f64)],
-            Padding((left, top), (right, bottom))   => vec![ViewAction::SetPadding(*left as f64, *top as f64, *right as f64, *bottom as f64)],
-            Text(text_val)                          => vec![ViewAction::SetText(bind_property(text_val.clone()))],
-            Id(id)                                  => vec![ViewAction::SetId(id.clone())],
-            Controller(_name)                       => vec![],
-            Action(trigger, name)                   => event_actions(trigger, name),
+            BoundingBox(bounds)                         => vec![ViewAction::SetBounds(make_app_bounds(bounds, bind_property))],
+            ZIndex(z_index)                             => vec![ViewAction::SetZIndex(*z_index as f64)],
+            Padding((left, top), (right, bottom))       => vec![ViewAction::SetPadding(*left as f64, *top as f64, *right as f64, *bottom as f64)],
+            Text(text_val)                              => vec![ViewAction::SetText(bind_property(text_val.clone()))],
+            Id(id)                                      => vec![ViewAction::SetId(id.clone())],
+            Controller(_name)                           => vec![],
+            Action(trigger, ActionEvent::Named(name))   => event_actions(trigger, name),
 
-            Canvas(_canvas_resource)                => vec![],              // Can send the whole canvas here, but more consistent if it's done in the same place it's attached
+            Canvas(_canvas_resource)                    => vec![],              // Can send the whole canvas here, but more consistent if it's done in the same place it's attached
 
-            SubComponents(_components)              => vec![]               // Handled separately by ViewState
+            SubComponents(_components)                  => vec![]               // Handled separately by ViewState
         }
     }
 }
