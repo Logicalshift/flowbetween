@@ -1,5 +1,7 @@
-use super::super::control::*;
-use super::super::viewmodel_update::*;
+use super::command_update::*;
+
+use crate::control::*;
+use crate::viewmodel_update::*;
 
 use flo_canvas::*;
 
@@ -45,5 +47,8 @@ pub enum UiUpdate {
     UpdateCanvas(Vec<CanvasDiff>),
 
     /// Represents an update to the viewmodel
-    UpdateViewModel(Vec<ViewModelUpdate>)
+    UpdateViewModel(Vec<ViewModelUpdate>),
+
+    /// Represents an update to the commands this UI can perform
+    UpdateCommands(Vec<CommandUpdate>)
 }

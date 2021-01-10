@@ -266,7 +266,9 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
             UpdateCanvas(canvas_diffs) => vec![Update::UpdateCanvas(canvas_diffs.into_iter().map(|diff| Self::map_canvas_diff(diff)).collect())],
 
-            UpdateViewModel(view_model_diffs) => vec![Update::UpdateViewModel(view_model_diffs)]
+            UpdateViewModel(view_model_diffs) => vec![Update::UpdateViewModel(view_model_diffs)],
+
+            UpdateCommands(_command_diffs) => vec![ /* TODO */ ]
         }
     }
 
