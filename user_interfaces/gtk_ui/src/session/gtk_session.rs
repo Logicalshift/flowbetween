@@ -591,18 +591,22 @@ impl GtkSessionCore {
 
         // Generate 'wire' events from them
         actions
-            .flat_map(|(action, action_name)| {
-                match action {
-                    Click                           => vec![ RequestEvent(GtkWidgetEventType::Click, action_name) ],
-                    Dismiss                         => vec![ RequestEvent(GtkWidgetEventType::Dismiss, action_name) ],
-                    Paint(device)                   => vec![ RequestEvent(GtkWidgetEventType::Paint(device.into()), action_name) ],
-                    Drag                            => vec![ RequestEvent(GtkWidgetEventType::Drag, action_name) ],
-                    Focused                         => vec![ /* TODO */ ],
-                    CancelEdit                      => vec![ /* TODO */ ],
-                    EditValue                       => vec![ RequestEvent(GtkWidgetEventType::EditValue, action_name) ],
-                    SetValue                        => vec![ RequestEvent(GtkWidgetEventType::SetValue, action_name) ],
-                    VirtualScroll(width, height)    => vec![ RequestEvent(GtkWidgetEventType::VirtualScroll(width, height), action_name) ],
-                    Command(_cmd)                   => vec![ /* TODO */ ]
+            .flat_map(|(action, action_event)| {
+                match action_event {
+                    ActionEvent::Named(action_name) => {
+                        match action {
+                            Click                           => vec![ RequestEvent(GtkWidgetEventType::Click, action_name) ],
+                            Dismiss                         => vec![ RequestEvent(GtkWidgetEventType::Dismiss, action_name) ],
+                            Paint(device)                   => vec![ RequestEvent(GtkWidgetEventType::Paint(device.into()), action_name) ],
+                            Drag                            => vec![ RequestEvent(GtkWidgetEventType::Drag, action_name) ],
+                            Focused                         => vec![ /* TODO */ ],
+                            CancelEdit                      => vec![ /* TODO */ ],
+                            EditValue                       => vec![ RequestEvent(GtkWidgetEventType::EditValue, action_name) ],
+                            SetValue                        => vec![ RequestEvent(GtkWidgetEventType::SetValue, action_name) ],
+                            VirtualScroll(width, height)    => vec![ RequestEvent(GtkWidgetEventType::VirtualScroll(width, height), action_name) ],
+                            Command(_cmd)                   => vec![ /* TODO */ ]
+                        }
+                    }
                 }
             })
             .collect()
