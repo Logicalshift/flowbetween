@@ -244,7 +244,8 @@ impl GtkSessionCore {
             Start                                   => vec![],
             UpdateUi(ui_differences)                => self.update_ui(ui_differences),
             UpdateCanvas(canvas_differences)        => self.update_canvases(canvas_differences),
-            UpdateViewModel(viewmodel_differences)  => self.update_viewmodel(viewmodel_differences)
+            UpdateViewModel(viewmodel_differences)  => self.update_viewmodel(viewmodel_differences),
+            UpdateCommands(_command_updates)        => vec![/* TODO */]
         }
     }
 
