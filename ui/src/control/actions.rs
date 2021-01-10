@@ -1,4 +1,5 @@
 use super::paint::*;
+use super::command::*;
 use super::super::property::*;
 
 ///
@@ -11,6 +12,9 @@ pub enum ActionTrigger {
 
     /// User began an interaction outside of this item (usually means that a popup should be dismissed)
     Dismiss,
+
+    /// User requested a command to be evaluated
+    Command(Command),
 
     /// Tracks all user clicks and drags over this item with a particular device
     /// In the event a control has multiple devices associated with it, we only track
