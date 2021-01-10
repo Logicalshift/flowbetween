@@ -91,8 +91,22 @@ impl ShapeTool {
                     }
 
                     // Construct the shape for this painting event
-                    let center          = (initial_action.location.0 as f64, initial_action.location.1 as f64);
-                    let point           = (painting.location.0 as f64, painting.location.1 as f64);
+                    let (center, point) = {
+                        if painting.modifier_keys.contains(&ModifierKey::Shift) {
+                            // Holding down shift specifies the center and corner points
+                            let center  = (initial_action.location.0 as f64, initial_action.location.1 as f64);
+                            let point   = (painting.location.0 as f64, painting.location.1 as f64);
+
+                            (center, point)
+                        } else {
+                            // Default behaviour is to specify a corner point
+                            let start_point     = (initial_action.location.0 as f64, initial_action.location.1 as f64);
+                            let end_point       = (painting.location.0 as f64, painting.location.1 as f64);
+                            let center_point    = ((start_point.0 + end_point.0) * 0.5, (start_point.1 + end_point.1) * 0.5);
+
+                            (center_point, end_point)
+                        }
+                    };
 
                     let shape_element   = (create_shape_element)(center, point);
 
