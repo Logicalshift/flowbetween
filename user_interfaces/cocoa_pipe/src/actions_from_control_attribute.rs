@@ -66,6 +66,8 @@ fn event_actions(trigger: &ActionTrigger, name: &String) -> Vec<ViewAction> {
         Click                           => vec![ViewAction::RequestEvent(ViewEvent::Click, name.clone())],
         Dismiss                         => vec![ViewAction::RequestEvent(ViewEvent::Dismiss, name.clone())],
 
+        Command(_cmd)                   => vec![/* TODO */],
+
         Paint(Mouse(Left))              => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::MouseLeft), name.clone())],
         Paint(Mouse(Middle))            => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::MouseMiddle), name.clone())],
         Paint(Mouse(Right))             => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::MouseRight), name.clone())],
