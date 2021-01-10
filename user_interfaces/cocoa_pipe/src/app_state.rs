@@ -80,7 +80,7 @@ impl AppState {
             UpdateUi(differences)       => { self.update_ui(differences) }
             UpdateCanvas(differences)   => { self.update_canvas(differences) }
             UpdateViewModel(updates)    => { self.update_viewmodel(updates) }
-            UpdateCommands(_updates)    => { /* TODO*/ }
+            UpdateCommands(_updates)    => { vec![/* TODO */] }
         }
     }
 
