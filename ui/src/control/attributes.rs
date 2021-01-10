@@ -66,7 +66,7 @@ pub enum ControlAttribute {
 
     /// When the specified action occurs for this item, send the event
     /// denoted by the string to the controller
-    Action(ActionTrigger, String),
+    Action(ActionTrigger, ActionEvent),
 
     // TODO: content attribute (maybe with text?). Image might be appearance though
     /// Specifies the canvas to use for this control (assuming it's a canvas control)
@@ -157,9 +157,9 @@ impl ControlAttribute {
     ///
     /// The action represented by this attribute
     ///
-    pub fn action<'a>(&'a self) -> Option<(&'a ActionTrigger, &'a String)> {
+    pub fn action<'a>(&'a self) -> Option<(&'a ActionTrigger, &'a ActionEvent)> {
         match self {
-            &Action(ref trigger, ref action)    => Some((trigger, action)),
+            &Action(ref trigger, ref event)     => Some((trigger, event)),
             _                                   => None
         }
     }
@@ -303,15 +303,21 @@ impl Modifier<Control> for Resource<BindingCanvas> {
     }
 }
 
-impl Modifier<Control> for (ActionTrigger, String) {
+impl<'a> Modifier<Control> for (ActionTrigger, ActionEvent) {
     fn modify(self, control: &mut Control) {
         control.add_attribute(Action(self.0, self.1))
     }
 }
 
+impl Modifier<Control> for (ActionTrigger, String) {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(Action(self.0, ActionEvent::Named(self.1)))
+    }
+}
+
 impl<'a> Modifier<Control> for (ActionTrigger, &'a str) {
     fn modify(self, control: &mut Control) {
-        control.add_attribute(Action(self.0, String::from(self.1)))
+        control.add_attribute(Action(self.0, ActionEvent::Named(String::from(self.1))))
     }
 }
 

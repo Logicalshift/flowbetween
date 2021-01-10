@@ -42,6 +42,15 @@ pub enum ActionTrigger {
 }
 
 ///
+/// Description of the action to take when a control is activated
+///
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum ActionEvent {
+    /// Generates the event with the specified name
+    Named(String)
+}
+
+///
 /// Indicates what type of drag action is occurring
 ///
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
