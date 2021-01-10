@@ -42,28 +42,27 @@ impl Command {
     }
 
     ///
-    /// Creates a command with a user description
+    /// Returns a command with an added description
     ///
-    pub fn with_name(identifier: String, name: String) -> Command {
-        Command {
-            identifier:             identifier,
-            name:                   name,
-            required_parameters:    None
-        }
+    pub fn named(self, name: String) -> Command {
+        let mut cmd = self;
+        cmd.name = name;
+        cmd
     }
 
     ///
-    /// Creates a command with a user description and a specified number of required parameters
+    /// Returns a command with a set of parameter descriptions
     ///
-    pub fn with_parameters<ParamIter: IntoIterator<Item=String>>(identifier: String, name: String, parameters: ParamIter) -> Command {
-        let parameters = parameters.into_iter().collect::<Vec<_>>();
-        let parameters = if parameters.len() == 0 { None } else { Some(parameters) };
+    pub fn parameters<ParamIter: IntoIterator>(self, parameters: ParamIter) -> Command 
+    where ParamIter::Item : Into<String> {
+        let mut cmd = self;
 
-        Command {
-            identifier:             identifier,
-            name:                   name,
-            required_parameters:    parameters
-        }
+        let parameters = parameters.into_iter().map(|item| item.into()).collect::<Vec<_>>();
+        let parameters = if parameters.len() > 0 { Some(parameters) } else { None };
+
+        cmd.required_parameters = parameters;
+
+        cmd
     }
 }
 
