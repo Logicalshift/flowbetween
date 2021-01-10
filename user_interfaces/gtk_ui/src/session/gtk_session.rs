@@ -601,7 +601,8 @@ impl GtkSessionCore {
                     CancelEdit                      => vec![ /* TODO */ ],
                     EditValue                       => vec![ RequestEvent(GtkWidgetEventType::EditValue, action_name) ],
                     SetValue                        => vec![ RequestEvent(GtkWidgetEventType::SetValue, action_name) ],
-                    VirtualScroll(width, height)    => vec![ RequestEvent(GtkWidgetEventType::VirtualScroll(width, height), action_name) ]
+                    VirtualScroll(width, height)    => vec![ RequestEvent(GtkWidgetEventType::VirtualScroll(width, height), action_name) ],
+                    Command(_cmd)                   => vec![ /* TODO */ ]
                 }
             })
             .collect()
