@@ -25,7 +25,7 @@ use std::sync::*;
 /// UI.
 ///
 pub struct UiUpdateStream {
-    /// The UI tree for the core controller
+    /// The UI tree for the core controller (used to keep the ui_updates stream alive, but not directly accessed)
     _ui_tree: BindRef<Control>,
 
     /// The state of the UI at the last update

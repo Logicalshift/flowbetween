@@ -4,6 +4,7 @@ mod command_update;
 mod core;
 mod event_publisher;
 mod update_stream;
+mod command_tracker;
 pub mod state;
 pub mod session;
 mod canvas_stream;
