@@ -1,5 +1,6 @@
 use super::update::*;
 use super::canvas_stream::*;
+use super::command_tracker::*;
 use super::viewmodel_stream::*;
 use super::super::diff::*;
 use super::super::control::*;
@@ -46,6 +47,9 @@ pub struct UiUpdateStream {
     // The canvas updates
     canvas_updates: CanvasUpdateStream,
 
+    // Tracks the commands available for the UI
+    command_tracker: CommandTracker,
+
     /// Pending updates from the UI (these have priority as we want the UI updates to happen first, but we poll them last)
     pending_ui: Arc<Mutex<Option<Vec<UiUpdate>>>>,
 
@@ -69,6 +73,8 @@ impl UiUpdateStream {
         let ui_tree             = assemble_ui(Arc::clone(&controller));
         let ui_updates          = follow(ui_tree.clone());
 
+        let command_tracker     = CommandTracker::new();
+
         // Stream from the viewmodel
         let viewmodel_updates   = ViewModelUpdateStream::new(Arc::clone(&controller));
 
@@ -83,6 +89,7 @@ impl UiUpdateStream {
             update_suspend:     update_suspend,
             viewmodel_updates:  viewmodel_updates,
             canvas_updates:     canvas_updates,
+            command_tracker:    command_tracker,
             pending_ui:         pending_ui,
             pending:            pending,
             tick:               tick,
@@ -97,10 +104,15 @@ impl UiUpdateStream {
     ///
     fn pull_ui_events(&mut self, context: &mut Context) {
         // Pending UI updates
-        let mut ui_updates = vec![];
+        let mut ui_updates      = vec![];
+        let mut command_updates = vec![];
 
         // Poll for as many updates as there are
         while let Poll::Ready(Some(new_ui)) = self.ui_updates.poll_next_unpin(context) {
+            // Track any changes to the commands supported by the UI
+            command_updates.extend(self.command_tracker.update_from_ui(&new_ui));
+
+            // Send any differences in the UI tree
             if let Some(last_ui) = self.last_ui.take() {
                 // Find the differences in the UI
                 let differences = diff_tree(&last_ui, &new_ui);
@@ -135,6 +147,12 @@ impl UiUpdateStream {
             self.pending_ui.lock().unwrap()
                 .get_or_insert_with(|| vec![])
                 .push(UiUpdate::UpdateUi(ui_updates))
+        }
+
+        if command_updates.len() > 0 {
+            self.pending_ui.lock().unwrap()
+                .get_or_insert_with(|| vec![])
+                .push(UiUpdate::UpdateCommands(command_updates))
         }
     }
 

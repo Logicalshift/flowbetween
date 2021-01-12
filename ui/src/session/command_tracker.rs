@@ -1,7 +1,7 @@
 use super::command_update::*;
 use crate::control::*;
 
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashSet};
 
 ///
 /// Tracks which commands are published by controllers
