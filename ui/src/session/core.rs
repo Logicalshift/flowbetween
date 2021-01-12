@@ -139,6 +139,10 @@ impl UiSessionCore {
                     }
                 },
 
+                UiEvent::Command(_cmd, _params) => {
+                    /* TODO */
+                },
+
                 UiEvent::SuspendUpdates => {
                     self.suspension_count += 1;
                     self.suspend_updates.publish(self.suspension_count > 0).await;

@@ -1,4 +1,5 @@
-use super::super::control::*;
+use crate::control::*;
+use crate::property::*;
 
 ///
 /// Possible events that can be sent to the UI
@@ -13,6 +14,9 @@ pub enum UiEvent {
 
     /// Performs the specified action: parameters are the controller path, the event name and the action parameter
     Action(Vec<String>, String, ActionParameter),
+
+    /// Performs the specified command (with optional parameters)
+    Command(Command, Vec<PropertyValue>),
 
     /// Sends a tick to all the controllers. If updates are suspended, ticks are only sent when they resume,
     /// and only one tick is sent regardless of how many were requested during the suspension.
