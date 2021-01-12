@@ -33,9 +33,9 @@ impl Command {
     ///
     /// Creates a new command with only an ID
     ///
-    pub fn with_id(identifier: String) -> Command {
+    pub fn with_id<ToString: Into<String>>(identifier: ToString) -> Command {
         Command { 
-            identifier:             identifier,
+            identifier:             identifier.into(),
             name:                   String::new(),
             required_parameters:    None
         }

@@ -237,4 +237,95 @@ fn viewmodel_update_triggers_update() {
     })
 }
 
+#[test]
+fn adding_command_action_triggers_update() {
+    let thread_pool         = executor::ThreadPool::new().unwrap();
+
+    // Create a viewmodel for us to update later on
+    let viewmodel           = Arc::new(DynamicViewModel::new());
+
+    viewmodel.set_property("Test", PropertyValue::Int(0));
+
+    // Controller is initially empty
+    let controller          = TestController { ui: bind(Control::empty()), viewmodel: Some(viewmodel.clone()) };
+    let ui                  = controller.ui.clone();
+
+    // Start a UI session for this controller
+    let (session, run_loop) = UiSession::new(controller);
+    thread_pool.spawn_ok(run_loop);
+
+    // Get an update stream for it and attach a timeout
+    let update_stream       = session.get_updates();
+    let mut next_or_timeout = stream::select(update_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))), timeout(1000).into_stream().map(|_| Ok(TestItem::Timeout)));
+
+    executor::block_on(async {
+        // Fetch the first item from the stream
+        let first_item = next_or_timeout.next().await;
+        assert!(first_item != Some(Ok(TestItem::Timeout)));
+
+        // Update the UI after a delay
+        spawn(move || {
+            sleep(Duration::from_millis(50));
+            ui.set(Control::empty().with((ActionTrigger::Command(Command::with_id("Test")), "Test")));
+        });
+
+        // After the initial event that informs us of the state of the stream, we should block (which will result in the timeout firing here)
+        let updated_ui = next_or_timeout.next().await;
+        assert!(updated_ui != Some(Ok(TestItem::Timeout)));
+        assert!(updated_ui == Some(Ok(TestItem::Updates(vec![
+            UiUpdate::UpdateCommands(vec![
+                CommandUpdate::Add(Command::with_id("Test"))
+            ])
+        ]))));
+    })
+}
+
+#[test]
+fn removing_command_action_triggers_udpate() {
+    let thread_pool         = executor::ThreadPool::new().unwrap();
+
+    // Create a viewmodel for us to update later on
+    let viewmodel           = Arc::new(DynamicViewModel::new());
+
+    viewmodel.set_property("Test", PropertyValue::Int(0));
+
+    // Controller is initially empty
+    let controller          = TestController { ui: bind(Control::empty().with((ActionTrigger::Command(Command::with_id("Test")), "Test"))), viewmodel: Some(viewmodel.clone()) };
+    let ui                  = controller.ui.clone();
+
+    // Start a UI session for this controller
+    let (session, run_loop) = UiSession::new(controller);
+    thread_pool.spawn_ok(run_loop);
+
+    // Get an update stream for it and attach a timeout
+    let update_stream       = session.get_updates();
+    let mut next_or_timeout = stream::select(update_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))), timeout(1000).into_stream().map(|_| Ok(TestItem::Timeout)));
+
+    executor::block_on(async {
+        // Fetch the first item from the stream
+        let first_item = next_or_timeout.next().await;
+        assert!(first_item != Some(Ok(TestItem::Timeout)));
+
+        // Update the UI after a delay
+        spawn(move || {
+            sleep(Duration::from_millis(50));
+            ui.set(Control::empty());
+        });
+
+        // After the initial event that informs us of the state of the stream, we should block (which will result in the timeout firing here)
+        let updated_ui = next_or_timeout.next().await;
+        println!("{:?}", updated_ui);
+        assert!(updated_ui != Some(Ok(TestItem::Timeout)));
+        assert!(updated_ui == Some(Ok(TestItem::Updates(vec![
+            UiUpdate::UpdateUi(vec![UiDiff {
+                address: vec![],
+                new_ui: Control::empty()
+            }]),
+            UiUpdate::UpdateCommands(vec![
+                CommandUpdate::Remove(Command::with_id("Test"))
+            ])
+        ]))));
+    })
+}
+
 // TODO: also check we trigger an update if a canvas that's in the UI changes
