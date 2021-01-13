@@ -8,6 +8,7 @@ use super::binding_canvas::*;
 use super::resource_manager::*;
 
 use std::sync::*;
+use std::collections::{HashSet};
 
 // TODO: it would be nice to use specific enum types for
 // sub-controllers and events. However, this causes a few
@@ -134,6 +135,34 @@ pub fn assemble_ui(base_controller: Arc<dyn Controller>) -> BindRef<Control> {
             Control::empty()
         }
     }));
+}
+
+///
+/// Retrieves the list of supported commands that can trigger actions for a controller, and the
+/// list of subcontrollers that might have further commands to process
+///
+fn get_supported_commands(controller: &Arc<dyn Controller>) -> (HashSet<Command>, Vec<String>) {
+    // Retrieve the UI for the control
+    let ui                  = controller.ui().get();
+
+    // Process the controls to find the command attributes
+    let mut commands        = HashSet::new();
+    let mut subcontrollers  = vec![];
+    let mut remaining       = vec![&ui];
+
+    while let Some(control) = remaining.pop() {
+        for attr in control.attributes() {
+            match attr {
+                ControlAttribute::Controller(controller_name)               => { subcontrollers.push(controller_name.clone()); }
+                ControlAttribute::SubComponents(subcomponents)              => { remaining.extend(subcomponents.iter()); }
+                ControlAttribute::Action(ActionTrigger::Command(cmd), _)    => { commands.insert(cmd.clone()); }
+                
+                _                                                           => { }
+            }
+        }
+    }
+
+    (commands, subcontrollers)
 }
 
 ///
