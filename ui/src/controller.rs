@@ -8,7 +8,7 @@ use super::binding_canvas::*;
 use super::resource_manager::*;
 
 use std::sync::*;
-use std::collections::{HashSet};
+use std::collections::{HashSet, HashMap};
 
 // TODO: it would be nice to use specific enum types for
 // sub-controllers and events. However, this causes a few
@@ -141,28 +141,72 @@ pub fn assemble_ui(base_controller: Arc<dyn Controller>) -> BindRef<Control> {
 /// Retrieves the list of supported commands that can trigger actions for a controller, and the
 /// list of subcontrollers that might have further commands to process
 ///
-fn get_supported_commands(controller: &Arc<dyn Controller>) -> (HashSet<Command>, Vec<String>) {
+fn get_supported_commands(controller: &Arc<dyn Controller>) -> (HashSet<Command>, HashSet<String>) {
     // Retrieve the UI for the control
     let ui                  = controller.ui().get();
 
     // Process the controls to find the command attributes
     let mut commands        = HashSet::new();
-    let mut subcontrollers  = vec![];
+    let mut subcontrollers  = HashSet::new();
     let mut remaining       = vec![&ui];
 
     while let Some(control) = remaining.pop() {
         for attr in control.attributes() {
             match attr {
-                ControlAttribute::Controller(controller_name)               => { subcontrollers.push(controller_name.clone()); }
+                ControlAttribute::Controller(controller_name)               => { subcontrollers.insert(controller_name.clone()); }
                 ControlAttribute::SubComponents(subcomponents)              => { remaining.extend(subcomponents.iter()); }
                 ControlAttribute::Action(ActionTrigger::Command(cmd), _)    => { commands.insert(cmd.clone()); }
-                
+
                 _                                                           => { }
             }
         }
     }
 
     (commands, subcontrollers)
+}
+
+///
+/// Retrieves binding of a map of commands to the controller paths that respond to those commands
+///
+pub fn command_map_binding(controller: Arc<dyn Controller>) -> BindRef<HashMap<Command, Vec<Vec<String>>>> {
+    let controller  = Arc::downgrade(&controller);
+    let binding     = computed(move || {
+        // Fetch the controller if it hasn't been released
+        let controller = controller.upgrade();
+        let controller = if let Some(controller) = controller { controller } else { return HashMap::new(); };
+
+        // Generate a hashmap with a list of all the controller paths
+        let mut controllers_for_command = HashMap::new();
+        let mut controllers             = vec![(controller, vec![])];
+
+        while let Some((controller, path)) = controllers.pop() {
+            // Fetch the commmands and subcontrollers for this controller
+            let (commands, subcontrollers) = get_supported_commands(&controller);
+
+            // Add the commands for this path
+            for cmd in commands {
+                controllers_for_command.entry(cmd)
+                    .or_insert_with(|| vec![])
+                    .push(path.clone());
+            }
+
+            // Process the subcontrollers
+            for subcontroller_name in subcontrollers {
+                if let Some(subcontroller) = controller.get_subcontroller(&subcontroller_name) {
+                    // Extend the path
+                    let mut subcontroller_path = path.clone();
+                    subcontroller_path.push(subcontroller_name);
+
+                    // Process this controller next
+                    controllers.push((subcontroller, subcontroller_path));
+                }
+            }
+        }
+
+        controllers_for_command
+    });
+
+    BindRef::from(binding)
 }
 
 ///
