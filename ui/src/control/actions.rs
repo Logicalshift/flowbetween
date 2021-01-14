@@ -78,6 +78,9 @@ pub enum ActionParameter {
     /// The new value for an item
     Value(PropertyValue),
 
+    /// The parameters for a command
+    CommandParameters(Vec<PropertyValue>),
+
     /// Indicates the top-left corner of a scrollable region (as a grid coordinate)
     /// and the size of the region (in grid entries)
     ///
