@@ -128,8 +128,19 @@ impl UiSessionCore {
                     self.dispatch_action_to_path(controller, &controller_path, event_name, action_parameter);
                 },
 
-                UiEvent::Command(_cmd, _params) => {
-                    /* TODO */
+                UiEvent::Command(cmd, params) => {
+                    // Find where this command is bound to
+                    let command_map         = self.command_map.get();
+                    let command_bindings    = command_map.get(&cmd);
+
+                    if let Some(command_bindings) = command_bindings {
+                        // Dispatch the action to every controller the command is bound to
+                        for command_binding in command_bindings.iter() {
+                            if let Some(controller) = command_binding.controller.upgrade() {
+                                self.dispatch_action_event(&*controller, &command_binding.action, ActionParameter::CommandParameters(params.clone()));
+                            }
+                        }
+                    }
                 },
 
                 UiEvent::SuspendUpdates => {
@@ -219,6 +230,15 @@ impl UiSessionCore {
     ///
     fn dispatch_action(&mut self, controller: &dyn Controller, event_name: String, action_parameter: ActionParameter) {
         controller.action(&event_name, &action_parameter);
+    }
+
+    ///
+    /// Dispatches an action event to a controller
+    ///
+    fn dispatch_action_event(&mut self, controller: &dyn Controller, event: &ActionEvent, action_parameter: ActionParameter) {
+        match event {
+            ActionEvent::Named(event_name)  => self.dispatch_action(controller, event_name.clone(), action_parameter)
+        }
     }
 
     ///
