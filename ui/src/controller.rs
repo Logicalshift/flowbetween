@@ -141,23 +141,23 @@ pub fn assemble_ui(base_controller: Arc<dyn Controller>) -> BindRef<Control> {
 /// Retrieves the list of supported commands that can trigger actions for a controller, and the
 /// list of subcontrollers that might have further commands to process
 ///
-fn get_supported_commands(controller: &Arc<dyn Controller>) -> (HashSet<Command>, HashSet<String>) {
+fn get_supported_commands(controller: &Arc<dyn Controller>, path: &Vec<String>) -> (Vec<CommandBinding>, HashSet<String>) {
     // Retrieve the UI for the control
     let ui                  = controller.ui().get();
 
     // Process the controls to find the command attributes
-    let mut commands        = HashSet::new();
+    let mut commands        = vec![];
     let mut subcontrollers  = HashSet::new();
     let mut remaining       = vec![&ui];
 
     while let Some(control) = remaining.pop() {
         for attr in control.attributes() {
             match attr {
-                ControlAttribute::Controller(controller_name)               => { subcontrollers.insert(controller_name.clone()); }
-                ControlAttribute::SubComponents(subcomponents)              => { remaining.extend(subcomponents.iter()); }
-                ControlAttribute::Action(ActionTrigger::Command(cmd), _)    => { commands.insert(cmd.clone()); }
+                ControlAttribute::Controller(controller_name)                   => { subcontrollers.insert(controller_name.clone()); }
+                ControlAttribute::SubComponents(subcomponents)                  => { remaining.extend(subcomponents.iter()); }
+                ControlAttribute::Action(ActionTrigger::Command(cmd), action)   => { commands.push(CommandBinding { command: cmd.clone(), controller: Arc::downgrade(controller), path: path.clone(), action: action.clone() }) }
 
-                _                                                           => { }
+                _                                                               => { }
             }
         }
     }
@@ -168,7 +168,7 @@ fn get_supported_commands(controller: &Arc<dyn Controller>) -> (HashSet<Command>
 ///
 /// Retrieves binding of a map of commands to the controller paths that respond to those commands
 ///
-pub fn command_map_binding(controller: Arc<dyn Controller>) -> BindRef<Arc<HashMap<Command, Vec<Vec<String>>>>> {
+pub fn command_map_binding(controller: Arc<dyn Controller>) -> BindRef<Arc<HashMap<Command, Vec<CommandBinding>>>> {
     let controller  = Arc::downgrade(&controller);
     let binding     = computed(move || {
         // Fetch the controller if it hasn't been released
@@ -181,13 +181,13 @@ pub fn command_map_binding(controller: Arc<dyn Controller>) -> BindRef<Arc<HashM
 
         while let Some((controller, path)) = controllers.pop() {
             // Fetch the commmands and subcontrollers for this controller
-            let (commands, subcontrollers) = get_supported_commands(&controller);
+            let (commands, subcontrollers) = get_supported_commands(&controller, &path);
 
             // Add the commands for this path
             for cmd in commands {
-                controllers_for_command.entry(cmd)
+                controllers_for_command.entry(cmd.command.clone())
                     .or_insert_with(|| vec![])
-                    .push(path.clone());
+                    .push(cmd);
             }
 
             // Process the subcontrollers

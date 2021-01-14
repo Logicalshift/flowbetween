@@ -36,7 +36,7 @@ pub struct UiSessionCore {
     ui_tree: BindRef<Control>,
 
     /// Binding that maps commands to the paths to the controllers that can evaluate them
-    command_map: BindRef<Arc<HashMap<Command, Vec<Vec<String>>>>>,
+    command_map: BindRef<Arc<HashMap<Command, Vec<CommandBinding>>>>,
 
     /// Functions to be called next time the core is updated
     update_callbacks: Vec<Box<dyn FnMut(&mut UiSessionCore) -> ()+Send>>
