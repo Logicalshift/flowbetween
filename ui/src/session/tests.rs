@@ -12,8 +12,8 @@ use std::sync::*;
 use std::thread::*;
 
 struct TestController {
-    ui: Binding<Control>,
-    viewmodel: Option<Arc<DynamicViewModel>>
+    ui:         Binding<Control>,
+    viewmodel:  Option<Arc<DynamicViewModel>>
 }
 
 impl Controller for TestController {
@@ -26,6 +26,29 @@ impl Controller for TestController {
             Some(ref viewmodel) => Some(viewmodel.clone()),
             None                => None
         }
+    }
+}
+
+struct ActionTestController {
+    ui:         Binding<Control>,
+    viewmodel:  Option<Arc<DynamicViewModel>>,
+    actions:    Arc<Mutex<Vec<String>>>
+}
+
+impl Controller for ActionTestController {
+    fn ui(&self) -> BindRef<Control> {
+        BindRef::new(&self.ui)
+    }
+
+    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
+        match self.viewmodel {
+            Some(ref viewmodel) => Some(viewmodel.clone()),
+            None                => None
+        }
+    }
+
+    fn action(&self, action_id: &str, _action_data: &ActionParameter) { 
+        self.actions.lock().unwrap().push(action_id.into());
     }
 }
 
@@ -326,6 +349,46 @@ fn removing_command_action_triggers_udpate() {
             ])
         ]))));
     })
+}
+
+#[test]
+fn send_command_to_root_controller() {
+    let thread_pool         = executor::ThreadPool::new().unwrap();
+
+    // Create a viewmodel for us to update later on
+    let viewmodel           = Arc::new(DynamicViewModel::new());
+
+    viewmodel.set_property("Test", PropertyValue::Int(0));
+
+    // Create a controller with an action
+    let controller          = ActionTestController { ui: bind(Control::empty().with((ActionTrigger::Command(Command::with_id("Test")), "Test"))), viewmodel: Some(viewmodel.clone()), actions: Arc::new(Mutex::new(vec![])) };
+    let actions             = controller.actions.clone();
+
+    // Start a UI session for this controller
+    let (session, run_loop) = UiSession::new(controller);
+    thread_pool.spawn_ok(run_loop);
+
+    // Get an update stream for it and attach a timeout
+    let update_stream       = session.get_updates();
+    let mut event_publisher = session.get_input_sink();
+    let mut next_or_timeout = stream::select(update_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))), timeout(1000).into_stream().map(|_| Ok(TestItem::Timeout)));
+
+    executor::block_on(async {
+        // Fetch the first item from the stream
+        let first_item = next_or_timeout.next().await;
+        assert!(first_item != Some(Ok(TestItem::Timeout)));
+
+        // Send a command to the stream
+        event_publisher.publish(vec![UiEvent::Command(Command::with_id("Test"), vec![])]).await;
+
+        // Send a tick
+        event_publisher.publish(vec![UiEvent::Tick]).await;
+        let tick_update = next_or_timeout.next().await;
+        assert!(tick_update != Some(Ok(TestItem::Timeout)));
+    });
+
+    // The 'Test' action should have been sent to the controller
+    assert!(&*actions.lock().unwrap() == &vec!["Test".to_string()]);
 }
 
 // TODO: also check we trigger an update if a canvas that's in the UI changes
