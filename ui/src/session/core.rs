@@ -125,23 +125,7 @@ impl UiSessionCore {
             // Send the event to the controllers
             match event {
                 UiEvent::Action(controller_path, event_name, action_parameter) => {
-                    // Find the controller along this path
-                    if controller_path.len() == 0 {
-                        // Straight to the root controller
-                        self.dispatch_action(controller, event_name, action_parameter);
-                    } else {
-                        // Controller along a path
-                        let mut controller = controller.get_subcontroller(&controller_path[0]);
-
-                        for controller_name in controller_path.into_iter().skip(1) {
-                            controller = controller.map_or(None, move |ctrl| ctrl.get_subcontroller(&controller_name));
-                        }
-
-                        match controller {
-                            Some(ref controller)    => self.dispatch_action(&**controller, event_name, action_parameter),
-                            None                    => ()       // TODO: event has disappeared into the void :-(
-                        }
-                    }
+                    self.dispatch_action_to_path(controller, &controller_path, event_name, action_parameter);
                 },
 
                 UiEvent::Command(_cmd, _params) => {
@@ -235,6 +219,29 @@ impl UiSessionCore {
     ///
     fn dispatch_action(&mut self, controller: &dyn Controller, event_name: String, action_parameter: ActionParameter) {
         controller.action(&event_name, &action_parameter);
+    }
+
+    ///
+    /// Dispatches an action to a controller given by a path
+    ///
+    pub fn dispatch_action_to_path(&mut self, controller: &dyn Controller, controller_path: &Vec<String>, event_name: String, action_parameter: ActionParameter) {
+        // Find the controller along this path
+        if controller_path.len() == 0 {
+            // Straight to the root controller
+            self.dispatch_action(controller, event_name, action_parameter);
+        } else {
+            // Controller along a path
+            let mut controller = controller.get_subcontroller(&controller_path[0]);
+
+            for controller_name in controller_path.into_iter().skip(1) {
+                controller = controller.map_or(None, move |ctrl| ctrl.get_subcontroller(&controller_name));
+            }
+
+            match controller {
+                Some(ref controller)    => self.dispatch_action(&**controller, event_name, action_parameter),
+                None                    => ()       // TODO: event has disappeared into the void :-(
+            }
+        }
     }
 
     ///
