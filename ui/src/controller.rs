@@ -168,12 +168,12 @@ fn get_supported_commands(controller: &Arc<dyn Controller>) -> (HashSet<Command>
 ///
 /// Retrieves binding of a map of commands to the controller paths that respond to those commands
 ///
-pub fn command_map_binding(controller: Arc<dyn Controller>) -> BindRef<HashMap<Command, Vec<Vec<String>>>> {
+pub fn command_map_binding(controller: Arc<dyn Controller>) -> BindRef<Arc<HashMap<Command, Vec<Vec<String>>>>> {
     let controller  = Arc::downgrade(&controller);
     let binding     = computed(move || {
         // Fetch the controller if it hasn't been released
         let controller = controller.upgrade();
-        let controller = if let Some(controller) = controller { controller } else { return HashMap::new(); };
+        let controller = if let Some(controller) = controller { controller } else { return Arc::new(HashMap::new()); };
 
         // Generate a hashmap with a list of all the controller paths
         let mut controllers_for_command = HashMap::new();
@@ -203,7 +203,7 @@ pub fn command_map_binding(controller: Arc<dyn Controller>) -> BindRef<HashMap<C
             }
         }
 
-        controllers_for_command
+        Arc::new(controllers_for_command)
     });
 
     BindRef::from(binding)
