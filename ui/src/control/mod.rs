@@ -17,6 +17,7 @@ mod attributes;
 mod hover_attr;
 mod scroll_attr;
 mod modifier_key;
+mod command_binding;
 mod appearance_attr;
 
 pub use self::json::*;
@@ -38,6 +39,7 @@ pub use self::attributes::*;
 pub use self::hover_attr::*;
 pub use self::scroll_attr::*;
 pub use self::modifier_key::*;
+pub use self::command_binding::*;
 pub use self::appearance_attr::*;
 
 #[cfg(test)]
