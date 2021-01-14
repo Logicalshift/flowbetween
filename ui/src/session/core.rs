@@ -35,6 +35,9 @@ pub struct UiSessionCore {
     /// The UI tree for the applicaiton
     ui_tree: BindRef<Control>,
 
+    /// Binding that maps commands to the paths to the controllers that can evaluate them
+    command_map: BindRef<Arc<HashMap<Command, Vec<Vec<String>>>>>,
+
     /// Functions to be called next time the core is updated
     update_callbacks: Vec<Box<dyn FnMut(&mut UiSessionCore) -> ()+Send>>
 }
@@ -45,11 +48,13 @@ impl UiSessionCore {
     ///
     pub fn new(controller: Arc<dyn Controller>) -> UiSessionCore {
         // Assemble the UI for the controller
-        let ui_tree = assemble_ui(controller);
+        let ui_tree     = assemble_ui(Arc::clone(&controller));
+        let command_map = command_map_binding(Arc::clone(&controller));
 
         UiSessionCore {
             last_update_id:     0,
             ui_tree:            ui_tree,
+            command_map:        command_map,
             tick:               ExpiringPublisher::new(1),
             suspend_updates:    ExpiringPublisher::new(1),
             suspension_count:   0,
