@@ -44,9 +44,9 @@ impl Command {
     ///
     /// Returns a command with an added description
     ///
-    pub fn named(self, name: String) -> Command {
+    pub fn named<ToString: Into<String>>(self, name: ToString) -> Command {
         let mut cmd = self;
-        cmd.name = name;
+        cmd.name = name.into();
         cmd
     }
 

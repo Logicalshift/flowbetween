@@ -68,6 +68,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineLayerControlsController<
                                     Control::button()
                                         .with(Bounds::next_horiz(18.0))
                                         .with((ActionTrigger::Click, "AddNewLayer"))
+                                        .with((ActionTrigger::Command(Command::with_id("layer_add").named("Add new layer")), "AddNewLayer"))
                                         .with(vec![
                                             Control::label()
                                                 .with(Bounds::fill_all())
@@ -77,6 +78,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineLayerControlsController<
                                     Control::button()
                                         .with(Bounds::next_horiz(18.0))
                                         .with((ActionTrigger::Click, "RemoveLayer"))
+                                        .with((ActionTrigger::Command(Command::with_id("layer_remove").named("Remove selected layer")), "RemoveLayer"))
                                         .with(vec![
                                             Control::label()
                                                 .with(Bounds::fill_all())
