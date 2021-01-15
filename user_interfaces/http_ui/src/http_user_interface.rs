@@ -268,7 +268,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
             UpdateViewModel(view_model_diffs) => vec![Update::UpdateViewModel(view_model_diffs)],
 
-            UpdateCommands(_command_diffs) => vec![ /* TODO */ ]
+            UpdateCommands(command_diffs) => vec![Update::UpdateCommands(command_diffs)]
         }
     }
 

@@ -1,6 +1,5 @@
 mod event;
 mod update;
-mod command_update;
 mod core;
 mod event_publisher;
 mod update_stream;
@@ -12,7 +11,6 @@ mod viewmodel_stream;
 
 pub use self::event::*;
 pub use self::update::*;
-pub use self::command_update::*;
 pub use self::session::*;
 pub use self::event_publisher::*;
 pub use self::canvas_stream::*;

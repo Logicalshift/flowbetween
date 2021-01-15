@@ -1,6 +1,5 @@
-use super::command_update::*;
-
 use crate::control::*;
+use crate::command_update::*;
 use crate::viewmodel_update::*;
 
 use flo_canvas::*;

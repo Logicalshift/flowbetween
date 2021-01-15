@@ -79,5 +79,10 @@ pub enum Update {
     ///
     /// Specifies that a canvas should be updated
     ///
-    UpdateCanvas(Vec<CanvasUpdate>)
+    UpdateCanvas(Vec<CanvasUpdate>),
+
+    ///
+    /// Specifies that the list of supported/active commands should be updated
+    ///
+    UpdateCommands(Vec<CommandUpdate>)
 }
