@@ -36,10 +36,6 @@ function flowbetween(root_node) {
     // Maps websockets to session IDs
     let websocket_for_session = {};
 
-    // Functions for triggering UI commands (accessed as flo.<cmd_id> in the console)
-    let flo         = {};
-    window['flo']   = flo;
-
     // Find out where we're running
     let doc_url  = document.createElement('a');
     doc_url.href = document.URL;
@@ -2038,35 +2034,62 @@ function flowbetween(root_node) {
     };
 
     ///
-    /// Handles a command update event
+    /// Handles commands defined in the user interface
     ///
-    let on_update_commands = (command_update_list) => {
-        // Add and remove commands in the list
-        command_update_list.forEach(command_update => {
-            if (command_update['Add']) {
-                let add                     = command_update['Add'];
-                let identifier              = add['identifier'];
-                let name                    = add['name'];
+    let on_update_commands = (function() {
+        // Functions for triggering UI commands (accessed as flo.<cmd_id> in the console)
+        let flo         = {};
+        window['flo']   = flo;
 
-                let invoke                  = () => {
-                    let request = make_request([ make_event({ Command: [identifier, []] })], running_session_id);
-                    return send_request(request);
-                };
-                invoke['flo_command_name']  = name;
+        // Add some JS commands for listing what's available
+        add_command('list_commands', 'List the commands defined by the UI', () => {
+            console.log('');
+            console.log('User-interface commands');
+            
+            // Get the list of commands and find the length of the longest command
+            let commands        = Object.keys(flo).sort();
+            let longest_command = commands.map((name) => ('flo.'+name).length).reduce((a, b) => a>b ? a:b);
 
-                flo[identifier]             = invoke;
+            for (let command_index=0; command_index < commands.length; ++command_index) {
+                let command_name    = commands[command_index];
+                let name_padding    = ' '.repeat(longest_command-command_name.length);
+                let description     = flo[command_name].flo_command_name;
 
-            } else if (command_update['Remove']) {
-                let remove      = command_update['Remove'];
-                let identifier  = remove['identifier'];
-
-                delete flo[identifier];
-
-            } else {
-                console.warning('Unknown command update');
+                console.log('  %cflo.' + command_name + '()%c' + name_padding + ' - ' + description, 'font-weight: bold; font-family: monospace', 'font-weight: normal; font-family: monospace');
             }
+
+            console.log('');
         });
-    };
+
+        // Result is the 'update commands' function
+        return (command_update_list) => {
+            // Add and remove commands in the list
+            command_update_list.forEach(command_update => {
+                if (command_update['Add']) {
+                    let add                     = command_update['Add'];
+                    let identifier              = add['identifier'];
+                    let name                    = add['name'];
+
+                    let invoke                  = () => {
+                        let request = make_request([ make_event({ Command: [identifier, []] })], running_session_id);
+                        return send_request(request);
+                    };
+                    invoke['flo_command_name']  = name;
+
+                    flo[identifier]             = invoke;
+
+                } else if (command_update['Remove']) {
+                    let remove      = command_update['Remove'];
+                    let identifier  = remove['identifier'];
+
+                    delete flo[identifier];
+
+                } else {
+                    console.warning('Unknown command update');
+                }
+            });
+        };
+    })();
 
     ///
     /// Dispatches updates in a request
