@@ -164,7 +164,8 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
             SuspendUpdates  => UiEvent::SuspendUpdates,
             ResumeUpdates   => UiEvent::ResumeUpdates,
 
-            Action(controller_path, action_name, action_parameter) => UiEvent::Action(controller_path, action_name, action_parameter)
+            Action(controller_path, action_name, action_parameter)  => UiEvent::Action(controller_path, action_name, action_parameter),
+            Command(cmd, _parameters)                               => UiEvent::Command(flo_ui::Command::with_id(cmd), vec![])
         }
     }
 

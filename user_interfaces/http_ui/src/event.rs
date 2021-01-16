@@ -21,6 +21,11 @@ pub enum Event {
     Action(Vec<String>, String, ActionParameter),
 
     ///
+    /// Invokes a command with a set of parameters
+    ///
+    Command(String, Vec<String>),
+
+    ///
     /// Wait for the next resume before sending any further updates. This is used when we don't want intermediate states to be displayed to the UI during event processing
     ///
     SuspendUpdates,

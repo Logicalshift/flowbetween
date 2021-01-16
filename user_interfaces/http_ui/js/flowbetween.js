@@ -36,11 +36,15 @@ function flowbetween(root_node) {
     // Maps websockets to session IDs
     let websocket_for_session = {};
 
+    // Functions for triggering UI commands (accessed as flo.<cmd_id> in the console)
+    let flo         = {};
+    window['flo']   = flo;
+
     // Find out where we're running
     let doc_url  = document.createElement('a');
     doc_url.href = document.URL;
     let base_url = doc_url.protocol + '//' + doc_url.host;
-    
+
     // Some utility functions
     Array.prototype.mapMany = function (map_fn) {
         let self = this;
@@ -1205,6 +1209,9 @@ function flowbetween(root_node) {
                 waiting_for_dismissal   = waiting_for_dismissal.filter(dismiss_node => dismiss_node !== node);
             };
 
+        } else if (action_type['Command']) {
+            /* Commands are not triggered directly */
+
         } else {
             warn('Unknown action type: ' + action_type);
         }
@@ -2031,6 +2038,37 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Handles a command update event
+    ///
+    let on_update_commands = (command_update_list) => {
+        // Add and remove commands in the list
+        command_update_list.forEach(command_update => {
+            if (command_update['Add']) {
+                let add                     = command_update['Add'];
+                let identifier              = add['identifier'];
+                let name                    = add['name'];
+
+                let invoke                  = () => {
+                    let request = make_request([ make_event({ Command: [identifier, []] })], running_session_id);
+                    return send_request(request);
+                };
+                invoke['flo_command_name']  = name;
+
+                flo[identifier]             = invoke;
+
+            } else if (command_update['Remove']) {
+                let remove      = command_update['Remove'];
+                let identifier  = remove['identifier'];
+
+                delete flo[identifier];
+
+            } else {
+                console.warning('Unknown command update');
+            }
+        });
+    };
+
+    ///
     /// Dispatches updates in a request
     ///
     let dispatch_updates = (function() {
@@ -2096,6 +2134,13 @@ function flowbetween(root_node) {
 
                     current_promise = current_promise
                         .then(() => on_update_html(updates));
+
+                } else if (update['UpdateCommands']) {
+
+                    let updates = update['UpdateCommands'];
+
+                    current_promise = current_promise
+                        .then(() => on_update_commands(updates));
 
                 } else {
                     warn('Unknown update type', Object.keys(update)[0], update);
