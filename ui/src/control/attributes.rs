@@ -1,18 +1,20 @@
 use super::bounds::*;
 use super::control::*;
 use super::actions::*;
+use super::command::*;
 use super::font_attr::*;
 use super::hint_attr::*;
 use super::state_attr::*;
 use super::popup_attr::*;
 use super::hover_attr::*;
+use super::keybinding::*;
 use super::scroll_attr::*;
 use super::appearance_attr::*;
 
-use super::super::image;
-use super::super::property::*;
-use super::super::binding_canvas::*;
-use super::super::resource_manager::*;
+use crate::image;
+use crate::property::*;
+use crate::binding_canvas::*;
+use crate::resource_manager::*;
 
 use ::modifier::*;
 
@@ -68,9 +70,13 @@ pub enum ControlAttribute {
     /// denoted by the string to the controller
     Action(ActionTrigger, ActionEvent),
 
-    // TODO: content attribute (maybe with text?). Image might be appearance though
     /// Specifies the canvas to use for this control (assuming it's a canvas control)
-    Canvas(Resource<BindingCanvas>)
+    Canvas(Resource<BindingCanvas>),
+
+    /// Binds a keypress to a command (keybinding commands never have any parameters)
+    BindKey(KeyBinding, Command)
+
+    // TODO: content attribute (maybe with text?). Image might be appearance though
 }
 
 impl ControlAttribute {
@@ -245,6 +251,16 @@ impl ControlAttribute {
     }
 
     ///
+    /// If this is a key binding attribute, returns the keybinding, otherwise returns nothing
+    ///
+    pub fn key_binding<'a>(&'a self) -> Option<(&'a KeyBinding, &'a Command)> {
+        match self {
+            BindKey(keypress, command)  => Some((keypress, command)),
+            _                           => None
+        }
+    }
+
+    ///
     /// Returns true if this attribute is different from another one
     /// (non-recursively, so this won't check subcomoponents)
     ///
@@ -265,6 +281,7 @@ impl ControlAttribute {
             &ScrollAttr(ref scroll)             => Some(scroll) != compare_to.scroll(),
             &HoverAttr(ref hover)               => Some(hover) != compare_to.hover(),
             &HintAttr(ref hint)                 => Some(hint) != compare_to.hint(),
+            BindKey(key, cmd)                   => Some((key, cmd)) != compare_to.key_binding(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
             &SubComponents(ref components)      => Some(components.len()) != compare_to.subcomponents().map(|components| components.len())

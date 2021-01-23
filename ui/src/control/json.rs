@@ -31,6 +31,15 @@ impl ToJsonValue for ControlAttribute {
             HoverAttr(hover)                            => json!({ "Hover": hover }),
             HintAttr(hint)                              => json!({ "Hint": hint }),
 
+            BindKey(key, cmd)                           => {
+                // For the purposes of serialization, the command is hidden if it's a system command (we just specify that a key has been bound)
+                if !cmd.is_system {
+                    json!({ "BindKey": json!({ "Key": key, "Command": cmd.identifier }) })
+                } else {
+                    json!({ "BindKey": json!({ "Key": key }) })
+                }
+            }
+
             SubComponents(components)                   => {
                 let json_components: Vec<_> = components.iter()
                     .map(|component| component.to_json())
