@@ -69,6 +69,7 @@ pub enum KeyPress {
     KeyDelete,
     KeyEnd,
     KeyPgDown,
+    KeyBackspace,
 
     KeyF1,
     KeyF2,
