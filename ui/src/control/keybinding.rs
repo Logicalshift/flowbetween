@@ -1,5 +1,8 @@
 use super::keypress::*;
 
+use itertools::*;
+
+use std::hash::{Hash, Hasher};
 use std::collections::{HashSet};
 
 ///
@@ -20,5 +23,16 @@ impl KeyBinding {
         KeyBinding { 
             keys: keys.into_iter().map(|key| key.into()).collect::<HashSet<KeyPress>>() 
         }
+    }
+}
+
+impl Hash for KeyBinding {
+    ///
+    /// Keybindings are hashed by the ordered set of keys
+    ///
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.keys.iter()
+            .sorted()
+            .for_each(|key| key.hash(state));
     }
 }

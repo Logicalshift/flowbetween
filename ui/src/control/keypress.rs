@@ -3,7 +3,7 @@ use super::modifier_key::*;
 ///
 /// Represents a keypress
 ///
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum KeyPress {
     /// A modifier key press
     Modifier(ModifierKey),
