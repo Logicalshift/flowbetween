@@ -47,6 +47,7 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
             Controller(_name)                           => vec![],
             Action(trigger, ActionEvent::Named(name))   => event_actions(trigger, name),
 
+            BindKey(_key, _cmd)                         => vec![],
             Canvas(_canvas_resource)                    => vec![],              // Can send the whole canvas here, but more consistent if it's done in the same place it's attached
 
             SubComponents(_components)                  => vec![]               // Handled separately by ViewState
