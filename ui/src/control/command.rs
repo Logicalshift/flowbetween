@@ -22,6 +22,9 @@ pub struct Command {
     /// The identifier used to call this command from the code
     pub identifier: String,
 
+    /// Flag indicating the command should only be generated 'internally'
+    pub is_system: bool,
+
     /// A name that can be used to describe this command to the user
     pub name: String,
 
@@ -36,6 +39,28 @@ impl Command {
     pub fn with_id<ToString: Into<String>>(identifier: ToString) -> Command {
         Command { 
             identifier:             identifier.into(),
+            is_system:              false,
+            name:                   String::new(),
+            required_parameters:    None
+        }
+    }
+
+    ///
+    /// Creates a new system command with the specified ID
+    ///
+    /// 'System' commands cannot be directly triggered by the user and are hidden from
+    /// command palettes, and which occupy a separate namespace, so they won't be confused
+    /// with 'standard' commands when they're used this way.
+    ///
+    /// These are intended for the case where a command has 'unsafe' parameters such
+    /// as a local filename and we don't want a user to be able to specify that directly.
+    /// 
+    /// System commands cannot be generated via a remote request or via a command palette.
+    ///
+    pub fn system_with_id<ToString: Into<String>>(identifier: ToString) -> Command {
+        Command { 
+            identifier:             identifier.into(),
+            is_system:              true,
             name:                   String::new(),
             required_parameters:    None
         }
@@ -71,7 +96,7 @@ impl PartialEq for Command {
     /// Two commands are equal if they have the same identifier
     ///
     fn eq(&self, other: &Command) -> bool {
-        self.identifier.eq(&other.identifier)
+        self.identifier.eq(&other.identifier) && self.is_system.eq(&other.is_system)
     }
 }
 
@@ -84,5 +109,6 @@ impl Hash for Command {
     ///
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.identifier.hash(state);
+        self.is_system.hash(state);
     }
 }

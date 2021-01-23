@@ -269,7 +269,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
             UpdateViewModel(view_model_diffs) => vec![Update::UpdateViewModel(view_model_diffs)],
 
-            UpdateCommands(command_diffs) => vec![Update::UpdateCommands(command_diffs)]
+            UpdateCommands(command_diffs) => vec![Update::UpdateCommands(command_diffs.into_iter().filter(|diff| !diff.is_system_command()).collect())]
         }
     }
 
@@ -393,6 +393,68 @@ mod test {
             assert!(first_update == Ok(TestItem::Updates(vec![
                 Update::NewUserInterfaceHtml("<flo-empty></flo-empty>".to_string(), json![{ "attributes": Vec::<String>::new(), "control_type": "Empty" }], vec![])
             ])));
+        });
+    }
+
+    #[test]
+    fn sends_new_user_commands() {
+        let thread_pool                     = executor::ThreadPool::new().unwrap();
+        let controller                      = TestController { 
+            ui: bind(Control::empty()
+                .with((ActionTrigger::Command(Command::with_id("Test")), "Test"))) 
+        };
+        let (core_session, core_run_loop)   = UiSession::new(controller);
+        let (http_session, http_run_loop)   = HttpUserInterface::new(Arc::new(core_session), "test/session".to_string());
+
+        thread_pool.spawn_ok(core_run_loop);
+        thread_pool.spawn_ok(http_run_loop);
+        let http_stream                 = http_session.get_updates();
+
+        //let next_or_timeout = stream::select(http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))), timeout(2000).into_stream().map(|_| TestItem::Timeout));
+        let next_or_timeout             = http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates)));
+        let mut next_or_timeout         = next_or_timeout;
+
+        // First update should be munged into a NewUserInterfaceHtml update
+        executor::block_on(async {
+            let first_update = next_or_timeout.next().await.unwrap();
+            println!("{:?}", first_update);
+            assert!(first_update.is_ok());
+            assert!(first_update != Ok(TestItem::Timeout));
+
+            if let Ok(TestItem::Updates(updates)) = first_update {
+                assert!(updates[1] == Update::UpdateCommands(vec![CommandUpdate::Add(Command::with_id("Test"))]));
+            }
+        });
+    }
+
+    #[test]
+    fn does_not_send_new_system_commands() {
+        let thread_pool                     = executor::ThreadPool::new().unwrap();
+        let controller                      = TestController { 
+            ui: bind(Control::empty()
+                .with((ActionTrigger::Command(Command::system_with_id("Test")), "Test"))) 
+        };
+        let (core_session, core_run_loop)   = UiSession::new(controller);
+        let (http_session, http_run_loop)   = HttpUserInterface::new(Arc::new(core_session), "test/session".to_string());
+
+        thread_pool.spawn_ok(core_run_loop);
+        thread_pool.spawn_ok(http_run_loop);
+        let http_stream                 = http_session.get_updates();
+
+        //let next_or_timeout = stream::select(http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))), timeout(2000).into_stream().map(|_| TestItem::Timeout));
+        let next_or_timeout             = http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates)));
+        let mut next_or_timeout         = next_or_timeout;
+
+        // First update should be munged into a NewUserInterfaceHtml update
+        executor::block_on(async {
+            let first_update = next_or_timeout.next().await.unwrap();
+            println!("{:?}", first_update);
+            assert!(first_update.is_ok());
+            assert!(first_update != Ok(TestItem::Timeout));
+
+            if let Ok(TestItem::Updates(updates)) = first_update {
+                assert!(updates[1] == Update::UpdateCommands(vec![]));
+            }
         });
     }
 }
