@@ -203,10 +203,11 @@ impl ToHtml for ControlAttribute {
             &HoverAttr(ref hover)           => hover.to_html_subcomponent(base_path, controller_path),
             &HintAttr(ref hint)             => hint.to_html_subcomponent(base_path, controller_path),
 
-            &BoundingBox(_) => DomEmpty::new(),
-            &Id(_)          => DomEmpty::new(),
-            &Controller(_)  => DomEmpty::new(),
-            &Action(_, _)   => DomEmpty::new()
+            BindKey(_key, _cmd)             => DomEmpty::new(),
+            &BoundingBox(_)                 => DomEmpty::new(),
+            &Id(_)                          => DomEmpty::new(),
+            &Controller(_)                  => DomEmpty::new(),
+            &Action(_, _)                   => DomEmpty::new()
         }
     }
 }
