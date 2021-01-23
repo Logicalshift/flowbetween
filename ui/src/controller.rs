@@ -166,7 +166,7 @@ fn get_supported_commands(controller: &Arc<dyn Controller>, path: &Vec<String>) 
 }
 
 ///
-/// Retrieves binding of a map of commands to the controller paths that respond to those commands
+/// Creates a binding of a map of commands to the controller paths that respond to those commands
 ///
 pub fn command_map_binding(controller: Arc<dyn Controller>) -> BindRef<Arc<HashMap<Command, Vec<CommandBinding>>>> {
     let controller  = Arc::downgrade(&controller);
@@ -204,6 +204,74 @@ pub fn command_map_binding(controller: Arc<dyn Controller>) -> BindRef<Arc<HashM
         }
 
         Arc::new(controllers_for_command)
+    });
+
+    BindRef::from(binding)
+}
+
+///
+/// Retrieves all keybindings defined in a particular controller, along with the list of subcontrollers
+///
+fn get_keybindings(controller: &Arc<dyn Controller>) -> (HashMap<KeyBinding, HashSet<Command>>, HashSet<String>) {
+    // Retrieve the UI for the control
+    let ui                  = controller.ui().get();
+
+    // Process the controls to find the command attributes
+    let mut keybindings     = HashMap::new();
+    let mut subcontrollers  = HashSet::new();
+    let mut remaining       = vec![&ui];
+
+    while let Some(control) = remaining.pop() {
+        for attr in control.attributes() {
+            match attr {
+                ControlAttribute::Controller(controller_name)                   => { subcontrollers.insert(controller_name.clone()); }
+                ControlAttribute::SubComponents(subcomponents)                  => { remaining.extend(subcomponents.iter()); }
+                ControlAttribute::BindKey(key, cmd)                             => { keybindings.entry(key.clone()).or_insert_with(|| HashSet::new()).insert(cmd.clone()); }
+
+                _                                                               => { }
+            }
+        }
+    }
+
+    (keybindings, subcontrollers)
+}
+
+///
+/// Creates a binding mapping key presses to the commands they should generate
+///
+pub fn keymap_binding(controller: Arc<dyn Controller>) -> BindRef<Arc<HashMap<KeyBinding, HashSet<Command>>>> {
+    let controller  = Arc::downgrade(&controller);
+    let binding     = computed(move || {
+        // Fetch the controller if it hasn't been released
+        let controller = controller.upgrade();
+        let controller = if let Some(controller) = controller { controller } else { return Arc::new(HashMap::new()); };
+
+        // Generate a hashmap with a list of all the controller paths
+        let mut all_keybindings         = HashMap::new();
+        let mut controllers             = vec![controller];
+
+        while let Some(controller) = controllers.pop() {
+            // Fetch the key bindings and subcontrollers for this controller
+            let (keybindings, subcontrollers) = get_keybindings(&controller);
+
+            // Merge the keybindings into the 'all' list
+            keybindings.into_iter()
+                .for_each(|(key, commands)| {
+                    all_keybindings.entry(key)
+                        .or_insert_with(|| HashSet::new())
+                        .extend(commands);
+                });
+
+            // Process the subcontrollers
+            for subcontroller_name in subcontrollers {
+                if let Some(subcontroller) = controller.get_subcontroller(&subcontroller_name) {
+                    // Process this controller next
+                    controllers.push(subcontroller);
+                }
+            }
+        }
+
+        Arc::new(all_keybindings)
     });
 
     BindRef::from(binding)
