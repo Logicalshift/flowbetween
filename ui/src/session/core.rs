@@ -1,6 +1,7 @@
 use super::event::*;
-use super::super::control::*;
-use super::super::controller::*;
+use crate::control::*;
+use crate::property::*;
+use crate::controller::*;
 
 use flo_stream::*;
 use flo_binding::*;
@@ -123,6 +124,24 @@ impl UiSessionCore {
     }
 
     ///
+    /// Dispatches a command to the controllers attached to this core
+    ///
+    fn dispatch_command(&mut self, cmd: &Command, params: Vec<PropertyValue>) {
+        // Find where this command is bound to
+        let command_map         = self.command_map.get();
+        let command_bindings    = command_map.get(&cmd);
+
+        if let Some(command_bindings) = command_bindings {
+            // Dispatch the action to every controller the command is bound to
+            for command_binding in command_bindings.iter() {
+                if let Some(controller) = command_binding.controller.upgrade() {
+                    self.dispatch_action_event(&*controller, &command_binding.action, ActionParameter::CommandParameters(params.clone()));
+                }
+            }
+        }
+    }
+
+    ///
     /// Dispatches an event to the specified controller
     ///
     pub async fn dispatch_event(&mut self, events: Vec<UiEvent>, controller: &dyn Controller) {
@@ -134,19 +153,20 @@ impl UiSessionCore {
                 },
 
                 UiEvent::Command(cmd, params) => {
-                    // Find where this command is bound to
-                    let command_map         = self.command_map.get();
-                    let command_bindings    = command_map.get(&cmd);
-
-                    if let Some(command_bindings) = command_bindings {
-                        // Dispatch the action to every controller the command is bound to
-                        for command_binding in command_bindings.iter() {
-                            if let Some(controller) = command_binding.controller.upgrade() {
-                                self.dispatch_action_event(&*controller, &command_binding.action, ActionParameter::CommandParameters(params.clone()));
-                            }
-                        }
-                    }
+                    self.dispatch_command(&cmd, params);
                 },
+
+                UiEvent::KeyPress(key_binding) => {
+                    // Turn into a set of command events
+                    let key_map     = self.key_map.get();
+                    let commands    = key_map.get(&key_binding);
+
+                    // Dispatch the commands
+                    if let Some(commands) = commands {
+                        commands.into_iter()
+                            .for_each(|cmd| self.dispatch_command(&cmd, vec![]));
+                    }
+                }
 
                 UiEvent::SuspendUpdates => {
                     self.suspension_count += 1;

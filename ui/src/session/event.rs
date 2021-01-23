@@ -18,6 +18,9 @@ pub enum UiEvent {
     /// Performs the specified command (with optional parameters)
     Command(Command, Vec<PropertyValue>),
 
+    /// Performs the action associated with the specified key binding
+    KeyPress(KeyBinding),
+
     /// Sends a tick to all the controllers. If updates are suspended, ticks are only sent when they resume,
     /// and only one tick is sent regardless of how many were requested during the suspension.
     Tick
