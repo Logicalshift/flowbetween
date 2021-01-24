@@ -9,7 +9,7 @@
 /* exported flowbetween */
 /* exported resize_svg_control */
 /* exported replace_object_with_content */
-/* global flo_canvas, flo_paint, flo_control */
+/* global flo_canvas, flo_paint, flo_control, flo_keyboard */
 
 function flowbetween(root_node) {
     /// The ID of the running session
