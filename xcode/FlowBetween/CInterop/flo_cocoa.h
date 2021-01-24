@@ -80,6 +80,8 @@ typedef struct AppPainting AppPainting;
 @interface FloControl : NSObject
 
 - (void) tick;
+- (void) keyDown: (NSString*) keyName;
+- (void) keyUp: (NSString*) keyName;
 - (uint64_t) sessionId;
 
 @end

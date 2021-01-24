@@ -14,6 +14,9 @@ class FloWindow : NSWindow {
     /// The user has pressed a key
     ///
     override func keyDown(with event: NSEvent) {
+        if let window_delegate = self.delegate as? FloWindowDelegate {
+            window_delegate.keyDown("KeyA");
+        }
         NSLog("Keydown: \(event)");
     }
     
@@ -21,6 +24,9 @@ class FloWindow : NSWindow {
     /// The user has released a key
     ///
     override func keyUp(with event: NSEvent) {
+        if let window_delegate = self.delegate as? FloWindowDelegate {
+            window_delegate.keyUp("KeyA");
+        }
         NSLog("Keyup: \(event)");
     }
     
@@ -166,5 +172,25 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
                                  inModes: [.default, .eventTracking, .modalPanel])
                 }
             )
+    }
+    
+    ///
+    /// Sends a key down event to the session
+    ///
+    func keyDown(_ key: String) {
+        if let session = _session {
+            let key = key as NSString;
+            session.perform(#selector(FloControl.keyDown(_:)), with: key);
+        }
+    }
+    
+    ///
+    /// Sends a key up event to the session
+    ///
+    func keyUp(_ key: String) {
+        if let session = _session {
+            let key = key as NSString;
+            session.perform(#selector(FloControl.keyUp(_:)), with: key);
+        }
     }
 }
