@@ -27,7 +27,10 @@ impl KeyBindingController {
     /// Creates the UI binding for this controller
     ///
     fn create_ui() -> Binding<Control> {
-        bind(Control::empty())
+        use self::KeyPress::*;
+
+        bind(Control::empty()
+            .with((KeyBinding::ctrl(KeyNumpadAdd), Command::with_id("layer_add"))))
     }
 }
 
