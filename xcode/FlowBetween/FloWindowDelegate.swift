@@ -12,6 +12,8 @@ import Cocoa
 import Carbon.HIToolbox
 
 class FloWindow : NSWindow {
+    fileprivate var _lastModifierFlags = NSEvent.ModifierFlags.init();
+    
     ///
     /// Returns the key code string for a key down or key up event
     ///
@@ -141,8 +143,6 @@ class FloWindow : NSWindow {
         if let window_delegate = self.delegate as? FloWindowDelegate {
             if let key_code = self.keyCodeForEvent(event.charactersIgnoringModifiers!, keyCode: event.keyCode, modifierFlags: event.modifierFlags) {
                 window_delegate.keyDown(key_code);
-                
-                NSLog("Keydown: \(key_code) \(event.keyCode) \(event.characters)")
             }
         }
     }
@@ -154,8 +154,6 @@ class FloWindow : NSWindow {
         if let window_delegate = self.delegate as? FloWindowDelegate {
             if let key_code = self.keyCodeForEvent(event.charactersIgnoringModifiers!, keyCode: event.keyCode, modifierFlags: event.modifierFlags) {
                 window_delegate.keyUp(key_code);
-                
-                NSLog("Keyup: \(key_code)")
             }
         }
     }
@@ -164,7 +162,41 @@ class FloWindow : NSWindow {
     /// The modifier flags have changed
     ///
     override func flagsChanged(with event: NSEvent) {
-        NSLog("Flags changed: \(event)");
+        if let window_delegate = self.delegate as? FloWindowDelegate {
+            // Fetch the old and new modifier flags
+            let modifierFlags   = event.modifierFlags;
+            let lastFlags       = self._lastModifierFlags;
+            
+            // Generate key up/key down events for the ways that the flags have changed
+            if modifierFlags.contains(.shift) && !lastFlags.contains(.shift) {
+                window_delegate.keyDown("ModifierShift");
+            }
+            if modifierFlags.contains(.control) && !lastFlags.contains(.control) {
+                window_delegate.keyDown("ModifierCtrl");
+            }
+            if modifierFlags.contains(.option) && !lastFlags.contains(.option) {
+                window_delegate.keyDown("ModifierAlt");
+            }
+            if modifierFlags.contains(.command) && !lastFlags.contains(.command) {
+                window_delegate.keyDown("ModifierMeta");
+            }
+
+            if !modifierFlags.contains(.shift) && lastFlags.contains(.shift) {
+                window_delegate.keyUp("ModifierShift");
+            }
+            if !modifierFlags.contains(.control) && lastFlags.contains(.control) {
+                window_delegate.keyUp("ModifierCtrl");
+            }
+            if !modifierFlags.contains(.option) && lastFlags.contains(.option) {
+                window_delegate.keyUp("ModifierAlt");
+            }
+            if !modifierFlags.contains(.command) && lastFlags.contains(.command) {
+                window_delegate.keyUp("ModifierMeta");
+            }
+
+            // Make a note of the current settings for the modifier flags
+            self._lastModifierFlags = modifierFlags;
+        }
     }
 }
 
