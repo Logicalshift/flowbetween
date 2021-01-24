@@ -2,9 +2,11 @@ use super::menu_controller::*;
 use super::canvas_controller::*;
 use super::toolbox_controller::*;
 use super::timeline_controller::*;
+use super::keybinding_controller::*;
 use super::controlbar_controller::*;
-use super::super::model::*;
-use super::super::style::*;
+
+use crate::model::*;
+use crate::style::*;
 
 use flo_ui::*;
 use flo_ui_files::ui::*;
@@ -23,7 +25,8 @@ enum SubController {
     Menu,
     ControlBar,
     Timeline,
-    Toolbox
+    Toolbox,
+    KeyBindings
 }
 
 ///
@@ -55,13 +58,14 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     /// Creates a new editor controller from a model
     ///
     pub fn from_model(animation: FloModel<Loader::NewAnimation>) -> EditorController<Loader> {
-        let canvas      = Arc::new(CanvasController::new(&animation));
-        let menu        = Arc::new(MenuController::new(&animation));
-        let timeline    = Arc::new(TimelineController::new(&animation));
-        let toolbox     = Arc::new(ToolboxController::new(&animation));
-        let control_bar = Arc::new(ControlBarController::new(&animation));
+        let canvas          = Arc::new(CanvasController::new(&animation));
+        let menu            = Arc::new(MenuController::new(&animation));
+        let timeline        = Arc::new(TimelineController::new(&animation));
+        let toolbox         = Arc::new(ToolboxController::new(&animation));
+        let control_bar     = Arc::new(ControlBarController::new(&animation));
+        let key_bindings    = Arc::new(KeyBindingController::new());
 
-        let ui          = bind(Self::ui());
+        let ui              = bind(Self::ui());
         let mut subcontrollers: HashMap<SubController, Arc<dyn Controller>> = HashMap::new();
 
         subcontrollers.insert(SubController::Canvas,        canvas);
@@ -69,6 +73,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
         subcontrollers.insert(SubController::Timeline,      timeline);
         subcontrollers.insert(SubController::Toolbox,       toolbox);
         subcontrollers.insert(SubController::ControlBar,    control_bar);
+        subcontrollers.insert(SubController::KeyBindings,   key_bindings);
 
         EditorController {
             anim:           PhantomData,
@@ -154,6 +159,15 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     }
 
     ///
+    /// Creates the key bindings control
+    ///
+    pub fn keybindings() -> Control {
+        Control::container()
+            .with(Bounds::next_vert(0.0))
+            .with_controller(&serde_json::to_string(&SubController::KeyBindings).unwrap())
+    }
+
+    ///
     /// Creates the UI tree for this controller
     ///
     pub fn ui() -> Control {
@@ -164,10 +178,12 @@ where Loader::NewAnimation: 'static+EditableAnimation {
         let toolbar     = Self::toolbox();
         let canvas      = Self::canvas();
         let control_bar = Self::control_bar();
+        let keybindings = Self::keybindings();
 
         Control::container()
             .with(Bounds::fill_all())
             .with(vec![
+                keybindings,
                 menu_bar,
                 Control::container()
                     .with((vec![toolbar, canvas],

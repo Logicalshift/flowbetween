@@ -8,6 +8,7 @@ mod controlbar_controller;
 mod frame_controls_controller;
 mod keyframe_controls_controller;
 mod toolbox_controller;
+mod keybinding_controller;
 
 pub use self::editor_controller::*;
 pub use self::canvas_controller::*;
