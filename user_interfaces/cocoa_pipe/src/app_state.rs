@@ -127,7 +127,7 @@ impl AppState {
 
             KeyDown(key_name)                                   => {
                 // Decode the keypress
-                let key_press = serde_json::from_str(&key_name);
+                let key_press = serde_json::from_str(&format!("\"{}\"", key_name));
                 if let Ok(key_press) = key_press {
                     // Update the set of keys that are currently held down
                     self.key_presses.insert(key_press);
@@ -143,7 +143,7 @@ impl AppState {
 
             KeyUp(key_name)                                     => {
                 // Decode the keypress
-                let key_press = serde_json::from_str(&key_name);
+                let key_press = serde_json::from_str(&format!("\"{}\"", key_name));
                 if let Ok(key_press) = key_press {
                     // Update the set of keys that are currently held down
                     self.key_presses.remove(&key_press);
