@@ -1,4 +1,4 @@
-use ui::ActionParameter;
+use ui::{ActionParameter, KeyPress};
 
 ///
 /// Represents details of an event from the browser side
@@ -24,6 +24,11 @@ pub enum Event {
     /// Invokes a command with a set of parameters
     ///
     Command(String, Vec<String>),
+
+    ///
+    /// Indicates that a particular keypress has occurred (and has not been captured)
+    ///
+    KeyPress(Vec<KeyPress>),
 
     ///
     /// Wait for the next resume before sending any further updates. This is used when we don't want intermediate states to be displayed to the UI during event processing

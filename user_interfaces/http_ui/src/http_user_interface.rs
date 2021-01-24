@@ -165,7 +165,8 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
             ResumeUpdates   => UiEvent::ResumeUpdates,
 
             Action(controller_path, action_name, action_parameter)  => UiEvent::Action(controller_path, action_name, action_parameter),
-            Command(cmd, _parameters)                               => UiEvent::Command(flo_ui::Command::with_id(cmd), vec![])
+            Command(cmd, _parameters)                               => UiEvent::Command(flo_ui::Command::with_id(cmd), vec![]),
+            KeyPress(keys)                                          => UiEvent::KeyPress(KeyBinding::hold_down_keys(keys))
         }
     }
 
