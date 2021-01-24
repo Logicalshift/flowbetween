@@ -26,11 +26,68 @@ impl KeyBinding {
     }
 
     ///
-    /// Creates a CTRL+key binding
+    /// Creates a single key binding
+    ///
+    pub fn key(key: KeyPress) -> KeyBinding {
+        Self::hold_down_keys(vec![key])
+    }
+
+    ///
+    /// Creates a ctrl+key binding
     ///
     pub fn ctrl(key: KeyPress) -> KeyBinding {
         Self::hold_down_keys(vec![KeyPress::ModifierCtrl, key])
     }
+
+    ///
+    /// Creates a ctrl+alt+key binding
+    ///
+    pub fn ctrl_alt(key: KeyPress) -> KeyBinding {
+        Self::hold_down_keys(vec![KeyPress::ModifierCtrl, KeyPress::ModifierAlt, key])
+    }
+
+    ///
+    /// Creates a ctrl+shift+key binding
+    ///
+    pub fn ctrl_shift(key: KeyPress) -> KeyBinding {
+        Self::hold_down_keys(vec![KeyPress::ModifierCtrl, KeyPress::ModifierShift, key])
+    }
+
+    ///
+    /// Creates a ctrl+alt+shift+key binding
+    ///
+    pub fn ctrl_alt_shift(key: KeyPress) -> KeyBinding {
+        Self::hold_down_keys(vec![KeyPress::ModifierCtrl, KeyPress::ModifierAlt, KeyPress::ModifierShift, key])
+    }
+
+    ///
+    /// Creates a meta+key binding
+    ///
+    pub fn meta(key: KeyPress) -> KeyBinding {
+        Self::hold_down_keys(vec![KeyPress::ModifierMeta, key])
+    }
+
+    ///
+    /// Creates a meta+alt+key binding
+    ///
+    pub fn meta_alt(key: KeyPress) -> KeyBinding {
+        Self::hold_down_keys(vec![KeyPress::ModifierMeta, KeyPress::ModifierAlt, key])
+    }
+
+    ///
+    /// Creates a meta+shift+key binding
+    ///
+    pub fn meta_shift(key: KeyPress) -> KeyBinding {
+        Self::hold_down_keys(vec![KeyPress::ModifierMeta, KeyPress::ModifierShift, key])
+    }
+
+    ///
+    /// Creates a meta+alt+shift+key binding
+    ///
+    pub fn meta_alt_shift(key: KeyPress) -> KeyBinding {
+        Self::hold_down_keys(vec![KeyPress::ModifierMeta, KeyPress::ModifierAlt, KeyPress::ModifierShift, key])
+    }
+
 }
 
 impl Hash for KeyBinding {
