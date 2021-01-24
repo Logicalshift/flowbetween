@@ -338,6 +338,12 @@ impl<'a> Modifier<Control> for (ActionTrigger, &'a str) {
     }
 }
 
+impl Modifier<Control> for (KeyBinding, Command) {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(BindKey(self.0, self.1))
+    }
+}
+
 impl Modifier<Control> for Vec<ControlAttribute> {
     fn modify(self, control: &mut Control) {
         for attr in self.into_iter() {
