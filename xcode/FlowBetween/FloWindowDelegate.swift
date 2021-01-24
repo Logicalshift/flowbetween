@@ -10,6 +10,26 @@ import Foundation
 import Cocoa
 
 class FloWindow : NSWindow {
+    ///
+    /// The user has pressed a key
+    ///
+    override func keyDown(with event: NSEvent) {
+        NSLog("Keydown: \(event)");
+    }
+    
+    ///
+    /// The user has released a key
+    ///
+    override func keyUp(with event: NSEvent) {
+        NSLog("Keyup: \(event)");
+    }
+    
+    ///
+    /// The modifier flags have changed
+    ///
+    override func flagsChanged(with event: NSEvent) {
+        NSLog("Flags changed: \(event)");
+    }
 }
 
 ///
