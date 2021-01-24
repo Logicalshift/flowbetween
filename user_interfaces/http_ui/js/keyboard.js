@@ -110,16 +110,29 @@ let flo_keyboard = (function () {
     /// The set of registered keypress event handlers
     let keypress_event_handlers = [];
 
+    ///
+    /// Returns true if the specified node is editable
+    ///
+    let is_editable = (node) => {
+        if (!node) { return false; }
+
+        return node.isContentEditable
+            || (node.nodeName.toLowerCase() === 'input'
+                && (   node.type === 'text'
+                    || node.type === 'email'
+                    || node.type === 'number'
+                    || node.type === 'search'
+                    || node.type === 'tel'
+                    || node.type === 'url'
+                    || node.type === 'password'));
+    };
+
     /// 
     /// Returns true if the user is currently editing text (so we shouldn't generate modifier-less key presses)
     ///
     let is_editing_text = (key_event) => {
-        // TODO!
-        console.log(key_event, document.activeElement);
-        console.log(key_event.target.isContentEditable);
-
-        return false;
-    }
+        return is_editable(key_event.target) || is_editable(document.activeElement);
+    };
 
     ///
     /// When the user presses a key, we add it to the list of 'down' keys and send the complete set to the session
@@ -154,7 +167,7 @@ let flo_keyboard = (function () {
 
         // Send the event to any attached handlers
         keypress_event_handlers.forEach(event_handler => {
-            event_handler(down_keys)
+            event_handler(down_keys);
         });
     };
 
@@ -182,7 +195,7 @@ let flo_keyboard = (function () {
     // If a keypress results in the window losing focus we can miss the 'up' event (eg, 'tab' is particularly bad at this)
     let handle_focus = () => {
         down_keys = [];
-    }
+    };
 
     // Attaches an event handler to fire when the user presses a key
     let on_key_press = (event_handler) => {
