@@ -24,6 +24,13 @@ impl KeyBinding {
             keys: keys.into_iter().map(|key| key.into()).collect::<HashSet<KeyPress>>() 
         }
     }
+
+    ///
+    /// Creates a CTRL+key binding
+    ///
+    pub fn ctrl(key: KeyPress) -> KeyBinding {
+        Self::hold_down_keys(vec![KeyPress::ModifierCtrl, key])
+    }
 }
 
 impl Hash for KeyBinding {
