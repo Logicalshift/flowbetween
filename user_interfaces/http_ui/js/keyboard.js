@@ -15,7 +15,17 @@ let flo_keyboard = (function () {
 
     // Maps key codes to the JSON needed by a FlowBetween session
     let code_map = {
-        // Modifier(ModifierKey),
+        'ShiftLeft':        'ModifierShift',
+        'ControlLeft':      'ModifierCtrl',
+        'AltLeft':          'ModifierAlt',
+        'MetaLeft':         'ModifierMeta',
+        'OSLeft':           'ModifierMeta',
+
+        'ShiftRight':       'ModifierShift',
+        'ControlRight':     'ModifierCtrl',
+        'AltRight':         'ModifierAlt',
+        'MetaRight':        'ModifierMeta',
+        'OSRight':          'ModifierMeta',
 
         'Tab':              'KeyTab',
 
