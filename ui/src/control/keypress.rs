@@ -63,6 +63,7 @@ pub enum KeyPress {
     KeyMinus,
     KeyEquals,
 
+    KeyEscape,
     KeyInsert,
     KeyHome,
     KeyPgUp,
@@ -70,6 +71,7 @@ pub enum KeyPress {
     KeyEnd,
     KeyPgDown,
     KeyBackspace,
+    KeyEnter,
 
     KeyF1,
     KeyF2,
