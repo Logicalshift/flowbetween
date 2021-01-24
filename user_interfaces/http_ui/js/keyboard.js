@@ -112,6 +112,13 @@ let flo_keyboard = (function () {
     let on_key_down = key_event => {
         let keycode = to_flo_keycode(key_event);
         if (keycode) {
+            // If the meta key is pressed, then remove all keypresses except the modifier key and the rightmost
+            // (Cmd+C on OS X will miss the 'C' key being released)
+            if (down_keys.includes('ModifierMeta')) {
+                down_keys = down_keys.filter(key => key.startsWith('Modifier'));
+            }
+
+            // Add the key to the list of keys that are currently pressed
             if (!down_keys.includes(keycode)) {
                 down_keys.push(keycode);
 
@@ -121,15 +128,20 @@ let flo_keyboard = (function () {
     };
 
     /// When the user releases a key, we just remove it from the list of 'down' keys
-    /// TODO: cmd+C in Chrome on OS X does not result in an event for the release of the 'C' key
     let on_key_up = key_event => {
         let keycode = to_flo_keycode(key_event);
         if (keycode) {
+            // Remove the key from the list that of keys that are currently pressed
             let down_index = down_keys.indexOf(keycode);
             if (down_index > -1) {
                 down_keys.splice(down_index, 1);
 
                 console.log("Down_keys", down_keys);
+            }
+
+            // Modifier keys cause 'key up' events to go missing on OS X, so always assume releasing a modifier key releases the other keys
+            if (keycode === 'ModifierMeta') {
+                down_keys = [];
             }
         }
     };
