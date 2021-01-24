@@ -121,6 +121,7 @@ let flo_keyboard = (function () {
     };
 
     /// When the user releases a key, we just remove it from the list of 'down' keys
+    /// TODO: cmd+C in Chrome on OS X does not result in an event for the release of the 'C' key
     let on_key_up = key_event => {
         let keycode = to_flo_keycode(key_event);
         if (keycode) {
