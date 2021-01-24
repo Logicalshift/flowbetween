@@ -9,15 +9,142 @@
 import Foundation
 import Cocoa
 
+import Carbon.HIToolbox
+
 class FloWindow : NSWindow {
+    ///
+    /// Returns the key code string for a key down or key up event
+    ///
+    func keyCodeForEvent(_ keys: String, keyCode: UInt16, modifierFlags: NSEvent.ModifierFlags) -> String? {
+        if keys.count == 1 {
+            // Keys will respect the keyboard layout, so we use it where we can
+            // (Unfortunately, it also respects the effect of 'shift', which we don't want for some keys)
+            switch keys {
+            case "a", "A":  return "KeyA";
+            case "b", "B":  return "KeyB";
+            case "c", "C":  return "KeyC";
+            case "d", "D":  return "KeyD";
+            case "e", "E":  return "KeyE";
+            case "f", "F":  return "KeyF";
+            case "g", "G":  return "KeyG";
+            case "h", "H":  return "KeyH";
+            case "i", "I":  return "KeyI";
+            case "j", "J":  return "KeyJ";
+            case "k", "K":  return "KeyK";
+            case "l", "L":  return "KeyL";
+            case "m", "M":  return "KeyM";
+            case "n", "N":  return "KeyN";
+            case "o", "O":  return "KeyO";
+            case "p", "P":  return "KeyP";
+            case "q", "Q":  return "KeyQ";
+            case "r", "R":  return "KeyR";
+            case "s", "S":  return "KeyS";
+            case "t", "T":  return "KeyT";
+            case "u", "U":  return "KeyU";
+            case "v", "V":  return "KeyV";
+            case "w", "W":  return "KeyW";
+            case "x", "X":  return "KeyX";
+            case "y", "Y":  return "KeyY";
+            case "z", "Z":  return "KeyZ";
+            
+            default:        break;
+            }
+            
+            // Keycodes originate in Carbon (we need to use these as 'charactersIgnoringModifiers' is a misnomer and doesn't ignore shift)
+            switch Int(keyCode) {
+            case kVK_Tab:                   return "KeyTab";
+            
+            case kVK_ANSI_0:                return "Key0";
+            case kVK_ANSI_1:                return "Key1";
+            case kVK_ANSI_2:                return "Key2";
+            case kVK_ANSI_3:                return "Key3";
+            case kVK_ANSI_4:                return "Key4";
+            case kVK_ANSI_5:                return "Key5";
+            case kVK_ANSI_6:                return "Key6";
+            case kVK_ANSI_7:                return "Key7";
+            case kVK_ANSI_8:                return "Key8";
+            case kVK_ANSI_9:                return "Key9";
+                
+            case kVK_UpArrow:               return "KeyUp";
+            case kVK_DownArrow:             return "KeyDown";
+            case kVK_LeftArrow:             return "KeyLeft";
+            case kVK_RightArrow:            return "KeyRight";
+                
+            case kVK_ANSI_Backslash:        return "KeyBackslash";
+            case kVK_ANSI_Slash:            return "KeyForwardslash";
+            case kVK_ANSI_Grave:            return "KeyBacktick";
+            case kVK_ANSI_Comma:            return "KeyComma";
+            case kVK_ANSI_Period:           return "KeyFullstop";
+            case kVK_ANSI_Semicolon:        return "KeySemicolon";
+            case kVK_ANSI_Quote:            return "KeyQuote";
+            case kVK_ANSI_Minus:            return "KeyMinus";
+            case kVK_ANSI_Equal:            return "KeyEquals";
+                
+            case kVK_Escape:                return "KeyEscape";
+            /* case kVK_Insert:             return "KeyInsert"; */
+            case kVK_Home:                  return "KeyHome";
+            case kVK_PageUp:                return "KeyPgUp";
+            case kVK_PageDown:              return "KeyPgDown";
+            case kVK_ForwardDelete:         return "KeyDelete";
+            case kVK_End:                   return "KeyEnd";
+            case kVK_Delete:                return "KeyBackspace";
+            case kVK_Return:                return "KeyEnter";
+                
+            case kVK_F1:                    return "KeyF1";
+            case kVK_F2:                    return "KeyF2";
+            case kVK_F3:                    return "KeyF3";
+            case kVK_F4:                    return "KeyF4";
+            case kVK_F5:                    return "KeyF5";
+            case kVK_F6:                    return "KeyF6";
+            case kVK_F7:                    return "KeyF7";
+            case kVK_F8:                    return "KeyF8";
+            case kVK_F9:                    return "KeyF9";
+            case kVK_F10:                   return "KeyF10";
+            case kVK_F11:                   return "KeyF11";
+            case kVK_F12:                   return "KeyF12";
+            case kVK_F13:                   return "KeyF13";
+            case kVK_F14:                   return "KeyF14";
+            case kVK_F15:                   return "KeyF15";
+            case kVK_F16:                   return "KeyF16";
+                
+            case kVK_ANSI_Keypad0:          return "KeyNumpad0";
+            case kVK_ANSI_Keypad1:          return "KeyNumpad1";
+            case kVK_ANSI_Keypad2:          return "KeyNumpad2";
+            case kVK_ANSI_Keypad3:          return "KeyNumpad3";
+            case kVK_ANSI_Keypad4:          return "KeyNumpad4";
+            case kVK_ANSI_Keypad5:          return "KeyNumpad5";
+            case kVK_ANSI_Keypad6:          return "KeyNumpad6";
+            case kVK_ANSI_Keypad7:          return "KeyNumpad7";
+            case kVK_ANSI_Keypad8:          return "KeyNumpad8";
+            case kVK_ANSI_Keypad9:          return "KeyNumpad9";
+            case kVK_ANSI_KeypadDivide:     return "KeyNumpadDivide";
+            case kVK_ANSI_KeypadMultiply:   return "KeyNumpadMultiply";
+            case kVK_ANSI_KeypadMinus:      return "KeyNumpadMinus";
+            case kVK_ANSI_KeypadPlus:       return "KeyNumpadAdd";
+            case kVK_ANSI_KeypadEnter:      return "KeyNumpadEnter";
+            case kVK_ANSI_KeypadDecimal:    return "KeyNumpadDecimal";
+
+            default: break;
+            }
+            
+            // Failed to match any key event
+            return nil;
+        } else {
+            return nil;
+        }
+    }
+    
     ///
     /// The user has pressed a key
     ///
     override func keyDown(with event: NSEvent) {
         if let window_delegate = self.delegate as? FloWindowDelegate {
-            window_delegate.keyDown("KeyA");
+            if let key_code = self.keyCodeForEvent(event.charactersIgnoringModifiers!, keyCode: event.keyCode, modifierFlags: event.modifierFlags) {
+                window_delegate.keyDown(key_code);
+                
+                NSLog("Keydown: \(key_code) \(event.keyCode) \(event.characters)")
+            }
         }
-        NSLog("Keydown: \(event)");
     }
     
     ///
@@ -25,9 +152,12 @@ class FloWindow : NSWindow {
     ///
     override func keyUp(with event: NSEvent) {
         if let window_delegate = self.delegate as? FloWindowDelegate {
-            window_delegate.keyUp("KeyA");
+            if let key_code = self.keyCodeForEvent(event.charactersIgnoringModifiers!, keyCode: event.keyCode, modifierFlags: event.modifierFlags) {
+                window_delegate.keyUp(key_code);
+                
+                NSLog("Keyup: \(key_code)")
+            }
         }
-        NSLog("Keyup: \(event)");
     }
     
     ///
