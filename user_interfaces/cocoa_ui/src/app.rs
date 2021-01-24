@@ -7,6 +7,7 @@ use cocoa::base::*;
 
 use std::sync::*;
 use std::collections::HashMap;
+use std::ffi::{CStr};
 
 lazy_static! {
     /// The FloControl objective-C class
@@ -30,6 +31,17 @@ fn declare_flo_control_class() -> &'static Class {
     let mut flo_control = ClassDecl::new("FloControl", class!(NSObject)).unwrap();
 
     unsafe {
+        ///
+        /// Converts a NSString name into a rust string
+        ///
+        unsafe fn name_for_name(name: &mut Object) -> String {
+            let utf8 = msg_send!(name, UTF8String);
+            let utf8 = CStr::from_ptr(utf8);
+            utf8.to_str()
+                .map(|utf8| utf8.to_string())
+                .unwrap_or_else(|err| format!("<to_str: {}>", err))
+        }
+
         /// Creating a new instance of the class initializes the session
         extern fn init_flo_control(this: &Object, _cmd: Sel) -> *mut Object {
             unsafe {
@@ -129,6 +141,38 @@ fn declare_flo_control_class() -> &'static Class {
             }
         }
 
+        /// Sends a key down event to the session
+        extern fn key_down(this: &mut Object, _cmd: Sel, key_name: *mut Object) {
+            unsafe {
+                // Send a tick to the session
+                let session_id  = this.get_ivar("_sessionId");
+                let session     = FLO_SESSIONS.lock().unwrap().get(&session_id).cloned();
+                let key_name    = name_for_name(&mut *key_name);
+
+                if let Some(session) = session {
+                    let mut session = session.lock().unwrap();
+
+                    session.key_down(key_name);
+                }
+            }
+        }
+
+        /// Sends a key down event to the session
+        extern fn key_up(this: &mut Object, _cmd: Sel, key_name: *mut Object) {
+            unsafe {
+                // Send a tick to the session
+                let session_id  = this.get_ivar("_sessionId");
+                let session     = FLO_SESSIONS.lock().unwrap().get(&session_id).cloned();
+                let key_name    = name_for_name(&mut *key_name);
+
+                if let Some(session) = session {
+                    let mut session = session.lock().unwrap();
+
+                    session.key_up(key_name);
+                }
+            }
+        }
+
         // Class contains a session ID we can use to look up the main session
         flo_control.add_ivar::<usize>("_sessionId");
 
@@ -146,6 +190,8 @@ fn declare_flo_control_class() -> &'static Class {
         flo_control.add_method(sel!(actionStreamReady), action_stream_ready as extern fn(&mut Object, Sel));
         flo_control.add_method(sel!(tick), tick as extern fn(&mut Object, Sel));
         flo_control.add_method(sel!(sessionId), get_session_id as extern fn(&mut Object, Sel) -> u64);
+        flo_control.add_method(sel!(keyDown:), key_down as extern fn(&mut Object, Sel, *mut Object));
+        flo_control.add_method(sel!(keyUp:), key_up as extern fn(&mut Object, Sel, *mut Object));
     }
 
     // Seal and register it

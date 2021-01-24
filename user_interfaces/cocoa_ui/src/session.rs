@@ -652,6 +652,24 @@ impl CocoaSession {
     }
 
     ///
+    /// Sends a key down event
+    ///
+    pub fn key_down(&mut self, key: String) {
+        let _ = self.events.future_desync(move |events| {
+            events.publish(vec![AppEvent::KeyDown(key)])
+        });
+    }
+
+    ///
+    /// Sends a key up event
+    ///
+    pub fn key_up(&mut self, key: String) {
+        let _ = self.events.future_desync(move |events| {
+            events.publish(vec![AppEvent::KeyUp(key)])
+        });
+    }
+
+    ///
     /// Requests an event for a particular view with the specified name
     ///
     fn request_view_event(&mut self, view_id: usize, event_type: ViewEvent, name: String) {
