@@ -6,8 +6,10 @@ use super::canvas_model::*;
 use flo_ui::*;
 use flo_ui::session::*;
 
+use serde_json;
+
 use std::sync::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 ///
 /// Stores information about the current state of a Cocoa application
@@ -30,6 +32,9 @@ pub struct AppState {
 
     /// Maps view IDs to addresses
     address_for_view: HashMap<usize, Vec<Arc<String>>>,
+
+    /// The currently pressed set of keys
+    key_presses: HashSet<KeyPress>,
 
     /// Maps view IDs to addresses for 'active' views
     ///
@@ -63,6 +68,7 @@ impl AppState {
             view_model_properties:      HashMap::new(),
             address_for_view:           HashMap::new(),
             address_for_active_views:   HashMap::new(),
+            key_presses:                HashSet::new(),
             next_view_id:               0,
             next_viewmodel_id:          0,
             next_property_id:           0
@@ -117,7 +123,34 @@ impl AppState {
             PaintStart(view_id, name, device, painting)         => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Start)]))],
             PaintContinue(view_id, name, device, painting)      => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Continue)]))],
             PaintFinish(view_id, name, device, painting)        => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Finish)]))],
-            PaintCancel(view_id, name, device, painting)        => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Cancel)]))]
+            PaintCancel(view_id, name, device, painting)        => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Cancel)]))],
+
+            KeyDown(key_name)                                   => {
+                // Decode the keypress
+                let key_press = serde_json::from_str(&key_name);
+                if let Ok(key_press) = key_press {
+                    // Update the set of keys that are currently held down
+                    self.key_presses.insert(key_press);
+                }
+
+                // Send a keypress event to the session
+                if self.key_presses.len() > 0 {
+                    vec![UiEvent::KeyPress(KeyBinding::hold_down_keys(self.key_presses.iter().cloned()))]
+                } else {
+                    vec![]
+                }
+            },
+
+            KeyUp(key_name)                                     => {
+                // Decode the keypress
+                let key_press = serde_json::from_str(&key_name);
+                if let Ok(key_press) = key_press {
+                    // Update the set of keys that are currently held down
+                    self.key_presses.remove(&key_press);
+                }
+
+                vec![]
+            }
         }
     }
 

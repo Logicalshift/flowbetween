@@ -1198,6 +1198,8 @@ dependencies = [
  "num-derive",
  "num-traits",
  "objc",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

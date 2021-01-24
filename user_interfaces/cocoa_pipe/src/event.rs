@@ -62,6 +62,12 @@ pub enum AppEvent {
     /// User has focused a view
     Focus(usize, String),
 
+    /// A key has been pressed
+    KeyDown(String),
+    
+    /// A key has been released
+    KeyUp(String),
+
     /// User is editing a view
     EditValue(usize, String, EditAction, PropertyValue),
 
