@@ -167,7 +167,7 @@ let flo_keyboard = (function () {
 
         // Send the event to any attached handlers
         keypress_event_handlers.forEach(event_handler => {
-            event_handler(down_keys);
+            event_handler(down_keys.slice());
         });
     };
 

@@ -2386,6 +2386,12 @@ function flowbetween(root_node) {
         passive: true
     });
 
+    // Send uncaptured keyboard events
+    flo_keyboard.on_key_press((keys) => {
+        let request = make_request([ make_event({ KeyPress: keys })], running_session_id);
+        send_request(request);
+    });
+
     // Prepare for painting
     flo_paint.initialise(add_action_event, perform_action);
 
