@@ -116,6 +116,7 @@ let flo_keyboard = (function () {
     let is_editing_text = (key_event) => {
         // TODO!
         console.log(key_event, document.activeElement);
+        console.log(key_event.target.isContentEditable);
 
         return false;
     }
@@ -126,6 +127,7 @@ let flo_keyboard = (function () {
     /// If no modifier keys are down (except Shift), then we don't send the keypress if any controls have focus
     ///
     let handle_key_down = key_event => {
+        // Add the keycode to the list of 'down' keys
         let keycode = to_flo_keycode(key_event);
         if (keycode) {
             // If the meta key is pressed, then remove all keypresses except the modifier key and the rightmost
@@ -139,6 +141,21 @@ let flo_keyboard = (function () {
                 down_keys.push(keycode);
             }
         }
+
+        // No event if there are no keys registered as 'down'
+        if (down_keys.length == 0) {
+            return;
+        }
+
+        // Events are not generated if the user is entering text
+        if (is_editing_text(key_event) && !key_event.altKey && !key_event.ctrlKey && !key_event.metaKey) {
+            return;
+        }
+
+        // Send the event to any attached handlers
+        keypress_event_handlers.forEach(event_handler => {
+            event_handler(down_keys)
+        });
     };
 
     ///
@@ -162,29 +179,6 @@ let flo_keyboard = (function () {
         }
     };
 
-    ///
-    /// Key press events are generated when the keypress is not captured (eg, when the user invokes a shortcut that's
-    /// in use by the browser)
-    ///
-    /// Some keys are still not allowed when the user is editing text
-    ///
-    let handle_key_press = key_event => {
-        // No event if there are no keys registered as 'down'
-        if (down_keys.length == 0) {
-            return;
-        }
-
-        // Events are not generated if the user is entering text
-        if (is_editing_text(key_event) && !key_event.altKey && !key_event.ctrlKey && !key_event.metaKey) {
-            return;
-        }
-
-        // Send the event to any attached handlers
-        keypress_event_handlers.forEach(event_handler => {
-            event_handler(down_keys)
-        });
-    };
-
     // If a keypress results in the window losing focus we can miss the 'up' event (eg, 'tab' is particularly bad at this)
     let handle_focus = () => {
         down_keys = [];
@@ -196,10 +190,9 @@ let flo_keyboard = (function () {
     };
 
     // Add key listeners to the window
-    window.addEventListener('keydown', handle_key_down);
-    window.addEventListener('keyup', handle_key_up);
-    window.addEventListener('keypress', handle_key_press);
-    window.addEventListener('focus', handle_focus);
+    window.addEventListener('keydown',  handle_key_down);
+    window.addEventListener('keyup',    handle_key_up);
+    window.addEventListener('focus',    handle_focus);
 
     return {
         on_key_press: on_key_press
