@@ -133,7 +133,6 @@ where TOutput: 'static+Send+Clone {
     }
 }
 
-
 impl<'a, TOutput> task::ArcWake for SharedFutureWaker<'a, TOutput>
 where TOutput: Send {
     fn wake_by_ref(arc_self: &Arc<Self>) {
