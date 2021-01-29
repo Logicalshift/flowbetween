@@ -175,7 +175,7 @@ impl Transformation {
     /// Computes the determinant of a 2x2 matrix
     ///
     fn det2(matrix: &[[f64; 2]; 2]) -> f64 {
-        matrix[0][0]*matrix[1][1] + matrix[0][1]*matrix[1][0]
+        matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0]
     }
 
     ///
