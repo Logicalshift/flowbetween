@@ -518,4 +518,42 @@ mod test {
     fn fold_translation() {
         assert!(Transformation::Translate(3.0, 4.0).fold(&Transformation::Translate(5.0, 6.0)) == Some(Transformation::Translate(8.0, 10.0)));
     }
+
+    #[test]
+    pub fn apply_translate() {
+        let translate       = Transformation::Translate(200.0, 300.0).to_matrix().unwrap();
+
+        let Coord2(x, y)    = translate.transform_point(&Coord2(20.0, 30.0));
+        assert!((x-220.0).abs() < 0.01);
+        assert!((y-330.0).abs() < 0.01);
+    }
+
+    #[test]
+    pub fn invert_translate() {
+        let translate       = Transformation::Translate(200.0, 300.0).to_matrix().unwrap();
+        let inverse         = translate.invert().unwrap();
+
+        let Coord2(x, y)    = inverse.transform_point(&Coord2(220.0, 330.0));
+        assert!((y-30.0).abs() < 0.01);
+        assert!((x-20.0).abs() < 0.01);
+    }
+
+    #[test]
+    pub fn apply_scale() {
+        let scale           = Transformation::Scale(2.0, 3.0, (0.0, 0.0)).to_matrix().unwrap();
+
+        let Coord2(x, y)    = scale.transform_point(&Coord2(20.0, 30.0));
+        assert!((x-40.0).abs() < 0.01);
+        assert!((y-90.0).abs() < 0.01);
+    }
+
+    #[test]
+    pub fn invert_scale() {
+        let scale           = Transformation::Scale(2.0, 3.0, (0.0, 0.0)).to_matrix().unwrap();
+        let inverse         = scale.invert().unwrap();
+
+        let Coord2(x, y)    = inverse.transform_point(&Coord2(40.0, 90.0));
+        assert!((y-30.0).abs() < 0.01);
+        assert!((x-20.0).abs() < 0.01);
+    }
 }
