@@ -872,6 +872,7 @@ public class FloView : NSObject, FloViewDelegate {
         layer.backgroundColor       = CGColor.clear
         layer.frame                 = CGRect(size: initialSize)
         layer.drawsAsynchronously   = false
+        layer.isOpaque              = false
         layer.setNeedsDisplay()
 
         // Reset the layer size whe
