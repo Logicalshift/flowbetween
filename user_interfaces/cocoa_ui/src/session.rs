@@ -573,20 +573,13 @@ impl CocoaSession {
 
                 // Update the view transform
                 let view                        = views.get(&view_id);
-
                 let active_transform            = gpu_canvas.canvas_renderer.get_window_transform();
-
-                // OS X uses flipped coordinates
-                let flip_window                 = Transform2D::scale(1.0, -1.0) * Transform2D::translate(0.0, -window_height);
 
                 // The coordinates are in canvas coordinates and we want them with the DPI scaling factor included
                 let scale                       = Transform2D::scale(1.0/scale, 1.0/scale);
 
-                // When using a canvas layer, there's some code to convert to/from the viewport
-                let translate                   = Transform2D::translate(-viewport_x, -(window_height-(viewport_y+viewport_height)));
-
                 // Invert to get the transformation from canvas coordinates to window coordinates
-                let active_transform            = scale*translate*flip_window*active_transform;
+                let active_transform            = scale*active_transform;
 
                 // Convert to a CGAffineTransform
                 let Transform2D([
