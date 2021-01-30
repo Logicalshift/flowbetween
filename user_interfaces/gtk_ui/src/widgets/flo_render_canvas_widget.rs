@@ -251,16 +251,6 @@ impl FloRenderWidgetCore {
     ///
     fn update_widget_transform(&self, height: f32) {
         let active_transform            = self.canvas_renderer.get_window_transform();
-        let (viewport_x, viewport_y)    = self.canvas_renderer.get_viewport();
-
-        // GTK uses flipped coordinates
-        let flip_window                 = Transform2D::scale(1.0, -1.0) * Transform2D::translate(0.0, -height);
-
-        // The coordinates are relative to the GL area, which has a fixed viewport
-        let add_viewport                = Transform2D::translate(viewport_x.start/self.scale, -viewport_y.start/self.scale);
-
-        // Invert to get the transformation from canvas coordinates to window coordinates
-        let active_transform            = (flip_window*add_viewport*active_transform).invert().unwrap();
 
         // Flip the inverted transform and convert the matrix to the format used by Gtk
         let Transform2D([a, b, _c])     = active_transform;
