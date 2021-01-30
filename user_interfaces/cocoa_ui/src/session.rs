@@ -574,7 +574,7 @@ impl CocoaSession {
                 // Update the view transform
                 let view                        = views.get(&view_id);
 
-                let active_transform            = gpu_canvas.canvas_renderer.get_active_transform();
+                let active_transform            = gpu_canvas.canvas_renderer.get_window_transform();
                 let (viewport_x, viewport_y)    = gpu_canvas.canvas_renderer.get_viewport();
 
                 // OS X uses flipped coordinates

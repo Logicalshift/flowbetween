@@ -250,7 +250,7 @@ impl FloRenderWidgetCore {
     /// Updates the widget transform from the active transform for the renderer
     ///
     fn update_widget_transform(&self, height: f32) {
-        let active_transform            = self.canvas_renderer.get_active_transform();
+        let active_transform            = self.canvas_renderer.get_window_transform();
         let (viewport_x, viewport_y)    = self.canvas_renderer.get_viewport();
 
         // GTK uses flipped coordinates
