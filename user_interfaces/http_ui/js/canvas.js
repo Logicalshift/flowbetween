@@ -620,7 +620,7 @@ let flo_canvas = (function() {
                 blend_for_layer[layer_id] = blend_mode;
             },
 
-            clear_canvas: () => {
+            clear_canvas: (r, g, b, a) => {
                 // Clear layers
                 layer_canvases      = null;
                 context             = canvas.getContext('2d');
@@ -632,6 +632,9 @@ let flo_canvas = (function() {
                 context.setTransform(1,0, 0,1, 0,0);
                 context.resetTransform();
                 context.clearRect(0, 0, canvas.width, canvas.height);
+
+                context.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+                context.fillRect(0, 0, canvas.width, canvas.height);
 
                 // Reset the transformation and state
                 current_path    = [];
@@ -809,7 +812,7 @@ let flo_canvas = (function() {
             pop_state:                      ()                          => { current_sprite.push([pop_state, []]); },
             layer_blend:                    (blend_mode)                => { current_sprite.push([layer_blend, [blend_mode]]); },
             clear_layer:                    ()                          => { current_sprite.push([clear_layer, []]); },
-            clear_canvas:                   ()                          => { current_sprite.push([clear_canvas, []]); },
+            clear_canvas:                   (r, g, b, a)                => { current_sprite.push([clear_canvas, [r, g, b, a]]); },
             draw_sprite:                    (sprite_id)                 => { current_sprite.push([draw_sprite, [sprite_id]]); },
             sprite_transform_identity:      ()                          => { current_sprite.push([sprite_transform_identity, []]); },
             sprite_transform_translate:     (x, y)                      => { current_sprite.push([sprite_transform_translate, [x, y]]); },
@@ -858,7 +861,7 @@ let flo_canvas = (function() {
         function layer(layer_id)                        { render.layer(layer_id); }
         function layer_blend(blend_mode)                { render.layer_blend(blend_mode); }
         function clear_layer()                          { render.clear_layer(); }
-        function clear_canvas()                         { render.clear_canvas(); }
+        function clear_canvas(r, g, b, a)               { render.clear_canvas(r, g, b, a); }
         function sprite(sprite_id)                      { render.sprite(sprite_id); }
         function clear_sprite()                         { render.clear_sprite(); }
         function draw_sprite(sprite_id)                 { render.draw_sprite(sprite_id); }
@@ -869,7 +872,7 @@ let flo_canvas = (function() {
         function sprite_transform_matrix(matrix)        { render.sprite_transform_matrix(matrix); }        
 
         // The replay log will replay the actions that draw this canvas (for example when resizing)
-        let replay  = [ [ clear_canvas, [] ] ];
+        let replay  = [ [ clear_canvas, [0, 0, 0, 0] ] ];
 
         return {
             new_path:           ()              => { replay.push([new_path, [], current_layer_id]);                         render.new_path();                     },
@@ -904,7 +907,7 @@ let flo_canvas = (function() {
             layer:              (layer_id)      => { replay.push([layer, [layer_id], layer]);                               render.layer(layer_id);                },
             layer_blend:        (layer_id, blend_mode) => { replay.push([layer_blend, [layer_id, blend_mode], -1]);         render.layer_blend(layer_id, blend_mode); },
             clear_layer:        ()              => { replay.push([clear_layer, [], current_layer_id]);                      render.clear_layer();                  },
-            clear_canvas:       ()              => { replay = [ [clear_canvas, [], current_layer_id] ];                     render.clear_canvas();                 },
+            clear_canvas:       (r, g, b, a)    => { replay = [ [clear_canvas, [r, g, b, a], current_layer_id] ];           render.clear_canvas(r, g, b, a);       },
             sprite:             (sprite_id)     => { replay = [ [sprite, [sprite_id], current_layer_id] ];                  render.sprite(sprite_id);              },
             clear_sprite:       ()              => { replay = [ [clear_sprite, [], current_layer_id] ];                     render.clear_sprite();                 },
             draw_sprite:        (sprite_id)     => { replay = [ [draw_sprite, [sprite_id], current_layer_id] ];             render.draw_sprite(sprite_id);         },
@@ -1066,11 +1069,16 @@ let flo_canvas = (function() {
             let decode_new = () => {
                 switch (read_char()) {
                 case 'p':   draw.new_path();        break;
-                case 'A':   draw.clear_canvas();    break;
                 case 'l':   draw.layer(read_u32()); break;
                 case 'b':   draw.layer_blend(read_u32(), decode_blend_mode()); break;
                 case 'C':   draw.clear_layer();     break;
                 case 's':   draw.sprite(read_sprite_id()); break;
+
+                case 'A':   {
+                        let background = read_rgba();
+                        draw.clear_canvas(background[0], background[1], background[2], background[3]);
+                        break;
+                    }
                 }
             };
 
