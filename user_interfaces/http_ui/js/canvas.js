@@ -633,6 +633,10 @@ let flo_canvas = (function() {
                 context.resetTransform();
                 context.clearRect(0, 0, canvas.width, canvas.height);
 
+                r = Math.floor(r*255.0);
+                g = Math.floor(g*255.0);
+                b = Math.floor(b*255.0);
+
                 context.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
                 context.fillRect(0, 0, canvas.width, canvas.height);
 
