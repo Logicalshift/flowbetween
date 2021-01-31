@@ -208,7 +208,7 @@ impl QuartzContext {
                     self.state.set_transform(transform);
                 }
 
-                ClearCanvas                                         => {
+                ClearCanvas(_bg_col)                                => {
                     self.reset_state();
 
                     /* Layers need to be implemented elsewhere */

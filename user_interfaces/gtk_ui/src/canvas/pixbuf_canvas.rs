@@ -129,7 +129,7 @@ impl PixBufCanvas {
     ///
     pub fn draw(&mut self, action: Draw) {
         match action {
-            Draw::ClearCanvas => {
+            Draw::ClearCanvas(_bg_col) => {
                 // Clearing the canvas clears all the layers and resets us to layer 0
                 self.layers.clear();
                 self.saved_state    = None;

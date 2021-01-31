@@ -204,7 +204,7 @@ impl GtkUiWidget for FloRenderCanvasWidget {
 
                 // Clear the entire list of things to render if there's a ClearCanvas anywhere in the drawing
                 for draw in drawing.iter() {
-                    if let Draw::ClearCanvas = draw {
+                    if let Draw::ClearCanvas(_) = draw {
                         core.waiting_to_render = vec![];
                     }
                 }
@@ -234,7 +234,7 @@ impl FloRenderWidgetCore {
     /// Creates a new render widget core
     ///
     pub fn new(widget_id: WidgetId, data: Rc<WidgetData>) -> FloRenderWidgetCore {
-        let default_render = vec![Draw::ClearCanvas];
+        let default_render = vec![Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))];
 
         FloRenderWidgetCore {
             renderer:           None,

@@ -123,7 +123,7 @@ impl ViewCanvas {
             use self::Draw::*;
 
             match action {
-                ClearCanvas => {
+                ClearCanvas(col) => {
                     unsafe {
                         // Invalidate the context and clear
                         context.to_state();
@@ -140,7 +140,7 @@ impl ViewCanvas {
                         }
 
                         // Pass the context on to the context
-                        context.draw(&Draw::ClearCanvas);
+                        context.draw(&Draw::ClearCanvas(col));
                     }
                 }
 
@@ -282,8 +282,9 @@ impl ViewCanvas {
         // Fetch the current set of drawing instructions
         let mut actions = self.canvas.get_drawing();
 
-        if actions[0] != Draw::ClearCanvas {
-            actions.insert(0, Draw::ClearCanvas);
+        match &actions[0] {
+            Draw::ClearCanvas(_)    => { }
+            _                       => { actions.insert(0, Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))); }
         }
 
         // Reset the state

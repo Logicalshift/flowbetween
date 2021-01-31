@@ -377,7 +377,7 @@ impl CairoDraw {
                 self.ctxt.set_matrix(Matrix::multiply(&center, &transform));
             },
 
-            ClearCanvas                                 |
+            ClearCanvas(_bg_col)                        |
             ClearLayer                                  => {
                 // Drain any saved states that were created
                 let ctxt = &self.ctxt;
