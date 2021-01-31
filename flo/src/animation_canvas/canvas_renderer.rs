@@ -1,4 +1,5 @@
-use super::super::model::*;
+use crate::model::*;
+use crate::style::*;
 
 use flo_ui::*;
 use flo_canvas::*;
@@ -141,7 +142,7 @@ impl CanvasRenderer {
             use self::Draw::*;
 
             match draw {
-                ClearCanvas => {
+                ClearCanvas(_bg_col) => {
                     // Clear all the layers instead
                     for layer in overlay.layers.values() {
                         gc.layer(*layer);
@@ -213,7 +214,7 @@ impl CanvasRenderer {
         self.annotated_layer = None;
 
         canvas.draw(move |gc| {
-            gc.clear_canvas();
+            gc.clear_canvas(CANVAS_BACKGROUND);
             gc.canvas_height((height*1.05) as f32);
             gc.center_region(0.0,0.0, width as f32, height as f32);
         });

@@ -30,7 +30,7 @@ impl OnionSkinRenderer {
     ///
     pub fn render(&self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, onion_skins: Vec<(OnionSkinTime, Arc<Vec<Draw>>)>, past_color: Color, future_color: Color) {
         if onion_skins.len() == 0 {
-            renderer.overlay(canvas, OVERLAY_ONIONSKINS, vec![Draw::ClearCanvas]);
+            renderer.overlay(canvas, OVERLAY_ONIONSKINS, vec![Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))]);
         } else {
             // Onion skins further away in time are less opaque
             let min_opacity     = 0.1;
@@ -38,7 +38,7 @@ impl OnionSkinRenderer {
             let opacity_step    = (max_opacity - min_opacity)/(onion_skins.len() as f64);
 
             // Generate drawing instructions for each set of onion skins, in reverse order (from least opaque to most opaque)
-            let draw_onion_skins = iter::once(Draw::ClearCanvas)
+            let draw_onion_skins = iter::once(Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0)))
                 .chain(onion_skins.into_iter()
                     .rev()
                     .enumerate()

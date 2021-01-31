@@ -89,7 +89,7 @@ impl BindingCanvasCore {
         // Draw to the canvas
         canvas.draw(|gc| {
             // We always start with a clear
-            gc.clear_canvas();
+            gc.clear_canvas(Color::Rgba(0.0, 0.0, 0.0, 0.0));
 
             // Call the drawing function in a binding context
             let (_result, deps) = BindingContext::bind(move || {

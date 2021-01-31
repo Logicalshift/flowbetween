@@ -129,7 +129,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                 self.tool_runner.set_tool(&effective_tool, tool_model);
 
                 // Clear the tool overlay
-                renderer.overlay(canvas, OVERLAY_TOOL, vec![Draw::ClearCanvas]);
+                renderer.overlay(canvas, OVERLAY_TOOL, vec![Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))]);
 
                 // Process the 'select' action for the new tool
                 self.select_active_tool(canvas, renderer);
@@ -264,7 +264,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
         // Overlay 0 is used for tool overlays
 
         match overlay {
-            OverlayAction::Clear            => renderer.overlay(canvas, OVERLAY_TOOL, vec![ Draw::ClearCanvas ]),
+            OverlayAction::Clear            => renderer.overlay(canvas, OVERLAY_TOOL, vec![ Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0)) ]),
             OverlayAction::Draw(drawing)    => renderer.overlay(canvas, OVERLAY_TOOL, drawing)
         }
     }
