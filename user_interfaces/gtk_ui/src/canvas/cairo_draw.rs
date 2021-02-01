@@ -377,7 +377,29 @@ impl CairoDraw {
                 self.ctxt.set_matrix(Matrix::multiply(&center, &transform));
             },
 
-            ClearCanvas(_bg_col)                        |
+            ClearCanvas(_bg_col)                        => {
+                // Drain any saved states that were created
+                let ctxt = &self.ctxt;
+                self.saved_states.drain(..).for_each(|_| ctxt.restore());
+
+                // Clear the surface
+                self.ctxt.reset_clip();
+                self.ctxt.set_operator(Operator::Source);
+                self.ctxt.set_source_rgba(0.0, 0.0, 0.0, 0.0);
+                self.ctxt.paint();
+
+                // Reset state
+                self.fill_color     = Color::Rgba(0.0, 0.0, 0.0, 1.0);
+                self.stroke_color   = Color::Rgba(0.0, 0.0, 0.0, 1.0);
+                self.set_color      = ColorTarget::None;
+                self.dash_pattern   = vec![];
+
+                self.ctxt.set_dash(&[], 0.0);
+                self.ctxt.set_line_width(1.0);
+                self.ctxt.set_operator(Operator::Over);
+                self.ctxt.set_matrix(self.initial_matrix);
+            }
+            
             ClearLayer                                  => {
                 // Drain any saved states that were created
                 let ctxt = &self.ctxt;
