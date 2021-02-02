@@ -1352,6 +1352,7 @@ dependencies = [
  "egl",
  "gbm-sys",
  "glutin_wgl_sys",
+ "winapi 0.3.9",
 ]
 
 [[package]]
