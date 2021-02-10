@@ -1230,6 +1230,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "flo_commands"
+version = "0.2.0"
+dependencies = [
+ "desync",
+ "flo_animation",
+ "flo_canvas",
+ "flo_curves",
+ "flo_sqlite_storage",
+ "flo_stream 0.6.1",
+ "flo_ui_files",
+ "futures",
+ "itertools",
+]
+
+[[package]]
 name = "flo_curves"
 version = "0.4.2"
 source = "git+https://github.com/Logicalshift/flo_curves#d112d55fb7fcc5d44569b58014fd541d24c07209"
@@ -1237,6 +1252,17 @@ dependencies = [
  "itertools",
  "roots",
  "smallvec",
+]
+
+[[package]]
+name = "flo_diag"
+version = "0.2.0"
+dependencies = [
+ "clap",
+ "flo_animation",
+ "flo_commands",
+ "futures",
+ "tokio",
 ]
 
 [[package]]
@@ -1459,6 +1485,8 @@ dependencies = [
  "flo_cocoa",
  "flo_cocoa_pipe",
  "flo_cocoa_ui",
+ "flo_commands",
+ "flo_diag",
  "flo_gtk_ui",
  "flo_http_ui",
  "flo_http_ui_actix",
@@ -3272,10 +3300,23 @@ dependencies = [
  "memchr",
  "mio",
  "mio-uds",
+ "num_cpus",
  "pin-project-lite 0.1.11",
  "signal-hook-registry",
  "slab",
+ "tokio-macros",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e44da00bfc73a25f814cd8d7e57a68a5c31b74b3152a0a1d1f590c97ed06265a"
+dependencies = [
+ "proc-macro2 1.0.24",
+ "quote 1.0.8",
+ "syn 1.0.60",
 ]
 
 [[package]]
