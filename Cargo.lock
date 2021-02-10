@@ -1115,7 +1115,7 @@ dependencies = [
  "flo_binding",
  "flo_canvas",
  "flo_curves",
- "flo_stream 0.6.1",
+ "flo_stream",
  "flo_ui",
  "flo_ui_files",
  "futures",
@@ -1134,7 +1134,7 @@ dependencies = [
  "flo_canvas",
  "flo_curves",
  "flo_float_encoder",
- "flo_stream 0.6.1",
+ "flo_stream",
  "futures",
  "itertools",
  "lazy_static",
@@ -1148,11 +1148,11 @@ dependencies = [
 [[package]]
 name = "flo_binding"
 version = "2.0.1"
-source = "git+https://github.com/Logicalshift/flo_binding#9572fca36bcd1625df18175ef5ecb4268091c87b"
+source = "git+https://github.com/Logicalshift/flo_binding#cd95d767f50609031d227dba8926585b4e8f43fc"
 dependencies = [
  "desync",
  "flo_rope",
- "flo_stream 0.4.0",
+ "flo_stream",
  "futures",
 ]
 
@@ -1198,7 +1198,7 @@ name = "flo_cocoa_pipe"
 version = "0.2.0"
 dependencies = [
  "flo_canvas",
- "flo_stream 0.6.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "itertools",
@@ -1220,7 +1220,7 @@ dependencies = [
  "flo_cocoa_pipe",
  "flo_render",
  "flo_render_canvas",
- "flo_stream 0.6.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "lazy_static",
@@ -1238,7 +1238,7 @@ dependencies = [
  "flo_canvas",
  "flo_curves",
  "flo_sqlite_storage",
- "flo_stream 0.6.1",
+ "flo_stream",
  "flo_ui_files",
  "futures",
  "itertools",
@@ -1280,7 +1280,7 @@ dependencies = [
  "flo_canvas",
  "flo_render",
  "flo_render_canvas",
- "flo_stream 0.6.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "gdk",
@@ -1305,7 +1305,7 @@ dependencies = [
  "flo_binding",
  "flo_canvas",
  "flo_logging",
- "flo_stream 0.6.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "itertools",
@@ -1331,7 +1331,7 @@ dependencies = [
  "flo_http_ui",
  "flo_logging",
  "flo_static_files",
- "flo_stream 0.6.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "lazy_static",
@@ -1344,7 +1344,7 @@ name = "flo_logging"
 version = "0.2.0"
 dependencies = [
  "desync",
- "flo_stream 0.6.1",
+ "flo_stream",
  "futures",
  "lazy_static",
  "log",
@@ -1373,7 +1373,7 @@ dependencies = [
  "desync",
  "flo_canvas",
  "flo_render",
- "flo_stream 0.6.1",
+ "flo_stream",
  "futures",
  "lyon",
  "num_cpus",
@@ -1417,16 +1417,6 @@ dependencies = [
 
 [[package]]
 name = "flo_stream"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b02e0d3667b27514149c1ac9b372d700f3e6df4bbaf6b7c5df12915de2996049"
-dependencies = [
- "futures",
- "smallvec",
-]
-
-[[package]]
-name = "flo_stream"
 version = "0.6.1"
 source = "git+https://github.com/Logicalshift/flo_stream?branch=v0.6#a54149c61ce114158fca31866b53fe1188c76bdd"
 dependencies = [
@@ -1443,7 +1433,7 @@ dependencies = [
  "desync",
  "flo_binding",
  "flo_canvas",
- "flo_stream 0.6.1",
+ "flo_stream",
  "futures",
  "itertools",
  "lazy_static",
@@ -1463,7 +1453,7 @@ dependencies = [
  "flo_binding",
  "flo_canvas",
  "flo_logging",
- "flo_stream 0.6.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "lazy_static",
