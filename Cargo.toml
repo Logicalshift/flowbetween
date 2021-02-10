@@ -48,6 +48,8 @@ flo_sqlite_storage      = { path = "./sqlite_storage" }
 flo_ui_files            = { path = "./ui_files" }
 flo_ui                  = { path = "./ui" }
 flo_logging             = { path = "./logging" }
+flo_float_encoder       = { path = "./float_encoder" }
+flo_static_files        = { path = "./static_files" }
 flo                     = { path = "./flo" }
 
 flo_gtk_ui              = { path = "./user_interfaces/gtk_ui" }
@@ -57,7 +59,10 @@ flo_cocoa_ui            = { path = "./user_interfaces/cocoa_ui" }
 flo_cocoa_pipe          = { path = "./user_interfaces/cocoa_pipe" }
 flo_cocoa               = { path = "./user_interfaces/flo_cocoa" }
 
+desync                  = { git = "https://github.com/Logicalshift/desync", branch = "v0.7.0" }
 flo_binding             = { git = "https://github.com/Logicalshift/flo_binding" }
+flo_curves              = { git = "https://github.com/Logicalshift/flo_curves" }
+flo_stream              = { git = "https://github.com/Logicalshift/flo_stream", branch = "v0.6" }
 
 flo_canvas              = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.2" }
 flo_render              = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.2" }
