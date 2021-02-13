@@ -83,7 +83,7 @@ impl Frame for StreamFrame {
     ///
     /// Renders this frame to a particular graphics context
     ///
-    fn render_to(&self, gc: &mut dyn GraphicsPrimitives) {
+    fn render_to(&self, gc: &mut dyn GraphicsContext) {
         // Set up the properties
         let mut properties;
         let mut active_attachments  = vec![];

@@ -206,7 +206,7 @@ impl VectorElement for ShapeElement {
     ///
     /// Renders this vector element
     ///
-    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, _when: Duration) {
+    fn render(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, _when: Duration) {
         let points = self.brush_points();
 
         gc.draw_list(properties.brush.render_brush(&properties.brush_properties, &points, Arc::clone(&properties.transformations)))

@@ -71,7 +71,7 @@ impl GroupElement {
     ///
     /// Renders the contents of this group in 'normal' mode
     ///
-    fn render_normal(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, when: Duration) {
+    fn render_normal(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration) {
         // Properties update internally to the group
         let default_properties      = Arc::new(properties.clone());
         let mut properties          = Arc::clone(&default_properties);
@@ -128,7 +128,7 @@ impl GroupElement {
     ///
     /// Renders the contents of this group in 'added' mode
     ///
-    fn render_added(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) {
+    fn render_added(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties) {
         let paths = self.added_path(properties);
 
         let paths = if properties.transformations.len() > 0 {
@@ -219,7 +219,7 @@ impl VectorElement for GroupElement {
     ///
     /// Renders this vector element
     ///
-    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, when: Duration) {
+    fn render(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration) {
         match self.group_type {
             GroupType::Normal   => self.render_normal(gc, properties, when),
             GroupType::Added    => self.render_added(gc, properties)

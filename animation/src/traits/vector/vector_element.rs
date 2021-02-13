@@ -33,7 +33,7 @@ pub trait VectorElement : Send+Any {
     ///
     /// Renders this vector element
     ///
-    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, when: Duration);
+    fn render(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration);
 
     ///
     /// Returns the properties to use for future elements

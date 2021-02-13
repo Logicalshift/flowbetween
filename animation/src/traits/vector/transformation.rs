@@ -348,7 +348,7 @@ impl VectorElement for (ElementId, SmallVec<[Transformation; 2]>) {
     ///
     /// Renders this vector element
     ///
-    fn render(&self, _gc: &mut dyn GraphicsPrimitives, _properties: &VectorProperties, _when: Duration) {
+    fn render(&self, _gc: &mut dyn GraphicsContext, _properties: &VectorProperties, _when: Duration) {
 
     }
 

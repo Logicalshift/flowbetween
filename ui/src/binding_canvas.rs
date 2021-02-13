@@ -32,7 +32,7 @@ struct BindingCanvasCore {
     invalidated: bool,
 
     /// The drawing function, or none if there is no drawing function
-    draw_fn: Option<Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>>,
+    draw_fn: Option<Box<dyn Fn(&mut dyn GraphicsContext) -> ()+Send+Sync>>,
 
     /// The notifications that are currently active for this core
     active_notifications: Option<Box<dyn Releasable>>,
@@ -158,7 +158,7 @@ impl BindingCanvas {
     ///
     /// Creates a new BindingCanvas with a drawing function
     ///
-    pub fn with_drawing<DrawingFn: 'static+Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>(draw: DrawingFn) -> BindingCanvas {
+    pub fn with_drawing<DrawingFn: 'static+Fn(&mut dyn GraphicsContext) -> ()+Send+Sync>(draw: DrawingFn) -> BindingCanvas {
         let canvas = Self::new();
         canvas.on_redraw(draw);
 
@@ -174,7 +174,7 @@ impl BindingCanvas {
     /// cause it to become invalidated if they change. Additionally,
     /// setting a drawing function will invalidate the canvas.
     ///
-    pub fn on_redraw<DrawingFn: 'static+Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>(&self, draw: DrawingFn) {
+    pub fn on_redraw<DrawingFn: 'static+Fn(&mut dyn GraphicsContext) -> ()+Send+Sync>(&self, draw: DrawingFn) {
         self.core.desync(move |core| {
             core.done_with_notifications();
 

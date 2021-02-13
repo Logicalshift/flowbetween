@@ -102,7 +102,7 @@ impl VectorElement for BrushElement {
     ///
     /// Renders this vector element
     ///
-    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, _when: Duration) {
+    fn render(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, _when: Duration) {
         gc.draw_list(properties.brush.render_brush(&properties.brush_properties, &self.points, Arc::clone(&properties.transformations)))
     }
 

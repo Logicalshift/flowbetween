@@ -361,7 +361,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
     ///
     /// Creates the function for drawing the keyframes
     ///
-    fn create_draw_keyframes_fn(timeline: &TimelineModel<Anim>) -> impl Fn(f32, f32) -> Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync {
+    fn create_draw_keyframes_fn(timeline: &TimelineModel<Anim>) -> impl Fn(f32, f32) -> Box<dyn Fn(&mut dyn GraphicsContext) -> ()+Send+Sync>+Send+Sync {
         let timeline    = timeline.clone();
 
         move |x, y| {
@@ -457,7 +457,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
     ///
     /// Draws the timeline scale
     ///
-    fn draw_scale(x: f32, _y: f32) -> Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync> {
+    fn draw_scale(x: f32, _y: f32) -> Box<dyn Fn(&mut dyn GraphicsContext) -> ()+Send+Sync> {
         Box::new(move |gc| {
             // Set up the canvas
             gc.canvas_height(TIMELINE_SCALE_HEIGHT);
@@ -520,7 +520,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
     ///
     /// Draws the frame indicator
     ///
-    fn draw_frame_indicator(gc: &mut dyn GraphicsPrimitives) -> () {
+    fn draw_frame_indicator(gc: &mut dyn GraphicsContext) -> () {
         gc.canvas_height(2.05);
 
         gc.new_path();
@@ -558,7 +558,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
     ///
     /// Draws the frame indicator
     ///
-    fn draw_onion_indicator(gc: &mut dyn GraphicsPrimitives, side: Onion) -> () {
+    fn draw_onion_indicator(gc: &mut dyn GraphicsContext, side: Onion) -> () {
         gc.canvas_height(2.05);
 
         gc.new_path();
@@ -601,7 +601,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
     ///
     /// Draws the frame indicator line
     ///
-    fn draw_frame_indicator_line(gc: &mut dyn GraphicsPrimitives) -> () {
+    fn draw_frame_indicator_line(gc: &mut dyn GraphicsContext) -> () {
         gc.stroke_color(TIMESCALE_INDICATOR2);
         gc.canvas_height(2.0);
         gc.line_width_pixels(1.0);

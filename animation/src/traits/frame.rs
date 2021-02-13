@@ -18,7 +18,7 @@ pub trait Frame : Send+Sync {
     ///
     /// Renders this frame to a particular graphics context
     ///
-    fn render_to(&self, gc: &mut dyn GraphicsPrimitives);
+    fn render_to(&self, gc: &mut dyn GraphicsContext);
 
     ///
     /// Applies all of the properties for the specified element (including those added by attached elements)
@@ -52,7 +52,7 @@ impl Frame for Arc<dyn Frame> {
     ///
     /// Renders this frame to a particular graphics context
     ///
-    #[inline] fn render_to(&self, gc: &mut dyn GraphicsPrimitives) { (**self).render_to(gc) }
+    #[inline] fn render_to(&self, gc: &mut dyn GraphicsContext) { (**self).render_to(gc) }
 
     ///
     /// Applies all of the properties for the specified element (including those added by attached elements)

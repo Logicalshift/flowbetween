@@ -34,7 +34,7 @@ pub struct VectorProperties {
     pub retrieve_attachments: Arc<dyn (Fn(ElementId) -> Vec<Vector>) + Sync+Send>,
 
     /// Provides an override for how a vector element is rendered
-    pub render_vector: Arc<dyn (Fn(&mut dyn GraphicsPrimitives, Vector, Duration, &VectorProperties)) + Sync+Send>
+    pub render_vector: Arc<dyn (Fn(&mut dyn GraphicsContext, Vector, Duration, &VectorProperties)) + Sync+Send>
 }
 
 impl VectorProperties {
@@ -54,14 +54,14 @@ impl VectorProperties {
     ///
     /// Prepares the context to render with these properties
     ///
-    pub fn prepare_to_render(&self, gc: &mut dyn GraphicsPrimitives) {
+    pub fn prepare_to_render(&self, gc: &mut dyn GraphicsContext) {
         gc.draw_list(self.brush.prepare_to_render(&self.brush_properties));
     }
 
     ///
     /// Renders the specified element with these properties
     ///
-    pub fn render(&self, gc: &mut dyn GraphicsPrimitives, element: Vector, when: Duration) {
+    pub fn render(&self, gc: &mut dyn GraphicsContext, element: Vector, when: Duration) {
         // Render this element
         (self.render_vector)(gc, element, when, self);
     }
