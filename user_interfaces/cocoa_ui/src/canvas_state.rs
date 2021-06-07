@@ -29,7 +29,7 @@ struct CanvasStateValues {
     line_join:          CGLineJoin,
     line_cap:           CGLineCap,
     winding_rule:       WindingRule,
-    layer_id:           u32,
+    layer_id:           LayerId,
     line_width:         CGFloat,
     sprite_transform:   Transform2D,
     path:               Vec<PathAction>,
@@ -70,7 +70,7 @@ impl CanvasState {
                     line_cap:           CGLineCap::Butt,
                     winding_rule:       WindingRule::NonZero,
                     sprite_transform:   Transform2D::identity(),
-                    layer_id:           0,
+                    layer_id:           LayerId(0),
                     line_width:         1.0,
                     path:               vec![],
                     stored_layer:       None,
@@ -426,14 +426,14 @@ impl CanvasState {
     ///
     /// Sets the layer that we should draw to for this context
     ///
-    pub fn set_layer_id(&mut self, layer_id: u32) {
+    pub fn set_layer_id(&mut self, layer_id: LayerId) {
         self.values.layer_id = layer_id;
     }
 
     ///
     /// Retrieves the active layer ID
     ///
-    pub fn layer_id(&self) -> u32 {
+    pub fn layer_id(&self) -> LayerId {
         self.values.layer_id
     }
 
