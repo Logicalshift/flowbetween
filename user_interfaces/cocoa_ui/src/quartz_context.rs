@@ -122,15 +122,16 @@ impl QuartzContext {
     ///
     pub fn draw(&mut self, draw: &Draw) {
         use self::Draw::*;
+        use self::PathOp::*;
 
         unsafe {
             match draw {
-                NewPath                                             => { self.state.begin_path(); }
-                Move(x, y)                                          => { self.state.path_move(*x as CGFloat, *y as CGFloat); }
-                Line(x, y)                                          => { self.state.path_line(*x as CGFloat, *y as CGFloat); }
-                BezierCurve((ex, ey), (c1x, c1y), (c2x, c2y))       => { self.state.path_bezier_curve((*c1x as CGFloat, *c1y as CGFloat), (*c2x as CGFloat, *c2y as CGFloat), (*ex as CGFloat, *ey as CGFloat)); }
-                ClosePath                                           => { self.state.path_close(); }
-                Fill                                                => { 
+                Path(NewPath)                                           => { self.state.begin_path(); }
+                Path(Move(x, y))                                        => { self.state.path_move(*x as CGFloat, *y as CGFloat); }
+                Path(Line(x, y))                                        => { self.state.path_line(*x as CGFloat, *y as CGFloat); }
+                Path(BezierCurve(((c1x, c1y), (c2x, c2y)), (ex, ey)))   => { self.state.path_bezier_curve((*c1x as CGFloat, *c1y as CGFloat), (*c2x as CGFloat, *c2y as CGFloat), (*ex as CGFloat, *ey as CGFloat)); }
+                Path(ClosePath)                                         => { self.state.path_close(); }
+                Fill                                                    => { 
                     use flo_canvas::WindingRule::*;
 
                     self.state.load_path(); 
@@ -139,9 +140,9 @@ impl QuartzContext {
                         EvenOdd => { CGContextEOFillPath(*self.context); }
                     }
                 }
-                Stroke                                              => { self.state.load_path(); CGContextStrokePath(*self.context); }
-                LineWidth(width)                                    => { self.state.set_line_width(*width as CGFloat); }
-                LineWidthPixels(width_pixels)                       => {
+                Stroke                                                  => { self.state.load_path(); CGContextStrokePath(*self.context); }
+                LineWidth(width)                                        => { self.state.set_line_width(*width as CGFloat); }
+                LineWidthPixels(width_pixels)                           => {
                     let width_pixels    = *width_pixels as CGFloat;
                     let transform       = self.state.current_transform();
                     let mut scale_y     = (transform.c*transform.c + transform.d*transform.d).sqrt();
@@ -150,24 +151,24 @@ impl QuartzContext {
 
                     self.state.set_line_width(scale_width);
                 }
-                LineJoin(join)                                      => { self.state.set_line_join(join); }
-                LineCap(cap)                                        => { self.state.set_line_cap(cap); }
-                WindingRule(winding_rule)                           => { self.state.set_winding_rule(winding_rule); }
-                NewDashPattern                                      => { /* TODO */ }
-                DashLength(len)                                     => { /* TODO */ }
-                DashOffset(offset)                                  => { /* TODO */ }
-                FillColor(col)                                      => { self.state.set_fill_color(col); }
-                StrokeColor(col)                                    => { self.state.set_stroke_color(col); }
-                BlendMode(blend)                                    => { self.state.set_blend_mode(blend); }
-                Unclip                                              => { self.state.unclip(); }
-                Clip                                                => { self.state.clip(); }
-                Store                                               => { /* See view_canvas */ }
-                Restore                                             => { /* See view_canvas */ }
-                FreeStoredBuffer                                    => { /* See view_canvas */ }
-                PushState                                           => { self.state.push_state(); }
-                PopState                                            => { self.state.pop_state(); }
+                LineJoin(join)                                          => { self.state.set_line_join(join); }
+                LineCap(cap)                                            => { self.state.set_line_cap(cap); }
+                WindingRule(winding_rule)                               => { self.state.set_winding_rule(winding_rule); }
+                NewDashPattern                                          => { /* TODO */ }
+                DashLength(len)                                         => { /* TODO */ }
+                DashOffset(offset)                                      => { /* TODO */ }
+                FillColor(col)                                          => { self.state.set_fill_color(col); }
+                StrokeColor(col)                                        => { self.state.set_stroke_color(col); }
+                BlendMode(blend)                                        => { self.state.set_blend_mode(blend); }
+                Unclip                                                  => { self.state.unclip(); }
+                Clip                                                    => { self.state.clip(); }
+                Store                                                   => { /* See view_canvas */ }
+                Restore                                                 => { /* See view_canvas */ }
+                FreeStoredBuffer                                        => { /* See view_canvas */ }
+                PushState                                               => { self.state.push_state(); }
+                PopState                                                => { self.state.pop_state(); }
 
-                ClearLayer                                          => {
+                ClearLayer                                              => {
                     let viewport_size = self.viewport_size;
                     self.state.with_native_transform(|context| {
                         CGContextClearRect(context, CGRect {
@@ -177,22 +178,22 @@ impl QuartzContext {
                     });
                 }
 
-                IdentityTransform                                   => {
+                IdentityTransform                                       => {
                     self.state.set_transform(self.get_identity_transform());
                 }
-                CanvasHeight(height)                                => {
+                CanvasHeight(height)                                    => {
                     let identity    = self.get_identity_transform();
                     let height      = self.get_height_transform(*height as f64);
                     let transform   = CGAffineTransformConcat(height, identity);
                     self.state.set_transform(transform);
                 }
-                CenterRegion((minx, miny), (maxx, maxy))            => {
+                CenterRegion((minx, miny), (maxx, maxy))                => {
                     let current     = self.state.current_transform();
                     let center      = self.get_center_transform(*minx as f64, *miny as f64, *maxx as f64, *maxy as f64);
                     let transform   = CGAffineTransformConcat(center, current);
                     self.state.set_transform(transform);
                 }
-                MultiplyTransform(transform)                        => {
+                MultiplyTransform(transform)                            => {
                     let current                 = self.state.current_transform();
                     let Transform2D([a, b, _c]) = transform;
                     let transform               = CGAffineTransform {
@@ -208,17 +209,17 @@ impl QuartzContext {
                     self.state.set_transform(transform);
                 }
 
-                ClearCanvas(_bg_col)                                => {
+                ClearCanvas(_bg_col)                                    => {
                     self.reset_state();
 
                     /* Layers need to be implemented elsewhere */
                 }
-                Layer(_layer_id)                                    => { /* Layers need to be implemented elsewhere */ }
-                LayerBlend(_layer_id, _blend)                       => { /* Layers need to be implemented elsewhere */ }
-                Sprite(_sprite_id)                                  => { unimplemented!() }
-                SpriteTransform(_transform)                         => { unimplemented!() }
-                ClearSprite                                         => { unimplemented!() }
-                DrawSprite(_sprite_id)                              => { unimplemented!() }
+                Layer(_layer_id)                                        => { /* Layers need to be implemented elsewhere */ }
+                LayerBlend(_layer_id, _blend)                           => { /* Layers need to be implemented elsewhere */ }
+                Sprite(_sprite_id)                                      => { unimplemented!() }
+                SpriteTransform(_transform)                             => { unimplemented!() }
+                ClearSprite                                             => { unimplemented!() }
+                DrawSprite(_sprite_id)                                  => { unimplemented!() }
             }
         }
     }
