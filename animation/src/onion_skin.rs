@@ -74,10 +74,11 @@ pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProce
                 .flat_map(|path| {
                     let start_point = path.start_point();
 
-                    iter::once(Draw::Move(start_point.x(), start_point.y()))
-                        .chain(path.points().map(|(cp1, cp2, end)| Draw::BezierCurve((end.x(), end.y()), (cp1.x(), cp1.y()), (cp2.x(), cp2.y()))))
-                        .chain(iter::once(Draw::ClosePath))
+                    iter::once(PathOp::Move(start_point.x(), start_point.y()))
+                        .chain(path.points().map(|(cp1, cp2, end)| PathOp::BezierCurve(((cp1.x(), cp1.y()), (cp2.x(), cp2.y())), (end.x(), end.y()))))
+                        .chain(iter::once(PathOp::ClosePath))
                 })
+                .map(|pathop| Draw::Path(pathop))
                 .collect())
         }))
 }

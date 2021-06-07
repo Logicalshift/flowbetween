@@ -164,12 +164,13 @@ impl Path {
         let elements = drawing.into_iter()
             .map(|draw| {
                 use self::Draw::*;
+                use self::PathOp::*;
 
                 match draw {
-                    Move(x, y)              => Some(PathComponent::Move(PathPoint::from((x, y)))),
-                    Line(x, y)              => Some(PathComponent::Line(PathPoint::from((x, y)))),
-                    BezierCurve(p, c1, c2)  => Some(PathComponent::Bezier(PathPoint::from(p), PathPoint::from(c1), PathPoint::from(c2))),
-                    ClosePath               => Some(PathComponent::Close),
+                    Path(Move(x, y))                => Some(PathComponent::Move(PathPoint::from((x, y)))),
+                    Path(Line(x, y))                => Some(PathComponent::Line(PathPoint::from((x, y)))),
+                    Path(BezierCurve((c1, c2), p))  => Some(PathComponent::Bezier(PathPoint::from(p), PathPoint::from(c1), PathPoint::from(c2))),
+                    Path(ClosePath)                 => Some(PathComponent::Close),
 
                     _                       => None
                 }
@@ -188,14 +189,14 @@ impl Path {
     pub fn to_drawing<'a>(&'a self) -> impl 'a+Iterator<Item=Draw> {
         self.elements.iter()
             .map(|path| {
-                use self::Draw::*;
+                use self::PathOp::*;
 
-                match path {
+                Draw::Path(match path {
                     &PathComponent::Move(point)       => Move(point.x(), point.y()),
                     &PathComponent::Line(point)       => Line(point.x(), point.y()),
-                    &PathComponent::Bezier(p, c1, c2) => BezierCurve(p.into(), c1.into(), c2.into()),
+                    &PathComponent::Bezier(p, c1, c2) => BezierCurve((c1.into(), c2.into()), p.into()),
                     &PathComponent::Close             => ClosePath
-                }
+                })
             })
     }
 

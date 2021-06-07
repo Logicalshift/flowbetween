@@ -193,11 +193,11 @@ impl BoundingBox for Rect {
 impl<'a> Into<Vec<Draw>> for &'a Rect {
     fn into(self) -> Vec<Draw> {
         vec![
-            Draw::Move(self.x1, self.y1),
-            Draw::Line(self.x2, self.y1),
-            Draw::Line(self.x2, self.y2),
-            Draw::Line(self.x1, self.y2),
-            Draw::ClosePath
+            Draw::Path(PathOp::Move(self.x1, self.y1)),
+            Draw::Path(PathOp::Line(self.x2, self.y1)),
+            Draw::Path(PathOp::Line(self.x2, self.y2)),
+            Draw::Path(PathOp::Line(self.x1, self.y2)),
+            Draw::Path(PathOp::ClosePath)
         ]
     }
 }

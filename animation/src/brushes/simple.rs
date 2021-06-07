@@ -113,17 +113,17 @@ impl Brush for SimpleBrush {
         // Draw a simple line for this brush
         let first_point = points.next().unwrap();
         let preamble    = vec![
-            Draw::NewPath,
-            Draw::Move(first_point.position.0, first_point.position.1)
+            Draw::Path(PathOp::NewPath),
+            Draw::Path(PathOp::Move(first_point.position.0, first_point.position.1))
         ];
 
         let curves = points
             .skip(1)
-            .map(|segment| Draw::BezierCurve(
-                (segment.position.0, segment.position.1),
-                (segment.cp1.0, segment.cp1.1),
-                (segment.cp2.0, segment.cp2.1)
-            ));
+            .map(|segment| Draw::Path(PathOp::BezierCurve(
+                ((segment.cp1.0, segment.cp1.1),
+                (segment.cp2.0, segment.cp2.1)),
+                (segment.position.0, segment.position.1)
+            )));
 
         Box::new(preamble.into_iter()
             .chain(curves)

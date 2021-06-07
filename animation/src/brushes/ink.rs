@@ -422,8 +422,8 @@ impl Brush for InkBrush {
         let Coord2(x, y) = upper_curves[0][0].start_point();
         let preamble = vec![
             Draw::WindingRule(WindingRule::NonZero),
-            Draw::NewPath,
-            Draw::Move(x as f32, y as f32)
+            Draw::Path(PathOp::NewPath),
+            Draw::Path(PathOp::Move(x as f32, y as f32))
         ];
 
         let upper_curves = upper_curves.into_iter()
@@ -437,7 +437,7 @@ impl Brush for InkBrush {
             last_curve.end_point()
         };
 
-        let end_cap = Draw::Line(x as f32, y as f32);
+        let end_cap = Draw::Path(PathOp::Line(x as f32, y as f32));
 
         let lower_curves = lower_curves.into_iter()
             .rev()
