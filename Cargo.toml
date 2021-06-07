@@ -6,7 +6,7 @@ license     = "Apache-2.0"
 edition     = "2018"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Vector animation editor"
-include     = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
+include     = [ "Cargo.toml", "LICENSE", "src/**/*", "*.md", "*.sh", "png/**/*" ]
 
 [features]
 gtk                     = [ "flo_gtk_ui" ]
@@ -23,7 +23,7 @@ flo_ui_files            = "0.2"
 flo_ui                  = "0.2"
 flo_logging             = "0.2"
 flo                     = "0.2"
-flo_canvas              = "0.2"
+flo_canvas              = "0.3"
 
 flo_gtk_ui              = { version="0.2", optional = true }
 flo_http_ui             = { version="0.2", optional = true }
@@ -71,8 +71,8 @@ flo_binding             = { git = "https://github.com/Logicalshift/flo_binding" 
 flo_curves              = { git = "https://github.com/Logicalshift/flo_curves" }
 flo_stream              = { git = "https://github.com/Logicalshift/flo_stream", branch = "v0.6" }
 
-flo_canvas              = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.2" }
-flo_render              = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.2" }
-flo_render_canvas       = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.2" }
-flo_render_gl_offscreen = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.2" }
+flo_canvas              = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.3" }
+flo_render              = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.3" }
+flo_render_canvas       = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.3" }
+flo_render_gl_offscreen = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.3" }
 # flo_draw                = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.2" }

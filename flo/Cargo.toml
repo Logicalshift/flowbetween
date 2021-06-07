@@ -11,11 +11,11 @@ include     = [ "Cargo.toml", "src/**/*", "svg/**/*" ]
 
 [dependencies]
 flo_animation       = "0.2"
-flo_curves          = "0.4"
+flo_curves          = "0.5"
 flo_stream          = "0.6"
 flo_binding         = "2.0"
 flo_ui              = "0.2"
-flo_canvas          = "0.2"
+flo_canvas          = "0.3"
 flo_ui_files        = "0.2"
 desync              = "0.7"
 

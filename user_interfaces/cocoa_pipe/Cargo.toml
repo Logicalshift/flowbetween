@@ -10,7 +10,7 @@ description     = "Pipes user interface operations between flo_ui and flo_cocoa_
 [dependencies]
 flo_ui      = "0.2"
 flo_stream  = "0.6"
-flo_canvas  = "0.2"
+flo_canvas  = "0.3"
 
 futures     = "0.3"
 itertools   = "0.9"

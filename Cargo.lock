@@ -1053,9 +1053,9 @@ dependencies = [
 
 [[package]]
 name = "euclid"
-version = "0.20.14"
+version = "0.22.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bb7ef65b3777a325d1eeefefab5b6d4959da54747e33bd6258e789640f307ad"
+checksum = "da96828553a086d7b18dcebfc579bd9628b016f86590d7453c115e490fa74b80"
 dependencies = [
  "num-traits",
 ]
@@ -1113,13 +1113,13 @@ dependencies = [
  "desync",
  "flo_animation",
  "flo_binding",
- "flo_canvas",
- "flo_curves",
+ "flo_canvas 0.3.0",
+ "flo_curves 0.5.0",
  "flo_stream",
  "flo_ui",
  "flo_ui_files",
  "futures",
- "itertools",
+ "itertools 0.9.0",
  "lazy_static",
  "serde",
  "serde_derive",
@@ -1131,12 +1131,12 @@ name = "flo_animation"
 version = "0.2.0"
 dependencies = [
  "desync",
- "flo_canvas",
- "flo_curves",
+ "flo_canvas 0.3.0",
+ "flo_curves 0.5.0",
  "flo_float_encoder",
  "flo_stream",
  "futures",
- "itertools",
+ "itertools 0.9.0",
  "lazy_static",
  "modifier",
  "serde",
@@ -1159,14 +1159,31 @@ dependencies = [
 [[package]]
 name = "flo_canvas"
 version = "0.2.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.2#e626154e5107bee93e9ee9d8cc4a172ae0e429fa"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5456dda8e0215bbf45aa62c3423cf54101afc3ad071a06c24285ab1c5cb1c69"
 dependencies = [
  "desync",
- "flo_curves",
+ "flo_curves 0.4.2",
  "futures",
  "rust-hsluv",
  "serde",
  "serde_derive",
+]
+
+[[package]]
+name = "flo_canvas"
+version = "0.3.0"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e591df4f74ce16c8b7fee79b7e034df1779521ce"
+dependencies = [
+ "desync",
+ "flo_curves 0.5.0",
+ "flo_stream",
+ "futures",
+ "itertools 0.10.0",
+ "rust-hsluv",
+ "serde",
+ "serde_derive",
+ "smallvec",
 ]
 
 [[package]]
@@ -1177,7 +1194,7 @@ dependencies = [
  "flo",
  "flo_animation",
  "flo_binding",
- "flo_canvas",
+ "flo_canvas 0.3.0",
  "flo_cocoa_pipe",
  "flo_cocoa_ui",
  "flo_logging",
@@ -1197,11 +1214,11 @@ dependencies = [
 name = "flo_cocoa_pipe"
 version = "0.2.0"
 dependencies = [
- "flo_canvas",
+ "flo_canvas 0.3.0",
  "flo_stream",
  "flo_ui",
  "futures",
- "itertools",
+ "itertools 0.9.0",
  "num-derive",
  "num-traits",
  "objc",
@@ -1216,7 +1233,7 @@ dependencies = [
  "cocoa 0.19.1",
  "core-foundation 0.6.4",
  "desync",
- "flo_canvas",
+ "flo_canvas 0.3.0",
  "flo_cocoa_pipe",
  "flo_render",
  "flo_render_canvas",
@@ -1235,13 +1252,13 @@ version = "0.2.0"
 dependencies = [
  "desync",
  "flo_animation",
- "flo_canvas",
- "flo_curves",
+ "flo_canvas 0.3.0",
+ "flo_curves 0.5.0",
  "flo_sqlite_storage",
  "flo_stream",
  "flo_ui_files",
  "futures",
- "itertools",
+ "itertools 0.9.0",
 ]
 
 [[package]]
@@ -1249,7 +1266,18 @@ name = "flo_curves"
 version = "0.4.2"
 source = "git+https://github.com/Logicalshift/flo_curves#d112d55fb7fcc5d44569b58014fd541d24c07209"
 dependencies = [
- "itertools",
+ "itertools 0.9.0",
+ "roots",
+ "smallvec",
+]
+
+[[package]]
+name = "flo_curves"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74a8361a571c3873167196a572894b9d4a086e87d93fdb45eac765ab5ba43d39"
+dependencies = [
+ "itertools 0.10.0",
  "roots",
  "smallvec",
 ]
@@ -1277,7 +1305,7 @@ dependencies = [
  "cairo-rs",
  "desync",
  "epoxy",
- "flo_canvas",
+ "flo_canvas 0.2.0",
  "flo_render",
  "flo_render_canvas",
  "flo_stream",
@@ -1290,7 +1318,7 @@ dependencies = [
  "gl",
  "glib",
  "gtk",
- "itertools",
+ "itertools 0.9.0",
  "lazy_static",
  "shared_library",
  "time 0.2.25",
@@ -1303,12 +1331,12 @@ dependencies = [
  "bytes 0.5.6",
  "desync",
  "flo_binding",
- "flo_canvas",
+ "flo_canvas 0.3.0",
  "flo_logging",
  "flo_stream",
  "flo_ui",
  "futures",
- "itertools",
+ "itertools 0.9.0",
  "lazy_static",
  "percent-encoding",
  "serde",
@@ -1327,7 +1355,7 @@ dependencies = [
  "actix-web-actors",
  "bytes 0.5.6",
  "flo_binding",
- "flo_canvas",
+ "flo_canvas 0.3.0",
  "flo_http_ui",
  "flo_logging",
  "flo_static_files",
@@ -1352,13 +1380,13 @@ dependencies = [
 
 [[package]]
 name = "flo_render"
-version = "0.2.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.2#e626154e5107bee93e9ee9d8cc4a172ae0e429fa"
+version = "0.3.0"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e591df4f74ce16c8b7fee79b7e034df1779521ce"
 dependencies = [
  "bindgen",
  "cocoa 0.23.0",
  "core-foundation 0.9.1",
- "flo_canvas",
+ "flo_canvas 0.3.0",
  "flo_render_gl_offscreen",
  "gl",
  "libc 0.2.86",
@@ -1367,11 +1395,11 @@ dependencies = [
 
 [[package]]
 name = "flo_render_canvas"
-version = "0.2.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.2#e626154e5107bee93e9ee9d8cc4a172ae0e429fa"
+version = "0.3.0"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e591df4f74ce16c8b7fee79b7e034df1779521ce"
 dependencies = [
  "desync",
- "flo_canvas",
+ "flo_canvas 0.3.0",
  "flo_render",
  "flo_stream",
  "futures",
@@ -1381,8 +1409,8 @@ dependencies = [
 
 [[package]]
 name = "flo_render_gl_offscreen"
-version = "0.2.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.2#e626154e5107bee93e9ee9d8cc4a172ae0e429fa"
+version = "0.3.0"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e591df4f74ce16c8b7fee79b7e034df1779521ce"
 dependencies = [
  "bindgen",
  "cgl",
@@ -1432,10 +1460,10 @@ dependencies = [
  "bytes 0.5.6",
  "desync",
  "flo_binding",
- "flo_canvas",
+ "flo_canvas 0.3.0",
  "flo_stream",
  "futures",
- "itertools",
+ "itertools 0.9.0",
  "lazy_static",
  "modifier",
  "png",
@@ -1451,7 +1479,7 @@ dependencies = [
  "desync",
  "dirs",
  "flo_binding",
- "flo_canvas",
+ "flo_canvas 0.3.0",
  "flo_logging",
  "flo_stream",
  "flo_ui",
@@ -1471,7 +1499,7 @@ dependencies = [
  "flo",
  "flo_animation",
  "flo_binding",
- "flo_canvas",
+ "flo_canvas 0.3.0",
  "flo_cocoa",
  "flo_cocoa_pipe",
  "flo_cocoa_ui",
@@ -1839,7 +1867,7 @@ checksum = "41486a26d1366a8032b160b59065a59fb528530a46a49f627e7048fb8c064039"
 dependencies = [
  "anyhow",
  "heck",
- "itertools",
+ "itertools 0.9.0",
  "proc-macro-crate",
  "proc-macro-error",
  "proc-macro2 1.0.24",
@@ -2071,6 +2099,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37d572918e350e82412fe766d24b15e6682fb2ed2bbe018280caa810397cb319"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2202,9 +2239,9 @@ dependencies = [
 
 [[package]]
 name = "lyon"
-version = "0.15.9"
+version = "0.17.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed142d912ddc611081d50acd84ce1b8612da909aa4cf369642ba92cf51f09b40"
+checksum = "3a146a460c58fb5361fc7faf8d7a68b274f11969ee1f6856875c162d679d0306"
 dependencies = [
  "lyon_algorithms",
  "lyon_tessellation",
@@ -2212,9 +2249,9 @@ dependencies = [
 
 [[package]]
 name = "lyon_algorithms"
-version = "0.15.1"
+version = "0.17.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef5d79947342462427efed6f49b1361d700c0f5dad97a1bac96a5f84d2d1abb1"
+checksum = "6931fa85f0e649e8d781a31ffc9fa42aee5074b965a0bad7d05f84aaef2e8933"
 dependencies = [
  "lyon_path",
  "sid",
@@ -2222,9 +2259,9 @@ dependencies = [
 
 [[package]]
 name = "lyon_geom"
-version = "0.15.3"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9962a2ba81382716b87d7d358493cb71844c1f9165ddad763cd9f4d3f5474df2"
+checksum = "d6b5d72694ade806440faf600defca6143dbe5499e90a9ec8caed62adbfd5db5"
 dependencies = [
  "arrayvec",
  "euclid",
@@ -2233,18 +2270,18 @@ dependencies = [
 
 [[package]]
 name = "lyon_path"
-version = "0.15.2"
+version = "0.17.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c81a044414965c051b7b4785770820d23146480a2d8573cd825f03a00a5b8dd8"
+checksum = "73ee0fb521dc29aadb761c7bb405848673f0115d0d4f99399cc6d6e01aee80a3"
 dependencies = [
  "lyon_geom",
 ]
 
 [[package]]
 name = "lyon_tessellation"
-version = "0.15.9"
+version = "0.17.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71c45e7eb8cf9cba513aa72efd59894f861a91acabc9a100caeb0fe6e6315b71"
+checksum = "23ba0dd2ed50c10d5f4c63a310db56c6a7326f6bedfd6200dc3ccb7ae8a061b7"
 dependencies = [
  "arrayvec",
  "lyon_path",
