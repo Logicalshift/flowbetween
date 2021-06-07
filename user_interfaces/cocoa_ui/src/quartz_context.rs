@@ -216,6 +216,17 @@ impl QuartzContext {
                 }
                 Layer(_layer_id)                                        => { /* Layers need to be implemented elsewhere */ }
                 LayerBlend(_layer_id, _blend)                           => { /* Layers need to be implemented elsewhere */ }
+                StartFrame | ShowFrame | ResetFrame                     => { /* Frames are implemented elsewhere */}
+
+                FillGradient(gradient_id, p1, p2)                       => { unimplemented!() }
+                FillTexture(texture_id, p1, p2)                         => { unimplemented!() }
+                Texture(texture_id, texture_op)                         => { unimplemented!() }
+                Gradient(gradient_id, gradient_op)                      => { unimplemented!() }
+                Font(font_id, font_op)                                  => { unimplemented!() }
+                BeginLineLayout(x, y, alignment)                        => { unimplemented!() }
+                DrawLaidOutText                                         => { unimplemented!() }
+                DrawText(font_id, text, x, y)                           => { unimplemented!() }
+
                 Sprite(_sprite_id)                                      => { unimplemented!() }
                 SpriteTransform(_transform)                             => { unimplemented!() }
                 ClearSprite                                             => { unimplemented!() }
