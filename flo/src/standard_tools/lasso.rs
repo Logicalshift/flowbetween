@@ -19,10 +19,10 @@ use futures::stream::{BoxStream};
 use std::sync::*;
 
 /// Layer where the current selection is drawn
-const LAYER_SELECTION: u32 = 0;
+const LAYER_SELECTION: LayerId = LayerId(0);
 
 /// Layer where the preview of the region the user is dragging is drawn
-const LAYER_PREVIEW: u32 = 1;
+const LAYER_PREVIEW: LayerId = LayerId(1);
 
 ///
 /// The data stored for the Lasso tool
@@ -236,7 +236,7 @@ impl Lasso {
     ///
     /// A function that keeps the selected path binding rendered and up to date
     ///
-    pub async fn render_selection_path(selected_path: BindRef<Option<Arc<Path>>>, actions: ToolActionPublisher<()>, layer: u32) {
+    pub async fn render_selection_path(selected_path: BindRef<Option<Arc<Path>>>, actions: ToolActionPublisher<()>, layer: LayerId) {
         // Convert the binding to a stream
         let mut selected_path = follow(selected_path);
 

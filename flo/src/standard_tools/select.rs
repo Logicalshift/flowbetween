@@ -7,9 +7,9 @@ use crate::style::*;
 
 use flo_ui::*;
 use flo_canvas::*;
-use flo_curves::*;
 use flo_binding::*;
 use flo_animation::*;
+use flo_animation::{HasBoundingBox};
 
 use futures::*;
 use futures::stream;
@@ -216,7 +216,7 @@ impl Select {
     ///
     /// Drags-to-move the current selection, returning the offset to apply if the operation is completed
     ///
-    pub async fn drag_selection<Anim: 'static+EditableAnimation>(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>, flo_model: &FloModel<Anim>, preview_layer: u32) -> Option<(f32, f32)> {
+    pub async fn drag_selection<Anim: 'static+EditableAnimation>(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>, flo_model: &FloModel<Anim>, preview_layer: LayerId) -> Option<(f32, f32)> {
         let selection_drawing = Self::generate_selection_preview(flo_model);
 
         // Draw the initial selection by defining it as a sprite
@@ -305,12 +305,12 @@ impl Select {
     ///
     fn selection_drawing_settings() -> Vec<Draw> {
         vec![
-            Draw::Layer(0),
+            Draw::Layer(LayerId(0)),
             Draw::ClearLayer,
 
             Draw::LineWidthPixels(1.0),
             Draw::StrokeColor(SELECTION_BBOX),
-            Draw::NewPath
+            Draw::Path(PathOp::NewPath)
         ]
     }
 
@@ -324,10 +324,10 @@ impl Select {
 
         // Setup actions
         let draw_setup = vec![
-            Draw::Layer(1),
+            Draw::Layer(LayerId(1)),
             Draw::ClearLayer,
 
-            Draw::NewPath
+            Draw::Path(PathOp::NewPath)
         ];
 
         // Draw actions
@@ -386,23 +386,23 @@ impl Select {
         let mut handles     = vec![];
 
         handles.extend(vec![
-            Draw::NewPath,
+            Draw::Path(PathOp::NewPath),
             
-            Draw::Move(bounding_box.x1, bounding_box.y1 + vert_len),
-            Draw::Line(bounding_box.x1, bounding_box.y1),
-            Draw::Line(bounding_box.x1 + horiz_len, bounding_box.y1),
+            Draw::Path(PathOp::Move(bounding_box.x1, bounding_box.y1 + vert_len)),
+            Draw::Path(PathOp::Line(bounding_box.x1, bounding_box.y1)),
+            Draw::Path(PathOp::Line(bounding_box.x1 + horiz_len, bounding_box.y1)),
 
-            Draw::Move(bounding_box.x2 - horiz_len, bounding_box.y1),
-            Draw::Line(bounding_box.x2, bounding_box.y1),
-            Draw::Line(bounding_box.x2, bounding_box.y1 + vert_len),
+            Draw::Path(PathOp::Move(bounding_box.x2 - horiz_len, bounding_box.y1)),
+            Draw::Path(PathOp::Line(bounding_box.x2, bounding_box.y1)),
+            Draw::Path(PathOp::Line(bounding_box.x2, bounding_box.y1 + vert_len)),
 
-            Draw::Move(bounding_box.x2, bounding_box.y2 - vert_len),
-            Draw::Line(bounding_box.x2, bounding_box.y2),
-            Draw::Line(bounding_box.x2 - horiz_len, bounding_box.y2),
+            Draw::Path(PathOp::Move(bounding_box.x2, bounding_box.y2 - vert_len)),
+            Draw::Path(PathOp::Line(bounding_box.x2, bounding_box.y2)),
+            Draw::Path(PathOp::Line(bounding_box.x2 - horiz_len, bounding_box.y2)),
 
-            Draw::Move(bounding_box.x1 + horiz_len, bounding_box.y2),
-            Draw::Line(bounding_box.x1, bounding_box.y2),
-            Draw::Line(bounding_box.x1, bounding_box.y2 - vert_len)
+            Draw::Path(PathOp::Move(bounding_box.x1 + horiz_len, bounding_box.y2)),
+            Draw::Path(PathOp::Line(bounding_box.x1, bounding_box.y2)),
+            Draw::Path(PathOp::Line(bounding_box.x1, bounding_box.y2 - vert_len))
         ]);
 
         // Edge scaling handles
@@ -412,11 +412,11 @@ impl Select {
             let mid_point   = bounding_box.x1 + (bounding_box.width() - mid_len)/2.0;
 
             handles.extend(vec![
-                Draw::Move(mid_point, bounding_box.y1),
-                Draw::Line(mid_point+mid_len, bounding_box.y1),
+                Draw::Path(PathOp::Move(mid_point, bounding_box.y1)),
+                Draw::Path(PathOp::Line(mid_point+mid_len, bounding_box.y1)),
 
-                Draw::Move(mid_point, bounding_box.y2),
-                Draw::Line(mid_point+mid_len, bounding_box.y2)
+                Draw::Path(PathOp::Move(mid_point, bounding_box.y2)),
+                Draw::Path(PathOp::Line(mid_point+mid_len, bounding_box.y2))
             ]);
         }
 
@@ -426,11 +426,11 @@ impl Select {
             let mid_point   = bounding_box.y1 + (bounding_box.height() - mid_len)/2.0;
 
             handles.extend(vec![
-                Draw::Move(bounding_box.x1, mid_point),
-                Draw::Line(bounding_box.x1, mid_point+mid_len),
+                Draw::Path(PathOp::Move(bounding_box.x1, mid_point)),
+                Draw::Path(PathOp::Line(bounding_box.x1, mid_point+mid_len)),
 
-                Draw::Move(bounding_box.x2, mid_point),
-                Draw::Line(bounding_box.x2, mid_point+mid_len)
+                Draw::Path(PathOp::Move(bounding_box.x2, mid_point)),
+                Draw::Path(PathOp::Line(bounding_box.x2, mid_point+mid_len))
             ]);
         }
 
@@ -461,9 +461,9 @@ impl Select {
 
         // Draw the stalk
         let mut handle  = vec![
-            Draw::NewPath,
-            Draw::Move(mid_point, bounding_box.y2+separation),
-            Draw::Line(mid_point, bounding_box.y2+stalk_len-radius),
+            Draw::Path(PathOp::NewPath),
+            Draw::Path(PathOp::Move(mid_point, bounding_box.y2+separation)),
+            Draw::Path(PathOp::Line(mid_point, bounding_box.y2+stalk_len-radius)),
 
             Draw::LineWidthPixels(1.0),
             Draw::StrokeColor(SELECTION_OUTLINE),
@@ -533,7 +533,7 @@ impl Select {
         // Draw the bounding boxes
         drawing.new_path();
         drawing.extend(vec![
-            Draw::NewPath
+            Draw::Path(PathOp::NewPath)
         ]);
 
         // Return the set of commands for drawing these elements
@@ -570,7 +570,7 @@ impl Select {
     fn draw_drag(data: &SelectData, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>, initial_point: (f32, f32), drag_point: (f32, f32)) -> Vec<Draw> {
         let mut drawing = vec![];
 
-        drawing.layer(1);
+        drawing.layer(LayerId(1));
         drawing.clear_layer();
 
         // Draw everything translated by the drag distance
@@ -581,7 +581,7 @@ impl Select {
         // Draw the 'shadows' of the elements
         if data.selected_elements_draw.len() > 0 {
             // Use the cached version
-            drawing.extend(&*data.selected_elements_draw);
+            drawing.extend(data.selected_elements_draw.iter().cloned());
         } else {
             // Regenerate every time
             drawing.extend(Self::rendering_for_elements(data, &selected_elements));
@@ -670,7 +670,7 @@ impl Select {
     fn draw_drag_handle(data: &SelectData, handle: SelectHandle, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>, initial_point: (f32, f32), drag_point: (f32, f32)) -> Vec<Draw> {
         let mut drawing = vec![];
 
-        drawing.layer(1);
+        drawing.layer(LayerId(1));
         drawing.clear_layer();
 
         // Work out the bounding box
@@ -690,7 +690,7 @@ impl Select {
         // Draw the 'shadows' of the elements
         if data.selected_elements_draw.len() > 0 {
             // Use the cached version
-            drawing.extend(&*data.selected_elements_draw);
+            drawing.extend(data.selected_elements_draw.iter().cloned());
         } else {
             // Regenerate every time
             drawing.extend(Self::rendering_for_elements(data, &selected_elements));
@@ -738,7 +738,7 @@ impl Select {
                 .flat_map(|path| { let path: Vec<Draw> = (&path).into(); path })
                 .collect();
 
-            path_draw.insert(0, Draw::NewPath);
+            path_draw.insert(0, Draw::Path(PathOp::NewPath));
 
             // Draw the outline
             if fill {
@@ -997,7 +997,7 @@ impl Select {
 
                 // Clear layer 1 (it's used to draw the rubber band)
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
-                    Draw::Layer(1),
+                    Draw::Layer(LayerId(1)),
                     Draw::ClearLayer
                 ])));
             },
@@ -1021,7 +1021,7 @@ impl Select {
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(
                     vec![Draw::Sprite(SPRITE_SELECTION_OUTLINE), Draw::ClearSprite].into_iter()
                         .chain(render.into_iter())
-                        .chain(vec![Draw::Layer(0)])
+                        .chain(vec![Draw::Layer(LayerId(0))])
                         .collect()
 
                 )));
@@ -1069,7 +1069,7 @@ impl Select {
 
                 // Redraw the selection highlights
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
-                    Draw::Layer(1),
+                    Draw::Layer(LayerId(1)),
                     Draw::ClearLayer
                 ])));
             },
@@ -1112,7 +1112,7 @@ impl Select {
 
                 // Redraw the selection highlights
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
-                    Draw::Layer(1),
+                    Draw::Layer(LayerId(1)),
                     Draw::ClearLayer
                 ])));
             },
@@ -1127,7 +1127,7 @@ impl Select {
 
                 // Clear layers other than 0 in the overlay
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
-                    Draw::Layer(1),
+                    Draw::Layer(LayerId(1)),
                     Draw::ClearLayer
                 ])));
             },

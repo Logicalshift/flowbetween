@@ -178,12 +178,12 @@ impl EraserMenuController {
             gc.center_region(-control_width/2.0, -control_height/2.0, control_width/2.0, control_height/2.0);
 
             // Clear the background
-            gc.layer(0);
+            gc.layer(LayerId(0));
             gc.fill_color(Color::Rgba(0.9, 0.9, 0.9, 1.0));
             gc.rect(-control_width/2.0, -control_height/2.0, control_width/2.0, control_height/2.0);
             gc.fill();
 
-            gc.layer(1);
+            gc.layer(LayerId(1));
             gc.fill_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
             gc.rect(-control_width/2.0, -control_height/2.0, control_width/2.0, control_height/2.0);
             gc.fill();

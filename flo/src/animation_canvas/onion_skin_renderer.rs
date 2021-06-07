@@ -51,9 +51,8 @@ impl OnionSkinRenderer {
                         };
                         let color   = color.with_alpha(opacity as f32);
 
-                        iter::once(Draw::NewPath)
-                            .chain(drawing.iter()
-                                .map(|draw| *draw))
+                        iter::once(Draw::Path(PathOp::NewPath))
+                            .chain(drawing.iter().cloned())
                             .chain(vec![
                                 Draw::FillColor(color),
                                 Draw::Fill,
