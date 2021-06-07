@@ -14,7 +14,7 @@ use std::collections::HashMap;
 ///
 struct FrameLayer {
     /// The ID of the layer to draw on the canvas
-    layer_id:           u32,
+    layer_id:           LayerId,
 
     /// The frame data for this layer
     layer_frame:        Arc<dyn Frame>,
@@ -31,10 +31,10 @@ struct FrameLayer {
 ///
 struct OverlayLayer {
     /// How layers in the overlay map to layers in the canvas
-    layers:         HashMap<u32, u32>,
+    layers:         HashMap<LayerId, LayerId>,
 
     /// The layer that is currently active for this overlay layer
-    active_layer:   u32,
+    active_layer:   LayerId,
 
     /// The drawing for this layer
     drawing:        Canvas
@@ -45,13 +45,13 @@ struct OverlayLayer {
 ///
 pub struct CanvasRenderer {
     /// The layers in the current frame
-    frame_layers: HashMap<u64, FrameLayer>,
+    frame_layers: HashMap<LayerId, FrameLayer>,
 
-    /// The over layers in the current frame
-    overlay_layers: HashMap<u32, OverlayLayer>,
+    /// The overlay layers in the current frame
+    overlay_layers: HashMap<LayerId, OverlayLayer>,
 
     /// The layer that we're currently 'annotating'
-    annotated_layer: Option<u64>
+    annotated_layer: Option<LayerId>
 }
 
 impl OverlayLayer {
@@ -61,7 +61,7 @@ impl OverlayLayer {
     pub fn new() -> OverlayLayer {
         OverlayLayer {
             layers:         HashMap::new(),
-            active_layer:   0,
+            active_layer:   LayerId(0),
             drawing:        Canvas::new()
         }
     }
@@ -89,16 +89,17 @@ impl CanvasRenderer {
     ///
     /// Returns the ID of the first free layer
     ///
-    fn free_layer(&self) -> u32 {
+    fn free_layer(&self) -> LayerId {
         // Create an iterator of all the used layer IDs
         let used_layers = self.frame_layers.values().map(|layer| layer.layer_id)
-            .chain(self.overlay_layers.values().flat_map(|overlay| overlay.layers.values().map(|layer_id| *layer_id)));
+            .chain(self.overlay_layers.values().flat_map(|overlay| overlay.layers.values().map(|layer_id| *layer_id)))
+            .map(|LayerId(layer_id)| layer_id);
 
         // Find the highest
         let max_layer = used_layers.max();
 
         // Result is one more than the highest used layer
-        max_layer.unwrap_or(0)+1
+        LayerId(max_layer.unwrap_or(0)+1)
     }
 
     ///
@@ -115,26 +116,30 @@ impl CanvasRenderer {
     /// Overlays can call 'Layer' themselves: one important action this performs is mapping layer IDs generated as part of the overlay
     /// into unique layer IDs on the canvas itself.
     ///
-    fn relay_drawing_for_overlay<DrawIter: Iterator<Item=Draw>>(&mut self, overlay: u32, gc: &mut dyn GraphicsContext, drawing: DrawIter) {
+    fn relay_drawing_for_overlay<DrawIter: Iterator<Item=Draw>>(&mut self, overlay: LayerId, gc: &mut dyn GraphicsContext, drawing: DrawIter) {
         // Find the first free layer in this object
-        let mut free_layer = self.free_layer();
+        let mut free_layer      = self.free_layer();
 
         // Function to generate the next free layer if we need one
         let mut next_free_layer = move || {
-            let layer_id = free_layer;
-            free_layer += 1;
+            let layer_id                        = free_layer;
+
+            let LayerId(mut next_free_layer)    = free_layer;
+            next_free_layer                     += 1;
+            free_layer                          = LayerId(next_free_layer);
+
             layer_id
         };
 
         // Get (or create) the layer map for this overlay
         // We'll generate new entries in this map if unknown layers are encountered
-        let overlay = self.overlay_layers
+        let overlay             = self.overlay_layers
             .entry(overlay)
             .or_insert_with(|| OverlayLayer::new());
 
         // Pick the currently active layer (allocate it if it doesn't exist)
-        let mut active_layer = overlay.active_layer;
-        let canvas_layer = *overlay.layers.entry(active_layer).or_insert_with(|| next_free_layer());
+        let mut active_layer    = overlay.active_layer;
+        let canvas_layer        = *overlay.layers.entry(active_layer).or_insert_with(|| next_free_layer());
         gc.layer(canvas_layer);
 
         // Map the drawing actions to actions for the target canvas (map layers mainly)
@@ -150,7 +155,7 @@ impl CanvasRenderer {
                     }
 
                     // Active layer resets back to 0
-                    active_layer = 0;
+                    active_layer = LayerId(0);
                     let canvas_layer = *overlay.layers.entry(active_layer).or_insert_with(|| next_free_layer());
                     gc.layer(canvas_layer);
                 },
@@ -190,8 +195,8 @@ impl CanvasRenderer {
             self.invalidate_overlay_layers();
 
             // The layer ID comes from the number of layers we've currently got loaded (this layer will be rendered on top of all others)
-            let animation_layer_id      = model.layer_id;
-            let canvas_layer_id         = (self.frame_layers.len() as u32) + 1;
+            let animation_layer_id      = LayerId(model.layer_id);
+            let canvas_layer_id         = LayerId((self.frame_layers.len() as u64) + 1);
 
             // Get the frame for this time
             let layer_frame             = frame;
@@ -228,7 +233,7 @@ impl CanvasRenderer {
         let (width, height) = (width as f32, height as f32);
 
         // Background always goes on layer 0
-        gc.layer(0);
+        gc.layer(LayerId(0));
 
         gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
         gc.line_width_pixels(1.0);
@@ -296,7 +301,7 @@ impl CanvasRenderer {
     ///
     /// Overlay operations will clear any annotation that might have been added.
     ///
-    pub fn overlay(&mut self, canvas: &BindingCanvas, overlay: u32, drawing: Vec<Draw>) {
+    pub fn overlay(&mut self, canvas: &BindingCanvas, overlay: LayerId, drawing: Vec<Draw>) {
         // Overlays screw with the annotation: make sure it's cleared
         self.clear_annotation(canvas);
 
@@ -359,7 +364,7 @@ impl CanvasRenderer {
     /// and can be replaced at any time. This allows for drawing things like preview
     /// brush strokes without needing to redraw the entire canvas.
     ///
-    pub fn annotate_layer<DrawFn: FnOnce(&mut dyn GraphicsContext) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: u64, draw_annotations: DrawFn) {
+    pub fn annotate_layer<DrawFn: FnOnce(&mut dyn GraphicsContext) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: LayerId, draw_annotations: DrawFn) {
         let previous_layer = self.annotated_layer;
 
         // We can't currently have annotations on more than one layer at once (this is because 'restore' does not function
@@ -403,7 +408,7 @@ impl CanvasRenderer {
     /// In general this is useful at the end of a brush stroke, where we want to finalize
     /// the results of a drawing without having to redraw the entire layer.
     ///
-    pub fn commit_to_layer<DrawFn: FnOnce(&mut dyn GraphicsContext) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: u64, commit_drawing: DrawFn) {
+    pub fn commit_to_layer<DrawFn: FnOnce(&mut dyn GraphicsContext) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: LayerId, commit_drawing: DrawFn) {
         // The currently annotated layer will be selected, so we can elide the layer select command if it's the same layer the user wants to commit drawing to
         let previous_layer = self.annotated_layer;
 
@@ -432,7 +437,7 @@ impl CanvasRenderer {
     ///
     /// Retrieves the brush settings for the specified layer
     ///
-    pub fn get_layer_brush(&self, layer_id: u64) -> (Option<(BrushDefinition, BrushDrawingStyle)>, Option<BrushProperties>) {
+    pub fn get_layer_brush(&self, layer_id: LayerId) -> (Option<(BrushDefinition, BrushDrawingStyle)>, Option<BrushProperties>) {
         if let Some(layer) = self.frame_layers.get(&layer_id) {
             (layer.active_brush.clone(), layer.active_properties.clone())
         } else {
@@ -443,7 +448,7 @@ impl CanvasRenderer {
     ///
     /// Sets the layer brush for the specified layer (eg after committing a brush preview)
     ///
-    pub fn set_layer_brush(&mut self, layer_id: u64, brush: Option<(BrushDefinition, BrushDrawingStyle)>, properties: Option<BrushProperties>) {
+    pub fn set_layer_brush(&mut self, layer_id: LayerId, brush: Option<(BrushDefinition, BrushDrawingStyle)>, properties: Option<BrushProperties>) {
         if let Some(layer) = self.frame_layers.get_mut(&layer_id) {
             layer.active_brush      = brush;
             layer.active_properties = properties;
