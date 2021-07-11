@@ -75,7 +75,7 @@ flo_canvas              = { git = "https://github.com/Logicalshift/flo_draw", br
 flo_render              = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.3" }
 flo_render_canvas       = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.3" }
 flo_render_gl_offscreen = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.3" }
-# flo_draw                = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.2" }
+# flo_draw                = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.3" }
 
 # flo_canvas              = { path = "../flo_draw/canvas" }
 # flo_render              = { path = "../flo_draw/render" }
