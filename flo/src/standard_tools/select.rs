@@ -282,7 +282,7 @@ impl Select {
                             Draw::ClearLayer,
                             Draw::SpriteTransform(SpriteTransform::Identity),
                             Draw::PushState,
-                            Draw::MultiplyTransform(Transform2D::translate(drag_offset.0, drag_offset.1)),
+                            Draw::SpriteTransform(SpriteTransform::Translate(drag_offset.0, drag_offset.1)),
                             Draw::DrawSprite(SPRITE_SELECTION_OUTLINE),
                             Draw::PopState
                         ]))
