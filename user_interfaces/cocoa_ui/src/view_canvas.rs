@@ -29,13 +29,13 @@ pub struct ViewCanvas {
     clear_canvas: Box<dyn FnMut() -> ()>,
 
     /// Callback function to create a copy of the layer with the specified ID
-    copy_layer: Box<dyn FnMut(u32) -> StrongPtr>,
+    copy_layer: Box<dyn FnMut(LayerId) -> StrongPtr>,
 
     /// Callback function to update the contents of a cached layer
-    update_layer: Box<dyn FnMut(u32, StrongPtr) -> ()>,
+    update_layer: Box<dyn FnMut(LayerId, StrongPtr) -> ()>,
 
     /// Callback function to restore the state of a layer from a copy created previously with copy_layer
-    restore_layer: Box<dyn FnMut(u32, StrongPtr) -> ()>,
+    restore_layer: Box<dyn FnMut(LayerId, StrongPtr) -> ()>,
 
     /// Sprites defined for the canvas
     sprites: HashMap<SpriteId, Vec<Draw>>
@@ -48,9 +48,9 @@ impl ViewCanvas {
     ///
     pub fn new<ClearCanvasFn, CopyLayerFn, UpdateLayerFn, RestoreLayerFn>(clear_canvas: ClearCanvasFn, copy_layer: CopyLayerFn, update_layer: UpdateLayerFn, restore_layer: RestoreLayerFn) -> ViewCanvas
     where   ClearCanvasFn:  'static+FnMut() -> (),
-            CopyLayerFn:    'static+FnMut(u32) -> StrongPtr,
-            UpdateLayerFn:  'static+FnMut(u32, StrongPtr) -> (),
-            RestoreLayerFn: 'static+FnMut(u32, StrongPtr) -> () {
+            CopyLayerFn:    'static+FnMut(LayerId) -> StrongPtr,
+            UpdateLayerFn:  'static+FnMut(LayerId, StrongPtr) -> (),
+            RestoreLayerFn: 'static+FnMut(LayerId, StrongPtr) -> () {
         ViewCanvas {
             canvas:         Canvas::new(),
             size:           CGSize { width: 1.0, height: 1.0 },
@@ -86,10 +86,10 @@ impl ViewCanvas {
     ///
     /// Performs a series of drawing actions on a graphics context
     ///
-    fn perform_drawing_on_context<ContextForLayer: FnMut(u32) -> Option<CFRef<CGContextRef>>, ActionIter: IntoIterator<Item=Draw>>(&mut self, actions: ActionIter, context_for_layer: ContextForLayer) {
+    fn perform_drawing_on_context<ContextForLayer: FnMut(LayerId) -> Option<CFRef<CGContextRef>>, ActionIter: IntoIterator<Item=Draw>>(&mut self, actions: ActionIter, context_for_layer: ContextForLayer) {
         // Get the initial context
         let mut context_for_layer   = context_for_layer;
-        let layer_context           = context_for_layer(0);
+        let layer_context           = context_for_layer(LayerId(0));
 
         if layer_context.is_none() {
             // Nothing to do if we can't get the context for layer 0
@@ -130,7 +130,7 @@ impl ViewCanvas {
                         (self.clear_canvas)();
 
                         // Reset to layer 0
-                        let layer_context = context_for_layer(0);
+                        let layer_context = context_for_layer(LayerId(0));
                         if let Some(layer_context) = layer_context {
                             // The canvas context doesn't deactivate itself on drop, so force it to deactivate by going through to_state
                             context = QuartzContext::new(layer_context, viewport_origin, viewport_size, canvas_size);
@@ -278,7 +278,7 @@ impl ViewCanvas {
     ///
     /// Redraws the entire canvas
     ///
-    pub fn redraw<ContextForLayer: FnMut(u32) -> Option<CFRef<CGContextRef>>>(&mut self, context_for_layer: ContextForLayer) {
+    pub fn redraw<ContextForLayer: FnMut(LayerId) -> Option<CFRef<CGContextRef>>>(&mut self, context_for_layer: ContextForLayer) {
         // Fetch the current set of drawing instructions
         let mut actions = self.canvas.get_drawing();
 
@@ -297,7 +297,7 @@ impl ViewCanvas {
     ///
     /// Draws some actions to this view canvas
     ///
-    pub fn draw<ContextForLayer: FnMut(u32) -> Option<CFRef<CGContextRef>>>(&mut self, actions: Vec<Draw>, context_for_layer: ContextForLayer) {
+    pub fn draw<ContextForLayer: FnMut(LayerId) -> Option<CFRef<CGContextRef>>>(&mut self, actions: Vec<Draw>, context_for_layer: ContextForLayer) {
         // Write the actions to the canvas so we can redraw them later on
         self.canvas.write(actions.clone());
 
