@@ -1146,7 +1146,7 @@ dependencies = [
 [[package]]
 name = "flo_canvas"
 version = "0.3.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#ef24f2e149121f96935daf70c13e083f2e414a3a"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#c6658f4f5bf40e9c52d571065e819fa9bf3dc3ec"
 dependencies = [
  "desync",
  "flo_curves 0.5.1",
@@ -1354,7 +1354,7 @@ dependencies = [
 [[package]]
 name = "flo_render"
 version = "0.3.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#ef24f2e149121f96935daf70c13e083f2e414a3a"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#c6658f4f5bf40e9c52d571065e819fa9bf3dc3ec"
 dependencies = [
  "bindgen",
  "cocoa 0.23.0",
@@ -1369,7 +1369,7 @@ dependencies = [
 [[package]]
 name = "flo_render_canvas"
 version = "0.3.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#ef24f2e149121f96935daf70c13e083f2e414a3a"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#c6658f4f5bf40e9c52d571065e819fa9bf3dc3ec"
 dependencies = [
  "desync",
  "flo_canvas 0.3.0",
@@ -1383,7 +1383,7 @@ dependencies = [
 [[package]]
 name = "flo_render_gl_offscreen"
 version = "0.3.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#ef24f2e149121f96935daf70c13e083f2e414a3a"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#c6658f4f5bf40e9c52d571065e819fa9bf3dc3ec"
 dependencies = [
  "bindgen",
  "cgl",
@@ -2305,13 +2305,13 @@ checksum = "b16bd47d9e329435e309c58469fe0791c2d0d1ba96ec0954152a5ae2b04387dc"
 
 [[package]]
 name = "metal"
-version = "0.20.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c4e8a431536529327e28c9ba6992f2cb0c15d4222f0602a16e6d7695ff3bccf"
+checksum = "79d7d769f1c104b8388294d6594d491d2e21240636f5f94d37f8a0f3d7904450"
 dependencies = [
  "bitflags",
  "block",
- "cocoa-foundation",
+ "core-graphics-types",
  "foreign-types",
  "log",
  "objc",
