@@ -270,6 +270,7 @@ impl CanvasRenderer {
                 layer.layer_frame.render_to(gc);
             }
 
+            /*
             // Draw a test gradient
             gc.new_gradient(GradientId(1), Color::Rgba(0.8, 0.0, 0.0, 1.0));
             gc.gradient_stop(GradientId(1), 0.33, Color::Rgba(0.3, 0.8, 0.0, 1.0));
@@ -286,6 +287,7 @@ impl CanvasRenderer {
             gc.circle(500.0, 500.0, 250.0);
             gc.fill_gradient(GradientId(1), x1, y1, x2, y2);
             gc.fill();
+            */
         });
     }
 
