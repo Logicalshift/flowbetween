@@ -269,6 +269,23 @@ impl CanvasRenderer {
                 gc.layer(layer.layer_id);
                 layer.layer_frame.render_to(gc);
             }
+
+            // Draw a test gradient
+            gc.new_gradient(GradientId(1), Color::Rgba(0.8, 0.0, 0.0, 1.0));
+            gc.gradient_stop(GradientId(1), 0.33, Color::Rgba(0.3, 0.8, 0.0, 1.0));
+            gc.gradient_stop(GradientId(1), 0.66, Color::Rgba(0.0, 0.3, 0.8, 1.0));
+            gc.gradient_stop(GradientId(1), 1.0, Color::Rgba(0.6, 0.3, 0.9, 1.0));
+
+            let x1 = 500.0 - 300.0*f32::cos(0.0);
+            let y1 = 500.0 - 300.0*f32::sin(0.0);
+            let x2 = 500.0 + 300.0*f32::cos(0.0);
+            let y2 = 500.0 + 300.0*f32::sin(0.0);
+
+            // Draw a circle using the gradient
+            gc.new_path();
+            gc.circle(500.0, 500.0, 250.0);
+            gc.fill_gradient(GradientId(1), x1, y1, x2, y2);
+            gc.fill();
         });
     }
 
