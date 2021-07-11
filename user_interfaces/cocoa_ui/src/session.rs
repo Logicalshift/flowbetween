@@ -533,7 +533,7 @@ impl CocoaSession {
     ///
     /// Draws a GPU canvas for a particular view
     ///
-    pub fn redraw_gpu_canvas_for_view(&mut self, view_id: usize, drawable: metal::CoreAnimationDrawable, size: CGSize, bounds: CGRect, scale: f64) {
+    pub fn redraw_gpu_canvas_for_view(&mut self, view_id: usize, drawable: metal::MetalDrawable, size: CGSize, bounds: CGRect, scale: f64) {
         let gpu_canvases    = &mut self.gpu_canvases;
         let views           = &self.views;
 
