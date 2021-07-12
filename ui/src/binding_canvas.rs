@@ -298,7 +298,7 @@ mod test {
         // Check we can get the results via the stream
         executor::block_on(async {
             assert!(stream.next().await == Some(Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))));
-            assert!(stream.next().await == Some(Draw::NewPath));
+            assert!(stream.next().await == Some(Draw::Path(PathOp::NewPath)));
         });
     }
 
@@ -318,7 +318,7 @@ mod test {
         // Check we can get the results via the stream
         executor::block_on(async {
             assert!(stream.next().await == Some(Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))));
-            assert!(stream.next().await == Some(Draw::NewPath));
+            assert!(stream.next().await == Some(Draw::Path(PathOp::NewPath)));
         });
     }
 
@@ -343,8 +343,8 @@ mod test {
         // Should draw the first set of functions
         executor::block_on(async {
             assert!(stream.next().await == Some(Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))));
-            assert!(stream.next().await == Some(Draw::NewPath));
-            assert!(stream.next().await == Some(Draw::Move(1.0, 2.0)));
+            assert!(stream.next().await == Some(Draw::Path(PathOp::NewPath)));
+            assert!(stream.next().await == Some(Draw::Path(PathOp::Move(1.0, 2.0))));
 
             // Update the binding
             binding.set((4.0, 5.0));
@@ -354,8 +354,8 @@ mod test {
 
             // Should redraw the canvas now
             assert!(stream.next().await == Some(Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))));
-            assert!(stream.next().await == Some(Draw::NewPath));
-            assert!(stream.next().await == Some(Draw::Move(4.0, 5.0)));
+            assert!(stream.next().await == Some(Draw::Path(PathOp::NewPath)));
+            assert!(stream.next().await == Some(Draw::Path(PathOp::Move(4.0, 5.0))));
         });
     }
 }
