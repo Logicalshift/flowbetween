@@ -230,7 +230,7 @@ impl FloDrawingWidget {
         // Write to the canvas and the core
         let actions: Vec<_> = actions.into_iter().collect();
         for action in actions.iter() {
-            core.pixbufs.draw(*action);
+            core.pixbufs.draw(action.clone());
         }
         core.canvas.write(actions);
 
@@ -323,7 +323,7 @@ impl GtkUiWidget for FloDrawingWidget {
 
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
         match action {
-            &GtkWidgetAction::Content(WidgetContent::Draw(ref drawing)) => self.draw(drawing.iter().map(|draw| *draw)),
+            &GtkWidgetAction::Content(WidgetContent::Draw(ref drawing)) => self.draw(drawing.iter().map(|draw| draw.clone())),
             other_action                                                => { process_basic_widget_action(self, flo_gtk, other_action); }
         }
     }
