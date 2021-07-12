@@ -428,6 +428,18 @@ impl CairoDraw {
             ClearSprite                                 => { unimplemented!(); },
             SpriteTransform(transform)                  => { unimplemented!(); },
             DrawSprite(sprite_id)                       => { unimplemented!(); },
+
+            StartFrame | ShowFrame | ResetFrame         => { /* Frames should be implemented elsewhere */ }
+
+            FillGradient(gradient_id, p1, p2)           => { unimplemented!() }
+            FillTexture(texture_id, p1, p2)             => { unimplemented!() }
+            Texture(texture_id, texture_op)             => { unimplemented!() }
+            Gradient(gradient_id, gradient_op)          => { unimplemented!() }
+            Font(font_id, font_op)                      => { unimplemented!() }
+            BeginLineLayout(x, y, alignment)            => { unimplemented!() }
+            DrawLaidOutText                             => { unimplemented!() }
+            DrawText(font_id, text, x, y)               => { unimplemented!() }
+
         }
     }
 }
