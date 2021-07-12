@@ -297,8 +297,11 @@ mod test {
 
         // Check we can get the results via the stream
         executor::block_on(async {
+            assert!(stream.next().await == Some(Draw::ResetFrame));
+            assert!(stream.next().await == Some(Draw::StartFrame));
             assert!(stream.next().await == Some(Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))));
             assert!(stream.next().await == Some(Draw::Path(PathOp::NewPath)));
+            assert!(stream.next().await == Some(Draw::ShowFrame));
         });
     }
 
@@ -317,8 +320,11 @@ mod test {
 
         // Check we can get the results via the stream
         executor::block_on(async {
+            assert!(stream.next().await == Some(Draw::ResetFrame));
+            assert!(stream.next().await == Some(Draw::StartFrame));
             assert!(stream.next().await == Some(Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))));
             assert!(stream.next().await == Some(Draw::Path(PathOp::NewPath)));
+            assert!(stream.next().await == Some(Draw::ShowFrame));
         });
     }
 
@@ -342,9 +348,12 @@ mod test {
 
         // Should draw the first set of functions
         executor::block_on(async {
+            assert!(stream.next().await == Some(Draw::ResetFrame));
+            assert!(stream.next().await == Some(Draw::StartFrame));
             assert!(stream.next().await == Some(Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))));
             assert!(stream.next().await == Some(Draw::Path(PathOp::NewPath)));
             assert!(stream.next().await == Some(Draw::Path(PathOp::Move(1.0, 2.0))));
+            assert!(stream.next().await == Some(Draw::ShowFrame));
 
             // Update the binding
             binding.set((4.0, 5.0));
@@ -353,9 +362,11 @@ mod test {
             canvas.redraw_if_invalid();
 
             // Should redraw the canvas now
+            assert!(stream.next().await == Some(Draw::StartFrame));
             assert!(stream.next().await == Some(Draw::ClearCanvas(Color::Rgba(0.0, 0.0, 0.0, 0.0))));
             assert!(stream.next().await == Some(Draw::Path(PathOp::NewPath)));
             assert!(stream.next().await == Some(Draw::Path(PathOp::Move(4.0, 5.0))));
+            assert!(stream.next().await == Some(Draw::ShowFrame));
         });
     }
 }
