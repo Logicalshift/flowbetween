@@ -1087,8 +1087,8 @@ dependencies = [
  "desync",
  "flo_animation",
  "flo_binding",
- "flo_canvas 0.3.0",
- "flo_curves 0.5.1",
+ "flo_canvas",
+ "flo_curves",
  "flo_stream",
  "flo_ui",
  "flo_ui_files",
@@ -1105,8 +1105,8 @@ name = "flo_animation"
 version = "0.2.0"
 dependencies = [
  "desync",
- "flo_canvas 0.3.0",
- "flo_curves 0.5.1",
+ "flo_canvas",
+ "flo_curves",
  "flo_float_encoder",
  "flo_stream",
  "futures",
@@ -1131,25 +1131,11 @@ dependencies = [
 
 [[package]]
 name = "flo_canvas"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5456dda8e0215bbf45aa62c3423cf54101afc3ad071a06c24285ab1c5cb1c69"
-dependencies = [
- "desync",
- "flo_curves 0.4.1",
- "futures",
- "rust-hsluv",
- "serde",
- "serde_derive",
-]
-
-[[package]]
-name = "flo_canvas"
 version = "0.3.0"
 source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#c6658f4f5bf40e9c52d571065e819fa9bf3dc3ec"
 dependencies = [
  "desync",
- "flo_curves 0.5.1",
+ "flo_curves",
  "flo_stream",
  "futures",
  "itertools 0.10.1",
@@ -1167,7 +1153,7 @@ dependencies = [
  "flo",
  "flo_animation",
  "flo_binding",
- "flo_canvas 0.3.0",
+ "flo_canvas",
  "flo_cocoa_pipe",
  "flo_cocoa_ui",
  "flo_logging",
@@ -1187,7 +1173,7 @@ dependencies = [
 name = "flo_cocoa_pipe"
 version = "0.2.0"
 dependencies = [
- "flo_canvas 0.3.0",
+ "flo_canvas",
  "flo_stream",
  "flo_ui",
  "futures",
@@ -1206,7 +1192,7 @@ dependencies = [
  "cocoa 0.19.1",
  "core-foundation 0.6.4",
  "desync",
- "flo_canvas 0.3.0",
+ "flo_canvas",
  "flo_cocoa_pipe",
  "flo_render",
  "flo_render_canvas",
@@ -1225,24 +1211,13 @@ version = "0.2.0"
 dependencies = [
  "desync",
  "flo_animation",
- "flo_canvas 0.3.0",
- "flo_curves 0.5.1",
+ "flo_canvas",
+ "flo_curves",
  "flo_sqlite_storage",
  "flo_stream",
  "flo_ui_files",
  "futures",
  "itertools 0.9.0",
-]
-
-[[package]]
-name = "flo_curves"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdadd295083d7d5dbdbbe8b930d70cf00ea02dd72c4796afd0ef584f90fc3192"
-dependencies = [
- "itertools 0.9.0",
- "roots",
- "smallvec",
 ]
 
 [[package]]
@@ -1278,7 +1253,7 @@ dependencies = [
  "cairo-rs",
  "desync",
  "epoxy",
- "flo_canvas 0.2.0",
+ "flo_canvas",
  "flo_render",
  "flo_render_canvas",
  "flo_stream",
@@ -1304,7 +1279,7 @@ dependencies = [
  "bytes 0.5.6",
  "desync",
  "flo_binding",
- "flo_canvas 0.3.0",
+ "flo_canvas",
  "flo_logging",
  "flo_stream",
  "flo_ui",
@@ -1328,7 +1303,7 @@ dependencies = [
  "actix-web-actors",
  "bytes 0.5.6",
  "flo_binding",
- "flo_canvas 0.3.0",
+ "flo_canvas",
  "flo_http_ui",
  "flo_logging",
  "flo_static_files",
@@ -1359,7 +1334,7 @@ dependencies = [
  "bindgen",
  "cocoa 0.23.0",
  "core-foundation 0.9.1",
- "flo_canvas 0.3.0",
+ "flo_canvas",
  "flo_render_gl_offscreen",
  "gl",
  "libc 0.2.98",
@@ -1372,7 +1347,7 @@ version = "0.3.0"
 source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#c6658f4f5bf40e9c52d571065e819fa9bf3dc3ec"
 dependencies = [
  "desync",
- "flo_canvas 0.3.0",
+ "flo_canvas",
  "flo_render",
  "flo_stream",
  "futures",
@@ -1433,7 +1408,7 @@ dependencies = [
  "bytes 0.5.6",
  "desync",
  "flo_binding",
- "flo_canvas 0.3.0",
+ "flo_canvas",
  "flo_stream",
  "futures",
  "itertools 0.9.0",
@@ -1452,7 +1427,7 @@ dependencies = [
  "desync",
  "dirs",
  "flo_binding",
- "flo_canvas 0.3.0",
+ "flo_canvas",
  "flo_logging",
  "flo_stream",
  "flo_ui",
@@ -1481,7 +1456,7 @@ dependencies = [
  "flo",
  "flo_animation",
  "flo_binding",
- "flo_canvas 0.3.0",
+ "flo_canvas",
  "flo_cocoa",
  "flo_cocoa_pipe",
  "flo_cocoa_ui",
