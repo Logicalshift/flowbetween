@@ -23,7 +23,7 @@ struct Layer {
 ///
 pub struct PixBufCanvas {
     /// The layers in this canvas
-    layers: HashMap<u32, Layer>,
+    layers: HashMap<LayerId, Layer>,
 
     /// The pixel scale for this canvas
     pixel_scale: f64,
@@ -32,7 +32,7 @@ pub struct PixBufCanvas {
     viewport: CanvasViewport,
 
     /// The currently selected layer
-    current_layer: u32,
+    current_layer: LayerId,
 
     /// The state to restore during the next drawing operation
     saved_state: Option<CairoState>
@@ -47,7 +47,7 @@ impl PixBufCanvas {
             layers:         HashMap::new(),
             pixel_scale:    pixel_scale,
             viewport:       viewport,
-            current_layer:  0,
+            current_layer:  LayerId(0),
             saved_state:    None
         }
     }
@@ -62,7 +62,7 @@ impl PixBufCanvas {
     ///
     /// Generates a stored version of the specified layer
     ///
-    fn save_layer(&mut self, layer_id: u32) {
+    fn save_layer(&mut self, layer_id: LayerId) {
         let width           = self.viewport.viewport_width;
         let height          = self.viewport.viewport_height;
         let viewport        = &self.viewport;
@@ -94,7 +94,7 @@ impl PixBufCanvas {
     ///
     /// Restores the specified layer from its stored version
     ///
-    fn restore_layer(&mut self, layer_id: u32) {
+    fn restore_layer(&mut self, layer_id: LayerId) {
         if let Some(layer) = self.layers.get_mut(&layer_id) {
             // Get the layer surface
             let layer_surface = &layer.surface;
@@ -118,7 +118,7 @@ impl PixBufCanvas {
     ///
     /// Clears the storage associated with a layer
     ///
-    fn clear_storage(&mut self, layer_id: u32) {
+    fn clear_storage(&mut self, layer_id: LayerId) {
         if let Some(layer) = self.layers.get_mut(&layer_id) {
             layer.stored = None;
         }
@@ -133,7 +133,7 @@ impl PixBufCanvas {
                 // Clearing the canvas clears all the layers and resets us to layer 0
                 self.layers.clear();
                 self.saved_state    = None;
-                self.current_layer  = 0;
+                self.current_layer  = LayerId(0);
             },
 
             Draw::ClearLayer => {
@@ -207,7 +207,7 @@ impl PixBufCanvas {
 
         // Put the layers in order
         let mut layers: Vec<_> = self.layers.iter().collect();
-        layers.sort_by(|&a, &b| a.0.cmp(b.0));
+        layers.sort_by(|&(LayerId(a), _), &(LayerId(b), _)| a.cmp(b));
 
         drawable.set_antialias(cairo::Antialias::None);
 
