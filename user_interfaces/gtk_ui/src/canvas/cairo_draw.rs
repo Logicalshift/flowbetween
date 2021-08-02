@@ -440,6 +440,9 @@ impl CairoDraw {
             DrawLaidOutText                             => { unimplemented!() }
             DrawText(font_id, text, x, y)               => { unimplemented!() }
 
+            FillTransform(_)                            => { unimplemented!() }
+            ClearAllLayers                              => { unimplemented!() }
+            SwapLayers(_, _)                            => { unimplemented!() }
         }
     }
 }

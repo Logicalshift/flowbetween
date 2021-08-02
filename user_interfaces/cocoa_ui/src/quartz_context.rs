@@ -231,6 +231,10 @@ impl QuartzContext {
                 SpriteTransform(_transform)                             => { unimplemented!() }
                 ClearSprite                                             => { unimplemented!() }
                 DrawSprite(_sprite_id)                                  => { unimplemented!() }
+
+                FillTransform(_)                                        => { unimplemented!() }
+                ClearAllLayers                                          => { unimplemented!() }
+                SwapLayers(_, _)                                        => { unimplemented!() }
             }
         }
     }
