@@ -1146,6 +1146,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "flo_canvas_animation"
+version = "0.3.0"
+dependencies = [
+ "flo_canvas",
+ "flo_curves",
+]
+
+[[package]]
 name = "flo_cocoa"
 version = "0.2.0"
 dependencies = [
@@ -1457,6 +1465,7 @@ dependencies = [
  "flo_animation",
  "flo_binding",
  "flo_canvas",
+ "flo_canvas_animation",
  "flo_cocoa",
  "flo_cocoa_pipe",
  "flo_cocoa_ui",

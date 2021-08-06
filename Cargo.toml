@@ -24,6 +24,7 @@ flo_ui                  = "0.2"
 flo_logging             = "0.2"
 flo                     = "0.2"
 flo_canvas              = "0.3"
+flo_canvas_animation    = "0.3"
 
 flo_gtk_ui              = { version="0.2", optional = true }
 flo_http_ui             = { version="0.2", optional = true }
@@ -48,6 +49,7 @@ actix-rt                = { version = "1.0", optional = true }
 
 [patch.crates-io]
 flo_animation           = { path = "./animation" }
+flo_canvas_animation    = { path = "./canvas_animation" }
 flo_sqlite_storage      = { path = "./sqlite_storage" }
 flo_ui_files            = { path = "./ui_files" }
 flo_ui                  = { path = "./ui" }

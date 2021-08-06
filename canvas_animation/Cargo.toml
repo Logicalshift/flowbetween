@@ -1,0 +1,12 @@
+[package]
+name        = "flo_canvas_animation"
+version     = "0.3.0"
+authors     = ["Andrew Hunter"]
+license     = "Apache-2.0"
+edition     = "2018"
+repository  = "https://github.com/Logicalshift/flowbetween"
+description = "Applies animations to vector graphics"
+
+[dependencies]
+flo_canvas              = "0.3"
+flo_curves              = "0.5"
