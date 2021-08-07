@@ -6,6 +6,10 @@
 //! As well as animations, this crate can be used to apply effects to regions (eg: drop shadows)
 //!
 
+mod region;
+mod animation_path;
 mod animation_layer;
 
-pub use animation_layer::*;
+pub use self::region::*;
+pub use self::animation_path::*;
+pub use self::animation_layer::*;
