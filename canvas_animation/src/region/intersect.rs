@@ -42,7 +42,8 @@ pub fn intersect_regions(overlapping_regions: Vec<(RegionId, Vec<SimpleBezierPat
             let (first_region_id, first_path, first_bounds)     = &regions[first_region];
             let (second_region_id, second_path, second_bounds)  = &regions[second_region];
 
-            if first_bounds.overlaps(second_bounds) {
+            // TOOD: the check for regions that have already intersected here might be a bit too slow
+            if first_bounds.overlaps(second_bounds) && !first_region_id.iter().any(|id| second_region_id.contains(id)) {
                 // The bounds overlap: try intersecting the regions
                 let intersection = path_full_intersect::<_, _, SimpleBezierPath>(first_path, second_path, precision);
 
@@ -125,7 +126,6 @@ mod test {
         println!("{:?}", intersections.len());
         println!("{:?}", intersections.iter().map(|(regions, _)| regions.clone()).collect::<Vec<_>>());
 
-        // TODO
-        // assert!(intersections.len() == 7);
+        assert!(intersections.len() == 7);
     }
 }
