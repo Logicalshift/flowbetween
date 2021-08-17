@@ -94,11 +94,11 @@ mod test {
         let path1           = vec![Circle::new(Coord2(5.0, 5.0), 5.0).to_path::<SimpleBezierPath>()];
         let path2           = vec![Circle::new(Coord2(15.0, 5.0), 5.0).to_path::<SimpleBezierPath>()];
 
-        let intersections   = intersect_regions(vec![(RegionId(0, 0), path1), (RegionId(1, 0), path2)], 0.01);
+        let intersections   = intersect_regions(vec![(RegionId(0), path1), (RegionId(1), path2)], 0.01);
 
         assert!(intersections.len() == 2);
-        assert!(intersections[0].0  == vec![RegionId(0, 0)]);
-        assert!(intersections[1].0  == vec![RegionId(1, 0)]);
+        assert!(intersections[0].0  == vec![RegionId(0)]);
+        assert!(intersections[1].0  == vec![RegionId(1)]);
     }
 
     #[test]
@@ -106,12 +106,12 @@ mod test {
         let path1           = vec![Circle::new(Coord2(5.0, 5.0), 5.0).to_path::<SimpleBezierPath>()];
         let path2           = vec![Circle::new(Coord2(8.0, 5.0), 5.0).to_path::<SimpleBezierPath>()];
 
-        let intersections   = intersect_regions(vec![(RegionId(0, 0), path1), (RegionId(1, 0), path2)], 0.01);
+        let intersections   = intersect_regions(vec![(RegionId(0), path1), (RegionId(1), path2)], 0.01);
 
         assert!(intersections.len() == 3);
-        assert!(intersections[0].0  == vec![RegionId(0, 0)]);
-        assert!(intersections[1].0  == vec![RegionId(1, 0)]);
-        assert!(intersections[2].0  == vec![RegionId(0, 0), RegionId(1, 0)]);
+        assert!(intersections[0].0  == vec![RegionId(0)]);
+        assert!(intersections[1].0  == vec![RegionId(1)]);
+        assert!(intersections[2].0  == vec![RegionId(0), RegionId(1)]);
     }
 
 
@@ -121,7 +121,7 @@ mod test {
         let path2           = vec![Circle::new(Coord2(8.0, 5.0), 5.0).to_path::<SimpleBezierPath>()];
         let path3           = vec![Circle::new(Coord2(5.0, 8.0), 5.0).to_path::<SimpleBezierPath>()];
 
-        let intersections   = intersect_regions(vec![(RegionId(0, 0), path1), (RegionId(1, 0), path2), (RegionId(2, 0), path3)], 0.01);
+        let intersections   = intersect_regions(vec![(RegionId(0), path1), (RegionId(1), path2), (RegionId(2), path3)], 0.01);
 
         println!("{:?}", intersections.len());
         println!("{:?}", intersections.iter().map(|(regions, _)| regions.clone()).collect::<Vec<_>>());

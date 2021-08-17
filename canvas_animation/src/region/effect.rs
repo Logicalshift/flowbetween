@@ -10,13 +10,13 @@ pub trait AnimationEffect : Clone+Send+Sync {
     ///
     /// Given the contents of the regions for this effect, calculates the path that should be rendered
     ///
-    fn animate(&self, region_contents: Arc<Vec<AnimationRegionContent>>, time: f64) -> Vec<AnimationPath>;
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: f64) -> Vec<AnimationPath>;
 }
 
 impl<T> AnimationEffect for Box<T>
 where T: AnimationEffect {
     #[inline]
-    fn animate(&self, region_contents: Arc<Vec<AnimationRegionContent>>, time: f64) -> Vec<AnimationPath> {
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: f64) -> Vec<AnimationPath> {
         (**self).animate(region_contents, time)
     }
 }

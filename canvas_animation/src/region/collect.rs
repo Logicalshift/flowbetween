@@ -10,12 +10,8 @@ pub fn collect_regions<'a, Region: 'a+AnimationRegion, RegionIter: IntoIterator<
     regions
         .into_iter()
         .enumerate()
-        .flat_map(|(region_idx, region)| {
-            (0..region.num_regions())
-                .into_iter()
-                .map(move |subregion_idx| {
-                    (RegionId(region_idx, subregion_idx), region.region(subregion_idx, time))
-                })
+        .map(|(region_idx, region)| {
+            (RegionId(region_idx), region.region(time))
         })
         .collect()
 }
@@ -32,17 +28,13 @@ mod test {
     pub struct TestRegion;
 
     impl AnimationEffect for TestRegion {
-        fn animate(&self, _region_contents: Arc<Vec<AnimationRegionContent>>, _time: f64) -> Vec<AnimationPath> {
+        fn animate(&self, _region_contents: Arc<AnimationRegionContent>, _time: f64) -> Vec<AnimationPath> {
             vec![]
         }
     }
 
     impl AnimationRegion for TestRegion {
-        fn num_regions(&self) -> usize {
-            1
-        }
-
-        fn region(&self, _subregion_index: usize, _time: f64) -> Vec<SimpleBezierPath> {
+        fn region(&self, _time: f64) -> Vec<SimpleBezierPath> {
             vec![]
         }
     }
@@ -53,6 +45,6 @@ mod test {
 
         let result = collect_regions(&boxed_regions, 0.0);
 
-        assert!(result[0].0 == RegionId(0, 0));
+        assert!(result[0].0 == RegionId(0));
     }
 }
