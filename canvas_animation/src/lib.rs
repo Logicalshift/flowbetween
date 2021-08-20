@@ -7,6 +7,7 @@
 //!
 
 mod region;
+pub mod effects;
 mod animation_path;
 mod animation_layer;
 

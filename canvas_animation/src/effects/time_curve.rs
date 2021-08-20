@@ -1,0 +1,65 @@
+use crate::region::*;
+use crate::animation_path::*;
+
+use std::sync::*;
+
+///
+/// The time curve effect applies a bezier curve time effect to an existing animation
+///
+/// It can be used to define simple effects like ease-in, ease-out or more complex
+/// effects over time
+///
+#[derive(Clone)]
+pub struct TimeCurveEffect<TEffect: AnimationEffect> {
+    /// The effect that the time curve is being applied to
+    effect: TEffect,
+
+    /// The control points for the time curve (a 1D bezier curve, in time coordinates). Time is linear after the last control point,
+    /// and the start point is always 0. Control points should always be moving forward in time (though there are no restrictions
+    /// between two control points)
+    ///
+    /// Order is control point 1, control point 2, end point
+    curve_points: Vec<(f64, f64, f64)>
+}
+
+impl<TEffect: AnimationEffect> TimeCurveEffect<TEffect> {
+    ///
+    /// Creates a new time curve effect with the specified control points
+    ///
+    pub fn with_control_points(effect: TEffect, control_points: Vec<(f64, f64, f64)>) -> TimeCurveEffect<TEffect> {
+        TimeCurveEffect {
+            effect:         effect,
+            curve_points:   control_points
+        }
+    }
+
+    ///
+    /// Works out where the specified time lies on the curve
+    ///
+    pub fn time_for_time(&self, time: f64) -> f64 {
+        time
+    }
+}
+
+impl<TEffect: AnimationEffect> AnimationEffect for TimeCurveEffect<TEffect> {
+    ///
+    /// Given the contents of the regions for this effect, calculates the path that should be rendered
+    ///
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: f64) -> Vec<AnimationPath> {
+        self.effect.animate(region_contents, self.time_for_time(time))
+    }
+
+    ///
+    /// Given an input region that will remain fixed throughout the time period, returns a function that
+    /// will animate it. This can be used to speed up operations when some pre-processing is required for
+    /// the region contents, but is not always available as the region itself might be changing over time
+    /// (eg, if many effects are combined)
+    ///
+    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(f64) -> Vec<AnimationPath>> {
+        let cached_effect = self.effect.animate_cached(region_contents);
+
+        Box::new(move |time| {
+            cached_effect(self.time_for_time(time))
+        })
+    }
+}
