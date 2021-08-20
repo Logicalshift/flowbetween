@@ -128,7 +128,7 @@ mod test {
     pub fn simple_easing_time_curve() {
         let time_curve = TimeCurveEffect::with_control_points(TestEffect, vec![(0.0, 300.0, 300.0)]);
 
-        for p in 1..300 {
+        for p in 1..400 {
             let p2 = p as f64;
             let p1 = p2 - 1.0;
             let p3 = p2 + 1.0;
@@ -137,12 +137,12 @@ mod test {
             let t2 = time_curve.time_for_time(p2);
             let t3 = time_curve.time_for_time(p3);
 
-            println!("{:?}", t3-t2);
-
             if p < 150 {
                 assert!((t2-t1) <= (t3-t2));
-            } else if p > 150 {
+            } else if p > 150 && p < 300 {
                 assert!((t2-t1) >= (t3-t2));
+            } else if p > 300 {
+                assert!(((t2-t1)-(t3-t2)).abs() < 0.1);
             }
         }
     }
