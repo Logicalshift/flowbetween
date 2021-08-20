@@ -31,4 +31,9 @@ where T: AnimationEffect {
     fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: f64) -> Vec<AnimationPath> {
         (**self).animate(region_contents, time)
     }
+
+    #[inline]
+    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(f64) -> Vec<AnimationPath>> {
+        (**self).animate_cached(region_contents)
+    }
 }
