@@ -1,6 +1,8 @@
 use crate::region::*;
 use crate::animation_path::*;
 
+use flo_curves::bezier::*;
+
 use std::sync::*;
 
 ///
@@ -37,7 +39,38 @@ impl<TEffect: AnimationEffect> TimeCurveEffect<TEffect> {
     /// Works out where the specified time lies on the curve
     ///
     pub fn time_for_time(&self, time: f64) -> f64 {
-        time
+        // Find the two curve points that this time is between (first where the control point is greater than the time)
+        let mut start_point = 0.0;
+        let     cp1;
+        let     cp2;
+        let     end_point;
+
+        let mut curve_iter = self.curve_points.iter();
+        loop {
+            if let Some((test_cp1, test_cp2, test_end_point)) = curve_iter.next() {
+                // If the end point is > time then this is the section containing the requested time
+                if test_end_point > &time {
+                    // This is the curve section containing the specified time region
+                    cp1         = *test_cp1;
+                    cp2         = *test_cp2;
+                    end_point   = *test_end_point;
+
+                    break;
+                }
+
+                // The end point of this section is the start of the next section
+                start_point = *test_end_point;
+            } else {
+                // The time is beyond the end of the curve, so we just treat it linearly
+                return time;
+            }
+        }
+
+        // We have the curve section with the time: the t value is the ratio that 'time' is along the curve
+        let t = (time-start_point) / (end_point-start_point);
+
+        // Time can be calculated using the bezier algorithm
+        de_casteljau4(t, start_point, cp1, cp2, end_point)
     }
 }
 
