@@ -8,6 +8,15 @@ use std::sync::*;
 ///
 pub trait AnimationEffect : Clone+Send+Sync {
     ///
+    /// Returns the duration of this effect (or None if this effect will animate forever)
+    ///
+    /// If the effect is passed a time that's after where the 'duration' has completed it should always generate the same result
+    ///
+    fn duration(&self) -> Option<f64> {
+        None
+    }
+
+    ///
     /// Given the contents of the regions for this effect, calculates the path that should be rendered
     ///
     fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: f64) -> Vec<AnimationPath>;
