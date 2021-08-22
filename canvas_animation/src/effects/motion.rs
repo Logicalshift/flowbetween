@@ -70,6 +70,72 @@ impl MotionEffect {
             duration:       duration
         }
     }
+
+    ///
+    /// Returns the offset from the start point at the specified time
+    ///
+    pub fn offset_at_time(&self, time: f64, tolerance: f64) -> Coord2 {
+        // Work out the distance down the path that we want for this time
+        let distance                = time / self.duration * self.total_length;
+
+        // Find the path segment that this distance appears along
+        let mut start_point         = self.start_point;
+        let mut segment_iter        = self.path.iter();
+        let mut segment_distance    = distance;
+        let segment;
+        let segment_length;
+
+        loop {
+            if let Some(point) = segment_iter.next() {
+                if point.segment_length >= segment_distance {
+                    // The motion point lies along this segment
+                    segment         = Curve::from_points(start_point, (point.cp1, point.cp2), point.end_point);
+                    segment_length  = point.segment_length;
+                    break;
+                }
+
+                // Move to the start of the next egment
+                start_point         = point.end_point;
+                segment_distance    -= point.segment_length;
+            } else {
+                // No point matches this distance (the end of the path is where everything appears after this pont)
+                return start_point;
+            }
+        }
+
+        // Estimate a t location for this distance
+        let mut min_t       = 0.0;
+        let mut t           = segment_distance / segment_length;
+
+        // Search the end part of the curve if t is below the required length
+        let mut t_length    = curve_length(&segment.section(0.0, t), TOLERANCE);
+
+        if t_length < segment_distance {
+            min_t   = t;
+            t       = 1.0;
+        }
+
+        // Search for a t value within tolerance of the target position
+        let tolerance_sq = tolerance * tolerance;
+        while (segment_distance - t_length) * (segment_distance - t_length) < tolerance_sq {
+            // Pick a value between min_t and t and measure it
+            let new_t   = (min_t + t) * 0.5;
+            t_length    = curve_length(&segment.section(0.0, new_t), TOLERANCE);
+
+            // Move min_t or t depending on which is closer to our target distance
+            if t_length < segment_distance {
+                min_t = new_t;
+            } else {
+                t = new_t;
+            }
+        }
+
+        // Offset is the point on the curve at t minus the start point
+        let curve_point = segment.point_at_pos(t);
+        let offset      = curve_point - self.start_point;
+
+        offset
+    }
 }
 
 impl AnimationEffect for MotionEffect {
