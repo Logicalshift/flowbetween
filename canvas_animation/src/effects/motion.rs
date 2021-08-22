@@ -117,7 +117,7 @@ impl MotionEffect {
 
         // Search for a t value within tolerance of the target position
         let tolerance_sq = tolerance * tolerance;
-        while (segment_distance - t_length) * (segment_distance - t_length) < tolerance_sq {
+        while (segment_distance - t_length) * (segment_distance - t_length) > tolerance_sq {
             // Pick a value between min_t and t and measure it
             let new_t   = (min_t + t) * 0.5;
             t_length    = curve_length(&segment.section(0.0, new_t), TOLERANCE);
