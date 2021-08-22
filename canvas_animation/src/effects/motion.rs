@@ -152,7 +152,13 @@ impl AnimationEffect for MotionEffect {
     /// Given the contents of the regions for this effect, calculates the path that should be rendered
     ///
     fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: f64) -> Vec<AnimationPath> {
-        vec![]
+        // Get the offset for the region contents
+        let offset = self.offset_at_time(time, TOLERANCE);
+
+        // Move all of the paths in the region by the offset
+        region_contents.paths.iter()
+            .map(|path| path.offset_by(offset))
+            .collect()
     }
 
 }
