@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "motion_effect",
+]
+
+[patch.crates-io]
+flo_canvas_animation    = { path = ".." }
