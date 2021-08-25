@@ -2,7 +2,6 @@ use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_stream::*;
 use flo_curves::bezier::*;
-use flo_canvas_animation::*;
 use flo_canvas_animation::effects::*;
 
 use futures::stream;
