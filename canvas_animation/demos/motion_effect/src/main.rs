@@ -193,10 +193,20 @@ fn main() {
                                 gc.new_path();
                                 gc.circle(pos.x() as _, pos.y() as _, 75.0);
 
-                                gc.fill_color(Color::Rgba(0.9, 0.9, 1.0, 1.0));
+                                gc.fill_color(Color::Rgba(0.9, 0.9, 1.0, 0.6));
                                 gc.line_width(6.0);
                                 gc.stroke_color(Color::Rgba(0.1, 0.1, 0.1, 1.0));
                                 gc.fill();
+                                gc.stroke();
+
+                                gc.line_width(1.0);
+                                gc.stroke_color(Color::Rgba(0.5, 0.1, 0.1, 1.0));
+
+                                gc.new_path();
+                                gc.move_to((pos.x() - 40.0) as _, pos.y() as _);
+                                gc.line_to((pos.x() + 40.0) as _, pos.y() as _);
+                                gc.move_to(pos.x() as _, (pos.y() - 40.0) as _);
+                                gc.line_to(pos.x() as _, (pos.y() + 40.0) as _);
                                 gc.stroke();
                             });
                         }
