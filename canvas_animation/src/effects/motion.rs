@@ -109,6 +109,7 @@ impl MotionEffect {
 
         // Search the end part of the curve if t is below the required length
         let mut t_length    = curve_length(&segment.section(0.0, t), TOLERANCE);
+        let mut closest_t   = t;
 
         if t_length < segment_distance {
             min_t   = t;
@@ -116,22 +117,22 @@ impl MotionEffect {
         }
 
         // Search for a t value within tolerance of the target position
-        let tolerance_sq = tolerance * tolerance;
+        let tolerance_sq    = tolerance * tolerance;
         while (segment_distance - t_length) * (segment_distance - t_length) > tolerance_sq {
             // Pick a value between min_t and t and measure it
-            let new_t   = (min_t + t) * 0.5;
-            t_length    = curve_length(&segment.section(0.0, new_t), TOLERANCE);
+            closest_t   = (min_t + t) * 0.5;
+            t_length    = curve_length(&segment.section(0.0, closest_t), TOLERANCE);
 
             // Move min_t or t depending on which is closer to our target distance
             if t_length < segment_distance {
-                min_t = new_t;
+                min_t = closest_t;
             } else {
-                t = new_t;
+                t = closest_t;
             }
         }
 
         // Offset is the point on the curve at t minus the start point
-        let curve_point = segment.point_at_pos(t);
+        let curve_point = segment.point_at_pos(closest_t);
         let offset      = curve_point - self.start_point;
 
         offset
