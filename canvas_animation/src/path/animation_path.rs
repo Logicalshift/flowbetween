@@ -17,10 +17,24 @@ pub struct AnimationPath {
     pub disappearance_time: Option<f64>,
 
     /// The attributes describe how this path is rendered
-    pub attributes: Arc<Vec<AnimationPathAttribute>>,
+    pub attributes: AnimationPathAttribute,
 
     /// The path that will be rendered by this animation
-    pub path: SimpleBezierPath
+    pub path: Arc<Vec<PathOp>>
+}
+
+#[inline]
+fn offset_path_op(op: &PathOp, distance: &Coord2) -> PathOp {
+    let dx = distance.x() as f32;
+    let dy = distance.y() as f32;
+
+    match op {
+        PathOp::NewPath                                             => PathOp::NewPath,
+        PathOp::ClosePath                                           => PathOp::ClosePath,
+        PathOp::Move(x, y)                                          => PathOp::Move(*x + dx, *y + dy),
+        PathOp::Line(x, y)                                          => PathOp::Line(*x + dx, *y + dy),
+        PathOp::BezierCurve(((cp1x, cp1y), (cp2x, cp2y)), (x, y))   => PathOp::BezierCurve(((*cp1x + dx, *cp1y + dy), (*cp2x + dx, *cp2y + dy)), (*x + dx, *y + dy)),
+    }
 }
 
 impl AnimationPath {
@@ -28,20 +42,15 @@ impl AnimationPath {
     /// Creates a copy of this path that is offset by the specified distance
     ///
     pub fn offset_by(&self, distance: Coord2) -> AnimationPath {
-        let (start_point, points) = &self.path;
-
-        let new_start_point = *start_point + distance;
-        let new_points = points.iter()
-            .map(|(cp1, cp2, end_point)| {
-                (*cp1 + distance, *cp2 + distance, *end_point + distance)
-            })
+        let offset_path = self.path.iter()
+            .map(|path_op| offset_path_op(path_op, &distance))
             .collect();
 
         AnimationPath {
             appearance_time:    self.appearance_time,
             disappearance_time: self.disappearance_time,
-            attributes:         Arc::clone(&self.attributes),
-            path:               (new_start_point, new_points)
+            attributes:         self.attributes.clone(),
+            path:               Arc::new(offset_path)
         }
     }
 }
