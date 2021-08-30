@@ -1,5 +1,5 @@
+use crate::path::*;
 use crate::region::*;
-use crate::animation_path::*;
 
 use flo_curves::bezier::*;
 

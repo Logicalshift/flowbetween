@@ -1,4 +1,4 @@
-use crate::animation_path::*;
+use crate::path::*;
 
 use flo_canvas::*;
 

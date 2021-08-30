@@ -1,4 +1,4 @@
-use crate::animation_path::*;
+use crate::path::*;
 
 ///
 /// Describes what's in a particular animation region

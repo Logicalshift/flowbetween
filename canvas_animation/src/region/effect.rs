@@ -1,5 +1,5 @@
+use crate::path::*;
 use super::content::*;
-use crate::animation_path::*;
 
 use std::sync::*;
 

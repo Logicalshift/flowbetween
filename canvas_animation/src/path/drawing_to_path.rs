@@ -1,4 +1,4 @@
-use crate::animation_path::*;
+use crate::path::animation_path::*;
 
 use flo_canvas::*;
 
@@ -54,8 +54,10 @@ impl LayerDrawingToPaths {
                 ClearLayer                                      => { unimplemented!(); },
                 ClearAllLayers                                  => { unimplemented!(); },
 
+                // flo_draw needs to be updated to support this
                 BlendMode(blend_mode)                           => { debug_assert!(false, "Blend modes not yet supported in an animation layer"); },
 
+                // Clipping paths need to be preserved across multiple paths in the layer for performance so they require some more thought
                 Unclip                                          |
                 Clip                                            => { debug_assert!(false, "Clipping not yet supported in an animation layer"); },
 

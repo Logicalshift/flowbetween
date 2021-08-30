@@ -19,8 +19,8 @@ pub fn collect_regions<'a, Region: 'a+AnimationRegion, RegionIter: IntoIterator<
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::path::*;
     use crate::region::*;
-    use crate::animation_path::*;
 
     use std::sync::*;
 
