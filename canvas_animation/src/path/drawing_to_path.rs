@@ -1,3 +1,4 @@
+use crate::path::layer_state::*;
 use crate::path::animation_path::*;
 
 use flo_canvas::*;
@@ -6,7 +7,8 @@ use flo_canvas::*;
 /// Converts drawing on a single layer to paths
 ///
 pub struct LayerDrawingToPaths {
-
+    state:          LayerState,
+    state_stack:    Vec<LayerState>
 }
 
 impl LayerDrawingToPaths {
@@ -15,6 +17,8 @@ impl LayerDrawingToPaths {
     ///
     pub fn new() -> LayerDrawingToPaths {
         LayerDrawingToPaths {
+            state:          LayerState::default(),
+            state_stack:    vec![]
         }
     }
 
@@ -26,33 +30,43 @@ impl LayerDrawingToPaths {
             use Draw::*;
 
             match draw {
-                Path(path_op)                                   => { unimplemented!(); },
+                Path(PathOp::NewPath)                           => { self.state.current_path.clear(); }
+                Path(path_op)                                   => { self.state.current_path.push(path_op.clone()); },
+                
                 Fill                                            => { unimplemented!(); },
                 Stroke                                          => { unimplemented!(); },
 
-                LineWidth(width)                                => { unimplemented!(); },
-                LineWidthPixels(pixel_width)                    => { unimplemented!(); },
-                LineJoin(line_join)                             => { unimplemented!(); },
-                LineCap(line_cap)                               => { unimplemented!(); },
-                NewDashPattern                                  => { unimplemented!(); },
-                DashLength(dash_length)                         => { unimplemented!(); },
-                DashOffset(dash_offset)                         => { unimplemented!(); },
-                StrokeColor(stroke_color)                       => { unimplemented!(); },
+                StrokeColor(stroke_color)                       => { self.state.stroke.color        = *stroke_color; },
+                LineWidth(width)                                => { self.state.stroke.width        = StrokeWidth::CanvasCoords(*width); },
+                LineWidthPixels(pixel_width)                    => { self.state.stroke.width        = StrokeWidth::PixelCoords(*pixel_width); },
+                LineJoin(line_join)                             => { self.state.stroke.line_join    = *line_join; },
+                LineCap(line_cap)                               => { self.state.stroke.line_cap     = *line_cap; },
+                NewDashPattern                                  => { self.state.stroke.dash_pattern = None; },
+                DashLength(dash_length)                         => { self.state.stroke.dash_pattern.get_or_insert_with(|| (0.0, vec![])).1.push(*dash_length); },
+                DashOffset(dash_offset)                         => { self.state.stroke.dash_pattern.get_or_insert_with(|| (0.0, vec![])).0 = *dash_offset; },
 
-                FillColor(fill_color)                           => { unimplemented!(); },
-                FillTexture(fill_texture, (x1, y1), (x2, y2))   => { unimplemented!(); },
-                FillGradient(gradient_id, (x1, y1), (x2, y2))   => { unimplemented!(); },
-                FillTransform(fill_transform)                   => { unimplemented!(); },
-                WindingRule(winding_rule)                       => { unimplemented!(); },
+                FillColor(fill_color)                           => { self.state.fill.color          = FillStyle::Solid(*fill_color); self.state.fill.transform = None; },
+                FillTexture(fill_texture, (x1, y1), (x2, y2))   => { self.state.fill.color          = FillStyle::Texture(*fill_texture, (*x1, *y1), (*x2, *y2)); self.state.fill.transform = None; },
+                FillGradient(gradient_id, (x1, y1), (x2, y2))   => { self.state.fill.color          = FillStyle::Gradient(*gradient_id, (*x1, *y1), (*x2, *y2)); self.state.fill.transform = None; },
+                WindingRule(winding_rule)                       => { self.state.fill.winding_rule   = *winding_rule; },
+                FillTransform(fill_transform)                   => {
+                    let transform = self.state.fill.transform.unwrap_or_else(|| Transform2D::identity());
+                    let transform = &transform * fill_transform;
+                    self.state.fill.transform = Some(transform);
+                },
 
-                MultiplyTransform(transform)                    => { unimplemented!(); },
+                MultiplyTransform(multiply_transform)           => {
+                    let transform = self.state.transform.unwrap_or_else(|| Transform2D::identity());
+                    let transform = &transform * multiply_transform;
+                    self.state.transform = Some(transform);
+                },
 
-                PushState                                       => { unimplemented!(); },
-                PopState                                        => { unimplemented!(); },
+                PushState                                       => { self.state_stack.push(self.state.clone()); },
+                PopState                                        => { if let Some(new_state) = self.state_stack.pop() { self.state = new_state; } },
 
-                ClearCanvas(canvas_colour)                      => { unimplemented!(); },
-                ClearLayer                                      => { unimplemented!(); },
-                ClearAllLayers                                  => { unimplemented!(); },
+                ClearCanvas(_canvas_color)                      => { self.state = LayerState::default(); self.state_stack = vec![]; },
+                ClearLayer                                      => { },
+                ClearAllLayers                                  => { },
 
                 // flo_draw needs to be updated to support this
                 BlendMode(blend_mode)                           => { debug_assert!(false, "Blend modes not yet supported in an animation layer"); },

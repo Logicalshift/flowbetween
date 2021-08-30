@@ -5,14 +5,17 @@ use flo_canvas::*;
 ///
 #[derive(Clone, Debug)]
 pub struct LayerState {
+    /// The path that is currently defined for this layer
+    pub current_path:   Vec<PathOp>,
+
     /// The current stroke state
-    pub stroke:     StrokeState,
+    pub stroke:         StrokeState,
 
     /// The current fill state
-    pub fill:       FillState,
+    pub fill:           FillState,
 
     /// If a transform multiplication has been applied, this is the transformation
-    pub transform:  Option<Transform2D>
+    pub transform:      Option<Transform2D>
 }
 
 ///
@@ -37,8 +40,8 @@ pub struct StrokeState {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum FillColor {
-    Color(Color),
+pub enum FillStyle {
+    Solid(Color),
     Texture(TextureId, (f32, f32), (f32, f32)),
     Gradient(GradientId, (f32, f32), (f32, f32))
 }
@@ -48,19 +51,19 @@ pub enum FillColor {
 ///
 #[derive(Clone, Debug)]
 pub struct FillState {
-    pub color:          FillColor,
+    pub color:          FillStyle,
     pub winding_rule:   WindingRule,
     pub transform:      Option<Transform2D>
 }
 
-impl Default for FillColor {
-    fn default() -> FillColor { FillColor::Color(Color::Rgba(0.0, 0.0, 0.0, 1.0)) }
+impl Default for FillStyle {
+    fn default() -> FillStyle { FillStyle::Solid(Color::Rgba(0.0, 0.0, 0.0, 1.0)) }
 }
 
 impl Default for FillState {
     fn default() -> FillState { 
         FillState {
-            color:          FillColor::default(),
+            color:          FillStyle::default(),
             winding_rule:   WindingRule::EvenOdd,
             transform:      None
         }
@@ -82,9 +85,10 @@ impl Default for StrokeState {
 impl Default for LayerState {
     fn default() -> LayerState {
         LayerState {
-            stroke:     StrokeState::default(),
-            fill:       FillState::default(),
-            transform:  None
+            current_path:   vec![],
+            stroke:         StrokeState::default(),
+            fill:           FillState::default(),
+            transform:      None
         }
     }
 }
