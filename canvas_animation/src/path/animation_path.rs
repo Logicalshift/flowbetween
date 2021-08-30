@@ -1,3 +1,5 @@
+use crate::path::animation_path_attributes::*;
+
 use flo_canvas::*;
 use flo_curves::bezier::path::*;
 
@@ -15,7 +17,7 @@ pub struct AnimationPath {
     pub disappearance_time: Option<f64>,
 
     /// The attributes describe how this path is rendered
-    pub attributes: Arc<Vec<PathAttribute>>,
+    pub attributes: Arc<Vec<AnimationPathAttribute>>,
 
     /// The path that will be rendered by this animation
     pub path: SimpleBezierPath
