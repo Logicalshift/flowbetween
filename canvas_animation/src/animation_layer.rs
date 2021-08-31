@@ -8,6 +8,8 @@ use flo_canvas::*;
 /// rendering: sprite and layer commands will be ignored.
 ///
 pub struct AnimationLayer {
+    layer_state: LayerDrawingToPaths,
+
     drawing: Vec<AnimationPath>
 }
 
@@ -23,6 +25,6 @@ impl AnimationLayer {
     /// Adds drawing onto this layer
     ///
     pub fn draw<DrawIter: IntoIterator<Item=Draw>>(&mut self, drawing: DrawIter) {
-        // TODO
+        self.drawing.extend(self.layer_state.draw(drawing));
     }
 }

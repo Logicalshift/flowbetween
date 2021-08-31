@@ -28,7 +28,7 @@ impl LayerDrawingToPaths {
     ///
     /// Sends some drawing instructions to this layer
     ///
-    pub fn draw<'a, DrawIter: 'a+IntoIterator<Item=&'a Draw>>(&'a mut self, drawing: DrawIter) -> impl 'a+Iterator<Item=AnimationPath> {
+    pub fn draw<'a, DrawIter: 'a+IntoIterator<Item=Draw>>(&'a mut self, drawing: DrawIter) -> impl 'a+Iterator<Item=AnimationPath> {
         drawing.into_iter()
             .flat_map(move |draw| {
                 use Draw::*;
@@ -83,28 +83,28 @@ impl LayerDrawingToPaths {
                         });
                     },
 
-                    StrokeColor(stroke_color)                       => { self.state.stroke.color        = *stroke_color; },
-                    LineWidth(width)                                => { self.state.stroke.width        = StrokeWidth::CanvasCoords(*width); },
-                    LineWidthPixels(pixel_width)                    => { self.state.stroke.width        = StrokeWidth::PixelCoords(*pixel_width); },
-                    LineJoin(line_join)                             => { self.state.stroke.line_join    = *line_join; },
-                    LineCap(line_cap)                               => { self.state.stroke.line_cap     = *line_cap; },
+                    StrokeColor(stroke_color)                       => { self.state.stroke.color        = stroke_color; },
+                    LineWidth(width)                                => { self.state.stroke.width        = StrokeWidth::CanvasCoords(width); },
+                    LineWidthPixels(pixel_width)                    => { self.state.stroke.width        = StrokeWidth::PixelCoords(pixel_width); },
+                    LineJoin(line_join)                             => { self.state.stroke.line_join    = line_join; },
+                    LineCap(line_cap)                               => { self.state.stroke.line_cap     = line_cap; },
                     NewDashPattern                                  => { self.state.stroke.dash_pattern = None; },
-                    DashLength(dash_length)                         => { self.state.stroke.dash_pattern.get_or_insert_with(|| (0.0, vec![])).1.push(*dash_length); },
-                    DashOffset(dash_offset)                         => { self.state.stroke.dash_pattern.get_or_insert_with(|| (0.0, vec![])).0 = *dash_offset; },
+                    DashLength(dash_length)                         => { self.state.stroke.dash_pattern.get_or_insert_with(|| (0.0, vec![])).1.push(dash_length); },
+                    DashOffset(dash_offset)                         => { self.state.stroke.dash_pattern.get_or_insert_with(|| (0.0, vec![])).0 = dash_offset; },
 
-                    FillColor(fill_color)                           => { self.state.fill.color          = FillStyle::Solid(*fill_color); self.state.fill.transform = None; },
-                    FillTexture(fill_texture, (x1, y1), (x2, y2))   => { self.state.fill.color          = FillStyle::Texture(*fill_texture, (*x1, *y1), (*x2, *y2)); self.state.fill.transform = None; },
-                    FillGradient(gradient_id, (x1, y1), (x2, y2))   => { self.state.fill.color          = FillStyle::Gradient(*gradient_id, (*x1, *y1), (*x2, *y2)); self.state.fill.transform = None; },
-                    WindingRule(winding_rule)                       => { self.state.fill.winding_rule   = *winding_rule; },
+                    FillColor(fill_color)                           => { self.state.fill.color          = FillStyle::Solid(fill_color); self.state.fill.transform = None; },
+                    FillTexture(fill_texture, (x1, y1), (x2, y2))   => { self.state.fill.color          = FillStyle::Texture(fill_texture, (x1, y1), (x2, y2)); self.state.fill.transform = None; },
+                    FillGradient(gradient_id, (x1, y1), (x2, y2))   => { self.state.fill.color          = FillStyle::Gradient(gradient_id, (x1, y1), (x2, y2)); self.state.fill.transform = None; },
+                    WindingRule(winding_rule)                       => { self.state.fill.winding_rule   = winding_rule; },
                     FillTransform(fill_transform)                   => {
                         let transform = self.state.fill.transform.unwrap_or_else(|| Transform2D::identity());
-                        let transform = &transform * fill_transform;
+                        let transform = transform * fill_transform;
                         self.state.fill.transform = Some(transform);
                     },
 
                     MultiplyTransform(multiply_transform)           => {
                         let transform = self.state.transform.unwrap_or_else(|| Transform2D::identity());
-                        let transform = &transform * multiply_transform;
+                        let transform = transform * multiply_transform;
                         self.state.transform = Some(transform);
                     },
 
