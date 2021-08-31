@@ -31,8 +31,13 @@ impl LayerDrawingToPaths {
                 use Draw::*;
 
                 match draw {
-                    Path(PathOp::NewPath)                           => { self.state.current_path.clear(); }
-                    Path(path_op)                                   => { self.state.current_path.push(path_op.clone()); },
+                    Path(PathOp::NewPath)                           => { self.state.current_path.clear(); self.state.cached_path = None; }
+                    Path(path_op)                                   => { 
+                        if let Some(path) = self.state.cached_path.take() { 
+                            self.state.current_path = (*path).clone(); 
+                        } 
+                        self.state.current_path.push(path_op.clone()); 
+                    },
 
                     Fill                                            => { unimplemented!(); },
                     Stroke                                          => { unimplemented!(); },

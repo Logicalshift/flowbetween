@@ -1,5 +1,7 @@
 use flo_canvas::*;
 
+use std::sync::*;
+
 ///
 /// The state of a layer as captured by the routines in `drawing_to_path`
 ///
@@ -7,6 +9,9 @@ use flo_canvas::*;
 pub struct LayerState {
     /// The path that is currently defined for this layer
     pub current_path:   Vec<PathOp>,
+
+    /// The most recently cached path (so we re-use the same vec if multiple animation paths are generated from one set of operations)
+    pub cached_path:    Option<Arc<Vec<PathOp>>>,
 
     /// The current stroke state
     pub stroke:         StrokeState,
@@ -86,6 +91,7 @@ impl Default for LayerState {
     fn default() -> LayerState {
         LayerState {
             current_path:   vec![],
+            cached_path:    None,
             stroke:         StrokeState::default(),
             fill:           FillState::default(),
             transform:      None
