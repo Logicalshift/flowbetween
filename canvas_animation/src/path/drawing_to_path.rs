@@ -3,6 +3,9 @@ use crate::path::animation_path::*;
 
 use flo_canvas::*;
 
+use std::mem;
+use std::sync::*;
+
 ///
 /// Converts drawing on a single layer to paths
 ///
@@ -39,7 +42,25 @@ impl LayerDrawingToPaths {
                         self.state.current_path.push(path_op.clone()); 
                     },
 
-                    Fill                                            => { unimplemented!(); },
+                    Fill                                            => {
+                        // Retrieve the current path (re-use if already cached)
+                        let path = if let Some(path) = &self.state.cached_path {
+                            Arc::clone(path)
+                        } else {
+                            let path                = Arc::new(mem::take(&mut self.state.current_path));
+                            self.state.cached_path  = Some(Arc::clone(&path));
+                            path
+                        };
+
+                        let attributes = (&self.state.fill).into();
+
+                        return Some(AnimationPath {
+                            appearance_time:    self.state.current_time,
+                            disappearance_time: None,
+                            attributes:         attributes,
+                            path:               path
+                        });
+                    },
                     Stroke                                          => { unimplemented!(); },
 
                     StrokeColor(stroke_color)                       => { self.state.stroke.color        = *stroke_color; },
