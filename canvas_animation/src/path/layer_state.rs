@@ -1,3 +1,5 @@
+use crate::path::animation_path_attributes::*;
+
 use flo_canvas::*;
 
 use std::sync::*;
@@ -95,6 +97,25 @@ impl Default for LayerState {
             stroke:         StrokeState::default(),
             fill:           FillState::default(),
             transform:      None
+        }
+    }
+}
+
+impl Into<AnimationPathAttribute> for &FillState {
+    fn into(self) -> AnimationPathAttribute {
+        match self.color {
+            FillStyle::Solid(color)                                 => AnimationPathAttribute::Fill(color, self.winding_rule),
+            FillStyle::Texture(texture_id, (x1, y1), (x2, y2))      => AnimationPathAttribute::FillTexture(texture_id, (x1, y1), (x2, y2), self.transform, self.winding_rule),
+            FillStyle::Gradient(gradient_id, (x1, y1), (x2, y2))    => AnimationPathAttribute::FillGradient(gradient_id, (x1, y1), (x2, y2), self.transform, self.winding_rule),
+        }
+    }
+}
+
+impl Into<AnimationPathAttribute> for &StrokeState {
+    fn into(self) -> AnimationPathAttribute {
+        match self.width {
+            StrokeWidth::CanvasCoords(width)    => AnimationPathAttribute::Stroke(width, self.color, self.line_join, self.line_cap),
+            StrokeWidth::PixelCoords(width)     => AnimationPathAttribute::StrokePixels(width, self.color, self.line_join, self.line_cap)
         }
     }
 }
