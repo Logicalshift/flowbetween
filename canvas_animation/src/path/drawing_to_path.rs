@@ -52,6 +52,7 @@ impl LayerDrawingToPaths {
                             path
                         };
 
+                        // Turn the fill state into attributes
                         let attributes = (&self.state.fill).into();
 
                         return Some(AnimationPath {
@@ -61,7 +62,26 @@ impl LayerDrawingToPaths {
                             path:               path
                         });
                     },
-                    Stroke                                          => { unimplemented!(); },
+                    Stroke                                          => {
+                        // Retrieve the current path (re-use if already cached)
+                        let path = if let Some(path) = &self.state.cached_path {
+                            Arc::clone(path)
+                        } else {
+                            let path                = Arc::new(mem::take(&mut self.state.current_path));
+                            self.state.cached_path  = Some(Arc::clone(&path));
+                            path
+                        };
+
+                        // Turn the stroke state into attributes
+                        let attributes = (&self.state.stroke).into();
+
+                        return Some(AnimationPath {
+                            appearance_time:    self.state.current_time,
+                            disappearance_time: None,
+                            attributes:         attributes,
+                            path:               path
+                        });
+                    },
 
                     StrokeColor(stroke_color)                       => { self.state.stroke.color        = *stroke_color; },
                     LineWidth(width)                                => { self.state.stroke.width        = StrokeWidth::CanvasCoords(*width); },
