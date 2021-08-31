@@ -9,6 +9,9 @@ use std::sync::*;
 ///
 #[derive(Clone, Debug)]
 pub struct LayerState {
+    /// The current time that rendering is occurring
+    pub current_time:   f64,
+
     /// The path that is currently defined for this layer
     pub current_path:   Vec<PathOp>,
 
@@ -92,6 +95,7 @@ impl Default for StrokeState {
 impl Default for LayerState {
     fn default() -> LayerState {
         LayerState {
+            current_time:   0.0,
             current_path:   vec![],
             cached_path:    None,
             stroke:         StrokeState::default(),
