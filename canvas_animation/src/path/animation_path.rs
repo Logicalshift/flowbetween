@@ -1,7 +1,6 @@
 use crate::path::animation_path_attributes::*;
 
 use flo_canvas::*;
-use flo_curves::bezier::path::*;
 
 use std::sync::*;
 
