@@ -1,5 +1,7 @@
-use crate::path::*;
 use super::cache::*;
+
+use crate::path::*;
+use crate::region::*;
 
 use ::desync::*;
 use flo_canvas::*;
@@ -20,8 +22,14 @@ pub struct AnimationLayer {
     /// The drawing that has been performed so far
     drawing: Vec<AnimationPath>,
 
-    /// The cached drawing, if it exists
-    cached_paths: Mutex<Option<Arc<Vec<AnimationPath>>>>,
+    /// The regions in this layer
+    regions: Vec<Arc<dyn AnimationRegion>>,
+
+    /// The cached paths, if they exist (as shared amongst pending caching operations)
+    cached_paths: Option<Arc<Vec<AnimationPath>>>,
+
+    /// The cached regions, if they exist (as shared amongst pending caching operations)
+    cached_regions: Option<Arc<Vec<Arc<dyn AnimationRegion>>>>,
 
     /// The state cache for this layer
     cache: Desync<AnimationLayerCache>
@@ -35,17 +43,73 @@ impl AnimationLayer {
         AnimationLayer {
             layer_state:    LayerDrawingToPaths::new(),
             drawing:        vec![],
-            cached_paths:   Mutex::new(None),
+            regions:        vec![],
+            cached_paths:   None,
+            cached_regions: None,
             cache:          Desync::new(AnimationLayerCache::new())
         }
     }
 
     ///
-    /// Clears this layer
+    /// Clears this layer of all animation regions
     ///
-    pub fn clear(&mut self) {
+    pub fn clear_regions(&mut self) {
+        self.cached_regions = None;
+        self.regions.clear();
+
+        self.cache.desync(|cache| cache.flush());
+    }
+
+    ///
+    /// Adds an animation region to this layer
+    ///
+    pub fn add_region<Region: 'static+AnimationRegion>(&mut self, region: Region) {
+        // Release the regions from the cache if necessary
+        if let Some(mut cached_regions) = self.cached_regions.take() {
+            if let Some(cached_regions) = Arc::get_mut(&mut cached_regions) {
+                // Swap out the regions with the cached version
+                self.regions.clear();
+                mem::swap(&mut self.regions, cached_regions);
+            } else {
+                // Clone out the drawing
+                self.regions = (*cached_regions).clone();
+            }
+
+            // Clear the cache whenever we remove the cached paths
+            self.cache.desync(|cache| cache.flush());
+        }
+
+        // Add to the list of regions in this layer
+        self.regions.push(Arc::new(region));
+    }
+
+    ///
+    /// Retrieves a pointer to the drawing for this layer
+    ///
+    fn get_cached_regions(&mut self) -> Arc<Vec<Arc<dyn AnimationRegion>>> {
+        if let Some(cached_regions) = &self.cached_regions {
+            // We've already got the paths in a cached reference
+            Arc::clone(cached_regions)
+        } else {
+            // Move the paths to a reference
+            let cached_regions  = mem::take(&mut self.regions);
+            let cached_regions  = Arc::new(cached_regions);
+            self.cached_regions = Some(Arc::clone(&cached_regions));
+
+            // Return the newly cached paths
+            cached_regions
+        }
+    }
+
+    ///
+    /// Clears this layer of all drawing operations
+    ///
+    pub fn clear_drawing(&mut self) {
+        self.cached_paths = None;
         self.drawing.clear();
         self.drawing.extend(self.layer_state.draw([Draw::ClearLayer]));
+
+        self.cache.desync(|cache| cache.flush());
     }
 
     ///
@@ -66,16 +130,16 @@ impl AnimationLayer {
     /// Retrieves a pointer to the drawing for this layer
     ///
     fn get_cached_paths(&mut self) -> Arc<Vec<AnimationPath>> {
-        if let Some(cached_paths) = &(*self.cached_paths.lock().unwrap()) {
-            // We've already got the drawing instructions in a cached reference
+        if let Some(cached_paths) = &self.cached_paths {
+            // We've already got the paths in a cached reference
             Arc::clone(cached_paths)
         } else {
-            // Move the drawing instructions to a reference
-            let cached_paths                    = mem::take(&mut self.drawing);
-            let cached_paths                    = Arc::new(cached_paths);
-            *self.cached_paths.lock().unwrap()  = Some(Arc::clone(&cached_paths));
+            // Move the paths to a reference
+            let cached_paths    = mem::take(&mut self.drawing);
+            let cached_paths    = Arc::new(cached_paths);
+            self.cached_paths   = Some(Arc::clone(&cached_paths));
 
-            // Return the newly cached drawing
+            // Return the newly cached paths
             cached_paths
         }
     }
@@ -84,8 +148,8 @@ impl AnimationLayer {
     /// Adds drawing onto this layer
     ///
     pub fn draw<DrawIter: IntoIterator<Item=Draw>>(&mut self, drawing: DrawIter) {
-        // Release the drawing instructions from the cache if necessary
-        if let Some(mut cached_paths) = (*self.cached_paths.lock().unwrap()).take() {
+        // Release the paths from the cache if necessary
+        if let Some(mut cached_paths) = self.cached_paths.take() {
             if let Some(cached_paths) = Arc::get_mut(&mut cached_paths) {
                 // Swap out the drawing with the cached version
                 self.drawing.clear();
@@ -112,12 +176,12 @@ impl AnimationLayer {
 
 impl Clone for AnimationLayer {
     fn clone(&self) -> Self {
-        let cached_paths = self.cached_paths.lock().unwrap().clone();
-
         AnimationLayer {
             layer_state:    self.layer_state.clone(),
             drawing:        self.drawing.clone(),
-            cached_paths:   Mutex::new(cached_paths),
+            regions:        self.regions.clone(),
+            cached_paths:   self.cached_paths.clone(),
+            cached_regions: self.cached_regions.clone(),
             cache:          Desync::new(AnimationLayerCache::new())
         }
     }

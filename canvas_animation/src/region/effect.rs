@@ -6,7 +6,7 @@ use std::sync::*;
 ///
 /// An animation effect describes how one or more sets of paths change over time
 ///
-pub trait AnimationEffect : Clone+Send+Sync {
+pub trait AnimationEffect : Send+Sync {
     ///
     /// Returns the duration of this effect (or None if this effect will animate forever)
     ///
