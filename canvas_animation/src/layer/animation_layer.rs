@@ -94,6 +94,9 @@ impl AnimationLayer {
                 // Clone out the drawing
                 self.drawing = (*cached_paths).clone();
             }
+
+            // Clear the cache whenever we remove the cached paths
+            self.cache.desync(|cache| cache.flush());
         }
 
         // Render to the drawing
