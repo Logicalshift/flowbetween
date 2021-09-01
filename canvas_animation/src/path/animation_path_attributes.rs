@@ -3,7 +3,7 @@ use flo_canvas::*;
 ///
 /// Attributes used to render a bezier path
 ///
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum AnimationPathAttribute {
     /// Path is drawn as a stroke with the specified width and colour
     Stroke(f32, Color, LineJoin, LineCap),
