@@ -57,7 +57,6 @@ impl LayerDrawingToPaths {
 
                         return Some(AnimationPath {
                             appearance_time:    self.state.current_time,
-                            disappearance_time: None,
                             attributes:         attributes,
                             path:               path
                         });
@@ -77,7 +76,6 @@ impl LayerDrawingToPaths {
 
                         return Some(AnimationPath {
                             appearance_time:    self.state.current_time,
-                            disappearance_time: None,
                             attributes:         attributes,
                             path:               path
                         });

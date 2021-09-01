@@ -13,9 +13,6 @@ pub struct AnimationPath {
     /// The time from the start of the keyframe where this content appears
     pub appearance_time: Duration,
 
-    /// The time in milliseconds from the start of the keyframe where this content is removed
-    pub disappearance_time: Option<Duration>,
-
     /// The attributes describe how this path is rendered
     pub attributes: AnimationPathAttribute,
 
@@ -48,7 +45,6 @@ impl AnimationPath {
 
         AnimationPath {
             appearance_time:    self.appearance_time,
-            disappearance_time: self.disappearance_time,
             attributes:         self.attributes.clone(),
             path:               Arc::new(offset_path)
         }
