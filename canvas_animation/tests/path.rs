@@ -39,7 +39,7 @@ pub fn components_from_simple_circle() {
 
     assert!(paths.len() == 1);
 
-    let circle = PathComponent::components_from_path(&paths[0]);
+    let circle = PathComponent::from_path(&paths[0]);
     
     assert!(circle.len()                == 1);
     assert!(circle[0].points().count()  == 4);
@@ -59,7 +59,7 @@ pub fn simple_circle_bounds() {
 
     assert!(paths.len() == 1);
 
-    let circle          = PathComponent::components_from_path(&paths[0]);
+    let circle          = PathComponent::from_path(&paths[0]);
     let circle_bounds   = circle[0].bounding_box::<(Coord2, Coord2)>();
     
     assert!(circle.len() == 1);

@@ -168,9 +168,14 @@ impl AnimationLayer {
     }
 
     ///
-    /// Starts filling the cache in the background
+    /// Starts filling the cache in the background, in preparation for future operations
     ///
     pub fn fill_cache(&mut self) {
+        let cached_paths = self.get_cached_paths();
+
+        self.cache.desync(move |cache| {
+            cache.calculate_bounding_boxes(&*cached_paths);
+        });
     }
 }
 

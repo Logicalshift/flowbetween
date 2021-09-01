@@ -28,7 +28,7 @@ impl<'a> PathComponent<'a> {
     ///
     /// Divides an animation path into path components
     ///
-    pub fn components_from_path(path: &'a AnimationPath) -> Vec<PathComponent<'a>> {
+    pub fn from_path(path: &'a AnimationPath) -> Vec<PathComponent<'a>> {
         // The result of this operation
         let mut path_components = vec![];
 
