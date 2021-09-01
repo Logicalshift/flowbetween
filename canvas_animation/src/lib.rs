@@ -7,10 +7,10 @@
 //!
 
 mod path;
+mod layer;
 mod region;
 pub mod effects;
-mod animation_layer;
 
 pub use self::path::*;
+pub use self::layer::*;
 pub use self::region::*;
-pub use self::animation_layer::*;
