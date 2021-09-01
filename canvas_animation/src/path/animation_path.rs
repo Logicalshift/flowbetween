@@ -3,17 +3,18 @@ use crate::path::animation_path_attributes::*;
 use flo_canvas::*;
 
 use std::sync::*;
+use std::time::{Duration};
 
 ///
 /// Describes a path rendered as part of an animation
 ///
 #[derive(Clone)]
 pub struct AnimationPath {
-    /// The time in milliseconds from the start of the keyframe where this content appears
-    pub appearance_time: f64,
+    /// The time from the start of the keyframe where this content appears
+    pub appearance_time: Duration,
 
     /// The time in milliseconds from the start of the keyframe where this content is removed
-    pub disappearance_time: Option<f64>,
+    pub disappearance_time: Option<Duration>,
 
     /// The attributes describe how this path is rendered
     pub attributes: AnimationPathAttribute,

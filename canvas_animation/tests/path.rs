@@ -1,6 +1,8 @@
 use flo_canvas::*;
 use flo_canvas_animation::*;
 
+use std::time::{Duration};
+
 #[test]
 pub fn simple_circle_path() {
     let mut drawing         = vec![];
@@ -13,10 +15,10 @@ pub fn simple_circle_path() {
 
     let paths               = drawing_to_path.draw(drawing).collect::<Vec<_>>();
 
-    assert!(paths.len() == 1);
-    assert!(paths[0].appearance_time == 0.0);
-    assert!(paths[0].attributes == AnimationPathAttribute::Fill(Color::Rgba(0.3, 0.4, 0.5, 0.6), WindingRule::EvenOdd));
+    assert!(paths.len()                 == 1);
+    assert!(paths[0].appearance_time    == Duration::from_millis(0));
+    assert!(paths[0].attributes         == AnimationPathAttribute::Fill(Color::Rgba(0.3, 0.4, 0.5, 0.6), WindingRule::EvenOdd));
 
     // 6 ops: 1 move, 4 bezier curves, 1 close
-    assert!(paths[0].path.len() == 6);
+    assert!(paths[0].path.len()         == 6);
 }

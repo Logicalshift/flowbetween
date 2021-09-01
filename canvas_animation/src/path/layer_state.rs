@@ -3,6 +3,7 @@ use crate::path::animation_path_attributes::*;
 use flo_canvas::*;
 
 use std::sync::*;
+use std::time::{Duration};
 
 ///
 /// The state of a layer as captured by the routines in `drawing_to_path`
@@ -10,7 +11,7 @@ use std::sync::*;
 #[derive(Clone, Debug)]
 pub struct LayerState {
     /// The current time that rendering is occurring
-    pub current_time:   f64,
+    pub current_time:   Duration,
 
     /// The path that is currently defined for this layer
     pub current_path:   Vec<PathOp>,
@@ -95,7 +96,7 @@ impl Default for StrokeState {
 impl Default for LayerState {
     fn default() -> LayerState {
         LayerState {
-            current_time:   0.0,
+            current_time:   Duration::from_millis(0),
             current_path:   vec![],
             cached_path:    None,
             stroke:         StrokeState::default(),
