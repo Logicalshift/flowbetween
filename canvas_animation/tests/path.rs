@@ -1,4 +1,5 @@
 use flo_canvas::*;
+use flo_curves::bezier::path::*;
 use flo_canvas_animation::*;
 
 use std::time::{Duration};
@@ -21,4 +22,24 @@ pub fn simple_circle_path() {
 
     // 6 ops: 1 move, 4 bezier curves, 1 close
     assert!(paths[0].path.len()         == 6);
+}
+
+#[test]
+pub fn components_from_simple_circle() {
+    let mut drawing         = vec![];
+    let mut drawing_to_path = LayerDrawingToPaths::new();
+
+    drawing.circle(100.0, 200.0, 50.0);
+    drawing.stroke_color(Color::Rgba(0.1, 0.2, 0.3, 0.4));
+    drawing.fill_color(Color::Rgba(0.3, 0.4, 0.5, 0.6));
+    drawing.fill();
+
+    let paths               = drawing_to_path.draw(drawing).collect::<Vec<_>>();
+
+    assert!(paths.len() == 1);
+
+    let circle = PathComponent::components_from_path(&paths[0]);
+    
+    assert!(circle.len()                == 1);
+    assert!(circle[0].points().count()  == 4);
 }
