@@ -2,6 +2,8 @@ use crate::path::*;
 
 use flo_canvas::*;
 
+use std::time::{Duration};
+
 ///
 /// Represents an animated layer of a vector drawing. This accepts commands in the form
 /// of `Draw` instructions, although it will only render to a single layer in the finished
@@ -14,6 +16,13 @@ pub struct AnimationLayer {
 }
 
 impl AnimationLayer {
+    ///
+    /// Sets the time that paths added to this layer should appear
+    ///
+    pub fn set_time(&mut self, drawing_time: Duration) {
+        self.layer_state.set_time(drawing_time);
+    }
+
     ///
     /// Adds a new path to this layer
     ///

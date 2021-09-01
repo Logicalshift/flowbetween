@@ -5,6 +5,7 @@ use flo_canvas::*;
 
 use std::mem;
 use std::sync::*;
+use std::time::{Duration};
 
 ///
 /// Converts drawing on a single layer to paths
@@ -23,6 +24,13 @@ impl LayerDrawingToPaths {
             state:          LayerState::default(),
             state_stack:    vec![]
         }
+    }
+
+    ///
+    /// Sets the time that paths added to this layer should appear
+    ///
+    pub fn set_time(&mut self, drawing_time: Duration) {
+        self.state.current_time = drawing_time;
     }
 
     ///
