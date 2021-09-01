@@ -9,13 +9,24 @@ use std::time::{Duration};
 /// of `Draw` instructions, although it will only render to a single layer in the finished
 /// rendering: sprite and layer commands will be ignored.
 ///
+#[derive(Clone)]
 pub struct AnimationLayer {
+    /// The current state of the layer drawing
     layer_state: LayerDrawingToPaths,
 
+    /// The drawing that has been performed so far
     drawing: Vec<AnimationPath>
 }
 
 impl AnimationLayer {
+    ///
+    /// Clears this layer
+    ///
+    pub fn clear(&mut self) {
+        self.drawing.clear();
+        self.drawing.extend(self.layer_state.draw([Draw::ClearLayer]));
+    }
+
     ///
     /// Sets the time that paths added to this layer should appear
     ///

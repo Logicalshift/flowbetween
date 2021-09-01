@@ -10,6 +10,7 @@ use std::time::{Duration};
 ///
 /// Converts drawing on a single layer to paths
 ///
+#[derive(Clone)]
 pub struct LayerDrawingToPaths {
     state:          LayerState,
     state_stack:    Vec<LayerState>
