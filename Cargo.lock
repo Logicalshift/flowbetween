@@ -1149,6 +1149,7 @@ dependencies = [
 name = "flo_canvas_animation"
 version = "0.3.0"
 dependencies = [
+ "desync",
  "flo_canvas",
  "flo_curves",
 ]

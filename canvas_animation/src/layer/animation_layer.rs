@@ -1,5 +1,7 @@
 use crate::path::*;
+use super::cache::*;
 
+use ::desync::*;
 use flo_canvas::*;
 
 use std::time::{Duration};
@@ -9,13 +11,15 @@ use std::time::{Duration};
 /// of `Draw` instructions, although it will only render to a single layer in the finished
 /// rendering: sprite and layer commands will be ignored.
 ///
-#[derive(Clone)]
 pub struct AnimationLayer {
     /// The current state of the layer drawing
     layer_state: LayerDrawingToPaths,
 
     /// The drawing that has been performed so far
-    drawing: Vec<AnimationPath>
+    drawing: Vec<AnimationPath>,
+
+    /// The state cache for this layer
+    cache: Desync<AnimationLayerCache>
 }
 
 impl AnimationLayer {
@@ -25,7 +29,8 @@ impl AnimationLayer {
     pub fn new() -> AnimationLayer {
         AnimationLayer {
             layer_state:    LayerDrawingToPaths::new(),
-            drawing:        vec![]
+            drawing:        vec![],
+            cache:          Desync::new(AnimationLayerCache::new())
         }
     }
 
@@ -56,5 +61,15 @@ impl AnimationLayer {
     ///
     pub fn draw<DrawIter: IntoIterator<Item=Draw>>(&mut self, drawing: DrawIter) {
         self.drawing.extend(self.layer_state.draw(drawing));
+    }
+}
+
+impl Clone for AnimationLayer {
+    fn clone(&self) -> Self {
+        AnimationLayer {
+            layer_state:    self.layer_state.clone(),
+            drawing:        self.drawing.clone(),
+            cache:          Desync::new(AnimationLayerCache::new())
+        }
     }
 }

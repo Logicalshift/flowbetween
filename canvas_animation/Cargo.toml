@@ -8,5 +8,6 @@ repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Applies animations to vector graphics"
 
 [dependencies]
-flo_canvas              = "0.3"
-flo_curves              = "^0.5.1"
+flo_canvas  = "0.3"
+flo_curves  = "^0.5.1"
+desync      = "0.7"
