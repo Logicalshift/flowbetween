@@ -20,6 +20,16 @@ pub struct AnimationLayer {
 
 impl AnimationLayer {
     ///
+    /// Creates an empty animation layer
+    ///
+    pub fn new() -> AnimationLayer {
+        AnimationLayer {
+            layer_state:    LayerDrawingToPaths::new(),
+            drawing:        vec![]
+        }
+    }
+
+    ///
     /// Clears this layer
     ///
     pub fn clear(&mut self) {
