@@ -80,7 +80,7 @@ pub fn simple_circle_overlaps_circle() {
     let paths               = drawing_to_path.draw(drawing).collect::<Vec<_>>();
     let circle              = &paths[0];
 
-    let overlapping_circle  = Circle::new(Coord2(200.0, 200.0), 50.0).to_path::<SimpleBezierPath>();
+    let overlapping_circle  = Circle::new(Coord2(200.0, 200.0), 100.0).to_path::<SimpleBezierPath>();
     let circle_overlaps     = circle.overlaps_path(&vec![overlapping_circle]);
 
     assert!(circle_overlaps);
