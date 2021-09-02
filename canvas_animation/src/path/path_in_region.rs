@@ -8,17 +8,17 @@ use std::time::{Duration};
 
 impl AnimationPath {
     ///
-    /// Returns true if this path is within the specified path
+    /// Returns true if this path is overlaps the specified path
     ///
-    pub fn inside_path<P: BezierPath>(&self, path: &Vec<P>) -> bool
+    pub fn overlaps_path<P: BezierPath>(&self, path: &Vec<P>) -> bool
     where P::Point: Coordinate+Coordinate2D {
         false
     }
 
     ///
-    /// Returns true if this path is within the specified region
+    /// Returns true if this path is overlaps the specified region
     ///
-    pub fn inside_region<R: AnimationRegion>(&self, region: &R, time: Duration) -> bool {
-        self.inside_path(&region.region(time))
+    pub fn overlaps_region<R: AnimationRegion>(&self, region: &R, time: Duration) -> bool {
+        self.overlaps_path(&region.region(time))
     }
 }
