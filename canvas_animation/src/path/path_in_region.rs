@@ -1,3 +1,4 @@
+use super::region_path::*;
 use super::animation_path::*;
 use super::path_component::*;
 use crate::region::*;
@@ -11,7 +12,7 @@ impl AnimationPath {
     ///
     /// Returns true if this path is overlaps the specified path
     ///
-    pub fn overlaps_path<P: BezierPath<Point=Coord2>>(&self, path: &Vec<P>) -> bool {
+    pub fn overlaps_path<P: BezierPath<Point=Coord2>>(&self, path: &Vec<P>) -> RegionPath {
         // Create a GraphPath from this path
         let mut animation_path = GraphPath::new();
 
@@ -42,15 +43,14 @@ impl AnimationPath {
         graph_path.set_exterior_by_intersecting();
         graph_path.heal_exterior_gaps();
 
-        // TODO: return something like a region path that can be used to regenerate any of the paths
-        // TODOTODO: faster way to determine if there are any exterior edges/whatever here
-        graph_path.exterior_paths::<SimpleBezierPath>().len() > 0
+        // Return as a region path
+        RegionPath::new(graph_path)
     }
 
     ///
     /// Returns true if this path is overlaps the specified region
     ///
-    pub fn overlaps_region<R: AnimationRegion>(&self, region: &R, time: Duration) -> bool {
+    pub fn overlaps_region<R: AnimationRegion>(&self, region: &R, time: Duration) -> RegionPath {
         self.overlaps_path(&region.region(time))
     }
 }

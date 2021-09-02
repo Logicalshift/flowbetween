@@ -81,9 +81,9 @@ pub fn simple_circle_overlaps_circle() {
     let circle              = &paths[0];
 
     let overlapping_circle  = Circle::new(Coord2(200.0, 200.0), 100.0).to_path::<SimpleBezierPath>();
-    let circle_overlaps     = circle.overlaps_path(&vec![overlapping_circle]);
+    let circle_overlaps     = circle.overlaps_path(&vec![overlapping_circle]).region_type();
 
-    assert!(circle_overlaps);
+    assert!(circle_overlaps == PathRegionType::IntersectsRegion);
 }
 
 #[test]
@@ -99,9 +99,9 @@ pub fn simple_circle_inside_circle() {
     let circle              = &paths[0];
 
     let outer_circle        = Circle::new(Coord2(100.0, 200.0), 100.0).to_path::<SimpleBezierPath>();
-    let circle_overlaps     = circle.overlaps_path(&vec![outer_circle]);
+    let circle_overlaps     = circle.overlaps_path(&vec![outer_circle]).region_type();
 
-    assert!(circle_overlaps);
+    assert!(circle_overlaps == PathRegionType::InsideRegion);
 }
 
 #[test]
@@ -117,9 +117,9 @@ pub fn simple_circle_within_circle() {
     let circle              = &paths[0];
 
     let inner_circle        = Circle::new(Coord2(100.0, 200.0), 25.0).to_path::<SimpleBezierPath>();
-    let circle_overlaps     = circle.overlaps_path(&vec![inner_circle]);
+    let circle_overlaps     = circle.overlaps_path(&vec![inner_circle]).region_type();
 
-    assert!(circle_overlaps);
+    assert!(circle_overlaps == PathRegionType::EnclosesRegion);
 }
 
 #[test]
@@ -135,7 +135,7 @@ pub fn simple_circle_outside_circle() {
     let circle              = &paths[0];
 
     let outside_circle      = Circle::new(Coord2(300.0, 200.0), 50.0).to_path::<SimpleBezierPath>();
-    let circle_overlaps     = circle.overlaps_path(&vec![outside_circle]);
+    let circle_overlaps     = circle.overlaps_path(&vec![outside_circle]).region_type();
 
-    assert!(!circle_overlaps);
+    assert!(circle_overlaps == PathRegionType::OutsideRegion);
 }

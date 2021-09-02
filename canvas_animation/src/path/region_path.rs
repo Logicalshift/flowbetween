@@ -5,7 +5,7 @@ use flo_curves::bezier::path::*;
 /// How a path fits in an animation region
 ///
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub enum GraphRegionType {
+pub enum PathRegionType {
     /// No part of the path is inside the region
     OutsideRegion,
 
@@ -40,7 +40,7 @@ impl RegionPath {
     ///
     /// Returns the type of region matched by this region type
     ///
-    pub fn region_type(&self) -> GraphRegionType {
+    pub fn region_type(&self) -> PathRegionType {
         let mut num_path_edges          = 0;
         let mut num_exterior_edges      = 0;
         let mut num_path_exterior_edges = 0;
@@ -60,16 +60,16 @@ impl RegionPath {
 
         if num_path_edges == num_path_exterior_edges && num_path_edges == num_exterior_edges {
             // The intersection is the entire path, so it's inside the region
-            GraphRegionType::InsideRegion
+            PathRegionType::InsideRegion
         } else if num_path_exterior_edges > 0 {
             // At least one edge from the original path is inside the region
-            GraphRegionType::IntersectsRegion
+            PathRegionType::IntersectsRegion
         } else if num_exterior_edges > 0 {
             // The region overlaps the path but no edges cross it
-            GraphRegionType::EnclosesRegion
+            PathRegionType::EnclosesRegion
         } else {
             // No exterior edges
-            GraphRegionType::OutsideRegion
+            PathRegionType::OutsideRegion
         }
     }
 }
