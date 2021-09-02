@@ -5,6 +5,7 @@ use flo_curves::*;
 use flo_curves::bezier::*;
 
 use std::sync::*;
+use std::time::{Duration};
 
 const TOLERANCE: f64 = 0.01;
 
@@ -152,9 +153,10 @@ impl AnimationEffect for MotionEffect {
     ///
     /// Given the contents of the regions for this effect, calculates the path that should be rendered
     ///
-    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: f64) -> Vec<AnimationPath> {
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Vec<AnimationPath> {
         // Get the offset for the region contents
-        let offset = self.offset_at_time(time, 0.01);
+        let time    = (time.as_nanos() as f64) / 1_000_000.0;
+        let offset  = self.offset_at_time(time, 0.01);
 
         // Move all of the paths in the region by the offset
         region_contents.paths.iter()

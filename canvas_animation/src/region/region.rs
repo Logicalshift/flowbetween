@@ -2,6 +2,8 @@ use super::effect::*;
 
 use flo_curves::bezier::path::*;
 
+use std::time::{Duration};
+
 ///
 /// Represents a region of a vector layer that is animated
 ///
@@ -12,13 +14,13 @@ pub trait AnimationRegion : AnimationEffect {
     /// This will return the location of the region at a particular time so that drawing added after
     /// the initial keyframe can be incorporated into the appropriate region
     ///
-    fn region(&self, time: f64) -> Vec<SimpleBezierPath>;
+    fn region(&self, time: Duration) -> Vec<SimpleBezierPath>;
 }
 
 impl<T> AnimationRegion for Box<T>
 where T: AnimationRegion {
     #[inline]
-    fn region(&self, time: f64) -> Vec<SimpleBezierPath> {
+    fn region(&self, time: Duration) -> Vec<SimpleBezierPath> {
         (**self).region(time)
     }
 }
