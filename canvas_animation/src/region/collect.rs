@@ -17,36 +17,3 @@ pub fn collect_regions<'a, Region: 'a+AnimationRegion, RegionIter: IntoIterator<
         })
         .collect()
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::path::*;
-    use crate::region::*;
-
-    use std::sync::*;
-
-    #[derive(Clone)]
-    pub struct TestRegion;
-
-    impl AnimationEffect for TestRegion {
-        fn animate(&self, _region_contents: Arc<AnimationRegionContent>, _time: Duration) -> Vec<AnimationPath> {
-            vec![]
-        }
-    }
-
-    impl AnimationRegion for TestRegion {
-        fn region(&self, _time: Duration) -> Vec<SimpleBezierPath> {
-            vec![]
-        }
-    }
-
-    #[test]
-    fn collect_boxed_regions() {
-        let boxed_regions = vec![Box::new(TestRegion)];
-
-        let result = collect_regions(&boxed_regions, Duration::from_millis(0));
-
-        assert!(result[0].0 == RegionId(0));
-    }
-}
