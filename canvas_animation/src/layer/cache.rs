@@ -11,6 +11,27 @@ use std::sync::*;
 use std::time::{Duration};
 
 ///
+/// Represents the bounding box of a possibly overlapping region in the animation layer
+///
+pub struct RegionBounds {
+    /// The ID of the overlapping regions that these bounds are for
+    pub regions: Vec<RegionId>,
+
+    /// The perimeter of the bounding box as a path
+    pub perimeter: Arc<Vec<SimpleBezierPath>>,
+
+    /// The outer bounds of the bounding box
+    pub bounds: Bounds<Coord2>
+}
+
+impl RegionBounds {
+    ///
+    /// Returns the minimum point of this bounding box
+    ///
+    #[inline] pub fn min(&self) -> Coord2 { self.bounds.min() }
+}
+
+///
 /// Cached values for an animation layer
 ///
 pub struct AnimationLayerCache {
@@ -21,7 +42,7 @@ pub struct AnimationLayerCache {
     pub (crate) drawing_times: Option<Vec<Duration>>,
 
     /// Bounding boxes for the animated regions, ordered by their time and minimum x-coordinate
-    pub (crate) region_bounding_boxes: Option<Vec<(Duration, Vec<(usize, Bounds<Coord2>)>)>>
+    pub (crate) region_bounding_boxes: Option<Vec<(Duration, Vec<RegionBounds>)>>
 }
 
 impl AnimationLayerCache {
@@ -89,18 +110,29 @@ impl AnimationLayerCache {
 
         let drawing_times = self.drawing_times.as_ref().unwrap();
 
+        // Compute the bounding boxes at each of these times
         let bounding_boxes_by_time = drawing_times.iter()
             .map(|time| {
-                let bounding_boxes      = regions.iter().map(|region| {
-                    let region_paths        = region.region(*time);
-                    let bounding_boxes      = region_paths.into_iter().map(|path| path.bounding_box());
+                // The regions themselves might overlap: reduce to a set of non-overlapping regions
+                let region_collection           = collect_regions(regions.iter(), *time);
+                let non_overlapping_regions     = intersect_regions(region_collection, 0.01);
+
+                // Work out the bounding boxes for each region
+                let bounding_boxes      = non_overlapping_regions.into_iter().map(|(overlapping_region_ids, perimeter_path)| {
+                    // Combine the bounding boxes of the paths that make up the perimeter to a single path
+                    let bounding_boxes      = perimeter_path.iter().map(|path| path.bounding_box());
                     let bbox                = bounding_boxes.fold(Bounds::empty(), |a, b| a.union_bounds(b));
 
-                    bbox
+                    // Store the resulting region in a RegionBounds structure
+                    RegionBounds {
+                        regions:    overlapping_region_ids,
+                        perimeter:  Arc::new(perimeter_path),
+                        bounds:     bbox
+                    }
                 });
 
-                let mut bounding_boxes  = bounding_boxes.enumerate().collect::<Vec<_>>();
-                bounding_boxes.sort_by(|&(_, a_bounds), &(_, b_bounds)| {
+                let mut bounding_boxes  = bounding_boxes.collect::<Vec<_>>();
+                bounding_boxes.sort_by(|a_bounds, b_bounds| {
                     a_bounds.min().x().partial_cmp(&b_bounds.min().x()).unwrap_or(Ordering::Equal)
                 });
 
