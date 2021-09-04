@@ -1152,6 +1152,7 @@ dependencies = [
  "desync",
  "flo_canvas",
  "flo_curves",
+ "itertools 0.10.1",
 ]
 
 [[package]]
