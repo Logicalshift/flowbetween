@@ -9,6 +9,7 @@ use itertools::*;
 use std::cmp::{Ordering};
 use std::sync::*;
 use std::time::{Duration};
+use std::collections::{HashMap};
 
 ///
 /// Represents the bounding box of a possibly overlapping region in the animation layer
@@ -140,5 +141,45 @@ impl AnimationLayerCache {
             });
 
         self.region_bounding_boxes  = Some(bounding_boxes_by_time.collect());    
+    }
+
+    ///
+    /// Cuts a drawing consisting of paths into regions
+    ///
+    /// For the moment, we divide paths at region boundaries: a future enhancement could be to make it possible to
+    /// make cutting the paths optional, for instance to make it so only a particular set of points within a path
+    /// actually move. This is currently not supported as a single path could overlap potentially many regions and
+    /// combining the effects to generate an output path makes things very complicated, particularly where regions 
+    /// want to do things like further cut up the path rather than just rearrange the points.
+    ///
+    pub fn cut_drawing_into_regions(&mut self, drawing: &Vec<AnimationPath>, regions: &Vec<Arc<dyn AnimationRegion>>) {
+        // Ensure all of the prerequisite caches are filled
+        if self.bounding_boxes.is_none()        { self.calculate_bounding_boxes(drawing); }
+        if self.drawing_times.is_none()         { self.calculate_drawing_times(drawing); }
+        if self.region_bounding_boxes.is_none() { self.calculate_region_bounding_boxes(drawing, regions); }
+
+        let drawing_bounding_boxes  = if let Some(bounding_boxes)        = &self.bounding_boxes        { bounding_boxes }        else { return; };
+        let drawing_times           = if let Some(drawing_times)         = &self.drawing_times         { drawing_times }         else { return; };
+        let region_bounding_boxes   = if let Some(region_bounding_boxes) = &self.region_bounding_boxes { region_bounding_boxes } else { return; };
+
+        // Nothing to do if there are no drawing times
+        if drawing_times.len() == 0 { return; }
+
+        // Set up the initial region bounds for the earliest time.
+        let earliest_drawing_time   = drawing_times[0];
+        let active_regions          = region_bounding_boxes.iter()
+            .map(|(when, region_bounds)| {
+                (*when, region_bounds)
+            })
+            .collect::<HashMap<_, _>>();
+
+        // Borrow the earlier active region
+        let mut current_time        = earliest_drawing_time;
+        let mut current_regions     = active_regions.get(&current_time).unwrap();
+
+        // Process the drawing instructions from left-to-right
+        for path in drawing.iter() {
+            
+        }
     }
 }
