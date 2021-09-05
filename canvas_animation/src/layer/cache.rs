@@ -178,8 +178,45 @@ impl AnimationLayerCache {
         let mut current_regions     = active_regions.get(&current_time).unwrap();
 
         // Process the drawing instructions from left-to-right
-        for path in drawing.iter() {
-            
+        for path_bounds in drawing_bounding_boxes.iter() {
+            // Initially the whole path is remaining
+            let (path_idx, remaining_bounds)    = *path_bounds;
+            let mut remaining_path              = drawing[path_idx].clone();
+
+            // Change the current region depending on the time that this path appears
+            let drawing_time = drawing_times[path_idx];
+            if drawing_time != current_time {
+                current_regions = active_regions.get(&drawing_time).unwrap();
+                current_time    = drawing_time;
+            }
+
+            // Match up against the bounds of the regions at the time that the path appears in the animation
+            for region_perimeter in current_regions.iter() {
+                // Ignore this region if the path doesn't overlap it
+                if !region_perimeter.bounds.overlaps(&remaining_bounds) {
+                    break;
+                }
+
+                // Test to see how the path and the region overlaps
+                let overlap = remaining_path.overlaps_path(&*region_perimeter.perimeter);
+
+                match overlap.region_type() {
+                    // The path is entirely outside of the region, just move to the next region for testing
+                    PathRegionType::OutsideRegion       => { continue; }
+
+                    // The path is entirely inside the region: add to the list of paths affected by this region and stop (there's no path left at this point)
+                    PathRegionType::InsideRegion        => { break; }
+
+                    // The region needs to cut out part of the path
+                    PathRegionType::IntersectsRegion    |
+                    PathRegionType::EnclosesRegion      => {
+                        // TODO: cut out the part in the region, and leave the remainder in remaining_path for other regions
+                        // (Regions have been processed so they don't overlap here so the cut out path will end up in the other regions)
+                    }
+                }
+            }
+
+            // TODO: if there's any remaining path, add to the paths outside of any region
         }
     }
 }
