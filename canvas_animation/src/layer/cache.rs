@@ -43,7 +43,10 @@ pub struct AnimationLayerCache {
     pub (crate) drawing_times: Option<Vec<Duration>>,
 
     /// Bounding boxes for the animated regions, ordered by their time and minimum x-coordinate
-    pub (crate) region_bounding_boxes: Option<Vec<(Duration, Vec<RegionBounds>)>>
+    pub (crate) region_bounding_boxes: Option<Vec<(Duration, Vec<RegionBounds>)>>,
+
+    /// The paths contained within each set of regions (the empty set for paths that are not in any region)
+    pub (crate) paths_for_region: Option<HashMap<Vec<RegionId>, Vec<(usize, AnimationPath)>>>
 }
 
 impl AnimationLayerCache {
@@ -54,7 +57,8 @@ impl AnimationLayerCache {
         AnimationLayerCache {
             bounding_boxes:         None,
             drawing_times:          None,
-            region_bounding_boxes:  None
+            region_bounding_boxes:  None,
+            paths_for_region:       None
         }
     }
 
@@ -177,6 +181,9 @@ impl AnimationLayerCache {
         let mut current_time        = earliest_drawing_time;
         let mut current_regions     = active_regions.get(&current_time).unwrap();
 
+        // Store the paths that are in each region
+        let mut cut_paths = HashMap::new();
+
         // Process the drawing instructions from left-to-right
         for path_bounds in drawing_bounding_boxes.iter() {
             // Initially the whole path is remaining
@@ -189,9 +196,6 @@ impl AnimationLayerCache {
                 current_regions = active_regions.get(&drawing_time).unwrap();
                 current_time    = drawing_time;
             }
-
-            // Store the paths that are in each region
-            let mut cut_paths = HashMap::new();
 
             // Match up against the bounds of the regions at the time that the path appears in the animation
             for region_perimeter in current_regions.iter() {
@@ -242,5 +246,8 @@ impl AnimationLayerCache {
                     .push((path_idx, remaining_path));
             }
         }
+
+        // Store the result in the cache
+        self.paths_for_region = Some(cut_paths);
     }
 }
