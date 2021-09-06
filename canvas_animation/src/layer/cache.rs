@@ -1,3 +1,5 @@
+use super::path_index::*;
+
 use crate::path::*;
 use crate::region::*;
 
@@ -37,7 +39,7 @@ impl RegionBounds {
 ///
 pub struct AnimationLayerCache {
     /// Bounding boxes for all of the paths in the drawing with their index, ordered by their minimum x-coordinate
-    pub (crate) bounding_boxes: Option<Vec<(usize, Bounds<Coord2>)>>,
+    pub (crate) bounding_boxes: Option<Vec<(PathIndex, Bounds<Coord2>)>>,
 
     /// The frames where the drawing changes (so we need to recalculate regions), in order
     pub (crate) drawing_times: Option<Vec<Duration>>,
@@ -46,7 +48,7 @@ pub struct AnimationLayerCache {
     pub (crate) region_bounding_boxes: Option<Vec<(Duration, Vec<RegionBounds>)>>,
 
     /// The paths contained within each set of regions (the empty set for paths that are not in any region)
-    pub (crate) paths_for_region: Option<HashMap<Vec<RegionId>, Vec<(usize, AnimationPath)>>>
+    pub (crate) paths_for_region: Option<HashMap<Vec<RegionId>, Vec<(PathIndex, AnimationPath)>>>
 }
 
 impl AnimationLayerCache {
@@ -83,7 +85,7 @@ impl AnimationLayerCache {
         });
 
         // Order by minimum x coordinate
-        let mut bounding_boxes  = bounding_boxes.enumerate().collect::<Vec<_>>();
+        let mut bounding_boxes  = bounding_boxes.enumerate().map(|(idx, bbox)| (PathIndex(idx), bbox)).collect::<Vec<_>>();
         bounding_boxes.sort_by(|&(_, a_bounds), &(_, b_bounds)| {
             a_bounds.min().x().partial_cmp(&b_bounds.min().x()).unwrap_or(Ordering::Equal)
         });
@@ -188,10 +190,10 @@ impl AnimationLayerCache {
         for path_bounds in drawing_bounding_boxes.iter() {
             // Initially the whole path is remaining
             let (path_idx, remaining_bounds)    = *path_bounds;
-            let mut remaining_path              = drawing[path_idx].clone();
+            let mut remaining_path              = drawing[path_idx.idx()].clone();
 
             // Change the current region depending on the time that this path appears
-            let drawing_time = drawing_times[path_idx];
+            let drawing_time = drawing_times[path_idx.idx()];
             if drawing_time != current_time {
                 current_regions = active_regions.get(&drawing_time).unwrap();
                 current_time    = drawing_time;
