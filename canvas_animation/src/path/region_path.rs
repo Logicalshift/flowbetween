@@ -1,3 +1,4 @@
+use flo_canvas::*;
 use flo_curves::*;
 use flo_curves::bezier::path::*;
 
@@ -76,6 +77,31 @@ impl RegionPath {
     }
 
     ///
+    /// Generates the path operations for the current state of the path
+    ///
+    fn to_path_ops(&self) -> Vec<PathOp> {
+        // Convert to SimpleBezierPaths
+        let simple_paths = self.graph.exterior_paths::<SimpleBezierPath>();
+
+        // Convert to PathsOps
+        let mut result = vec![];
+        for (start_point, curve_points) in simple_paths.into_iter() {
+            // Move to start the subpath
+            result.push(PathOp::Move(start_point.x() as _, start_point.y() as _));
+
+            // Add the other points as bezier curves
+            for (cp1, cp2, end_point) in curve_points {
+                result.push(PathOp::BezierCurve(((cp1.x() as _, cp1.y() as _), (cp2.x() as _, cp2.y() as _)), (end_point.x() as _, end_point.y() as _)));
+            }
+
+            // All paths are closed (TODO: support open paths - FlowBetween currently doesn't generate these)
+            result.push(PathOp::ClosePath);
+        }
+
+        result
+    }
+
+    ///
     /// Returns the type of region matched by this region type
     ///
     pub fn region_type(&mut self) -> PathRegionType {
@@ -111,5 +137,21 @@ impl RegionPath {
             // No exterior edges
             PathRegionType::OutsideRegion
         }
+    }
+
+    ///
+    /// Returns the definition for the part of the path that's inside the region
+    ///
+    pub fn path_inside(&mut self) -> Vec<PathOp> {
+        if self.exterior_edges != RegionExteriorEdgeKind::Intersection { self.to_path_intersection(); }
+        self.to_path_ops()
+    }
+
+    ///
+    /// Returns the definition for the part of the path that's outside of the region
+    ///
+    pub fn path_outside(&mut self) -> Vec<PathOp> {
+        if self.exterior_edges != RegionExteriorEdgeKind::Subtraction { self.to_path_subtraction(); }
+        self.to_path_ops()
     }
 }
