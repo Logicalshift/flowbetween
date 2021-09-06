@@ -198,7 +198,7 @@ impl AnimationLayerCache {
                 }
 
                 // Test to see how the path and the region overlaps
-                let overlap = remaining_path.overlaps_path(&*region_perimeter.perimeter);
+                let mut overlap = remaining_path.overlaps_path(&*region_perimeter.perimeter);
 
                 match overlap.region_type() {
                     // The path is entirely outside of the region, just move to the next region for testing
