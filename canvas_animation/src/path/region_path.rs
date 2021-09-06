@@ -1,5 +1,4 @@
 use flo_canvas::*;
-use flo_curves::*;
 use flo_curves::bezier::path::*;
 
 ///

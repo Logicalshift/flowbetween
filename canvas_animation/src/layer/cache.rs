@@ -190,6 +190,9 @@ impl AnimationLayerCache {
                 current_time    = drawing_time;
             }
 
+            // Store the paths that are in each region
+            let mut cut_paths = HashMap::new();
+
             // Match up against the bounds of the regions at the time that the path appears in the animation
             for region_perimeter in current_regions.iter() {
                 // Ignore this region if the path doesn't overlap it
@@ -206,7 +209,10 @@ impl AnimationLayerCache {
 
                     // The path is entirely inside the region: add to the list of paths affected by this region and stop (there's no path left at this point)
                     PathRegionType::InsideRegion        => { 
-                        // TODO: store the entire path in the result
+                        // Store the entire path in the result
+                        cut_paths.entry(region_perimeter.regions.clone())
+                            .or_insert_with(|| vec![])
+                            .push((path_idx, remaining_path.clone()));
 
                         // There's no remaining path
                         remaining_path = remaining_path.with_path(Arc::new(vec![]));
@@ -221,12 +227,20 @@ impl AnimationLayerCache {
                         let inside_path = remaining_path.with_path(Arc::new(overlap.path_inside()));
                         remaining_path  = remaining_path.with_path(Arc::new(overlap.path_outside()));
 
-                        // TODO: store the inside path in the result
+                        // Store the inside path in the result
+                        cut_paths.entry(region_perimeter.regions.clone())
+                            .or_insert_with(|| vec![])
+                            .push((path_idx, inside_path));
                     }
                 }
             }
 
-            // TODO: if there's any remaining path, add to the paths outside of any region
+            // If there's any remaining path, add to the paths outside of any region
+            if remaining_path.path.len() > 0 {
+                cut_paths.entry(vec![])
+                    .or_insert_with(|| vec![])
+                    .push((path_idx, remaining_path));
+            }
         }
     }
 }
