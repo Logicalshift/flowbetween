@@ -205,13 +205,23 @@ impl AnimationLayerCache {
                     PathRegionType::OutsideRegion       => { continue; }
 
                     // The path is entirely inside the region: add to the list of paths affected by this region and stop (there's no path left at this point)
-                    PathRegionType::InsideRegion        => { break; }
+                    PathRegionType::InsideRegion        => { 
+                        // TODO: store the entire path in the result
+
+                        // There's no remaining path
+                        remaining_path = remaining_path.with_path(Arc::new(vec![]));
+                        break; 
+                    }
 
                     // The region needs to cut out part of the path
                     PathRegionType::IntersectsRegion    |
                     PathRegionType::EnclosesRegion      => {
-                        // TODO: cut out the part in the region, and leave the remainder in remaining_path for other regions
+                        // Cut out the part in the region, and leave the remainder in remaining_path for other regions
                         // (Regions have been processed so they don't overlap here so the cut out path will end up in the other regions)
+                        let inside_path = remaining_path.with_path(Arc::new(overlap.path_inside()));
+                        remaining_path  = remaining_path.with_path(Arc::new(overlap.path_outside()));
+
+                        // TODO: store the inside path in the result
                     }
                 }
             }

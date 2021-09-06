@@ -49,4 +49,15 @@ impl AnimationPath {
             path:               Arc::new(offset_path)
         }
     }
+
+    ///
+    /// Creates a path with identical attributes but a new set of operations
+    ///
+    pub fn with_path(&self, new_path: Arc<Vec<PathOp>>) -> AnimationPath {
+        AnimationPath {
+            appearance_time:    self.appearance_time,
+            attributes:         self.attributes,
+            path:               new_path
+        }
+    }
 }
