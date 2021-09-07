@@ -68,7 +68,10 @@ impl AnimationLayerCache {
     /// Resets the cached values
     ///
     pub fn flush(&mut self) {
-        self.bounding_boxes = None;
+        self.bounding_boxes         = None;
+        self.drawing_times          = None;
+        self.region_bounding_boxes  = None;
+        self.paths_for_region       = None;
     }
 
     ///
