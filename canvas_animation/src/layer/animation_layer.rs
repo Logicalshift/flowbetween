@@ -175,7 +175,7 @@ impl AnimationLayer {
         let cached_regions  = self.get_cached_regions();
 
         self.cache.desync(move |cache| {
-            if cache.bounding_boxes.is_none()           { cache.calculate_bounding_boxes(&*cached_paths); }
+            if cache.drawing_bounding_boxes.is_none()   { cache.calculate_bounding_boxes(&*cached_paths); }
             if cache.drawing_times.is_none()            { cache.calculate_drawing_times(&*cached_paths); }
             if cache.region_bounding_boxes.is_none()    { cache.calculate_region_bounding_boxes(&*cached_paths, &*cached_regions); }
             if cache.paths_for_region.is_none()         { cache.cut_drawing_into_regions(&*cached_paths, &*cached_regions); }
