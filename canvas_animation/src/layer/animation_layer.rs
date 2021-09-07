@@ -6,6 +6,8 @@ use crate::region::*;
 use ::desync::*;
 use flo_canvas::*;
 
+use futures::prelude::*;
+
 use std::mem;
 use std::sync::*;
 use std::time::{Duration};
@@ -180,6 +182,25 @@ impl AnimationLayer {
             if cache.region_bounding_boxes.is_none()    { cache.calculate_region_bounding_boxes(&*cached_paths, &*cached_regions); }
             if cache.paths_for_region.is_none()         { cache.cut_drawing_into_regions(&*cached_paths, &*cached_regions); }
         });
+    }
+
+    ///
+    /// Generates the rendering instructions for this layer at a particular time
+    ///
+    pub fn render_at_time<'a>(&'a mut self, time: Duration) -> impl 'a+Future<Output=Vec<Draw>> {
+        // Ensure that all of the cached values are available
+        self.fill_cache();
+
+        // Process the regions to generate the final rendering
+        async move {
+            self.cache.future_sync(move |cache| {
+                async move {
+                    vec![]
+                }.boxed()
+            })
+            .await
+            .unwrap()
+        }
     }
 }
 
