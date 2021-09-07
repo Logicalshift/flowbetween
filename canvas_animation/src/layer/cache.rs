@@ -38,7 +38,7 @@ impl RegionBounds {
 /// Cached values for an animation layer
 ///
 pub struct AnimationLayerCache {
-    /// Bounding boxes for all of the paths in the drawing with their index, ordered by their minimum x-coordinate
+    /// Bounding boxes for all of the paths in the drawing with their index, ordered by their path index
     pub (crate) bounding_boxes: Option<Vec<(PathIndex, Bounds<Coord2>)>>,
 
     /// The frames where the drawing changes (so we need to recalculate regions), in order
@@ -47,7 +47,7 @@ pub struct AnimationLayerCache {
     /// Bounding boxes for the animated regions, ordered by their time and minimum x-coordinate
     pub (crate) region_bounding_boxes: Option<Vec<(Duration, Vec<RegionBounds>)>>,
 
-    /// The paths contained within each set of regions (the empty set for paths that are not in any region)
+    /// The paths contained within each set of regions, in path index order (the empty set for paths that are not in any region)
     pub (crate) paths_for_region: Option<HashMap<Vec<RegionId>, Vec<(PathIndex, AnimationPath)>>>
 }
 
@@ -86,8 +86,8 @@ impl AnimationLayerCache {
 
         // Order by minimum x coordinate
         let mut bounding_boxes  = bounding_boxes.enumerate().map(|(idx, bbox)| (PathIndex(idx), bbox)).collect::<Vec<_>>();
-        bounding_boxes.sort_by(|&(_, a_bounds), &(_, b_bounds)| {
-            a_bounds.min().x().partial_cmp(&b_bounds.min().x()).unwrap_or(Ordering::Equal)
+        bounding_boxes.sort_by(|&(a_idx, _a_bounds), &(b_idx, _b_bounds)| {
+            a_idx.cmp(&b_idx)
         });
 
         // Store the bounding boxes for the drawing
