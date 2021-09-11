@@ -222,13 +222,13 @@ impl AnimationLayer {
                     for region_ids in ordered_regions {
                         // Get the paths for this region
                         let paths       = region_paths.get(region_ids).unwrap();
-                        let mut content = Arc::new(AnimationRegionContent { paths: paths.clone() });
+                        let mut content = Arc::new(AnimationRegionContent::from_paths(paths.clone()));
 
                         for region_id in region_ids.iter() {
                             // Apply the animation in this region
                             let region      = &regions[region_id.0];
                             let new_paths   = region.animate(content, time);
-                            content         = Arc::new(AnimationRegionContent { paths: new_paths });
+                            content         = Arc::new(AnimationRegionContent::from_paths(new_paths));
                         }
 
                         // Add the content for this region to the rendering

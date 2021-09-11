@@ -24,6 +24,15 @@ pub struct AnimationRegionContent {
 
 impl AnimationRegionContent {
     ///
+    /// Creats a new animation region content item from a list of paths
+    ///
+    pub fn from_paths<PathIter: IntoIterator<Item=AnimationPath>>(paths: PathIter) -> AnimationRegionContent {
+        AnimationRegionContent {
+            paths: paths.into_iter().collect()
+        }
+    }
+
+    ///
     /// Converts the content of a region into some drawing instructions
     ///
     pub fn to_drawing(&self, time: Duration) -> Vec<Draw> {
