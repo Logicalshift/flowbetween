@@ -48,7 +48,7 @@ pub struct AnimationLayerCache {
     pub (crate) region_bounding_boxes: Option<Vec<(Duration, Vec<RegionBounds>)>>,
 
     /// The paths contained within each set of regions, in path index order (the empty set for paths that are not in any region)
-    pub (crate) paths_for_region: Option<HashMap<Vec<RegionId>, Vec<(PathIndex, AnimationPath)>>>
+    pub (crate) paths_for_region: Option<HashMap<Vec<RegionId>, Vec<AnimationPath>>>
 }
 
 impl AnimationLayerCache {
@@ -187,7 +187,7 @@ impl AnimationLayerCache {
         let mut current_regions     = active_regions.get(&current_time).unwrap();
 
         // Store the paths that are in each region
-        let mut cut_paths = HashMap::new();
+        let mut cut_paths           = HashMap::new();
 
         // Process the drawing instructions from left-to-right
         for path_bounds in drawing_bounding_boxes.iter() {
@@ -221,7 +221,7 @@ impl AnimationLayerCache {
                         // Store the entire path in the result
                         cut_paths.entry(region_perimeter.regions.clone())
                             .or_insert_with(|| vec![])
-                            .push((path_idx, remaining_path.clone()));
+                            .push(remaining_path.clone());
 
                         // There's no remaining path
                         remaining_path = remaining_path.with_path(Arc::new(vec![]));
@@ -239,7 +239,7 @@ impl AnimationLayerCache {
                         // Store the inside path in the result
                         cut_paths.entry(region_perimeter.regions.clone())
                             .or_insert_with(|| vec![])
-                            .push((path_idx, inside_path));
+                            .push(inside_path);
                     }
                 }
             }
@@ -248,7 +248,7 @@ impl AnimationLayerCache {
             if remaining_path.path.len() > 0 {
                 cut_paths.entry(vec![])
                     .or_insert_with(|| vec![])
-                    .push((path_idx, remaining_path));
+                    .push(remaining_path);
             }
         }
 
