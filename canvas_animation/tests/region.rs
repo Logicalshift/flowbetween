@@ -10,8 +10,8 @@ use std::time::{Duration};
 pub struct TestRegion;
 
 impl AnimationEffect for TestRegion {
-    fn animate(&self, _region_contents: Arc<AnimationRegionContent>, _time: Duration) -> Vec<AnimationPath> {
-        vec![]
+    fn animate(&self, _region_contents: Arc<AnimationRegionContent>, _time: Duration) -> Arc<AnimationRegionContent> {
+        Arc::new(AnimationRegionContent::default())
     }
 }
 

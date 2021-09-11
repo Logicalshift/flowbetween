@@ -228,7 +228,7 @@ impl AnimationLayer {
                             // Apply the animation in this region
                             let region      = &regions[region_id.0];
                             let new_paths   = region.animate(content, time);
-                            content         = Arc::new(AnimationRegionContent::from_paths(new_paths));
+                            content         = new_paths;
                         }
 
                         // Add the content for this region to the rendering

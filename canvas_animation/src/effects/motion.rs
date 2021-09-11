@@ -1,4 +1,3 @@
-use crate::path::*;
 use crate::region::*;
 
 use flo_curves::*;
@@ -153,15 +152,16 @@ impl AnimationEffect for MotionEffect {
     ///
     /// Given the contents of the regions for this effect, calculates the path that should be rendered
     ///
-    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Vec<AnimationPath> {
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Arc<AnimationRegionContent> {
         // Get the offset for the region contents
         let time    = (time.as_nanos() as f64) / 1_000_000.0;
         let offset  = self.offset_at_time(time, 0.01);
 
         // Move all of the paths in the region by the offset
-        region_contents.paths.iter()
-            .map(|path| path.offset_by(offset))
-            .collect()
+        let paths   = region_contents.paths.iter()
+            .map(|path| path.offset_by(offset));
+
+        Arc::new(AnimationRegionContent::from_paths(paths))
     }
 
 }

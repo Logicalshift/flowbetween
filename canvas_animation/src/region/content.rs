@@ -22,6 +22,17 @@ pub struct AnimationRegionContent {
     pub paths: Vec<AnimationPath>
 }
 
+impl Default for AnimationRegionContent {
+    ///
+    /// AnimationRegionContents have a default empty value
+    ///
+    fn default() -> Self {
+        AnimationRegionContent {
+            paths: vec![]
+        }
+    }
+}
+
 impl AnimationRegionContent {
     ///
     /// Creats a new animation region content item from a list of paths

@@ -1,4 +1,3 @@
-use crate::path::*;
 use crate::region::*;
 
 use flo_curves::bezier::*;
@@ -84,7 +83,7 @@ impl<TEffect: AnimationEffect> AnimationEffect for TimeCurveEffect<TEffect> {
     ///
     /// Given the contents of the regions for this effect, calculates the path that should be rendered
     ///
-    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Vec<AnimationPath> {
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Arc<AnimationRegionContent>{
         self.effect.animate(region_contents, self.time_for_time(time))
     }
 
@@ -94,7 +93,7 @@ impl<TEffect: AnimationEffect> AnimationEffect for TimeCurveEffect<TEffect> {
     /// the region contents, but is not always available as the region itself might be changing over time
     /// (eg, if many effects are combined)
     ///
-    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Vec<AnimationPath>> {
+    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Arc<AnimationRegionContent>> {
         let cached_effect = self.effect.animate_cached(region_contents);
 
         Box::new(move |time| {

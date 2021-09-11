@@ -1,4 +1,3 @@
-use crate::path::*;
 use super::effect::*;
 use super::content::*;
 
@@ -30,12 +29,12 @@ where T: AnimationRegion {
 
 impl AnimationEffect for Arc<dyn AnimationRegion> {
     #[inline]
-    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Vec<AnimationPath> {
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Arc<AnimationRegionContent> {
         (**self).animate(region_contents, time)
     }
 
     #[inline]
-    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Vec<AnimationPath>> {
+    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Arc<AnimationRegionContent>> {
         (**self).animate_cached(region_contents)
     }
 }

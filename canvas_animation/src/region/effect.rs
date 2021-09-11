@@ -1,10 +1,7 @@
-use crate::path::*;
 use super::content::*;
 
 use std::sync::*;
 use std::time::{Duration};
-
-// TODO: animate() and animate_cached() should really return Arc<AnimationRegionContent> objects
 
 ///
 /// An animation effect describes how one or more sets of paths change over time
@@ -22,7 +19,7 @@ pub trait AnimationEffect : Send+Sync {
     ///
     /// Given the contents of the regions for this effect, calculates the path that should be rendered
     ///
-    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Vec<AnimationPath>;
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Arc<AnimationRegionContent>;
 
     ///
     /// Given an input region that will remain fixed throughout the time period, returns a function that
@@ -30,7 +27,7 @@ pub trait AnimationEffect : Send+Sync {
     /// the region contents, but is not always available as the region itself might be changing over time
     /// (eg, if many effects are combined)
     ///
-    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Vec<AnimationPath>> {
+    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Arc<AnimationRegionContent>> {
         Box::new(move |time| {
             self.animate(Arc::clone(&region_contents), time)
         })
@@ -40,12 +37,12 @@ pub trait AnimationEffect : Send+Sync {
 impl<T> AnimationEffect for Box<T>
 where T: AnimationEffect {
     #[inline]
-    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Vec<AnimationPath> {
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Arc<AnimationRegionContent> {
         (**self).animate(region_contents, time)
     }
 
     #[inline]
-    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Vec<AnimationPath>> {
+    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Arc<AnimationRegionContent>> {
         (**self).animate_cached(region_contents)
     }
 }
@@ -53,12 +50,12 @@ where T: AnimationEffect {
 impl<T> AnimationEffect for Arc<T>
 where T: AnimationEffect {
     #[inline]
-    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Vec<AnimationPath> {
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Arc<AnimationRegionContent> {
         (**self).animate(region_contents, time)
     }
 
     #[inline]
-    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Vec<AnimationPath>> {
+    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Arc<AnimationRegionContent>> {
         (**self).animate_cached(region_contents)
     }
 }
