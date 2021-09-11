@@ -4,6 +4,8 @@ use super::content::*;
 use std::sync::*;
 use std::time::{Duration};
 
+// TODO: animate() and animate_cached() should really return Arc<AnimationRegionContent> objects
+
 ///
 /// An animation effect describes how one or more sets of paths change over time
 ///
