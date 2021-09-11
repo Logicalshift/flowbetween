@@ -48,7 +48,7 @@ pub struct AnimationLayerCache {
     pub (crate) region_bounding_boxes: Option<Vec<(Duration, Vec<RegionBounds>)>>,
 
     /// The paths contained within each set of regions, in path index order (the empty set for paths that are not in any region)
-    pub (crate) paths_for_region: Option<HashMap<Vec<RegionId>, Vec<AnimationPath>>>
+    pub (crate) paths_for_region: Option<HashMap<Vec<RegionId>, Arc<AnimationRegionContent>>>
 }
 
 impl AnimationLayerCache {
@@ -253,6 +253,9 @@ impl AnimationLayerCache {
         }
 
         // Store the result in the cache
-        self.paths_for_region = Some(cut_paths);
+        let cut_paths           = cut_paths.into_iter()
+            .map(|(region_id, paths)| (region_id, Arc::new(AnimationRegionContent::from_paths(paths))))
+            .collect();
+        self.paths_for_region   = Some(cut_paths);
     }
 }
