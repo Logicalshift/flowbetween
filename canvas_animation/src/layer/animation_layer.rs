@@ -231,7 +231,8 @@ impl AnimationLayer {
                             content         = Arc::new(AnimationRegionContent { paths: new_paths });
                         }
 
-                        // TODO: Add the content for this region to the rendering
+                        // Add the content for this region to the rendering
+                        rendering.extend(content.to_drawing(time));
                     }
 
                     Some(rendering)
