@@ -41,7 +41,7 @@ impl MotionEffect {
     ///
     /// Creates a motion effect along the specified path
     ///
-    pub fn from_points(duration: f64, start_point: Coord2, path: Vec<(Coord2, Coord2, Coord2)>) -> MotionEffect {
+    pub fn from_points(duration: Duration, start_point: Coord2, path: Vec<(Coord2, Coord2, Coord2)>) -> MotionEffect {
         // Measure the distance of each path to find the total length
         let mut motion_path     = vec![];
         let mut last_point      = start_point;
@@ -67,7 +67,7 @@ impl MotionEffect {
             start_point:    start_point,
             path:           motion_path,
             total_length:   total_length,
-            duration:       duration
+            duration:       (duration.as_nanos() as f64) / 1_000_000.0
         }
     }
 

@@ -65,12 +65,12 @@ fn main() {
 
             // Create an animation effect
             let (dx, dy)                = (f64::sin(middle_angle) * 300.0, f64::cos(middle_angle) * 300.0);
-            let motion_effect           = MotionEffect::from_points(10.0, 
+            let motion_effect           = MotionEffect::from_points(Duration::from_secs(10), 
                 Coord2(center_x, center_y), 
                 vec![(Coord2(center_x + dx * 0.33, center_y + dy * 0.33), Coord2(center_x + dx * 0.66, center_y + dy * 0.66), Coord2(center_x + dx, center_y + dy))]);
 
             // Apply a time curve
-            let motion_effect           = TimeCurveEffect::with_control_points(motion_effect, vec![(0.0, 9.0, 10.0), (10.0, 1.0, 0.0)]);
+            let motion_effect           = TimeCurveEffect::with_control_points(motion_effect, vec![(0.0, 9000.0, 10000.0), (10000.0, 1000.0, 0.0)]);
 
             // Apply it to a region of the layer
             let motion_effect           = motion_effect.with_region(vec![fragment]);
