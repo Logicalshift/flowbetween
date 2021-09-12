@@ -34,9 +34,11 @@ fn main() {
         // Fill a canvas layer with a circle and some regions
         let mut circle_drawing = vec![];
 
+        circle_drawing.new_path();
         circle_drawing.circle(500.0, 500.0, 116.0);
         circle_drawing.fill_color(Color::Rgba(0.1, 0.1, 0.1, 1.0));
         circle_drawing.fill();
+        circle_drawing.new_path();
         circle_drawing.circle(500.0, 500.0, 100.0);
         circle_drawing.fill_color(Color::Rgba(0.91, 1.0, 0.99, 1.0));
         circle_drawing.fill();
