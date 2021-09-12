@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "motion_effect",
+    "shatter"
 ]
 
 [patch.crates-io]
