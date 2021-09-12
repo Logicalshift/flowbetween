@@ -58,11 +58,14 @@ fn main() {
             let (center_x, center_y)    = (500.0, 500.0);
             let (x1, y1)                = (center_x + (f64::sin(start_angle) * 300.0),  center_y + (f64::cos(start_angle) * 300.0));
             let (x2, y2)                = (center_x + (f64::sin(end_angle) * 300.0),    center_y + (f64::cos(end_angle) * 300.0));
+            let (x3, y3)                = (center_x + (f64::sin(start_angle) * 16.0),  center_y + (f64::cos(start_angle) * 16.0));
+            let (x4, y4)                = (center_x + (f64::sin(end_angle) * 16.0),    center_y + (f64::cos(end_angle) * 16.0));
 
-            let fragment                = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(center_x, center_y))
+            let fragment                = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(x3, y3))
                 .line_to(Coord2(x1, y1))
                 .line_to(Coord2(x2, y2))
-                .line_to(Coord2(center_x, center_y))
+                .line_to(Coord2(x4, y4))
+                .line_to(Coord2(x3, y3))
                 .build();
 
             // Create an animation effect
