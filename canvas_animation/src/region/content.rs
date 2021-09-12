@@ -4,6 +4,7 @@ use flo_canvas::*;
 
 use std::sync::*;
 use std::time::Duration;
+use std::slice;
 
 // TODO: might be good to have a way to have optional pointers to extra region content that's intended to be added before/after the
 // list of paths in this content so we don't always have to copy all of the paths when doing simple things like motions
@@ -98,7 +99,7 @@ impl AnimationRegionContent {
     /// Creates an iterator through the paths that make up this region
     ///
     pub fn paths<'a>(&'a self) -> impl 'a+Iterator<Item=&AnimationPath> {
-        self.paths.iter()
+        AnimationContentIterator::from_region_content(self)
     }
 
     ///
@@ -227,5 +228,75 @@ impl AnimationRegionContent {
         // Finished drawing the paths: pop the layer state we pushed earlier
         drawing.push(Draw::PopState);
         drawing
+    }
+}
+
+///
+/// Iterator for the paths in an `AnimationRegionContent`
+///
+struct AnimationContentIterator<'a> {
+    /// Stack of region contents that should be animated
+    pending_content_stack: Vec<&'a AnimationRegionContent>,
+
+    /// The iterator for the paths from the current animation region content
+    current_iterator: slice::Iter<'a, AnimationPath>
+}
+
+impl<'a> AnimationContentIterator<'a> {
+    ///
+    /// Pushes the enumeration order of a region content to a stack for iteration
+    ///
+    fn push_region_to_stack(stack: &mut Vec<&'a AnimationRegionContent>, region: &'a AnimationRegionContent) {
+        // Suffix is process last (so pushed to the stack first)
+        if let Some(suffix) = region.suffix.as_ref() {
+            Self::push_region_to_stack(stack, &*suffix);
+        }
+
+        // Then this region is processed
+        stack.push(region);
+
+        // Then the prefix is processed first
+        if let Some(prefix) = region.prefix.as_ref() {
+            Self::push_region_to_stack(stack, &*prefix);
+        }
+    }
+
+    ///
+    /// Creates a path iterator from an animation region content item
+    ///
+    pub fn from_region_content(content: &'a AnimationRegionContent) -> AnimationContentIterator<'a> {
+        // Recursively process the content of the regions
+        let mut pending_content_stack = vec![];
+        Self::push_region_to_stack(&mut pending_content_stack, content);
+
+        // Create the initial iterator
+        let initial_iterator = pending_content_stack.pop().unwrap().paths.iter();
+
+        AnimationContentIterator {
+            pending_content_stack:  pending_content_stack,
+            current_iterator:       initial_iterator
+        }
+    }
+}
+
+impl<'a> Iterator for AnimationContentIterator<'a> {
+    type Item = &'a AnimationPath;
+
+    fn next(&mut self) -> Option<&'a AnimationPath> {
+        loop {
+            // Try to get the next path from the current iterator
+            if let Some(next) = self.current_iterator.next() {
+                return Some(next);
+            }
+
+            // Try to get the next region from the stack
+            if let Some(next_region) = self.pending_content_stack.pop() {
+                // Iterate over the next region (and continue the loop)
+                self.current_iterator = next_region.paths.iter();
+            } else {
+                // No more regions left
+                return None;
+            }
+        }
     }
 }
