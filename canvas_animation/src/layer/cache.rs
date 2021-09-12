@@ -102,8 +102,6 @@ impl AnimationLayerCache {
     ///
     pub fn calculate_drawing_times(&mut self, drawing: &Vec<AnimationPath>) {
         let drawing_times = drawing.iter().map(|path| path.appearance_time)
-            .unique()
-            .sorted()
             .collect::<Vec<_>>();
 
         self.drawing_times = Some(drawing_times);
