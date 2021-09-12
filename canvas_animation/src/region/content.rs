@@ -6,8 +6,7 @@ use std::sync::*;
 use std::time::Duration;
 use std::slice;
 
-// TODO: might be good to have a way to have optional pointers to extra region content that's intended to be added before/after the
-// list of paths in this content so we don't always have to copy all of the paths when doing simple things like motions
+// TODO: add a way to add a 2D transformation for the content of a region
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 enum FillStyle {

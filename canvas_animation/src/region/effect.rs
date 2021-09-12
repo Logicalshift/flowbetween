@@ -3,6 +3,8 @@ use super::content::*;
 use std::sync::*;
 use std::time::{Duration};
 
+// TODO: add a way to specify a 2D transformation at a time for simpler effects
+
 ///
 /// An animation effect describes how one or more sets of paths change over time
 ///
