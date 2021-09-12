@@ -163,5 +163,4 @@ impl AnimationEffect for MotionEffect {
 
         Arc::new(AnimationRegionContent::from_paths(paths))
     }
-
 }
