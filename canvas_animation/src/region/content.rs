@@ -58,6 +58,15 @@ impl AnimationRegionContent {
     /// Adds a set of content before this region
     ///
     pub fn with_prefix(self, prefix: Arc<AnimationRegionContent>) -> AnimationRegionContent {
+        // If there's an existing prefix, make a new region content with both prefixes
+        let prefix = if let Some(existing_prefix) = self.prefix {
+            Arc::new(AnimationRegionContent::default()
+                .with_prefix(prefix)
+                .with_suffix(existing_prefix))
+        } else {
+            prefix
+        };
+
         AnimationRegionContent {
             prefix: Some(prefix),
             paths:  self.paths,
@@ -69,6 +78,15 @@ impl AnimationRegionContent {
     /// Adds a set of content after this region
     ///
     pub fn with_suffix(self, suffix: Arc<AnimationRegionContent>) -> AnimationRegionContent {
+        // If there's an existing suffix, make a new region content with both suffixes
+        let suffix = if let Some(existing_suffix) = self.suffix {
+            Arc::new(AnimationRegionContent::default()
+                .with_prefix(existing_suffix)
+                .with_suffix(suffix))
+        } else {
+            suffix
+        };
+
         AnimationRegionContent {
             prefix: self.prefix,
             paths:  self.paths,
