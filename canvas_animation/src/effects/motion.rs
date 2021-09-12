@@ -158,7 +158,7 @@ impl AnimationEffect for MotionEffect {
         let offset  = self.offset_at_time(time, 0.01);
 
         // Move all of the paths in the region by the offset
-        let paths   = region_contents.paths.iter()
+        let paths   = region_contents.paths()
             .map(|path| path.offset_by(offset));
 
         Arc::new(AnimationRegionContent::from_paths(paths))

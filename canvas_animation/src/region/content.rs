@@ -19,7 +19,7 @@ enum FillStyle {
 ///
 pub struct AnimationRegionContent {
     /// The paths tht appear in this region
-    pub paths: Vec<AnimationPath>
+    paths: Vec<AnimationPath>
 }
 
 impl Default for AnimationRegionContent {
@@ -41,6 +41,13 @@ impl AnimationRegionContent {
         AnimationRegionContent {
             paths: paths.into_iter().collect()
         }
+    }
+
+    ///
+    /// Creates an iterator through the paths that make up this region
+    ///
+    pub fn paths<'a>(&'a self) -> impl 'a+Iterator<Item=&AnimationPath> {
+        self.paths.iter()
     }
 
     ///
