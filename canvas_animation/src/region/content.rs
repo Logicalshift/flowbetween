@@ -2,6 +2,7 @@ use crate::path::*;
 
 use flo_canvas::*;
 
+use std::sync::*;
 use std::time::Duration;
 
 // TODO: might be good to have a way to have optional pointers to extra region content that's intended to be added before/after the
@@ -18,8 +19,14 @@ enum FillStyle {
 /// Describes what's in a particular animation region
 ///
 pub struct AnimationRegionContent {
+    /// The region content that precedes this region (the content of this region is added to this one)
+    prefix: Option<Arc<AnimationRegionContent>>,
+
     /// The paths tht appear in this region
-    paths: Vec<AnimationPath>
+    paths: Vec<AnimationPath>,
+
+    /// The region content that follows this region (this will be added after the content of this region)
+    suffix: Option<Arc<AnimationRegionContent>>
 }
 
 impl Default for AnimationRegionContent {
@@ -28,18 +35,44 @@ impl Default for AnimationRegionContent {
     ///
     fn default() -> Self {
         AnimationRegionContent {
-            paths: vec![]
+            prefix: None,
+            paths:  vec![],
+            suffix: None
         }
     }
 }
 
 impl AnimationRegionContent {
     ///
-    /// Creats a new animation region content item from a list of paths
+    /// Creates a new animation region content item from a list of paths
     ///
     pub fn from_paths<PathIter: IntoIterator<Item=AnimationPath>>(paths: PathIter) -> AnimationRegionContent {
         AnimationRegionContent {
-            paths: paths.into_iter().collect()
+            prefix: None,
+            paths:  paths.into_iter().collect(),
+            suffix: None
+        }
+    }
+
+    ///
+    /// Adds a set of content before this region
+    ///
+    pub fn with_prefix(self, prefix: Arc<AnimationRegionContent>) -> AnimationRegionContent {
+        AnimationRegionContent {
+            prefix: Some(prefix),
+            paths:  self.paths,
+            suffix: self.suffix
+        }
+    }
+
+    ///
+    /// Adds a set of content after this region
+    ///
+    pub fn with_suffix(self, suffix: Arc<AnimationRegionContent>) -> AnimationRegionContent {
+        AnimationRegionContent {
+            prefix: self.prefix,
+            paths:  self.paths,
+            suffix: Some(suffix)
         }
     }
 
