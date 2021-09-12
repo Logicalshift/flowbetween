@@ -6,8 +6,6 @@ use crate::region::*;
 use flo_curves::*;
 use flo_curves::bezier::path::*;
 
-use itertools::*;
-
 use std::cmp::{Ordering};
 use std::sync::*;
 use std::time::{Duration};
