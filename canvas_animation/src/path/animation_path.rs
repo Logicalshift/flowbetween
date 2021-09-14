@@ -21,10 +21,7 @@ pub struct AnimationPath {
 }
 
 #[inline]
-fn offset_path_op(op: &PathOp, distance: &Coord2) -> PathOp {
-    let dx = distance.x() as f32;
-    let dy = distance.y() as f32;
-
+fn offset_path_op(op: &PathOp, dx: f32, dy: f32) -> PathOp {
     match op {
         PathOp::NewPath                                             => PathOp::NewPath,
         PathOp::ClosePath                                           => PathOp::ClosePath,
@@ -39,13 +36,41 @@ impl AnimationPath {
     /// Creates a copy of this path that is offset by the specified distance
     ///
     pub fn offset_by(&self, distance: Coord2) -> AnimationPath {
+        let dx = distance.x() as f32;
+        let dy = distance.y() as f32;
+
+        // Move the path coordinates
         let offset_path = self.path.iter()
-            .map(|path_op| offset_path_op(path_op, &distance))
+            .map(|path_op| offset_path_op(path_op, dx, dy))
             .collect();
 
+        // Move the texture or other attributes 
+        let attributes = match self.attributes.clone() {
+            AnimationPathAttribute::FillTexture(texture_id, (x1, y1), (x2, y2), None, winding_rule) => {
+                AnimationPathAttribute::FillTexture(texture_id, (x1 + dx, y1 + dy), (x2 + dx, y2 + dy), None, winding_rule)
+            },
+
+            AnimationPathAttribute::FillTexture(texture_id, (x1, y1), (x2, y2), Some(transform), winding_rule) => {
+                let transform = Transform2D::translate(dx, dy) * transform;
+                AnimationPathAttribute::FillTexture(texture_id, (x1, y1), (x2, y2), Some(transform), winding_rule)
+            },
+
+            AnimationPathAttribute::FillGradient(gradient_id, (x1, y1), (x2, y2), None, winding_rule) => {
+                AnimationPathAttribute::FillGradient(gradient_id, (x1 + dx, y1 + dy), (x2 + dx, y2 + dy), None, winding_rule)
+            },
+
+            AnimationPathAttribute::FillGradient(gradient_id, (x1, y1), (x2, y2), Some(transform), winding_rule) => {
+                let transform = Transform2D::translate(dx, dy) * transform;
+                AnimationPathAttribute::FillGradient(gradient_id, (x1 + dx, y1 + dy), (x2 + dx, y2 + dy), Some(transform), winding_rule)
+            },
+
+            other => other
+        };
+
+        // Pack into a new path object
         AnimationPath {
             appearance_time:    self.appearance_time,
-            attributes:         self.attributes.clone(),
+            attributes:         attributes,
             path:               Arc::new(offset_path)
         }
     }
