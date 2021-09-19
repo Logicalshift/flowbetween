@@ -1,6 +1,5 @@
 use super::region_path::*;
 use super::animation_path::*;
-use super::path_component::*;
 use crate::region::*;
 
 use flo_curves::*;
@@ -16,9 +15,9 @@ impl AnimationPath {
         // Create a GraphPath from this path
         let mut animation_path = GraphPath::new();
 
-        for our_component in PathComponent::from_path(self) {
+        for our_component in self.path.iter() {
             let direction       = if our_component.is_clockwise() { PathDirection::Clockwise } else { PathDirection::Anticlockwise };
-            let component_path  = GraphPath::from_path(&our_component, PathLabel(0, direction));
+            let component_path  = GraphPath::from_path(our_component, PathLabel(0, direction));
 
             animation_path      = animation_path.merge(component_path);
         }

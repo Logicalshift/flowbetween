@@ -64,11 +64,7 @@ impl LayerDrawingToPaths {
                         // Turn the fill state into attributes
                         let attributes = (&self.state.fill).into();
 
-                        return Some(AnimationPath {
-                            appearance_time:    self.state.current_time,
-                            attributes:         attributes,
-                            path:               path
-                        });
+                        return Some(AnimationPath::from_path_ops(path.iter(), self.state.current_time, attributes));
                     },
                     Stroke                                          => {
                         // Retrieve the current path (re-use if already cached)
@@ -83,11 +79,7 @@ impl LayerDrawingToPaths {
                         // Turn the stroke state into attributes
                         let attributes = (&self.state.stroke).into();
 
-                        return Some(AnimationPath {
-                            appearance_time:    self.state.current_time,
-                            attributes:         attributes,
-                            path:               path
-                        });
+                        return Some(AnimationPath::from_path_ops(path.iter(), self.state.current_time, attributes));
                     },
 
                     StrokeColor(stroke_color)                       => { self.state.stroke.color        = stroke_color; },

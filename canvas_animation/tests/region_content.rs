@@ -11,7 +11,7 @@ fn create_path(id_num: usize) -> AnimationPath {
     AnimationPath {
         appearance_time:    Duration::from_millis(0),
         attributes:         AnimationPathAttribute::Fill(Color::Rgba(0.0, 0.0, 0.0, 1.0), WindingRule::EvenOdd),
-        path:               Arc::new(vec![PathOp::Move(id_num as _, id_num as _)])
+        path:               Arc::new(vec![(Coord2(id_num as _, id_num as _), vec![])])
     }
 }
 
@@ -21,11 +21,10 @@ fn create_path(id_num: usize) -> AnimationPath {
 fn is_path_id(path: &AnimationPath, id_num: usize) -> bool {
     if path.path.len() != 1 {
         false
-    } else if let PathOp::Move(x, _y) = &path.path[0] {
-        let distance = ((id_num as f32) - x).abs();
-        distance < 0.01
     } else {
-        false
+        let (Coord2(x, _y), _points) = &path.path[0];
+        let distance = ((id_num as f64) - x).abs();
+        distance < 0.01
     }
 }
 

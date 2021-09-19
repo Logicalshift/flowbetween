@@ -122,7 +122,7 @@ impl AnimationRegionContent {
 
             // Load the path
             drawing.push(Draw::Path(PathOp::NewPath));
-            drawing.extend(path.path.iter().cloned().map(|pathop| Draw::Path(pathop)));
+            drawing.extend(path.to_path_ops().map(|pathop| Draw::Path(pathop)));
 
             // Apply any changed attributes for these paths, and render them
             use self::AnimationPathAttribute::*;

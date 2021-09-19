@@ -78,8 +78,8 @@ impl AnimationLayerCache {
     pub fn calculate_bounding_boxes(&mut self, drawing: &Vec<AnimationPath>) {
         // Calculate the bounding boxes for each path
         let bounding_boxes = drawing.iter().map(|path| {
-            let components      = PathComponent::from_path(&path);
-            let bounding_boxes  = components.into_iter().map(|component| component.bounding_box());
+            let components      = &path.path;
+            let bounding_boxes  = components.iter().map(|component| component.bounding_box());
             let bbox            = bounding_boxes.fold(Bounds::empty(), |a, b| a.union_bounds(b));
 
             bbox
