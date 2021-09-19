@@ -163,4 +163,26 @@ impl AnimationEffect for MotionEffect {
 
         Arc::new(AnimationRegionContent::from_paths(paths))
     }
+
+    ///
+    /// Given an input region that will remain fixed throughout the time period, returns a function that
+    /// will animate it. This can be used to speed up operations when some pre-processing is required for
+    /// the region contents, but is not always available as the region itself might be changing over time
+    /// (eg, if many effects are combined)
+    ///
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
+        let cached_effect = self.clone();
+
+        Box::new(move |time| {
+            // Get the offset for the region contents
+            let time    = (time.as_nanos() as f64) / 1_000_000.0;
+            let offset  = cached_effect.offset_at_time(time, 0.01);
+
+            // Move all of the paths in the region by the offset
+            let paths   = region_contents.paths()
+                .map(|path| path.offset_by(offset));
+
+            Arc::new(AnimationRegionContent::from_paths(paths))
+        })
+    }
 }

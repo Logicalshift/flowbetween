@@ -29,11 +29,7 @@ pub trait AnimationEffect : Send+Sync {
     /// the region contents, but is not always available as the region itself might be changing over time
     /// (eg, if many effects are combined)
     ///
-    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Arc<AnimationRegionContent>> {
-        Box::new(move |time| {
-            self.animate(Arc::clone(&region_contents), time)
-        })
-    }
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>>;
 }
 
 impl<T> AnimationEffect for Box<T>
@@ -44,7 +40,7 @@ where T: AnimationEffect {
     }
 
     #[inline]
-    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Arc<AnimationRegionContent>> {
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
         (**self).animate_cached(region_contents)
     }
 }
@@ -57,7 +53,7 @@ where T: AnimationEffect {
     }
 
     #[inline]
-    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Arc<AnimationRegionContent>> {
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
         (**self).animate_cached(region_contents)
     }
 }

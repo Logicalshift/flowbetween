@@ -44,7 +44,7 @@ impl<TEffect: AnimationEffect> AnimationEffect for AnimationEffectRegion<TEffect
         self.effect.animate(region_contents, time) 
     }
 
-    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Arc<AnimationRegionContent>> { 
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> { 
         self.effect.animate_cached(region_contents) 
     }
 }

@@ -38,7 +38,7 @@ impl<TEffect: AnimationEffect> TimeCurveEffect<TEffect> {
     ///
     /// Works out where the specified time lies on the curve
     ///
-    pub fn time_for_time(&self, time: Duration) -> Duration {
+    pub fn time_for_time(curve_points: &Vec<(f64, f64, f64)>, time: Duration) -> Duration {
         // Convert time to milliseconds
         let time            = (time.as_nanos() as f64) / 1_000_000.0;
 
@@ -48,7 +48,7 @@ impl<TEffect: AnimationEffect> TimeCurveEffect<TEffect> {
         let     cp2;
         let     end_point;
 
-        let mut curve_iter = self.curve_points.iter();
+        let mut curve_iter = curve_points.iter();
         loop {
             if let Some((test_cp1, test_cp2, test_end_point)) = curve_iter.next() {
                 // If the end point is > time then this is the section containing the requested time
@@ -84,7 +84,7 @@ impl<TEffect: AnimationEffect> AnimationEffect for TimeCurveEffect<TEffect> {
     /// Given the contents of the regions for this effect, calculates the path that should be rendered
     ///
     fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Arc<AnimationRegionContent>{
-        self.effect.animate(region_contents, self.time_for_time(time))
+        self.effect.animate(region_contents, Self::time_for_time(&self.curve_points, time))
     }
 
     ///
@@ -93,11 +93,12 @@ impl<TEffect: AnimationEffect> AnimationEffect for TimeCurveEffect<TEffect> {
     /// the region contents, but is not always available as the region itself might be changing over time
     /// (eg, if many effects are combined)
     ///
-    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Arc<AnimationRegionContent>> {
-        let cached_effect = self.effect.animate_cached(region_contents);
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
+        let cached_effect   = self.effect.animate_cached(region_contents);
+        let curve_points    = self.curve_points.clone();
 
         Box::new(move |time| {
-            cached_effect(self.time_for_time(time))
+            cached_effect(Self::time_for_time(&curve_points, time))
         })
     }
 }

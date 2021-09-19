@@ -13,6 +13,10 @@ impl AnimationEffect for TestRegion {
     fn animate(&self, _region_contents: Arc<AnimationRegionContent>, _time: Duration) -> Arc<AnimationRegionContent> {
         Arc::new(AnimationRegionContent::default())
     }
+
+    fn animate_cached(&self, _region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
+        Box::new(|_| Arc::new(AnimationRegionContent::default()))
+    }
 }
 
 impl AnimationRegion for TestRegion {

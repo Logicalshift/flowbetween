@@ -28,8 +28,8 @@ impl<TEffect: AnimationEffect> RepeatEffect<TEffect> {
     ///
     /// Returns the time to use for the internal effect given the overall animation time
     ///
-    fn time_for_time(&self, time: Duration) -> Duration {
-        Duration::from_nanos((time.as_nanos() % self.repeat_time.as_nanos()) as _)
+    fn time_for_time(repeat_time: Duration, time: Duration) -> Duration {
+        Duration::from_nanos((time.as_nanos() % repeat_time.as_nanos()) as _)
     }
 }
 
@@ -38,7 +38,7 @@ impl<TEffect: AnimationEffect> AnimationEffect for RepeatEffect<TEffect> {
     /// Given the contents of the regions for this effect, calculates the path that should be rendered
     ///
     fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Arc<AnimationRegionContent> {
-        let time = self.time_for_time(time);
+        let time = Self::time_for_time(self.repeat_time, time);
 
         self.effect.animate(region_contents, time)
     }
@@ -49,11 +49,12 @@ impl<TEffect: AnimationEffect> AnimationEffect for RepeatEffect<TEffect> {
     /// the region contents, but is not always available as the region itself might be changing over time
     /// (eg, if many effects are combined)
     ///
-    fn animate_cached<'a>(&'a self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn 'a+Fn(Duration) -> Arc<AnimationRegionContent>> {
-        let cached_effect = self.effect.animate_cached(region_contents);
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
+        let cached_effect   = self.effect.animate_cached(region_contents);
+        let repeat_time     = self.repeat_time;
 
         Box::new(move |time| {
-            let time = self.time_for_time(time);
+            let time = Self::time_for_time(repeat_time, time);
             cached_effect(time)
         })
     }
