@@ -1106,6 +1106,7 @@ version = "0.2.0"
 dependencies = [
  "desync",
  "flo_canvas",
+ "flo_canvas_animation",
  "flo_curves",
  "flo_float_encoder",
  "flo_stream",
