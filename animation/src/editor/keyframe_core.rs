@@ -223,14 +223,14 @@ impl KeyFrameCore {
     ///
     /// Loads the attachments for an element from a core
     ///
-    pub fn retrieve_attachments(&self, id: ElementId) -> Vec<(ElementId, VectorType)> {
+    pub fn retrieve_attachments(core: &Arc<KeyFrameCore>, id: ElementId) -> Vec<(ElementId, VectorType)> {
         // Start at the initial element
-        if let Some(wrapper) = self.elements.get(&id) {
+        if let Some(wrapper) = core.elements.get(&id) {
             // Fetch the types of the attachments to the element
             wrapper.attachments
                 .iter()
                 .map(|attachment_id| {
-                    self.elements.get(attachment_id)
+                    core.elements.get(attachment_id)
                         .map(|attachment_wrapper| {
                             (*attachment_id, VectorType::from(&attachment_wrapper.element))
                         })
@@ -246,20 +246,18 @@ impl KeyFrameCore {
     ///
     /// Creates the default properties for this frame
     ///
-    pub fn default_properties(&self) -> Arc<VectorProperties> {
+    pub fn default_properties(core: Arc<KeyFrameCore>) -> Arc<VectorProperties> {
         let mut properties  = VectorProperties::default();
 
-        /*
         // Retrieve attachments from this frame
         properties.retrieve_attachments = Arc::new(move |element_id| {
-            self.retrieve_attachments(element_id).into_iter()
+            Self::retrieve_attachments(&core, element_id).into_iter()
                 .flat_map(|(element_id, _type)| {
-                    self.elements.get(&element_id)
+                    core.elements.get(&element_id)
                         .map(|wrapper| wrapper.element.clone())
                 })
                 .collect()
         });
-        */
 
         Arc::new(properties)
     }
@@ -267,7 +265,7 @@ impl KeyFrameCore {
     ///
     /// Renders this keyframe to a new animation layer
     ///
-    pub fn generate_animation_layer(&self) -> AnimationLayer {
+    pub fn generate_animation_layer(core: &Arc<KeyFrameCore>) -> AnimationLayer {
         // Create an empty animation layer
         let mut layer               = AnimationLayer::new();
 
@@ -284,20 +282,20 @@ impl KeyFrameCore {
         let when                    = Duration::from_millis(0);
 
         // Render the elements
-        let default_properties  = self.default_properties();
-        let mut next_element    = self.initial_element;
-        let mut current_time    = self.start;
+        let default_properties      = Self::default_properties(Arc::clone(core));
+        let mut next_element        = core.initial_element;
+        let mut current_time        = core.start;
 
         while let Some(current_element) = next_element {
             // Fetch the element definition
-            let wrapper = self.elements.get(&current_element);
+            let wrapper = core.elements.get(&current_element);
             let wrapper = match wrapper {
                 Some(wrapper)   => wrapper,
                 None            => { break; }
             };
 
             // Render the element if it is displayed on this frame
-            if wrapper.start_time >= self.start {
+            if wrapper.start_time >= core.start {
                 // Update the drawing time in the layer
                 if current_time != wrapper.start_time {
                     // Flush the drawing
@@ -307,7 +305,7 @@ impl KeyFrameCore {
 
                     // Update the time in the layer
                     current_time = wrapper.start_time;
-                    layer.set_time(wrapper.start_time - self.start);
+                    layer.set_time(wrapper.start_time - core.start);
                 }
 
                 // Reset the properties
@@ -320,7 +318,7 @@ impl KeyFrameCore {
 
                     // Apply the properties from each of the attachments in turn
                     for attachment_id in active_attachments.iter() {
-                        if let Some(attach_element) = self.elements.get(&attachment_id) {
+                        if let Some(attach_element) = core.elements.get(&attachment_id) {
                             properties = attach_element.element.update_properties(Arc::clone(&properties), when);
                             properties.render(gc, attach_element.element.clone(), when);
                         }
@@ -335,8 +333,8 @@ impl KeyFrameCore {
             next_element = wrapper.order_before;
         }
 
+        // Draw the remaining instructions to finish
         layer.draw(drawing);
-
         layer
     }
 
