@@ -6,6 +6,7 @@ use crate::traits::*;
 use crate::serializer::*;
 
 use flo_canvas_animation::*;
+use ::desync::*;
 
 use futures::prelude::*;
 
@@ -16,7 +17,6 @@ use std::collections::{HashSet, HashMap};
 ///
 /// The keyframe core represents the elements in a keyframe in a particular layer
 ///
-#[derive(Clone)]
 pub (super) struct KeyFrameCore {
     /// The ID of the layer that this keyframe is for
     pub (super) layer_id: u64,
@@ -40,7 +40,22 @@ pub (super) struct KeyFrameCore {
     pub (super) active_brush: Option<Arc<dyn Brush>>,
 
     /// The animation layer for this frame (or None if this hasn't been populated yet or has been invalidated)
-    pub (super) animation_layer: Arc<Mutex<Option<AnimationLayer>>>
+    pub (super) animation_layer: Mutex<Option<Arc<Desync<AnimationLayer>>>>
+}
+
+impl Clone for KeyFrameCore {
+    fn clone(&self) -> Self {
+        KeyFrameCore {
+            layer_id:           self.layer_id,
+            elements:           self.elements.clone(),
+            initial_element:    self.initial_element,
+            last_element:       self.last_element,
+            start:              self.start,
+            end:                self.end,
+            active_brush:       self.active_brush.clone(),
+            animation_layer:    Mutex::new(self.animation_layer.lock().unwrap().clone())
+        }
+    }
 }
 
 ///
@@ -208,7 +223,7 @@ impl KeyFrameCore {
                 start:              start_time,
                 end:                end_time,
                 active_brush:       None,
-                animation_layer:    Arc::new(Mutex::new(None))
+                animation_layer:    Mutex::new(None)
             })
         }
     }
@@ -216,6 +231,7 @@ impl KeyFrameCore {
     ///
     /// Invalidates any cached rendering for this frame
     ///
+    #[inline]
     pub fn invalidate(&self) {
         (*self.animation_layer.lock().unwrap()) = None;
     }
@@ -263,12 +279,9 @@ impl KeyFrameCore {
     }
 
     ///
-    /// Renders this keyframe to a new animation layer
+    /// Renders this keyframe to an animation layer
     ///
-    pub fn generate_animation_layer(core: &Arc<KeyFrameCore>) -> AnimationLayer {
-        // Create an empty animation layer
-        let mut layer               = AnimationLayer::new();
-
+    pub fn generate_animation_layer(core: &Arc<KeyFrameCore>, layer: &mut AnimationLayer) {
         // Set up the properties
         let mut properties;
         let mut active_attachments  = vec![];
@@ -335,7 +348,29 @@ impl KeyFrameCore {
 
         // Draw the remaining instructions to finish
         layer.draw(drawing);
-        layer
+    }
+
+    ///
+    /// Retrieves or caches the animation layer for this keyframe
+    ///
+    pub fn get_animation_layer(core: &Arc<KeyFrameCore>) -> Arc<Desync<AnimationLayer>> {
+        let mut maybe_layer = core.animation_layer.lock().unwrap();
+
+        if let Some(layer) = &*maybe_layer {
+            // Layer was already created
+            Arc::clone(layer)
+        } else {
+            // Create a new animation layer and start filling it with data
+            let new_layer   = Desync::new(AnimationLayer::new());
+            let core        = Arc::clone(core);
+            new_layer.desync(move |layer| Self::generate_animation_layer(&core, layer));
+
+            // Store the layer
+            let new_layer   = Arc::new(new_layer);
+            *maybe_layer    = Some(Arc::clone(&new_layer));
+
+            new_layer
+        }
     }
 
     ///
