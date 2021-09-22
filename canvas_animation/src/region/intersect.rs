@@ -29,6 +29,8 @@ pub fn intersect_regions(overlapping_regions: Vec<(RegionId, Vec<SimpleBezierPat
         })
         .collect::<Vec<_>>();
 
+    if regions.len() == 0 { return vec![]; }
+
     // Intersect a past region with a future region, adding new regions to the end
     let mut first_region = 0;
 
