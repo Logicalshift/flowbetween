@@ -1,6 +1,7 @@
 use super::keyframe_core::*;
 use crate::traits::*;
 
+use ::desync::*;
 use flo_canvas::*;
 use flo_canvas_animation::*;
 
@@ -139,8 +140,17 @@ impl Frame for StreamFrame {
     /// The return value is the time offset that the animation layer should be rendered at, which can also be used to
     /// render other frames attached to the keyframe
     ///
-    fn to_animation_layer(&self) -> (Duration, AnimationLayer) {
-        unimplemented!()
+    fn to_animation_layer(&self) -> (Duration, Arc<Desync<AnimationLayer>>) {
+        if let Some(core) = &self.keyframe_core {
+            // Request the layer from the core
+            let layer   = KeyFrameCore::get_animation_layer(core);
+            let time    = self.frame_time - core.start;
+
+            (time, layer)
+        } else {
+            // Create an empty layer if there's no core
+            (Duration::from_millis(0), Arc::new(Desync::new(AnimationLayer::new())))
+        }
     }
 
     ///

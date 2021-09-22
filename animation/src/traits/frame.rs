@@ -1,6 +1,7 @@
 use super::edit::*;
 use super::vector::*;
 
+use ::desync::*;
 use flo_canvas::*;
 use flo_canvas_animation::*;
 
@@ -27,7 +28,7 @@ pub trait Frame : Send+Sync {
     /// The return value is the time offset that the animation layer should be rendered at, which can also be used to
     /// render other frames attached to the keyframe
     ///
-    fn to_animation_layer(&self) -> (Duration, AnimationLayer);
+    fn to_animation_layer(&self) -> (Duration, Arc<Desync<AnimationLayer>>);
 
     ///
     /// Applies all of the properties for the specified element (including those added by attached elements)
@@ -69,7 +70,7 @@ impl Frame for Arc<dyn Frame> {
     /// The return value is the time offset that the animation layer should be rendered at, which can also be used to
     /// render other frames attached to the keyframe
     ///
-    #[inline] fn to_animation_layer(&self) -> (Duration, AnimationLayer) { (**self).to_animation_layer() }
+    #[inline] fn to_animation_layer(&self) -> (Duration, Arc<Desync<AnimationLayer>>) { (**self).to_animation_layer() }
 
     ///
     /// Applies all of the properties for the specified element (including those added by attached elements)
