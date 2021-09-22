@@ -6,11 +6,9 @@ use crate::region::*;
 use ::desync::*;
 use flo_canvas::*;
 
-use itertools::*;
 use futures::prelude::*;
 
 use std::mem;
-use std::cmp::*;
 use std::sync::*;
 use std::time::{Duration};
 
@@ -200,47 +198,14 @@ impl AnimationLayer {
         async move {
             self.cache.future_sync(move |cache| {
                 async move {
-                    // Fetch the regions from the cache
-                    let region_paths    = cache.paths_for_region.as_ref()?;
-
-                    // Order the regions so that the empty region is first, followed by the other regions in order
-                    let ordered_regions = region_paths.keys()
-                        .sorted_by(|region_a, region_b| {
-                            if region_a.len() < region_b.len() {
-                                Ordering::Less
-                            } else if region_a.len() > region_b.len() {
-                                Ordering::Greater
-                            } else {
-                                region_a.cmp(region_b)
-                            }
-                        });
-
-                    // Process and draw the regions in order
-                    // TODO: generate the cached versions of the region animation
                     let mut rendering = vec![];
+                    cache.render_at_time(time, &*regions, &mut rendering);
 
-                    for region_ids in ordered_regions {
-                        // Get the paths for this region
-                        let paths       = region_paths.get(region_ids).unwrap();
-                        let mut content = Arc::clone(paths);
-
-                        for region_id in region_ids.iter() {
-                            // Apply the animation in this region
-                            let region      = &regions[region_id.0];
-                            let new_paths   = region.animate(content, time);
-                            content         = new_paths;
-                        }
-
-                        // Add the content for this region to the rendering
-                        rendering.extend(content.to_drawing(time));
-                    }
-
-                    Some(rendering)
+                    rendering
                 }.boxed()
             })
             .await
             .unwrap()
-            .unwrap_or_else(|| vec![])
         }
     }
 }

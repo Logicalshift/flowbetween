@@ -5,6 +5,9 @@ use crate::region::*;
 
 use flo_curves::*;
 use flo_curves::bezier::path::*;
+use flo_canvas::*;
+
+use itertools::*;
 
 use std::cmp::{Ordering};
 use std::sync::*;
@@ -253,5 +256,43 @@ impl AnimationLayerCache {
             .map(|(region_id, paths)| (region_id, Arc::new(AnimationRegionContent::from_paths(paths))))
             .collect();
         self.paths_for_region   = Some(cut_paths);
+    }
+
+    ///
+    /// Uses the contents of this cache and a list of regions to render the layer at a particular time
+    ///
+    pub fn render_at_time<Context: GraphicsContext>(&mut self, time: Duration, regions: &Vec<Arc<dyn AnimationRegion>>, ctxt: &mut Context) {
+        // Fetch the regions from the cache
+        let region_paths    = if let Some(paths) = self.paths_for_region.as_ref() { paths } else { return; };
+
+        // Order the regions so that the empty region is first, followed by the other regions in order
+        let ordered_regions = region_paths.keys()
+            .sorted_by(|region_a, region_b| {
+                if region_a.len() < region_b.len() {
+                    Ordering::Less
+                } else if region_a.len() > region_b.len() {
+                    Ordering::Greater
+                } else {
+                    region_a.cmp(region_b)
+                }
+            });
+
+        // Process and draw the regions in order
+        // TODO: generate the cached versions of the region animation
+        for region_ids in ordered_regions {
+            // Get the paths for this region
+            let paths       = region_paths.get(region_ids).unwrap();
+            let mut content = Arc::clone(paths);
+
+            for region_id in region_ids.iter() {
+                // Apply the animation in this region
+                let region      = &regions[region_id.0];
+                let new_paths   = region.animate(content, time);
+                content         = new_paths;
+            }
+
+            // Add the content for this region to the rendering
+            for drawing in content.to_drawing(time) { ctxt.draw(drawing); }
+        }
     }
 }
