@@ -208,6 +208,22 @@ impl AnimationLayer {
             .unwrap()
         }
     }
+
+    ///
+    /// Renders this layer synchronously to a graphics context
+    ///
+    pub fn render_sync<Context: Send+GraphicsContext>(&mut self, time: Duration, gc: &mut Context) {
+        // Ensure that all of the cached values are available
+        self.fill_cache();
+
+        // Fetch the regions and the paths, ready for rendering
+        let regions = self.get_cached_regions();
+
+        // Process the regions to generate the final rendering
+        self.cache.sync(move |cache| {
+            cache.render_at_time(time, &*regions, gc);
+        });
+    }
 }
 
 impl Clone for AnimationLayer {
