@@ -20,7 +20,7 @@ pub trait Frame : Send+Sync {
     ///
     /// Renders this frame to a particular graphics context
     ///
-    fn render_to(&self, gc: &mut dyn GraphicsContext);
+    fn render_to(&self, gc: &mut (dyn GraphicsContext+Send));
 
     ///
     /// Generates an animation layer for the keyframe corresponding to this frame, which can be used to render it at any time
@@ -62,7 +62,7 @@ impl Frame for Arc<dyn Frame> {
     ///
     /// Renders this frame to a particular graphics context
     ///
-    #[inline] fn render_to(&self, gc: &mut dyn GraphicsContext) { (**self).render_to(gc) }
+    #[inline] fn render_to(&self, gc: &mut (dyn GraphicsContext+Send)) { (**self).render_to(gc) }
 
     ///
     /// Generates an animation layer for the keyframe corresponding to this frame, which can be used to render it at any time

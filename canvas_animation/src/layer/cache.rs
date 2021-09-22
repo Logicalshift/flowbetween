@@ -261,7 +261,7 @@ impl AnimationLayerCache {
     ///
     /// Uses the contents of this cache and a list of regions to render the layer at a particular time
     ///
-    pub fn render_at_time<Context: GraphicsContext>(&mut self, time: Duration, regions: &Vec<Arc<dyn AnimationRegion>>, ctxt: &mut Context) {
+    pub fn render_at_time<Context: GraphicsContext+?Sized>(&mut self, time: Duration, regions: &Vec<Arc<dyn AnimationRegion>>, ctxt: &mut Context) {
         // Fetch the regions from the cache
         let region_paths    = if let Some(paths) = self.paths_for_region.as_ref() { paths } else { return; };
 

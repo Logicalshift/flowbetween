@@ -212,7 +212,7 @@ impl AnimationLayer {
     ///
     /// Renders this layer synchronously to a graphics context
     ///
-    pub fn render_sync<Context: Send+GraphicsContext>(&mut self, time: Duration, gc: &mut Context) {
+    pub fn render_sync<Context: Send+GraphicsContext+?Sized>(&mut self, time: Duration, gc: &mut Context) {
         // Ensure that all of the cached values are available
         self.fill_cache();
 
