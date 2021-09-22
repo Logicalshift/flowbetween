@@ -2,6 +2,7 @@ use super::keyframe_core::*;
 use crate::traits::*;
 
 use flo_canvas::*;
+use flo_canvas_animation::*;
 
 use std::sync::*;
 use std::time::{Duration};
@@ -14,7 +15,7 @@ pub struct StreamFrame {
     frame_time: Duration,
 
     /// The keyframe that was retrieved for this frame (or none if no keyframe was retrieved)
-    keyframe_core: Option<Arc<KeyFrameCore>>
+    keyframe_core: Option<Arc<KeyFrameCore>>,
 }
 
 impl StreamFrame {
@@ -23,8 +24,8 @@ impl StreamFrame {
     ///
     pub (super) fn new(frame_time: Duration, keyframe_core: Option<KeyFrameCore>) -> StreamFrame {
         StreamFrame {
-            frame_time:     frame_time,
-            keyframe_core:  keyframe_core.map(|core| Arc::new(core))
+            frame_time:         frame_time,
+            keyframe_core:      keyframe_core.map(|core| Arc::new(core))
         }
     }
 
@@ -130,6 +131,16 @@ impl Frame for StreamFrame {
                 next_element = wrapper.order_before;
             }
         }
+    }
+
+    ///
+    /// Generates an animation layer for the keyframe corresponding to this frame, which can be used to render it at any time
+    ///
+    /// The return value is the time offset that the animation layer should be rendered at, which can also be used to
+    /// render other frames attached to the keyframe
+    ///
+    fn to_animation_layer(&self) -> (Duration, AnimationLayer) {
+        unimplemented!()
     }
 
     ///

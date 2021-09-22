@@ -5,6 +5,8 @@ use crate::storage::storage_api::*;
 use crate::traits::*;
 use crate::serializer::*;
 
+use flo_canvas_animation::*;
+
 use futures::prelude::*;
 
 use std::sync::*;
@@ -35,7 +37,10 @@ pub (super) struct KeyFrameCore {
     pub (super) end: Duration,
 
     /// The brush that's active on the last_element, or none if this has not been calculated yet
-    pub (super) active_brush: Option<Arc<dyn Brush>>
+    pub (super) active_brush: Option<Arc<dyn Brush>>,
+
+    /// The animation layer for this frame (or None if this hasn't been populated yet or has been invalidated)
+    pub (super) animation_layer: Arc<Mutex<Option<AnimationLayer>>>
 }
 
 ///
@@ -69,6 +74,13 @@ where Resolver: ResolveElements<ElementWrapper> {
 }
 
 impl KeyFrameCore {
+    ///
+    /// Invalidates any cached rendering for this frame
+    ///
+    pub fn invalidate(&mut self) {
+        (*self.animation_layer.lock().unwrap()) = None;
+    }
+
     ///
     /// Generates a keyframe by querying the animation core
     ///
@@ -202,7 +214,8 @@ impl KeyFrameCore {
                 last_element:       last_element,
                 start:              start_time,
                 end:                end_time,
-                active_brush:       None
+                active_brush:       None,
+                animation_layer:    Arc::new(Mutex::new(None))
             })
         }
     }
@@ -285,6 +298,7 @@ impl KeyFrameCore {
 
         // Add to the list of elements in the current frame
         self.elements.insert(ElementId::Assigned(new_id), new_element.clone());
+        self.invalidate();
 
         // Create the updates
         let mut updates     = PendingStorageChange::new();
@@ -570,6 +584,7 @@ impl KeyFrameCore {
             }
         }
 
+        self.invalidate();
         updates
     }
 
@@ -638,6 +653,7 @@ impl KeyFrameCore {
             }
         }
 
+        self.invalidate();
         updates
     }
 
@@ -666,6 +682,7 @@ impl KeyFrameCore {
             }
         }
 
+        self.invalidate();
         updates
     }
 
@@ -707,6 +724,7 @@ impl KeyFrameCore {
         }
 
         // The result is the list of updates
+        self.invalidate();
         updates
     }
 
@@ -773,6 +791,7 @@ impl KeyFrameCore {
                 self.last_element = Some(ElementId::Assigned(element_id));
             }
 
+            self.invalidate();
             updates
         }
     }
@@ -829,6 +848,7 @@ impl KeyFrameCore {
             _ => { }
         }
 
+        self.invalidate();
         updates
     }
 
@@ -894,6 +914,7 @@ impl KeyFrameCore {
         }
 
         // Result is the updates to send to the storage layer
+        self.invalidate();
         updates
     }
 
@@ -936,6 +957,7 @@ impl KeyFrameCore {
             }
         }
 
+        self.invalidate();
         updates
     }
 }

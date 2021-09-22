@@ -189,6 +189,8 @@ impl StreamAnimationCore {
             // Add the replacement elements after the elements they replace
             let mut pending = frame.future_sync(move |frame| {
                 async move {
+                    frame.invalidate();
+
                     // Iterate through the 'outside' elements in reverse order so they end up in the correct order relative to one another
                     for (replaced_element_id, outside_element_id, outside_element_wrapper) in outside_path_with_ids.into_iter().rev() {
                         // Parent is same as the replaced element's parent
@@ -279,6 +281,7 @@ impl StreamAnimationCore {
 
                         updates.extend(frame.update_attachments(element_id));
                     }
+                    frame.invalidate();
 
                     updates
                 }.boxed()

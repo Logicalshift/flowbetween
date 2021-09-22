@@ -2,6 +2,7 @@ use super::edit::*;
 use super::vector::*;
 
 use flo_canvas::*;
+use flo_canvas_animation::*;
 
 use std::sync::*;
 use std::time::Duration;
@@ -19,6 +20,14 @@ pub trait Frame : Send+Sync {
     /// Renders this frame to a particular graphics context
     ///
     fn render_to(&self, gc: &mut dyn GraphicsContext);
+
+    ///
+    /// Generates an animation layer for the keyframe corresponding to this frame, which can be used to render it at any time
+    ///
+    /// The return value is the time offset that the animation layer should be rendered at, which can also be used to
+    /// render other frames attached to the keyframe
+    ///
+    fn to_animation_layer(&self) -> (Duration, AnimationLayer);
 
     ///
     /// Applies all of the properties for the specified element (including those added by attached elements)
@@ -53,6 +62,14 @@ impl Frame for Arc<dyn Frame> {
     /// Renders this frame to a particular graphics context
     ///
     #[inline] fn render_to(&self, gc: &mut dyn GraphicsContext) { (**self).render_to(gc) }
+
+    ///
+    /// Generates an animation layer for the keyframe corresponding to this frame, which can be used to render it at any time
+    ///
+    /// The return value is the time offset that the animation layer should be rendered at, which can also be used to
+    /// render other frames attached to the keyframe
+    ///
+    #[inline] fn to_animation_layer(&self) -> (Duration, AnimationLayer) { (**self).to_animation_layer() }
 
     ///
     /// Applies all of the properties for the specified element (including those added by attached elements)

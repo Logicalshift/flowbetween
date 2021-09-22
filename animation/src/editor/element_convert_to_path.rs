@@ -64,6 +64,7 @@ impl StreamAnimationCore {
                     let updates     = vec![StorageCommand::WriteElement(assigned_element_id, wrapper.serialize_to_string())];
 
                     // Replace the wrapper in the frame
+                    frame.invalidate();
                     frame.elements.insert(convert_element_id, wrapper);
 
                     updates

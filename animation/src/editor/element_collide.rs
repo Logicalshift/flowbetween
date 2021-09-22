@@ -129,6 +129,7 @@ impl StreamAnimationCore {
                                     replacement_element.element = combined_element;
 
                                     // Update it in the storage
+                                    frame.invalidate();
                                     updates.push_element(assigned_element_id, replacement_element.clone());
                                     frame.elements.insert(source_element_id, replacement_element);
 

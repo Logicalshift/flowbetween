@@ -316,6 +316,7 @@ impl StreamAnimationCore {
                                 // Add the new attachment to the frame
                                 frame.elements.insert(new_attachment_id, transform_wrapper);
                             }
+                            frame.invalidate();
 
                             Some(())
                         });
@@ -332,6 +333,7 @@ impl StreamAnimationCore {
 
                             // Add to the frame
                             frame.elements.insert(attachment_id, attachment_wrapper);
+                            frame.invalidate();
                         });
                     }
                 }

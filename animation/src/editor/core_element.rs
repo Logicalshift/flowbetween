@@ -109,6 +109,7 @@ impl StreamAnimationCore {
                                     // Generate the updates for this element
                                     let updates     = vec![StorageCommand::WriteElement(element_id, wrapper.serialize_to_string())]; 
                                     frame.elements.insert(ElementId::Assigned(element_id), wrapper);
+                                    frame.invalidate();
 
                                     Some(updates)
                                 }.boxed()
@@ -271,6 +272,7 @@ impl StreamAnimationCore {
                                 let id = attachment.element.id();
                                 keyframe.elements.insert(id, attachment.clone());
                             }
+                            keyframe.invalidate();
 
                             // Attach the elements to the layer
                             updates.extend(missing_attachment_ids.iter().map(|attachment_id| StorageCommand::AttachElementToLayer(keyframe.layer_id, *attachment_id, keyframe.start)));
@@ -314,6 +316,8 @@ impl StreamAnimationCore {
                                 // Generate the update of the serialized element
                                 updates.push_element(element_id, element_wrapper.clone());
                             });
+
+                        keyframe.invalidate();
                     }));
                 }
 
@@ -490,6 +494,7 @@ impl StreamAnimationCore {
                     updates.push(StorageCommand::AttachElementToLayer(frame.layer_id, group_id, start_time));
 
                     // Add the group to the frame
+                    frame.invalidate();
                     frame.elements.insert(ElementId::Assigned(group_id), group);
 
                     // Insert the group into the frame in place of the original element
