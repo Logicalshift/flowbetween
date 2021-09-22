@@ -75,13 +75,6 @@ where Resolver: ResolveElements<ElementWrapper> {
 
 impl KeyFrameCore {
     ///
-    /// Invalidates any cached rendering for this frame
-    ///
-    pub fn invalidate(&mut self) {
-        (*self.animation_layer.lock().unwrap()) = None;
-    }
-
-    ///
     /// Generates a keyframe by querying the animation core
     ///
     pub fn from_keyframe<'a>(core: &'a mut StreamAnimationCore, layer_id: u64, frame: Duration) -> impl 'a+Future<Output=Option<KeyFrameCore>> {
@@ -218,6 +211,133 @@ impl KeyFrameCore {
                 animation_layer:    Arc::new(Mutex::new(None))
             })
         }
+    }
+
+    ///
+    /// Invalidates any cached rendering for this frame
+    ///
+    pub fn invalidate(&self) {
+        (*self.animation_layer.lock().unwrap()) = None;
+    }
+
+    ///
+    /// Loads the attachments for an element from a core
+    ///
+    pub fn retrieve_attachments(&self, id: ElementId) -> Vec<(ElementId, VectorType)> {
+        // Start at the initial element
+        if let Some(wrapper) = self.elements.get(&id) {
+            // Fetch the types of the attachments to the element
+            wrapper.attachments
+                .iter()
+                .map(|attachment_id| {
+                    self.elements.get(attachment_id)
+                        .map(|attachment_wrapper| {
+                            (*attachment_id, VectorType::from(&attachment_wrapper.element))
+                        })
+                })
+                .flatten()
+                .collect()
+        } else {
+            // Element not found
+            vec![]
+        }
+    }
+
+    ///
+    /// Creates the default properties for this frame
+    ///
+    pub fn default_properties(&self) -> Arc<VectorProperties> {
+        let mut properties  = VectorProperties::default();
+
+        /*
+        // Retrieve attachments from this frame
+        properties.retrieve_attachments = Arc::new(move |element_id| {
+            self.retrieve_attachments(element_id).into_iter()
+                .flat_map(|(element_id, _type)| {
+                    self.elements.get(&element_id)
+                        .map(|wrapper| wrapper.element.clone())
+                })
+                .collect()
+        });
+        */
+
+        Arc::new(properties)
+    }
+
+    ///
+    /// Renders this keyframe to a new animation layer
+    ///
+    pub fn generate_animation_layer(&self) -> AnimationLayer {
+        // Create an empty animation layer
+        let mut layer               = AnimationLayer::new();
+
+        // Set up the properties
+        let mut properties;
+        let mut active_attachments  = vec![];
+        let mut drawing             = vec![];
+        let mut gc                  = &mut drawing;
+
+        // Everything is rendered at t=0 for the purposes of the animation layer
+        // TODO: we used to be able to animate by adjusting the 'when' value for different attachments: now we rely entirely on
+        // animation layer regions. It might be useful to bring this feature back in the future, but the AnimationLayer structure
+        // does not currently support it without recalculating everything every frame.
+        let when                    = Duration::from_millis(0);
+
+        // Render the elements
+        let default_properties  = self.default_properties();
+        let mut next_element    = self.initial_element;
+        let mut current_time    = self.start;
+
+        while let Some(current_element) = next_element {
+            // Fetch the element definition
+            let wrapper = self.elements.get(&current_element);
+            let wrapper = match wrapper {
+                Some(wrapper)   => wrapper,
+                None            => { break; }
+            };
+
+            // Render the element if it is displayed on this frame
+            if wrapper.start_time >= self.start {
+                // Update the drawing time in the layer
+                if current_time != wrapper.start_time {
+                    // Flush the drawing
+                    layer.draw(drawing);
+                    drawing = vec![];
+                    gc      = &mut drawing;
+
+                    // Update the time in the layer
+                    current_time = wrapper.start_time;
+                    layer.set_time(wrapper.start_time - self.start);
+                }
+
+                // Reset the properties
+                properties = Arc::clone(&default_properties);
+
+                // Check the attachments
+                if active_attachments != wrapper.attachments {
+                    // Update the properties based on the new attachments
+                    active_attachments = wrapper.attachments.clone();
+
+                    // Apply the properties from each of the attachments in turn
+                    for attachment_id in active_attachments.iter() {
+                        if let Some(attach_element) = self.elements.get(&attachment_id) {
+                            properties = attach_element.element.update_properties(Arc::clone(&properties), when);
+                            properties.render(gc, attach_element.element.clone(), when);
+                        }
+                    }
+                }
+
+                // Render the element
+                properties.render(gc, wrapper.element.clone(), when);
+            }
+
+            // Move on to the next element in the list
+            next_element = wrapper.order_before;
+        }
+
+        layer.draw(drawing);
+
+        layer
     }
 
     ///
