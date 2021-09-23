@@ -62,7 +62,7 @@ impl LayerDrawingToPaths {
                         };
 
                         // Turn the fill state into attributes
-                        let attributes = (&self.state.fill).into();
+                        let attributes = (&self.state.fill).into_attributes(self.state.blend_mode);
 
                         return Some(AnimationPath::from_path_ops(path.iter(), self.state.current_time, attributes));
                     },
@@ -77,7 +77,7 @@ impl LayerDrawingToPaths {
                         };
 
                         // Turn the stroke state into attributes
-                        let attributes = (&self.state.stroke).into();
+                        let attributes = (&self.state.stroke).into_attributes(self.state.blend_mode);
 
                         return Some(AnimationPath::from_path_ops(path.iter(), self.state.current_time, attributes));
                     },
@@ -114,8 +114,7 @@ impl LayerDrawingToPaths {
                     ClearLayer                                      => { },
                     ClearAllLayers                                  => { },
 
-                    // flo_draw needs to be updated to support this
-                    BlendMode(_blend_mode)                          => { /* debug_assert!(false, "Blend modes not yet supported in an animation layer"); */ },
+                    BlendMode(blend_mode)                           => { self.state.blend_mode = blend_mode; },
 
                     // Clipping paths need to be preserved across multiple paths in the layer for performance so they require some more thought
                     Unclip                                          |

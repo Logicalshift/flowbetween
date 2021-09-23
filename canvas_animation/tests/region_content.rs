@@ -10,7 +10,7 @@ use std::time::{Duration};
 fn create_path(id_num: usize) -> AnimationPath {
     AnimationPath {
         appearance_time:    Duration::from_millis(0),
-        attributes:         AnimationPathAttribute::Fill(Color::Rgba(0.0, 0.0, 0.0, 1.0), WindingRule::EvenOdd),
+        attributes:         AnimationPathAttribute::Fill(BlendMode::SourceOver, Color::Rgba(0.0, 0.0, 0.0, 1.0), WindingRule::EvenOdd),
         path:               Arc::new(vec![(Coord2(id_num as _, id_num as _), vec![])])
     }
 }

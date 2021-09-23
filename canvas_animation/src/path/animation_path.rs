@@ -131,22 +131,22 @@ impl AnimationPath {
 
         // Move the texture or other attributes 
         let attributes = match self.attributes.clone() {
-            AnimationPathAttribute::FillTexture(texture_id, (x1, y1), (x2, y2), None, winding_rule) => {
-                AnimationPathAttribute::FillTexture(texture_id, (x1 + dx, y1 + dy), (x2 + dx, y2 + dy), None, winding_rule)
+            AnimationPathAttribute::FillTexture(blend_mode, texture_id, (x1, y1), (x2, y2), None, winding_rule) => {
+                AnimationPathAttribute::FillTexture(blend_mode, texture_id, (x1 + dx, y1 + dy), (x2 + dx, y2 + dy), None, winding_rule)
             },
 
-            AnimationPathAttribute::FillTexture(texture_id, (x1, y1), (x2, y2), Some(transform), winding_rule) => {
+            AnimationPathAttribute::FillTexture(blend_mode, texture_id, (x1, y1), (x2, y2), Some(transform), winding_rule) => {
                 let transform = Transform2D::translate(dx, dy) * transform;
-                AnimationPathAttribute::FillTexture(texture_id, (x1, y1), (x2, y2), Some(transform), winding_rule)
+                AnimationPathAttribute::FillTexture(blend_mode, texture_id, (x1, y1), (x2, y2), Some(transform), winding_rule)
             },
 
-            AnimationPathAttribute::FillGradient(gradient_id, (x1, y1), (x2, y2), None, winding_rule) => {
-                AnimationPathAttribute::FillGradient(gradient_id, (x1 + dx, y1 + dy), (x2 + dx, y2 + dy), None, winding_rule)
+            AnimationPathAttribute::FillGradient(blend_mode, gradient_id, (x1, y1), (x2, y2), None, winding_rule) => {
+                AnimationPathAttribute::FillGradient(blend_mode, gradient_id, (x1 + dx, y1 + dy), (x2 + dx, y2 + dy), None, winding_rule)
             },
 
-            AnimationPathAttribute::FillGradient(gradient_id, (x1, y1), (x2, y2), Some(transform), winding_rule) => {
+            AnimationPathAttribute::FillGradient(blend_mode, gradient_id, (x1, y1), (x2, y2), Some(transform), winding_rule) => {
                 let transform = Transform2D::translate(dx, dy) * transform;
-                AnimationPathAttribute::FillGradient(gradient_id, (x1 + dx, y1 + dy), (x2 + dx, y2 + dy), Some(transform), winding_rule)
+                AnimationPathAttribute::FillGradient(blend_mode, gradient_id, (x1 + dx, y1 + dy), (x2 + dx, y2 + dy), Some(transform), winding_rule)
             },
 
             other => other

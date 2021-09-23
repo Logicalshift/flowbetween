@@ -25,6 +25,9 @@ pub struct LayerState {
     /// The current fill state
     pub fill:           FillState,
 
+    /// The selected blend mode
+    pub blend_mode:     BlendMode,
+
     /// If a transform multiplication has been applied, this is the transformation
     pub transform:      Option<Transform2D>
 }
@@ -101,26 +104,27 @@ impl Default for LayerState {
             cached_path:    None,
             stroke:         StrokeState::default(),
             fill:           FillState::default(),
+            blend_mode:     BlendMode::SourceOver,
             transform:      None
         }
     }
 }
 
-impl Into<AnimationPathAttribute> for &FillState {
-    fn into(self) -> AnimationPathAttribute {
+impl FillState {
+    pub fn into_attributes(&self, blend_mode: BlendMode) -> AnimationPathAttribute {
         match self.color {
-            FillStyle::Solid(color)                                 => AnimationPathAttribute::Fill(color, self.winding_rule),
-            FillStyle::Texture(texture_id, (x1, y1), (x2, y2))      => AnimationPathAttribute::FillTexture(texture_id, (x1, y1), (x2, y2), self.transform, self.winding_rule),
-            FillStyle::Gradient(gradient_id, (x1, y1), (x2, y2))    => AnimationPathAttribute::FillGradient(gradient_id, (x1, y1), (x2, y2), self.transform, self.winding_rule),
+            FillStyle::Solid(color)                                 => AnimationPathAttribute::Fill(blend_mode, color, self.winding_rule),
+            FillStyle::Texture(texture_id, (x1, y1), (x2, y2))      => AnimationPathAttribute::FillTexture(blend_mode, texture_id, (x1, y1), (x2, y2), self.transform, self.winding_rule),
+            FillStyle::Gradient(gradient_id, (x1, y1), (x2, y2))    => AnimationPathAttribute::FillGradient(blend_mode, gradient_id, (x1, y1), (x2, y2), self.transform, self.winding_rule),
         }
     }
 }
 
-impl Into<AnimationPathAttribute> for &StrokeState {
-    fn into(self) -> AnimationPathAttribute {
+impl StrokeState {
+    pub fn into_attributes(&self, blend_mode: BlendMode) -> AnimationPathAttribute {
         match self.width {
-            StrokeWidth::CanvasCoords(width)    => AnimationPathAttribute::Stroke(width, self.color, self.line_join, self.line_cap),
-            StrokeWidth::PixelCoords(width)     => AnimationPathAttribute::StrokePixels(width, self.color, self.line_join, self.line_cap)
+            StrokeWidth::CanvasCoords(width)    => AnimationPathAttribute::Stroke(blend_mode, width, self.color, self.line_join, self.line_cap),
+            StrokeWidth::PixelCoords(width)     => AnimationPathAttribute::StrokePixels(blend_mode, width, self.color, self.line_join, self.line_cap)
         }
     }
 }

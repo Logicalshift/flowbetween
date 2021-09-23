@@ -111,6 +111,7 @@ impl AnimationRegionContent {
         let mut stroke_cap          = None;
         let mut fill_windingrule    = None;
         let mut fill_style          = None;
+        let mut any_blend_mode      = None;
 
         // Drawing initially pushes the canvas state
         let mut drawing = vec![Draw::PushState];
@@ -128,7 +129,12 @@ impl AnimationRegionContent {
             use self::AnimationPathAttribute::*;
 
             match path.attributes {
-                Stroke(width, colour, join, cap) => {
+                Stroke(blend_mode, width, colour, join, cap) => {
+                    if any_blend_mode != Some(blend_mode) {
+                        any_blend_mode = Some(blend_mode);
+                        drawing.push(Draw::BlendMode(blend_mode));
+                    }
+
                     if stroke_colour != Some(colour) {
                         stroke_colour = Some(colour);
                         drawing.push(Draw::StrokeColor(colour));
@@ -148,7 +154,12 @@ impl AnimationRegionContent {
                     drawing.push(Draw::Stroke);
                 }
 
-                StrokePixels(width_pixels, colour, join, cap) => {
+                StrokePixels(blend_mode, width_pixels, colour, join, cap) => {
+                    if any_blend_mode != Some(blend_mode) {
+                        any_blend_mode = Some(blend_mode);
+                        drawing.push(Draw::BlendMode(blend_mode));
+                    }
+
                     if stroke_colour != Some(colour) {
                         stroke_colour = Some(colour);
                         drawing.push(Draw::StrokeColor(colour));
@@ -168,7 +179,12 @@ impl AnimationRegionContent {
                     drawing.push(Draw::Stroke);
                 }
 
-                Fill(colour, windingrule) => { 
+                Fill(blend_mode, colour, windingrule) => { 
+                    if any_blend_mode != Some(blend_mode) {
+                        any_blend_mode = Some(blend_mode);
+                        drawing.push(Draw::BlendMode(blend_mode));
+                    }
+
                     let new_style = FillStyle::Solid(colour);
 
                     if fill_windingrule != Some(windingrule) {
@@ -184,7 +200,12 @@ impl AnimationRegionContent {
                     drawing.push(Draw::Fill);
                 }
 
-                FillTexture(texture_id, (x1, y1), (x2, y2), fill_transform, windingrule) => {
+                FillTexture(blend_mode, texture_id, (x1, y1), (x2, y2), fill_transform, windingrule) => {
+                    if any_blend_mode != Some(blend_mode) {
+                        any_blend_mode = Some(blend_mode);
+                        drawing.push(Draw::BlendMode(blend_mode));
+                    }
+
                     let new_style = FillStyle::Texture(texture_id, (x1, y1), (x2, y2));
 
                     if fill_windingrule != Some(windingrule) {
@@ -203,7 +224,12 @@ impl AnimationRegionContent {
                     drawing.push(Draw::Fill);
                 }
 
-                FillGradient(gradient_id, (x1, y1), (x2, y2), fill_transform, windingrule) => {
+                FillGradient(blend_mode, gradient_id, (x1, y1), (x2, y2), fill_transform, windingrule) => {
+                    if any_blend_mode != Some(blend_mode) {
+                        any_blend_mode = Some(blend_mode);
+                        drawing.push(Draw::BlendMode(blend_mode));
+                    }
+
                     let new_style = FillStyle::Gradient(gradient_id, (x1, y1), (x2, y2));
 
                     if fill_windingrule != Some(windingrule) {

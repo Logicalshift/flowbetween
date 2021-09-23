@@ -19,7 +19,7 @@ pub fn simple_circle_path() {
 
     assert!(paths.len()                 == 1);
     assert!(paths[0].appearance_time    == Duration::from_millis(0));
-    assert!(paths[0].attributes         == AnimationPathAttribute::Fill(Color::Rgba(0.3, 0.4, 0.5, 0.6), WindingRule::EvenOdd));
+    assert!(paths[0].attributes         == AnimationPathAttribute::Fill(BlendMode::SourceOver, Color::Rgba(0.3, 0.4, 0.5, 0.6), WindingRule::EvenOdd));
 
     // 6 ops: 1 move, 4 bezier curves, 1 close
     assert!(paths[0].path.len()         == 1);
