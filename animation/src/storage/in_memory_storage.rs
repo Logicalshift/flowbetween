@@ -419,6 +419,11 @@ impl InMemoryStorageCore {
                             let element_ids     = layer.keyframes[keyframe_index].attached_elements.iter().map(|(element_id, _when)| element_id);
                             let element_defns   = element_ids.map(|id| self.elements.get(&id).map(move |defn| (id, defn.clone()))).flatten();
 
+                            let start_time      = layer.keyframes[keyframe_index].when;
+                            let end_time        = if keyframe_index+1 < layer.keyframes.len() { layer.keyframes[keyframe_index+1].when } else { Duration::from_secs(u32::MAX as _) };
+
+                            response.push(StorageResponse::KeyFrame(start_time, end_time));
+
                             response.extend(element_defns
                                 .map(|(element_id, defn)| StorageResponse::Element(*element_id, defn.clone())));
                         } else {

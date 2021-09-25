@@ -5,6 +5,7 @@ use rusqlite::{NO_PARAMS};
 
 use std::i64;
 use std::ops::{Range};
+use std::iter;
 use std::time::{Duration};
 
 const BASE_DATA_DEFN: &[u8]          = include_bytes!["../sql/flo_storage.sql"];
@@ -489,6 +490,11 @@ impl SqliteCore {
             Some(when)  => when,
             None        => { return Ok(vec![]); }
         };
+        let when_next   = self.read_next_key_frame(layer_id, when)?;
+
+        // Generate a 'KeyFrame' element to start off to indicate which keyframe these elements are for
+        let start_time  = Self::int_to_time(when);
+        let end_time    = if let Some(end) = when_next { Self::int_to_time(end) } else { Duration::from_secs(u32::MAX as _) };
 
         // Try to read the elements for this keyframe
         let mut read    = self.connection.prepare_cached("
@@ -498,6 +504,7 @@ impl SqliteCore {
 
         let elements    = read.query_map(&[layer_id as i64, when], |row| Ok((row.get(0)?, row.get(1)?)))?;
         let elements    = elements.map(|element| element.map(|(element_id, element)| StorageResponse::Element(element_id, element)));
+        let elements    = iter::once(Ok(StorageResponse::KeyFrame(start_time, end_time))).chain(elements);
 
         elements.collect()
     }
