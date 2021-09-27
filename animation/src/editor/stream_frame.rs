@@ -23,10 +23,10 @@ impl StreamFrame {
     ///
     /// Creates a new stream frame
     ///
-    pub (super) fn new(frame_time: Duration, keyframe_core: Option<KeyFrameCore>) -> StreamFrame {
+    pub (super) fn new(frame_time: Duration, keyframe_core: Option<Arc<KeyFrameCore>>) -> StreamFrame {
         StreamFrame {
             frame_time:         frame_time,
-            keyframe_core:      keyframe_core.map(|core| Arc::new(core))
+            keyframe_core:      keyframe_core
         }
     }
 

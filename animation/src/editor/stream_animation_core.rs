@@ -216,9 +216,10 @@ impl StreamAnimationCore {
     ///
     /// Loads the keyframe containing the specified moment
     ///
-    pub fn load_keyframe<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a + Future<Output=Option<KeyFrameCore>> {
+    pub fn load_keyframe<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a + Future<Output=Option<Arc<KeyFrameCore>>> {
         async move {
             KeyFrameCore::from_keyframe(self, layer_id, when).await
+                .map(|frame| Arc::new(frame))
         }
     }
 
@@ -238,7 +239,7 @@ impl StreamAnimationCore {
 
             // Update the cached keyframe if it doesn't
             self.cached_keyframe = self.load_keyframe(layer_id, when).await
-                .map(|keyframe| Arc::new(Desync::new(keyframe)));
+                .map(|keyframe| Arc::new(Desync::new((*keyframe).clone())));
             
             // This is the result of the operation
             self.cached_keyframe.clone()
