@@ -18,6 +18,7 @@ use futures::stream::{BoxStream};
 use std::sync::*;
 use std::ops::{Range};
 use std::time::{Duration};
+use std::collections::{HashMap};
 
 ///
 /// Animation that sends its updates to a storage stream
@@ -50,6 +51,7 @@ impl StreamAnimation {
             storage_responses:  storage_responses,
             storage_requests:   requests,
             next_element_id:    None,
+            cached_layers:      HashMap::new(),
             cached_keyframe:    None,
             brush_defn:         None,
             brush_props:        None,

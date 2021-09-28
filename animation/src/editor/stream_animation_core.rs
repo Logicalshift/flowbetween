@@ -12,6 +12,7 @@ use futures::stream::{BoxStream};
 
 use std::sync::*;
 use std::time::{Duration};
+use std::collections::{HashMap};
 
 ///
 /// Performs an asynchronous request on a storage layer for this animation
@@ -54,6 +55,9 @@ pub (super) struct StreamAnimationCore {
 
     /// The next element ID to assign (None if we haven't retrieved the element ID yet)
     pub (super) next_element_id: Option<i64>,
+
+    /// Cached loaded layers
+    pub (super) cached_layers: HashMap<u64, Arc<KeyFrameCore>>,
 
     /// The keyframe that is currently being edited, if there is one
     pub (super) cached_keyframe: Option<Arc<Desync<KeyFrameCore>>>,
@@ -218,8 +222,36 @@ impl StreamAnimationCore {
     ///
     pub fn load_keyframe<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a + Future<Output=Option<Arc<KeyFrameCore>>> {
         async move {
-            KeyFrameCore::from_keyframe(self, layer_id, when).await
-                .map(|frame| Arc::new(frame))
+            // We use a cached keyframe if possible. This saves us having to recalculate the animation layer and reload the elements
+            // from storage, but we need to be careful when editing the keyframe as the cached version will become out of date.
+
+            // Try to fetch an existing keyframe if possible
+            let existing_keyframe = if let Some(keyframe) = self.cached_layers.get(&layer_id) {
+                if keyframe.start <= when && keyframe.end > when {
+                    Some(Arc::clone(keyframe))
+                } else {
+                    // We free the cached keyframe before loading a new one if it's unused
+                    self.cached_layers.remove(&layer_id);
+                    None
+                }
+            } else {
+                None
+            };
+
+            // Load a new keyframe if no existing keyframe could be found
+            if existing_keyframe.is_none() {
+                let new_keyframe = KeyFrameCore::from_keyframe(self, layer_id, when).await
+                    .map(|frame| Arc::new(frame));
+
+                if let Some(new_keyframe) = new_keyframe {
+                    self.cached_layers.insert(layer_id, Arc::clone(&new_keyframe));
+                    Some(new_keyframe)
+                } else {
+                    None
+                }
+            } else {
+                existing_keyframe
+            }
         }
     }
 
@@ -240,7 +272,13 @@ impl StreamAnimationCore {
             // Update the cached keyframe if it doesn't
             self.cached_keyframe = self.load_keyframe(layer_id, when).await
                 .map(|keyframe| Arc::new(Desync::new((*keyframe).clone())));
-            
+
+            // Force the next fetch of this layer to update the frame
+            // TODO: if the keyframe is cached again and then edited, the cache will get out of sync: we need a way to either share the 
+            // keyframe with the cache or invalidate it when it's edited (this works for now but is very fragile and might be hard to debug 
+            // for anyone who hasn't read or remembered this comment)
+            self.cached_layers.remove(&layer_id);
+
             // This is the result of the operation
             self.cached_keyframe.clone()
         }
@@ -282,6 +320,8 @@ impl StreamAnimationCore {
             };
             let mut properties  = properties.unwrap_or_else(|| FileProperties::default());
 
+            self.cached_layers.clear();
+
             // Update the size
             properties.size     = (width, height);
 
@@ -298,6 +338,7 @@ impl StreamAnimationCore {
     pub fn add_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
         async move {
             self.cached_keyframe = None;
+            self.cached_layers.remove(&layer_id);
             self.request_one(StorageCommand::AddKeyFrame(layer_id, when)).await;
         } 
     }
@@ -308,6 +349,7 @@ impl StreamAnimationCore {
     pub fn remove_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
         async move {
             self.cached_keyframe = None;
+            self.cached_layers.remove(&layer_id);
             self.request_one(StorageCommand::DeleteKeyFrame(layer_id, when)).await;
         } 
     }
