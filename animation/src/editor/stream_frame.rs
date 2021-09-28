@@ -52,26 +52,6 @@ impl StreamFrame {
             vec![]
         }
     }
-
-    ///
-    /// Creates the default properties for this frame
-    ///
-    fn default_properties(core: &Arc<KeyFrameCore>) -> Arc<VectorProperties> {
-        let core            = Arc::clone(core);
-        let mut properties  = VectorProperties::default();
-
-        // Retrieve attachments from this frame
-        properties.retrieve_attachments = Arc::new(move |element_id| {
-            Self::retrieve_attachments_for_core(&core, element_id).into_iter()
-                .flat_map(|(element_id, _type)| {
-                    core.elements.get(&element_id)
-                        .map(|wrapper| wrapper.element.clone())
-                })
-                .collect()
-        });
-
-        Arc::new(properties)
-    }
 }
 
 impl Frame for StreamFrame {
