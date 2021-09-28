@@ -228,7 +228,8 @@ impl StreamAnimationCore {
             // Try to fetch an existing keyframe if possible
             let existing_keyframe = if let Some(keyframe) = self.cached_layers.get(&layer_id) {
                 if keyframe.start <= when && keyframe.end > when {
-                    Some(Arc::clone(keyframe))
+                    //Some(Arc::clone(keyframe))
+                    None
                 } else {
                     // We free the cached keyframe before loading a new one if it's unused
                     self.cached_layers.remove(&layer_id);
