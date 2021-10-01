@@ -14,6 +14,10 @@ impl StreamAnimationCore {
     pub fn layer_edit<'a>(&'a mut self, layer_id: u64, layer_edit: &'a LayerEdit) -> impl 'a+Future<Output=()> {
         use self::LayerEdit::*;
 
+        // Invalidate the layer from the cache
+        self.cached_layers.remove(&layer_id);
+
+        // Perform the edit
         async move {
             match layer_edit {
                 Paint(when, paint_edit)                     => { self.paint_edit(layer_id, *when, paint_edit).await }

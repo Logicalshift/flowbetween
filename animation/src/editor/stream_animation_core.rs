@@ -228,8 +228,7 @@ impl StreamAnimationCore {
             // Try to fetch an existing keyframe if possible
             let existing_keyframe = if let Some(keyframe) = self.cached_layers.get(&layer_id) {
                 if keyframe.start <= when && keyframe.end > when {
-                    //Some(Arc::clone(keyframe))
-                    None
+                    Some(Arc::clone(keyframe))
                 } else {
                     // We free the cached keyframe before loading a new one if it's unused
                     self.cached_layers.remove(&layer_id);
@@ -261,6 +260,12 @@ impl StreamAnimationCore {
     ///
     pub fn edit_keyframe<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a + Future<Output=Option<Arc<Desync<KeyFrameCore>>>> {
         async move {
+            // Force the next fetch of this layer to update the frame
+            // TODO: if the keyframe is cached again and then edited, the cache will get out of sync: we need a way to either share the 
+            // keyframe with the cache or invalidate it when it's edited (this works for now but is very fragile and might be hard to debug 
+            // for anyone who hasn't read or remembered this comment)
+            self.cached_layers.remove(&layer_id);
+
             // Return the cached keyframe if it matches the layer and time
             if let Some(keyframe) = self.cached_keyframe.as_ref() {
                 let (frame_layer_id, start, end) = keyframe.future_sync(|keyframe| future::ready((keyframe.layer_id, keyframe.start, keyframe.end)).boxed()).await.unwrap();
@@ -273,12 +278,6 @@ impl StreamAnimationCore {
             // Update the cached keyframe if it doesn't
             self.cached_keyframe = self.load_keyframe(layer_id, when).await
                 .map(|keyframe| Arc::new(Desync::new((*keyframe).clone())));
-
-            // Force the next fetch of this layer to update the frame
-            // TODO: if the keyframe is cached again and then edited, the cache will get out of sync: we need a way to either share the 
-            // keyframe with the cache or invalidate it when it's edited (this works for now but is very fragile and might be hard to debug 
-            // for anyone who hasn't read or remembered this comment)
-            self.cached_layers.remove(&layer_id);
 
             // This is the result of the operation
             self.cached_keyframe.clone()
@@ -297,6 +296,7 @@ impl StreamAnimationCore {
                 if let Some((layer_id, keyframe_time)) = keyframes.pop() {
                     // Need to retrieve the keyframe (some elements depend on others, so we need the whole keyframe)
                     // Most of the time we'll be editing a single frame so this won't be too expensive
+                    self.cached_layers.remove(&layer_id);
                     self.edit_keyframe(layer_id, keyframe_time).await
                 } else {
                     None

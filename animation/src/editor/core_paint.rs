@@ -21,6 +21,8 @@ impl StreamAnimationCore {
                 Some(keyframe)  => keyframe
             };
 
+            self.cached_layers.remove(&layer_id);
+
             let (id, wrapper) = match edit {
                 SelectBrush(element_id, defn, style)    => {
                     // Create a brush definition element

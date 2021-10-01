@@ -22,6 +22,9 @@ impl StreamAnimationCore {
                 Some(keyframe)  => keyframe
             };
 
+            // Remove the read-only version of the cache of this layer
+            self.cached_layers.remove(&layer_id);
+
             match edit {
                 CreatePath(element_id, components)      => {
                     let element_id = *element_id;
