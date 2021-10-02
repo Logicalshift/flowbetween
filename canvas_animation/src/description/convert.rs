@@ -123,9 +123,17 @@ impl Into<Box<dyn AnimationEffect>> for &EffectDescription {
         use self::EffectDescription::*;
 
         match self {
-            Other(type_name, json_defn)                 => OTHER_EFFECTS.lock().unwrap().get(type_name)
-                                                                .unwrap_or_else(|| panic!("Animation effect '{}' is not registered", type_name))(json_defn),
-            Sequence(sequence)                          => unimplemented!(),
+            Other(type_name, json_defn)                 => {
+                OTHER_EFFECTS.lock().unwrap().get(type_name)
+                    .unwrap_or_else(|| panic!("Animation effect '{}' is not registered", type_name))(json_defn)
+            },
+            Sequence(sequence)                          => {
+                let mut sequence_effect = SequenceEffect::empty();
+                for effect in sequence {
+                    sequence_effect.add_boxed_effect(effect.into());
+                }
+                Box::new(sequence_effect)
+            },
 
             Repeat(time, effect)                        => Box::new(RepeatEffect::<Box<dyn AnimationEffect>>::repeat_effect((&**effect).into(), *time)),
             TimeCurve(curve_points, effect)             => Box::new(TimeCurveEffect::<Box<dyn AnimationEffect>>::with_control_points((&**effect).into(), curve_points.clone())),
