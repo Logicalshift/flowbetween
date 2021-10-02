@@ -10,6 +10,7 @@ mod path;
 mod layer;
 mod region;
 pub mod effects;
+pub mod description;
 
 pub use self::path::*;
 pub use self::layer::*;

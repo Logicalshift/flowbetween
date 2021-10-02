@@ -1155,6 +1155,8 @@ dependencies = [
  "flo_curves",
  "futures",
  "itertools 0.10.1",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
