@@ -7,7 +7,14 @@ use crate::effects::*;
 use flo_curves::*;
 use flo_curves::bezier::path::{SimpleBezierPath};
 
+use serde_json as json;
+
 use std::sync::*;
+use std::collections::{HashMap};
+
+lazy_static! {
+    pub (super) static ref OTHER_EFFECTS: Mutex<HashMap<String, Box<dyn Send+Sync+Fn(&json::Value) -> Box<dyn AnimationEffect>>>> = Mutex::new(HashMap::new());
+}
 
 impl From<Coord2> for Point2D {
     #[inline]
@@ -79,7 +86,8 @@ impl Into<Box<dyn AnimationEffect>> for &EffectDescription {
         use self::EffectDescription::*;
 
         match self {
-            Other(type_name, json_defn)                 => unimplemented!(),
+            Other(type_name, json_defn)                 => OTHER_EFFECTS.lock().unwrap().get(type_name)
+                                                                .unwrap_or_else(|| panic!("Animation effect '{}' is not registered", type_name))(json_defn),
             Sequence(sequence)                          => unimplemented!(),
 
             Repeat(time, effect)                        => Box::new(RepeatEffect::<Box<dyn AnimationEffect>>::repeat_effect((&**effect).into(), *time)),
@@ -98,4 +106,31 @@ impl Into<Arc<dyn AnimationRegion>> for &RegionDescription {
 
         Arc::new(effect.with_region(path))
     }
+}
+
+///
+/// Adds a custom 'other' effect deserializer
+///
+/// This makes it possible to add effect descriptions for effects that aren't in the `flo_canvas_animation` library itself, by adding
+/// new serializers and using the `EffectDescription::Other()` description. Type names should be unique, so something using domain names
+/// is a good idea, eg `app.flowbetween.CustomEffect`.
+///
+pub fn register_animation_effect_deserializer<TFn: 'static+Send+Sync+Fn(&json::Value) -> Box<dyn AnimationEffect>>(type_name: &str, deserialization_fn: TFn) {
+    let old_key = OTHER_EFFECTS.lock().unwrap()
+        .insert(type_name.into(), Box::new(deserialization_fn));
+
+    if old_key.is_some() {
+        panic!("Animation effect '{}' was registered more than once", type_name);
+    }
+}
+
+///
+/// Indicates if a particular animation effect type name is available to deserialize
+///
+/// (Type names can be registered but not deregistered, so if this returns true, the type name will be available for as long as the
+/// program is running)
+///
+pub fn is_animation_effect_type_registered(type_name: &str) -> bool {
+    OTHER_EFFECTS.lock().unwrap()
+        .contains_key(type_name)
 }

@@ -6,6 +6,9 @@
 //! As well as animations, this crate can be used to apply effects to regions (eg: drop shadows)
 //!
 
+#[macro_use]
+extern crate lazy_static;
+
 mod path;
 mod layer;
 mod region;

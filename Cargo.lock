@@ -1155,6 +1155,7 @@ dependencies = [
  "flo_curves",
  "futures",
  "itertools 0.10.1",
+ "lazy_static",
  "serde",
  "serde_json",
 ]
