@@ -27,6 +27,7 @@ fn describe_vector(vec: &Vector) -> String {
             }
         Motion(_motion)                 => { format!("Motion description") }
         Transformation(_transform)      => { format!("Transformation description") }
+        AnimationRegion(_region)        => { format!("Animation region") }
         Error                           => { format!("Error :-(") }
 
         Group(group)                    => { 
