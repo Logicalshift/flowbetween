@@ -6,6 +6,7 @@ use super::error_element::*;
 use super::motion_element::*;
 use super::vector_element::*;
 use super::transformation::*;
+use super::animation_element::*;
 use super::transformed_vector::*;
 use super::brush_properties_element::*;
 use super::brush_definition_element::*;
@@ -40,6 +41,7 @@ pub enum Vector {
     Shape(ShapeElement),
 
     /// Element describing a motion
+    /// TODO: these are obsolete and replaced by animation regions
     Motion(MotionElement),
 
     /// Element describing a group (with optional cache and path combining operation)
@@ -47,6 +49,9 @@ pub enum Vector {
 
     /// Attached to an element to indicate a transformation that should be applied to it when rendering
     Transformation((ElementId, SmallVec<[Transformation; 2]>)),
+
+    /// An element representing an animation region for the keyframe
+    AnimationRegion(AnimationElement),
 
     /// Element exists but could not be loaded from the file
     Error
@@ -137,6 +142,7 @@ impl DerefMut for Vector {
             Motion(elem)                    => elem,
             Group(elem)                     => elem,
             Transformation(elem)            => elem,
+            AnimationRegion(elem)           => elem,
             Error                           => panic!("Cannot edit an error element")
         }
     }
@@ -160,6 +166,7 @@ impl Deref for Vector {
             Shape(elem)                     => elem,
             Motion(elem)                    => elem,
             Group(elem)                     => elem,
+            AnimationRegion(elem)           => elem,
             Transformation(transform)       => transform,
             Error                           => &*ERROR_ELEMENT
         }

@@ -42,6 +42,7 @@ impl RaycastEdge {
             Vector::BrushProperties(_props)     => { Box::new(iter::empty()) }
             Vector::Motion(_motion)             => { Box::new(iter::empty()) }
             Vector::Transformation(_transform)  => { Box::new(iter::empty()) }
+            Vector::AnimationRegion(_region)    => { Box::new(iter::empty()) }
             Vector::Error                       => { Box::new(iter::empty()) }
 
             Vector::Transformed(transform)      => { Self::from_transformed(transform, properties) }

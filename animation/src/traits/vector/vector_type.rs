@@ -29,6 +29,9 @@ pub enum VectorType {
     /// A property describing a transformation that can be applied to another element
     Transformation,
 
+    /// Represents a region of the canvas that has an animation effect applied to it
+    AnimationRegion,
+
     /// Element that exists but could not be loaded
     Error
 }
@@ -47,6 +50,7 @@ impl From<&Vector> for VectorType {
             Motion(_)                       => VectorType::Motion,
             Group(_)                        => VectorType::Group,
             Transformation(_)               => VectorType::Transformation,
+            AnimationRegion(_)              => VectorType::AnimationRegion,
             Error                           => VectorType::Error
         }
     }

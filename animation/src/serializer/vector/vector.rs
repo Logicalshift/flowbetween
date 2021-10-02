@@ -30,6 +30,7 @@ impl Vector {
             Shape(shape)                    => { data.write_chr('S'); shape.serialize(data); }
             Motion(motion)                  => { data.write_chr('m'); motion.serialize(data); }
             Group(group)                    => { data.write_chr('g'); group.serialize(data); }
+            AnimationRegion(region)         => { data.write_chr('A'); region.serialize(data); }
             Error                           => { data.write_chr('?'); }
 
             Transformation((id, transform)) => { 
