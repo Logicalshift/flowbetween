@@ -81,33 +81,6 @@ impl Into<Box<dyn AnimationEffect>> for EffectDescription {
     }
 }
 
-impl Into<Box<dyn AnimationEffect>> for &EffectDescription {
-    fn into(self) -> Box<dyn AnimationEffect> {
-        use self::EffectDescription::*;
-
-        match self {
-            Other(type_name, json_defn)                 => OTHER_EFFECTS.lock().unwrap().get(type_name)
-                                                                .unwrap_or_else(|| panic!("Animation effect '{}' is not registered", type_name))(json_defn),
-            Sequence(sequence)                          => unimplemented!(),
-
-            Repeat(time, effect)                        => Box::new(RepeatEffect::<Box<dyn AnimationEffect>>::repeat_effect((&**effect).into(), *time)),
-            TimeCurve(curve_points, effect)             => Box::new(TimeCurveEffect::<Box<dyn AnimationEffect>>::with_control_points((&**effect).into(), curve_points.clone())),
-
-            Move(time, BezierPath(start_point, coords)) => Box::new(MotionEffect::from_points(*time, start_point.into(), coords.iter().map(|BezierPoint(cp1, cp2, ep)| (cp1.into(), cp2.into(), ep.into())).collect()))
-        }
-    }
-}
-
-impl Into<Arc<dyn AnimationRegion>> for &RegionDescription {
-    fn into(self) -> Arc<dyn AnimationRegion> {
-        let RegionDescription(path, effect)     = self;
-        let effect: Box<dyn AnimationEffect>    = effect.into();
-        let path: Vec<SimpleBezierPath>         = path.iter().map(|path| path.into()).collect();
-
-        Arc::new(effect.with_region(path))
-    }
-}
-
 ///
 /// Adds a custom 'other' effect deserializer
 ///
@@ -133,4 +106,31 @@ pub fn register_animation_effect_deserializer<TFn: 'static+Send+Sync+Fn(&json::V
 pub fn is_animation_effect_type_registered(type_name: &str) -> bool {
     OTHER_EFFECTS.lock().unwrap()
         .contains_key(type_name)
+}
+
+impl Into<Arc<dyn AnimationRegion>> for &RegionDescription {
+    fn into(self) -> Arc<dyn AnimationRegion> {
+        let RegionDescription(path, effect)     = self;
+        let effect: Box<dyn AnimationEffect>    = effect.into();
+        let path: Vec<SimpleBezierPath>         = path.iter().map(|path| path.into()).collect();
+
+        Arc::new(effect.with_region(path))
+    }
+}
+
+impl Into<Box<dyn AnimationEffect>> for &EffectDescription {
+    fn into(self) -> Box<dyn AnimationEffect> {
+        use self::EffectDescription::*;
+
+        match self {
+            Other(type_name, json_defn)                 => OTHER_EFFECTS.lock().unwrap().get(type_name)
+                                                                .unwrap_or_else(|| panic!("Animation effect '{}' is not registered", type_name))(json_defn),
+            Sequence(sequence)                          => unimplemented!(),
+
+            Repeat(time, effect)                        => Box::new(RepeatEffect::<Box<dyn AnimationEffect>>::repeat_effect((&**effect).into(), *time)),
+            TimeCurve(curve_points, effect)             => Box::new(TimeCurveEffect::<Box<dyn AnimationEffect>>::with_control_points((&**effect).into(), curve_points.clone())),
+
+            Move(time, BezierPath(start_point, coords)) => Box::new(MotionEffect::from_points(*time, start_point.into(), coords.iter().map(|BezierPoint(cp1, cp2, ep)| (cp1.into(), cp2.into(), ep.into())).collect()))
+        }
+    }
 }
