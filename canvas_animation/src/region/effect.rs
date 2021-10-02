@@ -29,7 +29,7 @@ pub trait AnimationEffect : Send+Sync {
     /// the region contents, but is not always available as the region itself might be changing over time
     /// (eg, if many effects are combined)
     ///
-    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>>;
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Send+Fn(Duration) -> Arc<AnimationRegionContent>>;
 }
 
 impl<T> AnimationEffect for Box<T>
@@ -40,7 +40,7 @@ where T: AnimationEffect {
     }
 
     #[inline]
-    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Send+Fn(Duration) -> Arc<AnimationRegionContent>> {
         (**self).animate_cached(region_contents)
     }
 }
@@ -52,7 +52,7 @@ impl AnimationEffect for Box<dyn AnimationEffect> {
     }
 
     #[inline]
-    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Send+Fn(Duration) -> Arc<AnimationRegionContent>> {
         (**self).animate_cached(region_contents)
     }
 }
@@ -65,7 +65,7 @@ where T: AnimationEffect {
     }
 
     #[inline]
-    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Send+Fn(Duration) -> Arc<AnimationRegionContent>> {
         (**self).animate_cached(region_contents)
     }
 }

@@ -34,7 +34,7 @@ impl AnimationEffect for Arc<dyn AnimationRegion> {
     }
 
     #[inline]
-    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Send+Fn(Duration) -> Arc<AnimationRegionContent>> {
         (**self).animate_cached(region_contents)
     }
 }

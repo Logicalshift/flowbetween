@@ -78,7 +78,7 @@ impl AnimationEffect for SequenceEffect {
     /// the region contents, but is not always available as the region itself might be changing over time
     /// (eg, if many effects are combined)
     ///
-    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Send+Fn(Duration) -> Arc<AnimationRegionContent>> {
         // We can cache the first item in the sequence only, but need to call animate() on the future elements as they may get different results
         let sequence            = self.sequence.lock().unwrap();
         if sequence.len() > 0 {
