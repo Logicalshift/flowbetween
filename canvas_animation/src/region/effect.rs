@@ -45,6 +45,18 @@ where T: AnimationEffect {
     }
 }
 
+impl AnimationEffect for Box<dyn AnimationEffect> {
+    #[inline]
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Arc<AnimationRegionContent> {
+        (**self).animate(region_contents, time)
+    }
+
+    #[inline]
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Fn(Duration) -> Arc<AnimationRegionContent>> {
+        (**self).animate_cached(region_contents)
+    }
+}
+
 impl<T> AnimationEffect for Arc<T>
 where T: AnimationEffect {
     #[inline]
