@@ -7,6 +7,8 @@ use crate::effects::*;
 use flo_curves::*;
 use flo_curves::bezier::path::{SimpleBezierPath};
 
+use std::sync::*;
+
 impl From<Coord2> for Point2D {
     #[inline]
     fn from(Coord2(x, y): Coord2) -> Point2D {
@@ -85,5 +87,15 @@ impl Into<Box<dyn AnimationEffect>> for &EffectDescription {
 
             Move(time, BezierPath(start_point, coords)) => Box::new(MotionEffect::from_points(*time, start_point.into(), coords.iter().map(|BezierPoint(cp1, cp2, ep)| (cp1.into(), cp2.into(), ep.into())).collect()))
         }
+    }
+}
+
+impl Into<Arc<dyn AnimationRegion>> for &RegionDescription {
+    fn into(self) -> Arc<dyn AnimationRegion> {
+        let RegionDescription(path, effect)     = self;
+        let effect: Box<dyn AnimationEffect>    = effect.into();
+        let path: Vec<SimpleBezierPath>         = path.iter().map(|path| path.into()).collect();
+
+        Arc::new(effect.with_region(path))
     }
 }
