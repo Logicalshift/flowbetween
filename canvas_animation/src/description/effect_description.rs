@@ -8,7 +8,7 @@ use serde_json as json;
 ///
 /// Describes an animation effect that can be constructed later on
 ///
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum EffectDescription {
     /// Description of an effect with custom deserialization
     Other(String, json::Value),
