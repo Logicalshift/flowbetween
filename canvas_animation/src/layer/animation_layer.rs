@@ -295,6 +295,12 @@ impl<'a> AnimationLayerContext<'a> {
     ///
     #[inline]
     pub fn set_time(&mut self, time: Duration) {
+        // Flush the cache to the current time
+        if self.cache.len() > 0 {
+            self.animation_layer.draw(self.cache.drain(..));
+        }
+
+        // Set the time for future drawing instructions
         self.animation_layer.set_time(time);
     }
 }
