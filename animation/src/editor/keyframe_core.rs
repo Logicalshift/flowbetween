@@ -285,8 +285,7 @@ impl KeyFrameCore {
         // Set up the properties
         let mut properties;
         let mut active_attachments  = vec![];
-        let mut drawing             = vec![];
-        let mut gc                  = &mut drawing;
+        let mut gc                  = layer.graphics_context();
 
         // Everything is rendered at t=0 for the purposes of the animation layer
         // TODO: we used to be able to animate by adjusting the 'when' value for different attachments: now we rely entirely on
@@ -311,14 +310,9 @@ impl KeyFrameCore {
             if wrapper.start_time >= core.start {
                 // Update the drawing time in the layer
                 if current_time != wrapper.start_time {
-                    // Flush the drawing
-                    layer.draw(drawing);
-                    drawing = vec![];
-                    gc      = &mut drawing;
-
                     // Update the time in the layer
                     current_time = wrapper.start_time;
-                    layer.set_time(wrapper.start_time - core.start);
+                    gc.set_time(wrapper.start_time - core.start);
                 }
 
                 // Reset the properties
@@ -333,21 +327,18 @@ impl KeyFrameCore {
                     for attachment_id in active_attachments.iter() {
                         if let Some(attach_element) = core.elements.get(&attachment_id) {
                             properties = attach_element.element.update_properties(Arc::clone(&properties), when);
-                            properties.render(gc, attach_element.element.clone(), when);
+                            properties.render(&mut gc, attach_element.element.clone(), when);
                         }
                     }
                 }
 
                 // Render the element
-                properties.render(gc, wrapper.element.clone(), when);
+                properties.render(&mut gc, wrapper.element.clone(), when);
             }
 
             // Move on to the next element in the list
             next_element = wrapper.order_before;
         }
-
-        // Draw the remaining instructions to finish
-        layer.draw(drawing);
     }
 
     ///

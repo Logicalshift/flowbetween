@@ -289,6 +289,14 @@ impl<'a> AnimationLayerContext<'a> {
             self.animation_layer.draw(self.cache.drain(..));
         }
     }
+
+    ///
+    /// Updates the time where the current set of drawing will be rendered
+    ///
+    #[inline]
+    pub fn set_time(&mut self, time: Duration) {
+        self.animation_layer.set_time(time);
+    }
 }
 
 impl<'a> Drop for AnimationLayerContext<'a> {
