@@ -6,6 +6,7 @@ use super::super::path::*;
 use super::super::edit::*;
 
 use flo_canvas::*;
+use flo_canvas_animation::*;
 
 use std::time::Duration;
 use std::sync::*;
@@ -31,6 +32,11 @@ pub trait VectorElement : Send+Any {
     fn to_path(&self, properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>>;
 
     ///
+    /// Renders this vector element to an animated layer
+    ///
+    fn render_animated(&self, gc: &mut AnimationLayerContext<'_>, properties: &VectorProperties, when: Duration) { self.render_static(gc, properties, when); }
+
+    ///
     /// Renders this vector element as a static element in a graphics context
     ///
     /// This can be used for rendering a preview of this element, such as when editing it
@@ -40,7 +46,7 @@ pub trait VectorElement : Send+Any {
     ///
     /// For elements that are not visible in the final animation, renders an editing overlay to the specified graphics context 
     ///
-    fn render_overlay(&self, gc: &mut dyn GraphicsContext, when: Duration) { }
+    fn render_overlay(&self, _gc: &mut dyn GraphicsContext, _when: Duration) { }
 
     ///
     /// Returns the properties to use for future elements

@@ -327,13 +327,13 @@ impl KeyFrameCore {
                     for attachment_id in active_attachments.iter() {
                         if let Some(attach_element) = core.elements.get(&attachment_id) {
                             properties = attach_element.element.update_properties(Arc::clone(&properties), when);
-                            properties.render_static(&mut gc, attach_element.element.clone(), when);
+                            properties.render_animated(&mut gc, attach_element.element.clone(), when);
                         }
                     }
                 }
 
                 // Render the element
-                properties.render_static(&mut gc, wrapper.element.clone(), when);
+                properties.render_animated(&mut gc, wrapper.element.clone(), when);
             }
 
             // Move on to the next element in the list

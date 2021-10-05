@@ -8,6 +8,7 @@ use super::super::super::brushes::*;
 
 use flo_curves::*;
 use flo_canvas::*;
+use flo_canvas_animation::*;
 
 use std::sync::*;
 use std::time::Duration;
@@ -34,7 +35,10 @@ pub struct VectorProperties {
     pub retrieve_attachments: Arc<dyn (Fn(ElementId) -> Vec<Vector>) + Sync+Send>,
 
     /// Provides an override for how a vector element is rendered
-    pub render_vector: Arc<dyn (Fn(&mut dyn GraphicsContext, Vector, Duration, &VectorProperties)) + Sync+Send>
+    pub render_vector_static: Arc<dyn (Fn(&mut dyn GraphicsContext, Vector, Duration, &VectorProperties)) + Sync+Send>,
+
+    /// Provides an override for how a vector element is rendered
+    pub render_vector_animated: Arc<dyn (Fn(&mut AnimationLayerContext<'_>, Vector, Duration, &VectorProperties)) + Sync+Send>
 }
 
 impl VectorProperties {
@@ -47,7 +51,8 @@ impl VectorProperties {
             brush_properties:       BrushProperties::new(),
             transformations:        Arc::new(vec![]),
             retrieve_attachments:   Arc::new(|_| vec![]),
-            render_vector:          Arc::new(|gc, vector, when, properties| vector.render_static(gc, properties, when))
+            render_vector_static:   Arc::new(|gc, vector, when, properties| vector.render_static(gc, properties, when)),
+            render_vector_animated: Arc::new(|gc, vector, when, properties| vector.render_animated(gc, properties, when))
         }
     }
 
@@ -61,9 +66,17 @@ impl VectorProperties {
     ///
     /// Renders the specified element with these properties
     ///
+    pub fn render_animated(&self, gc: &mut AnimationLayerContext<'_>, element: Vector, when: Duration) {
+        // Render this element
+        (self.render_vector_animated)(gc, element, when, self);
+    }
+
+    ///
+    /// Renders the specified element with these properties
+    ///
     pub fn render_static(&self, gc: &mut dyn GraphicsContext, element: Vector, when: Duration) {
         // Render this element
-        (self.render_vector)(gc, element, when, self);
+        (self.render_vector_static)(gc, element, when, self);
     }
 
     ///
@@ -109,7 +122,8 @@ impl VectorProperties {
             brush_properties:       self.brush_properties.clone(),
             transformations:        Arc::new(inverted_transformations),
             retrieve_attachments:   Arc::clone(&self.retrieve_attachments),
-            render_vector:          Arc::clone(&self.render_vector)
+            render_vector_static:   Arc::clone(&self.render_vector_static),
+            render_vector_animated: Arc::clone(&self.render_vector_animated)
         })
     }
 }
