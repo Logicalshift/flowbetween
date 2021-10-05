@@ -9,7 +9,7 @@ impl AnimationElement {
     /// Generates a serialized version of this brush properties element on the specified data target
     ///
     pub fn serialize<Tgt: AnimationDataTarget>(&self, data: &mut Tgt) {
-        let as_json = json::to_string(&self.1).unwrap();
+        let as_json = json::to_string(&self.description()).unwrap();
         data.write_str(&as_json);
     }
 
@@ -20,6 +20,6 @@ impl AnimationElement {
         let as_json     = data.next_string();
         let description = json::from_str(&as_json).ok()?;
 
-        Some(AnimationElement(element_id, description))
+        Some(AnimationElement::new(element_id, description))
     }
 }
