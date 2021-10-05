@@ -308,6 +308,7 @@ impl<'a> AnimationLayerContext<'a> {
 impl<'a> Drop for AnimationLayerContext<'a> {
     fn drop(&mut self) {
         self.animation_layer.draw(self.cache.drain(..));
+        self.animation_layer.cache.desync(|cache| cache.flush());
     }
 }
 
