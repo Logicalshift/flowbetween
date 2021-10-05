@@ -11,6 +11,7 @@ use flo_canvas_animation::*;
 use flo_canvas_animation::description::*;
 
 use std::fmt;
+use std::iter;
 use std::sync::*;
 use std::time::{Duration};
 
@@ -105,9 +106,54 @@ impl VectorElement for AnimationElement {
         properties 
     }
 
-    fn control_points(&self, _properties: &VectorProperties) -> Vec<ControlPoint> { vec![] }
+    fn control_points(&self, _properties: &VectorProperties) -> Vec<ControlPoint> {
+        // The 'normal' control points are the points in the main bezier path
+        let RegionDescription(paths, _effect)        = &self.description;
 
-    fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>, _properties: &VectorProperties) -> Vector {
-        unimplemented!()
+        let regions = paths.iter()
+            .flat_map(|path| {
+                let BezierPath(start_point, other_points)   = path;
+
+                iter::once(ControlPoint::BezierPoint(start_point.x(), start_point.y()))
+                    .chain(other_points.iter().flat_map(|BezierPoint(cp1, cp2, end_point)| [
+                        ControlPoint::BezierControlPoint(cp1.x(), cp1.y()),
+                        ControlPoint::BezierControlPoint(cp2.x(), cp2.y()),
+                        ControlPoint::BezierPoint(end_point.x(), end_point.y())
+                    ]))
+            });
+
+        // TODO: get the control points from the effect
+
+        regions.collect()
+    }
+
+    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>, _properties: &VectorProperties) -> Vector {
+        // Create the new paths by mapping the points from the new positions onto the existing paths
+        let mut region_outline  = vec![];
+        let mut pos_iter        = new_positions.into_iter();
+
+        for old_path in self.description.0.iter() {
+            // Update the region control points
+            let start_point         = pos_iter.next().unwrap().into();
+            let mut outline_points  = vec![];
+
+            for _ in 0..(old_path.1.len()) {
+                let cp1         = pos_iter.next().unwrap().into();
+                let cp2         = pos_iter.next().unwrap().into();
+                let end_point   = pos_iter.next().unwrap().into();
+
+                outline_points.push(BezierPoint(cp1, cp2, end_point));
+            }
+
+            region_outline.push(BezierPath(start_point, outline_points));
+        }
+
+        // TODO: update the effect control points
+
+        // Create the new region description
+        let effect              = self.description.1.clone();
+        let region_description  = RegionDescription(region_outline, effect);
+
+        Vector::AnimationRegion(AnimationElement::new(self.id, region_description))
     }
 }

@@ -17,3 +17,8 @@ pub struct BezierPoint(pub Point2D, pub Point2D, pub Point2D);
 ///
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BezierPath(pub Point2D, pub Vec<BezierPoint>);
+
+impl Point2D {
+    #[inline] pub fn x(&self) -> f64 { self.0 }
+    #[inline] pub fn y(&self) -> f64 { self.1 }
+}

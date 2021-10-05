@@ -23,6 +23,20 @@ impl From<Coord2> for Point2D {
     }
 }
 
+impl From<(f64, f64)> for Point2D {
+    #[inline]
+    fn from((x, y): (f64, f64)) -> Point2D {
+        Point2D(x, y)
+    }
+}
+
+impl From<(f32, f32)> for Point2D {
+    #[inline]
+    fn from((x, y): (f32, f32)) -> Point2D {
+        Point2D(x as _, y as _)
+    }
+}
+
 impl From<&Coord2> for Point2D {
     #[inline]
     fn from(Coord2(x, y): &Coord2) -> Point2D {
