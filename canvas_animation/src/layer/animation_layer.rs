@@ -291,6 +291,19 @@ impl<'a> AnimationLayerContext<'a> {
     }
 
     ///
+    /// Adds an animation region to the layer that this context is for
+    ///
+    pub fn add_region<Region: 'static+AnimationRegion>(&mut self, region: Region) {
+        // Flush the cache to the current time
+        if self.cache.len() > 0 {
+            self.animation_layer.draw(self.cache.drain(..));
+        }
+
+        // Add the region
+        self.animation_layer.add_region(region);
+    }
+
+    ///
     /// Updates the time where the current set of drawing will be rendered
     ///
     #[inline]
