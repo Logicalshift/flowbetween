@@ -66,7 +66,7 @@ impl VectorElement for MotionElement {
     ///
     /// Renders this vector element
     ///
-    fn render(&self, _gc: &mut dyn GraphicsContext, _properties: &VectorProperties, _when: Duration) {
+    fn render_static(&self, _gc: &mut dyn GraphicsContext, _properties: &VectorProperties, _when: Duration) {
         // Nothing to do
     }
 

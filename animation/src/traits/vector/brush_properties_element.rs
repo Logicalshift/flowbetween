@@ -74,7 +74,7 @@ impl VectorElement for BrushPropertiesElement {
     ///
     /// Renders this vector element
     ///
-    fn render(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, _when: Duration) {
+    fn render_static(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, _when: Duration) {
         gc.draw_list(properties.brush.prepare_to_render(&self.new_properties));
     }
 

@@ -154,7 +154,7 @@ impl BrushPreview {
 
         // Render them to the canvas if they're marked as changed
         if update_brush_definition {
-            self.brush_definition_element().render(gc, &vector_properties, Duration::from_millis(0))
+            self.brush_definition_element().render_static(gc, &vector_properties, Duration::from_millis(0))
         }
 
         // Apply brush to the vector properties
@@ -166,13 +166,13 @@ impl BrushPreview {
 
         // We only render the properties if they're marked as updated
         if update_properties {
-            new_properties.render(gc, &vector_properties, Duration::from_millis(0));
+            new_properties.render_static(gc, &vector_properties, Duration::from_millis(0));
         }
 
         // Draw the current brush stroke
         let brush_element = self.brush_element();
         vector_properties = brush_element.update_properties(vector_properties, Duration::from_millis(0));
-        brush_element.render(gc, &vector_properties, Duration::from_millis(0));
+        brush_element.render_static(gc, &vector_properties, Duration::from_millis(0));
     }
 
     ///

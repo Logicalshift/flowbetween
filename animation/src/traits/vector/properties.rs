@@ -47,7 +47,7 @@ impl VectorProperties {
             brush_properties:       BrushProperties::new(),
             transformations:        Arc::new(vec![]),
             retrieve_attachments:   Arc::new(|_| vec![]),
-            render_vector:          Arc::new(|gc, vector, when, properties| vector.render(gc, properties, when))
+            render_vector:          Arc::new(|gc, vector, when, properties| vector.render_static(gc, properties, when))
         }
     }
 
@@ -61,7 +61,7 @@ impl VectorProperties {
     ///
     /// Renders the specified element with these properties
     ///
-    pub fn render(&self, gc: &mut dyn GraphicsContext, element: Vector, when: Duration) {
+    pub fn render_static(&self, gc: &mut dyn GraphicsContext, element: Vector, when: Duration) {
         // Render this element
         (self.render_vector)(gc, element, when, self);
     }

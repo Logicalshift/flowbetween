@@ -91,12 +91,12 @@ impl GroupElement {
                 // Apply the attachments
                 for attachment in element_attachments {
                     properties = attachment.update_properties(properties, when);
-                    attachment.render(gc, &*properties, when);
+                    attachment.render_static(gc, &*properties, when);
                 }
             }
 
             // Render the element
-            properties.render(gc, elem.clone(), when);
+            properties.render_static(gc, elem.clone(), when);
         }
     }
 
@@ -219,7 +219,7 @@ impl VectorElement for GroupElement {
     ///
     /// Renders this vector element
     ///
-    fn render(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration) {
+    fn render_static(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration) {
         match self.group_type {
             GroupType::Normal   => self.render_normal(gc, properties, when),
             GroupType::Added    => self.render_added(gc, properties)

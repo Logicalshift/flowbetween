@@ -22,7 +22,7 @@ impl VectorElement for AnimationElement {
     fn id(&self) -> ElementId { self.0 }
     fn set_id(&mut self, new_id: ElementId) { self.0 = new_id; }
     fn to_path(&self, properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>> { None }
-    fn render(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration) { }
+    fn render_static(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration) { }
     fn update_properties(&self, properties: Arc<VectorProperties>, _when: Duration) -> Arc<VectorProperties> { properties }
     fn control_points(&self, properties: &VectorProperties) -> Vec<ControlPoint> { vec![] }
 

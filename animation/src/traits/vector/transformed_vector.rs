@@ -81,8 +81,8 @@ impl VectorElement for TransformedVector {
     ///
     /// Renders this vector element
     ///
-    fn render(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration) {
-        self.transformed.render(gc, properties, when)
+    fn render_static(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration) {
+        self.transformed.render_static(gc, properties, when)
     }
 
     ///

@@ -31,9 +31,16 @@ pub trait VectorElement : Send+Any {
     fn to_path(&self, properties: &VectorProperties, options: PathConversion) -> Option<Vec<Path>>;
 
     ///
-    /// Renders this vector element
+    /// Renders this vector element as a static element in a graphics context
     ///
-    fn render(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration);
+    /// This can be used for rendering a preview of this element, such as when editing it
+    ///
+    fn render_static(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration);
+
+    ///
+    /// For elements that are not visible in the final animation, renders an editing overlay to the specified graphics context 
+    ///
+    fn render_overlay(&self, gc: &mut dyn GraphicsContext, when: Duration) { }
 
     ///
     /// Returns the properties to use for future elements
