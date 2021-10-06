@@ -23,6 +23,11 @@ pub trait Frame : Send+Sync {
     fn render_to(&self, gc: &mut (dyn GraphicsContext+Send));
 
     ///
+    /// Renders the overlay for this frame to a graphics context
+    ///
+    fn render_overlay(&self, gc: &mut (dyn GraphicsContext+Send));
+
+    ///
     /// Generates an animation layer for the keyframe corresponding to this frame, which can be used to render it at any time
     ///
     /// The return value is the time offset that the animation layer should be rendered at, which can also be used to
@@ -63,6 +68,11 @@ impl Frame for Arc<dyn Frame> {
     /// Renders this frame to a particular graphics context
     ///
     #[inline] fn render_to(&self, gc: &mut (dyn GraphicsContext+Send)) { (**self).render_to(gc) }
+
+    ///
+    /// Renders the overlay for this frame to a graphics context
+    ///
+    #[inline] fn render_overlay(&self, gc: &mut (dyn GraphicsContext+Send)) { (**self).render_overlay(gc) }
 
     ///
     /// Generates an animation layer for the keyframe corresponding to this frame, which can be used to render it at any time

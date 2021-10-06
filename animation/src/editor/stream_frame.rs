@@ -63,6 +63,15 @@ impl Frame for StreamFrame {
     }
 
     ///
+    /// Renders the overlay for this frame to a graphics context
+    ///
+    fn render_overlay(&self, gc: &mut (dyn GraphicsContext+Send)) {
+        if let Some(core) = &self.keyframe_core {
+            KeyFrameCore::render_overlay(core, gc, self.frame_time);
+        }
+    }
+
+    ///
     /// Renders this frame to a particular graphics context
     ///
     fn render_to(&self, gc: &mut (dyn GraphicsContext+Send)) {

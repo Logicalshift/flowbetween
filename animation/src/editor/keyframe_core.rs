@@ -5,6 +5,7 @@ use crate::storage::storage_api::*;
 use crate::traits::*;
 use crate::serializer::*;
 
+use flo_canvas::*;
 use flo_canvas_animation::*;
 use ::desync::*;
 
@@ -276,6 +277,28 @@ impl KeyFrameCore {
         });
 
         Arc::new(properties)
+    }
+
+    ///
+    /// Renders the overlay for this keyframeto an animation layer
+    ///
+    pub fn render_overlay(core: &Arc<KeyFrameCore>, gc: &mut dyn GraphicsContext, when: Duration) {
+        let mut next_element    = core.initial_element;
+
+        while let Some(current_element) = next_element {
+            // Fetch the wrapper for the element
+            let wrapper = core.elements.get(&current_element);
+            let wrapper = match wrapper {
+                Some(wrapper)   => wrapper,
+                None            => { break; }
+            };
+
+            // Render this element
+            wrapper.element.render_overlay(gc, when);
+
+            // Move on to the next element in the list
+            next_element = wrapper.order_before;
+        }
     }
 
     ///
