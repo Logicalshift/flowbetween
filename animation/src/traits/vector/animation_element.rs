@@ -15,6 +15,9 @@ use std::iter;
 use std::sync::*;
 use std::time::{Duration};
 
+pub const ANIMATION_OUTLINE:                Color = Color::Rgba(0.2, 0.8, 0.2, 1.0);
+pub const ANIMATION_OUTLINE_DARK:           Color = Color::Rgba(0.1, 0.4, 0.1, 1.0);
+
 ///
 /// Represents an animation region element
 ///
@@ -99,6 +102,35 @@ impl VectorElement for AnimationElement {
         self.render_static(gc, properties, when);
     }
 
+    fn render_overlay(&self, gc: &mut dyn GraphicsContext, _when: Duration) { 
+        gc.new_path();
+
+        // Add the region outline to the paths
+        let RegionDescription(paths, _effect) = &self.description;
+        for BezierPath(start_point, other_points) in paths.iter() {
+            // Add closed paths for each section of the region
+            gc.move_to(start_point.x() as _, start_point.y() as _);
+            for BezierPoint(cp1, cp2, end_point) in other_points.iter() {
+                gc.bezier_curve_to(
+                    end_point.x() as _, end_point.y() as _,
+                    cp1.x() as _, cp1.y() as _,
+                    cp2.x() as _, cp2.y() as _);
+            }
+            gc.close_path();
+        }
+
+        // Draw the region outline
+        gc.line_width_pixels(3.0);
+        gc.stroke_color(ANIMATION_OUTLINE_DARK);
+        gc.stroke();
+
+        gc.line_width_pixels(1.0);
+        gc.stroke_color(ANIMATION_OUTLINE);
+        gc.stroke();
+
+        // TODO: add any motion paths that might be present in the description
+    }
+
     fn render_static(&self, _gc: &mut dyn GraphicsContext, _properties: &VectorProperties, _when: Duration) { 
     }
 
@@ -111,9 +143,7 @@ impl VectorElement for AnimationElement {
         let RegionDescription(paths, _effect)        = &self.description;
 
         let regions = paths.iter()
-            .flat_map(|path| {
-                let BezierPath(start_point, other_points)   = path;
-
+            .flat_map(|BezierPath(start_point, other_points)| {
                 iter::once(ControlPoint::BezierPoint(start_point.x(), start_point.y()))
                     .chain(other_points.iter().flat_map(|BezierPoint(cp1, cp2, end_point)| [
                         ControlPoint::BezierControlPoint(cp1.x(), cp1.y()),
