@@ -326,7 +326,7 @@ impl KeyFrameCore {
             let wrapper = core.elements.get(&current_element);
             let wrapper = match wrapper {
                 Some(wrapper)   => wrapper,
-                None            => { break; }
+                None            => { println!("Element {:?} missing", current_element); break; }    // TODO: animations can be left in this state by some crashes
             };
 
             // Render the element if it is displayed on this frame
