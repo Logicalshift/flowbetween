@@ -148,7 +148,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
                     advance_edit_counter = true;
                 },
 
-                Layer(_, CreateAnimation(_, _)) => {
+                Layer(_, CreateAnimation(_, _, _)) => {
                     advance_edit_counter = true;
                 },
 
