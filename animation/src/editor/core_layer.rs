@@ -5,7 +5,10 @@ use crate::storage::layer_properties::*;
 
 use futures::prelude::*;
 
+use flo_canvas_animation::description::*;
+
 use std::sync::*;
+use std::time::{Duration};
 
 impl StreamAnimationCore {
     ///
@@ -20,18 +23,31 @@ impl StreamAnimationCore {
         // Perform the edit
         async move {
             match layer_edit {
-                Paint(when, paint_edit)                     => { self.paint_edit(layer_id, *when, paint_edit).await }
-                Path(when, path_edit)                       => { self.path_edit(layer_id, *when, path_edit).await }
-                AddKeyFrame(when)                           => { self.add_key_frame(layer_id, *when).await }
-                RemoveKeyFrame(when)                        => { self.remove_key_frame(layer_id, *when).await }
-                SetName(new_name)                           => { self.set_layer_name(layer_id, new_name).await }
-                SetOrdering(ordering)                       => { self.set_layer_ordering(layer_id, *ordering).await }
-                CreateAnimation(when, description)          => { todo!("CreateAnimation is not supported yet"); }
+                Paint(when, paint_edit)                         => { self.paint_edit(layer_id, *when, paint_edit).await }
+                Path(when, path_edit)                           => { self.path_edit(layer_id, *when, path_edit).await }
+                CreateAnimation(when, element_id, description)  => { self.create_animation(layer_id, *when, description.clone()); }
+                AddKeyFrame(when)                               => { self.add_key_frame(layer_id, *when).await }
+                RemoveKeyFrame(when)                            => { self.remove_key_frame(layer_id, *when).await }
+                SetName(new_name)                               => { self.set_layer_name(layer_id, new_name).await }
+                SetOrdering(ordering)                           => { self.set_layer_ordering(layer_id, *ordering).await }
                 Cut { path, when, inside_group }   => { 
                     let cut = self.layer_cut(layer_id, *when, Arc::clone(path)).await;
                     self.apply_layer_cut(layer_id, *when, cut, *inside_group).await;
                 }
             }
+        }
+    }
+
+    ///
+    /// Creates an animation element on a keyframe
+    ///
+    pub fn create_animation<'a>(&'a mut self, layer_id: u64, when: Duration, description: RegionDescription) -> impl 'a+Future<Output=()> {
+        async move {
+            // Ensure that the appropriate keyframe is in the cache. No edit can take place if there's no keyframe at this time
+            let current_keyframe = match self.edit_keyframe(layer_id, when).await {
+                None            => { return; }
+                Some(keyframe)  => keyframe
+            };
         }
     }
 

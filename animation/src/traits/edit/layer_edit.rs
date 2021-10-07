@@ -32,7 +32,7 @@ pub enum LayerEdit {
     Path(Duration, PathEdit),
 
     /// Creates an animation region on the keyframe containing the specified duration
-    CreateAnimation(Duration, RegionDescription),
+    CreateAnimation(Duration, ElementId, RegionDescription),
 
     /// Cuts elements within this layer along a path, creating two groups of th e parts of the elements within the path and those outside
     Cut { path: Arc<Vec<PathComponent>>, when: Duration, inside_group: ElementId },

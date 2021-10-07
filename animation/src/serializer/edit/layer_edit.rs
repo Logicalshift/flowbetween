@@ -20,7 +20,7 @@ impl LayerEdit {
             RemoveKeyFrame(when)                        => { data.write_chr('-'); data.write_duration(*when); },
             SetName(name)                               => { data.write_chr('N'); data.write_str(name); },
             SetOrdering(ordering)                       => { data.write_chr('O'); data.write_u64(*ordering); }
-            CreateAnimation(when, description)          => { data.write_chr('A'); data.write_duration(*when); data.write_str(&json::to_string(description).unwrap()); }
+            CreateAnimation(when, id, description)      => { data.write_chr('A'); data.write_duration(*when); id.serialize(data); data.write_str(&json::to_string(description).unwrap()); }
 
             Cut { path, when, inside_group }   => { 
                 data.write_chr('c'); 
@@ -57,7 +57,7 @@ impl LayerEdit {
             '-' => { Some(LayerEdit::RemoveKeyFrame(data.next_duration())) }
             'N' => { Some(LayerEdit::SetName(data.next_string())) }
             'O' => { Some(LayerEdit::SetOrdering(data.next_u64())) }
-            'A' => { Some(LayerEdit::CreateAnimation(data.next_duration(), json::from_str(&data.next_string()).ok()?)) }
+            'A' => { Some(LayerEdit::CreateAnimation(data.next_duration(), ElementId::deserialize(data)?, json::from_str(&data.next_string()).ok()?)) }
 
             'c' => {
                 let when            = data.next_duration();
@@ -150,7 +150,7 @@ mod test {
     fn create_animation() {
         let mut encoded     = String::new();
         let circle          = Circle::new(Coord2(100.0, 100.0), 50.0).to_path::<SimpleBezierPath>();
-        let edit            = LayerEdit::CreateAnimation(Duration::from_millis(1234), RegionDescription(vec![circle.into()], EffectDescription::Sequence(vec![])));
+        let edit            = LayerEdit::CreateAnimation(Duration::from_millis(1234), ElementId::Assigned(42), RegionDescription(vec![circle.into()], EffectDescription::Sequence(vec![])));
         edit.serialize(&mut encoded);
 
         assert!(LayerEdit::deserialize(&mut encoded.chars()) == Some(edit));
