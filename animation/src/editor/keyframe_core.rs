@@ -326,7 +326,7 @@ impl KeyFrameCore {
             let wrapper = core.elements.get(&current_element);
             let wrapper = match wrapper {
                 Some(wrapper)   => wrapper,
-                None            => { println!("Element {:?} missing", current_element); break; }    // TODO: animations can be left in this state by some crashes
+                None            => { break; }
             };
 
             // Render the element if it is displayed on this frame
@@ -1017,6 +1017,34 @@ impl KeyFrameCore {
 
         self.invalidate();
         updates
+    }
+
+    ///
+    /// Returns true if there are any unlinked elements in this frame
+    ///
+    pub fn has_unlinked_elements(&self) -> bool {
+        // Check that all the root elements have a 'next' element
+        let mut next_element    = self.initial_element;
+
+        while let Some(current_element) = next_element {
+            // Fetch the wrapper for the element
+            let wrapper = self.elements.get(&current_element);
+            let wrapper = match wrapper {
+                Some(wrapper)   => wrapper,
+                None            => { return true; }
+            };
+
+            // Move on to the next element in the list
+            next_element = wrapper.order_before;
+        }
+
+        // TODO: check for elements with a 'parent' that's not in the list
+        // TODO: check for elements outside of the root set
+        // TODO: check for missing attachments
+        // TODO: check for attachments added to elements that don't exist
+
+        // None of the tests found any missing elements
+        return false;
     }
 
     ///
