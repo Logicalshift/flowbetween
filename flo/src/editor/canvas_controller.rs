@@ -1,6 +1,7 @@
-use super::super::model::*;
-use super::super::tools::*;
-use super::super::animation_canvas::*;
+use crate::model::*;
+use crate::tools::*;
+use crate::animation_canvas::*;
+use crate::animation_canvas::overlay_layers::*;
 
 use flo_ui::*;
 use flo_canvas::*;
@@ -203,6 +204,23 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         self.core.sync(move |core| {
             core.renderer.draw_frame_layers(&*canvas, size);
             core.renderer.draw_overlays(&*canvas);
+        });
+    }
+
+    ///
+    /// Draws the overlay for the selected canvas layer
+    ///
+    fn draw_selected_layer_overlay(&self, frame: &Arc<dyn Frame>) {
+        // Generate the drawing instructions for the overlay
+        let mut overlay_drawing     = vec![Draw::ClearLayer];
+        frame.render_overlay(&mut overlay_drawing);
+
+        // Select the canvas
+        let canvas                  = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
+
+        // Draw the overlay to the core
+        self.core.sync(move |core| {
+            core.renderer.overlay(&canvas, OVERLAY_ELEMENTS, overlay_drawing);
         });
     }
 
