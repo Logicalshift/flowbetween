@@ -3,6 +3,8 @@ use super::element_transform::*;
 use crate::traits::path::*;
 use crate::traits::group_type::*;
 
+use flo_canvas_animation::description::*;
+
 use std::sync::*;
 use std::time::{Duration};
 
@@ -66,5 +68,8 @@ pub enum ElementEdit {
     ConvertToPath,
 
     /// Applies one or more transformations to the elements
-    Transform(Vec<ElementTransform>)
+    Transform(Vec<ElementTransform>),
+
+    /// If this element is an animation element, updates the region description to a new region
+    SetAnimationDescription(RegionDescription)
 }

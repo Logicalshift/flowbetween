@@ -123,6 +123,10 @@ impl StreamAnimationCore {
                     // Send the updates to storage
                     self.request(updates).await;
                 }
+
+                SetAnimationDescription(new_description) => {
+                    todo!("SetAnimationDescription is not supported yet")
+                }
             }
         }
     }

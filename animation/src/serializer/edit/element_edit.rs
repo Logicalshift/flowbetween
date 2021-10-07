@@ -6,6 +6,8 @@ use crate::traits::*;
 use std::sync::*;
 use std::time::{Duration};
 
+use serde_json as json;
+
 impl ElementEdit {
     ///
     /// Generates a serialized version of this edit on the specified data target
@@ -23,6 +25,7 @@ impl ElementEdit {
             ConvertToPath                   => { data.write_chr('p'); }
             Group(group_id, group_type)     => { data.write_chr('g'); group_id.serialize(data); group_type.serialize(data); }
             Ungroup                         => { data.write_chr('u'); }
+            SetAnimationDescription(desc)   => { data.write_chr('A'); data.write_str(&json::to_string(desc).unwrap()); }
 
             SetControlPoints(points, when)  => { 
                 data.write_chr('c');
@@ -101,6 +104,10 @@ impl ElementEdit {
                 Some(ElementEdit::Ungroup)
             }
 
+            'A' => {
+                Some(ElementEdit::SetAnimationDescription(json::from_str(&data.next_string()).ok()?))
+            }
+
             'C' => {
                 // Obsolete version from older versions of FlowBetween
                 let num_points      = data.next_usize();
@@ -177,6 +184,10 @@ impl ElementEdit {
 #[cfg(test)]
 mod test {
     use super::*;
+    use flo_curves::*;
+    use flo_curves::arc::*;
+    use flo_curves::bezier::path::*;
+    use flo_canvas_animation::description::*;
 
     #[test]
     fn add_attachment() {
@@ -272,6 +283,16 @@ mod test {
         ElementEdit::Ungroup.serialize(&mut encoded);
 
         assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Ungroup));
+    }
+
+    #[test]
+    fn set_animation_description() {
+        let mut encoded     = String::new();
+        let circle          = Circle::new(Coord2(100.0, 100.0), 50.0).to_path::<SimpleBezierPath>();
+        let set_animation   = ElementEdit::SetAnimationDescription(RegionDescription(vec![circle.into()], EffectDescription::Sequence(vec![])));
+        set_animation.serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(set_animation));
     }
 
     #[test]

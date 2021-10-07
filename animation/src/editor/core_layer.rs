@@ -26,6 +26,7 @@ impl StreamAnimationCore {
                 RemoveKeyFrame(when)                        => { self.remove_key_frame(layer_id, *when).await }
                 SetName(new_name)                           => { self.set_layer_name(layer_id, new_name).await }
                 SetOrdering(ordering)                       => { self.set_layer_ordering(layer_id, *ordering).await }
+                CreateAnimation(when, description)          => { todo!("CreateAnimation is not supported yet"); }
                 Cut { path, when, inside_group }   => { 
                     let cut = self.layer_cut(layer_id, *when, Arc::clone(path)).await;
                     self.apply_layer_cut(layer_id, *when, cut, *inside_group).await;
