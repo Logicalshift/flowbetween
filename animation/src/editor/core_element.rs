@@ -125,7 +125,7 @@ impl StreamAnimationCore {
                 }
 
                 SetAnimationDescription(new_description) => {
-                    todo!("SetAnimationDescription is not supported yet")
+                    self.update_elements(element_ids, move |mut wrapper| { let id = wrapper.element.id(); wrapper.element = Vector::AnimationRegion(AnimationElement::new(id, new_description.clone())); ChangeWrapper(wrapper) }).await;
                 }
             }
         }
