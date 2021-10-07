@@ -168,6 +168,9 @@ impl StreamAnimationCore {
                 Layer(layer_id, Path(when, PathEdit::BrushProperties(element, properties))) =>
                     Layer(*layer_id, Path(*when, PathEdit::BrushProperties(self.assign_element_id(*element).await, properties.clone()))),
 
+                Layer(layer_id, CreateAnimation(when, element, description)) =>
+                    Layer(*layer_id, CreateAnimation(*when, self.assign_element_id(*element).await, description.clone())),
+
                 Element(elements, Group(group_id, group_type)) =>
                     Element(elements.clone(), Group(self.assign_element_id(*group_id).await, *group_type)),
 
