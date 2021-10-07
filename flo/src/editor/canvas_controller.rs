@@ -83,6 +83,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
         // Connect events to the core
         Self::pipe_onion_skin_renders(main_canvas.clone(), onion_skin_model.clone(), core.clone());
+        Self::pipe_selected_layer_overlay(main_canvas.clone(), view_model.frame().frame.clone(), view_model.frame_update_count(), core.clone());
 
         // Create the controller
         let controller = CanvasController {
@@ -127,6 +128,40 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
             renderer.render(&*canvas, &mut core.renderer, onion_skins, past_color, future_color);
             Box::pin(future::ready(()))
         })
+    }
+
+    ///
+    /// Draws the overlay for the currently selected layer whenever it changes
+    ///
+    fn pipe_selected_layer_overlay(canvas: Resource<BindingCanvas>, frame: BindRef<Option<Arc<dyn Frame>>>, frame_edit_counter: BindRef<u64>, core: Arc<Desync<CanvasCore<Anim>>>) {
+        // Create a stream of frame updates
+        let selected_frame          = computed(move || {
+            // Fetch the current edit
+            let frame       = frame.get();
+            let edit_count  = frame_edit_counter.get();
+
+            // TODO: always updating every time the edit count is changed could get expensive if there are a lot of overlays
+            // (right now just expecting a couple of animation elements)
+            (frame, edit_count)
+        });
+        let selected_frame_stream   = follow(selected_frame);
+
+        // Update the overlay whenever the frame changes
+        pipe_in(core, selected_frame_stream, move |core, (frame, _edit_count)| {
+            if let Some(frame) = frame {
+                // Draw a new overlay for the frame
+                let mut overlay_drawing     = vec![Draw::ClearLayer];
+                frame.render_overlay(&mut overlay_drawing);
+
+                // Draw as the layer overlay
+                core.renderer.overlay(&canvas, OVERLAY_ELEMENTS, overlay_drawing);
+            } else {
+                // Clear the overlay
+                core.renderer.overlay(&canvas, OVERLAY_ELEMENTS, vec![Draw::ClearLayer]);
+            }
+
+            Box::pin(future::ready(()))
+        });
     }
 
     ///
@@ -204,23 +239,6 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         self.core.sync(move |core| {
             core.renderer.draw_frame_layers(&*canvas, size);
             core.renderer.draw_overlays(&*canvas);
-        });
-    }
-
-    ///
-    /// Draws the overlay for the selected canvas layer
-    ///
-    fn draw_selected_layer_overlay(&self, frame: &Arc<dyn Frame>) {
-        // Generate the drawing instructions for the overlay
-        let mut overlay_drawing     = vec![Draw::ClearLayer];
-        frame.render_overlay(&mut overlay_drawing);
-
-        // Select the canvas
-        let canvas                  = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
-
-        // Draw the overlay to the core
-        self.core.sync(move |core| {
-            core.renderer.overlay(&canvas, OVERLAY_ELEMENTS, overlay_drawing);
         });
     }
 
