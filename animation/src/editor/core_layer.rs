@@ -1,3 +1,4 @@
+use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use crate::traits::*;
 use crate::storage::storage_api::*;
@@ -25,7 +26,7 @@ impl StreamAnimationCore {
             match layer_edit {
                 Paint(when, paint_edit)                         => { self.paint_edit(layer_id, *when, paint_edit).await }
                 Path(when, path_edit)                           => { self.path_edit(layer_id, *when, path_edit).await }
-                CreateAnimation(when, element_id, description)  => { self.create_animation(layer_id, *when, description.clone()); }
+                CreateAnimation(when, element_id, description)  => { self.create_animation(layer_id, *when, *element_id, description.clone()).await; }
                 AddKeyFrame(when)                               => { self.add_key_frame(layer_id, *when).await }
                 RemoveKeyFrame(when)                            => { self.remove_key_frame(layer_id, *when).await }
                 SetName(new_name)                               => { self.set_layer_name(layer_id, new_name).await }
@@ -41,13 +42,33 @@ impl StreamAnimationCore {
     ///
     /// Creates an animation element on a keyframe
     ///
-    pub fn create_animation<'a>(&'a mut self, layer_id: u64, when: Duration, description: RegionDescription) -> impl 'a+Future<Output=()> {
+    pub fn create_animation<'a>(&'a mut self, layer_id: u64, when: Duration, element_id: ElementId, description: RegionDescription) -> impl 'a+Future<Output=()> {
         async move {
             // Ensure that the appropriate keyframe is in the cache. No edit can take place if there's no keyframe at this time
             let current_keyframe = match self.edit_keyframe(layer_id, when).await {
                 None            => { return; }
                 Some(keyframe)  => keyframe
             };
+
+            // Create the animation element
+            let element = AnimationElement::new(element_id, description);
+            let element = Vector::AnimationRegion(element);
+
+            // Edit the keyframe
+            let storage_updates = current_keyframe.future_sync(move |current_keyframe| {
+                async move {
+                    // Add to a wrapper
+                    let wrapper     = ElementWrapper::attached_with_element(element, when);
+
+                    // Append to the current keyframe and return the list of storage commands
+                    let add_element = current_keyframe.add_element_to_end(element_id, wrapper);
+
+                    add_element
+                }.boxed()
+            }).await;
+
+            // Send to the storage
+            self.request(storage_updates.unwrap()).await;
         }
     }
 
