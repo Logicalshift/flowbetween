@@ -1,5 +1,5 @@
 use super::*;
-use super::super::tools::*;
+use crate::tools::*;
 
 use flo_animation::*;
 
@@ -9,6 +9,7 @@ lazy_static! {
     pub static ref CANVAS_TOOLSET_ID: ToolSetId      = ToolSetId(String::from("77F61386-5279-4636-9AA5-D5C1F788E184"));
     pub static ref SELECTION_TOOLSET_ID: ToolSetId   = ToolSetId(String::from("52E89E39-2955-4330-841C-70E679EA6B5E"));
     pub static ref PAINT_TOOLSET_ID: ToolSetId       = ToolSetId(String::from("4795326D-9A7B-45D0-A6EF-13BD2648699D"));
+    pub static ref ANIMATION_TOOLSET_ID: ToolSetId   = ToolSetId(String::from("517DB0F4-90BB-4D5C-829D-AAAF46E0119B"));
 }
 
 pub struct CanvasTools<Anim: 'static+Animation> {
@@ -34,6 +35,13 @@ pub struct PaintTools<Anim: 'static+Animation> {
     shape_rectangle:    Arc<FloTool<Anim>>,
     shape_polygon:      Arc<FloTool<Anim>>,
     flood_fill:         Arc<FloTool<Anim>>
+}
+
+///
+/// The animation toolset
+///
+pub struct AnimationTools<Anim: 'static+Animation> {
+    create_region:      Arc<FloTool<Anim>>
 }
 
 impl<Anim: EditableAnimation+Animation> CanvasTools<Anim> {
@@ -63,6 +71,14 @@ impl<Anim: EditableAnimation> PaintTools<Anim> {
             shape_ellipse:      ShapeTool::ellipse().to_flo_tool(),
             shape_rectangle:    ShapeTool::rectangle().to_flo_tool(),
             shape_polygon:      ShapeTool::polygon().to_flo_tool()
+        }
+    }
+}
+
+impl<Anim: EditableAnimation> AnimationTools<Anim> {
+    pub fn new() -> AnimationTools<Anim> {
+        AnimationTools {
+            create_region: CreateAnimationRegion::new().to_flo_tool()
         }
     }
 }
@@ -106,6 +122,18 @@ impl<Anim: Animation> ToolSet<Anim> for PaintTools<Anim> {
             Arc::clone(&self.shape_ellipse),
             Arc::clone(&self.shape_polygon),
             Arc::clone(&self.flood_fill)
+        ]
+    }
+}
+
+impl<Anim: Animation> ToolSet<Anim> for AnimationTools<Anim> {
+    fn id(&self) -> ToolSetId { ANIMATION_TOOLSET_ID.clone() }
+
+    fn set_name(&self) -> String { "Animation".to_string() }
+
+    fn tools(&self) -> Vec<Arc<FloTool<Anim>>> {
+        vec![
+            Arc::clone(&self.create_region),
         ]
     }
 }

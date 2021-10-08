@@ -7,6 +7,7 @@ mod shape;
 mod eraser;
 mod flood_fill;
 mod lasso;
+mod animation;
 mod tool_sets;
 
 pub use self::select::*;
@@ -18,4 +19,5 @@ pub use self::shape::*;
 pub use self::eraser::*;
 pub use self::flood_fill::*;
 pub use self::lasso::*;
+pub use self::animation::*;
 pub use self::tool_sets::*;
