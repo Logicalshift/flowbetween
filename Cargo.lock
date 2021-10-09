@@ -1088,6 +1088,7 @@ dependencies = [
  "flo_animation",
  "flo_binding",
  "flo_canvas",
+ "flo_canvas_animation",
  "flo_curves",
  "flo_stream",
  "flo_ui",
