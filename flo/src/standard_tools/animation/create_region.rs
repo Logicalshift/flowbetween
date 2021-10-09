@@ -4,6 +4,7 @@ use super::super::lasso::*;
 
 use flo_ui::*;
 use flo_canvas::*;
+use flo_binding::*;
 use flo_animation::*;
 use flo_curves::bezier::*;
 use flo_canvas_animation::description::*;
@@ -71,6 +72,28 @@ impl CreateAnimationRegion {
     }
 
     ///
+    /// Adds a new animation region to the animation
+    ///
+    fn add_new_region<Anim: 'static+EditableAnimation>(new_region: BezierPath, actions: &mut ToolActionPublisher<()>, flo_model: &Arc<FloModel<Anim>>) {
+        // Fetch the selected layer and the active keyframe
+        let selected_layer  = flo_model.timeline().selected_layer.get();
+        let keyframe_time   = flo_model.frame().keyframe_time.get();
+
+        // If there's a keyframe and a layer, add a new animation region for that keyframe
+        if let Some((selected_layer, keyframe_time)) = selected_layer.and_then(|layer| keyframe_time.map(move |time| (layer, time))) {
+            // The region is initially an empty description with just this path
+            let empty_region    = RegionDescription(vec![new_region], EffectDescription::Sequence(vec![]));
+
+            // Generate the create region editing operation
+            let create_region   = LayerEdit::CreateAnimation(keyframe_time, ElementId::Unassigned, empty_region);
+            let create_region   = AnimationEdit::Layer(selected_layer, create_region);
+
+            // Send as a tool action
+            actions.send_actions(vec![ToolAction::EditAnimation(Arc::new(vec![create_region]))]);
+        }
+    }
+
+    ///
     /// Runs the main input handling loop for this animation region
     ///
     async fn handle_input<Anim: 'static+EditableAnimation>(input: ToolInputStream<()>, actions: ToolActionPublisher<()>, flo_model: Arc<FloModel<Anim>>) {
@@ -85,6 +108,11 @@ impl CreateAnimationRegion {
                     if painting.action == PaintAction::Start && painting.modifier_keys == vec![] {
                         // Create a new animation region
                         let new_region = Self::draw_region(painting, &mut input, &mut actions).await;
+
+                        if let Some(new_region) = new_region {
+                            // Add as a new region
+                            Self::add_new_region(new_region, &mut actions, &flo_model);
+                        }
                     }
                 }
 
