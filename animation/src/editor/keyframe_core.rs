@@ -1025,6 +1025,7 @@ impl KeyFrameCore {
     pub fn has_unlinked_elements(&self) -> bool {
         // Check that all the root elements have a 'next' element
         let mut next_element    = self.initial_element;
+        let mut last_element    = None;
 
         while let Some(current_element) = next_element {
             // Fetch the wrapper for the element
@@ -1035,7 +1036,13 @@ impl KeyFrameCore {
             };
 
             // Move on to the next element in the list
+            last_element = Some(current_element);
             next_element = wrapper.order_before;
+        }
+
+        // Should wind up at the last element in the frame
+        if last_element != self.last_element {
+            return true;
         }
 
         // TODO: check for elements with a 'parent' that's not in the list
