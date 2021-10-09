@@ -7,7 +7,7 @@ use std::time::{Duration};
 ///
 /// Serializable wrapper for elements
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ElementWrapper {
     /// The serialized element
     pub element: Vector,

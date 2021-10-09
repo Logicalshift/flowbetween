@@ -3,7 +3,7 @@ use crate::storage::storage_api::*;
 
 use std::collections::{HashMap};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum ElementChange {
     /// A change that is stored as an element wrapper
     Wrapper(ElementWrapper),
@@ -19,7 +19,7 @@ enum ElementChange {
 /// element changes at the start, once per element. The actual contents of the element are not
 /// read during the update so only the last update is required
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PendingStorageChange {
     /// The most recent version of the elements that these
     element_changes: HashMap<i64, ElementChange>,
