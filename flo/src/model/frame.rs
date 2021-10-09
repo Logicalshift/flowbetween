@@ -56,7 +56,10 @@ pub struct FrameModel {
     /// True if the current layer/selected time is on a keyframe
     pub keyframe_selected: BindRef<bool>,
 
-    /// The previous and next keyframes
+    /// The time when the current keyframe occurs
+    pub keyframe_time: BindRef<Option<Duration>>,
+
+    /// When the previous and next keyframes occur
     pub previous_and_next_keyframe: BindRef<(Option<Duration>, Option<Duration>)>,
 
     /// The layers in the current frame
@@ -83,6 +86,7 @@ impl FrameModel {
     pub fn new<Anim: Animation+'static>(animation: Arc<Anim>, edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, animation_update: BindRef<u64>, selected_layer: BindRef<Option<u64>>) -> FrameModel {
         // Create the bindings for the current frame state
         let keyframe_selected           = Self::keyframe_selected(Arc::clone(&animation), edits.resubscribe(), when.clone(), selected_layer.clone());
+        let keyframe_time               = Self::current_keyframe_time(Arc::clone(&animation), edits.resubscribe(), when.clone(), selected_layer.clone());
         let previous_and_next_keyframe  = Self::previous_next_keyframes(Arc::clone(&animation), edits.resubscribe(), when.clone(), selected_layer.clone());
 
         // The hashmap allows us to track frame bindings independently from layer bindings
@@ -162,6 +166,7 @@ impl FrameModel {
         FrameModel {
             create_keyframe_on_draw:    create_keyframe_on_draw,
             keyframe_selected:          keyframe_selected,
+            keyframe_time:              keyframe_time,
             previous_and_next_keyframe: previous_and_next_keyframe,
             layers:                     BindRef::new(&layers),
             frame:                      frame,
@@ -260,14 +265,42 @@ impl FrameModel {
     }
 
     ///
+    /// Returns a binding that tracks the time of the selected keyframe
+    ///
+    fn current_keyframe_time<Anim: Animation+'static>(animation: Arc<Anim>, edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> BindRef<Option<Duration>> {
+        // Get a stream of frame update events
+        let frame_updates           = Self::frame_update_stream(edits, when.clone(), selected_layer.clone());
+
+        // Update the binding whenever they change
+        let current_keyframe_time   = bind_stream(frame_updates, None, move |_, _| {
+            // Get the selected position in the timeline
+            let when    = when.get();
+            let layer   = selected_layer.get();
+
+            if let Some(layer) = layer {
+                // Get the keyframe for this time
+                let layer                   = animation.get_layer_with_id(layer);
+                let current_keyframe_time   = layer.and_then(|layer| layer.get_key_frame_at_time(when));
+
+                current_keyframe_time
+            } else {
+                // No selected layer
+                None
+            }
+        });
+
+        BindRef::from(current_keyframe_time)
+    }
+
+    ///
     /// Returns a binding of the previous and next keyframes
     ///
     fn previous_next_keyframes<Anim: Animation+'static>(animation: Arc<Anim>, edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> BindRef<(Option<Duration>, Option<Duration>)> {
         // Get a stream of frame update events
-        let frame_updates = Self::frame_update_stream(edits, when.clone(), selected_layer.clone());
+        let frame_updates       = Self::frame_update_stream(edits, when.clone(), selected_layer.clone());
 
         // Update the binding whenever they change
-        let previous_and_next = bind_stream(frame_updates, (None, None), move |_, _| {
+        let previous_and_next   = bind_stream(frame_updates, (None, None), move |_, _| {
             // Get the current position in the timeline
             let when    = when.get();
             let layer   = selected_layer.get();

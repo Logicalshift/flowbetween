@@ -117,6 +117,36 @@ impl Layer for StreamLayer {
     }
 
     ///
+    /// Returns the time of the keyframe that will be active at the specified time
+    ///
+    fn get_key_frame_at_time(&self, when: Duration) -> Option<Duration> {
+        // Request keyframes over a short period of time
+        let when                = when..(when + Duration::from_micros(1));
+
+        // Request the keyframe locations from the storage
+        let key_frames          = self.request_sync(vec![StorageCommand::ReadKeyFrames(self.layer_id, when.clone())]);
+
+        // Return the highest keyframe
+        let mut highest_frame   = None;
+
+        for response in key_frames.unwrap_or_else(|| vec![]) {
+            match response {
+                StorageResponse::KeyFrame(start, _end) => {
+                    if let Some(frame_time) = highest_frame {
+                        highest_frame = Some(Duration::max(frame_time, start));
+                    } else {
+                        highest_frame = Some(start);
+                    }
+                }
+                
+                _ => { }
+            }
+        }
+
+        highest_frame
+    }
+
+    ///
     /// Retrieves the previous and next keyframes from a particular point in time
     ///
     /// (If there's a keyframe at this point in time, it is not returned)

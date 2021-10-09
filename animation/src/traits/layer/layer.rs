@@ -43,6 +43,11 @@ pub trait Layer : Send+Sync {
     fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<dyn Iterator<Item=Duration>>;
 
     ///
+    /// Returns the time of the keyframe that will be active at the specified time
+    ///
+    fn get_key_frame_at_time(&self, when: Duration) -> Option<Duration>;
+
+    ///
     /// Retrieves the previous and next keyframes from a particular point in time
     ///
     /// (If there's a keyframe at this point in time, it is not returned)
