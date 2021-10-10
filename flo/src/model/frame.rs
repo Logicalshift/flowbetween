@@ -1,11 +1,11 @@
 use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
-use flo_curves::bezier::path::path_contains_point;
 
 use futures::*;
 use futures::future;
 use futures::stream::{BoxStream};
+use itertools::*;
 
 use std::sync::*;
 use std::collections::HashMap;
@@ -376,40 +376,38 @@ impl FrameModel {
         // Fetch the elements and their bounding boxes
         let elements        = self.elements.get();
         let more_elements   = Arc::clone(&elements);
-        let bounding_boxes  = self.bounding_boxes.get();
 
         let (x, y)          = point;
-        let path_point      = PathPoint::new(x, y);
+        let (x, y)          = (x as f64, y as f64);
 
-        // This would be considerably more elegant if rust understood that it could keep the Arc<Vec<_>> around to make the lifetime
-        // of elements.iter() work out. We use array indexes and multiple references to the elements array instead here, so the elements
-        // object can be owned by those functions.
-
-        // Iterate through the elements in reverse
-        let indexes = (0..elements.len()).into_iter().rev();
+        // Iterate through the elements in reverse, so the closest elements are returned first
+        let indexes         = (0..elements.len()).into_iter().rev();
 
         // Filter to the elements where the point is inside the bounding box
-        let inside_bounds = indexes.filter(move |element_index| {
-            bounding_boxes.get(&elements[*element_index].0.id())
-                .map(|bounds| bounds.contains(x, y))
-                .unwrap_or(false)
-        });
+        let is_selected     = indexes.map(move |idx| {
+                let (vector, properties)   = &elements[idx];
+                (idx, vector.is_selected_with_point(properties, x, y))
+            })
+            .filter_map(|(idx, priority)| {
+                priority.map(|priority| (idx, priority))
+            })
+            .sorted_by(|(a_idx, a_priority), (b_idx, b_priority)| {
+                if a_priority == b_priority {
+                    // Higher indexes are sorted first
+                    b_idx.cmp(a_idx)
+                } else {
+                    // Higher priorities are sorted first
+                    b_priority.cmp(a_priority)
+                }
+            });
 
         // Generate a result based on whether or not the match is inside the path for the element
-        let matches = inside_bounds
-            .map(move |element_index| {
-                // Get the vector properties from the more_elements array (elements is used above so we need two references)
-                let &(ref vector, ref properties)   = &more_elements[element_index];
-                let element_id                      = vector.id();
+        let matches = is_selected
+            .map(move |(element_index, priority)| {
+                let element_id = more_elements[element_index].0.id();
 
-                // Convert the element to paths and check if the point is inside
-                let paths                           = vector.to_path(properties, PathConversion::Fastest);
-                let inside_path                     = paths.map(|paths| paths.into_iter()
-                    .flat_map(|path| path.to_subpaths())
-                    .any(|path| path_contains_point(&path, &path_point))).unwrap_or(false);
-
-                // Any match inside the bounds is a match, but we often treat a point inside the path as a stronger match
-                if inside_path {
+                // A priority > 0 is considered inside the path
+                if priority > 0 {
                     ElementMatch::InsidePath(element_id)
                 } else {
                     ElementMatch::OnlyInBounds(element_id)
