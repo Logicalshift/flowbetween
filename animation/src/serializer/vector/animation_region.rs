@@ -27,6 +27,7 @@ impl AnimationElement {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::serializer::*;
 
     use flo_curves::*;
     use flo_curves::arc::*;
@@ -46,5 +47,25 @@ mod test {
         let decoded     = decoded.unwrap();
 
         assert!(decoded.description() == element.description());
+    }
+
+    #[test]
+    fn vector_animation_element() {
+        let circle              = Circle::new(Coord2(100.0, 100.0), 50.0).to_path::<SimpleBezierPath>();
+        let animation_region    = RegionDescription(vec![circle.into()], EffectDescription::Sequence(vec![]));
+
+        let mut encoded = String::new();
+        let element     = AnimationElement::new(ElementId::Assigned(1), animation_region.clone());
+        let vector      = Vector::AnimationRegion(element);
+        vector.serialize(&mut encoded);
+
+        let decoded     = Vector::deserialize(ElementId::Assigned(1), &mut encoded.chars());
+        let decoded     = decoded.unwrap().resolve(&mut |_id| None).unwrap();
+
+        if let Vector::AnimationRegion(decoded) = decoded {
+            assert!(decoded.description() == &animation_region);
+        } else {
+            assert!(false);
+        }
     }
 }

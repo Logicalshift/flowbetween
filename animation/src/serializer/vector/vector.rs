@@ -80,6 +80,12 @@ impl Vector {
                     Some(Vector::Shape(shape))
                 }))
             }
+            'A' => {
+                let animation_element = AnimationElement::deserialize(element_id, data)?;
+                Some(box_fn(move |_| { 
+                    Some(Vector::AnimationRegion(animation_element))
+                }))
+            }
             'm' => { 
                 MotionElement::deserialize(element_id, data)
                     .map(|motion| box_fn(move |_| Some(Vector::Motion(motion))))
