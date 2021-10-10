@@ -48,9 +48,13 @@ pub trait VectorElement : Send+Any {
     /// Returns a selection priority if the specified point should select this element when clicked using the selection tool
     ///
     /// The return value is 'None' if the point is not wihtin this element, otherwise is the selection priority. Items
-    /// with higher priorities are selected ahead of items with lower priorities. `Some(1)` is the default priority,
-    /// with `Some(0)` indicating a point that is within the bounding box for the element but not within the element
-    /// itself. 
+    /// with higher priorities are selected ahead of items with lower priorities. `Some(100)` is the default priority,
+    /// with `Some(-100)` indicating a point that is within the bounding box for the element but not within the element
+    /// itself.
+    ///
+    /// Other routines can use these priorities to make their own selections higher or lower priority as needed.
+    /// Priorities over 0 are considered to be 'inside' the path of the object and those at or below 0 are considered
+    /// to be 'outside' of the object's path.
     ///
     fn is_selected_with_point(&self, properties: &VectorProperties, x: f64, y: f64) -> Option<i32> {
         if let Some(paths) = self.to_path(properties, PathConversion::RemoveInteriorPoints) {
@@ -63,11 +67,11 @@ pub trait VectorElement : Send+Any {
                 let bounds = Rect::from(path); 
                 if x >= bounds.x1 as _ && x <= bounds.x2 as _ && y >= bounds.y1 as _ && y <= bounds.y2 as _ {
                     // Is within the bounding box
-                    path_priority = Some(0);
+                    path_priority = Some(-100);
 
                     // Check if we're within the path itself to see if we want to increase the priority to 1
                     if point_is_in_path(&path.to_subpaths(), &PathPoint::new(x as _, y as _)) {
-                        path_priority = Some(1);
+                        path_priority = Some(100);
                     }
                 }
 
