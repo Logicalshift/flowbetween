@@ -4,6 +4,7 @@ use super::control_point::*;
 use super::path_conversion_options::*;
 use super::super::path::*;
 use super::super::edit::*;
+use crate::raycast::*;
 
 use flo_canvas::*;
 use flo_canvas_animation::*;
@@ -64,7 +65,10 @@ pub trait VectorElement : Send+Any {
                     // Is within the bounding box
                     path_priority = Some(0);
 
-                    // TODO: Check if we're within the path itself to see if we want to increase the priority to 1
+                    // Check if we're within the path itself to see if we want to increase the priority to 1
+                    if point_is_in_path(&path.to_subpaths(), &PathPoint::new(x as _, y as _)) {
+                        path_priority = Some(1);
+                    }
                 }
 
                 // If this path is higher priority than the current priority, use it as a target
