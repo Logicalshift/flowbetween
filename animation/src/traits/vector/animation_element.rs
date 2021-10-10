@@ -15,8 +15,8 @@ use std::iter;
 use std::sync::*;
 use std::time::{Duration};
 
-pub const ANIMATION_OUTLINE:                Color = Color::Rgba(0.2, 0.8, 0.2, 1.0);
-pub const ANIMATION_OUTLINE_DARK:           Color = Color::Rgba(0.1, 0.4, 0.1, 1.0);
+pub const ANIMATION_OUTLINE:                Color = Color::Rgba(0.2, 0.8, 0.2, 0.6);
+pub const ANIMATION_OUTLINE_DARK:           Color = Color::Rgba(0.1, 0.4, 0.1, 0.4);
 
 ///
 /// Represents an animation region element
