@@ -44,6 +44,43 @@ pub trait VectorElement : Send+Any {
     fn render_static(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, when: Duration);
 
     ///
+    /// Returns a selection priority if the specified point should select this element when clicked using the selection tool
+    ///
+    /// The return value is 'None' if the point is not wihtin this element, otherwise is the selection priority. Items
+    /// with higher priorities are selected ahead of items with lower priorities. `Some(1)` is the default priority,
+    /// with `Some(0)` indicating a point that is within the bounding box for the element but not within the element
+    /// itself. 
+    ///
+    fn is_selected_with_point(&self, properties: &VectorProperties, x: f64, y: f64) -> Option<i32> {
+        if let Some(paths) = self.to_path(properties, PathConversion::RemoveInteriorPoints) {
+            // Check if the specified point is inside one of the paths
+            let mut priority = None;
+
+            for path in paths.iter() {
+                let mut path_priority = None;
+
+                let bounds = Rect::from(path); 
+                if x >= bounds.x1 as _ && x <= bounds.x2 as _ && y >= bounds.y1 as _ && y <= bounds.y2 as _ {
+                    // Is within the bounding box
+                    path_priority = Some(0);
+
+                    // TODO: Check if we're within the path itself to see if we want to increase the priority to 1
+                }
+
+                // If this path is higher priority than the current priority, use it as a target
+                if priority.is_none() || path_priority > priority {
+                    priority = path_priority;
+                }
+            }
+
+            priority
+        } else {
+            // Not within the path
+            None
+        }
+    }
+
+    ///
     /// For elements that are not visible in the final animation, renders an editing overlay to the specified graphics context 
     ///
     fn render_overlay(&self, _gc: &mut dyn GraphicsContext, _when: Duration) { }
