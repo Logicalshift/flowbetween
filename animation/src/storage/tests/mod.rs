@@ -3,6 +3,7 @@ use crate::editor::*;
 use crate::storage::*;
 use futures::*;
 
+mod animation_element;
 mod animation_properties;
 mod layers;
 mod cut_paths;
