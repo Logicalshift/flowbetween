@@ -56,4 +56,7 @@ fn create_animation_element() {
         // Not a path
         assert!(false);
     }
+
+    assert!(frame.vector_elements().unwrap().any(|item| item.id() == ElementId::Assigned(100)));
+    assert!(frame.vector_elements().unwrap().any(|item| item.id() == ElementId::Assigned(101)));
 }
