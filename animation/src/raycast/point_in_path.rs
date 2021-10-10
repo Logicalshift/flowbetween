@@ -1,5 +1,4 @@
 use flo_curves::*;
-use flo_curves::bezier::*;
 use flo_curves::bezier::path::*;
 
 ///
@@ -12,16 +11,17 @@ where P::Point: Coordinate2D {
 
     // Cast a ray towards the point (direction doesn't matter, so we'll cast at a 45-degree angle
     let ray                     = (*point - P::Point::from_components(&[1.0, 1.0]), *point);
-    let ray_direction           = ray.1 - ray.0;
+    // let ray_direction           = ray.1 - ray.0;
     let collisions              = graph_path.ray_collisions(&ray);
 
     // Total direction is 0 when the ray is outside of the path
     let mut total_direction     = 0;
 
-    for (collision, curve_t, ray_t, _position) in collisions {
+    for (_collision, _curve_t, ray_t, _position) in collisions {
         // Stop once we reach the target point
         if ray_t > 1.0 { break; }
 
+        /* -- TODO: while this does give us a non-zero winding rule, it seems to fail for things like brush strokes that overlap themselves
         // Get the edge where the collision occured
         let edge_ref        = match collision {
             GraphRayCollision::SingleEdge(edge_ref)     => edge_ref,
@@ -36,6 +36,10 @@ where P::Point: Coordinate2D {
         let direction       = if path_direction == PathDirection::Anticlockwise { -direction } else { direction };
 
         total_direction     += direction;
+        */
+
+        // Even-odd path detection
+        total_direction     = if total_direction == 0 { 1 } else { 0 };
     }
 
     // Point is inside the path if the ray has crossed an odd number of lines
