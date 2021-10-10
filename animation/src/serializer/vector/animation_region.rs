@@ -23,3 +23,28 @@ impl AnimationElement {
         Some(AnimationElement::new(element_id, description))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use flo_curves::*;
+    use flo_curves::arc::*;
+    use flo_curves::bezier::path::*;
+    use flo_canvas_animation::description::*;
+
+    #[test]
+    fn animation_element() {
+        let circle              = Circle::new(Coord2(100.0, 100.0), 50.0).to_path::<SimpleBezierPath>();
+        let animation_region    = RegionDescription(vec![circle.into()], EffectDescription::Sequence(vec![]));
+
+        let mut encoded = String::new();
+        let element     = AnimationElement::new(ElementId::Assigned(1), animation_region);
+        element.serialize(&mut encoded);
+
+        let decoded     = AnimationElement::deserialize(ElementId::Assigned(1), &mut encoded.chars());
+        let decoded     = decoded.unwrap();
+
+        assert!(decoded.description() == element.description());
+    }
+}
