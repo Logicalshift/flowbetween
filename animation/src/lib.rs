@@ -7,10 +7,8 @@
 extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde;
-extern crate modifier;
-extern crate futures;
-extern crate itertools;
+#[macro_use]
+extern crate log;
 
 mod traits;
 mod onion_skin;

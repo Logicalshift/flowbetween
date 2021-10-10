@@ -142,6 +142,7 @@ impl KeyFrameCore {
                         }
                     } else {
                         // Element cannot be resolved
+                        warn!("Element {:?} was referenced for this frame but cannot be resolved", *element_id);
                         resolved.insert(*element_id, ElementWrapper::error());
                     }
                 } else {
@@ -157,6 +158,10 @@ impl KeyFrameCore {
                 if let Some(element_wrapper) = resolved.get(element_id) {
                     if element_wrapper.parent.is_none() && element_wrapper.order_after.is_none() && !element_wrapper.unattached {
                         if Some(*element_id) > initial_element {
+                            if initial_element.is_some() {
+                                warn!("Found more than one possible initial element for this frame: {:?} and {:?}", initial_element.unwrap(), element_id);
+                            }
+
                             // If there are multiple possible initial elements, use the one with the highest element ID so the behaviour is at least consistent
                             initial_element = Some(*element_id);
                         }
