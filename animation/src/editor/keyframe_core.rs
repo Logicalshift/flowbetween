@@ -138,7 +138,12 @@ impl KeyFrameCore {
 
                         // Store the resolved element
                         if let Some(resolved_element) = resolved_element {
+                            if let Vector::Error = &resolved_element.element {
+                                warn!("Element {:?} failed to deserialize", *element_id);
+                            }
                             resolved.insert(*element_id, resolved_element);
+                        } else {
+                            warn!("Element {:?} was referenced for this frame but resolved to no element", *element_id);
                         }
                     } else {
                         // Element cannot be resolved
