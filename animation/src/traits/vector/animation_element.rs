@@ -109,14 +109,22 @@ impl VectorElement for AnimationElement {
 
         if collided {
             if distance < 2.0 {
+                // Clicking on the edge of the animation region selects it
                 Some(150)
-            } else if distance < 4.0 {
-                Some(100)
+            } else if distance < 8.0 {
+                // Clicking close to the edge of the animation region selects it if no other elements are near
+                Some(90)
             } else {
-                Some(50)
+                // Bounding boxes of other elements take priority over the region
+                Some(-150)
             }
         } else {
-            None
+            if distance < 2.0 {
+                // Clicking on the edge of the animation region selects it
+                Some(150)
+            } else {
+                None
+            }
         }
     }
 
