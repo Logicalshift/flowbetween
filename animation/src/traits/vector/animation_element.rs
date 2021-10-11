@@ -5,6 +5,7 @@ use super::vector_element::*;
 use super::path_conversion_options::*;
 use super::super::path::*;
 use super::super::edit::*;
+use crate::raycast::*;
 
 use flo_canvas::*;
 use flo_canvas_animation::*;
@@ -100,6 +101,23 @@ impl VectorElement for AnimationElement {
     fn render_animated(&self, gc: &mut AnimationLayerContext<'_>, properties: &VectorProperties, when: Duration) { 
         gc.add_region(self.animation_region());
         self.render_static(gc, properties, when);
+    }
+
+    fn is_selected_with_point(&self, _properties: &VectorProperties, x: f64, y: f64) -> Option<i32> {
+        let path                    = &self.description.0;
+        let (collided, distance)    = point_is_in_path_with_distance(path, &Point2D(x, y));
+
+        if collided {
+            if distance < 2.0 {
+                Some(150)
+            } else if distance < 4.0 {
+                Some(100)
+            } else {
+                Some(50)
+            }
+        } else {
+            None
+        }
     }
 
     fn render_overlay(&self, gc: &mut dyn GraphicsContext, _when: Duration) { 
