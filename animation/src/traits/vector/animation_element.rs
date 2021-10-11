@@ -95,7 +95,19 @@ impl VectorElement for AnimationElement {
     }
 
     fn to_path(&self, _properties: &VectorProperties, _options: PathConversion) -> Option<Vec<Path>> { 
-        None
+        let drawing = self.description.0
+            .iter()
+            .flat_map(|BezierPath(start_point, curves)| {
+                use self::PathOp::*;
+
+                iter::once(Move(start_point.x() as _, start_point.y() as _))
+                    .chain(curves.iter()
+                        .map(|BezierPoint(cp1, cp2, ep)| BezierCurve(((cp1.x() as _, cp1.y() as _), (cp2.x() as _, cp2.y() as _)), (ep.x() as _, ep.y() as _)) ))
+                    .chain(iter::once(PathOp::ClosePath))
+            })
+            .collect::<Vec<_>>();
+
+        Some(vec![drawing.into()])
     }
 
     fn render_animated(&self, gc: &mut AnimationLayerContext<'_>, properties: &VectorProperties, when: Duration) { 
