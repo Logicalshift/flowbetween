@@ -160,6 +160,31 @@ impl Path {
     ///
     /// Creates a path from a drawing iterator
     ///
+    pub fn from_path_ops<Drawing: IntoIterator<Item=PathOp>>(drawing: Drawing) -> Path {
+        let elements = drawing.into_iter()
+            .map(|draw| {
+                use self::PathOp::*;
+
+                match draw {
+                    Move(x, y)                  => Some(PathComponent::Move(PathPoint::from((x, y)))),
+                    Line(x, y)                  => Some(PathComponent::Line(PathPoint::from((x, y)))),
+                    BezierCurve((c1, c2), p)    => Some(PathComponent::Bezier(PathPoint::from(p), PathPoint::from(c1), PathPoint::from(c2))),
+                    ClosePath                   => Some(PathComponent::Close),
+
+                    NewPath                     => None
+                }
+            })
+            .filter(|element| element.is_some())
+            .map(|element| element.unwrap());
+
+        Path {
+            elements: Arc::new(elements.collect())
+        }
+    }
+
+    ///
+    /// Creates a path from a drawing iterator
+    ///
     pub fn from_drawing<Drawing: IntoIterator<Item=Draw>>(drawing: Drawing) -> Path {
         let elements = drawing.into_iter()
             .map(|draw| {
@@ -253,6 +278,12 @@ impl From<Vec<PathComponent>> for Path {
 impl From<Vec<Draw>> for Path {
     fn from(drawing: Vec<Draw>) -> Path {
         Path::from_drawing(drawing)
+    }
+}
+
+impl From<Vec<PathOp>> for Path {
+    fn from(drawing: Vec<PathOp>) -> Path {
+        Path::from_path_ops(drawing)
     }
 }
 
