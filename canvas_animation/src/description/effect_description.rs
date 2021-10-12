@@ -16,6 +16,12 @@ pub enum EffectDescription {
     /// Applies a series of effects in sequence
     Sequence(Vec<EffectDescription>),
 
+    /// Animate frame-by-frame by replacing the entire region
+    FrameByFrameReplaceWhole,
+
+    /// Animate frame-by-frame by adding new frames to the time=0 frame
+    FrameByFrameAddToInitial,
+
     /// Repeats another animation effect from the start
     Repeat(Duration, Box<EffectDescription>),
 

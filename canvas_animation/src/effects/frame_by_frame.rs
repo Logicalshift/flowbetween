@@ -13,7 +13,7 @@ pub enum FrameByFrameEffect {
     /// The whole content of the region is replaced by the new frame
     ReplaceWhole,
 
-    /// The content at time 0 is always added to
+    /// The content at time 0 will have future frame content added to it
     AddToInitial
 }
 

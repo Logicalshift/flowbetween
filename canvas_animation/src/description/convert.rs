@@ -149,6 +149,8 @@ impl Into<Box<dyn AnimationEffect>> for &EffectDescription {
                 Box::new(sequence_effect)
             },
 
+            FrameByFrameReplaceWhole                    => Box::new(FrameByFrameEffect::ReplaceWhole),
+            FrameByFrameAddToInitial                    => Box::new(FrameByFrameEffect::AddToInitial),
             Repeat(time, effect)                        => Box::new(RepeatEffect::<Box<dyn AnimationEffect>>::repeat_effect((&**effect).into(), *time)),
             TimeCurve(curve_points, effect)             => Box::new(TimeCurveEffect::<Box<dyn AnimationEffect>>::with_control_points((&**effect).into(), curve_points.clone())),
 
