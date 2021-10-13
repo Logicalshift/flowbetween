@@ -91,7 +91,7 @@ pub trait VectorElement : Send+Any {
     ///
     /// For elements that are not visible in the final animation, renders an editing overlay to the specified graphics context 
     ///
-    fn render_overlay(&self, _gc: &mut dyn GraphicsContext, _when: Duration) { }
+    fn render_overlay(&self, _gc: &mut dyn GraphicsContext, _properties: &VectorProperties, _when: Duration) { }
 
     ///
     /// Returns the properties to use for future elements

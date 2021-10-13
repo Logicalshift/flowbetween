@@ -294,6 +294,7 @@ impl KeyFrameCore {
     ///
     pub fn render_overlay(core: &Arc<KeyFrameCore>, gc: &mut dyn GraphicsContext, when: Duration) {
         let mut next_element    = core.initial_element;
+        let default_properties  = Self::default_properties(Arc::clone(core));
 
         while let Some(current_element) = next_element {
             // Fetch the wrapper for the element
@@ -303,8 +304,19 @@ impl KeyFrameCore {
                 None            => { break; }
             };
 
+            // Reset the properties
+            let mut properties = Arc::clone(&default_properties);
+
+            // Apply the properties from each of the attachments in turn
+            // TODO: more efficient to only work out the properties if they're needed (most elements have no overlay to draw). Need to see if this ever affects performance noticeably though.
+            for attachment_id in wrapper.attachments.iter() {
+                if let Some(attach_element) = core.elements.get(&attachment_id) {
+                    properties = attach_element.element.update_properties(Arc::clone(&properties), when);
+                }
+            }
+
             // Render this element
-            wrapper.element.render_overlay(gc, when);
+            wrapper.element.render_overlay(gc, &*properties, when);
 
             // Move on to the next element in the list
             next_element = wrapper.order_before;

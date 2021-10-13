@@ -166,10 +166,7 @@ impl VectorElement for AnimationElement {
         }
     }
 
-    fn render_overlay(&self, gc: &mut dyn GraphicsContext, _when: Duration) { 
-        // TODO: these should be generated from the attachments for this element
-        let properties = VectorProperties::default();
-
+    fn render_overlay(&self, gc: &mut dyn GraphicsContext, properties: &VectorProperties, _when: Duration) { 
         gc.new_path();
 
         // Add the region outline to the paths
