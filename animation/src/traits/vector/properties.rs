@@ -7,6 +7,7 @@ use super::super::brush_drawing_style::*;
 use super::super::super::brushes::*;
 
 use flo_curves::*;
+use flo_curves::bezier::path::*;
 use flo_canvas::*;
 use flo_canvas_animation::*;
 
@@ -101,6 +102,19 @@ impl VectorProperties {
 
         for transform in self.transformations.iter() {
             result = transform.transform_point(&result);
+        }
+
+        result
+    }
+
+    ///
+    /// Applies the transformation to a path implementing the path factory interface from flo_curves
+    ///
+    pub fn transform_bezier_path<P: BezierPathFactory>(&self, path: P) -> P {
+        let mut result = path;
+
+        for transform in self.transformations.iter() {
+            result = transform.transform_bezier_path(&result);
         }
 
         result
