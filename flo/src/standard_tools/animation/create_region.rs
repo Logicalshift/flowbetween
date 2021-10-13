@@ -82,7 +82,7 @@ impl CreateAnimationRegion {
         // If there's a keyframe and a layer, add a new animation region for that keyframe
         if let Some((selected_layer, keyframe_time)) = selected_layer.and_then(|layer| keyframe_time.map(move |time| (layer, time))) {
             // The region is initially an empty description with just this path
-            let empty_region    = RegionDescription(vec![new_region], EffectDescription::Sequence(vec![]));
+            let empty_region    = RegionDescription(vec![new_region], EffectDescription::Sequence(vec![EffectDescription::FrameByFrameReplaceWhole]));
 
             // Generate the create region editing operation
             let create_region   = LayerEdit::CreateAnimation(keyframe_time, ElementId::Unassigned, empty_region);
