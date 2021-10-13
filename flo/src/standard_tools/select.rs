@@ -15,7 +15,6 @@ use futures::*;
 use futures::stream;
 use futures::stream::{BoxStream};
 use std::sync::*;
-use std::time::Duration;
 use std::collections::{HashSet};
 
 ///
@@ -1057,12 +1056,15 @@ impl Select {
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
 
-                // Create a motion for this element
+                // Transform the selected elements
                 let selected_element_ids    = data.selected_elements.iter().cloned().collect();
-                let edit_time               = data.frame.as_ref().map(|frame| frame.time_index()).unwrap_or(Duration::from_millis(0));
-                let move_elements           = MotionEditAction::MoveElements(selected_element_ids, edit_time, data.initial_position.position, paint.location);
+                let transform_elements      = vec![
+                    ElementTransform::SetAnchor(data.initial_position.position.0 as _, data.initial_position.position.1 as _),
+                    ElementTransform::MoveTo(paint.location.0 as _, paint.location.1 as _)
+                ];
+                let transform_elements      = vec![AnimationEdit::Element(selected_element_ids, ElementEdit::Transform(transform_elements))];
 
-                actions.extend(move_elements.to_animation_edits(&*animation).into_iter().map(|elem| ToolAction::Edit(elem)));
+                actions.extend(transform_elements.into_iter().map(|elem| ToolAction::Edit(elem)));
 
                 // Cause the frame to be redrawn
                 actions.push(ToolAction::InvalidateFrame);
