@@ -8,6 +8,7 @@ use crate::traits::edit::*;
 use crate::traits::path::*;
 
 use flo_curves::*;
+use flo_curves::bezier::path::*;
 use flo_canvas::*;
 
 use smallvec::*;
@@ -271,6 +272,17 @@ impl Transformation {
 
         // Build into a new path
         Path::from_elements(new_elements)
+    }
+
+    ///
+    /// Applies this transformation to a path implementing the path factory interface from flo_curves
+    ///
+    pub fn transform_bezier_path<P: BezierPathFactory>(&self, path: &P) -> P {
+        let start_point     = self.transform_point(&path.start_point());
+        let curve_points    = path.points()
+            .map(|(cp1, cp2, ep)| (self.transform_point(&cp1), self.transform_point(&cp2), self.transform_point(&ep)));
+
+        P::from_points(start_point, curve_points)
     }
 
     ///
