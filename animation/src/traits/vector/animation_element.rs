@@ -1,6 +1,7 @@
 use super::vector::*;
 use super::properties::*;
 use super::control_point::*;
+use super::transformation::*;
 use super::vector_element::*;
 use super::path_conversion_options::*;
 use super::super::path::*;
@@ -10,6 +11,7 @@ use crate::raycast::*;
 use flo_canvas::*;
 use flo_canvas_animation::*;
 use flo_canvas_animation::description::*;
+use flo_curves::bezier::path::{SimpleBezierPath};
 
 use std::fmt;
 use std::iter;
@@ -18,6 +20,17 @@ use std::time::{Duration};
 
 pub const ANIMATION_OUTLINE:                Color = Color::Rgba(0.2, 0.8, 0.2, 0.6);
 pub const ANIMATION_OUTLINE_DARK:           Color = Color::Rgba(0.1, 0.4, 0.1, 0.4);
+
+///
+/// Represents an animation region whose base region has had a transformation applied to its perimeter
+///
+struct TransformedAnimationRegion {
+    /// The region that has been transformed
+    region: Arc<dyn AnimationRegion>,
+
+    /// The transformation that was applied to the region
+    transformation: Arc<Vec<Transformation>>
+}
 
 ///
 /// Represents an animation region element
@@ -114,7 +127,16 @@ impl VectorElement for AnimationElement {
     }
 
     fn render_animated(&self, gc: &mut AnimationLayerContext<'_>, properties: &VectorProperties, when: Duration) { 
-        gc.add_region(self.animation_region());
+        let mut region = self.animation_region();
+
+        if properties.transformations.len() > 0 {
+            region = Arc::new(TransformedAnimationRegion { 
+                region: region, 
+                transformation: Arc::clone(&properties.transformations)
+            });
+        }
+
+        gc.add_region(region);
         self.render_static(gc, properties, when);
     }
 
@@ -235,5 +257,57 @@ impl VectorElement for AnimationElement {
         let region_description  = RegionDescription(region_outline, effect);
 
         Vector::AnimationRegion(AnimationElement::new(self.id, region_description))
+    }
+}
+
+impl AnimationEffect for TransformedAnimationRegion {
+    ///
+    /// Returns the duration of this effect (or None if this effect will animate forever)
+    ///
+    /// If the effect is passed a time that's after where the 'duration' has completed it should always generate the same result
+    ///
+    fn duration(&self) -> Option<f64> {
+        self.region.duration()
+    }
+
+    ///
+    /// Given the contents of the regions for this effect, calculates the path that should be rendered
+    ///
+    fn animate(&self, region_contents: Arc<AnimationRegionContent>, time: Duration) -> Arc<AnimationRegionContent> {
+        self.region.animate(region_contents, time)
+    }
+
+    ///
+    /// Given an input region that will remain fixed throughout the time period, returns a function that
+    /// will animate it. This can be used to speed up operations when some pre-processing is required for
+    /// the region contents, but is not always available as the region itself might be changing over time
+    /// (eg, if many effects are combined)
+    ///
+    fn animate_cached(&self, region_contents: Arc<AnimationRegionContent>) -> Box<dyn Send+Fn(Duration) -> Arc<AnimationRegionContent>> {
+        self.region.animate_cached(region_contents)
+    }
+}
+
+impl AnimationRegion for TransformedAnimationRegion {
+    ///
+    /// Returns the definition of a sub-region that this animation will affect from the static layer
+    ///
+    /// This will return the location of the region at a particular time so that drawing added after
+    /// the initial keyframe can be incorporated into the appropriate region
+    ///
+    fn region(&self, time: Duration) -> Vec<SimpleBezierPath> {
+        let original_path = self.region.region(time);
+
+        original_path.into_iter()
+            .map(|path| {
+                let mut path = path;
+
+                for transform in self.transformation.iter() {
+                    path = transform.transform_bezier_path(&path);
+                }
+
+                path
+            })
+            .collect()
     }
 }
