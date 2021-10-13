@@ -490,7 +490,7 @@ impl SqliteCore {
             Some(when)  => when,
             None        => { return Ok(vec![]); }
         };
-        let when_next   = self.read_next_key_frame(layer_id, when)?;
+        let when_next   = self.read_next_key_frame(layer_id, when + 1)?;
 
         // Generate a 'KeyFrame' element to start off to indicate which keyframe these elements are for
         let start_time  = Self::int_to_time(when);
