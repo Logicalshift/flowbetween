@@ -94,19 +94,22 @@ impl VectorElement for AnimationElement {
         self.id = new_id; 
     }
 
-    fn to_path(&self, _properties: &VectorProperties, _options: PathConversion) -> Option<Vec<Path>> { 
+    fn to_path(&self, properties: &VectorProperties, _options: PathConversion) -> Option<Vec<Path>> { 
+        // Convert the region path to pathops
         let drawing = self.description.0
             .iter()
+            .map(|path| properties.transform_bezier_path(path.clone()))
             .flat_map(|BezierPath(start_point, curves)| {
                 use self::PathOp::*;
 
                 iter::once(Move(start_point.x() as _, start_point.y() as _))
-                    .chain(curves.iter()
+                    .chain(curves.into_iter()
                         .map(|BezierPoint(cp1, cp2, ep)| BezierCurve(((cp1.x() as _, cp1.y() as _), (cp2.x() as _, cp2.y() as _)), (ep.x() as _, ep.y() as _)) ))
                     .chain(iter::once(PathOp::ClosePath))
             })
             .collect::<Vec<_>>();
 
+        // Convert the pathops to a path
         Some(vec![drawing.into()])
     }
 
@@ -115,9 +118,10 @@ impl VectorElement for AnimationElement {
         self.render_static(gc, properties, when);
     }
 
-    fn is_selected_with_point(&self, _properties: &VectorProperties, x: f64, y: f64) -> Option<i32> {
+    fn is_selected_with_point(&self, properties: &VectorProperties, x: f64, y: f64) -> Option<i32> {
         let path                    = &self.description.0;
-        let (collided, distance)    = point_is_in_path_with_distance(path, &Point2D(x, y));
+        let path                    = path.iter().map(|path| properties.transform_bezier_path(path.clone())).collect();
+        let (collided, distance)    = point_is_in_path_with_distance(&path, &Point2D(x, y));
 
         if collided {
             if distance < 2.0 {
@@ -141,11 +145,15 @@ impl VectorElement for AnimationElement {
     }
 
     fn render_overlay(&self, gc: &mut dyn GraphicsContext, _when: Duration) { 
+        // TODO: these should be generated from the attachments for this element
+        let properties = VectorProperties::default();
+
         gc.new_path();
 
         // Add the region outline to the paths
-        let RegionDescription(paths, _effect) = &self.description;
-        for BezierPath(start_point, other_points) in paths.iter() {
+        let RegionDescription(paths, _effect)   = &self.description;
+        let paths                               = paths.iter().map(|path| properties.transform_bezier_path(path.clone()));
+        for BezierPath(start_point, other_points) in paths {
             // Add closed paths for each section of the region
             gc.move_to(start_point.x() as _, start_point.y() as _);
             for BezierPoint(cp1, cp2, end_point) in other_points.iter() {
@@ -176,14 +184,15 @@ impl VectorElement for AnimationElement {
         properties 
     }
 
-    fn control_points(&self, _properties: &VectorProperties) -> Vec<ControlPoint> {
+    fn control_points(&self, properties: &VectorProperties) -> Vec<ControlPoint> {
         // The 'normal' control points are the points in the main bezier path
-        let RegionDescription(paths, _effect)        = &self.description;
+        let RegionDescription(paths, _effect)   = &self.description;
+        let paths                               = paths.iter().map(|path| properties.transform_bezier_path(path.clone()));
 
-        let regions = paths.iter()
+        let regions = paths
             .flat_map(|BezierPath(start_point, other_points)| {
                 iter::once(ControlPoint::BezierPoint(start_point.x(), start_point.y()))
-                    .chain(other_points.iter().flat_map(|BezierPoint(cp1, cp2, end_point)| [
+                    .chain(other_points.into_iter().flat_map(|BezierPoint(cp1, cp2, end_point)| [
                         ControlPoint::BezierControlPoint(cp1.x(), cp1.y()),
                         ControlPoint::BezierControlPoint(cp2.x(), cp2.y()),
                         ControlPoint::BezierPoint(end_point.x(), end_point.y())
@@ -195,10 +204,13 @@ impl VectorElement for AnimationElement {
         regions.collect()
     }
 
-    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>, _properties: &VectorProperties) -> Vector {
+    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>, properties: &VectorProperties) -> Vector {
         // Create the new paths by mapping the points from the new positions onto the existing paths
+        let inverse_properties  = properties.with_inverse_transformation().expect("Invertable transformation");
         let mut region_outline  = vec![];
-        let mut pos_iter        = new_positions.into_iter();
+        let mut pos_iter        = new_positions.into_iter()
+            .map(|(x, y)| inverse_properties.transform_point(&Coord2(x as _, y as _)))
+            .map(|Coord2(x, y)| (x, y));
 
         for old_path in self.description.0.iter() {
             // Update the region control points
