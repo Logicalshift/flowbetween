@@ -7,6 +7,7 @@ use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
 use flo_curves::bezier::*;
+use flo_curves::bezier::path::{path_remove_interior_points};
 use flo_canvas_animation::description::*;
 
 use futures::prelude::*;
@@ -47,7 +48,7 @@ impl CreateAnimationRegion {
     ///
     /// Allows the user to draw a new animation region path
     ///
-    pub async fn draw_region(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>) -> Option<BezierPath> {
+    pub async fn draw_region(initial_event: Painting, input: &mut ToolInputStream<()>, actions: &mut ToolActionPublisher<()>) -> Option<Vec<BezierPath>> {
         // Use the same selection style as the freehand lasso tool
         let lasso_path = Lasso::select_area_freehand(initial_event, input, actions).await?;
 
@@ -68,13 +69,17 @@ impl CreateAnimationRegion {
             })
             .collect();
 
-        Some(BezierPath(start_point, path))
+        // Remove interior points
+        let path    = BezierPath(start_point, path);
+        let path    = path_remove_interior_points(&vec![path], 0.01);
+
+        Some(path)
     }
 
     ///
     /// Adds a new animation region to the animation
     ///
-    fn add_new_region<Anim: 'static+EditableAnimation>(new_region: BezierPath, actions: &mut ToolActionPublisher<()>, flo_model: &Arc<FloModel<Anim>>) {
+    fn add_new_region<Anim: 'static+EditableAnimation>(new_region: Vec<BezierPath>, actions: &mut ToolActionPublisher<()>, flo_model: &Arc<FloModel<Anim>>) {
         // Fetch the selected layer and the active keyframe
         let selected_layer  = flo_model.timeline().selected_layer.get();
         let keyframe_time   = flo_model.frame().keyframe_time.get();
@@ -82,7 +87,7 @@ impl CreateAnimationRegion {
         // If there's a keyframe and a layer, add a new animation region for that keyframe
         if let Some((selected_layer, keyframe_time)) = selected_layer.and_then(|layer| keyframe_time.map(move |time| (layer, time))) {
             // The region is initially an empty description with just this path
-            let empty_region    = RegionDescription(vec![new_region], EffectDescription::Sequence(vec![EffectDescription::FrameByFrameReplaceWhole]));
+            let empty_region    = RegionDescription(new_region, EffectDescription::Sequence(vec![EffectDescription::FrameByFrameReplaceWhole]));
 
             // Generate the create region editing operation
             let create_region   = LayerEdit::CreateAnimation(keyframe_time, ElementId::Unassigned, empty_region);

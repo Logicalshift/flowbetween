@@ -131,3 +131,9 @@ impl bezier::path::BezierPath for BezierPath {
             .map(|BezierPoint(cp1, cp2, ep)| (cp1, cp2, ep)))
     }
 }
+
+impl bezier::path::BezierPathFactory for BezierPath {
+    fn from_points<FromIter: IntoIterator<Item=(Self::Point, Self::Point, Self::Point)>>(start_point: Self::Point, points: FromIter) -> Self {
+        BezierPath(start_point, points.into_iter().map(|(cp1, cp2, ep)| BezierPoint(cp1, cp2, ep)).collect())
+    }
+}
