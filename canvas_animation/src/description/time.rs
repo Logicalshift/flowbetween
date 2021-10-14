@@ -1,6 +1,7 @@
 use super::space::*;
 
 use flo_curves::*;
+use flo_curves::bezier::*;
 
 use serde::{Serialize, Deserialize};
 
@@ -159,5 +160,49 @@ impl BezierCurve for TimeCurve {
     /// 
     fn control_points(&self) -> (Self::Point, Self::Point) {
         (self.1.0, self.1.1)
+    }
+}
+
+impl TimeCurve {
+    ///
+    /// Finds the curve t value for a specified time
+    ///
+    pub fn t_for_time(&self, time: Duration) -> Option<f64> {
+        let TimeCurve(TimePoint(_, t1), TimeCurvePoint(TimePoint(_, t2), TimePoint(_, t3), TimePoint(_, t4))) = self;
+
+        let time        = TimePoint::f64_from_duration(time);
+        let possible_t  = solve_basis_for_t(*t1, *t2, *t3, *t4, time);
+
+        for t in possible_t {
+            if t >= 0.0 && t <= 1.0 { return Some(t) }
+        }
+
+        None
+    }
+
+    ///
+    /// Returns the point at a given t value
+    ///
+    pub fn point2d_for_t(&self, t: f64) -> Point2D {
+        self.point_at_pos(t).into()
+    }
+
+    ///
+    /// Returns the point at a given time
+    ///
+    pub fn point2d_for_time(&self, time: Duration) -> Point2D {
+        if let Some(t) = self.t_for_time(time) {
+            self.point_at_pos(t).into()
+        } else {
+            // Use the start or end point based on the mid-point of this curve
+            let TimeCurve(TimePoint(p1, t1), TimeCurvePoint(TimePoint(_, _), TimePoint(_, _), TimePoint(p4, t4))) = self;
+            let time = TimePoint::f64_from_duration(time);
+
+            if time <= (*t1+*t4)*0.5 {
+                *p1
+            } else {
+                *p4
+            }
+        }
     }
 }
