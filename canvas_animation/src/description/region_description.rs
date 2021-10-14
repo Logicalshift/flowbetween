@@ -1,4 +1,4 @@
-use super::geometry::*;
+use super::space::*;
 use super::effect_description::*;
 
 use serde::{Serialize, Deserialize};

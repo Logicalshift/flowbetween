@@ -1,4 +1,4 @@
-use super::geometry::*;
+use super::space::*;
 
 use std::time::*;
 

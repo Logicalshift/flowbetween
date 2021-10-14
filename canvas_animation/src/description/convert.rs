@@ -1,4 +1,4 @@
-use super::geometry::*;
+use super::space::*;
 use super::region_description::*;
 use super::effect_description::*;
 use crate::region::*;
