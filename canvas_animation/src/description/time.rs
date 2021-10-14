@@ -1,7 +1,6 @@
 use super::space::*;
 
 use flo_curves::*;
-use flo_curves::bezier::*;
 
 use serde::{Serialize, Deserialize};
 
@@ -137,5 +136,28 @@ impl Coordinate for TimePoint {
 impl Into<Point2D> for TimePoint {
     fn into(self) -> Point2D {
         self.0
+    }
+}
+
+impl Geo for TimeCurve {
+    type Point = TimePoint;
+}
+
+impl BezierCurve for TimeCurve {
+    ///
+    /// The start point of this curve
+    /// 
+    fn start_point(&self) -> Self::Point { self.0 }
+
+    ///
+    /// The end point of this curve
+    /// 
+    fn end_point(&self) -> Self::Point { self.1.2 }
+
+    ///
+    /// The control points in this curve
+    /// 
+    fn control_points(&self) -> (Self::Point, Self::Point) {
+        (self.1.0, self.1.1)
     }
 }
