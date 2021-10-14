@@ -229,8 +229,10 @@ impl InkCurve {
         let end_offset      = end_pressure*(max_width-min_width) + min_width;
         let base_curve      = bezier::Curve::from_points(start, (cp1, cp2), end);
 
-        let offset_up       = bezier::offset(&base_curve, start_offset, end_offset);
-        let offset_down     = bezier::offset(&base_curve, -start_offset, -end_offset);
+        //let offset_up       = bezier::offset(&base_curve, start_offset, end_offset);
+        //let offset_down     = bezier::offset(&base_curve, -start_offset, -end_offset);
+        let offset_up       = bezier::offset_lms_sampling(&base_curve, |t| ((end_offset-start_offset)*t+start_offset), 20, 1.0).unwrap();
+        let offset_down     = bezier::offset_lms_sampling(&base_curve, |t| -((end_offset-start_offset)*t+start_offset), 20, 1.0).unwrap();
 
         (offset_up, offset_down)
     }
