@@ -76,7 +76,7 @@ impl Coordinate for Point2D {
         match index {
             0 => self.0,
             1 => self.1,
-            _ => panic!("Coord2 only has two components")
+            _ => panic!("Point2D only has two components")
         }
     }
 
