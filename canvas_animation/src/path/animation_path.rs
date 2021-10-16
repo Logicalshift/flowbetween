@@ -28,6 +28,19 @@ fn offset_path((start_point, points): &SimpleBezierPath, offset: Coord2) -> Simp
         points.iter().map(|(cp1, cp2, p)| (*cp1 + offset, *cp2 + offset, *p + offset)).collect())
 }
 
+#[inline]
+fn transform_point(point: &Coord2, transform: &Transform2D) -> Coord2 {
+    let Coord2(x, y)    = point;
+    let (x, y)          = transform.transform_point(*x as _, *y as _);
+    Coord2(x as _, y as _)
+}
+
+#[inline]
+fn transform_path((start_point, points): &SimpleBezierPath, transform: &Transform2D) -> SimpleBezierPath {
+    (transform_point(start_point, transform),
+        points.iter().map(|(cp1, cp2, p)| (transform_point(cp1, transform), transform_point(cp2, transform), transform_point(p, transform))).collect())
+}
+
 impl AnimationPath {
     ///
     /// Creates a new animation path from a list of path operations
@@ -147,6 +160,55 @@ impl AnimationPath {
             AnimationPathAttribute::FillGradient(blend_mode, gradient_id, (x1, y1), (x2, y2), Some(transform), winding_rule) => {
                 let transform = Transform2D::translate(dx, dy) * transform;
                 AnimationPathAttribute::FillGradient(blend_mode, gradient_id, (x1 + dx, y1 + dy), (x2 + dx, y2 + dy), Some(transform), winding_rule)
+            },
+
+            other => other
+        };
+
+        // Pack into a new path object
+        AnimationPath {
+            appearance_time:    self.appearance_time,
+            attributes:         attributes,
+            path:               Arc::new(offset_path)
+        }
+    }
+
+    ///
+    /// Creates a copy of this path that is offset by the specified distance
+    ///
+    pub fn transform_by(&self, transform: &Transform2D) -> AnimationPath {
+        // Move the path coordinates
+        let offset_path = self.path.iter()
+            .map(|path| transform_path(path, transform))
+            .collect();
+
+        // Move the texture or other attributes 
+        let attributes = match self.attributes.clone() {
+            AnimationPathAttribute::FillTexture(blend_mode, texture_id, (x1, y1), (x2, y2), None, winding_rule) => {
+                let (x1, y1) = transform.transform_point(x1 as _, y1 as _);
+                let (x2, y2) = transform.transform_point(x2 as _, y2 as _);
+
+                AnimationPathAttribute::FillTexture(blend_mode, texture_id, (x1 as _, y1 as _), (x2 as _, y2 as _), None, winding_rule)
+            },
+
+            AnimationPathAttribute::FillTexture(blend_mode, texture_id, (x1, y1), (x2, y2), Some(texture_transform), winding_rule) => {
+                let new_transform = (*transform) * texture_transform;
+                AnimationPathAttribute::FillTexture(blend_mode, texture_id, (x1, y1), (x2, y2), Some(new_transform), winding_rule)
+            },
+
+            AnimationPathAttribute::FillGradient(blend_mode, gradient_id, (x1, y1), (x2, y2), None, winding_rule) => {
+                let (x1, y1) = transform.transform_point(x1 as _, y1 as _);
+                let (x2, y2) = transform.transform_point(x2 as _, y2 as _);
+
+                AnimationPathAttribute::FillGradient(blend_mode, gradient_id, (x1 as _, y1 as _), (x2 as _, y2 as _), None, winding_rule)
+            },
+
+            AnimationPathAttribute::FillGradient(blend_mode, gradient_id, (x1, y1), (x2, y2), Some(gradient_transform), winding_rule) => {
+                let (x1, y1) = transform.transform_point(x1 as _, y1 as _);
+                let (x2, y2) = transform.transform_point(x2 as _, y2 as _);
+                let new_transform = (*transform) * gradient_transform;
+
+                AnimationPathAttribute::FillGradient(blend_mode, gradient_id, (x1 as _, y1 as _), (x2 as _, y2 as _), Some(new_transform), winding_rule)
             },
 
             other => other
