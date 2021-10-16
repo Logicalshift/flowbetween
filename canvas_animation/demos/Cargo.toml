@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "motion_effect",
-    "shatter"
+    "shatter",
+    "shatter_transform"
 ]
 
 [patch.crates-io]

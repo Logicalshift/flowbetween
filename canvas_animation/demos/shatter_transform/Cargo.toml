@@ -1,0 +1,12 @@
+[package]
+name                    = "shatter_transform_effect_demo"
+version                 = "0.1.0"
+authors                 = ["Andrew Hunter <andrew@logicalshift.co.uk>"]
+description             = "Demonstrates effect regions in flo_canvas_animation"
+edition                 = "2018"
+
+[dependencies]
+flo_draw                = "0.3"
+flo_canvas_animation    = "0.3"
+flo_curves              = "0.5"
+futures                 = "0.3"
