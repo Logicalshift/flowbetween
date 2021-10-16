@@ -242,6 +242,92 @@ impl Coordinate2D for Point2D {
     }
 }
 
+impl Add<TransformPoint> for TransformPoint {
+    type Output=TransformPoint;
+
+    #[inline]
+    fn add(self, rhs: TransformPoint) -> TransformPoint {
+        let TransformPoint(l_translate, Scale(l_scale_x, l_scale_y), RotateRadians(l_rotation)) = self;
+        let TransformPoint(r_translate, Scale(r_scale_x, r_scale_y), RotateRadians(r_rotation)) = rhs;
+
+        TransformPoint(l_translate + r_translate, Scale(l_scale_x + r_scale_x, l_scale_y + r_scale_y), RotateRadians(l_rotation + r_rotation))
+    }
+}
+
+impl Sub<TransformPoint> for TransformPoint {
+    type Output=TransformPoint;
+
+    #[inline]
+    fn sub(self, rhs: TransformPoint) -> TransformPoint {
+        let TransformPoint(l_translate, Scale(l_scale_x, l_scale_y), RotateRadians(l_rotation)) = self;
+        let TransformPoint(r_translate, Scale(r_scale_x, r_scale_y), RotateRadians(r_rotation)) = rhs;
+
+        TransformPoint(l_translate - r_translate, Scale(l_scale_x - r_scale_x, l_scale_y - r_scale_y), RotateRadians(l_rotation - r_rotation))
+    }
+}
+
+impl Mul<f64> for TransformPoint {
+    type Output=TransformPoint;
+
+    #[inline]
+    fn mul(self, rhs: f64) -> TransformPoint {
+        let TransformPoint(translate, Scale(scale_x, scale_y), RotateRadians(rotation)) = self;
+
+        TransformPoint(translate * rhs, Scale(scale_x * rhs, scale_y * rhs), RotateRadians(rotation * rhs))
+    }
+}
+
+impl Coordinate for TransformPoint {
+    #[inline]
+    fn from_components(components: &[f64]) -> TransformPoint {
+        TransformPoint(Point2D(components[0], components[1]), Scale(components[2], components[3]), RotateRadians(components[4]))
+    }
+
+    #[inline]
+    fn origin() -> TransformPoint {
+        TransformPoint(Point2D::default(), Scale::default(), RotateRadians::default())
+    }
+
+    #[inline]
+    fn len() -> usize { 5 }
+
+    #[inline]
+    fn get(&self, index: usize) -> f64 { 
+        let TransformPoint(Point2D(x, y), Scale(scale_x, scale_y), RotateRadians(rotation)) = self;
+
+        match index {
+            0 => *x,
+            1 => *y,
+            2 => *scale_x,
+            3 => *scale_y,
+            4 => *rotation,
+            _ => panic!("TransformPoint only has five components")
+        }
+    }
+
+    fn from_biggest_components(p1: TransformPoint, p2: TransformPoint) -> TransformPoint {
+        let TransformPoint(Point2D(p1x, p1y), Scale(p1scale_x, p1scale_y), RotateRadians(p1rotation)) = p1;
+        let TransformPoint(Point2D(p2x, p2y), Scale(p2scale_x, p2scale_y), RotateRadians(p2rotation)) = p2;
+
+        TransformPoint(
+            Point2D(f64::from_biggest_components(p1x, p2x), f64::from_biggest_components(p1y, p2y)),
+            Scale(f64::from_biggest_components(p1scale_x, p2scale_x), f64::from_biggest_components(p1scale_y, p2scale_y)),
+            RotateRadians(f64::from_biggest_components(p1rotation, p2rotation))
+        )
+    }
+
+    fn from_smallest_components(p1: TransformPoint, p2: TransformPoint) -> TransformPoint {
+        let TransformPoint(Point2D(p1x, p1y), Scale(p1scale_x, p1scale_y), RotateRadians(p1rotation)) = p1;
+        let TransformPoint(Point2D(p2x, p2y), Scale(p2scale_x, p2scale_y), RotateRadians(p2rotation)) = p2;
+
+        TransformPoint(
+            Point2D(f64::from_smallest_components(p1x, p2x), f64::from_smallest_components(p1y, p2y)),
+            Scale(f64::from_smallest_components(p1scale_x, p2scale_x), f64::from_smallest_components(p1scale_y, p2scale_y)),
+            RotateRadians(f64::from_smallest_components(p1rotation, p2rotation))
+        )
+    }
+}
+
 impl Geo for BezierPath {
     type Point = Point2D;
 }
