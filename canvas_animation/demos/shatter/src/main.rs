@@ -70,7 +70,7 @@ fn main() {
 
             // Create an animation effect
             let (dx, dy)                = (f64::sin(middle_angle) * 300.0, f64::cos(middle_angle) * 300.0);
-            let motion_effect           = MotionEffect::from_points(Duration::from_secs(20), 
+            let motion_effect           = LinearMotionEffect::from_points(Duration::from_secs(20), 
                 Coord2(center_x, center_y), 
                 vec![
                     (Coord2(center_x + dx * 0.33, center_y + dy * 0.33), Coord2(center_x + dx * 0.66, center_y + dy * 0.66), Coord2(center_x + dx, center_y + dy)),

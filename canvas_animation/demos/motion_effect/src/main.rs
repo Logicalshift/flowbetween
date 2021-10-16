@@ -103,7 +103,7 @@ fn main() {
                                     motion_path = fit_curve::<Curve<Coord2>>(&motion_points, 2.0).unwrap_or(vec![]);
 
                                     if motion_path.len() > 0 {
-                                        motion_effect = Some(MotionEffect::from_points(Duration::from_secs(10), motion_path[0].start_point(), 
+                                        motion_effect = Some(LinearMotionEffect::from_points(Duration::from_secs(10), motion_path[0].start_point(), 
                                             motion_path.iter().map(|curve| {
                                                 let (cp1, cp2)  = curve.control_points();
                                                 let end_point   = curve.end_point();

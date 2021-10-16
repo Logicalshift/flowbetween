@@ -5,7 +5,7 @@ use std::time::{Duration};
 
 #[test]
 pub fn basic_spacing() {
-    let effect              = MotionEffect::from_points(Duration::from_millis(10000), Coord2(20.0, 30.0), vec![(Coord2(20.0, 100.0), Coord2(200.0, 200.0), Coord2(300.0, 400.0))]);
+    let effect              = LinearMotionEffect::from_points(Duration::from_millis(10000), Coord2(20.0, 30.0), vec![(Coord2(20.0, 100.0), Coord2(200.0, 200.0), Coord2(300.0, 400.0))]);
 
     let initial_offset      = effect.offset_at_time(0.0, 0.01);
     assert!(initial_offset.magnitude() <= 0.1);
@@ -33,7 +33,7 @@ pub fn basic_spacing() {
 
 #[test]
 pub fn two_segment_spacing() {
-    let effect              = MotionEffect::from_points(Duration::from_millis(10000), Coord2(20.0, 30.0), vec![(Coord2(20.0, 100.0), Coord2(200.0, 200.0), Coord2(300.0, 400.0)), (Coord2(500.0, 400.0), Coord2(200.0, 100.0), Coord2(100.0, 100.0))]);
+    let effect              = LinearMotionEffect::from_points(Duration::from_millis(10000), Coord2(20.0, 30.0), vec![(Coord2(20.0, 100.0), Coord2(200.0, 200.0), Coord2(300.0, 400.0)), (Coord2(500.0, 400.0), Coord2(200.0, 100.0), Coord2(100.0, 100.0))]);
 
     let initial_offset      = effect.offset_at_time(0.0, 0.01);
     assert!(initial_offset.magnitude() <= 0.1);

@@ -23,7 +23,7 @@ struct MotionPoint {
 /// Effect that moves a region across a bezier path at linear speed
 ///
 #[derive(Clone)]
-pub struct MotionEffect {
+pub struct LinearMotionEffect {
     /// The initial coordinate of the path
     start_point: Coord2,
 
@@ -37,11 +37,11 @@ pub struct MotionEffect {
     duration: f64
 }
 
-impl MotionEffect {
+impl LinearMotionEffect {
     ///
     /// Creates a motion effect along the specified path
     ///
-    pub fn from_points(duration: Duration, start_point: Coord2, path: Vec<(Coord2, Coord2, Coord2)>) -> MotionEffect {
+    pub fn from_points(duration: Duration, start_point: Coord2, path: Vec<(Coord2, Coord2, Coord2)>) -> LinearMotionEffect {
         // Measure the distance of each path to find the total length
         let mut motion_path     = vec![];
         let mut last_point      = start_point;
@@ -63,7 +63,7 @@ impl MotionEffect {
             last_point          = end_point;
         }
 
-        MotionEffect {
+        LinearMotionEffect {
             start_point:    start_point,
             path:           motion_path,
             total_length:   total_length,
@@ -139,7 +139,7 @@ impl MotionEffect {
     }
 }
 
-impl AnimationEffect for MotionEffect {
+impl AnimationEffect for LinearMotionEffect {
     ///
     /// Returns the duration of this effect (or None if this effect will animate forever)
     ///

@@ -11,7 +11,7 @@ pub fn add_region_to_motion_effect() {
     // Apply a circle region to a motion effect
     let circle      = Circle::new(Coord2(100.0, 100.0), 50.0).to_path::<SimpleBezierPath>();
 
-    let effect      = MotionEffect::from_points(Duration::from_millis(10000), Coord2(20.0, 30.0), vec![(Coord2(20.0, 100.0), Coord2(200.0, 200.0), Coord2(300.0, 400.0))]);
+    let effect      = LinearMotionEffect::from_points(Duration::from_millis(10000), Coord2(20.0, 30.0), vec![(Coord2(20.0, 100.0), Coord2(200.0, 200.0), Coord2(300.0, 400.0))]);
     let with_region = effect.with_region(vec![circle]);
 
     // The initial position of the region should match the circle we passed in
