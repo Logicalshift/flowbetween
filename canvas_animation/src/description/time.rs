@@ -346,6 +346,16 @@ impl BezierCurve for TimeTransformCurve {
     }
 }
 
+impl BezierCurveFactory for TimeTransformCurve {
+    ///
+    /// Creates a new bezier curve of the same type from some points
+    ///
+    #[inline]
+    fn from_points(start: Self::Point, (control_point1, control_point2): (Self::Point, Self::Point), end: Self::Point) -> TimeTransformCurve {
+        TimeTransformCurve(start, TimeCurveTransformPoint(control_point1, control_point2, end))
+    }
+}
+
 impl TimeTransformCurve {
     ///
     /// Finds the curve t value for a specified time
