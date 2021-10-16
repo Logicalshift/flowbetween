@@ -84,6 +84,12 @@ impl Default for RotateRadians {
     }
 }
 
+impl Default for TransformPoint {
+    fn default() -> Self {
+        TransformPoint(Point2D::default(), Scale::default(), RotateRadians::default())
+    }
+}
+
 impl Into<RotateDegrees> for RotateRadians {
     fn into(self) -> RotateDegrees {
         let RotateRadians(radians) = self;
