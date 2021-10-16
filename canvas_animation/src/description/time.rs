@@ -323,6 +323,12 @@ impl Into<TransformPoint> for TimeTransformPoint {
     }
 }
 
+impl TimeCurveTransformPoint {
+    pub fn cp1(&self) -> TimeTransformPoint { self.0 }
+    pub fn cp2(&self) -> TimeTransformPoint { self.1 }
+    pub fn end_point(&self) -> TimeTransformPoint { self.2 }
+}
+
 impl Geo for TimeTransformCurve {
     type Point = TimeTransformPoint;
 }
@@ -361,9 +367,16 @@ impl TimeTransformCurve {
     /// Finds the curve t value for a specified time
     ///
     pub fn t_for_time(&self, time: Duration) -> Option<f64> {
+        let time = TimePoint::f64_from_duration(time);
+        self.t_for_time_f64(time)
+    }
+
+    ///
+    /// Finds the curve t value for a specified time
+    ///
+    pub fn t_for_time_f64(&self, time: f64) -> Option<f64> {
         let TimeTransformCurve(TimeTransformPoint(_, t1), TimeCurveTransformPoint(TimeTransformPoint(_, t2), TimeTransformPoint(_, t3), TimeTransformPoint(_, t4))) = self;
 
-        let time        = TimePoint::f64_from_duration(time);
         let possible_t  = solve_basis_for_t(*t1, *t2, *t3, *t4, time);
 
         for t in possible_t {
@@ -384,12 +397,19 @@ impl TimeTransformCurve {
     /// Returns the point at a given time
     ///
     pub fn transform_for_time(&self, time: Duration) -> TransformPoint {
-        if let Some(t) = self.t_for_time(time) {
+        let time = TimePoint::f64_from_duration(time);
+        self.transform_for_time_f64(time)
+    }
+
+    ///
+    /// Returns the point at a given time
+    ///
+    pub fn transform_for_time_f64(&self, time: f64) -> TransformPoint {
+        if let Some(t) = self.t_for_time_f64(time) {
             self.point_at_pos(t).into()
         } else {
             // Use the start or end point based on the mid-point of this curve
             let TimeTransformCurve(TimeTransformPoint(p1, t1), TimeCurveTransformPoint(_, _, TimeTransformPoint(p4, t4))) = self;
-            let time = TimePoint::f64_from_duration(time);
 
             if time <= (*t1+*t4)*0.5 {
                 *p1
