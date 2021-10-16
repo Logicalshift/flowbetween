@@ -2,16 +2,51 @@ use serde::{Serialize, Deserialize};
 
 use flo_curves::{Coordinate, Coordinate2D, Geo};
 use flo_curves::bezier;
+use flo_canvas::*;
 
+use std::f64;
 use std::ops::*;
 
 // TODO: fix naming clash between BezierPath the structure and BezierPath the trait
+// TODO: some of these types (in particular scale, rotate, etc) probably belong in flo_curves
 
 ///
 /// A point in 2D space
 ///
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Point2D(pub f64, pub f64);
+
+///
+/// Represents a scale factor
+///
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Scale(pub f64, pub f64);
+
+///
+/// A rotation measured in degrees
+///
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub struct RotateDegrees(pub f64);
+
+///
+/// A rotation measured in radians
+///
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub struct RotateRadians(pub f64);
+
+///
+/// A transformed point. The parameters represent the offset and how the point is scaled and rotated
+///
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TransformPoint(pub Point2D, pub Scale, pub RotateRadians);
+
+///
+/// A transformed point with an anchor point
+///
+/// (The anchor point is considered the origin for the purposes of the transformation)
+///
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TransformWithAnchor(pub Point2D, pub TransformPoint);
 
 ///
 /// Two control points followed by an end point (a point on a bezier curve)
@@ -25,9 +60,102 @@ pub struct BezierPoint(pub Point2D, pub Point2D, pub Point2D);
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BezierPath(pub Point2D, pub Vec<BezierPoint>);
 
+impl Default for Point2D {
+    fn default() -> Self {
+        Point2D(0.0, 0.0)
+    }
+}
+
+impl Default for Scale {
+    fn default() -> Self {
+        Scale(1.0, 1.0)
+    }
+}
+
+impl Default for RotateDegrees {
+    fn default() -> Self {
+        RotateDegrees(0.0)
+    }
+}
+
+impl Default for RotateRadians {
+    fn default() -> Self {
+        RotateRadians(0.0)
+    }
+}
+
+impl Into<RotateDegrees> for RotateRadians {
+    fn into(self) -> RotateDegrees {
+        let RotateRadians(radians) = self;
+        RotateDegrees((radians / f64::consts::PI) * 180.0)
+    }
+}
+
+impl Into<RotateRadians> for RotateDegrees {
+    fn into(self) -> RotateRadians {
+        let RotateDegrees(degrees) = self;
+        RotateRadians((degrees / 180.0) * f64::consts::PI)
+    }
+}
+
+impl Into<Transform2D> for RotateRadians {
+    fn into(self) -> Transform2D {
+        let RotateRadians(radians) = self;
+        Transform2D::rotate(radians as _)
+    }
+}
+
+impl Into<Transform2D> for RotateDegrees {
+    fn into(self) -> Transform2D {
+        let RotateDegrees(degrees) = self;
+        Transform2D::rotate_degrees(degrees as _)
+    }
+}
+
+impl Into<Transform2D> for Scale {
+    fn into(self) -> Transform2D {
+        let Scale(scale_x, scale_y) = self;
+        Transform2D::scale(scale_x as _, scale_y as _)
+    }
+}
+
+impl Into<Transform2D> for TransformPoint {
+    fn into(self) -> Transform2D {
+        let TransformPoint(Point2D(dx, dy), scale, rotate) = self;
+
+        let translate   = Transform2D::translate(dx as _, dy as _);
+        let scale       = scale.into();
+        let rotate      = rotate.into();
+
+        translate * rotate * scale
+    }
+}
+
+impl Into<Transform2D> for TransformWithAnchor {
+    fn into(self) -> Transform2D {
+        let TransformWithAnchor(Point2D(anchor_x, anchor_y), transform) = self;
+
+        let move_to_anchor  = Transform2D::translate(-anchor_x as _, -anchor_y as _);
+        let transform       = transform.into();
+        let move_back       = Transform2D::translate(anchor_x as _, anchor_y as _);
+
+        move_back * transform * move_to_anchor
+    }
+}
+
 impl Point2D {
     #[inline] pub fn x(&self) -> f64 { self.0 }
     #[inline] pub fn y(&self) -> f64 { self.1 }
+
+    ///
+    /// Appies a 2D transformation to this point
+    ///
+    pub fn transform(&self, transform: &Transform2D) -> Point2D {
+        let Point2D(x, y)   = self;
+        let (x, y)          = transform.transform_point(*x as _, *y as _);
+
+        Point2D(x as _, y as _)
+    }
 }
 
 impl Add<Point2D> for Point2D {
