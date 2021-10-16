@@ -1,3 +1,4 @@
+use super::time::*;
 use super::space::*;
 
 use std::time::*;
@@ -16,18 +17,28 @@ pub enum EffectDescription {
     /// Applies a series of effects in sequence
     Sequence(Vec<EffectDescription>),
 
-    /// Animate frame-by-frame by replacing the entire region
-    FrameByFrameReplaceWhole,
-
-    /// Animate frame-by-frame by adding new frames to the time=0 frame
-    FrameByFrameAddToInitial,
-
     /// Repeats another animation effect from the start
     Repeat(Duration, Box<EffectDescription>),
 
     /// Applies a time curve to another animation effect
     TimeCurve(Vec<(f64, f64, f64)>, Box<EffectDescription>),
 
+    /// Animate frame-by-frame by replacing the entire region
+    FrameByFrameReplaceWhole,
+
+    /// Animate frame-by-frame by adding new frames to the time=0 frame
+    FrameByFrameAddToInitial,
+
     /// A simple move through a bezier path at constant speed
-    Move(Duration, BezierPath)
+    Move(Duration, BezierPath),
+
+    /// Transform through a set of points, interpolating at other times using a fitted curve
+    ///
+    /// Contents are an anchor point and positions for the animation
+    FittedTransform(Point2D, Vec<TimeTransformPoint>),
+
+    /// Transform through a set of points with no interpolation
+    ///
+    /// Contents are an anchor point and positions for the animation
+    StopMotionTransform(Point2D, Vec<TimeTransformPoint>)
 }

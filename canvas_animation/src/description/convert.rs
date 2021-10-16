@@ -132,6 +132,17 @@ impl Into<Arc<dyn AnimationRegion>> for &RegionDescription {
     }
 }
 
+///
+/// Boxes an optional transform if it exists, or creates a null effect if it doesn't
+///
+fn optional_transform<Effect: 'static+AnimationEffect>(effect: Option<Effect>) -> Box<dyn AnimationEffect> {
+    if let Some(effect) = effect {
+        Box::new(effect)
+    } else {
+        Box::new(SequenceEffect::empty())
+    }
+}
+
 impl Into<Box<dyn AnimationEffect>> for &EffectDescription {
     fn into(self) -> Box<dyn AnimationEffect> {
         use self::EffectDescription::*;
@@ -154,7 +165,9 @@ impl Into<Box<dyn AnimationEffect>> for &EffectDescription {
             Repeat(time, effect)                        => Box::new(RepeatEffect::<Box<dyn AnimationEffect>>::repeat_effect((&**effect).into(), *time)),
             TimeCurve(curve_points, effect)             => Box::new(TimeCurveEffect::<Box<dyn AnimationEffect>>::with_control_points((&**effect).into(), curve_points.clone())),
 
-            Move(time, BezierPath(start_point, coords)) => Box::new(LinearMotionEffect::from_points(*time, start_point.into(), coords.iter().map(|BezierPoint(cp1, cp2, ep)| (cp1.into(), cp2.into(), ep.into())).collect()))
+            Move(time, BezierPath(start_point, coords)) => Box::new(LinearMotionEffect::from_points(*time, start_point.into(), coords.iter().map(|BezierPoint(cp1, cp2, ep)| (cp1.into(), cp2.into(), ep.into())).collect())),
+            FittedTransform(anchor, points)             => optional_transform(FittedTransformEffect::by_fitting_transformation(*anchor, points.clone())),
+            StopMotionTransform(anchor, points)         => Box::new(StopMotionTransformEffect::with_points(*anchor, points.clone())),
         }
     }
 }
