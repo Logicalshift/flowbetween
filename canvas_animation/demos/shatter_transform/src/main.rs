@@ -75,16 +75,17 @@ fn main() {
                 Point2D(center_x, center_y),
                 vec![
                     TransformPoint(Point2D(0.0, 0.0), Scale::default(), RotateRadians::default()).with_time(Duration::from_secs(0)),
-                    TransformPoint(Point2D(dx, dy), Scale(1.5, 1.5), RotateDegrees(180.0).into()).with_time(Duration::from_secs(7)),
+                    TransformPoint(Point2D(0.0, 0.0), Scale::default(), RotateRadians::default()).with_time(Duration::from_millis(100)),
+                    TransformPoint(Point2D(dx, dy), Scale(1.5, 1.5), RotateDegrees(180.0).into()).with_time(Duration::from_secs(6)),
                     TransformPoint(Point2D(0.0, 0.0), Scale::default(), RotateDegrees(360.0).into()).with_time(Duration::from_secs(10)),
                     TransformPoint(Point2D(dx*2.0, dy*2.0), Scale(0.25, 0.25), RotateDegrees(360.0 + 180.0).into()).with_time(Duration::from_secs(13)),
-                    TransformPoint(Point2D(dx*2.0, dy*2.0), Scale(1.0, 1.0), RotateDegrees(360.0 + 360.0).into()).with_time(Duration::from_secs(17)),
+                    TransformPoint(Point2D(dx*2.0, dy*2.0), Scale(1.0, 1.0), RotateDegrees(360.0 + 270.0).into()).with_time(Duration::from_secs(17)),
+                    TransformPoint(Point2D(0.0, 0.0), Scale::default(), RotateDegrees(360.0 + 360.0).into()).with_time(Duration::from_millis(19_900)),
                     TransformPoint(Point2D(0.0, 0.0), Scale::default(), RotateDegrees(360.0 + 360.0).into()).with_time(Duration::from_secs(20)),
                 ]
             ).unwrap();
 
             // Apply a time curve
-            let motion_effect           = TimeCurveEffect::with_control_points(motion_effect, vec![(0.0, 10000.0, 10000.0), (10000.0, 19000.0, 20000.0)]);
             let motion_effect           = RepeatEffect::repeat_effect(motion_effect, Duration::from_secs(20));
 
             // Apply it to a region of the layer
