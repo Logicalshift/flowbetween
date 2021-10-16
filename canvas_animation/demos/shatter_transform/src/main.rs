@@ -84,6 +84,7 @@ fn main() {
             ).unwrap();
 
             // Apply a time curve
+            let motion_effect           = TimeCurveEffect::with_control_points(motion_effect, vec![(0.0, 10000.0, 10000.0), (10000.0, 19000.0, 20000.0)]);
             let motion_effect           = RepeatEffect::repeat_effect(motion_effect, Duration::from_secs(20));
 
             // Apply it to a region of the layer
