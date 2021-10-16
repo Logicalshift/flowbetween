@@ -37,3 +37,13 @@ fn scale_with_anchor() {
     println!("{:?}", transform_point);
     assert!(transform_point.distance_to(&Point2D(15.0, 15.0)) < 0.1);
 }
+
+#[test]
+fn scale_and_translate_with_anchor() {
+    let point           = Point2D(10.0, 10.0);
+    let transform       = TransformWithAnchor(Point2D(5.0, 5.0), TransformPoint(Point2D(20.0, 10.0), Scale(2.0, 2.0), RotateRadians::default()));
+    let transform_point = point.transform(&transform.into());
+
+    println!("{:?}", transform_point);
+    assert!(transform_point.distance_to(&Point2D(35.0, 25.0)) < 0.1);
+}
