@@ -7,3 +7,4 @@ members = [
 
 [patch.crates-io]
 flo_canvas_animation    = { path = ".." }
+flo_curves              = { git = "https://github.com/Logicalshift/flo_curves" }
