@@ -1241,7 +1241,7 @@ dependencies = [
 [[package]]
 name = "flo_curves"
 version = "0.5.2"
-source = "git+https://github.com/Logicalshift/flo_curves#290beb62e4f63fca7547b4f17e33a1079e2819cd"
+source = "git+https://github.com/Logicalshift/flo_curves#9f87c7c2f6db2e26fd5a123c34db1176818675b9"
 dependencies = [
  "itertools 0.10.1",
  "roots",

@@ -344,6 +344,7 @@ fn collide_with_paths_leaves_holes() {
     };
 
     // Two subpaths means it's a path with a hole
+    assert!(path.path().to_subpaths().len() > 1);
     assert!(path.path().to_subpaths().len() == 2);
 
     // Converting to path should be the same
@@ -373,6 +374,8 @@ fn collide_with_paths_leaves_holes() {
         Vector::Path(path)  => path,
         _                   => { assert!(false); unimplemented!() }
     };
+    println!("{:?}", path.path().to_subpaths().len());
+    assert!(path.path().to_subpaths().len() > 1);
     assert!(path.path().to_subpaths().len() == 2);
 }
 
