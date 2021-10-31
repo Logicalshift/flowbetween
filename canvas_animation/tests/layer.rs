@@ -11,7 +11,7 @@ use futures::stream;
 use std::time::{Duration};
 
 #[test]
-pub fn include_path_in_region() {
+pub fn no_regions() {
     // Create an animation layer
     let mut animation_layer = AnimationLayer::new();
 
@@ -27,7 +27,7 @@ pub fn include_path_in_region() {
     draw1.fill();
 
     draw2.new_path();
-    draw2.bezier_path(&circle1);
+    draw2.bezier_path(&circle2);
     draw2.fill();
 
     animation_layer.set_time(Duration::from_millis(0));
@@ -51,7 +51,89 @@ pub fn include_path_in_region() {
     });
 
     assert!(at_time_zero.len() == 2);
+    assert!(at_time_later.len() != 3);
+    assert!(at_time_later.len() != 2);
     assert!(at_time_later.len() == 4);
+}
+
+#[test]
+pub fn include_path_in_region() {
+    // Create an animation layer
+    let mut animation_layer = AnimationLayer::new();
+
+    // Draw 4 shapes, two at two different times
+    let circle1             = Circle::new(Coord2(100.0, 100.0), 50.0).to_path::<SimpleBezierPath>();
+    let circle2             = Circle::new(Coord2(300.0, 100.0), 50.0).to_path::<SimpleBezierPath>();
+
+    let mut draw1           = vec![];
+    let mut draw2           = vec![];
+
+    draw1.new_path();
+    draw1.bezier_path(&circle1);
+    draw1.fill();
+
+    draw2.new_path();
+    draw2.bezier_path(&circle2);
+    draw2.fill();
+
+    animation_layer.set_time(Duration::from_millis(0));
+    animation_layer.draw(draw1.iter().cloned());
+    animation_layer.draw(draw2.iter().cloned());
+
+    animation_layer.set_time(Duration::from_millis(1000));
+    animation_layer.draw(draw1.iter().cloned());
+    animation_layer.draw(draw2.iter().cloned());
+
+    // Create an animation region
+    let region1         = Circle::new(Coord2(100.0, 100.0), 60.0).to_path::<SimpleBezierPath>();
+    let region1         = FrameByFrameEffect::ReplaceWhole.with_region(vec![region1]);
+    animation_layer.add_region(region1);
+
+    let at_time_zero    = executor::block_on(async { 
+        drawing_to_paths::<SimpleBezierPath, _>(stream::iter(
+            animation_layer.render_at_time(Duration::from_millis(0)).await.into_iter()
+        )).collect::<Vec<_>>().await
+    });
+    let at_time_later   = executor::block_on(async { 
+        drawing_to_paths::<SimpleBezierPath, _>(stream::iter(
+            animation_layer.render_at_time(Duration::from_millis(1000)).await.into_iter()
+        )).collect::<Vec<_>>().await
+    });
+
+    // The circle inside the region should be replaced, but the one outside should still build up
+    assert!(at_time_zero.len() == 2);
+    assert!(at_time_later.len() != 4);
+    assert!(at_time_later.len() != 2);
+    assert!(at_time_later.len() == 3);
+}
+
+#[test]
+pub fn include_path_in_two_regions() {
+    // Create an animation layer
+    let mut animation_layer = AnimationLayer::new();
+
+    // Draw 4 shapes, two at two different times
+    let circle1             = Circle::new(Coord2(100.0, 100.0), 50.0).to_path::<SimpleBezierPath>();
+    let circle2             = Circle::new(Coord2(300.0, 100.0), 50.0).to_path::<SimpleBezierPath>();
+
+    let mut draw1           = vec![];
+    let mut draw2           = vec![];
+
+    draw1.new_path();
+    draw1.bezier_path(&circle1);
+    draw1.fill();
+
+    draw2.new_path();
+    draw2.bezier_path(&circle2);
+    draw2.fill();
+
+    animation_layer.set_time(Duration::from_millis(0));
+    animation_layer.draw(draw1.iter().cloned());
+    animation_layer.draw(draw2.iter().cloned());
+
+    animation_layer.set_time(Duration::from_millis(1000));
+    animation_layer.draw(draw1.iter().cloned());
+    animation_layer.draw(draw2.iter().cloned());
 
     // Create two animation regions that enclose the shapes. Use the stop-motion effect so we replace the paths instead of adding them
     let region1         = Circle::new(Coord2(100.0, 100.0), 60.0).to_path::<SimpleBezierPath>();
@@ -72,6 +154,9 @@ pub fn include_path_in_region() {
         )).collect::<Vec<_>>().await
     });
 
+    // Both regions should replace their circles
     assert!(at_time_zero.len() == 2);
+    assert!(at_time_later.len() != 4);
+    assert!(at_time_later.len() != 3);
     assert!(at_time_later.len() == 2);
 }
