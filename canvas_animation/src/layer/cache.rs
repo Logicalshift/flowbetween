@@ -188,7 +188,7 @@ impl AnimationLayerCache {
         // Store the paths that are in each region
         let mut cut_paths           = HashMap::new();
 
-        // Process the drawing instructions from left-to-right
+        // Process the drawing instructions in path index order
         for path_bounds in drawing_bounding_boxes.iter() {
             // Initially the whole path is remaining
             let (path_idx, remaining_bounds)    = *path_bounds;
@@ -205,7 +205,7 @@ impl AnimationLayerCache {
             for region_perimeter in current_regions.iter() {
                 // Ignore this region if the path doesn't overlap it
                 if !region_perimeter.bounds.overlaps(&remaining_bounds) {
-                    break;
+                    continue;
                 }
 
                 // Test to see how the path and the region overlaps
