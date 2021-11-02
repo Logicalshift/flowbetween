@@ -160,7 +160,7 @@ impl FrameModel {
         let elements                = Self::element_properties(frame.clone());
         let bounding_boxes          = Self::bounding_boxes(elements.clone());
 
-        let create_keyframe_on_draw     = bind(true);
+        let create_keyframe_on_draw     = bind(false);
 
         // Result is a new FrameModel containing these layers
         FrameModel {
