@@ -292,13 +292,32 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     }
 
     ///
+    /// Returns true if the current time in the preview layer isn't currently on a keyframe
+    ///
+    fn layer_has_no_keyframe(&self) -> bool {
+        if let Some(preview_layer) = self.preview_layer {
+            // Look for a frame around the current time
+            let current_time    = self.current_time.get();
+
+            let layer           = self.animation.get_layer_with_id(preview_layer);
+            let keyframe_exists = layer.and_then(|layer| layer.get_key_frame_at_time(current_time)).is_some();
+
+            // If there's no keyframe at all, then we need to create a new keyframe
+            !keyframe_exists
+        } else {
+            // No preview layer (so we can't create a keyframe)
+            false
+        }
+    }
+
+    ///
     /// Creates a new keyframe if there is no current keyframe and the 'create keyframe on draw' option is set.
     ///
     /// Returns true if the keyframe was created
     ///
     fn create_new_keyframe_if_required(&mut self) -> bool {
         if let Some(preview_layer) = self.preview_layer {
-            if self.create_keyframe.get() {
+            if self.create_keyframe.get() || self.layer_has_no_keyframe() {
                 if self.need_new_keyframe() {
                     let current_time    = self.current_time.get();
 
