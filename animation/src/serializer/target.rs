@@ -236,10 +236,24 @@ mod test {
     }
 
     #[test]
-    fn encode_f64() {
+    fn encode_f64_1() {
         let mut res = String::new();
         res.write_f64(f64::consts::PI);
         assert!(&res == "Y0CRUtfIJAE");
+    }
+
+    #[test]
+    fn encode_f64_2() {
+        let mut res = String::new();
+        res.write_f64(42.0);
+        assert!(&res == "AAAAAAAAFBE");
+    }
+
+    #[test]
+    fn encode_f64_3() {
+        let mut res = String::new();
+        res.write_f64(123.45678);
+        assert!(&res == "h3lLivT3eBE");
     }
 
     #[test]
