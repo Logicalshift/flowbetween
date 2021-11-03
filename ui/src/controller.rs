@@ -7,6 +7,8 @@ use super::viewmodel::*;
 use super::binding_canvas::*;
 use super::resource_manager::*;
 
+use futures::future::{BoxFuture};
+
 use std::sync::*;
 use std::collections::{HashSet, HashMap};
 
@@ -33,28 +35,51 @@ use std::collections::{HashSet, HashMap};
 /// viewmodel.
 ///
 pub trait Controller : Send+Sync {
+    ///
     /// Retrieves a Control representing the UI for this controller
+    ///
     fn ui(&self) -> BindRef<Control>;
 
+    ///
     /// Retrieves the viewmodel for this controller
+    ///
     fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> { None }
 
+    ///
     /// Attempts to retrieve a sub-controller of this controller
+    ///
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> { None }
 
+    ///
     /// Callback for when a control associated with this controller generates an action
+    ///
     fn action(&self, _action_id: &str, _action_data: &ActionParameter) { }
 
+    ///
     /// Retrieves a resource manager containing the images used in the UI for this controller
+    ///
     fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> { None }
 
+    ///
     /// Retrieves a resource manager containing the canvases used in the UI for this controller
+    ///
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { None }
 
+    ///
+    /// Returns a future representing the run-time for this controller
+    ///
+    /// This is run in sync with the main UI thread: ie, all controllers that have a future must
+    /// be asleep before a tick can pass. This also provides a way for a controller to wake the
+    /// run-time thread.
+    ///
+    fn runtime(&self) -> Option<BoxFuture<'static, ()>> { None }
+
+    ///
     /// Called just before an update is processed
     ///
     /// This is called for every controller every time after processing any actions
     /// that might have occurred.
+    ///
     fn tick(&self) { }
 }
 
