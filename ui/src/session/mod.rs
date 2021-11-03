@@ -8,6 +8,7 @@ pub mod state;
 pub mod session;
 mod canvas_stream;
 mod viewmodel_stream;
+mod controller_runtime;
 
 pub use self::event::*;
 pub use self::update::*;
