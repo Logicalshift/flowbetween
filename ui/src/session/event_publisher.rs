@@ -14,7 +14,7 @@ use std::sync::*;
 ///
 /// The main UI event loop
 ///
-pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreController>, mut ui_events: WeakPublisher<Vec<UiEvent>>, core: Weak<Desync<UiSessionCore>>) -> impl Future<Output=()> {
+pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreController>, mut ui_events: WeakPublisher<Vec<UiEvent>>, core: Weak<Desync<UiSessionCore>>) -> impl Unpin+Future<Output=()> {
     // Subscribe to the UI events
     let mut ui_event_subscriber = ui_events.subscribe();
 
@@ -94,5 +94,5 @@ pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreCo
                 async move { core.dispatch_event(vec![UiEvent::ResumeUpdates], &*core_controller).await }.boxed()
             }).await.ok();
         }
-    }
+    }.boxed()
 }

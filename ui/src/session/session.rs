@@ -2,15 +2,17 @@ use super::*;
 use super::core::*;
 use super::event::*;
 use super::update::*;
-use super::event_publisher::*;
 use super::update_stream::*;
-use super::super::controller::*;
-use super::super::user_interface::*;
+use super::event_publisher::*;
+use super::controller_runtime::*;
+use crate::controller::*;
+use crate::user_interface::*;
 
 use ::desync::*;
 use flo_binding::*;
 use flo_stream::*;
 use futures::prelude::*;
+use futures::future;
 
 use std::sync::*;
 
@@ -36,7 +38,7 @@ impl<CoreController: Controller+'static> UiSession<CoreController> {
     /// Cretes a new UI session with the specified core controller, and returns a future that will run the session
     /// (and complete once the session has completed)
     ///
-    pub fn new(controller: CoreController) -> (UiSession<CoreController>, impl Future<Output=()>) {
+    pub fn new(controller: CoreController) -> (UiSession<CoreController>, impl Unpin+Future<Output=()>) {
         let controller          = Arc::new(controller);
         let core                = UiSessionCore::new(controller.clone());
         let core                = Arc::new(Desync::new(core));
@@ -44,6 +46,9 @@ impl<CoreController: Controller+'static> UiSession<CoreController> {
         let ui_update_lifetime  = Self::track_ui_updates(Arc::clone(&core));
         let publisher           = Publisher::new(100);
         let run_loop            = ui_event_loop(Arc::downgrade(&controller), publisher.republish_weak(), Arc::downgrade(&core));
+        let rt_controller       = Arc::clone(&controller);
+        let run_time            = controller_runtime(rt_controller);
+        let run_loop            = future::select(run_loop, run_time).map(|_| ());
 
         let session             = UiSession {
             controller:         controller,
