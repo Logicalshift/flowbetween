@@ -1,10 +1,13 @@
 use crate::image::*;
 use crate::control::*;
 use crate::property::*;
+use crate::controller::*;
 use crate::binding_canvas::*;
 use crate::resource_manager::*;
 
 use flo_binding::*;
+
+use std::sync::*;
 
 ///
 /// The possible actions that a StreamController can perform
@@ -24,4 +27,10 @@ pub enum ControllerAction {
 
     /// Adds (or replaces) a canvas resource in the resource manager for this controller
     SetCanvasResource(String, Resource<BindingCanvas>),
+
+    /// Adds a subcontroller with the specified name to the controller
+    AddSubController(String, Arc<dyn Controller>),
+
+    /// Removes a subcontroller from this controller
+    RemoveSubController(String),
 }
