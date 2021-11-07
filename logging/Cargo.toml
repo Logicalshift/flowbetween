@@ -8,7 +8,7 @@ repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Pubsub logging framework"
 
 [dependencies]
-flo_stream      = "0.6"
+flo_stream      = "0.7"
 desync          = "0.7"
 
 futures         = "0.3"

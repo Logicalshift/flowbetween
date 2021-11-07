@@ -19,4 +19,4 @@ desync              = "0.7"
 
 [dev-dependencies]
 flo_canvas          = "0.3"
-flo_stream          = "0.6"
+flo_stream          = "0.7"

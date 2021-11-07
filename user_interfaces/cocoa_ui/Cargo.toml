@@ -10,7 +10,7 @@ description         = "User interface implementation for FlowBetween using the C
 [dependencies]
 flo_cocoa_pipe      = "0.2"
 flo_canvas          = "0.3"
-flo_stream          = "0.6"
+flo_stream          = "0.7"
 flo_ui              = "0.2"
 flo_render          = { version = "0.3", features = [ "osx-metal" ] }
 flo_render_canvas   = "0.3"

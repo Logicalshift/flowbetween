@@ -16,7 +16,7 @@ flo_canvas          = "0.3"
 flo_http_ui         = "0.2"
 flo_static_files    = "0.1"
 flo_logging         = "0.2"
-flo_stream          = "0.6"
+flo_stream          = "0.7"
 
 actix-web           = "2.0"
 actix-web-actors    = "2.0"
