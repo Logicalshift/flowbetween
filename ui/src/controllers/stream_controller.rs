@@ -10,6 +10,7 @@ use crate::dynamic_viewmodel::*;
 use futures::prelude::*;
 use futures::future::{BoxFuture};
 
+use flo_stream::*;
 use flo_binding::*;
 
 use std::sync::*;
@@ -111,6 +112,9 @@ pub (crate) struct StreamControllerCore {
     /// The viewmodel for this controller
     viewmodel: Arc<DynamicViewModel>,
 
+    /// Used to switch the source of UI values
+    ui_switch: StreamSwitch<Control>,
+
     /// The canvases for this stream controller
     canvases: Arc<ResourceManager<BindingCanvas>>,
 
@@ -126,7 +130,7 @@ impl StreamControllerCore {
         use self::ControllerAction::*;
 
         match action {
-            SetUi(control)                                  => { todo!() },
+            SetUi(control)                                  => { self.ui_switch.switch_to_stream(follow(control)); },
             SetProperty(property_name, value)               => { self.viewmodel.set_property(&property_name, value); },
             SetPropertyBinding(property_name, binding)      => { self.viewmodel.set_computed(&property_name, move || binding.get()); },
             SetImageResource(image_name, image_resource)    => { todo!() },
