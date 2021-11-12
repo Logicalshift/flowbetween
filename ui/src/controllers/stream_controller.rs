@@ -126,6 +126,9 @@ pub (crate) struct StreamControllerCore {
 }
 
 impl StreamControllerCore {
+    ///
+    /// Processes an action for the controller
+    ///
     fn send_action(&mut self, action: ControllerAction) {
         use self::ControllerAction::*;
 
@@ -133,8 +136,6 @@ impl StreamControllerCore {
             SetUi(control)                                  => { self.ui_switch.switch_to_stream(follow(control)); },
             SetProperty(property_name, value)               => { self.viewmodel.set_property(&property_name, value); },
             SetPropertyBinding(property_name, binding)      => { self.viewmodel.set_computed(&property_name, move || binding.get()); },
-            SetImageResource(image_name, image_resource)    => { todo!() },
-            SetCanvasResource(canvas_name, canvas_resource) => { todo!() },
             AddSubController(controller_name, controller)   => { self.subcontrollers.insert(controller_name, controller); },
             RemoveSubController(controller_name)            => { self.subcontrollers.remove(&controller_name); },
         }

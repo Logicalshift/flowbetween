@@ -22,12 +22,6 @@ pub enum ControllerAction {
     /// Sets the value of a property to a bound value in this controller
     SetPropertyBinding(String, BindRef<PropertyValue>),
 
-    /// Adds (or replaces) a named image resource in the resource manager for this controller
-    SetImageResource(String, Resource<Image>),
-
-    /// Adds (or replaces) a canvas resource in the resource manager for this controller
-    SetCanvasResource(String, Resource<BindingCanvas>),
-
     /// Adds a subcontroller with the specified name to the controller
     AddSubController(String, Arc<dyn Controller>),
 
