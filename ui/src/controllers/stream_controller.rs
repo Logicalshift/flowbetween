@@ -5,6 +5,7 @@ use crate::control::*;
 use crate::viewmodel::*;
 use crate::controller::*;
 use crate::binding_canvas::*;
+use super::controller_event::*;
 use crate::resource_manager::*;
 use crate::dynamic_viewmodel::*;
 
@@ -15,6 +16,7 @@ use flo_stream::*;
 
 use flo_binding::*;
 
+use std::iter;
 use std::sync::*;
 use std::collections::{HashMap};
 
@@ -37,7 +39,7 @@ pub struct StreamController<TNewFuture> {
     core: Arc<Mutex<StreamControllerCore>>
 }
 
-impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(ControllerResources) -> TFuture> Controller for StreamController<TNewFuture> {
+impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(ControllerEventStream, ControllerResources) -> TFuture> Controller for StreamController<TNewFuture> {
     ///
     /// Retrieves a Control representing the UI for this controller
     ///
@@ -67,8 +69,14 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
     ///
     /// Callback for when a control associated with this controller generates an action
     ///
-    fn action(&self, _action_id: &str, _action_data: &ActionParameter) {
-        // TODO: queue the action to any runtimes that are running
+    fn action(&self, action_id: &str, action_data: &ActionParameter) {
+        // Queue the action to any runtimes that are running
+        let event_core = {
+            let core = self.core.lock().unwrap();
+            Arc::clone(&core.event_core)
+        };
+
+        event_core.post_events(iter::once(ControllerEvent::Action(action_id.to_string(), action_data.clone())));
     }
 
     ///
@@ -94,9 +102,25 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
     /// be asleep before a tick can pass. This also provides a way for a controller to wake the
     /// run-time thread.
     ///
-    fn runtime(&self) -> Option<BoxFuture<'static, ()>> { 
+    fn runtime(&self) -> Option<BoxFuture<'static, ()>> {
+        let (event_core, events, pending) = {
+            // Fetch the core
+            let mut core = self.core.lock().unwrap();
+
+            // Replace the events for the current core (if there's another running runtime, its events will close)
+            core.event_core.close();
+            let (event_core, events)    = ControllerEventStream::new();
+            let pending                 = core.event_core.take_pending();
+            core.event_core             = Arc::clone(&event_core);
+
+            (event_core, events, pending)
+        };
+
+        // Dispatch the pending events from the old core to the new core (if there is one)
+        event_core.post_events(pending.into_iter());
+
         // Start the runtime for this stream going (possibly a new copy, though usually only one runtime should be active at any one time)
-        let runtime = (self.make_runtime)(self.resources.clone());
+        let runtime = (self.make_runtime)(events, self.resources.clone());
 
         Some(runtime.boxed())
     }
@@ -127,7 +151,10 @@ pub (crate) struct StreamControllerCore {
     images: Arc<ResourceManager<Image>>,
 
     /// The subcontrollers that are known for this core
-    subcontrollers: HashMap<String, Arc<dyn Controller>>
+    subcontrollers: HashMap<String, Arc<dyn Controller>>,
+
+    /// Used to send events to the runtime
+    event_core: Arc<Mutex<ControllerEventStreamCore>>
 }
 
 impl StreamControllerCore {
