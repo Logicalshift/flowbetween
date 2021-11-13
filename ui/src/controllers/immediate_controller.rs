@@ -48,16 +48,18 @@ pub struct ImmediateController<TNewFuture> {
 
 impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(ControllerEventStream, mpsc::Sender<ControllerAction>, ControllerResources) -> TFuture> ImmediateController<TNewFuture> {
     ///
-    /// Creates a new immediate-mode controller. The function passed in should be able to create the runtime for the controller whenever it is displayed on screen
+    /// Creates a new immediate-mode controller. The function passed in should be able to create the runtime for the controller whenever it is 
+    /// displayed on screen.
     ///
-    pub fn new(create_runtime: TNewFuture) -> ImmediateController<TNewFuture> {
+    /// The resources and the UI can be specified ahead of time to avoid any point where the controller might display an empty UI due to the
+    /// runtime initialising late.
+    ///
+    pub fn new(create_runtime: TNewFuture, resources: ControllerResources, default_ui: BindRef<Control>) -> ImmediateController<TNewFuture> {
         // The UI defaults to an empty stream
-        let default_ui_stream       = stream::iter(vec![Control::empty()]);
+        let initial_ui              = default_ui.get();
+        let default_ui_stream       = follow(default_ui);
         let (ui_stream, ui_switch)  = switchable_stream(default_ui_stream);
-        let ui                      = bind_stream(ui_stream, Control::empty(), |_, new_value| new_value);
-
-        // Create the resources
-        let resources = ControllerResources::new();
+        let ui                      = bind_stream(ui_stream, initial_ui, |_, new_value| new_value);
 
         // The event core is initially not connected anywhere
         let (event_core, _events)   = ControllerEventStream::new();
