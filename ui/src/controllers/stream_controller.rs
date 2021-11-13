@@ -31,7 +31,7 @@ use std::collections::{HashMap};
 /// A future-based runtime like this also makes it easier to update the controller in the background and manage different
 /// states (say when tracking mouse drags and drawing actions)
 ///
-pub struct StreamController<TNewFuture> {
+pub struct ImmediateController<TNewFuture> {
     /// Creates a new runtime for the controller
     make_runtime: TNewFuture,
 
@@ -39,10 +39,10 @@ pub struct StreamController<TNewFuture> {
     resources: ControllerResources,
 
     /// The core for this stream controller
-    core: Arc<Mutex<StreamControllerCore>>
+    core: Arc<Mutex<ImmediateControllerCore>>
 }
 
-impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(ControllerEventStream, mpsc::Sender<ControllerAction>, ControllerResources) -> TFuture> Controller for StreamController<TNewFuture> {
+impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(ControllerEventStream, mpsc::Sender<ControllerAction>, ControllerResources) -> TFuture> Controller for ImmediateController<TNewFuture> {
     ///
     /// Retrieves a Control representing the UI for this controller
     ///
@@ -169,7 +169,7 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
 ///
 /// The core state for a stream controller
 ///
-pub (crate) struct StreamControllerCore {
+pub (crate) struct ImmediateControllerCore {
     /// The viewmodel for this controller
     viewmodel: Arc<DynamicViewModel>,
 
@@ -189,7 +189,7 @@ pub (crate) struct StreamControllerCore {
     event_core: Arc<Mutex<ControllerEventStreamCore>>
 }
 
-impl StreamControllerCore {
+impl ImmediateControllerCore {
     ///
     /// Processes an action for the controller
     ///
@@ -206,7 +206,7 @@ impl StreamControllerCore {
     }
 }
 
-impl Drop for StreamControllerCore {
+impl Drop for ImmediateControllerCore {
     fn drop(&mut self) {
         self.event_core.close();
     }
