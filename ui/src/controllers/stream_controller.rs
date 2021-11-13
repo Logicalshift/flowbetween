@@ -1,4 +1,5 @@
 use super::controller_action::*;
+use super::controller_resources::*;
 use crate::image::*;
 use crate::control::*;
 use crate::viewmodel::*;
@@ -11,6 +12,7 @@ use futures::prelude::*;
 use futures::future::{BoxFuture};
 
 use flo_stream::*;
+
 use flo_binding::*;
 
 use std::sync::*;
@@ -28,11 +30,14 @@ pub struct StreamController<TNewFuture> {
     /// Creates a new runtime for the controller
     make_runtime: TNewFuture,
 
+    /// The resources for this controller
+    resources: ControllerResources,
+
     /// The core for this stream controller
     core: Arc<Mutex<StreamControllerCore>>
 }
 
-impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn() -> TFuture> Controller for StreamController<TNewFuture> {
+impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(ControllerResources) -> TFuture> Controller for StreamController<TNewFuture> {
     ///
     /// Retrieves a Control representing the UI for this controller
     ///
@@ -91,7 +96,7 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn() -> TFut
     ///
     fn runtime(&self) -> Option<BoxFuture<'static, ()>> { 
         // Start the runtime for this stream going (possibly a new copy, though usually only one runtime should be active at any one time)
-        let runtime = (self.make_runtime)();
+        let runtime = (self.make_runtime)(self.resources.clone());
 
         Some(runtime.boxed())
     }
