@@ -18,6 +18,7 @@ use flo_stream::*;
 
 use flo_binding::*;
 
+use std::mem;
 use std::iter;
 use std::sync::*;
 use std::collections::{HashMap};
@@ -138,6 +139,9 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
                     break;
                 }
             }
+
+            // Make sure that receive_actions is dropped so that the runtime knows it can't send messages any more
+            mem::drop(receive_actions);
 
             // Wait forever so the main runtime determines when the future is terminated
             future::pending::<()>().await;
