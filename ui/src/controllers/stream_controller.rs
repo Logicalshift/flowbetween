@@ -201,3 +201,9 @@ impl StreamControllerCore {
         }
     }
 }
+
+impl Drop for StreamControllerCore {
+    fn drop(&mut self) {
+        self.event_core.close();
+    }
+}
