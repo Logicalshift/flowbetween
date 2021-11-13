@@ -3,6 +3,7 @@ use crate::control::*;
 use futures::prelude::*;
 use futures::task::{Waker, Poll, Context};
 
+use std::mem;
 use std::pin::*;
 use std::sync::*;
 use std::collections::{VecDeque};
@@ -90,6 +91,9 @@ pub (crate) trait ControllerEventStreamCoreActions {
     /// Sends one or more events to the core 
     fn post_events<ControllerEventIter: Iterator<Item=ControllerEvent>>(&self, events: ControllerEventIter);
 
+    /// Takes the pending events from this stream and returns them (removing them from this stream)
+    fn take_pending(&self) -> VecDeque<ControllerEvent>;
+
     /// Marks the core as closed
     fn close(&self);
 }
@@ -117,6 +121,12 @@ impl ControllerEventStreamCoreActions for Arc<Mutex<ControllerEventStreamCore>> 
         if let Some(wake) = wake {
             wake.wake()
         }
+    }
+
+    /// Takes the pending events from this stream and returns them (removing them from this stream)
+    fn take_pending(&self) -> VecDeque<ControllerEvent> {
+        let mut core = self.lock().unwrap();
+        mem::take(&mut core.pending)
     }
 
     /// Marks the core as closed
