@@ -1,9 +1,6 @@
-use crate::image::*;
 use crate::control::*;
 use crate::property::*;
 use crate::controller::*;
-use crate::binding_canvas::*;
-use crate::resource_manager::*;
 
 use flo_binding::*;
 
