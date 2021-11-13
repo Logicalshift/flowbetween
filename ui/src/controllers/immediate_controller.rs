@@ -10,6 +10,7 @@ use crate::resource_manager::*;
 use crate::dynamic_viewmodel::*;
 
 use futures::prelude::*;
+use futures::stream;
 use futures::future;
 use futures::future::{BoxFuture};
 use futures::channel::mpsc;
@@ -24,7 +25,7 @@ use std::sync::*;
 use std::collections::{HashMap};
 
 ///
-/// A stream controller implements the controller trait and runs the controller by dispatching and receiving messages
+/// An immediate-mode controller implements the controller trait and runs the controller by dispatching and receiving messages
 /// on a stream. This allows for writing controllers that run as streams, and also removes most of the boilerplate
 /// around setting up resource managers and view models.
 ///
@@ -35,11 +36,50 @@ pub struct ImmediateController<TNewFuture> {
     /// Creates a new runtime for the controller
     make_runtime: TNewFuture,
 
+    /// The user interface control
+    ui: BindRef<Control>,
+
     /// The resources for this controller
     resources: ControllerResources,
 
-    /// The core for this stream controller
+    /// The core for this immediate mode controller
     core: Arc<Mutex<ImmediateControllerCore>>
+}
+
+impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(ControllerEventStream, mpsc::Sender<ControllerAction>, ControllerResources) -> TFuture> ImmediateController<TNewFuture> {
+    ///
+    /// Creates a new immediate-mode controller. The function passed in should be able to create the runtime for the controller whenever it is displayed on screen
+    ///
+    pub fn new(create_runtime: TNewFuture) -> ImmediateController<TNewFuture> {
+        // The UI defaults to an empty stream
+        let default_ui_stream       = stream::iter(vec![Control::empty()]);
+        let (ui_stream, ui_switch)  = switchable_stream(default_ui_stream);
+        let ui                      = bind_stream(ui_stream, Control::empty(), |_, new_value| new_value);
+
+        // Create the resources
+        let resources = ControllerResources::new();
+
+        // The event core is initially not connected anywhere
+        let (event_core, _events)   = ControllerEventStream::new();
+
+        // Create the core
+        let core = ImmediateControllerCore {
+            viewmodel:      Arc::new(DynamicViewModel::new()),
+            ui_switch:      ui_switch,
+            canvases:       Arc::clone(resources.canvases()),
+            images:         Arc::clone(resources.images()),
+            subcontrollers: HashMap::new(),
+            event_core:     event_core
+        };
+
+        // Create the controller
+        ImmediateController {
+            make_runtime:   create_runtime,
+            ui:             BindRef::from(ui),
+            resources:      ControllerResources::new(),
+            core:           Arc::new(Mutex::new(core))
+        }
+    }
 }
 
 impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(ControllerEventStream, mpsc::Sender<ControllerAction>, ControllerResources) -> TFuture> Controller for ImmediateController<TNewFuture> {
@@ -47,7 +87,7 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
     /// Retrieves a Control representing the UI for this controller
     ///
     fn ui(&self) -> BindRef<Control> {
-        BindRef::from(bind(Control::empty()))
+        self.ui.clone()
     }
 
     ///
@@ -167,7 +207,7 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
 }
 
 ///
-/// The core state for a stream controller
+/// The core state for an immediate mode controller
 ///
 pub (crate) struct ImmediateControllerCore {
     /// The viewmodel for this controller
@@ -176,10 +216,10 @@ pub (crate) struct ImmediateControllerCore {
     /// Used to switch the source of UI values
     ui_switch: StreamSwitch<Control>,
 
-    /// The canvases for this stream controller
+    /// The canvases for this immediate mode controller
     canvases: Arc<ResourceManager<BindingCanvas>>,
 
-    /// The images for this stream controller
+    /// The images for this immediate mode controller
     images: Arc<ResourceManager<Image>>,
 
     /// The subcontrollers that are known for this core
