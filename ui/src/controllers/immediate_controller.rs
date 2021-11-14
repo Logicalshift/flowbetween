@@ -53,7 +53,7 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
     /// The resources and the UI can be specified ahead of time to avoid any point where the controller might display an empty UI due to the
     /// runtime initialising late.
     ///
-    pub fn new(create_runtime: TNewFuture, resources: ControllerResources, default_ui: BindRef<Control>) -> ImmediateController<TNewFuture> {
+    pub fn new(resources: ControllerResources, default_ui: BindRef<Control>, create_runtime: TNewFuture) -> ImmediateController<TNewFuture> {
         // The UI defaults to an empty stream
         let initial_ui              = default_ui.get();
         let default_ui_stream       = follow(default_ui);
@@ -250,5 +250,69 @@ impl ImmediateControllerCore {
 impl Drop for ImmediateControllerCore {
     fn drop(&mut self) {
         self.event_core.close();
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use futures::executor;
+    use futures::channel::oneshot;
+    use futures_timer::{Delay};
+
+    use ::desync::*;
+
+    use std::time::{Duration};
+
+    #[test]
+    fn set_new_ui() {
+        // Create a signal channel to perform the action
+        let (mut signal, update_ui) = mpsc::channel(0);
+        let (finished, is_finished) = oneshot::channel();
+
+        // Create a new controller
+        let update_ui       = Arc::new(Mutex::new(Some(update_ui)));
+        let finished        = Arc::new(Mutex::new(Some(finished)));
+
+        let controller      = ImmediateController::new(ControllerResources::new(), BindRef::from(bind(Control::empty())),
+            move |_events, actions, _resources| {
+                let finished        = Arc::clone(&finished);
+                let update_ui       = update_ui.lock().unwrap().take();
+                let mut update_ui   = update_ui.expect("Update UI");
+                let mut actions     = actions;
+
+                async move {
+                    update_ui.next().await;
+
+                    // Send the action
+                    actions.send(ControllerAction::SetUi(BindRef::from(bind(Control::label())))).await.ok();
+
+                    // Yield so the action can take effect
+                    Delay::new(Duration::from_millis(10)).await;
+
+                    // Note that we're finished
+                    if let Some(finished) = finished.lock().unwrap().take() {
+                        finished.send(()).ok();
+                    }
+                }
+            });
+
+        // Run the runtime in the background
+        let runtime = controller.runtime().expect("Runtime");
+        let runner  = Desync::new(());
+        runner.future_desync(move |_| runtime.boxed()).detach();
+
+        // Check the initial UI
+        assert!(controller.ui().get() == Control::empty());
+
+        // Send the action and wait for it to complete
+        executor::block_on(async { signal.send(()).await.unwrap(); });
+
+        // Wait for the action to finish sending
+        executor::block_on(async { is_finished.await.unwrap() });
+
+        // UI should be updated to be a label
+        assert!(controller.ui().get() == Control::label());
     }
 }

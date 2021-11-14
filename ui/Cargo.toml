@@ -22,3 +22,5 @@ png             = "0.16"
 lazy_static     = "1.2"
 bytes           = "0.5"
 itertools       = "0.9"
+
+futures-timer   = "3.0"
