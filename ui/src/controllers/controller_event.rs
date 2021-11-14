@@ -11,7 +11,7 @@ use std::collections::{VecDeque};
 ///
 /// Events that a controller can generate
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ControllerEvent {
     /// An action was generated from the UI
     Action(String, ActionParameter),

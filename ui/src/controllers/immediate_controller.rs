@@ -257,7 +257,7 @@ impl Drop for ImmediateControllerCore {
 mod test {
     use super::*;
 
-    use futures::future::{select};
+    use futures::future::{select, Either};
     use futures::executor;
     use futures::channel::oneshot;
     use futures_timer::{Delay};
@@ -315,5 +315,51 @@ mod test {
 
         // UI should be updated to be a label
         assert!(controller.ui().get() == Control::label());
+
+        // Drop the controller first to ensure the runtime terminates
+        mem::drop(controller);
+    }
+
+    #[test]
+    fn send_controller_event() {
+        // Create a signal channel to perform the action
+        let (send_event, recv_event) = oneshot::channel();
+
+        // Create a new controller
+        let send_event      = Arc::new(Mutex::new(Some(send_event)));
+
+        let controller      = ImmediateController::new(ControllerResources::new(), BindRef::from(bind(Control::empty())),
+            move |events, _actions, _resources| {
+                let send_event      = send_event.lock().unwrap().take().unwrap();
+                let mut events      = events;
+
+                async move {
+                    // Wait for the next event
+                    let first_event = events.next().await;
+
+                    // Send it back to the main thread
+                    send_event.send(first_event).ok();
+                }
+            });
+
+        // Run the runtime in the background
+        let runtime = controller.runtime().expect("Runtime");
+        let runner  = Desync::new(());
+        runner.future_desync(move |_| runtime.boxed()).detach();
+
+        // Send an event to it
+        controller.action("Test", &ActionParameter::VirtualScroll((1, 2), (3, 4)));
+
+        // Wait for the event to arrive
+        let event_readback = executor::block_on(async { select(recv_event, Delay::new(Duration::from_secs(1))).await });
+
+        match event_readback {
+            Either::Right(((), _))      => { assert!(false, "Timeout"); }
+            Either::Left((Ok(evt), _))  => { println!("{:?}", evt); assert!(evt == Some(ControllerEvent::Action("Test".to_string(), ActionParameter::VirtualScroll((1, 2), (3, 4))))); }
+            Either::Left((Err(_), _))   => { assert!(false, "Error"); }
+        }
+
+        // Drop the controller first to ensure the runtime terminates
+        mem::drop(controller);
     }
 }
