@@ -116,10 +116,19 @@ class FloEmptyView : NSView, FloContainerView {
     /// The hit testing routine is used to make the view 'click-through' if required
     ///
     override func hitTest(_ point: NSPoint) -> NSView? {
-        if viewState.clickThrough {
-            return nil;
+        // Check what view has been clicked on
+        let hitTestResult = super.hitTest(point);
+        
+        if hitTestResult == self {
+            // If the click is directly on this view, then return this view only if it's not a 'click through' view
+            if viewState.clickThrough {
+                return nil;
+            } else {
+                return hitTestResult;
+            }
         } else {
-            return super.hitTest(point);
+            // If another view has claimed the click, then don't suppress it
+            return hitTestResult;
         }
     }
 
