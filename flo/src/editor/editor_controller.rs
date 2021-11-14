@@ -166,6 +166,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                         y2: End
                     })
                     .with(Appearance::Background(Color::Rgba(0.9, 0.9, 0.9, 0.7)))
+                    .with(PointerBehaviour::ClickThrough)
                     .with_controller(&serde_json::to_string(&SubController::Sidebar).unwrap())
             ])
     }

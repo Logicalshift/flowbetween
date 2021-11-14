@@ -18,6 +18,7 @@ fn sidebar_ui<Anim: 'static+EditableAnimation>(_model: &FloModel<Anim>) -> BindR
                 x2: End,
                 y2: End
             })
+            .with(PointerBehaviour::ClickThrough)
             .with(vec![
                 Control::button()
                     .with("Test")
