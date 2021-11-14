@@ -257,6 +257,7 @@ impl Drop for ImmediateControllerCore {
 mod test {
     use super::*;
 
+    use futures::future::{select};
     use futures::executor;
     use futures::channel::oneshot;
     use futures_timer::{Delay};
@@ -307,10 +308,10 @@ mod test {
         assert!(controller.ui().get() == Control::empty());
 
         // Send the action and wait for it to complete
-        executor::block_on(async { signal.send(()).await.unwrap(); });
+        executor::block_on(async { select(signal.send(()), Delay::new(Duration::from_secs(1))).await; });
 
         // Wait for the action to finish sending
-        executor::block_on(async { is_finished.await.unwrap() });
+        executor::block_on(async { select(is_finished, Delay::new(Duration::from_secs(1))).await; });
 
         // UI should be updated to be a label
         assert!(controller.ui().get() == Control::label());
