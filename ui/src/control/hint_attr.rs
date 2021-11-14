@@ -35,3 +35,9 @@ impl Modifier<Control> for Hint {
         control.add_attribute(ControlAttribute::HintAttr(self))
     }
 }
+
+impl Modifier<Control> for PointerBehaviour {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(ControlAttribute::HintAttr(Hint::PointerBehaviour(self)))
+    }
+}
