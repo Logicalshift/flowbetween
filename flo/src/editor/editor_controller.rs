@@ -7,9 +7,11 @@ use super::controlbar_controller::*;
 
 use crate::model::*;
 use crate::style::*;
+use crate::sidebar::*;
 
 use flo_ui::*;
 use flo_ui_files::ui::*;
+use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
 
@@ -26,7 +28,8 @@ enum SubController {
     ControlBar,
     Timeline,
     Toolbox,
-    KeyBindings
+    KeyBindings,
+    Sidebar
 }
 
 ///
@@ -64,6 +67,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
         let toolbox         = Arc::new(ToolboxController::new(&animation));
         let control_bar     = Arc::new(ControlBarController::new(&animation));
         let key_bindings    = Arc::new(KeyBindingController::new());
+        let sidebar         = Arc::new(sidebar_controller(&animation));
 
         let ui              = bind(Self::ui());
         let mut subcontrollers: HashMap<SubController, Arc<dyn Controller>> = HashMap::new();
@@ -74,6 +78,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
         subcontrollers.insert(SubController::Toolbox,       toolbox);
         subcontrollers.insert(SubController::ControlBar,    control_bar);
         subcontrollers.insert(SubController::KeyBindings,   key_bindings);
+        subcontrollers.insert(SubController::Sidebar,       sidebar);
 
         EditorController {
             anim:           PhantomData,
@@ -143,7 +148,26 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                 x2: Stretch(1.0),
                 y2: End
             })
-            .with_controller(&serde_json::to_string(&SubController::Canvas).unwrap())
+            .with(vec![
+                Control::container()
+                    .with(Bounds {
+                        x1: Start,
+                        y1: Start,
+                        x2: End,
+                        y2: End
+                    })
+                    .with(ControlAttribute::ZIndex(0))
+                    .with_controller(&serde_json::to_string(&SubController::Canvas).unwrap()),
+                Control::container()
+                    .with(Bounds {
+                        x1: Stretch(1.0),
+                        y1: Start,
+                        x2: Offset(300.0),
+                        y2: End
+                    })
+                    .with(Appearance::Background(Color::Rgba(0.9, 0.9, 0.9, 0.7)))
+                    .with_controller(&serde_json::to_string(&SubController::Sidebar).unwrap())
+            ])
     }
 
     ///
