@@ -25,6 +25,7 @@ pub mod animation_canvas;
 pub mod tools;
 pub mod standard_tools;
 pub mod menu;
+pub mod sidebar;
 pub mod color;
 
 mod model;
