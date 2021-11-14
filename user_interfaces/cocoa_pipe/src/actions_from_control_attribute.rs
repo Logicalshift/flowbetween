@@ -158,8 +158,9 @@ impl ActionsFrom<ViewAction> for Hint {
         use self::Hint::*;
 
         match self {
-            FastDrawing     => vec![],
-            Class(name)     => vec![ViewAction::SetState(ViewStateUpdate::AddClass(name.clone()))]
+            FastDrawing         => vec![],
+            Class(name)         => vec![ViewAction::SetState(ViewStateUpdate::AddClass(name.clone()))],
+            PointerBehaviour(_) => vec![]
         }
     }
 }
