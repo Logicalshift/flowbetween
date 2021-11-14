@@ -154,13 +154,24 @@ impl ActionsFrom<ViewAction> for Scroll {
 }
 
 impl ActionsFrom<ViewAction> for Hint {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, _bind_property: &mut BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::Hint::*;
 
         match self {
-            FastDrawing         => vec![],
-            Class(name)         => vec![ViewAction::SetState(ViewStateUpdate::AddClass(name.clone()))],
-            PointerBehaviour(_) => vec![]
+            FastDrawing                 => vec![],
+            Class(name)                 => vec![ViewAction::SetState(ViewStateUpdate::AddClass(name.clone()))],
+            PointerBehaviour(behaviour) => behaviour.actions_from(bind_property)
+        }
+    }
+}
+
+impl ActionsFrom<ViewAction> for PointerBehaviour {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, _bind_property: &mut BindProperty) -> Vec<ViewAction> {
+        use self::PointerBehaviour::*;
+
+        match self {
+            ClickThrough    => vec![ViewAction::SetClickThrough(true)],
+            BlockClicks     => vec![ViewAction::SetClickThrough(false)],
         }
     }
 }

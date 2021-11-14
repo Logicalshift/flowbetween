@@ -111,6 +111,17 @@ class FloEmptyView : NSView, FloContainerView {
     /// Containers use a flipped coordinate system
     ///
     override var isFlipped: Bool { return true }
+    
+    ///
+    /// The hit testing routine is used to make the view 'click-through' if required
+    ///
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        if viewState.clickThrough {
+            return nil;
+        } else {
+            return super.hitTest(point);
+        }
+    }
 
     ///
     /// Adds a subview to this container

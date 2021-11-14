@@ -32,6 +32,7 @@ class ViewState {
     let isLast:         FloProperty     = FloProperty(withBool: false)
     var zIndex:         CGFloat?
     var classes:        [String]        = []
+    var clickThrough:   Bool            = false
 
     ///
     /// Removes all layout properties that are being tracked in this view

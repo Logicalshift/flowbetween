@@ -339,6 +339,7 @@ impl CocoaSession {
                     InsertSubView(view_id, index)           => { self.views.get(&view_id).cloned().map(|subview| { let _: () = msg_send!((**view), viewInsertSubView: *subview atIndex: index as u32); }); }
                     SetBounds(bounds)                       => { self.set_bounds(view, bounds); }
                     SetPadding(left, top, right, bottom)    => { self.set_padding(view, left, top, right, bottom); }
+                    SetClickThrough(click_through )         => { let _: () = msg_send!(**view, viewSetClickthrough: click_through); }
                     SetZIndex(z_index)                      => { let _: () = msg_send!(**view, viewSetZIndex: z_index); }
                     SetForegroundColor(col)                 => { let (r, g, b, a) = col.to_rgba_components(); let _: () = msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
                     SetBackgroundColor(col)                 => { let (r, g, b, a) = col.to_rgba_components(); let _: () = msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }

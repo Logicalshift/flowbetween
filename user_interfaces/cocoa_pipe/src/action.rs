@@ -144,6 +144,9 @@ pub enum ViewAction {
     /// Specifies the padding around the view
     SetPadding(f64, f64, f64, f64),
 
+    /// Specifies whether or not the view should respond to clicks/pointer events
+    SetClickThrough(bool),
+
     /// Sets the ID for this view
     SetId(String),
 
