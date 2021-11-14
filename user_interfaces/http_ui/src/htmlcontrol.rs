@@ -214,11 +214,11 @@ impl ToHtml for ControlAttribute {
 
 impl ToHtml for Hint {
     fn to_html_subcomponent(&self, _base_path: &str, _controller_path: &str) -> DomNode {
-        use self::Hint::*;
-
         match self {
-            FastDrawing         => DomEmpty::new(),
-            Class(class_name)   => DomAttribute::new("class", class_name)
+            Hint::FastDrawing                                       => DomEmpty::new(),
+            Hint::Class(class_name)                                 => DomAttribute::new("class", class_name),
+            Hint::PointerBehaviour(PointerBehaviour::ClickThrough)  => DomAttribute::new("style", "pointer-events: none"),
+            Hint::PointerBehaviour(PointerBehaviour::BlockClicks)   => DomAttribute::new("style", "pointer-events: auto"),
         }
     }
 }
