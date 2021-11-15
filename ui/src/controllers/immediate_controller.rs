@@ -81,6 +81,16 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
             core:           Arc::new(Mutex::new(core))
         }
     }
+
+    ///
+    /// Creates a new immediate controller with no initial resources. The future generally sets up the UI and resources as its first action
+    ///
+    /// Calling `new()` with a preset UI will avoid a 'loading' flicker in all cases as the UI will never be empty, but is a bit less self-contained
+    /// and is problematic when there are subcontrollers to set up, as they won't be available when the default UI is first used.
+    ///
+    pub fn empty(create_runtime: TNewFuture) -> ImmediateController<TNewFuture> {
+        Self::new(ControllerResources::new(), BindRef::from(bind(Control::empty())), create_runtime)
+    }
 }
 
 impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(ControllerEventStream, mpsc::Sender<ControllerAction>, ControllerResources) -> TFuture> Controller for ImmediateController<TNewFuture> {
