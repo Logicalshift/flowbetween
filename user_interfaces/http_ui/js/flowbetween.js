@@ -1184,6 +1184,16 @@ function flowbetween(root_node) {
         } else if (action_type === 'Drag') {
             wire_drag(action_name, node, controller_path);
 
+        } else if (action_type === 'Resize') {
+            node.flo_resize = (width, height) => {
+                if (width !== node.flo_last_width || height !== node.flo_last_height) {
+                    node.flo_last_width     = width;
+                    node.flo_last_height    = height;
+                    perform_action(controller_path, action_name, { 'Size': [width, height] });
+                }
+            };
+            node.flo_resize(node.clientWidth, node.clientHeight);
+
         } else if (action_type === 'Focused') {
             node.flo_was_focused = new_property_value => perform_action(controller_path, action_name, null);
 
