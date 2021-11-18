@@ -22,6 +22,9 @@ pub enum ActionTrigger {
     /// you can begin a new one with a different input method)
     Paint(PaintDevice),
 
+    /// Tracks resize actions for this control. If the control is involved in a layout event between one tick and another and the size is changed as a result, this event is generated once.
+    Resize,
+
     /// Tracks drag actions for this control
     Drag,
 
@@ -74,6 +77,9 @@ pub enum ActionParameter {
 
     /// Item drag action. Coordinates are relative to a fixed point during a drag action
     Drag(DragAction, (f32, f32), (f32, f32)),
+
+    /// The new size (as width/height) of the control in pixels
+    Size(f32, f32),
 
     /// The new value for an item
     Value(PropertyValue),

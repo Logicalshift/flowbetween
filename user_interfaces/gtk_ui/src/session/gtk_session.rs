@@ -600,6 +600,7 @@ impl GtkSessionCore {
                             Dismiss                         => vec![ RequestEvent(GtkWidgetEventType::Dismiss, action_name) ],
                             Paint(device)                   => vec![ RequestEvent(GtkWidgetEventType::Paint(device.into()), action_name) ],
                             Drag                            => vec![ RequestEvent(GtkWidgetEventType::Drag, action_name) ],
+                            Resize                          => vec![ /* TODO */ ],
                             Focused                         => vec![ /* TODO */ ],
                             CancelEdit                      => vec![ /* TODO */ ],
                             EditValue                       => vec![ RequestEvent(GtkWidgetEventType::EditValue, action_name) ],
