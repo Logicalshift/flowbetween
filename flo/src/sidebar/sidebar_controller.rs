@@ -22,6 +22,7 @@ fn sidebar_ui<Anim: 'static+EditableAnimation>(_model: &FloModel<Anim>) -> BindR
                 x2: End,
                 y2: End
             })
+            .with((ActionTrigger::Resize, "Resize"))
             .with(PointerBehaviour::ClickThrough)
             .with(vec![
                 Control::button()
@@ -48,6 +49,9 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
     let model       = Arc::new(model.clone());
     let ui          = sidebar_ui(&model);
 
+    // Parameters used for configuring the sidebar
+    let mut height = 0.0;
+
     ImmediateController::empty(move |events, actions, _resources| {
             // Start by taking the model from the main controller
             let model       = model.clone();
@@ -63,7 +67,24 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
 
                 // Process events
                 while let Some(next_event) = events.next().await {
+                    match next_event {
+                        ControllerEvent::Action(action_name, param) => {
+                            let action_name: &str = &action_name;
 
+                            // Decode the action
+                            match (action_name, param) {
+                                ("Resize", ActionParameter::Size(new_width, new_height)) => {
+                                    // The size is used to determine which sidebar items are displayed as 'open'
+                                    println!("Resize to {:?} {:?}", new_width, new_height);
+                                    height = new_height;
+                                }
+
+                                _ => { /* Unrecognised action */ }
+                            }
+                        }
+
+                        _ => { }
+                    }
                 }
             }
         })
