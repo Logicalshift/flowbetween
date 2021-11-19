@@ -160,9 +160,9 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                     .with_controller(&serde_json::to_string(&SubController::Canvas).unwrap()),
                 Control::container()
                     .with(Bounds {
-                        x1: Stretch(1.0),
+                        x1: Offset(-300.0),
                         y1: Start,
-                        x2: Offset(300.0),
+                        x2: Offset(0.0),
                         y2: End
                     })
                     .with(Appearance::Background(Color::Rgba(0.9, 0.9, 0.9, 0.7)))
