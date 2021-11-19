@@ -66,7 +66,7 @@ fn event_actions(trigger: &ActionTrigger, name: &String) -> Vec<ViewAction> {
     match trigger {
         Click                           => vec![ViewAction::RequestEvent(ViewEvent::Click, name.clone())],
         Dismiss                         => vec![ViewAction::RequestEvent(ViewEvent::Dismiss, name.clone())],
-        Resize                          => vec![ /* TODO */ ],
+        Resize                          => vec![ViewAction::RequestEvent(ViewEvent::Resize, name.clone())],
 
         Command(_cmd)                   => vec![ /* TODO */ ],
 

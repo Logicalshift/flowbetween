@@ -65,6 +65,9 @@ class FloEmptyView : NSView, FloContainerView {
     /// Event handler: control has obtained keyboard focus
     public var onFocused: (() -> ())?
 
+    /// Event handler: view has been resized
+    var onResized: ((Float64, Float64) -> ())?
+
     /// Event handler: user has dragged this control
     public var onDrag: ((DragAction, CGPoint, CGPoint) -> ())?
 

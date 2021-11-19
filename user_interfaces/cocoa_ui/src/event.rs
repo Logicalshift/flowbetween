@@ -211,6 +211,18 @@ pub fn declare_flo_events_class() -> &'static Class {
             }
         }
 
+        // Sends the resize event
+        extern fn send_resize(this: &mut Object, _sel: Sel, name: *mut Object, width: f64, height: f64) {
+            unsafe {
+                let view_id     = get_view_id(this);
+                let name        = name_for_name(&mut *name);
+
+                if let Some(view_id) = view_id {
+                    send_event(this, AppEvent::Resize(view_id, name, width, height));
+                }
+            }
+        }
+
         // Sends the 'edit/set value' event with a boolean
         extern fn send_change_value_bool(this: &mut Object, _sel: Sel, name: *mut Object, is_set: bool, value: bool) {
             unsafe {
@@ -422,6 +434,7 @@ pub fn declare_flo_events_class() -> &'static Class {
         flo_events.add_method(sel!(sendPaintContinueForDevice:name:action:), send_paint_continue as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
         flo_events.add_method(sel!(sendPaintFinishForDevice:name:action:), send_paint_finish as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
         flo_events.add_method(sel!(sendPaintCancelForDevice:name:action:), send_paint_cancel as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
+        flo_events.add_method(sel!(sendResize:width:height:), send_resize as extern fn(&mut Object, Sel, *mut Object, f64, f64));
         flo_events.add_method(sel!(redrawCanvasWithSize:viewport:), redraw_canvas as extern fn(&mut Object, Sel, CGSize, CGRect));
         flo_events.add_method(sel!(redrawGpuCanvasWithDrawable:size:viewport:resolution:), redraw_gpu_canvas_with_drawable as extern fn(&mut Object, Sel, *mut Object, CGSize, CGRect, f64));
     }

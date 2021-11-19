@@ -103,6 +103,9 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     /// Event handler: control has obtained keyboard focus
     var onFocused: (() -> ())?
 
+    /// Event handler: view has been resized
+    var onResized: ((Float64, Float64) -> ())?
+
     /// Event handler: user has dragged this control
     var onDrag: ((DragAction, CGPoint, CGPoint) -> ())?
 

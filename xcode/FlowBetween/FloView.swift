@@ -256,6 +256,13 @@ public class FloView : NSObject, FloViewDelegate {
     @objc public func requestFocused(_ events: FloEvents!, withName name: String!) {
         _view.onFocused = { events.sendFocus(name) }
     }
+    
+    ///
+    /// Sends an event when this view is resized
+    ///
+    @objc public func requestResize(_ events: FloEvents!, withName name: String!) {
+        _view.onResized = { width, height in events.sendResize(name, width: width, height: height); }
+    }
 
     ///
     /// Sends an event when the value being shown by this view is in the process of being edited

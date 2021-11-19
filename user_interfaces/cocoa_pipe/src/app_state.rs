@@ -105,6 +105,7 @@ impl AppState {
             Dismiss(view_id, name)                              => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
             Focus(view_id, name)                                => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
             EditValue(view_id, name, _action, property)         => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Value(property))],
+            Resize(view_id, name, width, height)                => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Size(width as _, height as _))],
 
             VirtualScroll(view_id, name, top_left, size)        => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::VirtualScroll(top_left, size))],
 

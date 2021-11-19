@@ -53,6 +53,9 @@ protocol FloContainerView {
 
     /// Event handler: control has obtained keyboard focus
     var onFocused: (() -> ())? { get set }
+    
+    /// Event handler: view has been resized
+    var onResized: ((Float64, Float64) -> ())? { get set }
 
     /// Event handler: user has dragged this control
     var onDrag: ((DragAction, CGPoint, CGPoint) -> ())? { get set }

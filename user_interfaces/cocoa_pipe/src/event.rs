@@ -87,7 +87,10 @@ pub enum AppEvent {
     PaintFinish(usize, String, AppPaintDevice, AppPainting),
 
     /// The painting action was cancelled
-    PaintCancel(usize, String, AppPaintDevice, AppPainting)
+    PaintCancel(usize, String, AppPaintDevice, AppPainting),
+
+    /// A view was resized
+    Resize(usize, String, f64, f64)
 }
 
 impl AppPainting {

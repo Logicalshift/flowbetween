@@ -267,7 +267,10 @@ pub enum ViewEvent {
     SetValue,
 
     /// Event sent when some EditValues were sent but the editing was cancelled
-    CancelEdit
+    CancelEdit,
+
+    /// Event sent when the control's size has changed
+    Resize
 }
 
 ///

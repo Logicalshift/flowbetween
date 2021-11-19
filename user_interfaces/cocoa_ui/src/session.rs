@@ -687,6 +687,7 @@ impl CocoaSession {
                     EditValue                       => { let _: () = msg_send!(**view, requestEditValue: *flo_events withName: *name); }
                     SetValue                        => { let _: () = msg_send!(**view, requestSetValue: *flo_events withName: *name); }
                     CancelEdit                      => { let _: () = msg_send!(**view, requestCancelEdit: *flo_events withName: *name); }
+                    Resize                          => { let _: () = msg_send!(**view, requestResize: *flo_events withName: *name); }
                 }
             }
         }

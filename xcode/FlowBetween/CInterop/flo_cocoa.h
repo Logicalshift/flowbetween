@@ -62,6 +62,7 @@ typedef struct AppPainting AppPainting;
 - (void) sendPaintContinueForDevice: (uint32_t) deviceId name: (NSString*) name action: (AppPainting) action;
 - (void) sendPaintFinishForDevice: (uint32_t) deviceId name: (NSString*) name action: (AppPainting) action;
 - (void) sendPaintCancelForDevice: (uint32_t) deviceId name: (NSString*) name action: (AppPainting) action;
+- (void) sendResize: (NSString*) name width: (double) width height: (double) height;
 - (void) redrawCanvasWithSize: (NSSize) size viewport: (NSRect) viewport;
 - (void) redrawGpuCanvasWithDrawable: (id<CAMetalDrawable>*) drawable size: (NSSize) size viewport: (NSRect) viewport resolution: (CGFloat) resolution;
 
@@ -100,6 +101,7 @@ typedef struct AppPainting AppPainting;
 - (void) requestEditValue: (FloEvents*) events withName: (NSString*) name;
 - (void) requestSetValue: (FloEvents*) events withName: (NSString*) name;
 - (void) requestCancelEdit: (FloEvents*) events withName: (NSString*) name;
+- (void) requestResize: (FloEvents*) events withName: (NSString*) name;
 
 - (void) viewRemoveFromSuperview;
 - (void) viewAddSubView: (NSObject*) subview;
