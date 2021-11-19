@@ -25,8 +25,7 @@ fn sidebar_ui<Anim: 'static+EditableAnimation>(_model: &FloModel<Anim>) -> BindR
             .with((ActionTrigger::Resize, "Resize"))
             .with(PointerBehaviour::ClickThrough)
             .with(vec![
-                Control::button()
-                    .with("Test")
+                Control::empty()
                     .with(Bounds {
                         x1: Start,
                         y1: Start,
@@ -75,7 +74,6 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
                             match (action_name, param) {
                                 ("Resize", ActionParameter::Size(new_width, new_height)) => {
                                     // The size is used to determine which sidebar items are displayed as 'open'
-                                    println!("Resize to {:?} {:?}", new_width, new_height);
                                     height = new_height;
                                 }
 

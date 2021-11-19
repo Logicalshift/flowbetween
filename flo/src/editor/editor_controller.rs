@@ -165,7 +165,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                         x2: Offset(-20.0),
                         y2: Offset(-20.0)
                     })
-                    .with(Appearance::Background(Color::Rgba(0.9, 0.9, 0.9, 0.7)))
+                    .with(Appearance::Background(Color::Rgba(1.0, 1.0, 1.0, 0.0)))
                     .with(PointerBehaviour::ClickThrough)
                     .with_controller(&serde_json::to_string(&SubController::Sidebar).unwrap())
             ])
