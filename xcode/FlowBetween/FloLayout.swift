@@ -78,9 +78,7 @@ class FloLayout {
             let bounds = subview.floBounds
 
             // Only need the x2 and y2 positions for the first pass
-            let x1 = layoutPosition(pos: bounds.x1, previous: last_x, end: max_x, stretch_distance: 0.0, stretch_total: 0.0)
             let x2 = layoutPosition(pos: bounds.x2, previous: last_x, end: max_x, stretch_distance: 0.0, stretch_total: 0.0)
-            let y1 = layoutPosition(pos: bounds.y1, previous: last_y, end: max_y, stretch_distance: 0.0, stretch_total: 0.0)
             let y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: 0.0, stretch_total: 0.0)
 
             // Update the stretch totals
