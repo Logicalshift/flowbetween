@@ -162,8 +162,8 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                     .with(Bounds {
                         x1: Offset(-300.0),
                         y1: Start,
-                        x2: Offset(0.0),
-                        y2: End
+                        x2: Offset(-20.0),
+                        y2: Offset(-20.0)
                     })
                     .with(Appearance::Background(Color::Rgba(0.9, 0.9, 0.9, 0.7)))
                     .with(PointerBehaviour::ClickThrough)
