@@ -221,6 +221,7 @@ class FloEmptyView : NSView, FloContainerView {
 
                 let bounds = self.getContainerBounds()
                 self.boundsChanged?(bounds)
+                self.onResized?(bounds.totalSize.width, bounds.totalSize.height)
             }
         }
     }

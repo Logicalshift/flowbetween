@@ -149,7 +149,11 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
 
     /// Triggers the bounds changed event for this view
     func triggerBoundsChanged() {
-        boundsChanged?(getContainerBounds())
+        let bounds = getContainerBounds();
+        
+        boundsChanged?(bounds)
+        onResized?(bounds.totalSize.width, bounds.totalSize.height)
+
         _popupWindow.updatePosition()
     }
 

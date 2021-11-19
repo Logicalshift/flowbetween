@@ -210,7 +210,10 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
 
     /// Triggers the bounds changed event for this view
     func triggerBoundsChanged() {
-        boundsChanged?(getContainerBounds())
+        let bounds = getContainerBounds();
+        
+        boundsChanged?(bounds)
+        onResized?(bounds.totalSize.width, bounds.totalSize.height)
     }
 
     /// Sets the text label for this view

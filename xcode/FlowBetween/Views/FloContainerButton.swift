@@ -223,6 +223,7 @@ class FloContainerButton : NSView, FloContainerView {
 
                 let bounds = self.getContainerBounds()
                 self.boundsChanged?(bounds)
+                self.onResized?(bounds.totalSize.width, bounds.totalSize.height)
 
                 if let screen = self.window?.screen {
                     self._backingLayer.contentsScale = screen.backingScaleFactor
