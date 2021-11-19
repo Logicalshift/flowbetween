@@ -79,9 +79,9 @@ class FloLayout {
 
             // Only need the x2 and y2 positions for the first pass
             let x1 = layoutPosition(pos: bounds.x1, previous: last_x, end: max_x, stretch_distance: 0.0, stretch_total: 0.0)
-            let x2 = layoutPosition(pos: bounds.x2, previous: x1, end: max_x, stretch_distance: 0.0, stretch_total: 0.0)
+            let x2 = layoutPosition(pos: bounds.x2, previous: last_x, end: max_x, stretch_distance: 0.0, stretch_total: 0.0)
             let y1 = layoutPosition(pos: bounds.y1, previous: last_y, end: max_y, stretch_distance: 0.0, stretch_total: 0.0)
-            let y2 = layoutPosition(pos: bounds.y2, previous: y1, end: max_y, stretch_distance: 0.0, stretch_total: 0.0)
+            let y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: 0.0, stretch_total: 0.0)
 
             // Update the stretch totals
             stretch_total_x = updateStretch(pos: bounds.x1, last_stretch: stretch_total_x)
@@ -109,9 +109,9 @@ class FloLayout {
 
             // Compute the x1, y1, x2, y2 positions
             let x1 = layoutPosition(pos: bounds.x1, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x)
-            let x2 = layoutPosition(pos: bounds.x2, previous: x1, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x)
+            let x2 = layoutPosition(pos: bounds.x2, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x)
             let y1 = layoutPosition(pos: bounds.y1, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y)
-            let y2 = layoutPosition(pos: bounds.y2, previous: y1, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y)
+            let y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y)
 
             // Set the new frame for the view (TODO: floating both in x1 and y1)
             // TODO: stop any old tracking if we're re-doing the layout
