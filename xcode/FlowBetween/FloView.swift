@@ -261,7 +261,21 @@ public class FloView : NSObject, FloViewDelegate {
     /// Sends an event when this view is resized
     ///
     @objc public func requestResize(_ events: FloEvents!, withName name: String!) {
-        _view.onResized = { width, height in events.sendResize(name, width: width, height: height); }
+        var lastWidth   = -1.0;
+        var lastHeight  = -1.0;
+        
+        _view.onResized = { width, height in
+            // Forward the event if the size is different from the last time it was generated
+            if width != lastWidth || height != lastHeight {
+                lastWidth   = width;
+                lastHeight  = height;
+                
+                events.sendResize(name, width: width, height: height);
+            }
+        }
+        
+        // Triggering a 'bounds changed' will cause the first resize event to be fired
+        _view.triggerBoundsChanged()
     }
 
     ///
