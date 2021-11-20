@@ -1,5 +1,6 @@
 use super::tools::*;
 use super::frame::*;
+use super::sidebar::*;
 use super::timeline::*;
 use super::selection::*;
 use super::onion_skin::*;
@@ -37,6 +38,9 @@ pub struct FloModel<Anim: Animation> {
     /// The onion skin model
     onion_skin: OnionSkinModel<Anim>,
 
+    /// The model for the sidebar
+    sidebar: SidebarModel,
+
     /// The size of the animation
     pub size: BindRef<(f64, f64)>,
 
@@ -63,6 +67,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
         let frame               = FrameModel::new(Arc::clone(&animation), edit_publisher.subscribe(), BindRef::new(&timeline.current_time), BindRef::new(&frame_edit_counter), BindRef::new(&timeline.selected_layer));
         let selection           = SelectionModel::new(Arc::clone(&animation), &frame, &timeline);
         let onion_skin          = OnionSkinModel::new(Arc::clone(&animation), &timeline);
+        let sidebar             = SidebarModel::new();
 
         let size_binding        = bind(animation.size());
         let edit_publisher      = Arc::new(Desync::new(edit_publisher));
@@ -75,6 +80,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
             frame:              frame,
             selection:          selection,
             onion_skin:         onion_skin,
+            sidebar:            sidebar,
 
             size:               BindRef::from(size_binding.clone()),
             size_binding:       size_binding,
@@ -218,6 +224,13 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     }
 
     ///
+    /// Retrieves the sidebar model for this animation
+    ///
+    pub fn sidebar(&self) -> &SidebarModel {
+        &self.sidebar
+    }
+
+    ///
     /// Retrieves the frame update binding for this animation
     ///
     pub fn frame_update_count(&self) -> BindRef<u64> {
@@ -243,6 +256,7 @@ impl<Anim: Animation> Clone for FloModel<Anim> {
             frame:              self.frame.clone(),
             selection:          self.selection.clone(),
             onion_skin:         self.onion_skin.clone(),
+            sidebar:            self.sidebar.clone(),
 
             size:               self.size.clone(),
             size_binding:       self.size_binding.clone(),

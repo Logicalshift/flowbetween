@@ -9,6 +9,7 @@ mod selection;
 mod shared_model;
 mod onion_skin;
 mod brush_settings;
+mod sidebar;
 
 pub use self::flo_model::*;
 pub use self::timeline::*;
@@ -20,3 +21,4 @@ pub use self::selection::*;
 pub use self::shared_model::*;
 pub use self::onion_skin::*;
 pub use self::brush_settings::*;
+pub use self::sidebar::*;
