@@ -56,14 +56,12 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
     // Parameters used for configuring the sidebar
     let height      = bind(0.0);
 
-    // Set up the UI
+    // Keep a copy of the model for the runtime
     let model       = Arc::new(model.clone());
-    let ui          = sidebar_ui(&model);
 
     ImmediateController::empty(move |events, actions, _resources| {
             // Start by taking the model from the main controller
             let model       = model.clone();
-            let ui          = ui.clone();
             let height      = height.clone();
 
             let mut actions = actions;
@@ -73,6 +71,7 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
                 // TODO: Set up the subcontrollers
 
                 // Set up the UI
+                let ui  = sidebar_ui(&model);
                 actions.send(ControllerAction::SetUi(ui.clone())).await.ok();
 
                 // Process events
