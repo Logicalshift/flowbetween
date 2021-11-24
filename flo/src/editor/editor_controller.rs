@@ -230,13 +230,10 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     }
 
     fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
-        let decoded_id = SubController::from_str(id);
+        let decoded_id = SubController::from_str(id).ok()?;
 
-        if let Ok(decoded_id) = decoded_id {
-            self.subcontrollers.get(&decoded_id).map(|controller_ref| controller_ref.clone())
-        } else {
-            None
-        }
+        self.subcontrollers.get(&decoded_id)
+            .map(|controller_ref| controller_ref.clone())
     }
 }
 
