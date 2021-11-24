@@ -6,10 +6,10 @@ use flo_binding::*;
 #[derive(Clone)]
 pub struct SidebarModel {
     /// Whether or not the sidebar has been opened by the user
-    is_open: Binding<bool>,
+    pub is_open: Binding<bool>,
 
     /// List of identifiers in priority order of the sidebar items that are open (hidden sidebars can be specified as open, sidebars are collapsed in priority order when they won't all fit on screen)
-    open_sidebars: Binding<Vec<String>>
+    pub open_sidebars: Binding<Vec<String>>
 }
 
 impl SidebarModel {

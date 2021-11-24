@@ -67,7 +67,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
         let key_bindings    = Arc::new(KeyBindingController::new());
         let sidebar         = Arc::new(sidebar_controller(&animation));
 
-        let ui              = Self::ui();
+        let ui              = Self::ui(&animation);
         let mut subcontrollers: HashMap<SubController, Arc<dyn Controller>> = HashMap::new();
 
         subcontrollers.insert(SubController::Canvas,        canvas);
@@ -162,18 +162,31 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates the sidebar control
     ///
-    pub fn sidebar() -> Control {
+    pub fn sidebar(is_open: &BindRef<bool>) -> Control {
         use self::Position::*;
 
-        Control::container()
-            .with(Bounds {
-                x1: Offset(0.0),
-                y1: Start,
-                x2: Offset(300.0),
-                y2: End
-            })
-            .with(Appearance::Background(TOOLS_BACKGROUND))
-            .with_controller(&SubController::Sidebar.to_string())
+        if is_open.get() {
+            Control::container()
+                .with(Bounds {
+                    x1: Offset(0.0),
+                    y1: Start,
+                    x2: Offset(300.0),
+                    y2: End
+                })
+                .with(Appearance::Background(TOOLS_BACKGROUND))
+                .with((ActionTrigger::Click, "CloseSidebar"))
+                .with_controller(&SubController::Sidebar.to_string())
+        } else {
+            Control::container()
+                .with(Bounds {
+                    x1: Offset(0.0),
+                    y1: Start,
+                    x2: Offset(32.0),
+                    y2: End
+                })
+                .with((ActionTrigger::Click, "OpenSidebar"))
+                .with(Appearance::Background(TOOLS_BACKGROUND))
+        }
     }
 
     ///
@@ -200,15 +213,17 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates the UI tree for this controller
     ///
-    pub fn ui() -> BindRef<Control> {
+    pub fn ui(model: &FloModel<Loader::NewAnimation>) -> BindRef<Control> {
         use self::Position::*;
+
+        let sidebar_open = BindRef::from(model.sidebar().is_open.clone());
 
         let ui = computed(move || {
             let menu_bar    = Self::menu_bar();
             let timeline    = Self::timeline();
             let toolbar     = Self::toolbox();
             let canvas      = Self::canvas();
-            let sidebar     = Self::sidebar();
+            let sidebar     = Self::sidebar(&sidebar_open);
             let control_bar = Self::control_bar();
             let keybindings = Self::keybindings();
 
