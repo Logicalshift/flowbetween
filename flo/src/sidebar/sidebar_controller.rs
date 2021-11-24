@@ -7,6 +7,15 @@ use flo_animation::*;
 use futures::prelude::*;
 
 use std::sync::*;
+use std::str::{FromStr};
+
+#[derive(Clone, PartialEq, Eq, Hash, AsRefStr, Display, EnumString)]
+enum SidebarAction {
+    Unknown,
+
+    /// The user has resized the sidebar
+    Resize
+}
 
 ///
 /// Creates the user interface for the sidebar
@@ -22,7 +31,7 @@ fn sidebar_ui<Anim: 'static+EditableAnimation>(_model: &FloModel<Anim>) -> BindR
                 x2: End,
                 y2: End
             })
-            .with((ActionTrigger::Resize, "Resize"))
+            .with((ActionTrigger::Resize, SidebarAction::Resize.as_ref()))
             .with(PointerBehaviour::ClickThrough)
             .with(vec![
                 Control::empty()
@@ -44,17 +53,19 @@ fn sidebar_ui<Anim: 'static+EditableAnimation>(_model: &FloModel<Anim>) -> BindR
 pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim>) -> impl Controller {
     // TODO: Create the set of subcontrollers
 
+    // Parameters used for configuring the sidebar
+    let height      = bind(0.0);
+
     // Set up the UI
     let model       = Arc::new(model.clone());
     let ui          = sidebar_ui(&model);
-
-    // Parameters used for configuring the sidebar
-    let mut height = 0.0;
 
     ImmediateController::empty(move |events, actions, _resources| {
             // Start by taking the model from the main controller
             let model       = model.clone();
             let ui          = ui.clone();
+            let height      = height.clone();
+
             let mut actions = actions;
             let mut events  = events;
 
@@ -68,13 +79,14 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
                 while let Some(next_event) = events.next().await {
                     match next_event {
                         ControllerEvent::Action(action_name, param) => {
-                            let action_name: &str = &action_name;
+                            let action_name: &str   = &action_name;
+                            let action              = SidebarAction::from_str(action_name).unwrap_or(SidebarAction::Unknown);
 
                             // Decode the action
-                            match (action_name, param) {
-                                ("Resize", ActionParameter::Size(new_width, new_height)) => {
+                            match (action, param) {
+                                (SidebarAction::Resize, ActionParameter::Size(_new_width, new_height)) => {
                                     // The size is used to determine which sidebar items are displayed as 'open'
-                                    height = new_height;
+                                    height.set(new_height);
                                 }
 
                                 _ => { /* Unrecognised action */ }
