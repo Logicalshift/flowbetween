@@ -11,7 +11,6 @@ use crate::sidebar::*;
 
 use flo_ui::*;
 use flo_ui_files::ui::*;
-use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
 
@@ -39,7 +38,7 @@ pub struct EditorController<Anim: FileAnimation> {
     anim: PhantomData<Anim>,
 
     /// The main editor UI
-    ui: Binding<Control>,
+    ui: BindRef<Control>,
 
     /// The subcontrollers for this editor
     subcontrollers: HashMap<SubController, Arc<dyn Controller>>
@@ -68,7 +67,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
         let key_bindings    = Arc::new(KeyBindingController::new());
         let sidebar         = Arc::new(sidebar_controller(&animation));
 
-        let ui              = bind(Self::ui());
+        let ui              = Self::ui();
         let mut subcontrollers: HashMap<SubController, Arc<dyn Controller>> = HashMap::new();
 
         subcontrollers.insert(SubController::Canvas,        canvas);
@@ -156,18 +155,25 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                         y2: End
                     })
                     .with(ControlAttribute::ZIndex(0))
-                    .with_controller(&SubController::Canvas.to_string()),
-                Control::container()
-                    .with(Bounds {
-                        x1: Offset(-300.0),
-                        y1: Start,
-                        x2: Offset(-20.0),
-                        y2: Offset(-20.0)
-                    })
-                    .with(Appearance::Background(Color::Rgba(1.0, 1.0, 1.0, 0.0)))
-                    .with(PointerBehaviour::ClickThrough)
-                    .with_controller(&SubController::Sidebar.to_string())
+                    .with_controller(&SubController::Canvas.to_string())
             ])
+    }
+
+    ///
+    /// Creates the sidebar control
+    ///
+    pub fn sidebar() -> Control {
+        use self::Position::*;
+
+        Control::container()
+            .with(Bounds {
+                x1: Offset(0.0),
+                y1: Start,
+                x2: Offset(300.0),
+                y2: End
+            })
+            .with(Appearance::Background(TOOLS_BACKGROUND))
+            .with_controller(&SubController::Sidebar.to_string())
     }
 
     ///
@@ -194,32 +200,37 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates the UI tree for this controller
     ///
-    pub fn ui() -> Control {
+    pub fn ui() -> BindRef<Control> {
         use self::Position::*;
 
-        let menu_bar    = Self::menu_bar();
-        let timeline    = Self::timeline();
-        let toolbar     = Self::toolbox();
-        let canvas      = Self::canvas();
-        let control_bar = Self::control_bar();
-        let keybindings = Self::keybindings();
+        let ui = computed(move || {
+            let menu_bar    = Self::menu_bar();
+            let timeline    = Self::timeline();
+            let toolbar     = Self::toolbox();
+            let canvas      = Self::canvas();
+            let sidebar     = Self::sidebar();
+            let control_bar = Self::control_bar();
+            let keybindings = Self::keybindings();
 
-        Control::container()
-            .with(Bounds::fill_all())
-            .with(vec![
-                keybindings,
-                menu_bar,
-                Control::container()
-                    .with((vec![toolbar, canvas],
-                        Bounds { x1: Start, y1: After, x2: End, y2: Stretch(1.0) })),
-                Control::empty()
-                    .with(Bounds::next_vert(1.0))
-                    .with(Appearance::Background(TIMESCALE_BORDER)),
-                control_bar,
-                Control::empty()
-                    .with(Bounds::next_vert(1.0))
-                    .with(Appearance::Background(TIMESCALE_LAYERS)),
-                timeline])
+            Control::container()
+                .with(Bounds::fill_all())
+                .with(vec![
+                    keybindings,
+                    menu_bar,
+                    Control::container()
+                        .with((vec![toolbar, canvas, sidebar],
+                            Bounds { x1: Start, y1: After, x2: End, y2: Stretch(1.0) })),
+                    Control::empty()
+                        .with(Bounds::next_vert(1.0))
+                        .with(Appearance::Background(TIMESCALE_BORDER)),
+                    control_bar,
+                    Control::empty()
+                        .with(Bounds::next_vert(1.0))
+                        .with(Appearance::Background(TIMESCALE_LAYERS)),
+                    timeline])
+            });
+
+        BindRef::from(ui)
     }
 }
 
