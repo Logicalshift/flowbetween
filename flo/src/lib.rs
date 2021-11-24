@@ -15,6 +15,8 @@ extern crate serde_json;
 extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate strum_macros;
 extern crate futures;
 extern crate itertools;
 

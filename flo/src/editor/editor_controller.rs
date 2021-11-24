@@ -16,12 +16,11 @@ use flo_binding::*;
 use flo_animation::*;
 
 use std::sync::*;
-use std::marker::PhantomData;
-use std::collections::HashMap;
+use std::str::{FromStr};
+use std::marker::{PhantomData};
+use std::collections::{HashMap};
 
-use serde_json;
-
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash, AsRefStr, Display, EnumString)]
 enum SubController {
     Canvas,
     Menu,
@@ -100,7 +99,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                 x2: End,
                 y2: Offset(32.0)
             })
-            .with_controller(&serde_json::to_string(&SubController::Menu).unwrap())
+            .with_controller(&SubController::Menu.to_string())
     }
 
     ///
@@ -116,7 +115,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                 x2: End,
                 y2: Offset(256.0)
             })
-            .with_controller(&serde_json::to_string(&SubController::Timeline).unwrap())
+            .with_controller(&SubController::Timeline.to_string())
     }
 
     ///
@@ -132,7 +131,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                 x2: Offset(TOOL_CONTROL_SIZE),
                 y2: End
             })
-            .with_controller(&serde_json::to_string(&SubController::Toolbox).unwrap())
+            .with_controller(&SubController::Toolbox.to_string())
     }
 
     ///
@@ -157,7 +156,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                         y2: End
                     })
                     .with(ControlAttribute::ZIndex(0))
-                    .with_controller(&serde_json::to_string(&SubController::Canvas).unwrap()),
+                    .with_controller(&SubController::Canvas.to_string()),
                 Control::container()
                     .with(Bounds {
                         x1: Offset(-300.0),
@@ -167,7 +166,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                     })
                     .with(Appearance::Background(Color::Rgba(1.0, 1.0, 1.0, 0.0)))
                     .with(PointerBehaviour::ClickThrough)
-                    .with_controller(&serde_json::to_string(&SubController::Sidebar).unwrap())
+                    .with_controller(&SubController::Sidebar.to_string())
             ])
     }
 
@@ -180,7 +179,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
             .with(Appearance::Background(TIMESCALE_BACKGROUND))
             .with(Font::Size(12.0))
             .with(Font::Weight(FontWeight::Light))
-            .with_controller(&serde_json::to_string(&SubController::ControlBar).unwrap())
+            .with_controller(&SubController::ControlBar.to_string())
     }
 
     ///
@@ -189,7 +188,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     pub fn keybindings() -> Control {
         Control::container()
             .with(Bounds::next_vert(0.0))
-            .with_controller(&serde_json::to_string(&SubController::KeyBindings).unwrap())
+            .with_controller(&SubController::KeyBindings.to_string())
     }
 
     ///
@@ -231,7 +230,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     }
 
     fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
-        let decoded_id = serde_json::from_str(id);
+        let decoded_id = SubController::from_str(id);
 
         if let Ok(decoded_id) = decoded_id {
             self.subcontrollers.get(&decoded_id).map(|controller_ref| controller_ref.clone())
