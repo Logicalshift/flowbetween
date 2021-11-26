@@ -11,10 +11,12 @@ import Cocoa
 ///
 /// View that displays an image set on a control
 ///
-class FloImageView: NSView {
-    
+class FloImageView : NSView {
     /// The image that this will display
     fileprivate var _image: NSImage?;
+
+    /// Stores the general state of this view
+    var viewState : ViewState = ViewState()
 
     required override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -29,7 +31,27 @@ class FloImageView: NSView {
         wantsLayer              = true
         layer!.contentsGravity  = CALayerContentsGravity.resizeAspect
     }
-    
+
+    ///
+    /// The hit testing routine is used to make the view 'click-through' if required
+    ///
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        // Check what view has been clicked on
+        let hitTestResult = super.hitTest(point);
+        
+        if hitTestResult == self {
+            // If the click is directly on this view, then return this view only if it's not a 'click through' view
+            if viewState.clickThrough {
+                return nil;
+            } else {
+                return hitTestResult;
+            }
+        } else {
+            // If another view has claimed the click, then don't suppress it
+            return hitTestResult;
+        }
+    }
+
     ///
     /// Updates the image that this view is displaying
     ///

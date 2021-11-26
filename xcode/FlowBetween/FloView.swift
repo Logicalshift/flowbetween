@@ -551,6 +551,7 @@ public class FloView : NSObject, FloViewDelegate {
         // Add an image view to this view if one does not already exist
         if _imageView == nil {
             _imageView              = FloImageView()
+            _imageView?.viewState   = _view.viewState
             _view.addContainerSubview(_imageView!)
         }
         
