@@ -217,9 +217,9 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                 .with((ActionTrigger::Click, "OpenSidebar"))
                 .with(Appearance::Background(TOOLS_BACKGROUND))
                 .with(vec![
-                    Control::empty().with(Bounds { x1: Start, y1: Start, x2: End, y2: Stretch(0.5) }),
-                    Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(28.0) }).with(closed_image),
-                    Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Stretch(0.5) })
+                    Control::empty().with(Bounds { x1: Start, y1: Start, x2: End, y2: Stretch(0.5) }).with(PointerBehaviour::ClickThrough),
+                    Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(28.0) }).with(closed_image).with(PointerBehaviour::ClickThrough),
+                    Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Stretch(0.5) }).with(PointerBehaviour::ClickThrough)
                 ])
         }
     }
