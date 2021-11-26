@@ -241,7 +241,11 @@ mod test {
     use super::*;
     use super::super::null_session::*;
 
+    use futures::future::{select, Either};
     use futures::executor;
+    use futures_timer::{Delay};
+
+    use std::time::{Duration};
 
     #[test]
     fn will_return_update_for_event() {
@@ -273,10 +277,22 @@ mod test {
         thread_pool.spawn_ok(http_run_loop);
 
         let send_an_event               = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
-        executor::block_on(send_an_event);
+        let send_event_timeout          = Delay::new(Duration::from_secs(10));
+        let initial_updates             = executor::block_on(select(send_an_event, send_event_timeout));
+
+        let _initial_updates            = match initial_updates {
+            Either::Right(_)            => { assert!(false, "Timeout for initial events"); panic!() },
+            Either::Left((updates, _))  => updates
+        };
 
         let send_another_event          = http_session.send_events(vec![Event::Tick]);
-        let updates                     = executor::block_on(send_another_event);
+        let send_another_event_timeout  = Delay::new(Duration::from_secs(10));
+        let updates                     = executor::block_on(select(send_another_event, send_another_event_timeout));
+
+        let updates                     = match updates {
+            Either::Right(_)            => { assert!(false, "Timeout for second event"); panic!() },
+            Either::Left((updates, _))  => updates
+        };
 
         // Second update will return but as it's a tick and nothing happens there will be no events
         assert!(updates.len() == 0);

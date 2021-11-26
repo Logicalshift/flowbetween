@@ -1301,6 +1301,7 @@ dependencies = [
  "flo_stream 0.7.0",
  "flo_ui",
  "futures",
+ "futures-timer",
  "itertools 0.9.0",
  "lazy_static",
  "percent-encoding",
