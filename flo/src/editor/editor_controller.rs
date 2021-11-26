@@ -37,6 +37,9 @@ pub struct EditorController<Anim: FileAnimation> {
     /// Phantom data so we can have the animation type
     anim: PhantomData<Anim>,
 
+    /// The sidebar model
+    sidebar_model: SidebarModel,
+
     /// The images for the editor controller
     images: Arc<ResourceManager<Image>>,
 
@@ -94,6 +97,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
             images:         images,
             ui:             ui,
             subcontrollers: subcontrollers,
+            sidebar_model:  animation.sidebar().clone()
         }
     }
 
@@ -178,6 +182,8 @@ where Loader::NewAnimation: 'static+EditableAnimation {
         use self::Position::*;
 
         if is_open.get() {
+            let open_image = images.get_named_resource("sidebar_open").unwrap();
+
             Control::container()
                 .with(Bounds {
                     x1: Offset(0.0),
@@ -187,7 +193,17 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                 })
                 .with(Appearance::Background(TOOLS_BACKGROUND))
                 .with((ActionTrigger::Click, "CloseSidebar"))
-                .with_controller(&SubController::Sidebar.to_string())
+                .with(vec![
+                    Control::empty().with(Bounds { x1: Start, y1: Start, x2: Offset(2.0), y2: End }),
+                    Control::container().with(Bounds { x1: After, y1: Start, x2: Offset(16.0), y2: End }).with(PointerBehaviour::ClickThrough)
+                        .with(vec![
+                            Control::empty().with(Bounds { x1: Start, y1: Start, x2: End, y2: Stretch(0.5) }).with(PointerBehaviour::ClickThrough),
+                            Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(28.0) }).with(open_image).with(PointerBehaviour::ClickThrough),
+                            Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Stretch(0.5) }).with(PointerBehaviour::ClickThrough)
+                        ]),
+                    Control::empty().with(Bounds { x1: After, y1: Start, x2: Offset(2.0), y2: End }),
+                    Control::container().with(Bounds { x1: After, y1: Start, x2: End, y2: End }).with(PointerBehaviour::ClickThrough).with_controller(&SubController::Sidebar.to_string())
+                ])
         } else {
             let closed_image = images.get_named_resource("sidebar_closed_active").unwrap();
 
@@ -284,6 +300,15 @@ where Loader::NewAnimation: 'static+EditableAnimation {
 
     fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {
         Some(Arc::clone(&self.images))
+    }
+
+    fn action(&self, action_id: &str, action_data: &ActionParameter) { 
+        match (action_id, action_data) {
+            ("OpenSidebar", _)      => { self.sidebar_model.is_open.set(true); }
+            ("CloseSidebar", _)     => { self.sidebar_model.is_open.set(false); }
+
+            _                       => { /* Unknown action */ }
+        }
     }
 }
 
