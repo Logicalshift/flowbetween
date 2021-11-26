@@ -59,7 +59,7 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
     // Keep a copy of the model for the runtime
     let model       = Arc::new(model.clone());
 
-    ImmediateController::empty(move |events, actions, resources| {
+    ImmediateController::empty(move |events, actions, _resources| {
         // Start by taking the model from the main controller
         let model       = model.clone();
         let height      = height.clone();

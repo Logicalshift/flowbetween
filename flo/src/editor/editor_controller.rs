@@ -37,6 +37,9 @@ pub struct EditorController<Anim: FileAnimation> {
     /// Phantom data so we can have the animation type
     anim: PhantomData<Anim>,
 
+    /// The images for the editor controller
+    images: Arc<ResourceManager<Image>>,
+
     /// The main editor UI
     ui: BindRef<Control>,
 
@@ -59,6 +62,14 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     /// Creates a new editor controller from a model
     ///
     pub fn from_model(animation: FloModel<Loader::NewAnimation>) -> EditorController<Loader> {
+        // Load the image resources
+        let images          = Arc::new(ResourceManager::new());
+
+        images.register_named("sidebar_closed_active", svg_static(include_bytes!("../../svg/control_decals/sidebar_closed_active.svg")));
+        images.register_named("sidebar_closed_inactive", svg_static(include_bytes!("../../svg/control_decals/sidebar_closed_inactive.svg")));
+        images.register_named("sidebar_open", svg_static(include_bytes!("../../svg/control_decals/sidebar_open.svg")));
+
+        // Create the subcontrollers
         let canvas          = Arc::new(CanvasController::new(&animation));
         let menu            = Arc::new(MenuController::new(&animation));
         let timeline        = Arc::new(TimelineController::new(&animation));
@@ -67,7 +78,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
         let key_bindings    = Arc::new(KeyBindingController::new());
         let sidebar         = Arc::new(sidebar_controller(&animation));
 
-        let ui              = Self::ui(&animation);
+        let ui              = Self::ui(&animation, &images);
         let mut subcontrollers: HashMap<SubController, Arc<dyn Controller>> = HashMap::new();
 
         subcontrollers.insert(SubController::Canvas,        canvas);
@@ -80,6 +91,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
 
         EditorController {
             anim:           PhantomData,
+            images:         images,
             ui:             ui,
             subcontrollers: subcontrollers,
         }
@@ -162,7 +174,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates the sidebar control
     ///
-    pub fn sidebar(is_open: &BindRef<bool>) -> Control {
+    pub fn sidebar(is_open: &BindRef<bool>, images: &ResourceManager<Image>) -> Control {
         use self::Position::*;
 
         if is_open.get() {
@@ -177,6 +189,8 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                 .with((ActionTrigger::Click, "CloseSidebar"))
                 .with_controller(&SubController::Sidebar.to_string())
         } else {
+            let closed_image = images.get_named_resource("sidebar_closed_active").unwrap();
+
             Control::container()
                 .with(Bounds {
                     x1: Offset(0.0),
@@ -186,6 +200,11 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                 })
                 .with((ActionTrigger::Click, "OpenSidebar"))
                 .with(Appearance::Background(TOOLS_BACKGROUND))
+                .with(vec![
+                    Control::empty().with(Bounds { x1: Start, y1: Start, x2: End, y2: Stretch(0.5) }),
+                    Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(28.0) }).with(closed_image),
+                    Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Stretch(0.5) })
+                ])
         }
     }
 
@@ -213,17 +232,18 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates the UI tree for this controller
     ///
-    pub fn ui(model: &FloModel<Loader::NewAnimation>) -> BindRef<Control> {
+    pub fn ui(model: &FloModel<Loader::NewAnimation>, images: &Arc<ResourceManager<Image>>) -> BindRef<Control> {
         use self::Position::*;
 
-        let sidebar_open = BindRef::from(model.sidebar().is_open.clone());
+        let sidebar_open    = BindRef::from(model.sidebar().is_open.clone());
+        let images          = Arc::clone(images);
 
         let ui = computed(move || {
             let menu_bar    = Self::menu_bar();
             let timeline    = Self::timeline();
             let toolbar     = Self::toolbox();
             let canvas      = Self::canvas();
-            let sidebar     = Self::sidebar(&sidebar_open);
+            let sidebar     = Self::sidebar(&sidebar_open, &*images);
             let control_bar = Self::control_bar();
             let keybindings = Self::keybindings();
 
@@ -260,6 +280,10 @@ where Loader::NewAnimation: 'static+EditableAnimation {
 
         self.subcontrollers.get(&decoded_id)
             .map(|controller_ref| controller_ref.clone())
+    }
+
+    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {
+        Some(Arc::clone(&self.images))
     }
 }
 

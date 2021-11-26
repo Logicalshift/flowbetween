@@ -215,6 +215,16 @@ impl<T: 'static+Send+Sync> ResourceManager<T> {
     }
 
     ///
+    /// Registers a resource and assigns it a name
+    ///
+    pub fn register_named(&self, name: &str, data: T) -> Resource<T> {
+        let resource = self.register(data);
+        self.assign_name(&resource, name);
+
+        resource
+    }
+
+    ///
     /// Registers a resource with this object
     ///
     pub fn register(&self, data: T) -> Resource<T> {
