@@ -59,42 +59,42 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
     // Keep a copy of the model for the runtime
     let model       = Arc::new(model.clone());
 
-    ImmediateController::empty(move |events, actions, _resources| {
-            // Start by taking the model from the main controller
-            let model       = model.clone();
-            let height      = height.clone();
+    ImmediateController::empty(move |events, actions, resources| {
+        // Start by taking the model from the main controller
+        let model       = model.clone();
+        let height      = height.clone();
 
-            let mut actions = actions;
-            let mut events  = events;
+        let mut actions = actions;
+        let mut events  = events;
 
-            async move {
-                // TODO: Set up the subcontrollers
+        async move {
+            // TODO: Set up the subcontrollers
 
-                // Set up the UI
-                let ui  = sidebar_ui(&model);
-                actions.send(ControllerAction::SetUi(ui.clone())).await.ok();
+            // Set up the UI
+            let ui  = sidebar_ui(&model);
+            actions.send(ControllerAction::SetUi(ui.clone())).await.ok();
 
-                // Process events
-                while let Some(next_event) = events.next().await {
-                    match next_event {
-                        ControllerEvent::Action(action_name, param) => {
-                            let action_name: &str   = &action_name;
-                            let action              = SidebarAction::from_str(action_name).unwrap_or(SidebarAction::Unknown);
+            // Process events
+            while let Some(next_event) = events.next().await {
+                match next_event {
+                    ControllerEvent::Action(action_name, param) => {
+                        let action_name: &str   = &action_name;
+                        let action              = SidebarAction::from_str(action_name).unwrap_or(SidebarAction::Unknown);
 
-                            // Decode the action
-                            match (action, param) {
-                                (SidebarAction::Resize, ActionParameter::Size(_new_width, new_height)) => {
-                                    // The size is used to determine which sidebar items are displayed as 'open'
-                                    height.set(new_height);
-                                }
-
-                                _ => { /* Unrecognised action */ }
+                        // Decode the action
+                        match (action, param) {
+                            (SidebarAction::Resize, ActionParameter::Size(_new_width, new_height)) => {
+                                // The size is used to determine which sidebar items are displayed as 'open'
+                                height.set(new_height);
                             }
-                        }
 
-                        _ => { }
+                            _ => { /* Unrecognised action */ }
+                        }
                     }
+
+                    _ => { }
                 }
             }
-        })
+        }
+    })
 }
