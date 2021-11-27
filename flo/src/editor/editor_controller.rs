@@ -178,10 +178,16 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates the sidebar control
     ///
-    pub fn sidebar(is_open: &BindRef<bool>, images: &ResourceManager<Image>) -> Control {
+    pub fn sidebar(open_state: &BindRef<SidebarOpenState>, activation_state: &BindRef<SidebarActivationState>, images: &ResourceManager<Image>) -> Control {
         use self::Position::*;
 
-        if is_open.get() {
+        // The sidebar has an open state (which is controlled by the user) and an activation state (controller by the program)
+        // Whether or not it is displayed as 'open' depends on both states
+        let open_state          = open_state.get();
+        let activation_state    = activation_state.get();
+
+        if open_state.is_open(&activation_state) {
+            // The sidebar should be displayed as open
             let open_image = images.get_named_resource("sidebar_open").unwrap();
 
             Control::container()
@@ -205,7 +211,11 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                     Control::container().with(Bounds { x1: After, y1: Start, x2: End, y2: End }).with(PointerBehaviour::ClickThrough).with_controller(&SubController::Sidebar.to_string())
                 ])
         } else {
-            let closed_image = images.get_named_resource("sidebar_closed_active").unwrap();
+            // The sidebar should be displayed as closed
+            let closed_image = match activation_state {
+                SidebarActivationState::Active      => images.get_named_resource("sidebar_closed_active").unwrap(),
+                SidebarActivationState::Inactive    => images.get_named_resource("sidebar_closed_inactive").unwrap(),
+            };
 
             Control::container()
                 .with(Bounds {
@@ -251,15 +261,16 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     pub fn ui(model: &FloModel<Loader::NewAnimation>, images: &Arc<ResourceManager<Image>>) -> BindRef<Control> {
         use self::Position::*;
 
-        let sidebar_open    = BindRef::from(model.sidebar().is_open.clone());
-        let images          = Arc::clone(images);
+        let sidebar_open        = BindRef::from(model.sidebar().open_state.clone());
+        let sidebar_activated   = model.sidebar().activation_state.clone();
+        let images              = Arc::clone(images);
 
         let ui = computed(move || {
             let menu_bar    = Self::menu_bar();
             let timeline    = Self::timeline();
             let toolbar     = Self::toolbox();
             let canvas      = Self::canvas();
-            let sidebar     = Self::sidebar(&sidebar_open, &*images);
+            let sidebar     = Self::sidebar(&sidebar_open, &sidebar_activated, &*images);
             let control_bar = Self::control_bar();
             let keybindings = Self::keybindings();
 
@@ -304,8 +315,25 @@ where Loader::NewAnimation: 'static+EditableAnimation {
 
     fn action(&self, action_id: &str, action_data: &ActionParameter) { 
         match (action_id, action_data) {
-            ("OpenSidebar", _)      => { self.sidebar_model.is_open.set(true); }
-            ("CloseSidebar", _)     => { self.sidebar_model.is_open.set(false); }
+            ("OpenSidebar", _)      => { 
+                // The sidebar is set to 'always open' if it's inactive, otherwise it is set to close when deactivated
+                let open_state = match self.sidebar_model.activation_state.get() {
+                    SidebarActivationState::Active      => SidebarOpenState::OpenWhenActive,
+                    SidebarActivationState::Inactive    => SidebarOpenState::AlwaysOpen
+                };
+
+                self.sidebar_model.open_state.set(open_state); 
+            }
+
+            ("CloseSidebar", _)     => { 
+                // The sidebar is set to 'always closed' if it's active, otherwise it's set to close when deactivated
+                let open_state = match self.sidebar_model.activation_state.get() {
+                    SidebarActivationState::Active      => SidebarOpenState::AlwaysClosed,
+                    SidebarActivationState::Inactive    => SidebarOpenState::OpenWhenActive
+                };
+
+                self.sidebar_model.open_state.set(open_state); 
+            }
 
             _                       => { /* Unknown action */ }
         }
