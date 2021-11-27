@@ -4,6 +4,7 @@ use flo_binding::*;
 ///
 /// Describes a panel that can be displayed on the sidebar
 ///
+#[derive(Clone)]
 pub struct SidebarPanel {
     /// Unique identifier for this panel
     identifier: String,
@@ -16,4 +17,11 @@ pub struct SidebarPanel {
 
     /// Binding indicating whether or not this panel is 'active' (has settings relevant to the current context)
     active: BindRef<bool>,
+}
+
+impl PartialEq for SidebarPanel {
+    fn eq(&self, panel: &SidebarPanel) -> bool {
+        // Panels are the same if they have the same identifier
+        self.identifier.eq(&panel.identifier)
+    }
 }

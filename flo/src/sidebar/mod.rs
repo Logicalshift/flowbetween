@@ -3,7 +3,7 @@
 //! on the selection.
 //!
 
-mod panel;
+pub mod panel;
 mod document_settings;
 mod sidebar_controller;
 

@@ -1,3 +1,5 @@
+use crate::sidebar::panel::*;
+
 use flo_binding::*;
 
 ///
@@ -66,6 +68,18 @@ pub struct SidebarModel {
 
     /// The activation state of the sidebar
     pub activation_state: BindRef<SidebarActivationState>,
+
+    /// The panels contained within this sidebar
+    pub panels: RopeBinding<SidebarPanel, ()>,
+
+    /// The panels relating to the document
+    document_panels: RopeBindingMut<SidebarPanel, ()>,
+
+    /// The panels relating to the current selection
+    selection_panels: RopeBindingMut<SidebarPanel, ()>,
+
+    /// The panels relating to the currently selected tool
+    tool_panels: RopeBindingMut<SidebarPanel, ()>
 }
 
 impl SidebarModel {
@@ -73,13 +87,26 @@ impl SidebarModel {
     /// 
     ///
     pub fn new() -> SidebarModel {
-        let activation_state = bind(SidebarActivationState::Inactive);
-        let activation_state = BindRef::from(activation_state);
+        // Create the default set of panels
+        let document_panels     = RopeBindingMut::new();
+        let selection_panels    = RopeBindingMut::new();
+        let tool_panels         = RopeBindingMut::new();
+
+        // Combine the panels into a single list
+        let panels              = document_panels.concat(&selection_panels).concat(&tool_panels);
+
+        // Set up the activation state
+        let activation_state    = bind(SidebarActivationState::Inactive);
+        let activation_state    = BindRef::from(activation_state);
 
         SidebarModel {
             open_state:         bind(SidebarOpenState::OpenWhenActive),
             open_sidebars:      bind(vec![]),
             activation_state:   activation_state,
+            panels:             panels,
+            document_panels:    document_panels,
+            selection_panels:   selection_panels,
+            tool_panels:        tool_panels
         }
     }
 }
