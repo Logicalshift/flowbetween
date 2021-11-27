@@ -1,4 +1,5 @@
 use flo_ui::*;
+use flo_binding::*;
 
 ///
 /// Describes a panel that can be displayed on the sidebar
@@ -11,5 +12,8 @@ pub struct SidebarPanel {
     title: String,
 
     /// The icon for this sidebar panel (or None to just use the title)
-    icon: Option<Image>
+    icon: Option<Image>,
+
+    /// Binding indicating whether or not this panel is 'active' (has settings relevant to the current context)
+    active: BindRef<bool>,
 }
