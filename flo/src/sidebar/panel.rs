@@ -15,6 +15,9 @@ pub struct SidebarPanel {
     /// The icon for this sidebar panel (or None to just use the title)
     icon: Option<Image>,
 
+    /// The height in pixels of the panel (width is always ~300)
+    height: BindRef<f64>,
+
     /// Binding indicating whether or not this panel is 'active' (has settings relevant to the current context)
     active: BindRef<bool>,
 }
