@@ -1090,6 +1090,7 @@ dependencies = [
  "flo_canvas",
  "flo_canvas_animation",
  "flo_curves",
+ "flo_rope",
  "flo_stream 0.7.0",
  "flo_ui",
  "flo_ui_files",
