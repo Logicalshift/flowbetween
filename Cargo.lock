@@ -1136,7 +1136,7 @@ dependencies = [
 [[package]]
 name = "flo_canvas"
 version = "0.3.1"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#27b1df576a8cb6cf35873bce67232efcfb65d4fb"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e1bc89fc9f4796a40c9c3afbc702b520568e25c4"
 dependencies = [
  "desync",
  "flo_curves",
@@ -1240,9 +1240,8 @@ dependencies = [
 
 [[package]]
 name = "flo_curves"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f99b3b5b7f26d3759076bb2fc999c4894c4a8f85b25b9381aad049a9e1c92b3"
+version = "0.6.1"
+source = "git+https://github.com/Logicalshift/flo_curves?branch=v0.6#8746f2fa3b17575031cb7cc6ecd9caa6f096a356"
 dependencies = [
  "itertools 0.10.1",
  "roots",
@@ -1349,7 +1348,7 @@ dependencies = [
 [[package]]
 name = "flo_render"
 version = "0.3.1"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#27b1df576a8cb6cf35873bce67232efcfb65d4fb"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e1bc89fc9f4796a40c9c3afbc702b520568e25c4"
 dependencies = [
  "bindgen",
  "cocoa 0.23.0",
@@ -1364,7 +1363,7 @@ dependencies = [
 [[package]]
 name = "flo_render_canvas"
 version = "0.3.1"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#27b1df576a8cb6cf35873bce67232efcfb65d4fb"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e1bc89fc9f4796a40c9c3afbc702b520568e25c4"
 dependencies = [
  "desync",
  "flo_canvas",
@@ -1378,7 +1377,7 @@ dependencies = [
 [[package]]
 name = "flo_render_gl_offscreen"
 version = "0.3.1"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#27b1df576a8cb6cf35873bce67232efcfb65d4fb"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e1bc89fc9f4796a40c9c3afbc702b520568e25c4"
 dependencies = [
  "bindgen",
  "cgl",
@@ -3773,8 +3772,3 @@ name = "xml-rs"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2d7d3948613f75c98fd9328cfdcc45acc4d360655289d0a7d4ec931392200a3"
-
-[[patch.unused]]
-name = "flo_curves"
-version = "0.6.1"
-source = "git+https://github.com/Logicalshift/flo_curves#8746f2fa3b17575031cb7cc6ecd9caa6f096a356"
