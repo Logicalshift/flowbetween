@@ -84,7 +84,7 @@ pub struct SidebarModel {
 
 impl SidebarModel {
     ///
-    /// 
+    /// Creates a new model for the sidebar panel used in FlowBetween
     ///
     pub fn new() -> SidebarModel {
         // Create the default set of panels
@@ -93,7 +93,7 @@ impl SidebarModel {
         let tool_panels         = RopeBindingMut::new();
 
         // Combine the panels into a single list
-        let panels              = document_panels.concat(&selection_panels).concat(&tool_panels);
+        let panels              = document_panels.chain(&selection_panels).chain(&tool_panels);
 
         // Set up the activation state
         let activation_state    = bind(SidebarActivationState::Inactive);
