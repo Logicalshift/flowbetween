@@ -28,3 +28,26 @@ impl PartialEq for SidebarPanel {
         self.identifier.eq(&panel.identifier)
     }
 }
+
+impl SidebarPanel {
+    ///
+    /// The title for this panel
+    ///
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
+    ///
+    /// The binding containing the height of this panel
+    ///
+    pub fn height(&self) -> &BindRef<f64> {
+        &self.height
+    }
+
+    ///
+    /// The binding that indicates whether or not this panel is active
+    ///
+    pub fn active(&self) -> &BindRef<bool> {
+        &self.active
+    }
+}
