@@ -16,10 +16,10 @@ use std::str::{FromStr};
 use std::collections::{HashSet, HashMap};
 
 /// Size of the title bar for a panel
-const TITLE_SIZE: f64   = 28.0;
+const TITLE_SIZE: f64   = 20.0;
 
 /// Size of the gap between panels
-const GAP: f64          = 4.0;
+const GAP: f64          = 3.0;
 
 #[derive(Clone, PartialEq, Eq, Hash, AsRefStr, Display, EnumString)]
 enum SidebarAction {
@@ -113,7 +113,7 @@ fn sidebar_ui(panels: Vec<&SidebarPanel>, open_panels: BindRef<Vec<String>>, tot
                     } else {
                         Control::label().with(Font::Weight(FontWeight::Light)).with(Appearance::Foreground(DIM_TEXT))
                     }
-                        .with(Font::Size(14.0))
+                        .with(Font::Size(12.0))
                         .with(Bounds { x1: After, y1: Start, x2: Stretch(1.0), y2: End })
                         .with(panel_title),
                     Control::empty().with(Bounds { x1: After, y1: Start, x2: Offset(28.0), y2: End }),
