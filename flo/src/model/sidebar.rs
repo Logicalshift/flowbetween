@@ -89,9 +89,14 @@ impl SidebarModel {
     ///
     pub fn new() -> SidebarModel {
         // Create the default set of panels
-        let document_panels     = RopeBindingMut::new();
+        let mut document_panels = RopeBindingMut::new();
         let selection_panels    = RopeBindingMut::new();
         let tool_panels         = RopeBindingMut::new();
+
+        let document_panel      = SidebarPanel::with_title("Document");
+        let another_panel       = SidebarPanel::with_title("AnotherPanel");
+
+        document_panels.replace(0..0, vec![document_panel, another_panel]);
 
         // Combine the panels into a single list
         let panels              = document_panels.chain(&selection_panels).chain(&tool_panels);
