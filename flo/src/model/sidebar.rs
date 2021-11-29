@@ -1,5 +1,6 @@
 use crate::sidebar::panel::*;
 
+use flo_rope::*;
 use flo_binding::*;
 
 ///
@@ -96,8 +97,7 @@ impl SidebarModel {
         let panels              = document_panels.chain(&selection_panels).chain(&tool_panels);
 
         // Set up the activation state
-        let activation_state    = bind(SidebarActivationState::Inactive);
-        let activation_state    = BindRef::from(activation_state);
+        let activation_state    = Self::activation_state(&panels);
 
         SidebarModel {
             open_state:         bind(SidebarOpenState::OpenWhenActive),
@@ -129,5 +129,26 @@ impl SidebarModel {
     ///
     pub fn set_tool_panels(&self, new_panels: Vec<SidebarPanel>) {
         self.tool_panels.replace(0..self.tool_panels.len(), new_panels);
+    }
+
+    ///
+    /// Returns a binding representing the activation state of the sidebar panel as a whole
+    ///
+    fn activation_state(panels: &RopeBinding<SidebarPanel, ()>) -> BindRef<SidebarActivationState> {
+        // Map to a list of 'is active' bindings
+        let panels              = panels.clone();
+        let activation_state    = computed(move || {
+            let panels          = panels.get();
+            let is_active       = panels.read_cells(0..panels.len())
+                .any(|panel| panel.active().get());
+
+            if is_active {
+                SidebarActivationState::Active
+            } else {
+                SidebarActivationState::Inactive
+            }
+        });
+
+        BindRef::from(activation_state)
     }
 }
