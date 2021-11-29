@@ -109,4 +109,25 @@ impl SidebarModel {
             tool_panels:        tool_panels
         }
     }
+
+    ///
+    /// Updates the 'document-wide' panels used for the sidebar
+    ///
+    pub fn set_document_panels(&self, new_panels: Vec<SidebarPanel>) {
+        self.document_panels.replace(0..self.document_panels.len(), new_panels);
+    }
+
+    ///
+    /// Sets the sidebar panels related to the current selection
+    ///
+    pub fn set_selection_panels(&self, new_panels: Vec<SidebarPanel>) {
+        self.selection_panels.replace(0..self.selection_panels.len(), new_panels);
+    }
+
+    ///
+    /// Updates the sidebar panels relating to the currently selected tool
+    ///
+    pub fn set_tool_panels(&self, new_panels: Vec<SidebarPanel>) {
+        self.tool_panels.replace(0..self.tool_panels.len(), new_panels);
+    }
 }
