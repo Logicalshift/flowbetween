@@ -1,6 +1,8 @@
 use flo_ui::*;
 use flo_binding::*;
 
+use std::sync::*;
+
 ///
 /// Describes a panel that can be displayed on the sidebar
 ///
@@ -20,6 +22,9 @@ pub struct SidebarPanel {
 
     /// Binding indicating whether or not this panel is 'active' (has settings relevant to the current context)
     active: BindRef<bool>,
+
+    /// The controller for the content of this panel
+    controller: Arc<dyn Controller>,
 }
 
 impl PartialEq for SidebarPanel {
@@ -30,6 +35,20 @@ impl PartialEq for SidebarPanel {
 }
 
 impl SidebarPanel {
+    ///
+    /// Returns the controller for this panel
+    ///
+    pub fn controller(&self) -> Arc<dyn Controller> {
+        Arc::clone(&self.controller)
+    }
+
+    ///
+    /// The unique identifier for this panel
+    ///
+    pub fn identifier(&self) -> &str {
+        &self.identifier
+    }
+
     ///
     /// The title for this panel
     ///
@@ -42,6 +61,13 @@ impl SidebarPanel {
     ///
     pub fn height(&self) -> &BindRef<f64> {
         &self.height
+    }
+
+    ///
+    /// The image for the icon for this panel, if it has one
+    ///
+    pub fn icon(&self) -> &Option<Image> {
+        &self.icon
     }
 
     ///
