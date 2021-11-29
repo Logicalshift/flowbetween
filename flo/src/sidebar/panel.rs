@@ -1,6 +1,8 @@
 use flo_ui::*;
 use flo_binding::*;
 
+use uuid::*;
+
 use std::sync::*;
 
 ///
@@ -35,6 +37,54 @@ impl PartialEq for SidebarPanel {
 }
 
 impl SidebarPanel {
+    ///
+    /// Creates a sidebar panel with a particular name
+    ///
+    pub fn with_title(title: &str) -> Self {
+        let identifier = Uuid::new_v4().to_simple().to_string();
+
+        SidebarPanel {
+            identifier: identifier,
+            title:      title.into(),
+            icon:       None,
+            height:     BindRef::from(bind(96.0)),
+            active:     BindRef::from(bind(false)),
+            controller: Arc::new(EmptyController)
+        }
+    }
+
+    ///
+    /// Sets the controller for a sidebar panel (this describes the content of the control when it's open in the sidebar)
+    ///
+    pub fn with_controller<TController: 'static+Controller>(mut self, controller: TController) -> Self {
+        self.controller = Arc::new(controller);
+        self
+    }
+
+    ///
+    /// Adds an image to a sidebar panel
+    ///
+    pub fn with_icon(mut self, icon: Image) -> Self {
+        self.icon = Some(icon);
+        self
+    }
+
+    ///
+    /// Modifies a sidebar panel with a height binding
+    ///
+    pub fn with_height(mut self, height: BindRef<f64>) -> Self {
+        self.height = height;
+        self
+    }
+
+    ///
+    /// Modifies a sidebar panel with an active binding
+    ///
+    pub fn with_active(mut self, active: BindRef<bool>) -> Self {
+        self.active = active;
+        self
+    }
+
     ///
     /// Returns the controller for this panel
     ///
