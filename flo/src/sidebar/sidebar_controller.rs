@@ -18,6 +18,26 @@ enum SidebarAction {
 }
 
 ///
+/// An event for the sidebar
+///
+enum SidebarEvent {
+    /// Add a subcontroller with the specified name to the sidebar
+    AddController(String, Arc<dyn Controller>),
+
+    /// The specified controller is no longer being managed as part of the sidebar
+    RemoveController(String),
+
+    /// Update the sidebar UI to the specified binding (when the list of panels change we re-bind the UI to avoid a potential race between updating the controllers and updating the UI)
+    SetUi(BindRef<Control>),
+
+    /// An action was generated from the UI
+    Action(String, ActionParameter),
+
+    /// Tick events are generated every time an update is completed
+    Tick,
+}
+
+///
 /// Creates the user interface for the sidebar
 ///
 fn sidebar_ui<Anim: 'static+EditableAnimation>(_model: &FloModel<Anim>) -> BindRef<Control> {
@@ -48,6 +68,18 @@ fn sidebar_ui<Anim: 'static+EditableAnimation>(_model: &FloModel<Anim>) -> BindR
 }
 
 ///
+/// Converts a stream of controller events to sidebar events
+///
+fn sidebar_events<ControllerEvents: Stream<Item=ControllerEvent>>(events: ControllerEvents) -> impl Stream<Item=SidebarEvent> {
+    events.map(|controller_event| {
+        match controller_event {
+            ControllerEvent::Action(name, param)    => SidebarEvent::Action(name, param),
+            ControllerEvent::Tick                   => SidebarEvent::Tick
+        }
+    })
+}
+
+///
 /// Creates the sidebar controller
 ///
 pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim>) -> impl Controller {
@@ -65,7 +97,7 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
         let height      = height.clone();
 
         let mut actions = actions;
-        let mut events  = events;
+        let mut events  = sidebar_events(events);
 
         async move {
             // TODO: Set up the subcontrollers
@@ -77,7 +109,7 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
             // Process events
             while let Some(next_event) = events.next().await {
                 match next_event {
-                    ControllerEvent::Action(action_name, param) => {
+                    SidebarEvent::Action(action_name, param) => {
                         let action_name: &str   = &action_name;
                         let action              = SidebarAction::from_str(action_name).unwrap_or(SidebarAction::Unknown);
 
