@@ -83,6 +83,15 @@ pub trait Controller : Send+Sync {
     fn tick(&self) { }
 }
 
+/// Controller that provides just an empty control
+pub struct EmptyController;
+
+impl Controller for EmptyController {
+    fn ui(&self) -> BindRef<Control> {
+        BindRef::from(bind(Control::empty()))
+    }
+}
+
 ///
 /// Returns the full UI tree for the current state of a controller
 ///
