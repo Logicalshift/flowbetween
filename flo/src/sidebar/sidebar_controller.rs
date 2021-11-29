@@ -156,15 +156,13 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
         let mut events      = stream::select_all(vec![events, panel_events]);
 
         async move {
-            // TODO: Set up the subcontrollers
-
-            // Set up the UI
-            let ui  = sidebar_ui(&model);
-            actions.send(ControllerAction::SetUi(ui.clone())).await.ok();
-
             // Process events
             while let Some(next_event) = events.next().await {
                 match next_event {
+                    SidebarEvent::AddController(name, controller)   => { actions.send(ControllerAction::AddSubController(name, controller)).await.ok(); }
+                    SidebarEvent::RemoveController(name)            => { actions.send(ControllerAction::RemoveSubController(name)).await.ok(); }
+                    SidebarEvent::SetUi(new_ui)                     => { actions.send(ControllerAction::SetUi(new_ui)).await.ok(); }
+
                     SidebarEvent::Action(action_name, param) => {
                         let action_name: &str   = &action_name;
                         let action              = SidebarAction::from_str(action_name).unwrap_or(SidebarAction::Unknown);
