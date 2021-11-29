@@ -1,6 +1,7 @@
 use flo_canvas::*;
 
 pub const DEFAULT_TEXT:                     Color = Color::Rgba(0.85, 0.95, 0.9, 1.0);
+pub const DIM_TEXT:                         Color = Color::Rgba(0.85*0.8, 0.95*0.8, 0.9*0.8, 1.0);
 
 pub const MAIN_BACKGROUND:                  Color = Color::Rgba(0.25, 0.25, 0.25, 1.0);
 pub const CANVAS_BACKGROUND:                Color = Color::Rgba(0.25, 0.25, 0.25, 1.0);
@@ -25,6 +26,8 @@ pub const MENU_BACKGROUND:                  Color = Color::Rgba(0.20, 0.22, 0.25
 pub const TOOLSET_BACKGROUND:               Color = Color::Rgba(0.30, 0.32, 0.35, 1.0);
 pub const TOOLS_BACKGROUND:                 Color = Color::Rgba(0.20, 0.22, 0.25, 1.0);
 pub const MENU_BACKGROUND_ALT:              Color = Color::Rgba(0.24, 0.26, 0.30, 1.0);
+
+pub const SIDEBAR_TITLE_BACKGROUND:         Color = Color::Rgba(0.30, 0.32, 0.35, 1.0);
 
 pub const RUBBERBAND_OUTLINE:               Color = Color::Rgba(0.0, 0.0, 0.0, 0.1);
 pub const RUBBERBAND_LINE:                  Color = Color::Rgba(0.1, 0.7, 0.9, 1.0);
