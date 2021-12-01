@@ -234,7 +234,8 @@ class FloEmptyView : NSView, FloContainerView {
             let label   = NSTextField(labelWithString: "")
             label.font  = NSFontManager.shared.font(withFamily: "Lato", traits: [], weight: 5, size: 13.0)
 
-            _labelView = FloControlView(frame: bounds, control: label)
+            _labelView              = FloControlView(frame: bounds, control: label)
+            _labelView?.viewState   = viewState
             addSubview(_labelView!)
         }
 
