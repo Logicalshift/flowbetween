@@ -107,7 +107,7 @@ fn sidebar_ui(panels: Vec<&SidebarPanel>, open_panels: BindRef<Vec<String>>, tot
                 .with(Appearance::Background(SIDEBAR_TITLE_BACKGROUND))
                 .with((ActionTrigger::Click, title_action))
                 .with(vec![
-                    Control::empty().with(Bounds { x1: Start, y1: Start, x2: Offset(28.0), y2: End }),
+                    Control::empty().with(Bounds { x1: Start, y1: Start, x2: Offset(28.0), y2: End }).with(PointerBehaviour::ClickThrough),
                     if is_active {
                         Control::label().with(Font::Weight(FontWeight::ExtraBold)).with(Appearance::Foreground(DEFAULT_TEXT))
                     } else {
@@ -115,8 +115,9 @@ fn sidebar_ui(panels: Vec<&SidebarPanel>, open_panels: BindRef<Vec<String>>, tot
                     }
                         .with(Font::Size(12.0))
                         .with(Bounds { x1: After, y1: Start, x2: Stretch(1.0), y2: End })
-                        .with(panel_title),
-                    Control::empty().with(Bounds { x1: After, y1: Start, x2: Offset(28.0), y2: End }),
+                        .with(panel_title)
+                        .with(PointerBehaviour::ClickThrough),
+                    Control::empty().with(Bounds { x1: After, y1: Start, x2: Offset(28.0), y2: End }).with(PointerBehaviour::ClickThrough),
                 ]);
 
             // Panel content
