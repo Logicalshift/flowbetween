@@ -111,6 +111,26 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
 
         centerVerticallyIfTextField()
     }
+    
+    ///
+    /// The hit testing routine is used to make the view 'click-through' if required
+    ///
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        // Check what view has been clicked on
+        let hitTestResult = super.hitTest(point);
+        
+        if hitTestResult == self || hitTestResult == _control {
+            // If the click is directly on this view, then return this view only if it's not a 'click through' view
+            if viewState.clickThrough {
+                return nil;
+            } else {
+                return hitTestResult;
+            }
+        } else {
+            // If another view has claimed the click, then don't suppress it
+            return hitTestResult;
+        }
+    }
 
     /// Adds a subview to this container view
     func addContainerSubview(_ subview: NSView) {
