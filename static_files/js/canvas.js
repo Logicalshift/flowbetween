@@ -1,1 +1,0 @@
-../../user_interfaces/http_ui/js/canvas.js
