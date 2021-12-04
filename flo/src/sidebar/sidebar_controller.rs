@@ -241,8 +241,6 @@ fn panel_change_events<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Ani
 /// Creates the sidebar controller
 ///
 pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim>) -> impl Controller {
-    // TODO: Create the set of subcontrollers
-
     // Parameters used for configuring the sidebar
     let height      = bind(0.0);
 

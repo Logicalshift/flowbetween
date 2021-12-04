@@ -6,7 +6,9 @@
 pub mod panel;
 mod document_settings;
 mod sidebar_controller;
+mod selection;
 
 pub use self::panel::*;
 pub use self::document_settings::*;
 pub use self::sidebar_controller::*;
+pub use self::selection::*;
