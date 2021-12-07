@@ -1127,7 +1127,7 @@ dependencies = [
 [[package]]
 name = "flo_binding"
 version = "2.1.0"
-source = "git+https://github.com/Logicalshift/flo_binding?branch=v2.1#b2f79b982b1461c6a339b298a6e7b0d0dd337b6d"
+source = "git+https://github.com/Logicalshift/flo_binding?branch=v2.1#fc775ae51c839b1e2ade8e62b09287d1ebe5adec"
 dependencies = [
  "desync",
  "flo_rope",

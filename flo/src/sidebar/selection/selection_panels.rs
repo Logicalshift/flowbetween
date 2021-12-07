@@ -56,5 +56,5 @@ pub fn animation_selection_panels<Anim: 'static+EditableAnimation>(model: &Arc<F
             // No frame
             vec![]
         }
-    }).follow_changes()
+    }).follow_changes_retained()
 }
