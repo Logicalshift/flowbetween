@@ -1,4 +1,5 @@
-use super::flo_model::*;
+use crate::sidebar::*;
+use crate::model::flo_model::*;
 
 use flo_animation::*;
 use flo_ui_files::*;
@@ -38,8 +39,16 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     /// Creates a new instance model from the shared model. This is used for a single session.
     ///
     fn new_instance(&self) -> FloModel<Loader::NewAnimation> {
-        let animation = self.loader.open(self.path.as_path());
+        // Create the animation
+        let animation   = self.loader.open(self.path.as_path());
 
-        FloModel::new(animation)
+        // The base model
+        let model       = FloModel::new(animation);
+
+        // Apply some extra default behaviours
+        let model_arc   = Arc::new(model.clone());
+        model.sidebar().set_selection_panels(selection_panels(&model_arc));
+
+        model
     }
 }
