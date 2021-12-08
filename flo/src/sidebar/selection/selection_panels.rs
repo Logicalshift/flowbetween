@@ -15,7 +15,9 @@ use std::sync::*;
 /// Returns the updates for the rope of selection panels
 ///
 pub fn selection_panels<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>) -> impl Stream<Item=RopeAction<SidebarPanel, ()>> {
-    animation_selection_panels(model)
+    let animation_panels = animation_selection_panels(model);
+
+    animation_panels
 }
 
 ///
@@ -25,7 +27,7 @@ pub fn animation_selection_panels<Anim: 'static+EditableAnimation>(model: &Arc<F
     let model           = Arc::clone(model);
     let animation_panel = animation_sidebar_panel(&model);
 
-    RopeBinding::computed(move || {
+    let binding = RopeBinding::computed(move || {
         let selected_element_ids    = model.selection().selected_elements.get();
         let frame                   = model.frame().frame.get();
 
@@ -56,5 +58,7 @@ pub fn animation_selection_panels<Anim: 'static+EditableAnimation>(model: &Arc<F
             // No frame
             vec![]
         }
-    }).follow_changes_retained()
+    });
+
+    binding.follow_changes_retained()
 }
