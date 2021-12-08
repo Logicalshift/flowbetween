@@ -109,7 +109,7 @@ impl SidebarModel {
         document_panels.replace(0..0, vec![document_panel, another_panel]);
 
         // Combine the panels into a single list
-        let panels              = document_panels.chain(&selection_panels).chain(&tool_panels);
+        let panels              = selection_panels.chain(&document_panels).chain(&tool_panels);
 
         // Set up the activation state
         let activation_state    = Self::activation_state(&panels);
