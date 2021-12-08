@@ -4,6 +4,8 @@ use flo_binding::*;
 use uuid::*;
 
 use std::sync::*;
+use std::cmp::{Ordering};
+use std::hash::{Hash, Hasher};
 
 ///
 /// Describes a panel that can be displayed on the sidebar
@@ -33,6 +35,29 @@ impl PartialEq for SidebarPanel {
     fn eq(&self, panel: &SidebarPanel) -> bool {
         // Panels are the same if they have the same identifier
         self.identifier.eq(&panel.identifier)
+    }
+}
+
+impl Eq for SidebarPanel {
+
+}
+
+impl PartialOrd for SidebarPanel {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.identifier.partial_cmp(&other.identifier)
+    }
+}
+
+impl Ord for SidebarPanel {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.identifier.cmp(&other.identifier)
+    }
+}
+
+impl Hash for SidebarPanel {
+    fn hash<H>(&self, state: &mut H)
+    where H: Hasher {
+        self.identifier.hash(state)
     }
 }
 
