@@ -7,7 +7,6 @@ use flo_binding::*;
 use flo_animation::*;
 
 use futures::prelude::*;
-use futures::stream;
 
 use std::sync::*;
 
@@ -27,7 +26,7 @@ pub fn animation_selection_panels<Anim: 'static+EditableAnimation>(model: &Arc<F
     let model           = Arc::clone(model);
     let animation_panel = animation_sidebar_panel(&model);
 
-    let binding = RopeBinding::computed(move || {
+    let binding = RopeBinding::computed_difference(move || {
         let selected_element_ids    = model.selection().selected_elements.get();
         let frame                   = model.frame().frame.get();
 
