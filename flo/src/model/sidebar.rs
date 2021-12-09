@@ -3,6 +3,7 @@ use crate::sidebar::panel::*;
 use futures::prelude::*;
 use futures::stream;
 
+use ::desync::*;
 use flo_rope::*;
 use flo_stream::*;
 use flo_binding::*;
@@ -89,7 +90,10 @@ pub struct SidebarModel {
     selection_panel_switch: Arc<StreamSwitch<RopeAction<SidebarPanel, ()>>>,
 
     /// The panels relating to the currently selected tool
-    tool_panels: RopeBindingMut<SidebarPanel, ()>
+    tool_panels: RopeBindingMut<SidebarPanel, ()>,
+
+    /// Task that opens new active panels
+    open_active_panels: Arc<Desync<()>>
 }
 
 impl SidebarModel {
@@ -110,19 +114,22 @@ impl SidebarModel {
 
         // Combine the panels into a single list
         let panels              = selection_panels.chain(&document_panels).chain(&tool_panels);
+        let open_sidebars       = bind(vec![]);
+        let open_active_panels  = Self::open_new_active_panels(&panels, &open_sidebars);
 
         // Set up the activation state
         let activation_state    = Self::activation_state(&panels);
 
         SidebarModel {
             open_state:             bind(SidebarOpenState::OpenWhenActive),
-            open_sidebars:          bind(vec![]),
+            open_sidebars:          open_sidebars,
             activation_state:       activation_state,
             panels:                 panels,
             document_panels:        document_panels,
             selection_panels:       selection_panels,
             selection_panel_switch: Arc::new(selection_switch),
-            tool_panels:            tool_panels
+            tool_panels:            tool_panels,
+            open_active_panels:     open_active_panels
         }
     }
 
@@ -153,6 +160,52 @@ impl SidebarModel {
     ///
     pub fn set_tool_panels(&self, new_panels: Vec<SidebarPanel>) {
         self.tool_panels.replace(0..self.tool_panels.len(), new_panels);
+    }
+
+    ///
+    /// Follows the changes to the panels and opens any new panels that are active
+    ///
+    fn open_new_active_panels(panels: &RopeBinding<SidebarPanel, ()>, open_sidebars: &Binding<Vec<String>>) -> Arc<Desync<()>> {
+        // Create a desync that we'll use to follow the stream
+        let runner          = Arc::new(Desync::new(()));
+
+        // Follow the changes to the sidebars
+        let open_sidebars   = open_sidebars.clone();
+        let panel_changes   = panels.follow_changes();
+
+        // Pipe them into the runner
+        pipe_in(Arc::clone(&runner), panel_changes, move |_, changes| {
+            let open_sidebars = open_sidebars.clone();
+            async move {
+                use self::RopeAction::*;
+
+                match changes {
+                    SetAttributes(_, _)         => { }
+                    ReplaceAttributes(_, _, _)  => { }
+                    Replace(_, cells)           => {
+                        // Get the open panels
+                        let mut open_panels     = open_sidebars.get();
+                        let mut open_changed    = false;
+
+                        for panel in cells.into_iter().rev() {
+                            if panel.active().get() {
+                                if !open_panels.contains(&panel.identifier().to_string()) {
+                                    open_panels.insert(0, panel.identifier().to_string());
+                                    open_changed = true;
+                                }
+                            }
+                        }
+
+                        // Update the open panels if they've changed
+                        if open_changed {
+                            open_sidebars.set(open_panels);
+                        }
+                    }
+                }
+            }.boxed()
+        });
+
+        runner
     }
 
     ///
