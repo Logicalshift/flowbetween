@@ -53,8 +53,9 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
     /// The resources and the UI can be specified ahead of time to avoid any point where the controller might display an empty UI due to the
     /// runtime initialising late.
     ///
-    pub fn new(resources: ControllerResources, default_ui: BindRef<Control>, create_runtime: TNewFuture) -> ImmediateController<TNewFuture> {
+    pub fn new<UiBinding: Into<BindRef<Control>>>(resources: ControllerResources, default_ui: UiBinding, create_runtime: TNewFuture) -> ImmediateController<TNewFuture> {
         // The UI defaults to an empty stream
+        let default_ui              = default_ui.into();
         let initial_ui              = default_ui.get();
         let default_ui_stream       = follow(default_ui);
         let (ui_stream, ui_switch)  = switchable_stream(default_ui_stream);
@@ -89,13 +90,13 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
     /// and is problematic when there are subcontrollers to set up, as they won't be available when the default UI is first used.
     ///
     pub fn empty(create_runtime: TNewFuture) -> ImmediateController<TNewFuture> {
-        Self::new(ControllerResources::new(), BindRef::from(bind(Control::empty())), create_runtime)
+        Self::new(ControllerResources::new(), bind(Control::empty()), create_runtime)
     }
 
     ///
     /// Creates a new immediate controller with a default UI (displayed whenever the runtime starts)
     ///
-    pub fn with_ui(default_ui: BindRef<Control>, create_runtime: TNewFuture) -> ImmediateController<TNewFuture> {
+    pub fn with_ui<UiBinding: Into<BindRef<Control>>>(default_ui: UiBinding, create_runtime: TNewFuture) -> ImmediateController<TNewFuture> {
         Self::new(ControllerResources::new(), default_ui, create_runtime)
     }
 }
