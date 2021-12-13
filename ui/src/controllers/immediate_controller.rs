@@ -91,6 +91,13 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
     pub fn empty(create_runtime: TNewFuture) -> ImmediateController<TNewFuture> {
         Self::new(ControllerResources::new(), BindRef::from(bind(Control::empty())), create_runtime)
     }
+
+    ///
+    /// Creates a new immediate controller with a default UI (displayed whenever the runtime starts)
+    ///
+    pub fn with_ui(default_ui: BindRef<Control>, create_runtime: TNewFuture) -> ImmediateController<TNewFuture> {
+        Self::new(ControllerResources::new(), default_ui, create_runtime)
+    }
 }
 
 impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(ControllerEventStream, mpsc::Sender<ControllerAction>, ControllerResources) -> TFuture> Controller for ImmediateController<TNewFuture> {
