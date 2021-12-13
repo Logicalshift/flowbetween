@@ -55,7 +55,8 @@ impl From<ControlType> for ViewType {
             Slider                  => ViewType::Slider,
             Rotor                   => ViewType::Rotor,
             TextBox                 => ViewType::TextBox,
-            CheckBox                => ViewType::CheckBox
+            CheckBox                => ViewType::CheckBox,
+            ComboBox                => ViewType::Empty
         }
     }
 }

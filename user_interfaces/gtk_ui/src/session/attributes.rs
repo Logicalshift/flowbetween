@@ -122,7 +122,8 @@ impl ToGtkActions for Control {
             Slider              => New(GtkWidgetType::Scale),
             Rotor               => New(GtkWidgetType::Rotor),
             TextBox             => New(GtkWidgetType::TextBox),
-            CheckBox            => New(GtkWidgetType::CheckBox)
+            CheckBox            => New(GtkWidgetType::CheckBox),
+            ComboBox            => New(GtkWidgetType::Generic)
         };
 
         // The widget class allows the style sheet to specifically target Flo widgets
@@ -138,7 +139,8 @@ impl ToGtkActions for Control {
             Slider              => "flo-slider",
             Rotor               => "flo-rotor",
             TextBox             => "flo-textbox",
-            CheckBox            => "flo-checkbox"
+            CheckBox            => "flo-checkbox",
+            ComboBox            => "flo-combobox",
         };
 
         // Build into the 'create control' action

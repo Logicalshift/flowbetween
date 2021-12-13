@@ -62,7 +62,8 @@ fn control_class(ctrl: &Control) -> &str {
         Slider              => "flo-slider",
         Rotor               => "flo-rotor",
         TextBox             => "flo-textbox",
-        CheckBox            => "flo-checkbox"
+        CheckBox            => "flo-checkbox",
+        ComboBox            => "flo-combobox"
     }
 }
 
