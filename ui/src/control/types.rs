@@ -38,5 +38,10 @@ pub enum ControlType {
     TextBox,
 
     /// A checkbox that can be turned on or off, with optional label
-    CheckBox
+    CheckBox,
+
+    /// A combobox that displays some text and makes it possible to choose a subcontrol from a menu
+    ///
+    /// Subcontrols must be labels 
+    ComboBox
 }
