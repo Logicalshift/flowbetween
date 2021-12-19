@@ -22,11 +22,11 @@ pub async fn run_animation_sidebar_panel(_events: ControllerEventStream, _action
 ///
 pub fn animation_sidebar_panel<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>) -> SidebarPanel {
     // Create the controller for the panel
-    let controller = ImmediateController::empty(move |events, actions, resources| run_animation_sidebar_panel(events, actions, resources));
+    let controller          = ImmediateController::empty(move |events, actions, resources| run_animation_sidebar_panel(events, actions, resources));
 
     // The panel is 'active' if there is one or more elements selected
-    let selected_elements = model.selection().selected_elements.clone();
-    let is_active = computed(move || selected_elements.get().len() > 0);
+    let selected_elements   = model.selection().selected_elements.clone();
+    let is_active           = computed(move || selected_elements.get().len() > 0);
 
     // Construct the sidebar panel
     SidebarPanel::with_title("Animation")
