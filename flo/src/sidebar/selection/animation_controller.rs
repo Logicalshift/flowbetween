@@ -11,6 +11,30 @@ use futures::channel::mpsc;
 use std::sync::*;
 
 ///
+/// Creates the binding for the animation sidebar user interface
+///
+fn animation_sidebar_ui() -> BindRef<Control> {
+    computed(move || {
+        use self::Position::*;
+
+        Control::container()
+            .with(Bounds { x1: Start, y1: Start, x2: End, y2: End } )
+            .with(ControlAttribute::Padding((8, 8), (8, 8)))
+            .with(vec![
+                Control::combo_box()
+                    .with(Bounds { x1: Start, y1: After, x2: Start, y2: End })
+                    .with("Test")
+                    .with(vec![
+                        Control::label().with("Option 1"),
+                        Control::label().with("Option 2"),
+                        Control::label().with("Option 3"),
+                        Control::label().with("Option 4"),
+                    ])
+            ])
+    }).into()
+}
+
+///
 /// Runs the animation sidebar panel
 ///
 pub async fn run_animation_sidebar_panel(_events: ControllerEventStream, _actions: mpsc::Sender<ControllerAction>, _resources: ControllerResources) {
@@ -22,7 +46,9 @@ pub async fn run_animation_sidebar_panel(_events: ControllerEventStream, _action
 ///
 pub fn animation_sidebar_panel<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>) -> SidebarPanel {
     // Create the controller for the panel
-    let controller          = ImmediateController::empty(move |events, actions, resources| run_animation_sidebar_panel(events, actions, resources));
+    let ui                  = animation_sidebar_ui();
+    let controller          = ImmediateController::with_ui(ui,
+        move |events, actions, resources| run_animation_sidebar_panel(events, actions, resources));
 
     // The panel is 'active' if there is one or more elements selected
     let selected_elements   = model.selection().selected_elements.clone();

@@ -90,6 +90,11 @@ impl Control {
         Self::new(ControlType::Rotor)
     }
 
+    /// Creates a new combo box control
+    pub fn combo_box() -> Control {
+        Self::new(ControlType::ComboBox)
+    }
+
     /// Adds an attribute to this control
     pub fn add_attribute(&mut self, attribute: ControlAttribute) {
         self.attributes.push(attribute);
