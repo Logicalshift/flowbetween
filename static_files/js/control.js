@@ -840,6 +840,16 @@ let flo_control = (function () {
         renderComboBox() {
             let shadow_root     = this.shadowRoot;
 
+            // Need to load the flowbetween stylesheet
+            let stylesheet      = document.createElement('style');
+            stylesheet.textContent = `
+                select {
+                    font:       inherit;
+                    color:      inherit;
+                    background: inherit;
+                }
+            `;
+
             // This becomes a select, and we render the options underneath
             let rendered_select = document.createElement('select');
             let attributes      = [].slice.apply(this.attributes);
@@ -870,6 +880,7 @@ let flo_control = (function () {
             });
 
             shadow_root.replaceChildren();
+            shadow_root.appendChild(stylesheet);
             shadow_root.appendChild(rendered_select);
         }
     }
