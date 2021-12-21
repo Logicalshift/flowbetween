@@ -126,6 +126,8 @@ fn sidebar_ui(panels: Vec<&SidebarPanel>, open_panels: BindRef<Vec<String>>, tot
                 let panel_height = panel_height.get();
                 vec![
                     Control::container().with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(panel_height as _) })
+                        .with(Font::Size(11.0))
+                        .with(Font::Weight(FontWeight::Light))
                         .with((ActionTrigger::Click, "BackgroundClick"))
                         .with_controller(panel_id)
                 ]
