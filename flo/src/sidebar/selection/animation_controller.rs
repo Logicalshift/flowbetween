@@ -23,12 +23,10 @@ fn animation_sidebar_ui() -> BindRef<Control> {
             .with(vec![
                 Control::combo_box()
                     .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(20.0) })
-                    .with("Test")
+                    .with("Frame-by-frame")
                     .with(vec![
-                        Control::label().with("Option 1"),
-                        Control::label().with("Option 2"),
-                        Control::label().with("Option 3"),
-                        Control::label().with("Option 4"),
+                        Control::label().with("Frame-by-frame"),
+                        Control::label().with("Build over time"),
                     ])
             ])
     }).into()
@@ -57,5 +55,6 @@ pub fn animation_sidebar_panel<Anim: 'static+EditableAnimation>(model: &Arc<FloM
     // Construct the sidebar panel
     SidebarPanel::with_title("Animation")
         .with_active(BindRef::from(is_active))
+        .with_height(bind(200.0))
         .with_controller(controller)
 }
