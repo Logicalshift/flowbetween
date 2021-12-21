@@ -816,10 +816,65 @@ let flo_control = (function () {
     ///
     /// Declare custom elements
     ///
-    class FloComboBox extends HTMLSelectElement { constructor() { super(); } }
     class FloComboItem extends HTMLOptionElement { constructor() { super(); } }
 
-    customElements.define('flo-combobox', FloComboBox, { extends: 'select' });
+    class FloComboBox extends HTMLElement { 
+        constructor() { 
+            super();
+
+            this.attachShadow({mode: 'open'});
+        } 
+
+        static get observedAttributes() { return ['style']; }
+
+        connectedCallback() {
+            console.log('ConnectedCallback');
+            this.renderComboBox();
+        }
+
+        attributeChangedCallback() {
+            console.log('Attributed changed');
+            this.renderComboBox();
+        }
+
+        renderComboBox() {
+            let shadow_root     = this.shadowRoot;
+
+            // This becomes a select, and we render the options underneath
+            let rendered_select = document.createElement('select');
+            let attributes      = [].slice.apply(this.attributes);
+
+            console.log('Render attributes', attributes);
+
+            // Attributes are the same
+            attributes.forEach(attribute => { 
+                if (attribute.nodeName !== 'id') { rendered_select.setAttribute(attribute.nodeName, attribute.nodeValue); }
+            });
+
+            // Options are built from the combo-item child elements
+            let options         = [].slice.apply(this.getElementsByTagName('flo-combo-item'));
+            options.forEach(option => {
+                // Gather data on the option
+                let text                    = option.innerText;
+                let attributes              = [].slice.apply(option.attributes);
+
+                // Copy attributes and set the text
+                let rendered_option         = document.createElement('option');
+                rendered_option.innerText   = text;
+                attributes.forEach(attribute => { 
+                    if (attribute.nodeName !== 'id') { rendered_option.setAttribute(attribute.nodeName, attribute.nodeValue); }
+                });
+
+                // Add to the rendering
+                rendered_select.appendChild(rendered_option);
+            });
+
+            shadow_root.replaceChildren();
+            shadow_root.appendChild(rendered_select);
+        }
+    }
+
+    customElements.define('flo-combobox', FloComboBox);
     customElements.define('flo-combo-item', FloComboItem, { extends: 'option' });
 
     return {

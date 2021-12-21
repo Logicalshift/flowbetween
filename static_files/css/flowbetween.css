@@ -60,6 +60,12 @@ html, body {
     box-shadow:     0px 0px 4px rgba(180, 200, 220, 0.9);
 }
 
+#root select {
+    font:       inherit;
+    color:      inherit;
+    background: inherit;
+}
+
 flo-empty,
 flo-container,
 flo-cropping,
