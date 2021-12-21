@@ -123,6 +123,36 @@ fn add_textbox_subcomponents(ctrl: &Control, dom_element: &mut DomNode, base_pat
     }
 }
 
+///
+/// Comboboxes only display the labels of their immediate child controls, and generate click actions for those 
+/// subcomponents when they're selected
+///
+fn add_combobox_subcomponents(ctrl: &Control, dom_element: &mut DomNode, base_path: &str, controller_path: &str, _subcomponent_path: &str) {
+    for attribute in ctrl.attributes() {
+        use ui::ControlAttribute::*;
+
+        match attribute {
+            SubComponents(subcomponents) => {
+                // Only the labels of subcomponents are used for comboboxes
+                for component in subcomponents {
+                    if let Some(label) = component.text() {
+                        let mut label_node  = DomElement::new("flo-combo-item");
+                        let text_node       = DomText::new(&label.to_string());
+
+                        label_node.append_child_node(text_node);
+                        dom_element.append_child_node(label_node);
+                    }
+                }
+            },
+
+            _ => {
+                // Treat other attributes as normal
+                dom_element.append_child_node(attribute.to_html_subcomponent(base_path, controller_path))
+            }
+        }
+    }
+}
+
 impl ToHtml for Control {
     fn to_html_subcomponent(&self, base_path: &str, controller_path: &str) -> DomNode {
         // Start with the main element
@@ -140,6 +170,7 @@ impl ToHtml for Control {
         // Add any subcomponents or text for this control
         match self.control_type() {
             ControlType::TextBox    => add_textbox_subcomponents(self, &mut result, base_path, controller_path, subcomponent_path),
+            ControlType::ComboBox   => add_combobox_subcomponents(self, &mut result, base_path, controller_path, subcomponent_path),
             _                       => add_subcomponents(self, &mut result, base_path, controller_path, subcomponent_path)
         }
 
