@@ -22,7 +22,7 @@ fn animation_sidebar_ui() -> BindRef<Control> {
             .with(ControlAttribute::Padding((8, 8), (8, 8)))
             .with(vec![
                 Control::combo_box()
-                    .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(14.0) })
+                    .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(16.0) })
                     .with("Test")
                     .with(vec![
                         Control::label().with("Option 1"),
