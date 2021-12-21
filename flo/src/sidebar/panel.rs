@@ -97,16 +97,16 @@ impl SidebarPanel {
     ///
     /// Modifies a sidebar panel with a height binding
     ///
-    pub fn with_height(mut self, height: BindRef<f64>) -> Self {
-        self.height = height;
+    pub fn with_height<BindHeight: Into<BindRef<f64>>>(mut self, height: BindHeight) -> Self {
+        self.height = height.into();
         self
     }
 
     ///
     /// Modifies a sidebar panel with an active binding
     ///
-    pub fn with_active(mut self, active: BindRef<bool>) -> Self {
-        self.active = active;
+    pub fn with_active<BindActive: Into<BindRef<bool>>>(mut self, active: BindActive) -> Self {
+        self.active = active.into();
         self
     }
 
