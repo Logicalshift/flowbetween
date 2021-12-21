@@ -813,6 +813,15 @@ let flo_control = (function () {
         });
     };
 
+    ///
+    /// Declare custom elements
+    ///
+    class FloComboBox extends HTMLSelectElement { constructor() { super(); } }
+    class FloComboItem extends HTMLOptionElement { constructor() { super(); } }
+
+    customElements.define('flo-combobox', FloComboBox, { extends: 'select' });
+    customElements.define('flo-combo-item', FloComboItem, { extends: 'option' });
+
     return {
         load_slider:            load_slider,
         load_rotor:             load_rotor,
