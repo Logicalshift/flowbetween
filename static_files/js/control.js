@@ -889,13 +889,29 @@ let flo_control = (function () {
                 attributes.forEach(attribute => { 
                     if (attribute.nodeName !== 'id') { rendered_option.setAttribute(attribute.nodeName, attribute.nodeValue); }
                 });
+                rendered_option.flo_option  = option;
 
                 // Add to the rendering
                 rendered_select.appendChild(rendered_option);
             });
 
             // On change: reselect the title element (selection only updates if the UI wants it to)
-            rendered_select.addEventListener('change', () => {
+            rendered_select.addEventListener('change', event => {
+                // Cause a click event on the selected option
+                let event_handler = null;
+                if (rendered_select.selectedIndex > 0) {
+                    let selected_item   = rendered_select.options[rendered_select.selectedIndex];
+                    selected_item       = selected_item.flo_option;
+
+                    event_handler       = selected_item['flo_event_click'];
+                }
+
+                // Send the event handler if it exists for the option
+                if (event_handler) {
+                    event_handler(event);
+                }
+
+                // Reset the selected index
                 rendered_select.selectedIndex = 0;
             });
 
