@@ -349,6 +349,16 @@ public class FloView : NSObject, FloViewDelegate {
     @objc public func viewSetClickthrough(_ isClickThrough: Bool) {
         _view.viewState.clickThrough = isClickThrough
     }
+    
+    @objc public func viewSetMenuChoices(_ choices: [Any]?) {
+        if let choices = choices {
+            // The array is an array of strings
+            let choices = choices.map({ choice in choice as! String })
+            
+            // Set the choices in the view
+            _view.setMenuChoices(choices)
+        }
+    }
 
     @objc public func viewAddClassName(_ className: String!) {
         _view.viewState.classes.append(className)

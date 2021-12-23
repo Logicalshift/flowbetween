@@ -133,6 +133,7 @@ typedef struct AppPainting AppPainting;
 - (void) viewSetRangeWithLower: (FloProperty*) lower upper: (FloProperty*) upper;
 - (void) viewSetFocusPriority: (FloProperty*) property;
 - (void) viewFixScrollAxis: (uint32_t) axis;
+- (void) viewSetMenuChoices: (NSArray*) choices;
 - (void) viewSetClickthrough: (BOOL) isClickThrough;
 - (void) viewAddClassName: (NSString*) className;
 

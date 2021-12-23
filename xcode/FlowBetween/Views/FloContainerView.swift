@@ -98,6 +98,9 @@ protocol FloContainerView {
 
     /// Sets the text alignment for this view
     func setTextAlignment(alignment: NSTextAlignment)
+    
+    /// Sets the menu choices for this view
+    func setMenuChoices(_ choices: [String]);
 
     /// Sets part of the state of this control
     func setState(selector: ViewStateSelector, toProperty: FloProperty)

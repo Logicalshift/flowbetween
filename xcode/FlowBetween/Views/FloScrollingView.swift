@@ -328,6 +328,11 @@ public class FloScrollingView : NSScrollView, FloContainerView {
 
     }
 
+    /// Sets the menu choices for this view
+    func setMenuChoices(_ choices: [String]) {
+        
+    }
+
     /// Sets part of the state of this control
     func setState(selector: ViewStateSelector, toProperty: FloProperty) {
         viewState.retainProperty(selector: selector, property: toProperty)

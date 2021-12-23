@@ -256,6 +256,11 @@ class FloContainerButton : NSView, FloContainerView {
     func setTextAlignment(alignment: NSTextAlignment) {
         // Text not supported by this view
     }
+    
+    /// Sets the menu choices for this view
+    func setMenuChoices(_ choices: [String]) {
+        
+    }
 
     /// Sets part of the state of this control
     func setState(selector: ViewStateSelector, toProperty: FloProperty) {

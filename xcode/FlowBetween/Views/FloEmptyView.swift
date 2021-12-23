@@ -262,6 +262,11 @@ class FloEmptyView : NSView, FloContainerView {
         labelView.setTextAlignment(alignment: alignment)
     }
 
+    /// Sets the menu choices for this view
+    func setMenuChoices(_ choices: [String]) {
+        
+    }
+
     /// Sets the foreground colour of the control
     func setForegroundColor(color: NSColor) {
         labelView.setForegroundColor(color: color)

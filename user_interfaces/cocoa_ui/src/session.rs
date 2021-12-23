@@ -17,7 +17,7 @@ use futures::task;
 use futures::task::{Poll, Context};
 
 use cocoa::base::{id, nil};
-use cocoa::foundation::NSString;
+use cocoa::foundation::{NSString, NSArray};
 use objc::rc::*;
 use objc::runtime::*;
 use metal;
@@ -422,7 +422,9 @@ impl CocoaSession {
                 Range(lower, upper)         => { let _: () = msg_send!(**view, viewSetRangeWithLower: *self.flo_property(lower) upper: *self.flo_property(upper)); },
                 FocusPriority(property)     => { let _: () = msg_send!(**view, viewSetFocusPriority: *self.flo_property(property)); }
                 FixScrollAxis(axis)         => { let _: () = msg_send!(**view, viewFixScrollAxis: self.id_for_scroll_axis(axis)); }
-                MenuChoices(choices)        => { /* TODO */ }
+                MenuChoices(choices)        => { let _: () = msg_send!(**view, viewSetMenuChoices: NSArray::arrayWithObjects(nil, &choices.into_iter()
+                    .map(|choice| NSString::alloc(nil).init_str(&choice))
+                    .collect::<Vec<_>>())); }
                 AddClass(class_name)        => { let _: () = msg_send!(**view, viewAddClassName: NSString::alloc(nil).init_str(&class_name)); }
             }
         }

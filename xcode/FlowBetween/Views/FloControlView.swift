@@ -312,6 +312,11 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
         _control.attributedStringValue = attributedLabel
     }
 
+    /// Sets the menu choices for this view
+    func setMenuChoices(_ choices: [String]) {
+        
+    }
+
     /// If this control's focus priority is higher than the currently focused view, move focus here
     func focusIfNeeded() {
         if let priorityProperty = viewState.focusPriority {
