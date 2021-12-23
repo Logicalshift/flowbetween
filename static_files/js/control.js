@@ -828,12 +828,10 @@ let flo_control = (function () {
         static get observedAttributes() { return ['style']; }
 
         connectedCallback() {
-            console.log('ConnectedCallback');
             this.renderComboBox();
         }
 
         attributeChangedCallback() {
-            console.log('Attributed changed');
             this.renderComboBox();
         }
 
@@ -854,12 +852,29 @@ let flo_control = (function () {
             let rendered_select = document.createElement('select');
             let attributes      = [].slice.apply(this.attributes);
 
-            console.log('Render attributes', attributes);
-
             // Attributes are the same
             attributes.forEach(attribute => { 
                 if (attribute.nodeName !== 'id') { rendered_select.setAttribute(attribute.nodeName, attribute.nodeValue); }
             });
+
+            // Add a hidden selected option as the 'default' (this is the text displayed in the combo box)
+            let display_text    = '';
+            [].slice.apply(this.children)
+                .forEach(element => {
+                    if (element.tagName.toLowerCase() !== 'flo-combo-item' && element.innerText !== '') {
+                        display_text += element.innerText;
+                    }
+                });
+
+            // Selected, hidden and disabled will set this element as the default item for the selection without showing it in the list 
+            // (Safari does not honour this properly, but we'd need to build our own combo box from scratch to get around this)
+            let title_element   = document.createElement('option');
+            title_element.setAttribute('hidden', '');
+            title_element.setAttribute('selected', '');
+            title_element.setAttribute('disabled', '');
+            title_element.innerText = display_text;
+
+            rendered_select.appendChild(title_element);
 
             // Options are built from the combo-item child elements
             let options         = [].slice.apply(this.getElementsByTagName('flo-combo-item'));
