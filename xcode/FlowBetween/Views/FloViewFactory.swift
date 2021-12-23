@@ -92,6 +92,20 @@ import Cocoa
 
         return view
     }
+    
+    ///
+    /// Creates a view that can be used to drop down a menu of choices
+    ///
+    @objc public static func createAsComboBox() -> FloView {
+        // Create a combobox
+        let combobox        = NSPopUpButton(frame: .zero, pullsDown: true)
+        
+        // Put it in a view
+        let comboboxView    = FloComboBoxView(frame: .zero, control: combobox)
+        let view            = FloView(withView: comboboxView)
+        
+        return view
+    }
 
     ///
     /// Creates a view that can contain some text to be edited

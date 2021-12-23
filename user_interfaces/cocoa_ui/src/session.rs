@@ -278,6 +278,7 @@ impl CocoaSession {
                     Rotor           => { msg_send!(*view_class, createAsRotor) }
                     TextBox         => { msg_send!(*view_class, createAsTextBox) }
                     CheckBox        => { msg_send!(*view_class, createAsCheckBox) }
+                    ComboBox        => { msg_send!(*view_class, createAsComboBox) }
                     Scrolling       => { msg_send!(*view_class, createAsScrolling) }
                     Popup           => { msg_send!(*view_class, createAsPopup) }
                 };

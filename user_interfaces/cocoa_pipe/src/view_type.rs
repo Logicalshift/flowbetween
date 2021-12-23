@@ -26,6 +26,11 @@ pub enum ViewType {
     /// A view that lets you check or uncheck a value
     CheckBox,
 
+    /// A view that works as a combo box
+    ///
+    /// FlowBetween comboboxes have a title that's separate to the menu contents, so they work more like pull-down menus as far as Cocoa is concerned
+    ComboBox,
+
     /// A view that can be scrolled
     Scrolling,
 
@@ -56,7 +61,7 @@ impl From<ControlType> for ViewType {
             Rotor                   => ViewType::Rotor,
             TextBox                 => ViewType::TextBox,
             CheckBox                => ViewType::CheckBox,
-            ComboBox                => ViewType::Empty
+            ComboBox                => ViewType::ComboBox
         }
     }
 }

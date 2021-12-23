@@ -40,6 +40,7 @@
 		4B79EAE0220F92C50019D660 /* FloContainerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B79EADF220F92C50019D660 /* FloContainerButton.swift */; };
 		4B79EAE2220F92D70019D660 /* FloContainerButtonLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B79EAE1220F92D70019D660 /* FloContainerButtonLayer.swift */; };
 		4B7DE8CA25402DF300C1B4E7 /* FloImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B7DE8C925402DF300C1B4E7 /* FloImageView.swift */; };
+		4BAC0BD62774E71200AD1838 /* FloComboBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BAC0BD52774E71200AD1838 /* FloComboBoxView.swift */; };
 		4BAC990721E0FC7000CEB87B /* OFL.txt in Copy Fonts */ = {isa = PBXBuildFile; fileRef = 4BAC98FC21E0FBD100CEB87B /* OFL.txt */; };
 		4BAC990F21E0FDE900CEB87B /* Lato-Bold.ttf in Copy Fonts */ = {isa = PBXBuildFile; fileRef = 4BAC990921E0FDDB00CEB87B /* Lato-Bold.ttf */; };
 		4BAC991021E0FDE900CEB87B /* Lato-Regular.ttf in Copy Fonts */ = {isa = PBXBuildFile; fileRef = 4BAC990B21E0FDDB00CEB87B /* Lato-Regular.ttf */; };
@@ -244,6 +245,7 @@
 		4B8EC361256EF04700C8D9B8 /* libflo_cocoa.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libflo_cocoa.a; path = debug/x64/libflo_cocoa.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		4B8EC362256EF05000C8D9B8 /* libflo_cocoa.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libflo_cocoa.dylib; path = debug/arm64/libflo_cocoa.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		4B8EC363256EF05000C8D9B8 /* libflo_cocoa.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libflo_cocoa.a; path = debug/arm64/libflo_cocoa.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		4BAC0BD52774E71200AD1838 /* FloComboBoxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloComboBoxView.swift; sourceTree = "<group>"; };
 		4BAC98F921E0FBD100CEB87B /* Lato-Thin.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Thin.woff2"; sourceTree = "<group>"; };
 		4BAC98FA21E0FBD100CEB87B /* Lato-Regular.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Regular.woff2"; sourceTree = "<group>"; };
 		4BAC98FB21E0FBD100CEB87B /* README-WEB.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "README-WEB.txt"; sourceTree = "<group>"; };
@@ -357,6 +359,7 @@
 				4B52B4D621E26DBA00CA6B64 /* FloScrollingView.swift */,
 				4B51F82322078D1C0060578C /* FloControlView.swift */,
 				4B51F825220792290060578C /* FloButtonView.swift */,
+				4BAC0BD52774E71200AD1838 /* FloComboBoxView.swift */,
 				4B557B1421FB0BA300FFAC5D /* FloCanvasLayer.swift */,
 				4B756DDC24E72CDB000688B2 /* FloMetalCanvasLayer.swift */,
 				4B5709B32205E83F004FB91F /* FloCacheLayer.swift */,
@@ -703,6 +706,7 @@
 				4B79EAE0220F92C50019D660 /* FloContainerButton.swift in Sources */,
 				4B57E9E121DE6A9E00FD0551 /* FloLayout.swift in Sources */,
 				4B4902122201036300FB6AFC /* FloPaintStage.swift in Sources */,
+				4BAC0BD62774E71200AD1838 /* FloComboBoxView.swift in Sources */,
 				4B53915122123B5E00854B3C /* DragAction.swift in Sources */,
 				4B4BEC01221BFFB10008147E /* FixedAxis.swift in Sources */,
 				4B795F2F223176D3006D9CD5 /* FloBadgeLayer.swift in Sources */,
