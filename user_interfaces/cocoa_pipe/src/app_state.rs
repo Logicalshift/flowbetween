@@ -337,6 +337,21 @@ impl AppState {
     }
 
     ///
+    /// Creates the actions needed to setup some subcomponents as a combobox menu
+    ///
+    fn setup_combobox_items(&mut self, view_id: usize, subcomponents: &Vec<Control>) -> impl IntoIterator<Item=AppAction> {
+        // The menu items are defined by the labels of the subcomponent
+        let menu_items = subcomponents.iter()
+            .map(|control| control.text().and_then(|prop| prop.string()).unwrap_or_else(|| "".to_string()))
+            .collect();
+
+        // Send in a set state request
+        vec![
+            AppAction::View(view_id, ViewAction::SetState(ViewStateUpdate::MenuChoices(menu_items)))
+        ]
+    }
+
+    ///
     /// Creates a view (and subviews) from a UI control
     ///
     fn create_view(&mut self, control: &Control, controller_path: &Vec<Arc<String>>) -> (ViewState, Vec<AppAction>) {
@@ -374,18 +389,28 @@ impl AppState {
         };
 
         // Also set up any subcomponents
-        for subcomponent in control.subcomponents().unwrap_or(&vec![]) {
-            // Create the view for the subcomponent
-            let (subcomponent_view, subcomponent_actions) = self.create_view(subcomponent, subcomponent_controller_path);
+        match control.control_type() {
+            ControlType::ComboBox => {
+                // Subcomponents are set as menu choices using their text
+                setup_actions.extend(self.setup_combobox_items(view_id, control.subcomponents().unwrap_or(&vec![])));
+            }
 
-            // Add to the setup actions
-            setup_actions.extend(subcomponent_actions);
+            _ => {
+                // For most controls, the subcomponents are just more views
+                for subcomponent in control.subcomponents().unwrap_or(&vec![]) {
+                    // Create the view for the subcomponent
+                    let (subcomponent_view, subcomponent_actions) = self.create_view(subcomponent, subcomponent_controller_path);
 
-            // Add as a subview
-            setup_actions.push(AppAction::View(view_id, ViewAction::AddSubView(subcomponent_view.id())));
+                    // Add to the setup actions
+                    setup_actions.extend(subcomponent_actions);
 
-            // Add as a child control of our view state
-            view_state.add_child_state(subcomponent_view);
+                    // Add as a subview
+                    setup_actions.push(AppAction::View(view_id, ViewAction::AddSubView(subcomponent_view.id())));
+
+                    // Add as a child control of our view state
+                    view_state.add_child_state(subcomponent_view);
+                }
+            }
         }
 
         // Set up any canvases

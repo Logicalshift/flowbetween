@@ -189,6 +189,9 @@ pub enum ViewStateUpdate {
     /// Prevents this view from moving within a scroll view
     FixScrollAxis(FixedAxis),
 
+    /// Sets the choices for the menus for this view
+    MenuChoices(Vec<String>),
+
     /// Adds a class name to this view (used as a hint to change rendering styles)
     AddClass(String)
 }

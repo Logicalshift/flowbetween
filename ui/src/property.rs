@@ -34,6 +34,16 @@ impl Property {
     pub fn bound(value_name: &str) -> Property {
         Property::Bind(value_name.to_string())
     }
+
+    ///
+    /// Returns the string value of this property, if it's not bound to anything
+    ///
+    pub fn string(&self) -> Option<String> {
+        match self {
+            Property::String(value) => Some(value.to_string()),
+            _                       => None
+        }
+    }
 }
 
 impl PropertyValue {
