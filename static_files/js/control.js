@@ -894,6 +894,11 @@ let flo_control = (function () {
                 rendered_select.appendChild(rendered_option);
             });
 
+            // On change: reselect the title element (selection only updates if the UI wants it to)
+            rendered_select.addEventListener('change', () => {
+                rendered_select.selectedIndex = 0;
+            });
+
             shadow_root.replaceChildren();
             shadow_root.appendChild(stylesheet);
             shadow_root.appendChild(rendered_select);
