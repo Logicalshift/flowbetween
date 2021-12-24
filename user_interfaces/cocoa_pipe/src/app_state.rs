@@ -8,6 +8,7 @@ use flo_ui::session::*;
 
 use serde_json;
 
+use std::iter;
 use std::sync::*;
 use std::collections::{HashMap, HashSet};
 
@@ -339,16 +340,29 @@ impl AppState {
     ///
     /// Creates the actions needed to setup some subcomponents as a combobox menu
     ///
-    fn setup_combobox_items(&mut self, view_id: usize, subcomponents: &Vec<Control>) -> impl IntoIterator<Item=AppAction> {
+    fn setup_combobox_items<'a>(&mut self, view_id: usize, subcomponents: &'a Vec<Control>) -> impl 'a+IntoIterator<Item=AppAction> {
         // The menu items are defined by the labels of the subcomponent
         let menu_items = subcomponents.iter()
             .map(|control| control.text().and_then(|prop| prop.string()).unwrap_or_else(|| "".to_string()))
             .collect();
 
+        // Get the list of action trigger requests
+        let action_triggers = subcomponents.iter()
+            .enumerate()
+            .flat_map(move |(idx, control)| {
+                control.actions()
+                    .into_iter()
+                    .flat_map(move |(trigger, event)| {
+                        match (trigger, event) {
+                            (ActionTrigger::Click, ActionEvent::Named(name))    => Some(AppAction::View(view_id, ViewAction::RequestEvent(ViewEvent::ClickOption(idx), name.clone()))),
+                            _                                                   => None
+                        }
+                    })
+            });
+
         // Send in a set state request
-        vec![
-            AppAction::View(view_id, ViewAction::SetState(ViewStateUpdate::MenuChoices(menu_items)))
-        ]
+        iter::once(AppAction::View(view_id, ViewAction::SetState(ViewStateUpdate::MenuChoices(menu_items))))
+            .chain(action_triggers)
     }
 
     ///

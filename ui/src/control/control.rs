@@ -1,5 +1,6 @@
 use super::types::*;
 use super::bounds::*;
+use super::actions::*;
 use super::modifier::*;
 use super::attributes::*;
 
@@ -220,6 +221,20 @@ impl Control {
         result.dedup();
 
         result
+    }
+
+    ///
+    /// Returns the action triggers attached to this control
+    ///
+    pub fn actions(&self) -> Vec<(ActionTrigger, ActionEvent)> {
+        self.attributes.iter()
+            .flat_map(|attr| {
+                match attr {
+                    ControlAttribute::Action(trigger, event)    => Some((trigger.clone(), event.clone())),
+                    _                                           => None
+                }
+            })
+            .collect()
     }
 
     ///
