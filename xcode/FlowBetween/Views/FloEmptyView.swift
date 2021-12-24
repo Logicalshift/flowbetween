@@ -49,6 +49,9 @@ class FloEmptyView : NSView, FloContainerView {
 
     /// Event handler: user clicked in the view
     public var onClick: (() -> Bool)?
+    
+    /// Event handlers: user clicked on a menu option
+    public var onClickOption: [uint32 : (() -> Bool)] = [:]
 
     /// Event handler: user performed layout on this view
     public var performLayout: ((NSSize) -> ())?

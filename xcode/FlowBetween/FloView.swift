@@ -36,6 +36,7 @@ public class FloView : NSObject, FloViewDelegate {
 
     /// Events
     fileprivate var _onClick: (() -> ())?
+    fileprivate var _onClickOption: [uint32 : (() -> ())] = [:]
     fileprivate var _onDismiss: (() -> ())?
 
     /// The layer to draw on, if there is one
@@ -202,9 +203,28 @@ public class FloView : NSObject, FloViewDelegate {
     /// Sends an event if this view (or its control) is clicked
     ///
     @objc public func requestClick(_ events: FloEvents!, withName: String?) {
-        weak var this = self
-        _view.onClick = { if let onClick = this?._onClick { onClick(); return true } else { return false } }
-        _onClick = { events.sendClick(withName) }
+        weak var this   = self
+        _view.onClick   = { if let onClick = this?._onClick { onClick(); return true } else { return false } }
+        _onClick        = { events.sendClick(withName) }
+    }
+    
+    ///
+    /// Sends an event if a menu option attached to this view is clicked
+    ///
+    @objc public func requestClickOption(_ events: FloEvents!, withName: String?, at index: uint32) {
+        weak var this               = self
+        
+        _view.onClickOption[index]  = {
+            if let onClick = this?._onClickOption[index] {
+                onClick()
+                return true
+            } else {
+                return false
+            }
+        }
+        _onClickOption[index]       = { events.sendClick(withName) }
+        
+        // TODO
     }
 
     ///

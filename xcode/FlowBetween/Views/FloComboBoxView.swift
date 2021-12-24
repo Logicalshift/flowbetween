@@ -34,4 +34,19 @@ class FloComboBoxView : FloControlView {
             choices.forEach({ choice in comboBox.addItem(withTitle: choice) })
         }
     }
+    
+    /// User activated the control (selected an item from the menu)
+    override func controlAction() {
+        // User clicked one of the menu options
+        if let comboBox = _control as? NSPopUpButton {
+            let selectedIndex = comboBox.indexOfSelectedItem
+            
+            // Index 0 is the title item
+            if selectedIndex > 0 {
+                if let onClick = onClickOption[uint32(selectedIndex-1)] {
+                    let _ = onClick()
+                }
+            }
+        }
+    }
 }

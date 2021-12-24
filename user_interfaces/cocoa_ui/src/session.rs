@@ -683,6 +683,7 @@ impl CocoaSession {
             if let Some(view) = views.get(&view_id) {
                 match event_type {
                     Click                           => { let _: () = msg_send!(**view, requestClick: *flo_events withName: *name); }
+                    ClickOption(index)              => { let _: () = msg_send!(**view, requestClickOption: *flo_events withName: *name atIndex: index as u32); }
                     Dismiss                         => { let _: () = msg_send!(**view, requestDismiss: *flo_events withName: *name); }
                     VirtualScroll(width, height)    => { let _: () = msg_send!(**view, requestVirtualScroll: *flo_events withName: *name width: width as f64 height: height as f64); }
                     Paint(device)                   => { let _: () = msg_send!(**view, requestPaintWithDeviceId: device as u32 events: *flo_events withName: *name); }

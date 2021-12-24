@@ -248,6 +248,9 @@ pub enum ViewEvent {
     /// User has clicked the control contained within this view
     Click,
 
+    /// User has selected the menu option with the specified index (treated as a click event)
+    ClickOption(usize),
+
     /// Send event when the user clicks in a view that's not either this view or a subview
     Dismiss,
 
@@ -273,7 +276,7 @@ pub enum ViewEvent {
     CancelEdit,
 
     /// Event sent when the control's size has changed
-    Resize
+    Resize,
 }
 
 ///

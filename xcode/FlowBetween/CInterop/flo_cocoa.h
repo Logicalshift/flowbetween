@@ -93,6 +93,7 @@ typedef struct AppPainting AppPainting;
 @protocol FloViewDelegate
 
 - (void) requestClick: (FloEvents*) events withName: (NSString*) name;
+- (void) requestClickOption: (FloEvents*) events withName: (NSString*) name atIndex: (uint32_t) index;
 - (void) requestDismiss: (FloEvents*) events withName: (NSString*) name;
 - (void) requestVirtualScroll: (FloEvents*) events withName: (NSString*) name width: (double) width height: (double) height;
 - (void) requestPaintWithDeviceId: (uint32_t) deviceId events: (FloEvents*) events withName: (NSString*) name;

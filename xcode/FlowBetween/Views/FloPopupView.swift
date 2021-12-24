@@ -90,6 +90,9 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
 
     /// Event handler: user clicked in the view
     var onClick: (() -> Bool)?
+    
+    /// Event handlers: user clicked on a menu option
+    var onClickOption: [uint32 : (() -> Bool)] = [:]
 
     /// Event handler: user scrolled/resized so that a particular region is visible
     var onScroll: ((NSRect) -> ())?

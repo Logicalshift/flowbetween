@@ -225,6 +225,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     /// Event handler: user clicked in the view
     var onClick: (() -> Bool)?
 
+    /// Event handlers: user clicked on a menu option
+    var onClickOption: [uint32 : (() -> Bool)] = [:]
+
     /// Event handler: value has changed
     var onEditValue: ((PropertyValue) -> ())?
 
