@@ -86,7 +86,7 @@ fn animation_sidebar_ui() -> BindRef<Control> {
 ///
 /// Runs the animation sidebar panel
 ///
-pub async fn run_animation_sidebar_panel(_events: ControllerEventStream, _actions: mpsc::Sender<ControllerAction>, _resources: ControllerResources) {
+async fn run_animation_sidebar_panel(_events: ControllerEventStream, _actions: mpsc::Sender<ControllerAction>, _resources: ControllerResources) {
     // TODO
 }
 
