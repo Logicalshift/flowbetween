@@ -238,6 +238,13 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     }
 
     ///
+    /// Causes the frame edit count to update (resulting in a redrawn frame)
+    ///
+    pub fn increase_edit_count(&self) {
+        self.frame_edit_counter.set(self.frame_edit_counter.get() + 1);
+    }
+
+    ///
     /// Returns a stream containing any edits that have occurred on this stream
     ///
     pub fn subscribe_edits(&self) -> impl Stream<Item=Arc<Vec<AnimationEdit>>>+Unpin+Clone+Send {
