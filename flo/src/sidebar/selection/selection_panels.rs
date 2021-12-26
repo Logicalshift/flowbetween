@@ -23,41 +23,29 @@ pub fn selection_panels<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
 /// Returns the updates for the rope of selection panels relating to the animation
 ///
 pub fn animation_selection_panels<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>) -> impl Stream<Item=RopeAction<SidebarPanel, ()>> {
-    let model           = Arc::clone(model);
-    let animation_panel = animation_sidebar_panel(&model);
+    // Create the model
+    let model                       = Arc::clone(model);
 
-    let binding = RopeBinding::computed_difference(move || {
-        let selected_element_ids    = model.selection().selected_elements.get();
-        let frame                   = model.frame().frame.get();
+    // Create the panels
+    let selected_animation_elements = selected_animation_elements(&model);
+    let animation_panel             = animation_sidebar_panel(&model, selected_animation_elements.clone());
 
-        if let Some(frame) = frame {
-            // Fetch the elements from the frame and find 
-            let mut animation_elements = vec![];
+    // Create a binding that describes the selection panels that are being displayed
+    let selection_panels            = RopeBinding::computed_difference(move || {
+        let animation_elements  = selected_animation_elements.get();
 
-            for element_id in selected_element_ids.iter() {
-                let element = frame.element_with_id(*element_id);
-                let element = if let Some(element) = element { element } else { continue; };
-
-                if let Vector::AnimationRegion(animation_region) = element {
-                    animation_elements.push(animation_region);
-                }
-            }
-
-            if animation_elements.len() == 0 {
-                // User has picked no animation elements
-                vec![]
-            } else if animation_elements.len() == 1 {
-                // User has picked exactly one animation element
-                vec![animation_panel.clone()]
-            } else {
-                // User has picked multiple animation elements
-                vec![]
-            }
+        if animation_elements.len() == 0 {
+            // User has picked no animation elements
+            vec![]
+        } else if animation_elements.len() == 1 {
+            // User has picked exactly one animation element
+            vec![animation_panel.clone()]
         } else {
-            // No frame
+            // User has picked multiple animation elements
             vec![]
         }
     });
 
-    binding.follow_changes_retained()
+    // Follow the changes to the set of selection panels
+    selection_panels.follow_changes_retained()
 }
