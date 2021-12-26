@@ -2,6 +2,7 @@ use crate::model::*;
 use crate::sidebar::panel::*;
 
 use flo_ui::*;
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 use flo_canvas_animation::description::*;
@@ -32,7 +33,7 @@ enum AnimationAction {
 ///
 /// The 'base' animation for an animation region
 ///
-#[derive(Clone, Debug, PartialEq, Display, EnumString, EnumIter)]
+#[derive(Clone, Copy, Debug, PartialEq, Display, EnumString, EnumIter)]
 enum BaseAnimationType {
     /// Build over time animations (later drawings are added to the existing ones, the default behaviour if no animation is defined)
     BuildOverTime,
@@ -135,6 +136,71 @@ fn base_animation_type(description: &EffectDescription) -> BaseAnimationType {
     }
 }
 
+// TODO: the 'update base description' and probably the list of base animation types might be best moved to the EffectDescription definition so they can be used in other contexts if needed
+
+///
+/// Creates a new effect description for a new base animation type
+///
+fn update_effect_animation_type(old_description: &EffectDescription, new_base_type: BaseAnimationType) -> EffectDescription {
+    use self::EffectDescription::*;
+
+    // Work out the new base description element
+    let new_description = match new_base_type {
+        BaseAnimationType::FrameByFrame         => Some(FrameByFrameReplaceWhole),
+        BaseAnimationType::BuildOnFirstFrame    => Some(FrameByFrameAddToInitial),
+        BaseAnimationType::BuildOverTime        => None
+    };
+
+    match old_description {
+        // Basic frame-by-frame items are replaced with sequences
+        FrameByFrameReplaceWhole    |
+        FrameByFrameAddToInitial    => Sequence(new_description.into_iter().collect()),
+
+        // Sequences update the first element (or insert a new first element if there's no base type there)
+        Sequence(sequence)          => {
+            if sequence.len() == 0 {
+                // Empty sequence is just replaced with the new base description
+                Sequence(new_description.into_iter().collect())
+            } else {
+                // First sequence element is replaced if it's already a base animation type, otherwise the base type is added to the start of the sequence
+                match sequence[0] {
+                    FrameByFrameReplaceWhole | FrameByFrameAddToInitial => Sequence(new_description.into_iter().chain(sequence.iter().skip(1).cloned()).collect()),
+                    _                                                   => Sequence(new_description.into_iter().chain(sequence.iter().cloned()).collect())
+                }
+            }
+        }
+
+        // Embedded effects recurse
+        Repeat(length, effect)      => { Repeat(*length, Box::new(update_effect_animation_type(&*effect, new_base_type))) },
+        TimeCurve(curve, effect)    => { TimeCurve(curve.clone(), Box::new(update_effect_animation_type(&*effect, new_base_type))) },
+
+        // Other effects are unaffected
+        Other(_, _)                 |
+        Move(_, _)                  |
+        FittedTransform(_, _)       |
+        StopMotionTransform(_, _)   => old_description.clone()
+    }
+}
+
+///
+/// Sends the editing instructions to update the base animation type of an animation element
+///
+async fn set_base_animation_type<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, animation_element: &AnimationElement, new_base_type: BaseAnimationType) {
+    // Gather information
+    let element_id      = animation_element.id();
+    let region          = animation_element.description().region().clone();
+    let effect          = animation_element.description().effect();
+
+    // Update the description for the animation element
+    let new_effect      = update_effect_animation_type(effect, new_base_type);
+    let new_description = RegionDescription(region, new_effect);
+
+    // Edit the model
+    model.edit().publish(Arc::new(vec![
+        AnimationEdit::Element(vec![element_id], ElementEdit::SetAnimationDescription(new_description))
+    ])).await;
+}
+
 ///
 /// Creates the binding for the animation sidebar user interface
 ///
@@ -215,7 +281,7 @@ impl AnimationAction {
 ///
 /// Runs the animation sidebar panel
 ///
-async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: ControllerEventStream, _actions: mpsc::Sender<ControllerAction>, _resources: ControllerResources, model: Arc<FloModel<Anim>>) {
+async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: ControllerEventStream, _actions: mpsc::Sender<ControllerAction>, _resources: ControllerResources, model: Arc<FloModel<Anim>>, selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>) {
     // Convert the events into animation events
     let mut events = events.map(|event| AnimationAction::from_controller_event(&event));
 
@@ -228,7 +294,9 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
 
             AnimationAction::SetBaseAnimationType(new_base_type) => {
                 // Set the base animation type for the selected region
-                println!("New base type: {:?}", new_base_type);
+                for selected_element in selected_animation_elements.get() {
+                    set_base_animation_type(&model, &selected_element, new_base_type).await
+                }
             }
         }
     }
@@ -241,8 +309,9 @@ pub fn animation_sidebar_panel<Anim: 'static+EditableAnimation>(model: &Arc<FloM
     // Create the controller for the panel
     let ui                  = animation_sidebar_ui(selected_animation_elements.clone());
     let model               = model.clone();
+    let selected_elem_clone = selected_animation_elements.clone();
     let controller          = ImmediateController::with_ui(ui,
-        move |events, actions, resources| run_animation_sidebar_panel(events, actions, resources, model.clone()));
+        move |events, actions, resources| run_animation_sidebar_panel(events, actions, resources, model.clone(), selected_elem_clone.clone()));
 
     // The panel is 'active' if there is one or more elements selected
     let is_active           = computed(move || selected_animation_elements.get().len() > 0);
