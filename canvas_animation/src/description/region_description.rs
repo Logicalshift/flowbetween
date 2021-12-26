@@ -8,3 +8,19 @@ use serde::{Serialize, Deserialize};
 ///
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RegionDescription(pub Vec<BezierPath>, pub EffectDescription);
+
+impl RegionDescription {
+    ///
+    /// The path that this animation region affects
+    ///
+    pub fn region(&self) -> &Vec<BezierPath> {
+        &self.0
+    }
+
+    ///
+    /// The effect that's applied to the animation region
+    ///
+    pub fn effect(&self) -> &EffectDescription {
+        &self.1
+    }
+}
