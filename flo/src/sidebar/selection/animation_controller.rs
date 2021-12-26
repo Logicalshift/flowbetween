@@ -67,8 +67,13 @@ impl Deref for SelectedAnimationElement {
 pub fn selected_animation_elements<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>) -> BindRef<Vec<SelectedAnimationElement>> {
     let selected_element_ids    = model.selection().selected_elements.clone();
     let frame                   = model.frame().frame.clone();
+    let edit_counter            = model.frame_update_count();
 
     let animation_elements = computed(move || {
+        // Refresh whenever the edit counter changes
+        edit_counter.get();
+
+        // Read the elements from the current frame
         let selected_element_ids    = selected_element_ids.get();
         let frame                   = frame.get();
 
