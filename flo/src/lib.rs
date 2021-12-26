@@ -13,6 +13,8 @@ extern crate desync;
 extern crate lazy_static;
 #[macro_use]
 extern crate strum_macros;
+#[macro_use]
+extern crate log;
 extern crate futures;
 extern crate itertools;
 
