@@ -201,9 +201,11 @@ async fn set_base_animation_type<Anim: 'static+EditableAnimation>(model: &Arc<Fl
     let new_description = RegionDescription(region, new_effect);
 
     // Edit the model
-    model.edit().publish(Arc::new(vec![
+    let mut editor = model.edit();
+    editor.publish(Arc::new(vec![
         AnimationEdit::Element(vec![element_id], ElementEdit::SetAnimationDescription(new_description))
     ])).await;
+    editor.when_empty().await;
 }
 
 ///
@@ -326,6 +328,9 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
                 for selected_element in selected_animation_elements.get() {
                     set_base_animation_type(&model, &selected_element, new_base_type).await
                 }
+
+                // Ensure the update is fully drawn
+                model.increase_edit_count();
             }
         }
     }
