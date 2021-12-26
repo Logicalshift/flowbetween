@@ -209,7 +209,32 @@ async fn set_base_animation_type<Anim: 'static+EditableAnimation>(model: &Arc<Fl
 ///
 /// Creates the binding for the animation sidebar user interface
 ///
-fn animation_sidebar_ui(selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>) -> BindRef<Control> {
+fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>) -> BindRef<Control> {
+    // Create a binding for the base animation type for the selected element
+    let edit_counter                    = model.frame_update_count();
+    let selected_animation_elements_2   = selected_animation_elements.clone();
+    let selected_base_anim_type         = computed(move || { 
+        // We re-check when the edit counter changes, or the selected elements change
+        edit_counter.get();
+        let selected_elements = selected_animation_elements_2.get();
+
+        // We can't currently update the base type if there are multiple selected elements or no selected elements
+        if selected_elements.len() == 0 {
+            // Default to frame-by-frame for no elements
+            BaseAnimationType::FrameByFrame
+        } else if selected_elements.len() > 1 {
+            // Default to frame-by-frame for multiple elements
+            BaseAnimationType::FrameByFrame
+        } else {
+            // Only one element selected
+            let selected_element        = &selected_elements[0];
+            let element_animation_type  = base_animation_type(selected_element.description().effect());
+
+            element_animation_type
+        }
+    });
+
+    // Generate the UI for the animation panel
     computed(move || {
         use self::Position::*;
 
@@ -223,8 +248,7 @@ fn animation_sidebar_ui(selected_animation_elements: BindRef<Vec<SelectedAnimati
             Control::empty()
         } else {
             // Single selected element
-            let selected_element        = &selected_elements[0];
-            let element_animation_type  = base_animation_type(selected_element.description().effect());
+            let element_animation_type  = selected_base_anim_type.get();
 
             // The list of base animation type choices and the combo-box allowing selection (derived from the enum definit)
             let base_choices            = BaseAnimationType::iter()
@@ -312,7 +336,7 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
 ///
 pub fn animation_sidebar_panel<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>) -> SidebarPanel {
     // Create the controller for the panel
-    let ui                  = animation_sidebar_ui(selected_animation_elements.clone());
+    let ui                  = animation_sidebar_ui(model, selected_animation_elements.clone());
     let model               = model.clone();
     let selected_elem_clone = selected_animation_elements.clone();
     let controller          = ImmediateController::with_ui(ui,
