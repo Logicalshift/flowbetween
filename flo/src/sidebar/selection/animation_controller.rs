@@ -34,11 +34,11 @@ enum AnimationAction {
 ///
 #[derive(Clone, Debug, PartialEq, Display, EnumString, EnumIter)]
 enum BaseAnimationType {
-    /// Frame-by-frame animations (later drawings replace the existing ones)
-    FrameByFrame,
-
     /// Build over time animations (later drawings are added to the existing ones, the default behaviour if no animation is defined)
     BuildOverTime,
+
+    /// Frame-by-frame animations (later drawings replace the existing ones)
+    FrameByFrame,
 
     /// The first frame is always redrawn and future frames are added to it
     BuildOnFirstFrame,
