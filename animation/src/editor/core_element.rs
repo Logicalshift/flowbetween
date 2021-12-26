@@ -125,7 +125,11 @@ impl StreamAnimationCore {
                 }
 
                 SetAnimationDescription(new_description) => {
-                    self.update_elements(element_ids, move |mut wrapper| { let id = wrapper.element.id(); wrapper.element = Vector::AnimationRegion(AnimationElement::new(id, new_description.clone())); ChangeWrapper(wrapper) }).await;
+                    self.update_elements(element_ids, move |mut wrapper| { 
+                        let id          = wrapper.element.id(); 
+                        wrapper.element = Vector::AnimationRegion(AnimationElement::new(id, new_description.clone())); 
+                        ChangeWrapper(wrapper) 
+                    }).await;
                 }
             }
         }
