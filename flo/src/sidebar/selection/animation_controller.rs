@@ -153,17 +153,23 @@ fn animation_sidebar_ui(selected_animation_elements: BindRef<Vec<SelectedAnimati
         } else {
             // Single selected element
             let selected_element        = &selected_elements[0];
-            let base_animation_type     = base_animation_type(selected_element.description().effect());
+            let element_animation_type  = base_animation_type(selected_element.description().effect());
 
             // The list of base animation type choices and the combo-box allowing selection (derived from the enum definit)
             let base_choices            = BaseAnimationType::iter()
-                .map(|base_type| Control::label()
-                    .with(base_type.description())
-                    .with((ActionTrigger::Click, format!("SetBase {}", base_type))))
+                .map(|base_type| if base_type != element_animation_type {
+                    Control::label()
+                        .with(base_type.description())
+                        .with((ActionTrigger::Click, format!("SetBase {}", base_type)))
+                    } else {
+                        // No action is generated for the element that is already selected
+                        Control::label()
+                            .with(base_type.description())
+                    })
                 .collect::<Vec<_>>();
             let base_combobox           = Control::combo_box()
                 .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(20.0) })
-                .with(base_animation_type.description())
+                .with(element_animation_type.description())
                 .with(base_choices);
 
             // Generate the sidebar container
