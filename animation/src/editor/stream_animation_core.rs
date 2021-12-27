@@ -282,6 +282,10 @@ impl StreamAnimationCore {
             self.cached_keyframe = self.load_keyframe(layer_id, when).await
                 .map(|keyframe| Arc::new(Desync::new((*keyframe).clone())));
 
+            // This will re-cache keyframe for this layer, so remove it again
+            // TODO: would be way better for have the cached keyframes be desync if possible
+            self.cached_layers.remove(&layer_id);
+
             // This is the result of the operation
             self.cached_keyframe.clone()
         }
