@@ -72,7 +72,10 @@ pub (super) struct StreamAnimationCore {
     pub (super) path_brush_defn: Option<Arc<BrushDefinitionElement>>,
 
     /// The element that should be used as the properties for the current path (unassigned if there is none)
-    pub (super) path_brush_props: Option<Arc<BrushPropertiesElement>>
+    pub (super) path_brush_props: Option<Arc<BrushPropertiesElement>>,
+
+    /// Channels for sending retired editing instructions
+    pub (super) retired_edit_senders: Vec<Publisher<Arc<Vec<AnimationEdit>>>>,
 }
 
 impl StreamAnimationCore {

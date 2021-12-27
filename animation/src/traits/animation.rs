@@ -82,6 +82,11 @@ pub trait EditableAnimation : Animation+Send+Sync {
     fn perform_edits(&self, edits: Vec<AnimationEdit>);
 
     ///
+    /// Returns a stream of edits as they are being retired (ie, the edits that are now visible on the animation)
+    ///
+    fn retired_edits(&self) -> BoxStream<'static, Arc<Vec<AnimationEdit>>>;
+
+    ///
     /// Flushes any caches this might have (forces reload from data storage)
     ///
     fn flush_caches(&self);

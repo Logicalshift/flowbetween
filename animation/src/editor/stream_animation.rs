@@ -48,22 +48,32 @@ impl StreamAnimation {
 
         // The core is used to actually execute the requests
         let core            = StreamAnimationCore {
-            storage_responses:  storage_responses,
-            storage_requests:   requests,
-            next_element_id:    None,
-            cached_layers:      HashMap::new(),
-            cached_keyframe:    None,
-            brush_defn:         None,
-            brush_props:        None,
-            path_brush_defn:    None,
-            path_brush_props:   None
+            storage_responses:      storage_responses,
+            storage_requests:       requests,
+            next_element_id:        None,
+            cached_layers:          HashMap::new(),
+            cached_keyframe:        None,
+            brush_defn:             None,
+            brush_props:            None,
+            path_brush_defn:        None,
+            path_brush_props:       None,
+            retired_edit_senders:   vec![],
         };
         let core            = Arc::new(Desync::new(core));
 
         // Anything published to the editor is piped into the core
         pipe_in(Arc::clone(&core), edit_publisher.subscribe(), |core, edits| {
             async move {
-                core.perform_edits(edits).await;
+                // Perform the edits
+                core.perform_edits(Arc::clone(&edits)).await;
+
+                // Clean up the edit publishers
+                core.retired_edit_senders.retain(|sender| sender.count_subscribers() > 0);
+
+                // Send them as retired
+                for retired_sender in core.retired_edit_senders.iter_mut() {
+                    retired_sender.publish(Arc::clone(&edits)).await;
+                }
             }.boxed()
         });
 
@@ -354,6 +364,23 @@ impl EditableAnimation for StreamAnimation {
 
         // Return the sync_request to the pool
         self.idle_sync_requests.desync(move |reqs| { reqs.push(sync_request) });
+    }
+
+    ///
+    /// Returns a stream of edits as they are being retired (ie, the edits that are now visible on the animation)
+    ///
+    fn retired_edits(&self) -> BoxStream<'static, Arc<Vec<AnimationEdit>>> {
+        // Create a channel to send edits through
+        let mut sender  = Publisher::new(1000);
+        let receiver    = sender.subscribe();
+
+        // Add to the list in the core
+        self.core.desync(move |core| {
+            core.retired_edit_senders.push(sender);
+        });
+
+        // Box up the receiver to create the result
+        receiver.boxed()
     }
 
     ///

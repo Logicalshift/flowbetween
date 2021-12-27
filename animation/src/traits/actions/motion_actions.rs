@@ -205,6 +205,7 @@ mod test {
         impl EditableAnimation for TestAnimation {
             fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> { unimplemented!() }
             fn perform_edits(&self, _edits: Vec<AnimationEdit>) { unimplemented!() }
+            fn retired_edits(&self) -> BoxStream<'static, Arc<Vec<AnimationEdit>>> { unimplemented!() }
             fn flush_caches(&self) { unimplemented!() }
 
             fn assign_element_id(&self) -> ElementId {
@@ -266,6 +267,7 @@ mod test {
         impl EditableAnimation for TestAnimation {
             fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> { unimplemented!() }
             fn perform_edits(&self, _edits: Vec<AnimationEdit>) { unimplemented!() }
+            fn retired_edits(&self) -> BoxStream<'static, Arc<Vec<AnimationEdit>>> { unimplemented!() }
             fn flush_caches(&self) { unimplemented!() }
 
             fn assign_element_id(&self) -> ElementId {

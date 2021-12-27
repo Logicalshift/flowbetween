@@ -371,6 +371,13 @@ impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<A
     }
 
     ///
+    /// Returns a stream of edits as they are being retired (ie, the edits that are now visible on the animation)
+    ///
+    fn retired_edits(&self) -> BoxStream<'static, Arc<Vec<AnimationEdit>>> {
+        self.animation.retired_edits()
+    }
+
+    ///
     /// Assigns a new unique ID for creating a new motion
     ///
     /// This ID will not have been used so far and will not be used again, and can be used as the ID for the MotionElement vector element.
