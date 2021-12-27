@@ -87,7 +87,7 @@ impl Layer for StreamLayer {
 
                 if keyframe.as_ref().map(|keyframe| keyframe.has_unlinked_elements()).unwrap_or(false) {
                     // TODO: Repair the keyframe
-                    println!("Found unlinked elements in layer {:?} at {:?}", layer_id, time_index);
+                    warn!("Found unlinked elements in layer {:?} at {:?}", layer_id, time_index);
                 }
 
                 keyframe
