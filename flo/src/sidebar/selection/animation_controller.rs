@@ -190,9 +190,9 @@ fn update_effect_animation_type(old_description: &EffectDescription, new_base_ty
 }
 
 ///
-/// Sends the editing instructions to update the base animation type of an animation element
+/// Creates the editing instructions to update the base animation type of an animation element
 ///
-async fn set_base_animation_type<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, animation_element: &AnimationElement, new_base_type: BaseAnimationType) {
+fn set_base_animation_type(animation_element: &AnimationElement, new_base_type: BaseAnimationType) -> Vec<AnimationEdit> {
     // Gather information
     let element_id      = animation_element.id();
     let region          = animation_element.description().region().clone();
@@ -203,11 +203,9 @@ async fn set_base_animation_type<Anim: 'static+EditableAnimation>(model: &Arc<Fl
     let new_description = RegionDescription(region, new_effect);
 
     // Edit the model
-    let mut editor = model.edit();
-    editor.publish(Arc::new(vec![
+    vec![
         AnimationEdit::Element(vec![element_id], ElementEdit::SetAnimationDescription(new_description))
-    ])).await;
-    editor.when_empty().await;
+    ]
 }
 
 ///
@@ -327,12 +325,14 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
 
             AnimationAction::SetBaseAnimationType(new_base_type) => {
                 // Set the base animation type for the selected region
-                for selected_element in selected_animation_elements.get() {
-                    set_base_animation_type(&model, &selected_element, new_base_type).await
-                }
+                let edits       = selected_animation_elements.get().iter()
+                    .flat_map(|selected_element| set_base_animation_type(selected_element, new_base_type))
+                    .collect();
 
-                // Ensure the update is fully drawn
-                model.increase_edit_count();
+                // Send the edits to the animation and wait for them to be received
+                let mut editor  = model.edit();
+                editor.publish(Arc::new(edits)).await;
+                editor.when_empty().await;
             }
         }
     }
