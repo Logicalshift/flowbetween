@@ -148,17 +148,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
         // Update the overlay whenever the frame changes
         pipe_in(core, selected_frame_stream, move |core, (frame, _edit_count)| {
-            if let Some(frame) = frame {
-                // Draw a new overlay for the frame
-                let mut overlay_drawing     = vec![Draw::ClearLayer];
-                frame.render_overlay(&mut overlay_drawing);
-
-                // Draw as the layer overlay
-                core.renderer.overlay(&canvas, OVERLAY_ELEMENTS, overlay_drawing);
-            } else {
-                // Clear the overlay
-                core.renderer.overlay(&canvas, OVERLAY_ELEMENTS, vec![Draw::ClearLayer]);
-            }
+            core.redraw_overlays(&canvas, &frame);
 
             Box::pin(future::ready(()))
         });
@@ -330,5 +320,24 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
 
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> {
         Some(self.canvases.clone())
+    }
+}
+
+impl<Anim: Animation+EditableAnimation> CanvasCore<Anim> {
+    ///
+    /// Redraws the overlays on the canvas
+    ///
+    fn redraw_overlays(&mut self, canvas: &Resource<BindingCanvas>, frame: &Option<Arc<dyn Frame>>) {
+        if let Some(frame) = frame {
+            // Draw a new overlay for the frame
+            let mut overlay_drawing     = vec![Draw::ClearLayer];
+            frame.render_overlay(&mut overlay_drawing);
+
+            // Draw as the layer overlay
+            self.renderer.overlay(&canvas, OVERLAY_ELEMENTS, overlay_drawing);
+        } else {
+            // Clear the overlay
+            self.renderer.overlay(&canvas, OVERLAY_ELEMENTS, vec![Draw::ClearLayer]);
+        }
     }
 }
