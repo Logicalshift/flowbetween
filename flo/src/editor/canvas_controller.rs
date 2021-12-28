@@ -267,13 +267,12 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
     }
 
     fn tick(&self) {
+        let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
+
         // Ensure that the active tool is up to date
         if *self.tool_changed.lock().unwrap() {
             // Tool has changed: need to call refresh()
             self.core.sync(|core| {
-                // Fetch the canvas to deal with the refresh
-                let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
-
                 // Tool has no longer changed
                 *self.tool_changed.lock().unwrap() = false;
 
@@ -283,26 +282,12 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
         } else {
             // Process any pending actions for the current tool
             self.core.sync(|core| {
-                let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
                 core.canvas_tools.poll_for_pending_actions(&*canvas, &mut core.renderer)
             });
         }
 
         // Check that the frame time hasn't changed and the frame has not been invalidated since it was last drawn
-        let displayed_invalidation_count    = self.core.sync(|core| core.current_invalidation_count);
-        let displayed_time                  = self.core.sync(|core| core.current_time);
-        let target_invalidation_count       = self.anim_model.timeline().canvas_invalidation_count.get();
-        let target_time                     = self.anim_model.timeline().current_time.get();
-
-        if displayed_time != target_time || displayed_invalidation_count != target_invalidation_count {
-            // If the selected frame has changed, regenerate the canvas
-            let canvas                      = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
-
-            self.core.sync(|core| {
-                core.update_layers_to_frame_at_time(target_time);
-                core.draw_frame_layers(&canvas);
-            });
-        }
+        self.core.sync(|core| core.update_canvas(&canvas));
     }
 
     fn action(&self, action_id: &str, action_parameter: &ActionParameter) {
