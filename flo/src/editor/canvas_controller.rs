@@ -245,7 +245,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
     ///
     async fn run_canvas(core: Arc<Desync<CanvasCore<Anim>>>, canvas: Resource<BindingCanvas>) {
         // The 'retired' edits are edits that have been written out to the animation
-        let mut retired_edits = core.sync(|core| core.model.retired_edits()).chunks(100);
+        let mut retired_edits = core.sync(|core| core.model.retired_edits()).ready_chunks(100);
 
         while let Some(next_edit) = retired_edits.next().await {
             // Send edits to the core
