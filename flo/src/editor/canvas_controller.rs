@@ -249,12 +249,19 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
         while let Some(next_edit) = retired_edits.next().await {
             // Send edits to the core
-            let canvas = canvas.clone();
             core.future_sync(move |core| {
                 async move {
                     for edit in next_edit {
-                        core.process_edits(&*edit, &canvas);
+                        core.process_edits(&*edit);
                     }
+                }.boxed()
+            }).await.ok();
+
+            // Update the canvas from the edits if necessary
+            let canvas = canvas.clone();
+            core.future_desync(move |core| {
+                async move {
+                    core.update_canvas(&canvas);
                 }.boxed()
             }).await.ok();
         }
@@ -409,7 +416,6 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
     ///
     /// Updates the canvas according to a set of edits that have been committed to it
     ///
-    fn process_edits(&mut self, edits: &Vec<AnimationEdit>, canvas: &Resource<BindingCanvas>) {
-        println!("Edits");
+    fn process_edits(&mut self, edits: &Vec<AnimationEdit>) {
     }
 }
