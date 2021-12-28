@@ -1,13 +1,16 @@
 use super::layer::*;
 use super::keyframe::*;
 use super::timeline_updates::*;
+use super::canvas_invalidation::*;
 
 use flo_binding::*;
 use flo_binding::Bound;
 use flo_animation::*;
+use ::desync::*;
 
 use futures::*;
 
+use std::mem;
 use std::sync::*;
 use std::ops::Range;
 use std::collections::*;
@@ -38,6 +41,9 @@ pub struct TimelineModel<Anim: Animation> {
     /// The number of times the canvas has been invalidated
     pub canvas_invalidation_count: Binding<u64>,
 
+    /// The ways in which the canvas has invalidated since it was last redrawn
+    canvas_invalidation_tracker: Arc<Desync<Vec<CanvasInvalidation>>>,
+
     /// The keyframes that occur during a certain time period
     keyframes: Arc<Mutex<HashMap<Range<u32>, Weak<Binding<Vec<KeyFrameModel>>>>>>
 }
@@ -45,14 +51,15 @@ pub struct TimelineModel<Anim: Animation> {
 impl<Anim: Animation> Clone for TimelineModel<Anim> {
     fn clone(&self) -> TimelineModel<Anim> {
         TimelineModel {
-            animation:                  Arc::clone(&self.animation),
-            current_time:               Binding::clone(&self.current_time),
-            frame_duration:             Binding::clone(&self.frame_duration),
-            duration:                   Binding::clone(&self.duration),
-            layers:                     BindRef::clone(&self.layers),
-            selected_layer:             Binding::clone(&self.selected_layer),
-            canvas_invalidation_count:  Binding::clone(&self.canvas_invalidation_count),
-            keyframes:                  Arc::clone(&self.keyframes)
+            animation:                      Arc::clone(&self.animation),
+            current_time:                   Binding::clone(&self.current_time),
+            frame_duration:                 Binding::clone(&self.frame_duration),
+            duration:                       Binding::clone(&self.duration),
+            layers:                         BindRef::clone(&self.layers),
+            selected_layer:                 Binding::clone(&self.selected_layer),
+            canvas_invalidation_count:      Binding::clone(&self.canvas_invalidation_count),
+            canvas_invalidation_tracker:    Arc::clone(&self.canvas_invalidation_tracker),
+            keyframes:                      Arc::clone(&self.keyframes),
         }
     }
 }
@@ -77,14 +84,15 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
 
         // Create the timeline view model
         TimelineModel {
-            animation:                  animation,
-            current_time:               bind(Duration::from_millis(0)),
-            duration:                   bind(duration),
-            frame_duration:             bind(frame_duration),
-            layers:                     layers,
-            selected_layer:             bind(selected_layer),
-            canvas_invalidation_count:  bind(0),
-            keyframes:                  Arc::new(Mutex::new(HashMap::new()))
+            animation:                      animation,
+            current_time:                   bind(Duration::from_millis(0)),
+            duration:                       bind(duration),
+            frame_duration:                 bind(frame_duration),
+            layers:                         layers,
+            selected_layer:                 bind(selected_layer),
+            canvas_invalidation_count:      bind(0),
+            canvas_invalidation_tracker:    Arc::new(Desync::new(vec![])),
+            keyframes:                      Arc::new(Mutex::new(HashMap::new()))
         }
     }
 
@@ -178,6 +186,23 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
     pub fn invalidate_canvas(&self) {
         let old_count = self.canvas_invalidation_count.get();
         self.canvas_invalidation_count.set(old_count+1);
+        self.canvas_invalidation_tracker.desync(|list| list.push(CanvasInvalidation::WholeCanvas));
+    }
+
+    ///
+    /// Causes a single layer on the canvas to be invalidated
+    ///
+    pub fn invalidate_canvas_layer(&self, layer_id: u64) {
+        let old_count = self.canvas_invalidation_count.get();
+        self.canvas_invalidation_count.set(old_count+1);
+        self.canvas_invalidation_tracker.desync(move |list| list.push(CanvasInvalidation::Layer(layer_id)));
+    }
+
+    ///
+    /// Retrieves the list of active invalidations and clears the list
+    ///
+    pub fn take_canvas_invalidations(&self) -> Vec<CanvasInvalidation> {
+        self.canvas_invalidation_tracker.sync(|list| mem::take(list))
     }
 
     ///
