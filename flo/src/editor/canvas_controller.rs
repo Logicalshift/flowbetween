@@ -249,7 +249,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
         while let Some(next_edit) = retired_edits.next().await {
             // Send edits to the core
-            core.future_sync(move |core| {
+            core.future_desync(move |core| {
                 async move {
                     for edit in next_edit {
                         core.process_edits(&*edit);
