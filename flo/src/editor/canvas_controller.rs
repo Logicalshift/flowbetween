@@ -104,8 +104,10 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         };
 
         // Load the initial set of frame layers
-        controller.update_layers_to_frame_at_time(view_model.timeline().current_time.get());
-        controller.draw_frame_layers();
+        controller.core.sync(|core| {
+            core.update_layers_to_frame_at_time(view_model.timeline().current_time.get());
+            core.draw_frame_layers(main_canvas);
+        });
 
         controller
     }
@@ -202,44 +204,6 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
     }
 
     ///
-    /// Computes the frames for all the layers in the animation
-    ///
-    fn update_layers_to_frame_at_time(&self, time: Duration) {
-        // Retrieve the layers from the animation
-        let layers              = self.anim_model.frame().layers.get();
-        let invalidate_count    = self.anim_model.timeline().canvas_invalidation_count.get();
-
-        // Update the layers in the core
-        self.core.desync(move |core| {
-            // Update the time set in the core
-            core.current_time               = time;
-            core.current_invalidation_count = invalidate_count;
-
-            // Clear any existing canvases
-            core.renderer.clear();
-
-            // Load the frames into the renderer
-            for layer_frame in layers {
-                core.renderer.load_frame(layer_frame);
-            }
-        });
-    }
-
-    ///
-    /// Draws the current set of frame layers
-    ///
-    fn draw_frame_layers(&self) {
-        let canvas  = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
-        let size    = self.anim_model.size();
-
-        // Draw the active set of layers
-        self.core.sync(move |core| {
-            core.renderer.draw_frame_layers(&*canvas, size);
-            core.renderer.draw_overlays(&*canvas);
-        });
-    }
-
-    ///
     /// Performs a series of painting actions on the canvas
     ///
     fn paint(&self, device: &PaintDevice, actions: &Vec<Painting>) {
@@ -295,8 +259,6 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
     }
 
     fn tick(&self) {
-        println!("Canvas tick");
-
         // Ensure that the active tool is up to date
         if *self.tool_changed.lock().unwrap() {
             // Tool has changed: need to call refresh()
@@ -326,8 +288,12 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
 
         if displayed_time != target_time || displayed_invalidation_count != target_invalidation_count {
             // If the selected frame has changed, regenerate the canvas
-            self.update_layers_to_frame_at_time(target_time);
-            self.draw_frame_layers();
+            let canvas                      = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
+
+            self.core.sync(|core| {
+                core.update_layers_to_frame_at_time(target_time);
+                core.draw_frame_layers(canvas);
+            });
         }
     }
 
@@ -349,7 +315,39 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
     }
 }
 
-impl<Anim: Animation+EditableAnimation> CanvasCore<Anim> {
+impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
+    ///
+    /// Computes the frames for all the layers in the animation
+    ///
+    fn update_layers_to_frame_at_time(&mut self, time: Duration) {
+        // Retrieve the layers from the animation
+        let layers              = self.model.frame().layers.get();
+        let invalidate_count    = self.model.timeline().canvas_invalidation_count.get();
+
+        // Update the time set
+        self.current_time               = time;
+        self.current_invalidation_count = invalidate_count;
+
+        // Clear any existing canvases
+        self.renderer.clear();
+
+        // Load the frames into the renderer
+        for layer_frame in layers {
+            self.renderer.load_frame(layer_frame);
+        }
+    }
+
+    ///
+    /// Draws the current set of frame layers
+    ///
+    fn draw_frame_layers(&mut self, canvas: Resource<BindingCanvas>) {
+        let size    = self.model.size();
+
+        // Draw the active set of layers
+        self.renderer.draw_frame_layers(&*canvas, size);
+        self.renderer.draw_overlays(&*canvas);
+    }
+
     ///
     /// Redraws the overlays on the canvas
     ///
