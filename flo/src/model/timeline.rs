@@ -91,7 +91,7 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
             layers:                         layers,
             selected_layer:                 bind(selected_layer),
             canvas_invalidation_count:      bind(0),
-            canvas_invalidation_tracker:    Arc::new(Desync::new(vec![])),
+            canvas_invalidation_tracker:    Arc::new(Desync::new(vec![CanvasInvalidation::WholeCanvas])),
             keyframes:                      Arc::new(Mutex::new(HashMap::new()))
         }
     }
