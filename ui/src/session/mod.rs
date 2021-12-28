@@ -9,6 +9,7 @@ pub mod session;
 mod canvas_stream;
 mod viewmodel_stream;
 mod controller_runtime;
+mod priority_future;
 
 pub use self::event::*;
 pub use self::update::*;
