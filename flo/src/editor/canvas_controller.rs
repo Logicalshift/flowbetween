@@ -417,5 +417,68 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
     /// Updates the canvas according to a set of edits that have been committed to it
     ///
     fn process_edits(&mut self, edits: &Vec<AnimationEdit>) {
+        // The layers are used to determine which layers are affected by an element edit
+        let layers = self.model.frame().layers.get();
+
+        for edit in edits.iter() {
+            match edit {
+                AnimationEdit::Motion(_element, _motion)        => { /* Motions are deprecated */ }
+                AnimationEdit::SetSize(_w, _h)                  => { }
+                AnimationEdit::AddNewLayer(_layer_id)           => { }
+                AnimationEdit::RemoveLayer(_layer_id)           => { }
+
+                AnimationEdit::Layer(layer_id, edit)            => {
+                    // Determine if this edit should refresh the layer
+                    let update_layer = match edit {
+                        LayerEdit::Paint(_, _)                                  => { false /* Tool is responsible for the update, for efficiency when we're just overlaying a brush stroke */ }
+                        LayerEdit::Path(_, _)                                   => { false /* Tool is also responsible here */ }
+                        LayerEdit::CreateAnimation(_, _, _)                     => { true }
+                        LayerEdit::Cut { path: _, when: _, inside_group: _ }    => { true }
+                        LayerEdit::AddKeyFrame(_)                               => { true }
+                        LayerEdit::RemoveKeyFrame(_)                            => { true },
+                        LayerEdit::SetName(_)                                   => { false },
+                        LayerEdit::SetOrdering(_)                               => { false /* ... but whole canvas update */ }
+                    };
+
+                    // Force the layer to update if necessary
+                    if update_layer {
+                        self.model.timeline().invalidate_canvas_layer(*layer_id);
+                    }
+                },
+
+                AnimationEdit::Element(elements, edit)          => {
+                    // Determine if we should update the layer(s) that these elements are on
+                    let update_layer = match edit {
+                        ElementEdit::AddAttachment(_)               => false,
+                        ElementEdit::RemoveAttachment(_)            => false,
+                        ElementEdit::SetControlPoints(_, _)         => true,
+                        ElementEdit::SetPath(_)                     => true,
+                        ElementEdit::Order(_)                       => true,
+                        ElementEdit::Delete                         => true,
+                        ElementEdit::DetachFromFrame                => true,
+                        ElementEdit::Group(_, _)                    => true,
+                        ElementEdit::Ungroup                        => false,
+                        ElementEdit::CollideWithExistingElements    => false,
+                        ElementEdit::ConvertToPath                  => false,
+                        ElementEdit::Transform(_)                   => true,
+                        ElementEdit::SetAnimationDescription(_)     => true
+                    };
+
+                    // Update all of the layers for all of the elements if needed
+                    if update_layer {
+                        for layer in layers.iter() {
+                            let frame               = layer.frame.get();
+                            let frame               = frame.as_ref();
+                            let update_this_layer   = elements.iter().any(|element_id| 
+                                frame.map(|frame| frame.element_with_id(*element_id).is_some()).unwrap_or(false));
+
+                            if update_this_layer {
+                                self.model.timeline().invalidate_canvas_layer(layer.layer_id);
+                            }
+                        }
+                    }
+                },
+            }
+        }
     }
 }
