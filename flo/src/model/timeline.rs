@@ -16,6 +16,8 @@ use std::ops::Range;
 use std::collections::*;
 use std::time::Duration;
 
+// TODO: the invalidation tracker here is not much use if we have multiple canvases to render to (each canvas really needs its own list of invalidations rather than sharing a central one)
+
 ///
 /// ViewModel used for the timeline view
 ///
