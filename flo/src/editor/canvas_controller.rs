@@ -14,6 +14,7 @@ use futures::future::{BoxFuture};
 
 use std::sync::*;
 use std::time::Duration;
+use std::collections::{HashSet};
 
 const MAIN_CANVAS: &str     = "main";
 const PAINT_ACTION: &str    = "Paint";
@@ -106,7 +107,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         // Load the initial set of frame layers
         controller.core.sync(|core| {
             core.update_layers_to_frame_at_time(view_model.timeline().current_time.get());
-            core.draw_frame_layers(main_canvas);
+            core.draw_frame_layers(&main_canvas);
         });
 
         controller
@@ -299,7 +300,7 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
 
             self.core.sync(|core| {
                 core.update_layers_to_frame_at_time(target_time);
-                core.draw_frame_layers(canvas);
+                core.draw_frame_layers(&canvas);
             });
         }
     }
@@ -348,12 +349,12 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
     ///
     /// Draws the current set of frame layers
     ///
-    fn draw_frame_layers(&mut self, canvas: Resource<BindingCanvas>) {
+    fn draw_frame_layers(&mut self, canvas: &Resource<BindingCanvas>) {
         let size    = self.model.size();
 
         // Draw the active set of layers
-        self.renderer.draw_frame_layers(&*canvas, size);
-        self.renderer.draw_overlays(&*canvas);
+        self.renderer.draw_frame_layers(&**canvas, size);
+        self.renderer.draw_overlays(&**canvas);
     }
 
     ///
@@ -370,6 +371,53 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
         } else {
             // Clear the overlay
             self.renderer.overlay(&canvas, OVERLAY_ELEMENTS, vec![Draw::ClearLayer]);
+        }
+    }
+
+    ///
+    /// Redraws any invalidated region of the canvas using the invalidation list in the model
+    ///
+    fn update_canvas(&mut self, canvas: &Resource<BindingCanvas>) {
+        // Take the current list of invalidations from the canvas (we'll process these now)
+        let mut invalidations           = self.model.timeline().take_canvas_invalidations();
+
+        // Add a 'whole canvas' invalidation if the time has updated
+        let displayed_time              = self.current_time;
+        let target_time                 = self.model.timeline().current_time.get();
+
+        if self.current_time != target_time {
+            self.current_time = target_time;
+            invalidations.push(CanvasInvalidation::WholeCanvas);
+        }
+
+        // Work out the invalid layers/whole canvas invalidation from the list of instructions
+        let mut whole_canvas_invalid    = false;
+        let mut invalid_layers          = HashSet::new();
+        for invalidation in invalidations {
+            match invalidation {
+                CanvasInvalidation::WholeCanvas     => { whole_canvas_invalid = true; }
+                CanvasInvalidation::Layer(layer_id) => { invalid_layers.insert(layer_id); }
+            }
+        }
+
+        // Redraw the appropriate parts of the canvas
+        if whole_canvas_invalid {
+            // Refresh the entire canvas
+            self.update_layers_to_frame_at_time(target_time);
+            self.draw_frame_layers(canvas);
+        } else {
+            // Refresh individual layers
+            let invalid_layer_models = self.model.frame().layers.get()
+                .into_iter()
+                .filter(|frame_layer| invalid_layers.contains(&frame_layer.layer_id));
+
+            for invalid_layer in invalid_layer_models {
+                let layer_id    = invalid_layer.layer_id;
+                let size        = self.model.size();
+
+                self.renderer.load_frame(invalid_layer);
+                self.renderer.redraw_layer(layer_id, &*canvas, size);
+            }
         }
     }
 
