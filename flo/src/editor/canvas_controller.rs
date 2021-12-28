@@ -242,13 +242,20 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
     ///
     /// Runs the canvas update loop
     ///
-    async fn run_canvas(core: Arc<Desync<CanvasCore<Anim>>>) {
+    async fn run_canvas(core: Arc<Desync<CanvasCore<Anim>>>, canvas: Resource<BindingCanvas>) {
         // The 'retired' edits are edits that have been written out to the animation
-        let mut retired_edits = core.sync(|core| core.model.retired_edits());
+        let mut retired_edits = core.sync(|core| core.model.retired_edits()).chunks(100);
 
-        // Edits are drawn to the animation on the next tick of the UI (TODO: or after a 50ms delay)
         while let Some(next_edit) = retired_edits.next().await {
-            core.sync(|core| core.process_edits(next_edit));
+            // Send edits to the core
+            let canvas = canvas.clone();
+            core.future_sync(move |core| {
+                async move {
+                    for edit in next_edit {
+                        core.process_edits(&*edit, &canvas);
+                    }
+                }.boxed()
+            }).await.ok();
         }
     }
 }
@@ -311,7 +318,8 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
     }
 
     fn runtime(&self) -> Option<BoxFuture<'static, ()>> {
-        Some(Self::run_canvas(Arc::clone(&self.core)).boxed())
+        let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
+        Some(Self::run_canvas(Arc::clone(&self.core), canvas).boxed())
     }
 }
 
@@ -368,7 +376,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
     ///
     /// Updates the canvas according to a set of edits that have been committed to it
     ///
-    fn process_edits(&mut self, edits: Arc<Vec<AnimationEdit>>) {
+    fn process_edits(&mut self, edits: &Vec<AnimationEdit>, canvas: &Resource<BindingCanvas>) {
         println!("Edits");
     }
 }
