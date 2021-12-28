@@ -273,6 +273,23 @@ impl CanvasRenderer {
     }
 
     ///
+    /// Redraws a single layer
+    ///
+    pub fn redraw_layer(&mut self, layer_id: u64, canvas: &BindingCanvas, size: (f64, f64)) {
+        // Redraw this particular layer
+        let layer_id    = LayerId(layer_id);
+        let layer       = self.frame_layers.get(&layer_id);
+        let layer       = if let Some(layer) = layer { layer } else { return; };
+
+        canvas.draw(|gc| {
+            gc.layer(layer.layer_id);
+            gc.clear_layer();
+
+            layer.layer_frame.render_to(gc);
+        })
+    }
+
+    ///
     /// Redraws all of the overlay layers on a canvas
     ///
     /// Overlay operations will clear any annotation that might have been added.
