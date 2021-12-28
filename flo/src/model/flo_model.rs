@@ -48,6 +48,7 @@ pub struct FloModel<Anim: Animation> {
     size_binding: Binding<(f64, f64)>,
 
     /// Counter used to set an edit ID for the frame (essentially indicates when the frame has been redrawn)
+    // TODO: this is used for barely anything (overlay updating, mainly) so this should probably be removed
     frame_edit_counter: Binding<u64>,
 
     /// Publisher where we send edits to this stream
