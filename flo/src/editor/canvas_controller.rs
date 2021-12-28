@@ -9,6 +9,8 @@ use flo_binding::*;
 use flo_animation::*;
 use ::desync::*;
 use futures::future;
+use futures::prelude::*;
+use futures::future::{BoxFuture};
 
 use std::sync::*;
 use std::time::Duration;
@@ -22,6 +24,9 @@ const PAINT_ACTION: &str    = "Paint";
 struct CanvasCore<Anim: Animation+EditableAnimation> {
     /// The canvas renderer
     renderer: CanvasRenderer,
+
+    /// The animation model
+    model: Arc<FloModel<Anim>>,
 
     /// The canvas invalidation count specified in the model when the canvas was drawn
     current_invalidation_count: u64,
@@ -42,7 +47,7 @@ struct CanvasCore<Anim: Animation+EditableAnimation> {
 pub struct CanvasController<Anim: Animation+EditableAnimation> {
     ui:                 BindRef<Control>,
     canvases:           Arc<ResourceManager<BindingCanvas>>,
-    anim_model:         FloModel<Anim>,
+    anim_model:         Arc<FloModel<Anim>>,
     tool_changed:       Arc<Mutex<bool>>,
     _onion_skin_model:  BindRef<(Color, Color, Vec<(OnionSkinTime, Arc<Vec<Draw>>)>)>,
 
@@ -57,12 +62,13 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         // Create the resources
         let canvases            = ResourceManager::new();
 
+        let view_model          = Arc::new(view_model.clone());
         let renderer            = CanvasRenderer::new();
-        let canvas_tools        = CanvasTools::from_model(view_model);
+        let canvas_tools        = CanvasTools::from_model(&*view_model);
         let main_canvas         = Self::create_main_canvas(&canvases);
         let ui                  = Self::ui(main_canvas.clone(), view_model.size.clone());
         let tool_changed        = Arc::new(Mutex::new(true));
-        let onion_skin_model    = Self::onion_skin_binding(view_model);
+        let onion_skin_model    = Self::onion_skin_binding(&*view_model);
 
         // Set the tool changed flag whenever the effective tool changes
         // Note: the keep_alive() here will leak if the controller lives for less time than the model
@@ -74,6 +80,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         // Create the core to perform the actual rendering
         let core                = Desync::new(CanvasCore {
                 renderer:                   renderer,
+                model:                      view_model.clone(),
                 canvas_tools:               canvas_tools,
                 last_paint_device:          None,
                 current_time:               Duration::new(0, 0),
@@ -267,6 +274,19 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
             core.canvas_tools.send_input(&canvas, &mut core.renderer, tool_inputs)
         });
     }
+
+    ///
+    /// Runs the canvas update loop
+    ///
+    async fn run_canvas(core: Arc<Desync<CanvasCore<Anim>>>) {
+        // The 'retired' edits are edits that have been written out to the animation
+        let mut retired_edits = core.sync(|core| core.model.retired_edits());
+
+        // Edits are drawn to the animation on the next tick of the UI (TODO: or after a 50ms delay)
+        while let Some(next_edit) = retired_edits.next().await {
+            core.sync(|core| core.process_edits(next_edit));
+        }
+    }
 }
 
 impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<Anim> {
@@ -275,6 +295,8 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
     }
 
     fn tick(&self) {
+        println!("Canvas tick");
+
         // Ensure that the active tool is up to date
         if *self.tool_changed.lock().unwrap() {
             // Tool has changed: need to call refresh()
@@ -321,6 +343,10 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> {
         Some(self.canvases.clone())
     }
+
+    fn runtime(&self) -> Option<BoxFuture<'static, ()>> {
+        Some(Self::run_canvas(Arc::clone(&self.core)).boxed())
+    }
 }
 
 impl<Anim: Animation+EditableAnimation> CanvasCore<Anim> {
@@ -339,5 +365,12 @@ impl<Anim: Animation+EditableAnimation> CanvasCore<Anim> {
             // Clear the overlay
             self.renderer.overlay(&canvas, OVERLAY_ELEMENTS, vec![Draw::ClearLayer]);
         }
+    }
+
+    ///
+    /// Updates the canvas according to a set of edits that have been committed to it
+    ///
+    fn process_edits(&mut self, edits: Arc<Vec<AnimationEdit>>) {
+        println!("Edits");
     }
 }
