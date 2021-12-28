@@ -12,7 +12,6 @@ use ::desync::*;
 use flo_binding::*;
 use flo_stream::*;
 use futures::prelude::*;
-use futures::future;
 
 use std::sync::*;
 
@@ -45,10 +44,9 @@ impl<CoreController: Controller+'static> UiSession<CoreController> {
 
         let ui_update_lifetime  = Self::track_ui_updates(Arc::clone(&core));
         let publisher           = Publisher::new(100);
-        let run_loop            = ui_event_loop(Arc::downgrade(&controller), publisher.republish_weak(), Arc::downgrade(&core));
         let rt_controller       = Arc::clone(&controller);
         let run_time            = controller_runtime(rt_controller);
-        let run_loop            = future::select(run_loop, run_time).map(|_| ());
+        let run_loop            = ui_event_loop(Arc::downgrade(&controller), publisher.republish_weak(), run_time, Arc::downgrade(&core));
 
         let session             = UiSession {
             controller:         controller,

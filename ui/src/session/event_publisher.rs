@@ -1,22 +1,48 @@
 use super::core::*;
 use super::event::*;
-use super::super::controller::*;
+use super::priority_future::*;
+use crate::controller::*;
 
 use flo_stream::*;
 
 use ::desync::*;
 use futures::future;
+use futures::task;
 use futures::task::{Poll};
 use futures::prelude::*;
 
 use std::sync::*;
 
 ///
+/// Polls the runtime if needed
+///
+fn poll_runtime(maybe_runtime: &mut Option<PriorityFuture<impl Unpin+Future<Output=()>>>, context: &mut task::Context) {
+    if let Some(runtime) = maybe_runtime {
+        // Update the context in the runtime (in case it's not ready)
+        runtime.update_waker(context);
+
+        // Poll until it's no longer ready
+        while runtime.is_ready() {
+            match runtime.poll_unpin(context) {
+                Poll::Ready(_) => {
+                    // Unset the runtime and stop if it completes
+                    *maybe_runtime = None;
+                    return;
+                }
+
+                Poll::Pending => { }
+            }
+        }
+    }
+}
+
+///
 /// The main UI event loop
 ///
-pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreController>, mut ui_events: WeakPublisher<Vec<UiEvent>>, core: Weak<Desync<UiSessionCore>>) -> impl Unpin+Future<Output=()> {
+pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreController>, mut ui_events: WeakPublisher<Vec<UiEvent>>, runtime: impl 'static+Send+Unpin+Future<Output=()>, core: Weak<Desync<UiSessionCore>>) -> impl Unpin+Future<Output=()> {
     // Subscribe to the UI events
     let mut ui_event_subscriber = ui_events.subscribe();
+    let mut runtime             = Some(PriorityFuture::from(runtime));
 
     async move {
         // Start the main UI loop
@@ -33,7 +59,14 @@ pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreCo
             };
 
             // Wait for the next event to arrive
-            let next_events     = ui_event_subscriber.next().await;
+            let runtime_poller  = &mut runtime;
+
+            let mut next_events = ui_event_subscriber.next();
+            let next_events     = future::poll_fn(move |context| {
+                poll_runtime(runtime_poller, context);
+                next_events.poll_unpin(context)
+            });
+            let next_events     = next_events.await;
             let mut next_events = match next_events {
                 None                => { break; }
                 Some(next_events)   => next_events
@@ -47,8 +80,12 @@ pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreCo
                 // Read as many events as possible from the queue
                 let mut poll_events             = next_events;
                 let mut poll_subscriber         = Some(ui_event_subscriber);
+                let runtime_poller              = &mut runtime;
 
                 let (subscriber, more_events)   = future::poll_fn(move |context| {
+                    // Give the runtime a chance to run first
+                    poll_runtime(runtime_poller, context);
+
                     // Add to the list of events as long as the subscriber is ready (we want to process as many as possible before resuming the UI)
                     while let Poll::Ready(Some(more_events)) = poll_subscriber.as_mut().unwrap().poll_next_unpin(context) {
                         poll_events = match poll_events.take() {
@@ -76,10 +113,20 @@ pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreCo
                 if let Some(core_events) = core_events {
                     let core_controller = Arc::clone(&controller);
 
-                    core.future_sync(move |core| {
+                    // Create the dispatcher future
+                    let mut dispatcher  = core.future_sync(move |core| {
                         let core_events = core.reduce_events(core_events);
                         async move { core.dispatch_event(core_events, &*core_controller).await }.boxed()
-                    }).await.ok();
+                    });
+
+                    // While it's running, also poll the runtime
+                    let runtime_poller  = &mut runtime;
+                    let dispatcher      = future::poll_fn(move |context| {
+                        poll_runtime(runtime_poller, context);
+                        dispatcher.poll_unpin(context)
+                    });
+
+                    dispatcher.await.ok();
                 } else {
                     // Ran out of events to process
                     break;
