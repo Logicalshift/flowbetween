@@ -371,7 +371,7 @@ impl EditableAnimation for StreamAnimation {
     ///
     fn retired_edits(&self) -> BoxStream<'static, Arc<Vec<AnimationEdit>>> {
         // Create a channel to send edits through
-        let mut sender  = Publisher::new(1000);
+        let mut sender  = Publisher::new(10);
         let receiver    = sender.subscribe();
 
         // Add to the list in the core
