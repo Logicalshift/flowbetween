@@ -256,14 +256,6 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
                     }
                 }.boxed()
             }).await.ok();
-
-            // Update the canvas from the edits if necessary
-            let canvas = canvas.clone();
-            core.future_desync(move |core| {
-                async move {
-                    core.update_canvas(&canvas);
-                }.boxed()
-            }).await.ok();
         }
     }
 }
