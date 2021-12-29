@@ -282,10 +282,16 @@ impl CanvasRenderer {
         let layer       = if let Some(layer) = layer { layer } else { return; };
 
         canvas.draw(|gc| {
+            gc.push_state();
+
             gc.layer(layer.layer_id);
             gc.clear_layer();
 
             layer.layer_frame.render_to(gc);
+
+            gc.layer(LayerId(0));
+
+            gc.pop_state();
         })
     }
 
