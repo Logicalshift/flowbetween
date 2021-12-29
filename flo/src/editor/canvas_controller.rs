@@ -249,6 +249,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
         while let Some(next_edit) = retired_edits.next().await {
             // Send edits to the core
+            // When this wakes up the main loop, this generates a tick, which will finish updating the canvas if the edits invalidate it
             core.future_desync(move |core| {
                 async move {
                     for edit in next_edit {

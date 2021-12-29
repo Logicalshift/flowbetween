@@ -15,8 +15,6 @@ use std::ops::{Deref};
 use std::str::{FromStr};
 use std::sync::*;
 
-// TODO: redraw the whole frame with the new style after changing it (can't tell if we're not redrawing or if we're redrawing with the cached older style)
-
 ///
 /// The actions that are possible for the animation sidebar
 ///
