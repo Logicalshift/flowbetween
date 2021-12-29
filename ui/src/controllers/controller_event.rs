@@ -15,9 +15,6 @@ use std::collections::{VecDeque};
 pub enum ControllerEvent {
     /// An action was generated from the UI
     Action(String, ActionParameter),
-
-    /// Tick events are generated every time an update is completed
-    Tick,
 }
 
 ///

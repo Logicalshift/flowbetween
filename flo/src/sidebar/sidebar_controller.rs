@@ -50,9 +50,6 @@ enum SidebarEvent {
 
     /// An action was generated from the UI
     Action(String, ActionParameter),
-
-    /// Tick events are generated every time an update is completed
-    Tick,
 }
 
 ///
@@ -184,7 +181,6 @@ fn sidebar_events<ControllerEvents: Stream<Item=ControllerEvent>>(events: Contro
     events.map(|controller_event| {
         match controller_event {
             ControllerEvent::Action(name, param)    => SidebarEvent::Action(name, param),
-            ControllerEvent::Tick                   => SidebarEvent::Tick
         }
     })
 }

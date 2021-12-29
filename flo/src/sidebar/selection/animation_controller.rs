@@ -25,9 +25,6 @@ enum AnimationAction {
     /// Sets the base animation type
     SetBaseAnimationType(BaseAnimationType),
 
-    /// Tick event
-    Tick,
-
     /// Unrecognised action occurred
     Unknown(String)
 }
@@ -303,8 +300,6 @@ impl AnimationAction {
                     AnimationAction::Unknown(action_name.clone())
                 }
             }
-
-            ControllerEvent::Tick => AnimationAction::Tick,
         }
     }
 }
@@ -319,9 +314,8 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
     // Run while there are events pending
     while let Some(event) = events.next().await {
         match event {
-            // Tick events are ignored, unknown events are logged
+            // Unknown events are logged
             AnimationAction::Unknown(evt)   => { warn!("Unknown animation sidebar event {}", evt); }
-            AnimationAction::Tick           => { }
 
             AnimationAction::SetBaseAnimationType(new_base_type) => {
                 // Set the base animation type for the selected region
