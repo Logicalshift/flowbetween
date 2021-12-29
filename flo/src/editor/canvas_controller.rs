@@ -397,7 +397,9 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
             // Refresh the entire canvas
             self.update_layers_to_frame_at_time(target_time);
             self.draw_frame_layers(canvas);
-        } else {
+        } else if invalid_layers.len() > 0 {
+            self.renderer.clear_annotation(&*canvas);
+
             // Refresh individual layers
             let invalid_layer_models = self.model.frame().layers.get()
                 .into_iter()
