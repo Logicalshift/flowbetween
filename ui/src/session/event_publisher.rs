@@ -14,26 +14,32 @@ use futures::prelude::*;
 use std::sync::*;
 
 ///
-/// Polls the runtime if needed
+/// Polls the runtime if needed, returning true if the runtime was woken up
 ///
-fn poll_runtime(maybe_runtime: &mut Option<PriorityFuture<impl Unpin+Future<Output=()>>>, context: &mut task::Context) {
+fn poll_runtime(maybe_runtime: &mut Option<PriorityFuture<impl Unpin+Future<Output=()>>>, context: &mut task::Context) -> bool {
+    let mut woke_up = false;
+
     if let Some(runtime) = maybe_runtime {
         // Update the context in the runtime (in case it's not ready)
         runtime.update_waker(context);
 
         // Poll until it's no longer ready
         while runtime.is_ready() {
+            woke_up = true;
+
             match runtime.poll_unpin(context) {
                 Poll::Ready(_) => {
                     // Unset the runtime and stop if it completes
                     *maybe_runtime = None;
-                    return;
+                    return woke_up;
                 }
 
                 Poll::Pending => { }
             }
         }
     }
+
+    woke_up
 }
 
 ///
@@ -63,8 +69,12 @@ pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreCo
 
             let mut next_events = ui_event_subscriber.next();
             let next_events     = future::poll_fn(move |context| {
-                poll_runtime(runtime_poller, context);
-                next_events.poll_unpin(context)
+                if poll_runtime(runtime_poller, context) {
+                    // If the runtime woke up, generate a tick event
+                    Poll::Ready(Some(vec![UiEvent::Tick]))
+                } else {
+                    next_events.poll_unpin(context)
+                }
             });
             let next_events     = next_events.await;
             let mut next_events = match next_events {
