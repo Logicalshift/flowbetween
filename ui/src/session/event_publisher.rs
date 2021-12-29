@@ -51,6 +51,13 @@ pub fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreCo
     let mut runtime             = Some(PriorityFuture::from(runtime));
 
     async move {
+        // Initial runtime poll before the main loop starts
+        let runtime_poller  = &mut runtime;
+        future::poll_fn(move |context| {
+            poll_runtime(runtime_poller, context);
+            Poll::Ready(())
+        }).await;
+
         // Start the main UI loop
         loop {
             // === State: idle (wait for an event to arrive)
