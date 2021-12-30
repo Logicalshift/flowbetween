@@ -266,22 +266,21 @@ where Loader::NewAnimation: 'static+EditableAnimation {
         let images              = Arc::clone(images);
 
         let ui = computed(move || {
-            let menu_bar    = Self::menu_bar();
-            let timeline    = Self::timeline();
-            let toolbar     = Self::toolbox();
-            let canvas      = Self::canvas();
-            let sidebar     = Self::sidebar(&sidebar_open, &sidebar_activated, &*images);
-            let control_bar = Self::control_bar();
-            let keybindings = Self::keybindings();
+            // Basic controls
+            let menu_bar            = Self::menu_bar();
+            let timeline            = Self::timeline();
+            let toolbar             = Self::toolbox();
+            let canvas              = Self::canvas();
+            let sidebar             = Self::sidebar(&sidebar_open, &sidebar_activated, &*images);
+            let control_bar         = Self::control_bar();
+            let keybindings         = Self::keybindings();
 
-            Control::container()
-                .with(Bounds::fill_all())
+            // Assembly containing the tool panel, the canvas and the main timeline stacked on top of each other
+            let canvas_and_timeline = Control::container()
                 .with(vec![
-                    keybindings,
-                    menu_bar,
                     Control::container()
-                        .with((vec![toolbar, canvas, sidebar],
-                            Bounds { x1: Start, y1: After, x2: End, y2: Stretch(1.0) })),
+                        .with((vec![toolbar, canvas],
+                            Bounds { x1: Start, y1: Start, x2: End, y2: Stretch(1.0) })),
                     Control::empty()
                         .with(Bounds::next_vert(1.0))
                         .with(Appearance::Background(TIMESCALE_BORDER)),
@@ -289,7 +288,24 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                     Control::empty()
                         .with(Bounds::next_vert(1.0))
                         .with(Appearance::Background(TIMESCALE_LAYERS)),
-                    timeline])
+                    timeline
+                ]);
+
+            // Put it all together
+            Control::container()
+                .with(Bounds::fill_all())
+                .with(vec![
+                    keybindings,
+                    menu_bar,
+
+                    Control::container()
+                        .with(Bounds { x1: Start, y1: After, x2: End, y2: Stretch(1.0) })
+                        .with(vec![
+                            canvas_and_timeline
+                                .with(Bounds { x1: Start, y1: Start, x2: Stretch(1.0), y2: End }),
+                            sidebar
+                        ])
+                ])
             });
 
         BindRef::from(ui)
