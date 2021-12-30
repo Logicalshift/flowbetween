@@ -29,21 +29,6 @@ enum AnimationAction {
 }
 
 ///
-/// The 'base' animation for an animation region
-///
-#[derive(Clone, Copy, Debug, PartialEq, Display, EnumString, EnumIter)]
-enum BaseAnimationType {
-    /// Build over time animations (later drawings are added to the existing ones, the default behaviour if no animation is defined)
-    BuildOverTime,
-
-    /// Frame-by-frame animations (later drawings replace the existing ones)
-    FrameByFrame,
-
-    /// The first frame is always redrawn and future frames are added to it
-    BuildOnFirstFrame,
-}
-
-///
 /// Wrapper structure used to bind a selected animation element
 ///
 #[derive(Clone, Debug)]
@@ -98,93 +83,6 @@ pub fn selected_animation_elements<Anim: 'static+EditableAnimation>(model: &Arc<
     BindRef::from(animation_elements)
 }
 
-impl BaseAnimationType {
-    ///
-    /// Generates a description of this animation type
-    ///
-    fn description(&self) -> &str {
-        use self::BaseAnimationType::*;
-
-        match self {
-            FrameByFrame        => { "Frame-by-frame" }
-            BuildOverTime       => { "Build over time" }
-            BuildOnFirstFrame   => { "Draw over initial frame" }
-        }
-    }
-}
-
-///
-/// Returns the base animation type for an effect description
-///
-fn base_animation_type(description: &EffectDescription) -> BaseAnimationType {
-    use self::EffectDescription::*;
-
-    match description {
-        // The 'frame by frame' animation types override the usual 'build over time' effect
-        FrameByFrameReplaceWhole    => BaseAnimationType::FrameByFrame,
-        FrameByFrameAddToInitial    => BaseAnimationType::BuildOnFirstFrame,
-
-        // In sequences, the first element determines the base animation type
-        Sequence(sequence)          => { if sequence.len() > 0 { base_animation_type(&sequence[0]) } else { BaseAnimationType::BuildOverTime } }
-        
-        // Embedded effects like repeats or time curves preserve the base animation type of their underlying animation
-        Repeat(_length, effect)     => { base_animation_type(&*effect) },
-        TimeCurve(_curve, effect)   => { base_animation_type(&*effect) },
-
-        // Other built-in effects mean there's no 'base' type, ie we're using the build over time effect
-        Other(_, _)                 |
-        Move(_, _)                  |
-        FittedTransform(_, _)       |
-        StopMotionTransform(_, _)   => BaseAnimationType::BuildOverTime
-    }
-}
-
-// TODO: the 'update base description' and probably the list of base animation types might be best moved to the EffectDescription definition so they can be used in other contexts if needed
-
-///
-/// Creates a new effect description for a new base animation type
-///
-fn update_effect_animation_type(old_description: &EffectDescription, new_base_type: BaseAnimationType) -> EffectDescription {
-    use self::EffectDescription::*;
-
-    // Work out the new base description element
-    let new_description = match new_base_type {
-        BaseAnimationType::FrameByFrame         => Some(FrameByFrameReplaceWhole),
-        BaseAnimationType::BuildOnFirstFrame    => Some(FrameByFrameAddToInitial),
-        BaseAnimationType::BuildOverTime        => None
-    };
-
-    match old_description {
-        // Basic frame-by-frame items are replaced with sequences
-        FrameByFrameReplaceWhole    |
-        FrameByFrameAddToInitial    => Sequence(new_description.into_iter().collect()),
-
-        // Sequences update the first element (or insert a new first element if there's no base type there)
-        Sequence(sequence)          => {
-            if sequence.len() == 0 {
-                // Empty sequence is just replaced with the new base description
-                Sequence(new_description.into_iter().collect())
-            } else {
-                // First sequence element is replaced if it's already a base animation type, otherwise the base type is added to the start of the sequence
-                match sequence[0] {
-                    FrameByFrameReplaceWhole | FrameByFrameAddToInitial => Sequence(new_description.into_iter().chain(sequence.iter().skip(1).cloned()).collect()),
-                    _                                                   => Sequence(new_description.into_iter().chain(sequence.iter().cloned()).collect())
-                }
-            }
-        }
-
-        // Embedded effects recurse
-        Repeat(length, effect)      => { Repeat(*length, Box::new(update_effect_animation_type(&*effect, new_base_type))) },
-        TimeCurve(curve, effect)    => { TimeCurve(curve.clone(), Box::new(update_effect_animation_type(&*effect, new_base_type))) },
-
-        // Other effects are unaffected
-        Other(_, _)                 |
-        Move(_, _)                  |
-        FittedTransform(_, _)       |
-        StopMotionTransform(_, _)   => old_description.clone()
-    }
-}
-
 ///
 /// Creates the editing instructions to update the base animation type of an animation element
 ///
@@ -195,7 +93,7 @@ fn set_base_animation_type(animation_element: &AnimationElement, new_base_type: 
     let effect          = animation_element.description().effect();
 
     // Update the description for the animation element
-    let new_effect      = update_effect_animation_type(effect, new_base_type);
+    let new_effect      = effect.update_effect_animation_type(new_base_type);
     let new_description = RegionDescription(region, new_effect);
 
     // Edit the model
@@ -226,7 +124,7 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
         } else {
             // Only one element selected
             let selected_element        = &selected_elements[0];
-            let element_animation_type  = base_animation_type(selected_element.description().effect());
+            let element_animation_type  = selected_element.description().effect().base_animation_type();
 
             element_animation_type
         }
