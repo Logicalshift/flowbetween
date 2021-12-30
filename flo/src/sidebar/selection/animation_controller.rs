@@ -234,8 +234,6 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
 
     // Generate the UI for the animation panel
     computed(move || {
-        use self::Position::*;
-
         let selected_elements = selected_animation_elements.get();
 
         if selected_elements.len() == 0 {
@@ -261,42 +259,67 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
                     })
                 .collect::<Vec<_>>();
             let base_combobox           = Control::combo_box()
-                .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(20.0) })
+                .with(Bounds::next_vert(20.0))
                 .with(element_animation_type.description())
                 .with(Hover::Tooltip("How this region is animated".to_string()))
                 .with(base_choices);
 
             // The effect selector
             let effect_selector = Control::container()
-                .with(Bounds { x1: Start, y1: After, x2: End, y2: Stretch(1.0) })
+                .with(Bounds::stretch_vert(1.0))
                 .with(ControlAttribute::Padding((1, 1), (1, 1)))
                 .with(Appearance::Background(CONTROL_BORDER))
                 .with(vec![
                     Control::container()
-                        .with(Bounds { x1: Start, y1: Start, x2: End, y2: End })
+                        .with(Bounds::fill_all())
                         .with(Appearance::Background(CONTROL_BACKGROUND))
                 ]);
 
-            // TODO: The action buttons for adding new effects
+            // The action buttons for adding new effects
+            let action_buttons = Control::container()
+                .with(Bounds::next_vert(20.0))
+                .with(Font::Size(9.0))
+                .with(vec![
+                    Control::empty()
+                        .with(Bounds::stretch_horiz(1.0)),
+                    Control::container()
+                        .with(Hint::Class("button-group".to_string()))
+                        .with(Bounds::next_horiz(22.0*4.0))
+                        .with(vec![
+                            Control::button()
+                                .with(Bounds::next_horiz(22.0)),
+                            Control::button()
+                                .with(Bounds::next_horiz(20.0)),
+                            Control::button()
+                                .with(Bounds::next_horiz(20.0)),
+                            Control::button()
+                                .with(Bounds::next_horiz(22.0)),
+                        ])
+                ]);
 
             // Generate the sidebar container
             Control::container()
-                .with(Bounds { x1: Start, y1: Start, x2: End, y2: End } )
+                .with(Bounds::fill_all())
                 .with(ControlAttribute::Padding((8, 8), (8, 8)))
                 .with(vec![
                     base_combobox,
 
                     Control::empty()
-                        .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(6.0) }),
+                        .with(Bounds::next_vert(6.0)),
 
                     Control::label()
                         .with("Effects")
                         .with(Font::Size(10.0))
                         .with(Appearance::Foreground(DEFAULT_TEXT))
-                        .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(12.0) }),
+                        .with(Bounds::next_vert(12.0)),
                     Control::empty()
-                        .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(3.0) }),
+                        .with(Bounds::next_vert(3.0)),
                     effect_selector,
+
+                    Control::empty()
+                        .with(Bounds::next_vert(3.0)),
+
+                    action_buttons
                 ])
         }
     }).into()
