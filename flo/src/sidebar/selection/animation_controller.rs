@@ -277,23 +277,23 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
 
             // The action buttons for adding new effects
             let action_buttons = Control::container()
-                .with(Bounds::next_vert(24.0))
+                .with(Bounds::next_vert(22.0))
                 .with(Font::Size(9.0))
                 .with(vec![
                     Control::empty()
                         .with(Bounds::stretch_horiz(1.0)),
                     Control::container()
                         .with(Hint::Class("button-group".to_string()))
-                        .with(Bounds::next_horiz(24.0*4.0 + 4.0))
+                        .with(Bounds::next_horiz(22.0*4.0 + 4.0))
                         .with(vec![
                             Control::button()
-                                .with(Bounds::next_horiz(26.0)),
-                            Control::button()
                                 .with(Bounds::next_horiz(24.0)),
                             Control::button()
-                                .with(Bounds::next_horiz(24.0)),
+                                .with(Bounds::next_horiz(22.0)),
                             Control::button()
-                                .with(Bounds::next_horiz(26.0)),
+                                .with(Bounds::next_horiz(22.0)),
+                            Control::button()
+                                .with(Bounds::next_horiz(24.0)),
                         ])
                 ]);
 
