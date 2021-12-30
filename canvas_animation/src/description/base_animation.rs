@@ -1,7 +1,14 @@
 use super::effect_description::*;
 
 ///
-/// The 'base' animation for an animation region
+/// The 'base' animation for an animation effect
+///
+/// This is displayed as an animation style to the user. These aren't really special in how an animation
+/// effect is constructed but they generally don't make sense to use together or with another effect.
+///
+/// The `base_animation_type()` function can be used to find out the base animation type for an effect
+/// description and `update_effect_animation_type()` can be used to create a new description with a
+/// different base style.
 ///
 #[derive(Clone, Copy, Debug, PartialEq, Display, EnumString, EnumIter)]
 pub enum BaseAnimationType {
