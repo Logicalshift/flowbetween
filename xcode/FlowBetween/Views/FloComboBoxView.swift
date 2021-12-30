@@ -39,7 +39,7 @@ class FloComboBoxView : FloControlView {
             // This removes the title element to replace it with the new element, which
             // effectively just changes the title to the first choice...
             // (This only occurs if the title matches an element in the list)
-            comboBox.setTitle("")
+            comboBox.setTitle("0BA347F2-8B50-4395-81E1-E6F5BE6F7B98")
             
             // Add the choices in turn
             choices.forEach({ choice in comboBox.addItem(withTitle: choice) })
