@@ -1,4 +1,5 @@
 use crate::model::*;
+use crate::style::*;
 use crate::sidebar::panel::*;
 
 use flo_ui::*;
@@ -262,14 +263,40 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
             let base_combobox           = Control::combo_box()
                 .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(20.0) })
                 .with(element_animation_type.description())
+                .with(Hover::Tooltip("How this region is animated".to_string()))
                 .with(base_choices);
+
+            // The effect selector
+            let effect_selector = Control::container()
+                .with(Bounds { x1: Start, y1: After, x2: End, y2: Stretch(1.0) })
+                .with(ControlAttribute::Padding((1, 1), (1, 1)))
+                .with(Appearance::Background(CONTROL_BORDER))
+                .with(vec![
+                    Control::container()
+                        .with(Bounds { x1: Start, y1: Start, x2: End, y2: End })
+                        .with(Appearance::Background(CONTROL_BACKGROUND))
+                ]);
+
+            // TODO: The action buttons for adding new effects
 
             // Generate the sidebar container
             Control::container()
                 .with(Bounds { x1: Start, y1: Start, x2: End, y2: End } )
                 .with(ControlAttribute::Padding((8, 8), (8, 8)))
                 .with(vec![
-                    base_combobox
+                    base_combobox,
+
+                    Control::empty()
+                        .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(6.0) }),
+
+                    Control::label()
+                        .with("Effects")
+                        .with(Font::Size(10.0))
+                        .with(Appearance::Foreground(DEFAULT_TEXT))
+                        .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(12.0) }),
+                    Control::empty()
+                        .with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(3.0) }),
+                    effect_selector,
                 ])
         }
     }).into()

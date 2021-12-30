@@ -27,7 +27,11 @@ pub const TOOLSET_BACKGROUND:               Color = Color::Rgba(0.30, 0.32, 0.35
 pub const TOOLS_BACKGROUND:                 Color = Color::Rgba(0.20, 0.22, 0.25, 1.0);
 pub const MENU_BACKGROUND_ALT:              Color = Color::Rgba(0.24, 0.26, 0.30, 1.0);
 
+pub const SIDEBAR_BACKGROUND:               Color = TOOLS_BACKGROUND;
 pub const SIDEBAR_TITLE_BACKGROUND:         Color = Color::Rgba(0.30, 0.32, 0.35, 1.0);
+pub const CONTROL_BORDER:                   Color = Color::Rgba(0.85, 0.95, 0.9, 0.6);
+pub const CONTROL_BACKGROUND:               Color = Color::Rgba(0.25, 0.27, 0.30, 1.0);
+pub const CONTROL_BACKGROUND_2:             Color = Color::Rgba(0.20, 0.22, 0.25, 1.0);
 
 pub const RUBBERBAND_OUTLINE:               Color = Color::Rgba(0.0, 0.0, 0.0, 0.1);
 pub const RUBBERBAND_LINE:                  Color = Color::Rgba(0.1, 0.7, 0.9, 1.0);

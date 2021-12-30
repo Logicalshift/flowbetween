@@ -197,7 +197,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                     x2: Offset(300.0),
                     y2: End
                 })
-                .with(Appearance::Background(TOOLS_BACKGROUND))
+                .with(Appearance::Background(SIDEBAR_BACKGROUND))
                 .with((ActionTrigger::Click, "CloseSidebar"))
                 .with(vec![
                     Control::empty().with(Bounds { x1: Start, y1: Start, x2: Offset(2.0), y2: End }),
