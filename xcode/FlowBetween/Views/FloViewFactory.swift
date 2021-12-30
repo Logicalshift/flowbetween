@@ -100,6 +100,10 @@ import Cocoa
         // Create a combobox
         let combobox        = NSPopUpButton(frame: .zero, pullsDown: true)
         
+        // Pull-down buttons are secretly not pull-down buttons and need a title item created ahead of time (this appears to be undocumented)
+        combobox.setTitle("")
+        combobox.addItem(withTitle: "")
+        
         // Put it in a view
         let comboboxView    = FloComboBoxView(frame: .zero, control: combobox)
         let view            = FloView(withView: comboboxView)
