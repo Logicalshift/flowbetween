@@ -200,7 +200,8 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                 .with(Appearance::Background(SIDEBAR_BACKGROUND))
                 .with((ActionTrigger::Click, "CloseSidebar"))
                 .with(vec![
-                    Control::empty().with(Bounds { x1: Start, y1: Start, x2: Offset(2.0), y2: End }),
+                    Control::empty().with(Bounds { x1: Start, y1: Start, x2: Offset(1.0), y2: End }).with(Appearance::Background(CONTROL_BORDER)),
+                    Control::empty().with(Bounds { x1: Start, y1: Start, x2: Offset(1.0), y2: End }),
                     Control::container().with(Bounds { x1: After, y1: Start, x2: Offset(16.0), y2: End }).with(PointerBehaviour::ClickThrough)
                         .with(vec![
                             Control::empty().with(Bounds { x1: Start, y1: Start, x2: End, y2: Stretch(0.5) }).with(PointerBehaviour::ClickThrough),
@@ -221,15 +222,21 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                 .with(Bounds {
                     x1: Offset(0.0),
                     y1: Start,
-                    x2: Offset(32.0),
+                    x2: Offset(33.0),
                     y2: End
                 })
                 .with((ActionTrigger::Click, "OpenSidebar"))
                 .with(Appearance::Background(TOOLS_BACKGROUND))
                 .with(vec![
-                    Control::empty().with(Bounds { x1: Start, y1: Start, x2: End, y2: Stretch(0.5) }).with(PointerBehaviour::ClickThrough),
-                    Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(28.0) }).with(closed_image).with(PointerBehaviour::ClickThrough),
-                    Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Stretch(0.5) }).with(PointerBehaviour::ClickThrough)
+                    Control::empty().with(Bounds { x1: Start, y1: Start, x2: Offset(1.0), y2: End }).with(Appearance::Background(CONTROL_BORDER)),
+                    Control::container()
+                        .with(Bounds::fill_horiz())
+                        .with(ControlAttribute::Padding((1, 1), (1, 1)))
+                        .with(vec![
+                            Control::empty().with(Bounds { x1: Start, y1: Start, x2: End, y2: Stretch(0.5) }).with(PointerBehaviour::ClickThrough),
+                            Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Offset(28.0) }).with(closed_image).with(PointerBehaviour::ClickThrough),
+                            Control::empty().with(Bounds { x1: Start, y1: After, x2: End, y2: Stretch(0.5) }).with(PointerBehaviour::ClickThrough)
+                        ])
                 ])
         }
     }
