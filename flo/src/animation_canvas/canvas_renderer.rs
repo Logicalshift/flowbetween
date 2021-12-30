@@ -7,7 +7,9 @@ use flo_binding::*;
 use flo_animation::*;
 
 use std::sync::*;
-use std::collections::HashMap;
+use std::collections::{HashMap};
+
+// TODO: something is wrong with how we assign layers (sometimes redrawing an individual layer erases an overlay)
 
 ///
 /// Represents a layer in the current frame
