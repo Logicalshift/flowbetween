@@ -270,9 +270,15 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
                 .with(ControlAttribute::Padding((1, 1), (1, 1)))
                 .with(Appearance::Background(CONTROL_BORDER))
                 .with(vec![
-                    Control::container()
+                    Control::scrolling_container()
                         .with(Bounds::fill_all())
                         .with(Appearance::Background(CONTROL_BACKGROUND))
+                        .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Never))
+                        .with(Scroll::VerticalScrollBar(ScrollBarVisibility::Always))
+                        .with(vec![
+                            Control::empty()
+                                .with(Bounds::next_vert(400.0))
+                        ])
                 ]);
 
             // The action buttons for adding new effects
