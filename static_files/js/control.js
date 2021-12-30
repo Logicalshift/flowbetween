@@ -869,7 +869,6 @@ let flo_control = (function () {
             // Selected, hidden and disabled will set this element as the default item for the selection without showing it in the list 
             // (Safari does not honour this properly, but we'd need to build our own combo box from scratch to get around this)
             let title_element   = document.createElement('option');
-            title_element.setAttribute('hidden', '');
             title_element.setAttribute('selected', '');
             title_element.setAttribute('disabled', '');
             title_element.innerText = display_text;
