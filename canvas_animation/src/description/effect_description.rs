@@ -42,3 +42,22 @@ pub enum EffectDescription {
     /// Contents are an anchor point and positions for the animation
     StopMotionTransform(Point2D, Vec<TimeTransformPoint>)
 }
+
+impl EffectDescription {
+    ///
+    /// Puts the effect description in a box
+    ///
+    pub fn boxed(self) -> Box<EffectDescription> {
+        Box::new(self)
+    }
+
+    ///
+    /// Changes this effect description to a sequence of 1
+    ///
+    pub fn sequence(self) -> EffectDescription {
+        match self {
+            EffectDescription::Sequence(_)  => self,
+            _                               => EffectDescription::Sequence(vec![self])
+        }
+    }
+}
