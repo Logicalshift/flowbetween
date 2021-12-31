@@ -80,6 +80,20 @@ impl AnimationElement {
 
         region
     }
+
+    ///
+    /// The effect that's applied to the animation region
+    ///
+    pub fn effect(&self) -> &EffectDescription {
+        self.description.effect()
+    }
+
+    ///
+    /// The effect that's applied to the animation region
+    ///
+    pub fn effect_mut(&mut self) -> &mut EffectDescription {
+        self.description.effect_mut()
+    }
 }
 
 impl Clone for AnimationElement {

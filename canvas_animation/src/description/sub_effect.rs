@@ -99,6 +99,15 @@ impl SubEffectDescription {
     }
 
     ///
+    /// Returns the address of this effect
+    ///
+    /// This uniquely identifies the effect relative to the parent animation effect description it comes from
+    ///
+    pub fn address(&self) -> Vec<usize> {
+        self.address.iter().cloned().collect()
+    }
+
+    ///
     /// Returns the description for this effect
     ///
     pub fn effect_description(&self) -> &EffectDescription {

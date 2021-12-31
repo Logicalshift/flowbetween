@@ -131,6 +131,54 @@ impl StreamAnimationCore {
                         ChangeWrapper(wrapper) 
                     }).await;
                 }
+
+                SetAnimationBaseType(new_base_type) => {
+                    self.update_elements(element_ids, move |mut wrapper| {
+                        match &mut wrapper.element {
+                            Vector::AnimationRegion(region) => {
+                                let updated_effect      = region.effect().update_effect_animation_type(*new_base_type);
+                                *region.effect_mut()    = updated_effect;
+                            }
+
+                            _ => { }
+                        }
+
+                        ChangeWrapper(wrapper)
+                    }).await;
+                }
+
+                AddAnimationEffect(new_effect_type) => { 
+                    self.update_elements(element_ids, move |mut wrapper| {
+                        match &mut wrapper.element {
+                            Vector::AnimationRegion(region) => {
+                                let updated_effect      = region.effect().add_new_effect(*new_effect_type);
+                                *region.effect_mut()    = updated_effect;
+                            }
+
+                            _ => { }
+                        }
+
+                        ChangeWrapper(wrapper)
+                    }).await;
+                }
+
+                ReplaceAnimationEffect(address, description) => {
+                    self.update_elements(element_ids, move |mut wrapper| {
+                        match &mut wrapper.element {
+                            Vector::AnimationRegion(region) => {
+                                let subeffect   = region.effect().sub_effects().into_iter().filter(|item| &item.address() == address).nth(0);
+                                if let Some(subeffect) = subeffect {
+                                    let updated_effect      = region.effect().replace_sub_effect(&subeffect, description.clone());
+                                    *region.effect_mut()    = updated_effect;
+                                }
+                            }
+
+                            _ => { }
+                        }
+
+                        ChangeWrapper(wrapper)
+                    }).await;
+                }
             }
         }
     }

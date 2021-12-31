@@ -23,4 +23,11 @@ impl RegionDescription {
     pub fn effect(&self) -> &EffectDescription {
         &self.1
     }
+
+    ///
+    /// The effect that's applied to the animation region
+    ///
+    pub fn effect_mut(&mut self) -> &mut EffectDescription {
+        &mut self.1
+    }
 }

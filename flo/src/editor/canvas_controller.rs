@@ -456,7 +456,10 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
                         ElementEdit::CollideWithExistingElements    => false,
                         ElementEdit::ConvertToPath                  => false,
                         ElementEdit::Transform(_)                   => true,
-                        ElementEdit::SetAnimationDescription(_)     => true
+                        ElementEdit::SetAnimationDescription(_)     => true,
+                        ElementEdit::SetAnimationBaseType(_)        => true,
+                        ElementEdit::AddAnimationEffect(_)          => true,
+                        ElementEdit::ReplaceAnimationEffect(_, _)   => true,
                     };
 
                     // Update all of the layers for all of the elements if needed

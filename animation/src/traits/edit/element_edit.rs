@@ -71,5 +71,15 @@ pub enum ElementEdit {
     Transform(Vec<ElementTransform>),
 
     /// If this element is an animation element, updates the region description to a new region
-    SetAnimationDescription(RegionDescription)
+    SetAnimationDescription(RegionDescription),
+
+    /// If this element is an animation element, updates the base animation type to a new kind
+    SetAnimationBaseType(BaseAnimationType),
+
+    /// If this element is an animation element, adds a new animation effect with a default description
+    AddAnimationEffect(SubEffectType),
+
+    /// If this element is an animation element, replaces the subeffect at the specified address with a new description
+    /// (Follow the same rules as `EffectDescription::replace_sub_effect()` when the effect is nested: ie, will preserve the nested contents of the effect)
+    ReplaceAnimationEffect(Vec<usize>, EffectDescription)
 }

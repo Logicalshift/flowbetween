@@ -16,18 +16,21 @@ impl ElementEdit {
         use self::ElementEdit::*;
 
         match self {
-            AddAttachment(elem)             => { data.write_chr('+'); elem.serialize(data); }
-            RemoveAttachment(elem)          => { data.write_chr('-'); elem.serialize(data); }
-            Order(ordering)                 => { data.write_chr('O'); ordering.serialize(data); }
-            Delete                          => { data.write_chr('X'); }
-            DetachFromFrame                 => { data.write_chr('D'); }
-            CollideWithExistingElements     => { data.write_chr('j'); }
-            ConvertToPath                   => { data.write_chr('p'); }
-            Group(group_id, group_type)     => { data.write_chr('g'); group_id.serialize(data); group_type.serialize(data); }
-            Ungroup                         => { data.write_chr('u'); }
-            SetAnimationDescription(desc)   => { data.write_chr('A'); data.write_str(&json::to_string(desc).unwrap()); }
+            AddAttachment(elem)                     => { data.write_chr('+'); elem.serialize(data); }
+            RemoveAttachment(elem)                  => { data.write_chr('-'); elem.serialize(data); }
+            Order(ordering)                         => { data.write_chr('O'); ordering.serialize(data); }
+            Delete                                  => { data.write_chr('X'); }
+            DetachFromFrame                         => { data.write_chr('D'); }
+            CollideWithExistingElements             => { data.write_chr('j'); }
+            ConvertToPath                           => { data.write_chr('p'); }
+            Group(group_id, group_type)             => { data.write_chr('g'); group_id.serialize(data); group_type.serialize(data); }
+            Ungroup                                 => { data.write_chr('u'); }
+            SetAnimationDescription(desc)           => { data.write_chr('A'); data.write_str(&json::to_string(desc).unwrap()); }
+            SetAnimationBaseType(desc)              => { data.write_chr('1'); data.write_str(&json::to_string(desc).unwrap()); }
+            AddAnimationEffect(desc)                => { data.write_chr('2'); data.write_str(&json::to_string(desc).unwrap()); }
+            ReplaceAnimationEffect(address, desc)   => { data.write_chr('3'); data.write_str(&json::to_string(address).unwrap()); data.write_str(&json::to_string(desc).unwrap()); }
 
-            SetControlPoints(points, when)  => { 
+            SetControlPoints(points, when)          => { 
                 data.write_chr('c');
                 data.write_duration(*when); 
                 data.write_usize(points.len());
@@ -41,7 +44,7 @@ impl ElementEdit {
                 }
             }
 
-            SetPath(path_components)    => { 
+            SetPath(path_components)                => { 
                 data.write_chr('P'); 
                 data.write_usize(path_components.len()); 
 
@@ -51,7 +54,7 @@ impl ElementEdit {
                 }
             },
 
-            Transform(transform)        => {
+            Transform(transform)                    => {
                 data.write_chr('T');
                 data.write_usize(transform.len());
 
@@ -106,6 +109,18 @@ impl ElementEdit {
 
             'A' => {
                 Some(ElementEdit::SetAnimationDescription(json::from_str(&data.next_string()).ok()?))
+            }
+
+            '1' => {
+                Some(ElementEdit::SetAnimationBaseType(json::from_str(&data.next_string()).ok()?))
+            }
+
+            '2' => {
+                Some(ElementEdit::AddAnimationEffect(json::from_str(&data.next_string()).ok()?))
+            }
+
+            '3' => {
+                Some(ElementEdit::ReplaceAnimationEffect(json::from_str(&data.next_string()).ok()?, json::from_str(&data.next_string()).ok()?))
             }
 
             'C' => {
@@ -290,6 +305,24 @@ mod test {
         let mut encoded     = String::new();
         let circle          = Circle::new(Coord2(100.0, 100.0), 50.0).to_path::<SimpleBezierPath>();
         let set_animation   = ElementEdit::SetAnimationDescription(RegionDescription(vec![circle.into()], EffectDescription::Sequence(vec![])));
+        set_animation.serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(set_animation));
+    }
+
+    #[test]
+    fn set_animation_base_type() {
+        let mut encoded     = String::new();
+        let set_animation   = ElementEdit::SetAnimationBaseType(BaseAnimationType::FrameByFrame);
+        set_animation.serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(set_animation));
+    }
+
+    #[test]
+    fn add_animation_effect() {
+        let mut encoded     = String::new();
+        let set_animation   = ElementEdit::AddAnimationEffect(SubEffectType::Repeat);
         set_animation.serialize(&mut encoded);
 
         assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(set_animation));
