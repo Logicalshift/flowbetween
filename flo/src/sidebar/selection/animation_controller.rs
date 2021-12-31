@@ -84,25 +84,6 @@ pub fn selected_animation_elements<Anim: 'static+EditableAnimation>(model: &Arc<
 }
 
 ///
-/// Creates the editing instructions to update the base animation type of an animation element
-///
-fn set_base_animation_type(animation_element: &AnimationElement, new_base_type: BaseAnimationType) -> Vec<AnimationEdit> {
-    // Gather information
-    let element_id      = animation_element.id();
-    let region          = animation_element.description().region().clone();
-    let effect          = animation_element.description().effect();
-
-    // Update the description for the animation element
-    let new_effect      = effect.update_effect_animation_type(new_base_type);
-    let new_description = RegionDescription(region, new_effect);
-
-    // Edit the model
-    vec![
-        AnimationEdit::Element(vec![element_id], ElementEdit::SetAnimationDescription(new_description))
-    ]
-}
-
-///
 /// Creates the binding for the animation sidebar user interface
 ///
 fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>) -> BindRef<Control> {
@@ -271,9 +252,8 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
 
             AnimationAction::SetBaseAnimationType(new_base_type) => {
                 // Set the base animation type for the selected region
-                let edits       = selected_animation_elements.get().iter()
-                    .flat_map(|selected_element| set_base_animation_type(selected_element, new_base_type))
-                    .collect();
+                let element_ids = selected_animation_elements.get().iter().map(|elem| elem.id()).collect();
+                let edits       = vec![AnimationEdit::Element(element_ids, ElementEdit::SetAnimationBaseType(new_base_type))];
 
                 // Send the edits to the animation and wait for them to be received
                 let mut editor  = model.edit();
