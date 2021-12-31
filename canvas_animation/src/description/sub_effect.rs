@@ -1,7 +1,12 @@
+use super::space::*;
 use super::effect_description::*;
 
 use smallvec::*;
 use serde::{Serialize, Deserialize};
+use serde_json as json;
+
+use std::iter;
+use std::time::{Duration};
 
 ///
 /// A sub-effect represents a single part of an effect description
@@ -55,6 +60,21 @@ impl SubEffectType {
             TimeCurve           => "Time curve",
             LinearPosition      => "Move at constant speed",
             TransformPosition   => "Transform position",
+        }
+    }
+
+    ///
+    /// Creates a default effect description for this effect
+    ///
+    pub fn default_effect_description(&self) -> EffectDescription {
+        use self::SubEffectType::*;
+
+        match self {
+            Other               => EffectDescription::Other("".to_string(), json::Value::Null),
+            Repeat              => EffectDescription::Repeat(Duration::from_millis(1000), EffectDescription::Sequence(vec![]).boxed()),
+            TimeCurve           => EffectDescription::TimeCurve(vec![], EffectDescription::Sequence(vec![]).boxed()),
+            LinearPosition      => EffectDescription::Move(Duration::from_millis(1000), BezierPath(Point2D(0.0, 0.0), vec![])),
+            TransformPosition   => EffectDescription::FittedTransform(Point2D(0.0, 0.0), vec![])
         }
     }
 }
@@ -237,5 +257,36 @@ impl EffectDescription {
 
         // The new description is the result
         new_description
+    }
+
+    ///
+    /// Adds a new effect to this effect description
+    ///
+    pub fn add_new_effect(&self, new_effect_type: SubEffectType) -> EffectDescription {
+        use self::EffectDescription::*;
+
+        // Create the new effect with default parameters
+        let new_effect = new_effect_type.default_effect_description();
+
+        match (new_effect, self) {
+            // Nested effects have special behaviour
+            (Repeat(_, _), Repeat(_, _))            => self.clone(),
+            (TimeCurve(_, _), TimeCurve(_, _))      => self.clone(),
+            (_, Repeat(duration, nested_effect))    => Repeat(*duration, nested_effect.add_new_effect(new_effect_type).boxed()),
+            (Repeat(duration, _), _)                => Repeat(duration, self.clone().boxed()),      // Note ordering: Repeat will nest over timecurve so it has priority
+            (_, TimeCurve(curve, nested_effect))    => TimeCurve(curve.clone(), nested_effect.add_new_effect(new_effect_type).boxed()),
+            (TimeCurve(curve, _), _)                => TimeCurve(curve, self.clone().boxed()),
+
+            // Sequences are extended
+            (new_effect, Sequence(items))           => Sequence(items.iter().cloned().chain(iter::once(new_effect)).collect()),
+
+            // Standard effects get turned into a sequence
+            (new_effect, Other(_, _))               |
+            (new_effect, FrameByFrameReplaceWhole)  |
+            (new_effect, FrameByFrameAddToInitial)  |
+            (new_effect, Move(_, _))                |
+            (new_effect, FittedTransform(_, _))     |
+            (new_effect, StopMotionTransform(_, _)) => Sequence(vec![self.clone(), new_effect])
+        }
     }
 }

@@ -119,3 +119,109 @@ fn replace_sub_effect_sequence() {
     assert!(new_effect.sub_effects()[0].effect_type() == SubEffectType::LinearPosition);
     assert!(new_effect.sub_effects()[2].effect_type() == SubEffectType::LinearPosition);
 }
+
+#[test]
+fn add_new_effect_to_sequence() {
+    let effect = EffectDescription::Sequence(vec![
+        EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
+    ]);
+
+    assert!(effect.sub_effects().len() == 1);
+
+    let new_effect = effect.add_new_effect(SubEffectType::TransformPosition);
+    assert!(new_effect.sub_effects().len() == 2);
+    assert!(new_effect.sub_effects()[1].effect_type() == SubEffectType::TransformPosition);
+
+    assert!(new_effect.sub_effects()[0].effect_type() == SubEffectType::LinearPosition);
+}
+
+#[test]
+fn add_repeat_effect() {
+    let effect = EffectDescription::Sequence(vec![
+        EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
+    ]);
+
+    assert!(effect.sub_effects().len() == 1);
+
+    let new_effect = effect.add_new_effect(SubEffectType::Repeat);
+    assert!(new_effect.sub_effects().len() == 2);
+    assert!(new_effect.sub_effects()[0].effect_type() == SubEffectType::Repeat);
+    assert!(new_effect.sub_effects()[1].effect_type() == SubEffectType::LinearPosition);
+}
+
+#[test]
+fn add_repeat_effect_and_position() {
+    let effect = EffectDescription::Sequence(vec![
+        EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
+    ]);
+
+    assert!(effect.sub_effects().len() == 1);
+
+    let new_effect = effect.add_new_effect(SubEffectType::Repeat);
+    let new_effect = new_effect.add_new_effect(SubEffectType::TransformPosition);
+
+    assert!(new_effect.sub_effects().len() == 3);
+    assert!(new_effect.sub_effects()[0].effect_type() == SubEffectType::Repeat);
+    assert!(new_effect.sub_effects()[1].effect_type() == SubEffectType::LinearPosition);
+    assert!(new_effect.sub_effects()[2].effect_type() == SubEffectType::TransformPosition);
+}
+
+#[test]
+fn add_repeat_effect_twice() {
+    let effect = EffectDescription::Sequence(vec![
+        EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
+    ]);
+
+    assert!(effect.sub_effects().len() == 1);
+
+    let new_effect = effect.add_new_effect(SubEffectType::Repeat);
+    let new_effect = new_effect.add_new_effect(SubEffectType::Repeat);
+    assert!(new_effect.sub_effects().len() == 2);
+    assert!(new_effect.sub_effects()[0].effect_type() == SubEffectType::Repeat);
+    assert!(new_effect.sub_effects()[1].effect_type() == SubEffectType::LinearPosition);
+}
+
+#[test]
+fn add_repeat_and_timecurve_effect_twice() {
+    let effect = EffectDescription::Sequence(vec![
+        EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
+    ]);
+
+    assert!(effect.sub_effects().len() == 1);
+
+    let new_effect = effect.add_new_effect(SubEffectType::Repeat);
+    let new_effect = new_effect.add_new_effect(SubEffectType::TimeCurve);
+    let new_effect = new_effect.add_new_effect(SubEffectType::Repeat);
+    let new_effect = new_effect.add_new_effect(SubEffectType::TimeCurve);
+
+    assert!(new_effect.sub_effects().len() != 2, "Only added one of the timecurve/repeat effects");
+    assert!(new_effect.sub_effects().len() != 4);
+    assert!(new_effect.sub_effects().len() != 5);
+    assert!(new_effect.sub_effects().len() == 3);
+    assert!(new_effect.sub_effects()[0].effect_type() == SubEffectType::Repeat);
+    assert!(new_effect.sub_effects()[1].effect_type() == SubEffectType::TimeCurve);
+    assert!(new_effect.sub_effects()[2].effect_type() == SubEffectType::LinearPosition);
+}
+
+#[test]
+fn add_timecurve_then_repeat() {
+    let effect = EffectDescription::Sequence(vec![
+        EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
+    ]);
+
+    assert!(effect.sub_effects().len() == 1);
+
+    let new_effect = effect.add_new_effect(SubEffectType::TimeCurve);
+    let new_effect = new_effect.add_new_effect(SubEffectType::Repeat);
+    let new_effect = new_effect.add_new_effect(SubEffectType::TimeCurve);
+    let new_effect = new_effect.add_new_effect(SubEffectType::Repeat);
+
+    // 'Repeat' must appear as the first effect if it's added after TimeCurve (or any other nested type)
+    assert!(new_effect.sub_effects().len() != 2, "Only added one of the timecurve/repeat effects");
+    assert!(new_effect.sub_effects().len() != 4);
+    assert!(new_effect.sub_effects().len() != 5);
+    assert!(new_effect.sub_effects().len() == 3);
+    assert!(new_effect.sub_effects()[0].effect_type() == SubEffectType::Repeat);
+    assert!(new_effect.sub_effects()[1].effect_type() == SubEffectType::TimeCurve);
+    assert!(new_effect.sub_effects()[2].effect_type() == SubEffectType::LinearPosition);
+}
