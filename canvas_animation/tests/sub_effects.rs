@@ -101,3 +101,21 @@ fn top_level_timecurve() {
     assert!(effect.sub_effects()[0].effect_type() == SubEffectType::TimeCurve);
     assert!(effect.sub_effects()[1].effect_type() == SubEffectType::LinearPosition);
 }
+
+#[test]
+fn replace_sub_effect_sequence() {
+    let effect = EffectDescription::Sequence(vec![
+        EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
+        EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
+        EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
+    ]);
+
+    assert!(effect.sub_effects().len() == 3);
+
+    let new_effect = effect.replace_sub_effect(&effect.sub_effects()[1], EffectDescription::StopMotionTransform(Point2D(500.0, 500.0), vec![]));
+    assert!(new_effect.sub_effects().len() == 3);
+    assert!(new_effect.sub_effects()[1].effect_type() == SubEffectType::TransformPosition);
+
+    assert!(new_effect.sub_effects()[0].effect_type() == SubEffectType::LinearPosition);
+    assert!(new_effect.sub_effects()[2].effect_type() == SubEffectType::LinearPosition);
+}

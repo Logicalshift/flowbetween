@@ -141,4 +141,101 @@ impl EffectDescription {
             }
         }
     }
+
+    ///
+    /// Finds a sub-effect within this effect
+    ///
+    fn find_sub_effect(&mut self, address: &SmallVec<[usize; 2]>) -> Option<&mut EffectDescription> {
+        if address.len() == 0 {
+            // No address = we've found the effect
+            Some(self)
+        } else {
+            use self::EffectDescription::*;
+
+            // Effect should have a recursive portion
+            match self {
+                Other(_, _)                 |
+                FrameByFrameReplaceWhole    |
+                FrameByFrameAddToInitial    |
+                Move(_, _)                  |
+                FittedTransform(_, _)       |
+                StopMotionTransform(_, _)   => None,
+
+                Sequence(seq)               => {
+                    let new_address = address.iter().skip(1).cloned().collect();
+                    seq[address[0]].find_sub_effect(&new_address)
+                }
+                Repeat(_, subeffect)        |
+                TimeCurve(_, subeffect)     => {
+                    let new_address = address.iter().skip(1).cloned().collect();
+                    subeffect.find_sub_effect(&new_address)
+                }
+            }
+        }
+    }
+
+    ///
+    /// If this effect is applied to another animation effect, this returns the effect that this applies to
+    ///
+    /// Returns the empty sequence for non-recursive effects
+    ///
+    pub fn recursive_effect(&self) -> EffectDescription {
+        use self::EffectDescription::*;
+
+        match self {
+            Other(_, _)                 |
+            FrameByFrameReplaceWhole    |
+            FrameByFrameAddToInitial    |
+            Move(_, _)                  |
+            FittedTransform(_, _)       |
+            StopMotionTransform(_, _)   |
+            Sequence(_)                 => EffectDescription::Sequence(vec![]),
+
+            Repeat(_, subeffect)        |
+            TimeCurve(_, subeffect)     => (**subeffect).clone()
+        }
+    }
+
+    ///
+    /// Replaces a sub-effect with a new effect description
+    ///
+    /// The sub-effect description must have been generated from this effect description by calling sub_effects (the way
+    /// it describes its location is only valid for this effect)
+    ///
+    /// For recursive effects, this will ignore the effect defined in the new effect and keep the original effect.
+    /// For example, if the new effect is a 'repeat' and the original effect is also a 'repeat', the orignal repeated
+    /// effect will be kept (and the new one ignored). This makes it possible to store edits to these recursive effects
+    /// without having to replace the whole effects tree.
+    ///
+    /// In the event the original effect is not recursive, this will use the empty sequence as the content of the new
+    /// recursive portion of the effect.
+    ///
+    pub fn replace_sub_effect(&self, old_effect: &SubEffectDescription, new_effect: EffectDescription) -> EffectDescription {
+        // Find the effect that's being replaced
+        let mut new_description = self.clone();
+        let replaced_effect     = new_description.find_sub_effect(&old_effect.address);
+        let replaced_effect     = if let Some(replaced_effect) = replaced_effect { replaced_effect } else { return new_description; };
+
+        // Replace any recursive portion of the new effect
+        use self::EffectDescription::*;
+
+        let new_effect = match new_effect {
+            Other(_, _)                 |
+            FrameByFrameReplaceWhole    |
+            FrameByFrameAddToInitial    |
+            Move(_, _)                  |
+            FittedTransform(_, _)       |
+            StopMotionTransform(_, _)   |
+            Sequence(_)                 => new_effect,
+
+            Repeat(len, _)              => Repeat(len, replaced_effect.recursive_effect().boxed()),
+            TimeCurve(curve, _)         => TimeCurve(curve, replaced_effect.recursive_effect().boxed()),
+        };
+
+        // Replace the effect
+        *replaced_effect        = new_effect;
+
+        // The new description is the result
+        new_description
+    }
 }
