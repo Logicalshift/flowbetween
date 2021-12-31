@@ -1,5 +1,7 @@
 use super::effect_description::*;
 
+use serde::{Serialize, Deserialize};
+
 ///
 /// The 'base' animation for an animation effect
 ///
@@ -10,7 +12,7 @@ use super::effect_description::*;
 /// description and `update_effect_animation_type()` can be used to create a new description with a
 /// different base style.
 ///
-#[derive(Clone, Copy, Debug, PartialEq, Display, EnumString, EnumIter)]
+#[derive(Clone, Copy, Debug, PartialEq, Display, EnumString, EnumIter, Deserialize, Serialize)]
 pub enum BaseAnimationType {
     /// Build over time animations (later drawings are added to the existing ones, the default behaviour if no animation is defined)
     BuildOverTime,
