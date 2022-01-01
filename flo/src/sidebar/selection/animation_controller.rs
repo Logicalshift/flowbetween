@@ -18,6 +18,14 @@ use std::str::{FromStr};
 use std::sync::*;
 
 ///
+/// Bindings used within the animation controller
+///
+struct AnimationControllerModel {
+    /// The selected set of animation elements
+    selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>
+}
+
+///
 /// The actions that are possible for the animation sidebar
 ///
 #[derive(Clone, Debug, PartialEq)]
@@ -93,10 +101,10 @@ pub fn selected_animation_elements<Anim: 'static+EditableAnimation>(model: &Arc<
 ///
 /// Creates the binding for the animation sidebar user interface
 ///
-fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>) -> BindRef<Control> {
+fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, anim_model: Arc<AnimationControllerModel>) -> BindRef<Control> {
     // Create a binding for the base animation type for the selected element
     let edit_counter                    = model.frame_update_count();
-    let selected_animation_elements_2   = selected_animation_elements.clone();
+    let selected_animation_elements_2   = anim_model.selected_animation_elements.clone();
     let selected_base_anim_type         = computed(move || { 
         // We re-check when the edit counter changes, or the selected elements change
         edit_counter.get();
@@ -120,7 +128,7 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
 
     // Generate the UI for the animation panel
     computed(move || {
-        let selected_elements = selected_animation_elements.get();
+        let selected_elements = anim_model.selected_animation_elements.get();
 
         if selected_elements.len() == 0 {
             // Control is inactive with 0 selected elements
@@ -244,10 +252,10 @@ impl AnimationAction {
     }
 }
 
-fn refresh_selected_sub_effect<Anim: 'static+EditableAnimation>(selected_animation_elements: &BindRef<Vec<SelectedAnimationElement>>, model: &Arc<FloModel<Anim>>) {
+fn refresh_selected_sub_effect<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, anim_model: &Arc<AnimationControllerModel>) {
     // Fetch the selected animation elements and the currently selected sub-effect (there's nothing to do if no sub-effect is selected)
     let (subeffect_id, subeffect_description)   = if let Some(sub_effect) = model.selection().selected_sub_effect.get() { sub_effect } else { return; };
-    let selected_animation_elements             = selected_animation_elements.get();
+    let selected_animation_elements             = anim_model.selected_animation_elements.get();
 
     if selected_animation_elements.len() != 1 {
         // Currently can only pick a sub-effect if there's only one element selected
@@ -280,13 +288,13 @@ fn refresh_selected_sub_effect<Anim: 'static+EditableAnimation>(selected_animati
 ///
 /// Runs the animation sidebar panel
 ///
-async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: ControllerEventStream, _actions: mpsc::Sender<ControllerAction>, _resources: ControllerResources, model: Arc<FloModel<Anim>>, selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>) {
+async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: ControllerEventStream, _actions: mpsc::Sender<ControllerAction>, _resources: ControllerResources, model: Arc<FloModel<Anim>>, anim_model: Arc<AnimationControllerModel>) {
     // Setup: set 'no selected subeffect' when the runtime starts (in case it has some stale value in it)
     model.selection().selected_sub_effect.set(None);
 
     // Generate some events from the model: we need to know when the canvas is updated or the selection is changed to update the selected sub-effect
     let canvas_updated      = follow(model.frame_update_count().clone()).map(|_| AnimationAction::CanvasUpdated);
-    let selection_changed   = follow(selected_animation_elements.clone()).map(|_| AnimationAction::SelectionChanged);
+    let selection_changed   = follow(anim_model.selected_animation_elements.clone()).map(|_| AnimationAction::SelectionChanged);
 
     // Convert the events into animation events
     let events              = events.map(|event| AnimationAction::from_controller_event(&event));
@@ -302,7 +310,7 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
 
             AnimationAction::SetBaseAnimationType(new_base_type) => {
                 // Set the base animation type for the selected region
-                let element_ids = selected_animation_elements.get().iter().map(|elem| elem.id()).collect();
+                let element_ids = anim_model.selected_animation_elements.get().iter().map(|elem| elem.id()).collect();
                 let edits       = vec![AnimationEdit::Element(element_ids, ElementEdit::SetAnimationBaseType(new_base_type))];
 
                 // Send the edits to the animation and wait for them to be received
@@ -314,7 +322,7 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
             AnimationAction::SelectionChanged |
             AnimationAction::CanvasUpdated => {
                 // The selected sub-effect may no longer be available or may have an out-of-date description
-                refresh_selected_sub_effect(&selected_animation_elements, &model);
+                refresh_selected_sub_effect(&model, &anim_model);
             },
         }
     }
@@ -325,14 +333,18 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
 ///
 pub fn animation_sidebar_panel<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>) -> SidebarPanel {
     // Create the controller for the panel
-    let ui                  = animation_sidebar_ui(model, selected_animation_elements.clone());
+    let animation_model     = Arc::new(AnimationControllerModel {
+        selected_animation_elements: selected_animation_elements
+    });
+
+    let ui                  = animation_sidebar_ui(model, animation_model.clone());
     let model               = model.clone();
-    let selected_elem_clone = selected_animation_elements.clone();
+    let anim_model_clone    = animation_model.clone();
     let controller          = ImmediateController::with_ui(ui,
-        move |events, actions, resources| run_animation_sidebar_panel(events, actions, resources, model.clone(), selected_elem_clone.clone()));
+        move |events, actions, resources| run_animation_sidebar_panel(events, actions, resources, model.clone(), anim_model_clone.clone()));
 
     // The panel is 'active' if there is one or more elements selected
-    let is_active           = computed(move || selected_animation_elements.get().len() > 0);
+    let is_active           = computed(move || animation_model.selected_animation_elements.get().len() > 0);
 
     // Construct the sidebar panel
     SidebarPanel::with_title("Animation")
