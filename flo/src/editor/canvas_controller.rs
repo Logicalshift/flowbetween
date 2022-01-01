@@ -402,7 +402,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
                 let size        = self.model.size();
 
                 self.renderer.load_frame(invalid_layer);
-                self.renderer.redraw_layer(layer_id, &*canvas, size);
+                self.renderer.redraw_layer(layer_id, &*canvas);
             }
         }
     }

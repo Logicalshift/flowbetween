@@ -277,7 +277,7 @@ impl CanvasRenderer {
     ///
     /// Redraws a single layer
     ///
-    pub fn redraw_layer(&mut self, layer_id: u64, canvas: &BindingCanvas, size: (f64, f64)) {
+    pub fn redraw_layer(&mut self, layer_id: u64, canvas: &BindingCanvas) {
         // Redraw this particular layer
         let layer_id    = LayerId(layer_id);
         let layer       = self.frame_layers.get(&layer_id);
