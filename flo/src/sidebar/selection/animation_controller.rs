@@ -9,6 +9,7 @@ use flo_animation::*;
 use flo_canvas_animation::description::*;
 
 use futures::prelude::*;
+use futures::stream;
 use futures::channel::mpsc;
 use strum::{IntoEnumIterator};
 
@@ -23,6 +24,12 @@ use std::sync::*;
 enum AnimationAction {
     /// Sets the base animation type
     SetBaseAnimationType(BaseAnimationType),
+
+    /// The set of selected elements has changed
+    SelectionChanged,
+
+    /// The canvas has been updated
+    CanvasUpdated,
 
     /// Unrecognised action occurred
     Unknown(String)
@@ -237,12 +244,55 @@ impl AnimationAction {
     }
 }
 
+fn refresh_selected_sub_effect<Anim: 'static+EditableAnimation>(selected_animation_elements: &BindRef<Vec<SelectedAnimationElement>>, model: &Arc<FloModel<Anim>>) {
+    // Fetch the selected animation elements and the currently selected sub-effect (there's nothing to do if no sub-effect is selected)
+    let (subeffect_id, subeffect_description)   = if let Some(sub_effect) = model.selection().selected_sub_effect.get() { sub_effect } else { return; };
+    let selected_animation_elements             = selected_animation_elements.get();
+
+    if selected_animation_elements.len() != 1 {
+        // Currently can only pick a sub-effect if there's only one element selected
+        model.selection().selected_sub_effect.set(None);
+    } else if !selected_animation_elements.iter().any(|elem| elem.id() == subeffect_id) {
+        // Animation is no longer in the selected list
+        model.selection().selected_sub_effect.set(None);
+    } else {
+        // Might need to update to the latest description for this sub-effect (or clear it if it's no longer present with the same address)
+        let animation_element   = &selected_animation_elements[0];
+        let active_effects      = animation_element.effect().sub_effects();
+        let expected_address    = subeffect_description.address();
+        let selected_effect     = active_effects.into_iter().filter(|effect| &effect.address() == &expected_address).nth(0);
+
+        if let Some(selected_effect) = selected_effect {
+            if selected_effect.effect_type() != subeffect_description.effect_type() {
+                // The effect type has changed, so the selection is pointing at a different effect
+                model.selection().selected_sub_effect.set(None);
+            } else if selected_effect != subeffect_description {
+                // Update the selection if the effect description has changed
+                model.selection().selected_sub_effect.set(Some((subeffect_id, selected_effect)));
+            }
+        } else {
+            // No effect with this address is presen
+            model.selection().selected_sub_effect.set(None);
+        }
+    }
+}
+
 ///
 /// Runs the animation sidebar panel
 ///
 async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: ControllerEventStream, _actions: mpsc::Sender<ControllerAction>, _resources: ControllerResources, model: Arc<FloModel<Anim>>, selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>) {
+    // Setup: set 'no selected subeffect' when the runtime starts (in case it has some stale value in it)
+    model.selection().selected_sub_effect.set(None);
+
+    // Generate some events from the model: we need to know when the canvas is updated or the selection is changed to update the selected sub-effect
+    let canvas_updated      = follow(model.frame_update_count().clone()).map(|_| AnimationAction::CanvasUpdated);
+    let selection_changed   = follow(selected_animation_elements.clone()).map(|_| AnimationAction::SelectionChanged);
+
     // Convert the events into animation events
-    let mut events = events.map(|event| AnimationAction::from_controller_event(&event));
+    let events              = events.map(|event| AnimationAction::from_controller_event(&event));
+
+    // Combine to create the complete list of events
+    let mut events          = stream::select_all(vec![events.boxed(), canvas_updated.boxed(), selection_changed.boxed()]);
 
     // Run while there are events pending
     while let Some(event) = events.next().await {
@@ -260,6 +310,12 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
                 editor.publish(Arc::new(edits)).await;
                 editor.when_empty().await;
             }
+
+            AnimationAction::SelectionChanged |
+            AnimationAction::CanvasUpdated => {
+                // The selected sub-effect may no longer be available or may have an out-of-date description
+                refresh_selected_sub_effect(&selected_animation_elements, &model);
+            },
         }
     }
 }
