@@ -129,6 +129,8 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
         }
     });
 
+    let model = Arc::clone(model);
+
     // Generate the UI for the animation panel
     computed(move || {
         let selected_elements = anim_model.selected_animation_elements.get();
@@ -161,7 +163,38 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
                 .with(Hover::Tooltip("How this region is animated".to_string()))
                 .with(base_choices);
 
-            // The effect selector
+            // The effect selector lets the user pick between the list of sub-effects available
+            let effect_height       = 12.0;
+            let selected_effect     = model.selection().selected_sub_effect.get();
+            let available_effects   = anim_model.effects.get();
+            let effect_controls     = available_effects.into_iter()
+                .enumerate()
+                .flat_map(|(idx, (_elem_id, effect))| {
+                    let is_selected = Some(effect.address()) == selected_effect.as_ref().map(|(_, effect)| effect.address());
+                    let background  = if (idx%2) == 0 { CONTROL_BACKGROUND } else { CONTROL_BACKGROUND_2 };
+                    let background  = if is_selected { SELECTED_BACKGROUND } else { background };
+
+                    let title       = effect.effect_type().description().to_string();
+                    let action_name = format!("SelectEffect{}", idx);
+
+                    vec![
+                        Control::empty()
+                            .with(Bounds::next_vert(1.0))
+                            .with(Appearance::Background(CONTROL_BORDER)),
+                        Control::label()
+                            .with(Bounds::next_vert(effect_height))
+                            .with(Appearance::Background(background))
+                            .with(title)
+                            .with((ActionTrigger::Click, action_name))
+                    ]
+                })
+                .chain(vec![
+                    Control::empty()
+                        .with(Bounds::next_vert(1.0))
+                        .with(Appearance::Background(CONTROL_BORDER))
+                ])
+                .collect::<Vec<_>>();
+
             let effect_selector = Control::container()
                 .with(Bounds::stretch_vert(1.0))
                 .with(ControlAttribute::Padding((1, 1), (1, 1)))
@@ -172,10 +205,7 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
                         .with(Appearance::Background(CONTROL_BACKGROUND))
                         .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Never))
                         .with(Scroll::VerticalScrollBar(ScrollBarVisibility::Always))
-                        .with(vec![
-                            Control::empty()
-                                .with(Bounds::next_vert(400.0))
-                        ])
+                        .with(effect_controls)
                 ]);
 
             // The action buttons for adding new effects
