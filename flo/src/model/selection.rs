@@ -4,6 +4,7 @@ use super::timeline::*;
 use flo_binding::*;
 use flo_animation::*;
 use flo_curves::bezier::path::*;
+use flo_canvas_animation::description::*;
 
 use std::sync::*;
 use std::time::{Duration};
@@ -21,6 +22,9 @@ pub struct SelectionModel<Anim: Animation> {
 
     /// The currently selected path (if this is set and the selected elements is empty, then the path has not yet been cut out from the layer)
     pub selected_path: Binding<Option<Arc<Path>>>,
+
+    /// If the selected elements
+    pub selected_sub_effect: Binding<Option<(ElementId, SubEffectDescription)>>,
 
     /// The binding for the selected element (used when updating)
     selected_elements_binding: Binding<Arc<HashSet<ElementId>>>,
@@ -45,6 +49,7 @@ impl<Anim: Animation> Clone for SelectionModel<Anim> {
             selection_in_order:         self.selection_in_order.clone(),
             selected_path:              self.selected_path.clone(),
             selected_elements_binding:  self.selected_elements_binding.clone(),
+            selected_sub_effect:        self.selected_sub_effect.clone(),
             animation:                  self.animation.clone(),
             layers:                     self.layers.clone(),
             current_time:               self.current_time.clone(),
@@ -63,12 +68,14 @@ impl<Anim: 'static+Animation> SelectionModel<Anim> {
         let selected_elements           = BindRef::new(&selected_elements_binding);
         let selection_in_order          = Self::selection_in_order(selected_elements.clone(), frame_model, timeline_model);
         let selected_path               = bind(None);
+        let selected_sub_effect         = bind(None);
 
         SelectionModel {
             selected_elements:          selected_elements,
             selected_elements_binding:  selected_elements_binding,
             selected_path:              selected_path,
             selection_in_order:         selection_in_order,
+            selected_sub_effect:        selected_sub_effect,
             animation:                  animation,
             layers:                     frame_model.layers.clone(),
             current_time:               BindRef::from(&timeline_model.current_time),
