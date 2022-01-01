@@ -298,8 +298,6 @@ pub fn sidebar_controller<Anim: 'static+EditableAnimation>(model: &FloModel<Anim
                             _ => { /* Unrecognised action */ }
                         }
                     }
-
-                    _ => { }
                 }
             }
         }
