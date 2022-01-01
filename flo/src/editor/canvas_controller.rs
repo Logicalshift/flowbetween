@@ -243,7 +243,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
     ///
     /// Runs the canvas update loop
     ///
-    async fn run_canvas(core: Arc<Desync<CanvasCore<Anim>>>, canvas: Resource<BindingCanvas>) {
+    async fn run_canvas(core: Arc<Desync<CanvasCore<Anim>>>) {
         // The 'retired' edits are edits that have been written out to the animation
         let mut retired_edits = core.sync(|core| core.model.retired_edits()).ready_chunks(100);
 
@@ -304,8 +304,7 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
     }
 
     fn runtime(&self) -> Option<BoxFuture<'static, ()>> {
-        let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
-        Some(Self::run_canvas(Arc::clone(&self.core), canvas).boxed())
+        Some(Self::run_canvas(Arc::clone(&self.core)).boxed())
     }
 }
 
@@ -370,7 +369,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
         let displayed_time              = self.current_time;
         let target_time                 = self.model.timeline().current_time.get();
 
-        if self.current_time != target_time {
+        if displayed_time != target_time {
             self.current_time = target_time;
             invalidations.push(CanvasInvalidation::WholeCanvas);
         }
