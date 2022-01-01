@@ -164,9 +164,16 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
                 .with(base_choices);
 
             // The effect selector lets the user pick between the list of sub-effects available
-            let effect_height       = 12.0;
+            let effect_height       = 20.0;
             let selected_effect     = model.selection().selected_sub_effect.get();
             let available_effects   = anim_model.effects.get();
+
+            use std::time::{Duration};
+            let available_effects   = EffectDescription::Sequence(vec![
+                EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
+                EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
+            ]).sub_effects().into_iter().map(|effect| (ElementId::Assigned(0), effect));
+
             let effect_controls     = available_effects.into_iter()
                 .enumerate()
                 .flat_map(|(idx, (_elem_id, effect))| {
@@ -178,25 +185,24 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
                     let action_name = format!("SelectEffect{}", idx);
 
                     vec![
+                        Control::container()
+                            .with(Bounds::next_vert(effect_height))
+                            .with(Appearance::Background(background))
+                            .with(ControlAttribute::Padding((8, 0), (8, 0)))
+                            .with((ActionTrigger::Click, action_name.clone()))
+                            .with(vec![
+                                Control::label().with(Bounds::fill_all()).with((ActionTrigger::Click, action_name)).with(title)
+                            ]),
                         Control::empty()
                             .with(Bounds::next_vert(1.0))
                             .with(Appearance::Background(CONTROL_BORDER)),
-                        Control::label()
-                            .with(Bounds::next_vert(effect_height))
-                            .with(Appearance::Background(background))
-                            .with(title)
-                            .with((ActionTrigger::Click, action_name))
                     ]
                 })
-                .chain(vec![
-                    Control::empty()
-                        .with(Bounds::next_vert(1.0))
-                        .with(Appearance::Background(CONTROL_BORDER))
-                ])
                 .collect::<Vec<_>>();
 
             let effect_selector = Control::container()
                 .with(Bounds::stretch_vert(1.0))
+                .with(Font::Size(11.0))
                 .with(ControlAttribute::Padding((1, 1), (1, 1)))
                 .with(Appearance::Background(CONTROL_BORDER))
                 .with(vec![
