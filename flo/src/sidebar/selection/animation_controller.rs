@@ -22,7 +22,10 @@ use std::sync::*;
 ///
 struct AnimationControllerModel {
     /// The selected set of animation elements
-    selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>
+    selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>,
+
+    /// The list of effects that can be selected between (the selected effect is in the main selection model)
+    effects: BindRef<Vec<(ElementId, Arc<SubEffectDescription>)>>,
 }
 
 ///
@@ -329,12 +332,39 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
 }
 
 ///
+/// Creates a binding of the list of effects for the currently selected animation element
+///
+fn effects_list(selected_animation_elements: &BindRef<Vec<SelectedAnimationElement>>) -> BindRef<Vec<(ElementId, Arc<SubEffectDescription>)>> {
+    let selected_animation_elements = selected_animation_elements.clone();
+
+    computed(move || {
+        let selected_animation_elements = selected_animation_elements.get();
+
+        if selected_animation_elements.len() == 1 {
+            // When there's only one element selected, we generate a list of sub-effects that the user can choose between
+            let element_id  = selected_animation_elements[0].id();
+            let sub_effects = selected_animation_elements[0].effect().sub_effects();
+
+            sub_effects.into_iter()
+                .map(|effect| (element_id, Arc::new(effect)))
+                .collect()
+        } else {
+            // For 0 or >1 element, there are no subeffects available
+            vec![]
+        }
+    })
+    .into()
+}
+
+///
 /// The Animation panel is used to show an overview of the effects in the currently selected animation element(s)
 ///
 pub fn animation_sidebar_panel<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, selected_animation_elements: BindRef<Vec<SelectedAnimationElement>>) -> SidebarPanel {
     // Create the controller for the panel
+    let effects             = effects_list(&selected_animation_elements);
     let animation_model     = Arc::new(AnimationControllerModel {
-        selected_animation_elements: selected_animation_elements
+        selected_animation_elements:    selected_animation_elements,
+        effects:                        effects,
     });
 
     let ui                  = animation_sidebar_ui(model, animation_model.clone());
