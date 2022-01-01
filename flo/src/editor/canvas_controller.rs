@@ -399,7 +399,6 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
 
             for invalid_layer in invalid_layer_models {
                 let layer_id    = invalid_layer.layer_id;
-                let size        = self.model.size();
 
                 self.renderer.load_frame(invalid_layer);
                 self.renderer.redraw_layer(layer_id, &*canvas);
