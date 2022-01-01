@@ -168,12 +168,6 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
             let selected_effect     = model.selection().selected_sub_effect.get();
             let available_effects   = anim_model.effects.get();
 
-            use std::time::{Duration};
-            let available_effects   = EffectDescription::Sequence(vec![
-                EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
-                EffectDescription::Move(Duration::from_millis(10000), BezierPath(Point2D(20.0, 30.0), vec![BezierPoint(Point2D(20.0, 100.0), Point2D(200.0, 200.0), Point2D(300.0, 400.0))])),
-            ]).sub_effects().into_iter().map(|effect| (ElementId::Assigned(0), effect));
-
             let effect_controls     = available_effects.into_iter()
                 .enumerate()
                 .flat_map(|(idx, (_elem_id, effect))| {
