@@ -218,6 +218,7 @@ fn new_effect_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<A
             .with(vec![
                 Control::scrolling_container()
                     .with(Bounds::fill_all())
+                    .with(Appearance::Background(CONTROL_BACKGROUND))
                     .with(Font::Size(13.0))
                     .with(Font::Weight(FontWeight::Normal))
                     .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Never))
