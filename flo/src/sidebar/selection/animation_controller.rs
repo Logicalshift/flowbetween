@@ -384,9 +384,15 @@ fn effects_list(selected_animation_elements: &BindRef<Vec<SelectedAnimationEleme
 ///
 /// Runs the animation sidebar panel
 ///
-async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: ControllerEventStream, _actions: mpsc::Sender<ControllerAction>, _resources: ControllerResources, model: Arc<FloModel<Anim>>, anim_model: Arc<AnimationControllerModel>) {
+async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: ControllerEventStream, actions: mpsc::Sender<ControllerAction>, _resources: ControllerResources, model: Arc<FloModel<Anim>>, anim_model: Arc<AnimationControllerModel>) {
+    let mut actions         = actions;
+
     // Setup: set 'no selected subeffect' when the runtime starts (in case it has some stale value in it)
     model.selection().selected_sub_effect.set(None);
+
+    // Create sub-controllers and initialise the UI
+    let ui                  = animation_sidebar_ui(&model, anim_model.clone());
+    actions.send(ControllerAction::SetUi(ui.into())).await.ok();
 
     // Generate some events from the model: we need to know when the canvas is updated or the selection is changed to update the selected sub-effect
     let canvas_updated      = follow(model.frame_update_count().clone()).map(|_| AnimationAction::CanvasUpdated);
@@ -453,11 +459,10 @@ pub fn animation_sidebar_panel<Anim: 'static+EditableAnimation>(model: &Arc<FloM
         add_popup_open:                 bind(false)
     });
 
-    let ui                  = animation_sidebar_ui(model, animation_model.clone());
     let model               = model.clone();
     let anim_model_clone    = animation_model.clone();
-    let controller          = ImmediateController::with_ui(ui,
-        move |events, actions, resources| run_animation_sidebar_panel(events, actions, resources, model.clone(), anim_model_clone.clone()));
+    let controller          = ImmediateController::empty(move |events, actions, resources| 
+        run_animation_sidebar_panel(events, actions, resources, model.clone(), anim_model_clone.clone()));
 
     // The panel is 'active' if there is one or more elements selected
     let is_active           = computed(move || animation_model.selected_animation_elements.get().len() > 0);
