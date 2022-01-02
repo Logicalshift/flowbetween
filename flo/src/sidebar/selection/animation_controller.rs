@@ -329,6 +329,31 @@ fn refresh_selected_sub_effect<Anim: 'static+EditableAnimation>(model: &Arc<FloM
 }
 
 ///
+/// Creates a binding of the list of effects for the currently selected animation element
+///
+fn effects_list(selected_animation_elements: &BindRef<Vec<SelectedAnimationElement>>) -> BindRef<Vec<(ElementId, Arc<SubEffectDescription>)>> {
+    let selected_animation_elements = selected_animation_elements.clone();
+
+    computed(move || {
+        let selected_animation_elements = selected_animation_elements.get();
+
+        if selected_animation_elements.len() == 1 {
+            // When there's only one element selected, we generate a list of sub-effects that the user can choose between
+            let element_id  = selected_animation_elements[0].id();
+            let sub_effects = selected_animation_elements[0].effect().sub_effects();
+
+            sub_effects.into_iter()
+                .map(|effect| (element_id, Arc::new(effect)))
+                .collect()
+        } else {
+            // For 0 or >1 element, there are no subeffects available
+            vec![]
+        }
+    })
+    .into()
+}
+
+///
 /// Runs the animation sidebar panel
 ///
 async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: ControllerEventStream, _actions: mpsc::Sender<ControllerAction>, _resources: ControllerResources, model: Arc<FloModel<Anim>>, anim_model: Arc<AnimationControllerModel>) {
@@ -381,31 +406,6 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
             },
         }
     }
-}
-
-///
-/// Creates a binding of the list of effects for the currently selected animation element
-///
-fn effects_list(selected_animation_elements: &BindRef<Vec<SelectedAnimationElement>>) -> BindRef<Vec<(ElementId, Arc<SubEffectDescription>)>> {
-    let selected_animation_elements = selected_animation_elements.clone();
-
-    computed(move || {
-        let selected_animation_elements = selected_animation_elements.get();
-
-        if selected_animation_elements.len() == 1 {
-            // When there's only one element selected, we generate a list of sub-effects that the user can choose between
-            let element_id  = selected_animation_elements[0].id();
-            let sub_effects = selected_animation_elements[0].effect().sub_effects();
-
-            sub_effects.into_iter()
-                .map(|effect| (element_id, Arc::new(effect)))
-                .collect()
-        } else {
-            // For 0 or >1 element, there are no subeffects available
-            vec![]
-        }
-    })
-    .into()
 }
 
 ///
