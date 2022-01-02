@@ -167,11 +167,12 @@ fn new_effect_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<A
         let title_controls      = vec![
             Control::container()
                 .with(Bounds::next_vert(16.0))
-                .with(ControlAttribute::Padding((8, 0), (8, 0)))
+                .with(ControlAttribute::Padding((8, 2), (8, 0)))
                 .with(vec![
                     Control::label()
                         .with(Bounds::fill_all())
-                        .with(Font::Size(11.0))
+                        .with(Font::Size(10.0))
+                        .with(TextAlign::Center)
                         .with(Font::Weight(FontWeight::Light))
                         .with("Add new effect:")
                 ]),
@@ -195,6 +196,7 @@ fn new_effect_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<A
                             Control::label()
                                 .with(Bounds::fill_all())
                                 .with(effect.name.as_str())
+                                .with(TextAlign::Left)
                                 .with((ActionTrigger::Click, effect.id.as_str()))
                         ]),
                     Control::empty()
