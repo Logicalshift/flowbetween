@@ -231,6 +231,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
                     Control::empty().with(Bounds { x1: Start, y1: Start, x2: Offset(1.0), y2: End }).with(Appearance::Background(CONTROL_BORDER)),
                     Control::container()
                         .with(Bounds::fill_horiz())
+                        .with((ActionTrigger::Click, "OpenSidebar"))
                         .with(ControlAttribute::Padding((1, 1), (1, 1)))
                         .with(vec![
                             Control::empty().with(Bounds { x1: Start, y1: Start, x2: End, y2: Stretch(0.5) }).with(PointerBehaviour::ClickThrough),
