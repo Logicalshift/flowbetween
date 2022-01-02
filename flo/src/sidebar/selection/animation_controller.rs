@@ -111,6 +111,15 @@ pub fn selected_animation_elements<Anim: 'static+EditableAnimation>(model: &Arc<
 }
 
 ///
+/// Creates the UI and controller that runs the 'new effect' popup
+///
+fn new_effect_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, anim_model: &Arc<AnimationControllerModel>) -> impl Controller {
+    PopupController::new(EmptyController, &anim_model.add_popup_open)
+        .with_direction(&PopupDirection::Below)
+        .with_size(&(200, 200))
+}
+
+///
 /// Creates the binding for the animation sidebar user interface
 ///
 fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, anim_model: Arc<AnimationControllerModel>) -> BindRef<Control> {
@@ -237,6 +246,7 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
                                         .with(Bounds::fill_all())
                                         .with(TextAlign::Center)
                                         .with("+")
+                                        .with_controller("NewEffect")
                                 ])
                                 .with(Bounds::next_horiz(24.0)),
                             Control::button()
@@ -391,7 +401,10 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
     model.selection().selected_sub_effect.set(None);
 
     // Create sub-controllers and initialise the UI
+    let new_effect_ctrl     = new_effect_controller(&model, &anim_model);
     let ui                  = animation_sidebar_ui(&model, anim_model.clone());
+
+    actions.send(ControllerAction::AddSubController("NewEffect".to_string(), Arc::new(new_effect_ctrl))).await.ok();
     actions.send(ControllerAction::SetUi(ui.into())).await.ok();
 
     // Generate some events from the model: we need to know when the canvas is updated or the selection is changed to update the selected sub-effect
