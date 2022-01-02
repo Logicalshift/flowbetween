@@ -221,10 +221,25 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
                     Control::container()
                         .with(Hint::Class("button-group".to_string()))
                         .with(Bounds::next_horiz(22.0*4.0 + 4.0))
+                        .with(Font::Size(13.0))
+                        .with(Font::Weight(FontWeight::ExtraBold))
                         .with(vec![
                             Control::button()
+                                .with((ActionTrigger::Click, "OpenNewEffectPopup"))
+                                .with(vec![
+                                    Control::label()
+                                        .with(Bounds::fill_all())
+                                        .with(TextAlign::Center)
+                                        .with("+")
+                                ])
                                 .with(Bounds::next_horiz(24.0)),
                             Control::button()
+                                .with(vec![
+                                    Control::label()
+                                        .with(Bounds::fill_all())
+                                        .with(TextAlign::Center)
+                                        .with("-")
+                                ])
                                 .with(Bounds::next_horiz(22.0)),
                             Control::button()
                                 .with(Bounds::next_horiz(22.0)),
