@@ -168,10 +168,11 @@ fn new_effect_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<A
             Control::container()
                 .with(Bounds::next_vert(16.0))
                 .with(ControlAttribute::Padding((8, 2), (8, 0)))
+                .with(Font::Size(11.0))
                 .with(vec![
                     Control::label()
                         .with(Bounds::fill_all())
-                        .with(Font::Size(10.0))
+                        .with(Font::Size(11.0))
                         .with(TextAlign::Center)
                         .with(Font::Weight(FontWeight::Light))
                         .with("Add new effect:")
@@ -210,13 +211,19 @@ fn new_effect_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<A
             .collect::<Vec<_>>();
 
         // Put into a scrolling container
-        Control::scrolling_container()
+        Control::container()
+            .with(Appearance::Background(CONTROL_BORDER))
+            .with(ControlAttribute::Padding((1, 1), (1, 1)))
             .with(Bounds::fill_all())
-            .with(Font::Size(13.0))
-            .with(Font::Weight(FontWeight::Normal))
-            .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Never))
-            .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
-            .with(effect_controls)
+            .with(vec![
+                Control::scrolling_container()
+                    .with(Bounds::fill_all())
+                    .with(Font::Size(13.0))
+                    .with(Font::Weight(FontWeight::Normal))
+                    .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Never))
+                    .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
+                    .with(effect_controls)
+            ])
     });
 
     // Create a controller to add the effects when necessary (just waiting for the click events, which have the effect ID as a parameter)
