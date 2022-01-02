@@ -1,5 +1,7 @@
 use super::super::*;
 
+use futures::future::{BoxFuture};
+
 use flo_binding::*;
 use std::sync::*;
 
@@ -168,4 +170,10 @@ impl<ContentController: Controller> Controller for PopupController<ContentContro
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> {
         self.content_controller.get_canvas_resources()
     }
+
+    fn runtime(&self) -> Option<BoxFuture<'static, ()>> {
+        self.content_controller.runtime()
+    }
+
+    fn tick(&self) { self.content_controller.tick() }
 }

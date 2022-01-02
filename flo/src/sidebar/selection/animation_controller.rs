@@ -237,8 +237,6 @@ fn new_effect_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<A
                 while let Some(event) = events.next().await {
                     match event {
                         ControllerEvent::Action(name, _) => {
-                            println!("{}", name);
-
                             // The event name should match the effect ID
                             let available_effects   = available_effects.get();
                             let clicked_effect      = available_effects.iter().filter(|effect| effect.id.as_str() == name.as_str()).nth(0);
