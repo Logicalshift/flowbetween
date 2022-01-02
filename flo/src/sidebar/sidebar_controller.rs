@@ -153,8 +153,8 @@ fn sidebar_ui(panels: Vec<&SidebarPanel>, open_panels: BindRef<Vec<String>>, tot
                 x2: End,
                 y2: End
             })
+            .with((ActionTrigger::Click, "BackgroundClick"))
             .with((ActionTrigger::Resize, SidebarAction::Resize.as_ref()))
-            .with(PointerBehaviour::ClickThrough)
             .with(panel_controls)
     });
 
