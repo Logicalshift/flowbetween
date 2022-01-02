@@ -26,6 +26,9 @@ struct AnimationControllerModel {
 
     /// The list of effects that can be selected between (the selected effect is in the main selection model)
     effects: BindRef<Vec<(ElementId, Arc<SubEffectDescription>)>>,
+
+    /// Binding used to open the 'add new effect' popup
+    add_popup_open: Binding<bool>,
 }
 
 ///
@@ -38,6 +41,9 @@ enum AnimationAction {
 
     /// Selects the sub-effect at the specified index
     SelectEffect(usize),
+
+    /// User clicked the 'add effect' button
+    OpenNewEffectPopup,
 
     /// The set of selected elements has changed
     SelectionChanged,
@@ -283,8 +289,9 @@ impl AnimationAction {
     pub fn from_controller_event(event: &ControllerEvent) -> AnimationAction {
         match event {
             ControllerEvent::Action(action_name, _param) => {
+
                 if action_name.starts_with("SetBase ") {
-                    // Parse the animation type
+                    // These are the set of actions for selecting the base animation type
                     let base_animation_type = action_name["SetBase ".len()..].to_string();
                     let base_animation_type = BaseAnimationType::from_str(&base_animation_type);
 
@@ -294,15 +301,21 @@ impl AnimationAction {
                     } else {
                         AnimationAction::Unknown(action_name.clone())
                     }
+
                 } else if action_name.starts_with("SelectEffect ") {
-                    // Parse the index
+                    // These are the set of actions for selecting one of the effects for the current animation selection
                     let effect_index = action_name["SelectEffect ".len()..].to_string();
                     let effect_index = usize::from_str(&effect_index);
 
                     effect_index.map(|idx| AnimationAction::SelectEffect(idx)).unwrap_or_else(|_| AnimationAction::Unknown(action_name.clone()))
                 } else {
-                    // Action name doesn't match any we know
-                    AnimationAction::Unknown(action_name.clone())
+                    // Match against single action names
+                    match action_name.as_str() {
+                        "OpenNewEffectPopup" => AnimationAction::OpenNewEffectPopup,
+
+                        // Action name doesn't match any we know
+                        _ => AnimationAction::Unknown(action_name.clone())
+                    }
                 }
             }
         }
@@ -414,6 +427,11 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
                 model.selection().selected_sub_effect.set(selected_effect);
             }
 
+            AnimationAction::OpenNewEffectPopup => {
+                // This just opens the 'add effect' popup
+                anim_model.add_popup_open.set(true);
+            }
+
             AnimationAction::SelectionChanged |
             AnimationAction::CanvasUpdated => {
                 // The selected sub-effect may no longer be available or may have an out-of-date description
@@ -432,6 +450,7 @@ pub fn animation_sidebar_panel<Anim: 'static+EditableAnimation>(model: &Arc<FloM
     let animation_model     = Arc::new(AnimationControllerModel {
         selected_animation_elements:    selected_animation_elements,
         effects:                        effects,
+        add_popup_open:                 bind(false)
     });
 
     let ui                  = animation_sidebar_ui(model, animation_model.clone());
