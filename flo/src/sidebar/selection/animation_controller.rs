@@ -12,10 +12,27 @@ use futures::prelude::*;
 use futures::stream;
 use futures::channel::mpsc;
 use strum::{IntoEnumIterator};
+use uuid::*;
+use smallvec::*;
 
 use std::ops::{Deref};
 use std::str::{FromStr};
 use std::sync::*;
+
+///
+/// Describes an effect that can be added to an existing effect
+///
+#[derive(Clone, Debug, PartialEq)]
+struct AvailableEffect {
+    /// The ID of this effect (a unique string)
+    id: String,
+
+    /// The name of this effect
+    name: String,
+
+    /// The sequence of element edits required to add this effect to an existing animation element
+    create: SmallVec<[ElementEdit; 2]>
+}
 
 ///
 /// Bindings used within the animation controller
@@ -29,6 +46,9 @@ struct AnimationControllerModel {
 
     /// Binding used to open the 'add new effect' popup
     add_popup_open: Binding<bool>,
+
+    /// A list of effects that can be added to the current animation element
+    available_effects: BindRef<Vec<AvailableEffect>>,
 }
 
 ///
@@ -69,6 +89,31 @@ impl Deref for SelectedAnimationElement {
     type Target = AnimationElement;
 
     fn deref(&self) -> &AnimationElement { &*self.0 }
+}
+
+impl AvailableEffect {
+    ///
+    /// Creates a new available effect with a unique ID
+    ///
+    pub fn new(name: &str, create: SmallVec<[ElementEdit; 2]>) -> AvailableEffect {
+        let id = Uuid::new_v4().to_simple().to_string();
+
+        AvailableEffect {
+            id:     id,
+            name:   name.to_string(),
+            create: create
+        }
+    }
+}
+
+///
+/// The default list of effects that can be added to an animation
+///
+fn default_effects() -> Vec<AvailableEffect> {
+    vec![
+        AvailableEffect::new("Repeat",      smallvec![ElementEdit::AddAnimationEffect(SubEffectType::Repeat)]),
+        AvailableEffect::new("Time Curve",  smallvec![ElementEdit::AddAnimationEffect(SubEffectType::TimeCurve)]),
+    ]
 }
 
 ///
@@ -114,9 +159,110 @@ pub fn selected_animation_elements<Anim: 'static+EditableAnimation>(model: &Arc<
 /// Creates the UI and controller that runs the 'new effect' popup
 ///
 fn new_effect_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<Anim>>, anim_model: &Arc<AnimationControllerModel>) -> impl Controller {
-    PopupController::new(EmptyController, &anim_model.add_popup_open)
+    let effect_height       = 20.0;
+
+    // UI to display the available effects
+    let available_effects   = anim_model.available_effects.clone();
+    let new_effects_ui      = computed(move || {
+        let title_controls      = vec![
+            Control::container()
+                .with(Bounds::next_vert(16.0))
+                .with(ControlAttribute::Padding((8, 0), (8, 0)))
+                .with(vec![
+                    Control::label()
+                        .with(Bounds::fill_all())
+                        .with(Font::Size(11.0))
+                        .with(Font::Weight(FontWeight::Light))
+                        .with("Add new effect:")
+                ]),
+            Control::empty()
+                .with(Bounds::next_vert(4.0)),
+            Control::empty()
+                .with(Bounds::next_vert(1.0))
+                .with(Appearance::Background(CONTROL_BORDER)),
+        ];
+
+        // Create a list of controls for selecting an effect
+        let available_effects   = available_effects.get();
+        let effect_controls     = available_effects.into_iter()
+            .flat_map(|effect| {
+                vec![
+                    Control::container()
+                        .with(Bounds::next_vert(effect_height))
+                        .with(ControlAttribute::Padding((8, 0), (8, 0)))
+                        .with((ActionTrigger::Click, effect.id.as_str()))
+                        .with(vec![
+                            Control::label()
+                                .with(Bounds::fill_all())
+                                .with(effect.name.as_str())
+                                .with((ActionTrigger::Click, effect.id.as_str()))
+                        ]),
+                    Control::empty()
+                        .with(Bounds::next_vert(1.0))
+                        .with(Appearance::Background(CONTROL_BORDER)),
+                ]
+            });
+
+        let effect_controls     = title_controls.into_iter()
+            .chain(effect_controls)
+            .collect::<Vec<_>>();
+
+        // Put into a scrolling container
+        Control::scrolling_container()
+            .with(Bounds::fill_all())
+            .with(Font::Size(13.0))
+            .with(Font::Weight(FontWeight::Normal))
+            .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Never))
+            .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
+            .with(effect_controls)
+    });
+
+    // Create a controller to add the effects when necessary (just waiting for the click events, which have the effect ID as a parameter)
+    let model                           = model.clone();
+    let available_effects               = anim_model.available_effects.clone();
+    let add_popup_open                  = anim_model.add_popup_open.clone();
+    let selected_animation_elements     = anim_model.selected_animation_elements.clone();
+
+    let effect_controller               = ImmediateController::with_ui(new_effects_ui,
+        move |events, _actions, _resources| {
+            // Set up for running the event loop
+            let mut events                      = events;
+            let model                           = model.clone();
+            let add_popup_open                  = add_popup_open.clone();
+            let available_effects               = available_effects.clone();
+            let selected_animation_elements     = selected_animation_elements.clone();
+
+            // Run the event loop and wait until we get a click on a known event
+            async move {
+                while let Some(event) = events.next().await {
+                    match event {
+                        ControllerEvent::Action(name, _) => {
+                            println!("{}", name);
+
+                            // The event name should match the effect ID
+                            let available_effects   = available_effects.get();
+                            let clicked_effect      = available_effects.iter().filter(|effect| effect.id.as_str() == name.as_str()).nth(0);
+
+                            if let Some(clicked_effect) = clicked_effect {
+                                // Add the effect to the animation
+                                let selected_elements = selected_animation_elements.get().into_iter().map(|elem| elem.id()).collect::<Vec<_>>();
+                                model.edit().publish(Arc::new(clicked_effect.create.iter()
+                                    .map(|edit| AnimationEdit::Element(selected_elements.clone(), edit.clone()))
+                                    .collect())).await;
+                                
+                                // Close the popup
+                                add_popup_open.set(false);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+    // Wrap in a popup controller
+    PopupController::new(effect_controller, &anim_model.add_popup_open)
         .with_direction(&PopupDirection::Below)
-        .with_size(&(200, 200))
+        .with_size(&(200, 250))
 }
 
 ///
@@ -469,7 +615,8 @@ pub fn animation_sidebar_panel<Anim: 'static+EditableAnimation>(model: &Arc<FloM
     let animation_model     = Arc::new(AnimationControllerModel {
         selected_animation_elements:    selected_animation_elements,
         effects:                        effects,
-        add_popup_open:                 bind(false)
+        add_popup_open:                 bind(false),
+        available_effects:              bind(default_effects()).into(),
     });
 
     let model               = model.clone();
