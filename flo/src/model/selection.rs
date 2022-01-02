@@ -24,7 +24,7 @@ pub struct SelectionModel<Anim: Animation> {
     pub selected_path: Binding<Option<Arc<Path>>>,
 
     /// If the selected elements
-    pub selected_sub_effect: Binding<Option<(ElementId, SubEffectDescription)>>,
+    pub selected_sub_effect: Binding<Option<(ElementId, Arc<SubEffectDescription>)>>,
 
     /// The binding for the selected element (used when updating)
     selected_elements_binding: Binding<Arc<HashSet<ElementId>>>,

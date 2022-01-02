@@ -36,6 +36,9 @@ enum AnimationAction {
     /// Sets the base animation type
     SetBaseAnimationType(BaseAnimationType),
 
+    /// Selects the sub-effect at the specified index
+    SelectEffect(usize),
+
     /// The set of selected elements has changed
     SelectionChanged,
 
@@ -176,7 +179,7 @@ fn animation_sidebar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<An
                     let background  = if is_selected { SELECTED_BACKGROUND } else { background };
 
                     let title       = effect.effect_type().description().to_string();
-                    let action_name = format!("SelectEffect{}", idx);
+                    let action_name = format!("SelectEffect {}", idx);
 
                     vec![
                         Control::container()
@@ -276,6 +279,12 @@ impl AnimationAction {
                     } else {
                         AnimationAction::Unknown(action_name.clone())
                     }
+                } else if action_name.starts_with("SelectEffect ") {
+                    // Parse the index
+                    let effect_index = action_name["SelectEffect ".len()..].to_string();
+                    let effect_index = usize::from_str(&effect_index);
+
+                    effect_index.map(|idx| AnimationAction::SelectEffect(idx)).unwrap_or_else(|_| AnimationAction::Unknown(action_name.clone()))
                 } else {
                     // Action name doesn't match any we know
                     AnimationAction::Unknown(action_name.clone())
@@ -302,6 +311,7 @@ fn refresh_selected_sub_effect<Anim: 'static+EditableAnimation>(model: &Arc<FloM
         let active_effects      = animation_element.effect().sub_effects();
         let expected_address    = subeffect_description.address();
         let selected_effect     = active_effects.into_iter().filter(|effect| &effect.address() == &expected_address).nth(0);
+        let selected_effect     = selected_effect.map(|effect| Arc::new(effect));
 
         if let Some(selected_effect) = selected_effect {
             if selected_effect.effect_type() != subeffect_description.effect_type() {
@@ -350,6 +360,18 @@ async fn run_animation_sidebar_panel<Anim: 'static+EditableAnimation>(events: Co
                 let mut editor  = model.edit();
                 editor.publish(Arc::new(edits)).await;
                 editor.when_empty().await;
+            }
+
+            AnimationAction::SelectEffect(effect_idx) => {
+                // Change the selected effect in the main animation
+                let effects         = anim_model.effects.get();
+                let selected_effect = if effect_idx < effects.len() {
+                    Some(effects[effect_idx].clone())
+                } else {
+                    None
+                };
+
+                model.selection().selected_sub_effect.set(selected_effect);
             }
 
             AnimationAction::SelectionChanged |
