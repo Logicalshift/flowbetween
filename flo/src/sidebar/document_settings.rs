@@ -108,7 +108,7 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
                             .with(vec![
                                 Control::label()
                                     .with(TextAlign::Right)
-                                    .with("FPS:")
+                                    .with("Frame rate:")
                                     .with(Bounds::next_horiz(label_width)),
                                 Control::empty().with(Bounds::next_horiz(label_gap)),
                                 Control::text_box()
