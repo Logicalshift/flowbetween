@@ -13,7 +13,7 @@ use std::sync::*;
 ///
 /// This is used to set things like the size of the document and the frame rate
 ///
-pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(model: &Arc<FloModel<Anim>>) -> impl Controller {
+pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(model: &Arc<FloModel<Anim>>, height: Binding<f64>) -> impl Controller {
     // Sizes of various things
     let label_width     = 72.0;
     let label_height    = 26.0;
@@ -26,6 +26,7 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
 
     ImmediateController::empty(move |events, actions, _resources| {
         let model       = Arc::clone(&model);
+        let height      = height.clone();
         let mut actions = actions;
 
         async move {
@@ -93,6 +94,7 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
             });
 
             actions.send(ControllerAction::SetUi(ui.into())).await.ok();
+            height.set(3.0 * (label_height as f64) + 2.0 * (vert_padding as f64));
 
             // Run the events
             let mut events = events;
