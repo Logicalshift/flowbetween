@@ -3,6 +3,8 @@ use super::layer_edit::*;
 use super::motion_edit::*;
 use super::element_edit::*;
 
+use std::time::{Duration};
+
 ///
 /// Represents an edit to an animation object
 ///
@@ -20,6 +22,12 @@ pub enum AnimationEdit {
 
     /// Sets the canvas size for this animation
     SetSize(f64, f64),
+
+    /// Sets the lenght of a frame in this animation
+    SetFrameLength(Duration),
+
+    /// Sets the overall length of this animation
+    SetLength(Duration),
 
     /// Adds a new layer and assigns it the specified ID
     /// Has no effect if a layer with that ID already exists

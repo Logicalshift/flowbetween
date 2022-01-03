@@ -417,6 +417,8 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
             match edit {
                 AnimationEdit::Motion(_element, _motion)        => { /* Motions are deprecated */ }
                 AnimationEdit::SetSize(_w, _h)                  => { self.model.timeline().invalidate_canvas(); }
+                AnimationEdit::SetFrameLength(_length)          => { self.model.timeline().invalidate_canvas(); }
+                AnimationEdit::SetLength(_length)               => { }
                 AnimationEdit::AddNewLayer(_layer_id)           => { }
                 AnimationEdit::RemoveLayer(_layer_id)           => { }
 

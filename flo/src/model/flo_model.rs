@@ -130,6 +130,16 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
                     advance_edit_counter = true;
                 },
 
+                AnimationEdit::SetFrameLength(length) => {
+                    timeline.frame_duration.set(*length);
+                    advance_edit_counter = true;
+                }
+
+                AnimationEdit::SetLength(length) => { 
+                    timeline.duration.set(*length);
+                    advance_edit_counter = true;
+                }
+
                 AddNewLayer(_)              |
                 RemoveLayer(_)              |
                 Element(_, _)               |

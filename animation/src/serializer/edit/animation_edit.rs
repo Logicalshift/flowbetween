@@ -1,6 +1,8 @@
 use super::super::source::*;
 use super::super::target::*;
-use super::super::super::traits::*;
+use crate::traits::*;
+
+use std::time::{Duration};
 
 impl AnimationEdit {
     ///
@@ -14,6 +16,8 @@ impl AnimationEdit {
             Element(elements, edit)     => { data.write_chr('E'); data.write_usize(elements.len()); elements.iter().for_each(|elem| elem.serialize(data)); edit.serialize(data); },
             Motion(element, edit)       => { data.write_chr('M'); element.serialize(data); edit.serialize(data); },
             SetSize(width, height)      => { data.write_chr('S'); data.write_f64(*width); data.write_f64(*height); },
+            SetFrameLength(len)         => { data.write_chr('f'); data.write_small_u64(len.as_nanos() as _); }
+            SetLength(len)              => { data.write_chr('l'); data.write_duration(*len); },
             AddNewLayer(layer_id)       => { data.write_chr('+'); data.write_small_u64(*layer_id); },
             RemoveLayer(layer_id)       => { data.write_chr('-'); data.write_small_u64(*layer_id); }
         }
@@ -27,6 +31,8 @@ impl AnimationEdit {
             'L' => { let layer_id = data.next_small_u64(); LayerEdit::deserialize(data).map(move |edit| AnimationEdit::Layer(layer_id, edit)) }
             'M' => { ElementId::deserialize(data).and_then(|elem| MotionEdit::deserialize(data).map(move |edit| AnimationEdit::Motion(elem, edit))) }
             'S' => { Some(AnimationEdit::SetSize(data.next_f64(), data.next_f64())) }
+            'f' => { Some(AnimationEdit::SetFrameLength(Duration::from_nanos(data.next_small_u64() as _))) }
+            'l' => { Some(AnimationEdit::SetLength(data.next_duration())) }
             '+' => { Some(AnimationEdit::AddNewLayer(data.next_small_u64())) }
             '-' => { Some(AnimationEdit::RemoveLayer(data.next_small_u64())) }
 
@@ -99,6 +105,22 @@ mod test {
         AnimationEdit::SetSize(1024.0, 768.0).serialize(&mut encoded);
 
         assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(AnimationEdit::SetSize(1024.0, 768.0)));
+    }
+
+    #[test]
+    fn set_frame_length() {
+        let mut encoded = String::new();
+        AnimationEdit::SetFrameLength(Duration::from_nanos(1_000_000_000 / 24)).serialize(&mut encoded);
+
+        assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(AnimationEdit::SetFrameLength(Duration::from_nanos(1_000_000_000 / 24))));
+    }
+
+    #[test]
+    fn set_length() {
+        let mut encoded = String::new();
+        AnimationEdit::SetLength(Duration::from_secs(80)).serialize(&mut encoded);
+
+        assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(AnimationEdit::SetLength(Duration::from_secs(80))));
     }
 
     #[test]

@@ -216,6 +216,8 @@ impl StreamAnimationCore {
                     Element(element_ids, element_edit)      => { self.element_edit(element_ids, element_edit).await; }
                     Motion(motion_id, motion_edit)          => { self.motion_edit(*motion_id, motion_edit).await; }
                     SetSize(width, height)                  => { self.set_size(*width, *height).await }
+                    SetFrameLength(length)                  => { self.set_frame_length(*length).await }
+                    SetLength(length)                       => { self.set_length(*length).await }
                     AddNewLayer(layer_id)                   => { self.add_new_layer(*layer_id).await; }
                     RemoveLayer(layer_id)                   => { self.remove_layer(*layer_id).await; }
                 }
@@ -335,6 +337,58 @@ impl StreamAnimationCore {
 
             // Update the size
             properties.size     = (width, height);
+
+            // Send the new file size to the storage
+            let mut new_properties = String::new();
+            properties.serialize(&mut new_properties);
+            self.request_one(StorageCommand::WriteAnimationProperties(new_properties)).await;
+        }
+    }
+
+    ///
+    /// Sets the length of a frame in the animation
+    ///
+    pub fn set_frame_length<'a>(&'a mut self, frame_length: Duration) -> impl 'a+Future<Output=()> {
+        async move {
+            // Get the current animation properties
+            let properties          = self.request_one(StorageCommand::ReadAnimationProperties).await;
+            let properties          = if let Some(StorageResponse::AnimationProperties(properties)) = properties {
+                FileProperties::deserialize(&mut properties.chars())
+            } else {
+                None
+            };
+            let mut properties      = properties.unwrap_or_else(|| FileProperties::default());
+
+            self.cached_layers.clear();
+
+            // Update the frame length
+            properties.frame_length = frame_length;
+
+            // Send the new file size to the storage
+            let mut new_properties = String::new();
+            properties.serialize(&mut new_properties);
+            self.request_one(StorageCommand::WriteAnimationProperties(new_properties)).await;
+        }
+    }
+
+    ///
+    /// Sets the length of the animation as a whole
+    ///
+    pub fn set_length<'a>(&'a mut self, length: Duration) -> impl 'a+Future<Output=()> {
+        async move {
+            // Get the current animation properties
+            let properties          = self.request_one(StorageCommand::ReadAnimationProperties).await;
+            let properties          = if let Some(StorageResponse::AnimationProperties(properties)) = properties {
+                FileProperties::deserialize(&mut properties.chars())
+            } else {
+                None
+            };
+            let mut properties      = properties.unwrap_or_else(|| FileProperties::default());
+
+            self.cached_layers.clear();
+
+            // Update the length of the animation
+            properties.duration     = length;
 
             // Send the new file size to the storage
             let mut new_properties = String::new();
