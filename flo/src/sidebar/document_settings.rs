@@ -182,7 +182,17 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
                                     }
                                 }
                             },
-                            "SetFps"        => { },
+                            "SetFps"        => {
+                                if let Ok(new_fps) = u64::from_str_radix(new_value.as_str(), 10) {
+                                    if new_fps <= max_fps && new_fps >= min_fps {
+                                        // Update the frame rate in the model
+                                        let frame_duration = 1_000_000_000 / new_fps;
+                                        let frame_duration = Duration::from_nanos(frame_duration as _);
+
+                                        model.edit().publish(Arc::new(vec![AnimationEdit::SetFrameLength(frame_duration)])).await;
+                                    }
+                                }
+                            },
                             "SetDuration"   => { }
 
                             _ => {}
