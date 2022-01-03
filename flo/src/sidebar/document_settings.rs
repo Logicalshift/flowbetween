@@ -35,13 +35,16 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
     let text_width      = 64.0;
     let vert_padding    = 12.0;
 
+    let length_units    = bind(TimeUnits::Seconds);
+
     // Create the controller to run the document settings panel
     let model           = Arc::clone(model);
 
     ImmediateController::empty(move |events, actions, _resources| {
-        let model       = Arc::clone(&model);
-        let height      = height.clone();
-        let mut actions = actions;
+        let model           = Arc::clone(&model);
+        let height          = height.clone();
+        let length_units    = length_units.clone();
+        let mut actions     = actions;
 
         async move {
             // Set up the viewmodel bindings
@@ -50,8 +53,10 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
             let size            = model.size.clone();
             let frame_duration  = model.timeline().frame_duration.clone();
             let duration        = model.timeline().duration.clone();
+            let length_units_2  = length_units.clone();
             let ui              = computed(move || {
                 // Get the values for the labels
+                let length_units        = length_units_2.get();
                 let (size_x, size_y)    = size.get();
                 let frame_duration      = frame_duration.get();
                 let duration            = duration.get();
@@ -62,7 +67,7 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
                 let fps                 = 1_000_000_000.0 / (frame_duration.as_nanos() as f64);
                 let fps                 = fps.floor() as u64;
                 let fps                 = format!("{}", fps);
-                let duration            = (duration.as_nanos() as f64) / 1_000_000_000.0;
+                let duration            = length_units.from_duration(duration, frame_duration);
                 let duration            = format!("{:.2}", duration);
 
                 Control::container()
@@ -139,11 +144,11 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
                                     .with(vec![
                                         Control::combo_box()
                                             .with(Bounds::fill_all())
-                                            .with("seconds")
+                                            .with(length_units.description())
                                             .with(vec![
-                                                Control::label().with("frames"),
-                                                Control::label().with("seconds"),
-                                                Control::label().with("minutes"),
+                                                Control::label().with("frames").with((ActionTrigger::Click, "LengthFrames")),
+                                                Control::label().with("seconds").with((ActionTrigger::Click, "LengthSeconds")),
+                                                Control::label().with("minutes").with((ActionTrigger::Click, "LengthMinutes")),
                                             ])
                                     ])
                             ]),
@@ -196,6 +201,16 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
                             "SetDuration"   => { }
 
                             _ => {}
+                        }
+                    },
+
+                    ControllerEvent::Action(name, _) => {
+                        match name.as_str() {
+                            "LengthFrames"  => { length_units.set(TimeUnits::Frames); }
+                            "LengthSeconds" => { length_units.set(TimeUnits::Seconds); }
+                            "LengthMinutes" => { length_units.set(TimeUnits::Minutes); }
+
+                            _               => { }
                         }
                     }
 
