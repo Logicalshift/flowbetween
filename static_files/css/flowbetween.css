@@ -81,6 +81,11 @@ flo-button flo-label {
     pointer-events: none;
 }
 
+flo-button flo-popup,
+flo-button flo-popup * {
+    pointer-events: auto;
+}
+
 flo-label {
     display:                flex;
     flex-direction:         row;
