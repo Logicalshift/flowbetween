@@ -47,6 +47,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
 
         // Apply some extra default behaviours
         let model_arc   = Arc::new(model.clone());
+        model.sidebar().set_document_panels(document_panels(&model_arc));
         model.sidebar().set_selection_panels(selection_panels(&model_arc));
 
         model

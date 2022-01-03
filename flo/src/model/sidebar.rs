@@ -107,11 +107,6 @@ impl SidebarModel {
         let selection_panels                    = RopeBinding::from_stream(panel_stream);
         let tool_panels                         = RopeBindingMut::new();
 
-        let document_panel      = SidebarPanel::with_title("Document");
-        let another_panel       = SidebarPanel::with_title("AnotherPanel");
-
-        document_panels.replace(0..0, vec![document_panel, another_panel]);
-
         // Combine the panels into a single list
         let panels              = selection_panels.chain(&document_panels).chain(&tool_panels);
         let open_sidebars       = bind(vec![]);
