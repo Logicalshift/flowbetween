@@ -8,6 +8,7 @@ use flo_binding::*;
 use flo_animation::*;
 
 use std::sync::*;
+use std::str::{FromStr};
 use std::time::{Duration};
 
 ///
@@ -198,7 +199,18 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
                                     }
                                 }
                             },
-                            "SetDuration"   => { }
+                            "SetDuration"   => {
+                                if let Ok(new_length) = f64::from_str(new_value.as_str()) {
+                                    let length_units    = length_units.get();
+                                    let frame_duration  = model.timeline().frame_duration.get();
+                                    let new_length      = length_units.to_duration(new_length, frame_duration);
+
+                                    if new_length <= max_length && new_length >= min_length {
+                                        // Update the length of the animation
+                                        model.edit().publish(Arc::new(vec![AnimationEdit::SetLength(new_length)])).await;
+                                    }
+                                }
+                            }
 
                             _ => {}
                         }
