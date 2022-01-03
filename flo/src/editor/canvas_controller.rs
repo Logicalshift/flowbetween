@@ -416,7 +416,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
         for edit in edits.iter() {
             match edit {
                 AnimationEdit::Motion(_element, _motion)        => { /* Motions are deprecated */ }
-                AnimationEdit::SetSize(_w, _h)                  => { }
+                AnimationEdit::SetSize(_w, _h)                  => { self.model.timeline().invalidate_canvas(); }
                 AnimationEdit::AddNewLayer(_layer_id)           => { }
                 AnimationEdit::RemoveLayer(_layer_id)           => { }
 
@@ -430,7 +430,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
                         LayerEdit::AddKeyFrame(_)                               => { true }
                         LayerEdit::RemoveKeyFrame(_)                            => { true },
                         LayerEdit::SetName(_)                                   => { false },
-                        LayerEdit::SetOrdering(_)                               => { false /* ... but whole canvas update */ }
+                        LayerEdit::SetOrdering(_)                               => { self.model.timeline().invalidate_canvas(); false /* ... but whole canvas update */ }
                     };
 
                     // Force the layer to update if necessary
