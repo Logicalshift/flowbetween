@@ -3,12 +3,14 @@ use crate::sidebar::panel::*;
 use crate::sidebar::panel_style::*;
 
 use flo_ui::*;
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 use flo_canvas_animation::description::*;
 
 use futures::prelude::*;
 
+use std::str::{FromStr};
 use std::sync::*;
 
 ///
@@ -146,7 +148,42 @@ pub fn animation_repeat_sidebar_panel<Anim: 'static+Animation+EditableAnimation>
 
             // Run the controller
             while let Some(event) = events.next().await {
+                match event {
+                    ControllerEvent::Action(name, ActionParameter::Value(PropertyValue::String(new_value))) => {
+                        if let ("SetRepeat", Ok(new_length), Some((element_id, subeffect))) = (name.as_str(), f64::from_str(&new_value), model.selection().selected_sub_effect.get()) {
+                            // Get the current selection from the model
+                            let frame_length    = model.timeline().frame_duration.get();
+                            let length_units    = length_units.get();
 
+                            let new_length      = length_units.to_duration(new_length, frame_length);
+
+                            // Update the effect (if it's actually a repeat effect)
+                            match subeffect.effect_description() {
+                                EffectDescription::Repeat(_, _)   => {
+                                    // Editing the repeat description will preserve the existing effect that it describes
+                                    let new_description = EffectDescription::Repeat(new_length, Box::new(EffectDescription::Sequence(vec![])));
+                                    model.edit().publish(Arc::new(vec![
+                                        AnimationEdit::Element(vec![element_id], ElementEdit::ReplaceAnimationEffect(subeffect.address(), new_description))
+                                    ])).await;
+                                }
+
+                                _ => { }
+                            }
+                        }
+                    }
+
+                    ControllerEvent::Action(name, _) => {
+                        match name.as_str() {
+                            "LengthFrames"              => { length_units.set(TimeUnits::Frames); }
+                            "LengthSeconds"             => { length_units.set(TimeUnits::Seconds); }
+                            "LengthMinutes"             => { length_units.set(TimeUnits::Minutes); }
+
+                            "RepeatAfterCurrentFrame"   => { }
+
+                            _ => { }
+                        }
+                    }
+                }
             }
         }
     });
