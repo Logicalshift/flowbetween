@@ -1,3 +1,4 @@
+use super::panel_style::*;
 use crate::model::*;
 
 use futures::prelude::*;
@@ -28,13 +29,6 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
     let min_height      = 1;
     let min_fps         = 1;
     let min_length      = Duration::from_millis(1);
-
-    // Sizes of various things
-    let label_width     = 72.0;
-    let label_height    = 26.0;
-    let label_gap       = 8.0;
-    let text_width      = 64.0;
-    let vert_padding    = 12.0;
 
     let length_units    = bind(TimeUnits::Seconds);
 
@@ -74,17 +68,17 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
                 Control::container()
                     .with(Bounds::fill_all())
                     .with(vec![
-                        Control::empty().with(Bounds::next_vert(vert_padding)),
+                        Control::empty().with(Bounds::next_vert(PANEL_VERT_PADDING)),
                         Control::container()
-                            .with(Bounds::next_vert(label_height))
+                            .with(Bounds::next_vert(PANEL_LABEL_HEIGHT))
                             .with(vec![
                                 Control::label()
                                     .with(TextAlign::Right)
                                     .with("Width:")
-                                    .with(Bounds::next_horiz(label_width)),
-                                Control::empty().with(Bounds::next_horiz(label_gap)),
+                                    .with(Bounds::next_horiz(PANEL_LABEL_WIDTH)),
+                                Control::empty().with(Bounds::next_horiz(PANEL_LABEL_GAP)),
                                 Control::text_box()
-                                    .with(Bounds::next_horiz(text_width))
+                                    .with(Bounds::next_horiz(PANEL_TEXT_WIDTH))
                                     .with((ActionTrigger::SetValue, "SetWidth"))
                                     .with(size_x),
                                 Control::empty().with(Bounds::next_horiz(2.0)),
@@ -93,15 +87,15 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
                                     .with("pixels")
                             ]),
                         Control::container()
-                            .with(Bounds::next_vert(label_height))
+                            .with(Bounds::next_vert(PANEL_LABEL_HEIGHT))
                             .with(vec![
                                 Control::label()
                                     .with(TextAlign::Right)
                                     .with("Height:")
-                                    .with(Bounds::next_horiz(label_width)),
-                                Control::empty().with(Bounds::next_horiz(label_gap)),
+                                    .with(Bounds::next_horiz(PANEL_LABEL_WIDTH)),
+                                Control::empty().with(Bounds::next_horiz(PANEL_LABEL_GAP)),
                                 Control::text_box()
-                                    .with(Bounds::next_horiz(text_width))
+                                    .with(Bounds::next_horiz(PANEL_TEXT_WIDTH))
                                     .with((ActionTrigger::SetValue, "SetHeight"))
                                     .with(size_y),
                                 Control::empty().with(Bounds::next_horiz(2.0)),
@@ -110,15 +104,15 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
                                     .with("pixels")
                             ]),
                         Control::container()
-                            .with(Bounds::next_vert(label_height))
+                            .with(Bounds::next_vert(PANEL_LABEL_HEIGHT))
                             .with(vec![
                                 Control::label()
                                     .with(TextAlign::Right)
                                     .with("Frame rate:")
-                                    .with(Bounds::next_horiz(label_width)),
-                                Control::empty().with(Bounds::next_horiz(label_gap)),
+                                    .with(Bounds::next_horiz(PANEL_LABEL_WIDTH)),
+                                Control::empty().with(Bounds::next_horiz(PANEL_LABEL_GAP)),
                                 Control::text_box()
-                                    .with(Bounds::next_horiz(text_width))
+                                    .with(Bounds::next_horiz(PANEL_TEXT_WIDTH))
                                     .with((ActionTrigger::SetValue, "SetFps"))
                                     .with(fps),
                                 Control::empty().with(Bounds::next_horiz(2.0)),
@@ -127,15 +121,15 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
                                     .with("frames/second")
                             ]),
                         Control::container()
-                            .with(Bounds::next_vert(label_height))
+                            .with(Bounds::next_vert(PANEL_LABEL_HEIGHT))
                             .with(vec![
                                 Control::label()
                                     .with(TextAlign::Right)
                                     .with("Length:")
-                                    .with(Bounds::next_horiz(label_width)),
-                                Control::empty().with(Bounds::next_horiz(label_gap)),
+                                    .with(Bounds::next_horiz(PANEL_LABEL_WIDTH)),
+                                Control::empty().with(Bounds::next_horiz(PANEL_LABEL_GAP)),
                                 Control::text_box()
-                                    .with(Bounds::next_horiz(text_width))
+                                    .with(Bounds::next_horiz(PANEL_TEXT_WIDTH))
                                     .with((ActionTrigger::SetValue, "SetDuration"))
                                     .with(duration),
                                 Control::empty().with(Bounds::next_horiz(2.0)),
@@ -153,12 +147,12 @@ pub fn document_settings_controller<Anim: 'static+Animation+EditableAnimation>(m
                                             ])
                                     ])
                             ]),
-                        Control::empty().with(Bounds::next_vert(vert_padding)),
+                        Control::empty().with(Bounds::next_vert(PANEL_VERT_PADDING)),
                     ])
             });
 
             actions.send(ControllerAction::SetUi(ui.into())).await.ok();
-            height.set(4.0 * (label_height as f64) + 2.0 * (vert_padding as f64));
+            height.set(4.0 * (PANEL_LABEL_HEIGHT as f64) + 2.0 * (PANEL_VERT_PADDING as f64));
 
             // Run the events
             let mut events = events;

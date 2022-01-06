@@ -4,6 +4,7 @@
 //!
 
 pub mod panel;
+mod panel_style;
 mod document_panels;
 mod document_settings;
 mod sidebar_controller;
