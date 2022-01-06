@@ -103,11 +103,12 @@ fn repeat_panel_ui<Anim: 'static+Animation+EditableAnimation>(model: &Arc<FloMod
                         .with(vec![
                             Control::button()
                                 .with(Bounds::fill_all())
+                                .with((ActionTrigger::Click, "RepeatAfterCurrentFrame"))
                                 .with(vec![
                                     Control::label()
                                         .with(Bounds::fill_all())
                                         .with(TextAlign::Center)
-                                        .with((ActionTrigger::SetValue, "RepeatAfterCurrentFrame"))
+                                        .with((ActionTrigger::Click, "RepeatAfterCurrentFrame"))
                                         .with("Repeat after current frame")
                                 ])
                         ]),
@@ -162,6 +163,7 @@ pub fn animation_repeat_sidebar_panel<Anim: 'static+Animation+EditableAnimation>
                                 EffectDescription::Repeat(_, _)   => {
                                     // Editing the repeat description will preserve the existing effect that it describes
                                     let new_description = EffectDescription::Repeat(new_length, Box::new(EffectDescription::Sequence(vec![])));
+
                                     model.edit().publish(Arc::new(vec![
                                         AnimationEdit::Element(vec![element_id], ElementEdit::ReplaceAnimationEffect(subeffect.address(), new_description))
                                     ])).await;
@@ -178,7 +180,29 @@ pub fn animation_repeat_sidebar_panel<Anim: 'static+Animation+EditableAnimation>
                             "LengthSeconds"             => { length_units.set(TimeUnits::Seconds); }
                             "LengthMinutes"             => { length_units.set(TimeUnits::Minutes); }
 
-                            "RepeatAfterCurrentFrame"   => { }
+                            "RepeatAfterCurrentFrame"   => { 
+                                // Get current frame and subeffect from the model
+                                let subeffect       = model.selection().selected_sub_effect.get();
+                                let current_time    = model.timeline().current_time.get();
+                                let keyframe_time   = model.frame().keyframe_time.get();
+                                let frame_length    = model.timeline().frame_duration.get();
+
+                                let keyframe_time   = keyframe_time.and_then(|keyframe_time| 
+                                    if keyframe_time > current_time { None } else { Some(keyframe_time) }
+                                );
+
+                                if let (Some(keyframe_time), Some((element_id, subeffect))) = (keyframe_time, subeffect) {
+                                    // Repeat length is based on the keyframe time and where we are relative to it
+                                    let new_length      = (current_time - keyframe_time) + frame_length;
+
+                                    // Update the selected effect
+                                    let new_description = EffectDescription::Repeat(new_length, Box::new(EffectDescription::Sequence(vec![])));
+
+                                    model.edit().publish(Arc::new(vec![
+                                        AnimationEdit::Element(vec![element_id], ElementEdit::ReplaceAnimationEffect(subeffect.address(), new_description))
+                                    ])).await;
+                                }
+                            }
 
                             _ => { }
                         }
