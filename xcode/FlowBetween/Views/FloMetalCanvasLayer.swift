@@ -100,8 +100,8 @@ class FloMetalCanvasLayer : CAMetalLayer {
             return
         }
         
-        // Fetch the next drawable
         if let flo_events = _events {
+            // Fetch the next drawable
             let drawable = nextDrawable()
             
             if var drawable = drawable {
@@ -121,7 +121,7 @@ class FloMetalCanvasLayer : CAMetalLayer {
     ///
     func setVisibleArea(bounds: ContainerBounds, resolution: CGFloat) {
         autoreleasepool {
-            _ready                  = true
+            _ready                  = bounds.totalSize.width > 0.0 && bounds.totalSize.height > 0.0
             _size                   = bounds.totalSize
             _visibleRect            = bounds.visibleRect
             
