@@ -10,10 +10,10 @@ include     = [ "Cargo.toml", "src/**/*", "style/**/*" ]
 
 [dependencies]
 flo_ui              = "0.2"
-flo_canvas          = "0.3"
+flo_canvas          = "0.4"
 flo_stream          = "0.7"
-flo_render          = { version = "0.3", features = [ "opengl" ] }
-flo_render_canvas   = "0.3"
+flo_render          = { version = "0.4", features = [ "opengl" ] }
+flo_render_canvas   = "0.4"
 desync              = "0.7"
 
 gtk                 = { version = "0.9", features = ["v3_20"] }

@@ -1140,8 +1140,8 @@ dependencies = [
 
 [[package]]
 name = "flo_canvas"
-version = "0.3.1"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e1bc89fc9f4796a40c9c3afbc702b520568e25c4"
+version = "0.4.0"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#51750c27a2afc049a35987dadca2ad73a8d48a32"
 dependencies = [
  "desync",
  "flo_curves",
@@ -1355,8 +1355,8 @@ dependencies = [
 
 [[package]]
 name = "flo_render"
-version = "0.3.1"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e1bc89fc9f4796a40c9c3afbc702b520568e25c4"
+version = "0.4.0"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#51750c27a2afc049a35987dadca2ad73a8d48a32"
 dependencies = [
  "bindgen",
  "cocoa 0.23.0",
@@ -1370,8 +1370,8 @@ dependencies = [
 
 [[package]]
 name = "flo_render_canvas"
-version = "0.3.1"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e1bc89fc9f4796a40c9c3afbc702b520568e25c4"
+version = "0.4.0"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#51750c27a2afc049a35987dadca2ad73a8d48a32"
 dependencies = [
  "desync",
  "flo_canvas",
@@ -1384,8 +1384,8 @@ dependencies = [
 
 [[package]]
 name = "flo_render_gl_offscreen"
-version = "0.3.1"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.3#e1bc89fc9f4796a40c9c3afbc702b520568e25c4"
+version = "0.4.0"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#51750c27a2afc049a35987dadca2ad73a8d48a32"
 dependencies = [
  "bindgen",
  "cgl",

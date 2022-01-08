@@ -9,7 +9,7 @@ description = "Implementation-free user interface description library"
 
 [dependencies]
 flo_binding     = "2.0"
-flo_canvas      = "0.3"
+flo_canvas      = "0.4"
 flo_stream      = "0.7"
 desync          = "0.7"
 
