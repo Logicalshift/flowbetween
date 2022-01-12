@@ -216,6 +216,7 @@ impl QuartzContext {
                 }
                 Layer(_layer_id)                                        => { /* Layers need to be implemented elsewhere */ }
                 LayerBlend(_layer_id, _blend)                           => { /* Layers need to be implemented elsewhere */ }
+                LayerAlpha(_layer_id, _alpha)                           => { /* Layers need to be implemented elsewhere */ }
                 StartFrame | ShowFrame | ResetFrame                     => { /* Frames are implemented elsewhere */}
 
                 FillGradient(gradient_id, p1, p2)                       => { unimplemented!() }

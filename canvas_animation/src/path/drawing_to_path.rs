@@ -126,6 +126,7 @@ impl LayerDrawingToPaths {
 
                     Layer(_layer_id)                                => { debug_assert!(false, "Animation layers should not have layer change operations sent to them"); },
                     LayerBlend(_layer_id, _layer_blend)             => { debug_assert!(false, "Animation layers should not have layer change operations sent to them"); },
+                    LayerAlpha(_layer_id, _layer_alpha)             => { debug_assert!(false, "Animation layers should not have layer change operations sent to them"); },
 
                     Store                                           => { debug_assert!(false, "Operation unsupported in an animation layer"); },
                     Restore                                         => { debug_assert!(false, "Operation unsupported in an animation layer"); },

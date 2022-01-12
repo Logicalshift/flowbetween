@@ -366,6 +366,7 @@ impl CairoDraw {
             PopState                                    => { self.ctxt.restore(); self.saved_states.pop().map(|state| state.restore(self)); },
             Layer(_layer_id)                            => { /* Layers require external support */ },
             LayerBlend(_layer_id, _mode)                => { /* Layers require external support */ },
+            LayerAlpha(_layer_id, _alpha)               => { /* Layers require external support */ }
 
             CanvasHeight(height)                        => {
                 let transform   = self.initial_matrix.clone();

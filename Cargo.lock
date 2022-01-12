@@ -511,16 +511,15 @@ checksum = "b41b7ea54a0c9d92199de89e20e58d49f02f8e699814ef3fdf266f6f748d15c7"
 
 [[package]]
 name = "bindgen"
-version = "0.54.0"
+version = "0.59.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66c0bb6167449588ff70803f4127f0684f9063097eca5016f37eb52b92c2cf36"
+checksum = "2bd2a9a458e8f4304c52c43ebb0cfbd520289f8379a52e329a38afda99bf8eb8"
 dependencies = [
  "bitflags",
  "cexpr",
- "cfg-if 0.1.10",
  "clang-sys",
  "clap",
- "env_logger",
+ "env_logger 0.9.0",
  "lazy_static",
  "lazycell",
  "log",
@@ -641,9 +640,9 @@ checksum = "22a9137b95ea06864e018375b72adfb7db6e6f68cfc8df5a04d00288050485ee"
 
 [[package]]
 name = "cexpr"
-version = "0.4.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4aedb84272dbe89af497cf81375129abda4fc0a9e7c5d317498c15cc30c0d27"
+checksum = "6fac387a98bb7c37292057cffc56d62ecb629900026402633ae9160df93a8766"
 dependencies = [
  "nom",
 ]
@@ -684,9 +683,9 @@ dependencies = [
 
 [[package]]
 name = "clang-sys"
-version = "0.29.3"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe6837df1d5cba2397b835c8530f51723267e16abbf83892e9e5af4f0e5dd10a"
+checksum = "fa66045b9cb23c2e9c1520732030608b02ee07e5cfaa5a521ec15ded7fa24c90"
 dependencies = [
  "glob",
  "libc 0.2.112",
@@ -734,9 +733,9 @@ dependencies = [
 
 [[package]]
 name = "cocoa"
-version = "0.23.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c54201c07dcf3a5ca33fececb8042aed767ee4bfd5a0235a8ceabcda956044b2"
+checksum = "6f63902e9223530efb4e26ccd0cf55ec30d592d3b42e21a28defc42a9586e832"
 dependencies = [
  "bitflags",
  "block",
@@ -1007,7 +1006,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44533bbbb3bb3c1fa17d9f2e4e38bbbaf8396ba82193c4cb1b6445d711445d36"
 dependencies = [
  "atty",
- "humantime",
+ "humantime 1.3.0",
+ "log",
+ "regex",
+ "termcolor",
+]
+
+[[package]]
+name = "env_logger"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b2cf0344971ee6c64c31be0d530793fba457d322dfec2810c453d0ef228f9c3"
+dependencies = [
+ "atty",
+ "humantime 2.1.0",
  "log",
  "regex",
  "termcolor",
@@ -1091,7 +1103,7 @@ dependencies = [
  "flo_canvas_animation",
  "flo_curves",
  "flo_rope",
- "flo_stream 0.7.1",
+ "flo_stream",
  "flo_ui",
  "flo_ui_files",
  "futures",
@@ -1113,7 +1125,7 @@ dependencies = [
  "flo_canvas_animation",
  "flo_curves",
  "flo_float_encoder",
- "flo_stream 0.7.1",
+ "flo_stream",
  "futures",
  "futures-timer",
  "itertools 0.9.0",
@@ -1141,11 +1153,11 @@ dependencies = [
 [[package]]
 name = "flo_canvas"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#51750c27a2afc049a35987dadca2ad73a8d48a32"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#316a4dc25721b87a0c85c224d60d40479e6851a7"
 dependencies = [
  "desync",
  "flo_curves",
- "flo_stream 0.6.0",
+ "flo_stream",
  "futures",
  "itertools 0.10.3",
  "rust-hsluv",
@@ -1175,7 +1187,7 @@ dependencies = [
 name = "flo_cocoa"
 version = "0.2.0"
 dependencies = [
- "env_logger",
+ "env_logger 0.7.1",
  "flo",
  "flo_animation",
  "flo_binding",
@@ -1200,7 +1212,7 @@ name = "flo_cocoa_pipe"
 version = "0.2.0"
 dependencies = [
  "flo_canvas",
- "flo_stream 0.7.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "itertools 0.9.0",
@@ -1222,7 +1234,7 @@ dependencies = [
  "flo_cocoa_pipe",
  "flo_render",
  "flo_render_canvas",
- "flo_stream 0.7.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "lazy_static",
@@ -1240,7 +1252,7 @@ dependencies = [
  "flo_canvas",
  "flo_curves",
  "flo_sqlite_storage",
- "flo_stream 0.7.1",
+ "flo_stream",
  "flo_ui_files",
  "futures",
  "itertools 0.9.0",
@@ -1282,7 +1294,7 @@ dependencies = [
  "flo_canvas",
  "flo_render",
  "flo_render_canvas",
- "flo_stream 0.7.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "gdk",
@@ -1307,7 +1319,7 @@ dependencies = [
  "flo_binding",
  "flo_canvas",
  "flo_logging",
- "flo_stream 0.7.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "futures-timer",
@@ -1334,7 +1346,7 @@ dependencies = [
  "flo_http_ui",
  "flo_logging",
  "flo_static_files",
- "flo_stream 0.7.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "lazy_static",
@@ -1347,7 +1359,7 @@ name = "flo_logging"
 version = "0.2.0"
 dependencies = [
  "desync",
- "flo_stream 0.7.1",
+ "flo_stream",
  "futures",
  "lazy_static",
  "log",
@@ -1356,10 +1368,10 @@ dependencies = [
 [[package]]
 name = "flo_render"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#51750c27a2afc049a35987dadca2ad73a8d48a32"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#316a4dc25721b87a0c85c224d60d40479e6851a7"
 dependencies = [
  "bindgen",
- "cocoa 0.23.0",
+ "cocoa 0.24.0",
  "core-foundation 0.9.2",
  "flo_canvas",
  "flo_render_gl_offscreen",
@@ -1371,12 +1383,12 @@ dependencies = [
 [[package]]
 name = "flo_render_canvas"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#51750c27a2afc049a35987dadca2ad73a8d48a32"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#316a4dc25721b87a0c85c224d60d40479e6851a7"
 dependencies = [
  "desync",
  "flo_canvas",
  "flo_render",
- "flo_stream 0.6.0",
+ "flo_stream",
  "futures",
  "lyon",
  "num_cpus",
@@ -1385,7 +1397,7 @@ dependencies = [
 [[package]]
 name = "flo_render_gl_offscreen"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#51750c27a2afc049a35987dadca2ad73a8d48a32"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#316a4dc25721b87a0c85c224d60d40479e6851a7"
 dependencies = [
  "bindgen",
  "cgl",
@@ -1419,17 +1431,6 @@ dependencies = [
 
 [[package]]
 name = "flo_stream"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b237e5870a0f3ca6906d116e0900d2a7d7b0a0a4a41a284dc4eef9e3e800970"
-dependencies = [
- "futures",
- "lazy_static",
- "smallvec",
-]
-
-[[package]]
-name = "flo_stream"
 version = "0.7.1"
 source = "git+https://github.com/Logicalshift/flo_stream?branch=v0.7#b670423433486e6dbe39d130b3bfd95a3cc06781"
 dependencies = [
@@ -1446,7 +1447,7 @@ dependencies = [
  "desync",
  "flo_binding",
  "flo_canvas",
- "flo_stream 0.7.1",
+ "flo_stream",
  "futures",
  "futures-timer",
  "itertools 0.9.0",
@@ -1467,7 +1468,7 @@ dependencies = [
  "flo_binding",
  "flo_canvas",
  "flo_logging",
- "flo_stream 0.7.1",
+ "flo_stream",
  "flo_ui",
  "futures",
  "lazy_static",
@@ -1490,7 +1491,7 @@ version = "0.2.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "env_logger",
+ "env_logger 0.7.1",
  "flo",
  "flo_animation",
  "flo_binding",
@@ -2035,6 +2036,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "humantime"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
+
+[[package]]
 name = "idna"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2178,11 +2185,11 @@ checksum = "1b03d17f364a3a042d5e5d46b053bbbf82c92c9430c592dd4c064dc6ee997125"
 
 [[package]]
 name = "libloading"
-version = "0.5.2"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2b111a074963af1d37a139918ac6d49ad1d0d5e47f72fd55388619691a7d753"
+checksum = "afe203d669ec979b7128619bae5a63b7b42e9203c1b29146079ee05e2f604b52"
 dependencies = [
- "cc",
+ "cfg-if 1.0.0",
  "winapi 0.3.9",
 ]
 
@@ -2343,6 +2350,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
 
 [[package]]
+name = "minimal-lexical"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
+
+[[package]]
 name = "miniz_oxide"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2422,11 +2435,12 @@ dependencies = [
 
 [[package]]
 name = "nom"
-version = "5.1.2"
+version = "7.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffb4262d26ed83a1c0a33a38fe2bb15797329c85770da05e6b828ddb782627af"
+checksum = "1b1d11e1ef389c76fe5b81bcaf2ea32cf88b62bc494e19f493d0b30e7a930109"
 dependencies = [
  "memchr",
+ "minimal-lexical",
  "version_check",
 ]
 
@@ -2686,7 +2700,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "926d36b9553851b8b0005f1275891b392ee4d2d833852c417ed025477350fb9d"
 dependencies = [
- "env_logger",
+ "env_logger 0.7.1",
  "log",
 ]
 
@@ -3035,9 +3049,9 @@ dependencies = [
 
 [[package]]
 name = "shlex"
-version = "0.1.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fdf1b9db47230893d76faad238fd6097fd6d6a9245cd7a4d90dbd639536bbd2"
+checksum = "43b2853a4d09f215c24cc5489c992ce46052d359b5109343cbafbf26bc62f8a3"
 
 [[package]]
 name = "sid"
@@ -3679,10 +3693,12 @@ checksum = "0237232789cf037d5480773fe568aac745bfe2afbc11a863e97901780a6b47cc"
 
 [[package]]
 name = "which"
-version = "3.1.1"
+version = "4.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d011071ae14a2f6671d0b74080ae0cd8ebf3a6f8c9589a2cd45f23126fe29724"
+checksum = "ea187a8ef279bc014ec368c27a920da2024d2a711109bfbe3440585d5cf27ad9"
 dependencies = [
+ "either",
+ "lazy_static",
  "libc 0.2.112",
 ]
 
