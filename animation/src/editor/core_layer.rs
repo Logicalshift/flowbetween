@@ -31,6 +31,7 @@ impl StreamAnimationCore {
                 RemoveKeyFrame(when)                            => { self.remove_key_frame(layer_id, *when).await }
                 SetName(new_name)                               => { self.set_layer_name(layer_id, new_name).await }
                 SetOrdering(ordering)                           => { self.set_layer_ordering(layer_id, *ordering).await }
+                SetAlpha(alpha)                                 => { self.set_layer_alpha(layer_id, *alpha).await }
                 Cut { path, when, inside_group }   => { 
                     let cut = self.layer_cut(layer_id, *when, Arc::clone(path)).await;
                     self.apply_layer_cut(layer_id, *when, cut, *inside_group).await;
@@ -185,6 +186,31 @@ impl StreamAnimationCore {
 
             // Update the name
             properties.name = name.to_string();
+
+            // Save back to the storage
+            let mut serialized = String::new();
+            properties.serialize(&mut serialized);
+            self.request_one(StorageCommand::WriteLayerProperties(layer_id, serialized)).await;
+        } 
+    }
+
+    ///
+    /// Sets the alpha blend factor of a layer
+    ///
+    pub fn set_layer_alpha<'a>(&'a mut self, layer_id: u64, alpha: f64) -> impl 'a+Future<Output=()> { 
+        async move {
+            // Read the current properties for this layer
+            let mut properties = match self.request_one(StorageCommand::ReadLayerProperties(layer_id)).await {
+                Some(StorageResponse::LayerProperties(_, properties)) => {
+                    LayerProperties::deserialize(&mut properties.chars())
+                        .unwrap_or_else(|| LayerProperties::default())
+                }
+
+                _ => LayerProperties::default()
+            };
+
+            // Update the alpha value
+            properties.alpha = f64::min(1.0, f64::max(0.0, alpha));
 
             // Save back to the storage
             let mut serialized = String::new();

@@ -50,7 +50,10 @@ pub enum LayerEdit {
     SetName(String),
 
     /// Sets this layer so that it is ordered behind the specified layer
-    SetOrdering(u64)
+    SetOrdering(u64),
+
+    /// Sets the layer alpha blend (0.0-1.0)
+    SetAlpha(f64),
 }
 
 impl LayerEdit {

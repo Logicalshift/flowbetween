@@ -169,6 +169,10 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
                     advance_edit_counter = true;
                 },
 
+                Layer(_, SetAlpha(_)) => {
+                    advance_edit_counter = true;
+                },
+
                 Layer(layer_id, SetOrdering(at_index)) => {
                     unimplemented!("Cannot update model with layer ordering yet")
                 }

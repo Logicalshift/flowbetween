@@ -432,7 +432,8 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
                         LayerEdit::AddKeyFrame(_)                               => { true }
                         LayerEdit::RemoveKeyFrame(_)                            => { true },
                         LayerEdit::SetName(_)                                   => { false },
-                        LayerEdit::SetOrdering(_)                               => { self.model.timeline().invalidate_canvas(); false /* ... but whole canvas update */ }
+                        LayerEdit::SetOrdering(_)                               => { self.model.timeline().invalidate_canvas(); false /* ... but whole canvas update */ },
+                        LayerEdit::SetAlpha(_)                                  => { true },
                     };
 
                     // Force the layer to update if necessary

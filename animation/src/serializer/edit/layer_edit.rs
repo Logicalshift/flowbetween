@@ -20,6 +20,7 @@ impl LayerEdit {
             RemoveKeyFrame(when)                        => { data.write_chr('-'); data.write_duration(*when); },
             SetName(name)                               => { data.write_chr('N'); data.write_str(name); },
             SetOrdering(ordering)                       => { data.write_chr('O'); data.write_u64(*ordering); }
+            SetAlpha(alpha)                             => { data.write_chr('a'); data.write_f64(*alpha); }
             CreateAnimation(when, id, description)      => { data.write_chr('A'); data.write_duration(*when); id.serialize(data); data.write_str(&json::to_string(description).unwrap()); }
 
             Cut { path, when, inside_group }   => { 
@@ -58,6 +59,7 @@ impl LayerEdit {
             'N' => { Some(LayerEdit::SetName(data.next_string())) }
             'O' => { Some(LayerEdit::SetOrdering(data.next_u64())) }
             'A' => { Some(LayerEdit::CreateAnimation(data.next_duration(), ElementId::deserialize(data)?, json::from_str(&data.next_string()).ok()?)) }
+            'a' => { Some(LayerEdit::SetAlpha(data.next_f64())) }
 
             'c' => {
                 let when            = data.next_duration();
@@ -164,6 +166,15 @@ mod test {
             when:           Duration::from_millis(4200),
             inside_group:   ElementId::Assigned(1)
         };
+        edit.serialize(&mut encoded);
+
+        assert!(LayerEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+
+    #[test]
+    fn set_alpha() {
+        let mut encoded = String::new();
+        let edit        = LayerEdit::SetAlpha(0.42);
         edit.serialize(&mut encoded);
 
         assert!(LayerEdit::deserialize(&mut encoded.chars()) == Some(edit));
