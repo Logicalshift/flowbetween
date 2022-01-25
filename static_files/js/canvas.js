@@ -159,6 +159,7 @@ let flo_canvas = (function() {
         let last_store_pos              = null;
         let layer_canvases              = null;
         let blend_for_layer             = {};
+        let alpha_for_layer             = {};
         let current_layer_id            = 0;
         let current_sprite              = [ ];
         let sprites                     = { };
@@ -602,6 +603,7 @@ let flo_canvas = (function() {
 
                 // Reset the blend mode
                 blend_for_layer[current_layer_id] = 'source-over';
+                alpha_for_layer[current_layer_id] = 1.0;
 
                 // Remove everything from the canvas that was on this layer
                 for (let index=1; index<replay.length; ++index) {
@@ -620,11 +622,16 @@ let flo_canvas = (function() {
                 blend_for_layer[layer_id] = blend_mode;
             },
 
+            layer_alpha: (layer_id, alpha) => {
+                alpha_for_layer[layer_id] = alpha;
+            },
+
             clear_canvas: (r, g, b, a) => {
                 // Clear layers
                 layer_canvases      = null;
                 context             = canvas.getContext('2d');
                 blend_for_layer     = {};
+                alpha_for_layer     = {};
                 current_layer_id    = 0;
                 render              = layer_renderer;
 
@@ -777,9 +784,14 @@ let flo_canvas = (function() {
 
                 // Draw each of the layers
                 Object.keys(layer_canvases).forEach(layer_id => {
-                    layer_context.globalCompositeOperation = blend_for_layer[layer_id] || 'source-over';
+                    layer_context.globalAlpha               = alpha_for_layer[layer_id] || 1.0;
+                    layer_context.globalCompositeOperation  = blend_for_layer[layer_id] || 'source-over';
                     layer_context.drawImage(layer_canvases[layer_id], 0,0, width,height);
                 });
+
+                // Reset blending mode
+                layer_context.globalAlpha               = 1.0;
+                layer_context.globalCompositeOperation  = 'source-over';
             }
         }
 
@@ -814,7 +826,8 @@ let flo_canvas = (function() {
             free_stored_buffer:             ()                          => { current_sprite.push([free_stored_buffer, []]); },
             push_state:                     ()                          => { current_sprite.push([push_state, []]); },
             pop_state:                      ()                          => { current_sprite.push([pop_state, []]); },
-            layer_blend:                    (blend_mode)                => { current_sprite.push([layer_blend, [blend_mode]]); },
+            layer_blend:                    (layer_id, blend_mode)      => { current_sprite.push([layer_blend, [layer_id, blend_mode]]); },
+            layer_alpha:                    (layer_id, alpha)           => { current_sprite.push([layer_alpha, [layer_id, alpha]]); },
             clear_layer:                    ()                          => { current_sprite.push([clear_layer, []]); },
             clear_canvas:                   (r, g, b, a)                => { current_sprite.push([clear_canvas, [r, g, b, a]]); },
             draw_sprite:                    (sprite_id)                 => { current_sprite.push([draw_sprite, [sprite_id]]); },
@@ -863,7 +876,8 @@ let flo_canvas = (function() {
         function push_state()                           { render.push_state(); }
         function pop_state()                            { render.pop_state(); }
         function layer(layer_id)                        { render.layer(layer_id); }
-        function layer_blend(blend_mode)                { render.layer_blend(blend_mode); }
+        function layer_blend(layer_id, blend_mode)      { render.layer_blend(layer_id, blend_mode); }
+        function layer_alpha(layer_id, alpha)           { render.layer_alpha(layer_id, alpha); }
         function clear_layer()                          { render.clear_layer(); }
         function clear_canvas(r, g, b, a)               { render.clear_canvas(r, g, b, a); }
         function sprite(sprite_id)                      { render.sprite(sprite_id); }
@@ -910,6 +924,7 @@ let flo_canvas = (function() {
             pop_state:          ()              => { replay.push([pop_state, [], current_layer_id]);                        render.pop_state();                    },
             layer:              (layer_id)      => { replay.push([layer, [layer_id], layer]);                               render.layer(layer_id);                },
             layer_blend:        (layer_id, blend_mode) => { replay.push([layer_blend, [layer_id, blend_mode], -1]);         render.layer_blend(layer_id, blend_mode); },
+            layer_alpha:        (layer_id, alpha) => { replay.push([layer_alpha, [layer_id, alpha], -1]);                   render.layer_alpha(layer_id, alpha);   },
             clear_layer:        ()              => { replay.push([clear_layer, [], current_layer_id]);                      render.clear_layer();                  },
             clear_canvas:       (r, g, b, a)    => { replay = [ [clear_canvas, [r, g, b, a], current_layer_id] ];           render.clear_canvas(r, g, b, a);       },
             sprite:             (sprite_id)     => { replay = [ [sprite, [sprite_id], current_layer_id] ];                  render.sprite(sprite_id);              },
@@ -1079,6 +1094,7 @@ let flo_canvas = (function() {
                 case 'b':   draw.layer_blend(read_u32(), decode_blend_mode()); break;
                 case 'L':   draw.layer(read_truncated_u64()); break;
                 case 'B':   draw.layer_blend(read_truncated_u64(), decode_blend_mode()); break;
+                case 't':   draw.layer_alpha(read_truncated_u64(), read_float());
                 case 'C':   draw.clear_layer();     break;
                 case 's':   draw.sprite(read_sprite_id()); break;
 
