@@ -205,10 +205,10 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
         // If there's a brush preview, draw it as the renderer annotation
         if let Some(preview) = self.preview.as_ref() {
             if let Some(preview_layer) = self.preview_layer {
-                let need_brush = self.need_brush_definition(LayerId(preview_layer), renderer);
-                let need_props = self.need_brush_properties(LayerId(preview_layer), renderer);
+                let need_brush = self.need_brush_definition(preview_layer, renderer);
+                let need_props = self.need_brush_properties(preview_layer, renderer);
 
-                renderer.annotate_layer(canvas, LayerId(preview_layer), |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
+                renderer.annotate_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
             }
         }
     }
@@ -216,7 +216,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     ///
     /// True if we need to update the brush definition before drawing
     ///
-    fn need_brush_definition(&self, layer_id: LayerId, renderer: &CanvasRenderer) -> bool {
+    fn need_brush_definition(&self, layer_id: u64, renderer: &CanvasRenderer) -> bool {
         let (brush, _properties) = renderer.get_layer_brush(layer_id);
 
         brush.as_ref() != Some(&self.brush_definition)
@@ -225,7 +225,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     ///
     /// True if we need to update the brush properties before drawing
     ///
-    fn need_brush_properties(&self, layer_id: LayerId, renderer: &CanvasRenderer) -> bool {
+    fn need_brush_properties(&self, layer_id: u64, renderer: &CanvasRenderer) -> bool {
         let (_brush, properties) = renderer.get_layer_brush(layer_id);
 
         properties.as_ref() != Some(&self.brush_properties)
@@ -245,7 +245,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                 self.combine_after_commit   = false;
             },
 
-            BrushPreviewAction::UnsetProperties                 => { self.preview_layer.map(|layer_id| renderer.set_layer_brush(LayerId(layer_id), None, None)); }
+            BrushPreviewAction::UnsetProperties                 => { self.preview_layer.map(|layer_id| renderer.set_layer_brush(layer_id, None, None)); }
             BrushPreviewAction::Layer(layer_id)                 => { self.preview_layer = Some(layer_id); },
             BrushPreviewAction::BrushDefinition(defn, style)    => { self.brush_definition = (defn.clone(), style); self.preview.as_mut().map(move |preview| preview.select_brush(&defn, style)); },
             BrushPreviewAction::BrushProperties(props)          => { self.brush_properties = props; self.preview.as_mut().map(move |preview| preview.set_brush_properties(&props)); },
@@ -346,8 +346,8 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     fn commit_brush_preview(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
         // We take the preview here (so there's no preview after this)
         if let (Some(mut preview), Some(preview_layer)) = (self.preview.take(), self.preview_layer) {
-            let mut need_brush  = self.need_brush_definition(LayerId(preview_layer), renderer);
-            let mut need_props  = self.need_brush_properties(LayerId(preview_layer), renderer);
+            let mut need_brush  = self.need_brush_definition(preview_layer, renderer);
+            let mut need_props  = self.need_brush_properties(preview_layer, renderer);
 
             let current_time    = self.current_time.get();
 
@@ -359,7 +359,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
             }
 
             // Commit the brush stroke to the renderer
-            renderer.commit_to_layer(canvas, LayerId(preview_layer), |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
+            renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
 
             // Commit the preview to the animation
             let elements = preview.commit_to_animation(need_brush, need_props, current_time, preview_layer, &*self.animation);
@@ -369,7 +369,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
             // Update the properties in the renderer if they've changed
             if need_brush || need_props {
-                renderer.set_layer_brush(LayerId(preview_layer), Some(self.brush_definition.clone()), Some(self.brush_properties.clone()));
+                renderer.set_layer_brush(preview_layer, Some(self.brush_definition.clone()), Some(self.brush_properties.clone()));
             }
         }
     }
@@ -380,8 +380,8 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     fn commit_brush_preview_as_path(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
         // Take the brush preview and commit
         if let (Some(mut preview), Some(preview_layer)) = (self.preview.take(), self.preview_layer) {
-            let mut need_brush  = self.need_brush_definition(LayerId(preview_layer), renderer);
-            let mut need_props  = self.need_brush_properties(LayerId(preview_layer), renderer);
+            let mut need_brush  = self.need_brush_definition(preview_layer, renderer);
+            let mut need_props  = self.need_brush_properties(preview_layer, renderer);
             let current_time    = self.current_time.get();
 
             // Create a new keyframe for this brush stroke if necessary
@@ -392,7 +392,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
             }
 
             // Commit the brush stroke to the renderer
-            renderer.commit_to_layer(canvas, LayerId(preview_layer), |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
+            renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
 
             // Commit the preview to the animation
             let elements        = preview.commit_to_animation(need_brush, need_props, current_time, preview_layer, &*self.animation);
