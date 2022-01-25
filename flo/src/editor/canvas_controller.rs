@@ -315,6 +315,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
     fn update_layers_to_frame_at_time(&mut self, time: Duration) {
         // Retrieve the layers from the animation
         let layers              = self.model.frame().layers.get();
+        let timeline_layers     = self.model.timeline().layers.get();
         let invalidate_count    = self.model.timeline().canvas_invalidation_count.get();
 
         // Update the time set
@@ -326,7 +327,10 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
 
         // Load the frames into the renderer
         for layer_frame in layers {
-            self.renderer.load_frame(layer_frame);
+            let timeline_layer = timeline_layers.iter().filter(|layer| layer.id == layer_frame.layer_id).nth(0);
+            let timeline_layer = if let Some(timeline_layer) = timeline_layer { timeline_layer } else { continue; };
+
+            self.renderer.load_frame(&layer_frame, timeline_layer);
         }
     }
 
@@ -393,14 +397,18 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
             self.renderer.clear_annotation(&*canvas);
 
             // Refresh individual layers
-            let invalid_layer_models = self.model.frame().layers.get()
+            let timeline_layers         = self.model.timeline().layers.get();
+            let invalid_layer_models    = self.model.frame().layers.get()
                 .into_iter()
                 .filter(|frame_layer| invalid_layers.contains(&frame_layer.layer_id));
 
             for invalid_layer in invalid_layer_models {
-                let layer_id    = invalid_layer.layer_id;
+                let layer_id        = invalid_layer.layer_id;
 
-                self.renderer.load_frame(invalid_layer);
+                let timeline_layer  = timeline_layers.iter().filter(|layer| layer.id == layer_id).nth(0);
+                let timeline_layer  = if let Some(timeline_layer) = timeline_layer { timeline_layer } else { continue; };
+
+                self.renderer.load_frame(&invalid_layer, timeline_layer);
                 self.renderer.redraw_layer(layer_id, &*canvas);
             }
         }

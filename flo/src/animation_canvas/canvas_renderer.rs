@@ -22,6 +22,9 @@ struct FrameLayer {
     /// The frame data for this layer
     layer_frame:        Arc<dyn Frame>,
 
+    /// The alpha value for this layer
+    alpha:              BindRef<f64>,
+
     /// The brush that was last used for this layer
     active_brush:       Option<(BrushDefinition, BrushDrawingStyle)>,
 
@@ -195,7 +198,7 @@ impl CanvasRenderer {
     ///
     /// Loads a particular frame from a layer into this renderer
     ///
-    pub fn load_frame(&mut self, model: FrameLayerModel) {
+    pub fn load_frame(&mut self, model: &FrameLayerModel, layer_model: &LayerModel) {
         // Load the frame data (we don't necessarily form a binding here)
         let frame = model.frame.get();
 
@@ -214,6 +217,7 @@ impl CanvasRenderer {
             self.frame_layers.insert(animation_layer_id, FrameLayer {
                 layer_id:           canvas_layer_id,
                 layer_frame:        layer_frame,
+                alpha:              BindRef::from(&layer_model.alpha),
                 active_brush:       None,
                 active_properties:  None,
             });
