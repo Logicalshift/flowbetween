@@ -1,5 +1,6 @@
 use crate::model::*;
 use crate::style::*;
+use super::overlay_layers::*;
 
 use flo_ui::*;
 use flo_canvas::*;
@@ -50,7 +51,7 @@ pub struct CanvasRenderer {
     frame_layers: HashMap<u64, FrameLayer>,
 
     /// The overlay layers in the current frame
-    overlay_layers: HashMap<u64, OverlayLayer>,
+    overlay_layers: HashMap<OverlayLayerId, OverlayLayer>,
 
     /// The layer that we're currently 'annotating'
     annotated_layer: Option<u64>
@@ -118,7 +119,7 @@ impl CanvasRenderer {
     /// Overlays can call 'Layer' themselves: one important action this performs is mapping layer IDs generated as part of the overlay
     /// into unique layer IDs on the canvas itself.
     ///
-    fn relay_drawing_for_overlay<DrawIter: Iterator<Item=Draw>>(&mut self, overlay: u64, gc: &mut dyn GraphicsContext, drawing: DrawIter) {
+    fn relay_drawing_for_overlay<DrawIter: Iterator<Item=Draw>>(&mut self, overlay: OverlayLayerId, gc: &mut dyn GraphicsContext, drawing: DrawIter) {
         // Find the first free layer in this object
         let mut free_layer      = self.free_layer();
 
@@ -331,7 +332,7 @@ impl CanvasRenderer {
     ///
     /// Overlay operations will clear any annotation that might have been added.
     ///
-    pub fn overlay(&mut self, canvas: &BindingCanvas, overlay: u64, drawing: Vec<Draw>) {
+    pub fn overlay(&mut self, canvas: &BindingCanvas, overlay: OverlayLayerId, drawing: Vec<Draw>) {
         // Overlays screw with the annotation: make sure it's cleared
         self.clear_annotation(canvas);
 
