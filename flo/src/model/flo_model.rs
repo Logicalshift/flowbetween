@@ -169,7 +169,12 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
                     advance_edit_counter = true;
                 },
 
-                Layer(_, SetAlpha(_)) => {
+                Layer(layer_id, SetAlpha(new_alpha)) => {
+                    // Update the alpha value in the model
+                    timeline.layers.get()
+                        .into_iter()
+                        .for_each(|layer| if &layer.id == layer_id { layer.alpha.set(*new_alpha); });
+
                     advance_edit_counter = true;
                 },
 

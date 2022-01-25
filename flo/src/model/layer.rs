@@ -10,7 +10,10 @@ pub struct LayerModel {
     pub id: u64,
 
     /// The name of this layer
-    pub name: Binding<String>
+    pub name: Binding<String>,
+
+    /// The alpha value for this layer
+    pub alpha: Binding<f64>,
 }
 
 impl PartialEq for LayerModel {
@@ -23,7 +26,8 @@ impl LayerModel {
     pub fn new<'a>(layer: &'a dyn Layer) -> LayerModel {
         LayerModel {
             id:     layer.id(),
-            name:   bind(layer.name().unwrap_or_else(|| format!("Layer {}", layer.id())))
+            name:   bind(layer.name().unwrap_or_else(|| format!("Layer {}", layer.id()))),
+            alpha:  bind(layer.alpha()),
         }
     }
 }
