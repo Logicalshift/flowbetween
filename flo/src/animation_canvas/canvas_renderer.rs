@@ -416,15 +416,12 @@ impl CanvasRenderer {
             canvas.draw(move |gc| {
                 // If the layer being annotated has changed, then we need to switch layers
                 if Some(layer_id) != previous_layer {
-                    // Throw away the stored buffer here
-                    gc.free_stored_buffer();
-
                     // Set the layer and store the backing buffer
                     gc.layer(canvas_layer_id);
-                    gc.store();
                 }
 
-                // Always push the state so it can be cleared when the annotations go away
+                // Store the current layer state (will be restored by clear_annotation later on)
+                gc.store();
                 gc.push_state();
 
                 // Draw the annotations
