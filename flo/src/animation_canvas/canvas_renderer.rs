@@ -280,6 +280,8 @@ impl CanvasRenderer {
             // Draw the layers
             for layer in self.frame_layers.values() {
                 gc.layer(layer.layer_id);
+                gc.clear_layer();
+                gc.layer_alpha(layer.layer_id, layer.alpha.get());
                 layer.layer_frame.render_to(gc);
             }
         });
@@ -298,6 +300,7 @@ impl CanvasRenderer {
 
             gc.layer(layer.layer_id);
             gc.clear_layer();
+            gc.layer_alpha(layer.layer_id, layer.alpha.get());
 
             layer.layer_frame.render_to(gc);
 
