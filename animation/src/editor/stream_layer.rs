@@ -73,6 +73,13 @@ impl Layer for StreamLayer {
     }
 
     ///
+    /// The alpha for this layer (0.0 - 1.0)
+    ///
+    fn alpha(&self) -> f64 {
+        self.properties.alpha
+    }
+
+    ///
     /// Retrieves a frame from this layer with the specified parameters
     ///
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<dyn Frame> {

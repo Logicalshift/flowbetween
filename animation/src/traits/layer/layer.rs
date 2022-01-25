@@ -23,6 +23,11 @@ pub trait Layer : Send+Sync {
     fn name(&self) -> Option<String>;
 
     ///
+    /// The alpha for this layer (0.0 - 1.0)
+    ///
+    fn alpha(&self) -> f64;
+
+    ///
     /// The types of edit that are supported by this layer
     ///
     fn supported_edit_types(&self) -> Vec<LayerEditType>;
