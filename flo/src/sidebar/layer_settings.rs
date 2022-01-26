@@ -4,6 +4,7 @@ use crate::model::*;
 use futures::prelude::*;
 
 use flo_ui::*;
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 
@@ -140,7 +141,11 @@ pub fn layer_settings_controller<Anim: 'static+Animation+EditableAnimation>(mode
                             }
 
                             ("SetAlphaSlider", ActionParameter::Value(PropertyValue::Float(new_alpha))) => {
-
+                                // Set the alpha in the selected layer (by editing)
+                                let selected_layer_id   = model.timeline().selected_layer.get();
+                                if let Some(layer_id) = selected_layer_id {
+                                    model.edit().publish(Arc::new(vec![AnimationEdit::Layer(layer_id, LayerEdit::SetAlpha(new_alpha))])).await;
+                                }
                             }
 
                             ("SetAlphaText", ActionParameter::Value(PropertyValue::String(new_alpha))) => {
