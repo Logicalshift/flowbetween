@@ -153,7 +153,11 @@ pub fn layer_settings_controller<Anim: 'static+Animation+EditableAnimation>(mode
                             }
 
                             ("SetName", ActionParameter::Value(PropertyValue::String(new_name))) => {
-
+                                // Set the layer name
+                                let selected_layer_id   = model.timeline().selected_layer.get();
+                                if let Some(layer_id) = selected_layer_id {
+                                    model.edit().publish(Arc::new(vec![AnimationEdit::Layer(layer_id, LayerEdit::SetName(new_name))])).await;
+                                }
                             }
 
                             _ => { }
