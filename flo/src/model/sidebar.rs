@@ -81,13 +81,16 @@ pub struct SidebarModel {
     pub panels: RopeBinding<SidebarPanel, ()>,
 
     /// The panels relating to the document
-    document_panels: RopeBindingMut<SidebarPanel, ()>,
+    document_panels: RopeBinding<SidebarPanel, ()>,
 
     /// The panels relating to the current selection
     selection_panels: RopeBinding<SidebarPanel, ()>,
 
     /// Switches the stream for the selection panels
     selection_panel_switch: Arc<StreamSwitch<RopeAction<SidebarPanel, ()>>>,
+
+    /// Switches the stream for the document panels
+    document_panel_switch: Arc<StreamSwitch<RopeAction<SidebarPanel, ()>>>,
 
     /// The panels relating to the currently selected tool
     tool_panels: RopeBindingMut<SidebarPanel, ()>,
@@ -102,7 +105,8 @@ impl SidebarModel {
     ///
     pub fn new() -> SidebarModel {
         // Create the default set of panels
-        let document_panels                     = RopeBindingMut::new();
+        let (panel_stream, document_switch)     = switchable_stream(stream::empty());
+        let document_panels                     = RopeBinding::from_stream(panel_stream);
         let (panel_stream, selection_switch)    = switchable_stream(stream::empty());
         let selection_panels                    = RopeBinding::from_stream(panel_stream);
         let tool_panels                         = RopeBindingMut::new();
@@ -123,6 +127,7 @@ impl SidebarModel {
             document_panels:        document_panels,
             selection_panels:       selection_panels,
             selection_panel_switch: Arc::new(selection_switch),
+            document_panel_switch:  Arc::new(document_switch),
             tool_panels:            tool_panels,
             open_active_panels:     open_active_panels
         }
@@ -131,8 +136,16 @@ impl SidebarModel {
     ///
     /// Updates the 'document-wide' panels used for the sidebar
     ///
-    pub fn set_document_panels(&self, new_panels: Vec<SidebarPanel>) {
-        self.document_panels.replace(0..self.document_panels.len(), new_panels);
+    pub fn set_document_panels(&self, new_panels: impl 'static+Send+Stream<Item=RopeAction<SidebarPanel, ()>>) {
+        // Switch to an empty stream temporarily
+        self.document_panel_switch.switch_to_stream(stream::empty());
+
+        // Clear the panel rope before receiving the new panel stream (which is assumed to be against an empty rope)
+        let len         = self.document_panels.len();
+        let new_panels  = stream::iter(vec![RopeAction::Replace(0..len, vec![])]).chain(new_panels);
+
+        // Use the new stream
+        self.document_panel_switch.switch_to_stream(new_panels);
     }
 
     ///

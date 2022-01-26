@@ -5,12 +5,14 @@
 
 pub mod panel;
 mod panel_style;
+mod layer_settings;
 mod document_panels;
 mod document_settings;
 mod sidebar_controller;
 mod selection;
 
 pub use self::panel::*;
+pub use self::layer_settings::*;
 pub use self::document_panels::*;
 pub use self::document_settings::*;
 pub use self::sidebar_controller::*;
