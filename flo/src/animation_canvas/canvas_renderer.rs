@@ -25,6 +25,9 @@ struct FrameLayer {
     /// The alpha value for this layer
     alpha:              BindRef<f64>,
 
+    /// The alpha used for rendering this layer last time through
+    render_alpha:       f64,
+
     /// The brush that was last used for this layer
     active_brush:       Option<(BrushDefinition, BrushDrawingStyle)>,
 
@@ -218,6 +221,7 @@ impl CanvasRenderer {
                 layer_id:           canvas_layer_id,
                 layer_frame:        layer_frame,
                 alpha:              BindRef::from(&layer_model.alpha),
+                render_alpha:       1.0,
                 active_brush:       None,
                 active_properties:  None,
             });
@@ -278,10 +282,13 @@ impl CanvasRenderer {
         // Draw the active set of layers
         canvas.draw(move |gc| {
             // Draw the layers
-            for layer in self.frame_layers.values() {
+            for layer in self.frame_layers.values_mut() {
+                let alpha           = layer.alpha.get();
+                layer.render_alpha  = alpha;
+
                 gc.layer(layer.layer_id);
                 gc.clear_layer();
-                gc.layer_alpha(layer.layer_id, layer.alpha.get());
+                gc.layer_alpha(layer.layer_id, alpha);
                 layer.layer_frame.render_to(gc);
             }
         });
@@ -292,15 +299,18 @@ impl CanvasRenderer {
     ///
     pub fn redraw_layer(&mut self, layer_id: u64, canvas: &BindingCanvas) {
         // Redraw this particular layer
-        let layer       = self.frame_layers.get(&layer_id);
+        let layer       = self.frame_layers.get_mut(&layer_id);
         let layer       = if let Some(layer) = layer { layer } else { return; };
 
         canvas.draw(|gc| {
+            let alpha           = layer.alpha.get();
+            layer.render_alpha  = alpha;
+
             gc.push_state();
 
             gc.layer(layer.layer_id);
             gc.clear_layer();
-            gc.layer_alpha(layer.layer_id, layer.alpha.get());
+            gc.layer_alpha(layer.layer_id, alpha);
 
             layer.layer_frame.render_to(gc);
 
@@ -487,6 +497,20 @@ impl CanvasRenderer {
         if let Some(layer) = self.frame_layers.get_mut(&layer_id) {
             layer.active_brush      = brush;
             layer.active_properties = properties;
+        }
+    }
+
+    ///
+    /// Updates the layer alphas to the latest versions, if they're different from what's set
+    ///
+    pub fn update_layer_alphas(&mut self, canvas: &BindingCanvas) {
+        for layer in self.frame_layers.values_mut() {
+            let new_alpha = layer.alpha.get();
+
+            if new_alpha != layer.render_alpha {
+                layer.render_alpha = new_alpha;
+                canvas.draw(|gc| gc.layer_alpha(layer.layer_id, new_alpha));
+            }
         }
     }
 }

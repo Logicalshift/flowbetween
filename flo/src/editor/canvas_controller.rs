@@ -411,6 +411,12 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
                 self.renderer.load_frame(&invalid_layer, timeline_layer);
                 self.renderer.redraw_layer(layer_id, &*canvas);
             }
+
+            // Update any out of date layer alphas
+            self.renderer.update_layer_alphas(&*canvas);
+        } else {
+            // Just update the alphas            
+            self.renderer.update_layer_alphas(&*canvas);
         }
     }
 
