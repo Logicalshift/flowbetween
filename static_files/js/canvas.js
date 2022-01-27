@@ -1090,18 +1090,18 @@ let flo_canvas = (function() {
                 let new_type = read_char();
 
                 switch (new_type) {
-                case 'p':   draw.new_path();        break;
-                case 'l':   draw.layer(read_u32()); break;
-                case 'b':   draw.layer_blend(read_u32(), decode_blend_mode()); break;
-                case 'L':   draw.layer(read_truncated_u64()); break;
-                case 'B':   draw.layer_blend(read_truncated_u64(), decode_blend_mode()); break;
-                case 't':   draw.layer_alpha(read_truncated_u64(), read_float());
-                case 'C':   draw.clear_layer();     break;
-                case 's':   draw.sprite(read_sprite_id()); break;
+                case 'p':   draw.new_path();                                                break;
+                case 'l':   draw.layer(read_u32());                                         break;
+                case 'b':   draw.layer_blend(read_u32(), decode_blend_mode());              break;
+                case 'L':   draw.layer(read_truncated_u64());                               break;
+                case 'B':   draw.layer_blend(read_truncated_u64(), decode_blend_mode());    break;
+                case 't':   draw.layer_alpha(read_truncated_u64(), read_float());           break;
+                case 'C':   draw.clear_layer();                                             break;
+                case 's':   draw.sprite(read_sprite_id());                                  break;
 
-                case 'F':   /* StartFrame */                            break;
-                case 'f':   /* ShowFrame */                             break;
-                case 'G':   /* ResetFrame */                            break;
+                case 'F':   /* StartFrame */                                                break;
+                case 'f':   /* ShowFrame */                                                 break;
+                case 'G':   /* ResetFrame */                                                break;
 
                 case 'A':   {
                         let background = read_rgba();
