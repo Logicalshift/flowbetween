@@ -209,22 +209,31 @@ impl CanvasRenderer {
             // If there are any overlays, they get invalidated when we add this frame
             self.invalidate_overlay_layers();
 
-            // The layer ID comes from the number of layers we've currently got loaded (this layer will be rendered on top of all others)
-            let animation_layer_id      = model.layer_id;
-            let canvas_layer_id         = LayerId((self.frame_layers.len() as u64) + 1);
+            let existing_layer = self.frame_layers.get_mut(&model.layer_id);
+            if let Some(existing_layer) = existing_layer {
+                // Update the model of the existing layer
+                existing_layer.alpha                = BindRef::from(&layer_model.alpha);
+                existing_layer.active_brush         = None;
+                existing_layer.active_properties    = None;
+                existing_layer.layer_frame          = frame;
+            } else {
+                // The layer ID comes from the number of layers we've currently got loaded (this layer will be rendered on top of all others)
+                let animation_layer_id      = model.layer_id;
+                let canvas_layer_id         = LayerId((self.frame_layers.len() as u64) + 1);
 
-            // Get the frame for this time
-            let layer_frame             = frame;
+                // Get the frame for this time
+                let layer_frame             = frame;
 
-            // Store this layer in the hashmap with its layer ID
-            self.frame_layers.insert(animation_layer_id, FrameLayer {
-                layer_id:           canvas_layer_id,
-                layer_frame:        layer_frame,
-                alpha:              BindRef::from(&layer_model.alpha),
-                render_alpha:       1.0,
-                active_brush:       None,
-                active_properties:  None,
-            });
+                // Store this layer in the hashmap with its layer ID
+                self.frame_layers.insert(animation_layer_id, FrameLayer {
+                    layer_id:           canvas_layer_id,
+                    layer_frame:        layer_frame,
+                    alpha:              BindRef::from(&layer_model.alpha),
+                    render_alpha:       1.0,
+                    active_brush:       None,
+                    active_properties:  None,
+                });
+            }
         }
     }
 
