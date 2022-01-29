@@ -182,11 +182,6 @@ impl BrushPreview {
         use LayerEdit::*;
         use PaintEdit::*;
 
-        if self.raw_points.len() < 2 {
-            // Do nothing if there are no points in this brush preview
-            return vec![];
-        }
-
         let mut actions = vec![];
 
         // Select the brush
@@ -199,6 +194,11 @@ impl BrushPreview {
         // Select the properties
         if update_properties {
             actions.push(Paint(when, BrushProperties(ElementId::Unassigned, self.brush_properties.clone())));
+        }
+
+        if self.raw_points.len() < 2 {
+            // Do nothing if there are no points in this brush preview
+            return actions;
         }
 
         // Perform the brush stroke (and clear out the points)
