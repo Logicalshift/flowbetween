@@ -143,19 +143,12 @@ impl BrushPreview {
     /// Draws this preview brush stroke to the specified graphics object
     ///
     pub fn draw_current_brush_stroke(&self, gc: &mut dyn GraphicsContext, update_brush_definition: bool, update_properties: bool) {
-        if self.raw_points.len() < 2 && self.brush_points.is_none() {
-            // Do nothing if there are no points in this brush preview
-            return;
-        }
-
         // Set the brush to use in the vector properties
         let mut vector_properties   = VectorProperties::default();
         vector_properties.brush     = self.current_brush.clone();
 
         // Render them to the canvas if they're marked as changed
-        if update_brush_definition {
-            self.brush_definition_element().render_static(gc, &vector_properties, Duration::from_millis(0))
-        }
+        self.brush_definition_element().render_static(gc, &vector_properties, Duration::from_millis(0));
 
         // Apply brush to the vector properties
         let new_properties = self.brush_properties_element();
@@ -165,8 +158,11 @@ impl BrushPreview {
         vector_properties           = new_properties.update_properties(vector_properties, Duration::from_millis(0));
 
         // We only render the properties if they're marked as updated
-        if update_properties {
-            new_properties.render_static(gc, &vector_properties, Duration::from_millis(0));
+        new_properties.render_static(gc, &vector_properties, Duration::from_millis(0));
+
+        if self.raw_points.len() < 2 && self.brush_points.is_none() {
+            // Just set the properties if there are no points in this brush preview
+            return;
         }
 
         // Draw the current brush stroke
@@ -197,8 +193,11 @@ impl BrushPreview {
         }
 
         if self.raw_points.len() < 2 {
-            // Do nothing if there are no points in this brush preview
-            return actions;
+            // Just set the properties if there are no points in this preview
+            let actions         = actions.into_iter().map(|action| AnimationEdit::Layer(layer_id, action));
+            animation.perform_edits(actions.collect());
+
+            return vec![];
         }
 
         // Perform the brush stroke (and clear out the points)
