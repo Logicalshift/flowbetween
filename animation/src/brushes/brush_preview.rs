@@ -147,7 +147,6 @@ impl BrushPreview {
         let mut vector_properties   = VectorProperties::default();
         vector_properties.brush     = self.current_brush.clone();
 
-        // Render them to the canvas if they're marked as changed
         self.brush_definition_element().render_static(gc, &vector_properties, Duration::from_millis(0));
 
         // Apply brush to the vector properties
@@ -157,7 +156,6 @@ impl BrushPreview {
         let mut vector_properties   = Arc::new(vector_properties);
         vector_properties           = new_properties.update_properties(vector_properties, Duration::from_millis(0));
 
-        // We only render the properties if they're marked as updated
         new_properties.render_static(gc, &vector_properties, Duration::from_millis(0));
 
         if self.raw_points.len() < 2 && self.brush_points.is_none() {
