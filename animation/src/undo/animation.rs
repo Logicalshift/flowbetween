@@ -87,3 +87,48 @@ impl<Anim: 'static+Unpin+EditableAnimation> Animation for UndoableAnimation<Anim
         // self.animation.sync(|anim| anim.read_edit_log(range))
     }
 }
+
+impl<Anim: 'static+Unpin+EditableAnimation> EditableAnimation for UndoableAnimation<Anim> {
+    ///
+    /// Assigns a new unique ID for creating a new motion
+    ///
+    /// This ID will not have been used so far and will not be used again, and can be used as the ID for the MotionElement vector element.
+    ///
+    fn assign_element_id(&self) -> ElementId {
+        self.animation.sync(|anim| anim.assign_element_id())
+    }
+
+    ///
+    /// Retrieves a sink that can be used to send edits for this animation
+    ///
+    /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
+    /// a set of related edits are performed atomically
+    ///
+    fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> {
+        self.edits.republish()
+    }
+
+    ///
+    /// Sends a set of edits straight to this animation
+    /// 
+    /// (Note that these are not always published to the publisher)
+    ///
+    fn perform_edits(&self, edits: Vec<AnimationEdit>) {
+        // TODO
+        unimplemented!()
+    }
+
+    ///
+    /// Returns a stream of edits as they are being retired (ie, the edits that are now visible on the animation)
+    ///
+    fn retired_edits(&self) -> BoxStream<'static, Arc<Vec<AnimationEdit>>> {
+        self.animation.sync(|anim| anim.retired_edits())
+    }
+
+    ///
+    /// Flushes any caches this might have (forces reload from data storage)
+    ///
+    fn flush_caches(&self) {
+        self.animation.sync(|anim| anim.flush_caches())
+    }
+}
