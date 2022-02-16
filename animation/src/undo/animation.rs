@@ -1,5 +1,6 @@
 use crate::traits::*;
 
+use futures::prelude::*;
 use futures::stream::{BoxStream};
 
 use ::desync::*;
@@ -14,10 +15,13 @@ use std::ops::{Range};
 ///
 pub struct UndoableAnimation<Anim: 'static+Unpin+EditableAnimation> {
     /// The animation that this will add undo support to
-    animation:  Arc<Desync<Anim>>,
+    animation:      Arc<Desync<Anim>>,
 
     /// The input stream of edits for this animation
-    edits:      Publisher<Arc<Vec<AnimationEdit>>>,
+    edits:          Publisher<Arc<Vec<AnimationEdit>>>,
+
+    /// Used to schedule edits for the animation
+    pending_edits:  Desync<()>,
 }
 
 impl<Anim: Unpin+EditableAnimation> UndoableAnimation<Anim> {
@@ -26,12 +30,14 @@ impl<Anim: Unpin+EditableAnimation> UndoableAnimation<Anim> {
     ///
     pub fn new(animation: Anim) -> UndoableAnimation<Anim> {
         // Box up the animation and create the edit stream
-        let animation   = Arc::new(Desync::new(animation));
-        let edits       = Publisher::new(10);
+        let animation       = Arc::new(Desync::new(animation));
+        let edits           = Publisher::new(10);
+        let pending_edits   = Desync::new(());
 
         UndoableAnimation {
             animation,
             edits,
+            pending_edits,
         }
     }
 }
@@ -114,8 +120,16 @@ impl<Anim: 'static+Unpin+EditableAnimation> EditableAnimation for UndoableAnimat
     /// (Note that these are not always published to the publisher)
     ///
     fn perform_edits(&self, edits: Vec<AnimationEdit>) {
-        // TODO
-        unimplemented!()
+        // Connect to the edit stream (this will capture undo context)
+        let mut edit_stream = self.edit();
+
+        // Dispatch via the pending edits queue, synchronously (so the edits are on the animation's queue when this returns)
+        self.pending_edits.future_desync(move |_| {
+            async move {
+                edit_stream.publish(Arc::new(edits)).await;
+                edit_stream.when_empty().await;
+            }.boxed()
+        }).sync().ok();
     }
 
     ///
