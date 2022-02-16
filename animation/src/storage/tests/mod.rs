@@ -9,7 +9,6 @@ mod layers;
 mod cut_paths;
 mod edit_log;
 mod frame_edits;
-mod motion;
 mod path;
 mod shape;
 mod caching;
