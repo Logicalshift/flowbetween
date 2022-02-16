@@ -142,7 +142,7 @@ impl BrushPreview {
     ///
     /// Draws this preview brush stroke to the specified graphics object
     ///
-    pub fn draw_current_brush_stroke(&self, gc: &mut dyn GraphicsContext, update_brush_definition: bool, update_properties: bool) {
+    pub fn draw_current_brush_stroke(&self, gc: &mut dyn GraphicsContext, _update_brush_definition: bool, _update_properties: bool) {
         // Set the brush to use in the vector properties
         let mut vector_properties   = VectorProperties::default();
         vector_properties.brush     = self.current_brush.clone();
