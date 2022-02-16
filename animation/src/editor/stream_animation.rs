@@ -295,13 +295,6 @@ impl Animation for StreamAnimation {
             }
         }).fuse().boxed()
     }
-
-    ///
-    /// Supplies a reference which can be used to find the motions associated with this animation
-    ///
-    fn motion<'a>(&'a self) -> &'a dyn AnimationMotion {
-        &*self
-    }
 }
 
 impl EditableAnimation for StreamAnimation {
@@ -390,110 +383,5 @@ impl EditableAnimation for StreamAnimation {
         self.core.desync(|core| {
             core.cached_keyframe = None;
         });
-    }
-}
-
-impl AnimationMotion for StreamAnimation {
-    ///
-    /// Retrieves the IDs of the motions attached to a particular element
-    ///
-    fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
-        let element_id      = match element_id {
-            ElementId::Assigned(id) => id,
-            ElementId::Unassigned   => { return vec![]; }
-        };
-
-        // Request the keyframe that contains this element
-        let core            = Arc::clone(&self.core);
-
-        let keyframe        = core.future_desync(move |core| core.edit_keyframe_for_element(element_id).boxed()).sync().unwrap();
-        let keyframe        = match keyframe {
-            Some(keyframe)  => keyframe,
-            None            => { return vec![]; }
-        };
-
-        // Read the attachments for the element
-        keyframe.sync(move |keyframe| {
-            // Read the main element
-            let element     = keyframe.elements.get(&ElementId::Assigned(element_id));
-            let element     = match element {
-                Some(wrapper)   => wrapper,
-                None            => { return vec![]; }
-            };
-
-            // Try to read all the attachments
-            let motion_attachments = element.attachments.iter()
-                .filter_map(|attachment_id| keyframe.elements.get(attachment_id))
-                .filter_map(|attachment_wrapper| {
-                    if VectorType::from(&attachment_wrapper.element) == VectorType::Motion {
-                        Some(attachment_wrapper.element.id())
-                    } else {
-                        None
-                    }
-                });
-
-            motion_attachments.collect()
-        })
-    }
-
-    ///
-    /// Retrieves the IDs of the elements attached to a particular motion
-    ///
-    fn get_elements_for_motion(&self, motion_id: ElementId) -> Vec<ElementId> {
-        if let Some(motion_id) = motion_id.id() {
-            // Read the wrapper for the motion
-            let response = self.request_sync(vec![StorageCommand::ReadElement(motion_id)]);
-
-            // Read the attachments from the response (resolve the elements with no dependent elements)
-            response.into_iter()
-                .flatten()
-                .map(|response| match response {
-                    StorageResponse::Element(id, data) => {
-                        // Deserialize the element to get its attachments
-                        let resolver = ElementWrapper::deserialize(ElementId::Assigned(id), &mut data.chars());
-                        resolver.and_then(|resolver| resolver.resolve(&mut |_| None))
-                    },
-                    _ => None
-                }).flatten()
-                .map(|wrapper| wrapper.attached_to.iter().cloned().collect::<Vec<_>>())
-                .flatten()
-                .collect()
-        } else {
-            // No elements if the ID is unassigned
-            vec![]
-        }
-    }
-
-    ///
-    /// Retrieves the motion with the specified ID
-    ///
-    fn get_motion(&self, motion_id: ElementId) -> Option<Motion> {
-        let element_id      = match motion_id {
-            ElementId::Assigned(id) => id,
-            ElementId::Unassigned   => { return None; }
-        };
-
-        // Request the keyframe that contains this element
-        let core            = Arc::clone(&self.core);
-
-        let keyframe        = core.future_desync(move |core| core.edit_keyframe_for_element(element_id).boxed()).sync().unwrap();
-        let keyframe        = match keyframe {
-            Some(keyframe)  => keyframe,
-            None            => { return None; }
-        };
-
-        // Try to retrieve the element
-        keyframe.sync(move |keyframe| {
-            // Read the main element
-            let element     = match keyframe.elements.get(&ElementId::Assigned(element_id)) {
-                Some(element)   => element,
-                None            => { return None; }
-            };
-
-            match &element.element {
-                Vector::Motion(motion)  => Some((&*motion.motion()).clone()),
-                _                       => None
-            }
-        })
     }
 }

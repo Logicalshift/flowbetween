@@ -335,36 +335,6 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
     fn read_edit_log<'a>(&'a self, range: Range<usize>) -> BoxStream<'a, AnimationEdit> {
         self.animation.read_edit_log(range)
     }
-
-    ///
-    /// Supplies a reference which can be used to find the motions associated with this animation
-    ///
-    fn motion<'a>(&'a self) -> &'a dyn AnimationMotion {
-        self
-    }
-}
-
-impl<Anim: Animation> AnimationMotion for FloModel<Anim> {
-    ///
-    /// Retrieves the IDs of the motions attached to a particular element
-    ///
-    fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
-        self.animation.motion().get_motions_for_element(element_id)
-    }
-
-    ///
-    /// Retrieves the IDs of the elements attached to a particular motion
-    ///
-    fn get_elements_for_motion(&self, motion_id: ElementId) -> Vec<ElementId> {
-        self.animation.motion().get_elements_for_motion(motion_id)
-    }
-
-    ///
-    /// Retrieves the motion with the specified ID
-    ///
-    fn get_motion(&self, motion_id: ElementId) -> Option<Motion> {
-        self.animation.motion().get_motion(motion_id)
-    }
 }
 
 impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {

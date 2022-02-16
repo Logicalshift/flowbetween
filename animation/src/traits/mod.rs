@@ -1,7 +1,6 @@
 mod edit;
 mod actions;
 mod animation;
-mod animation_motion;
 mod file_animation;
 mod frame;
 mod layer;
@@ -22,7 +21,6 @@ mod fill_option;
 pub use self::edit::*;
 pub use self::actions::*;
 pub use self::animation::*;
-pub use self::animation_motion::*;
 pub use self::file_animation::*;
 pub use self::frame::*;
 pub use self::layer::*;

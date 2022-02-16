@@ -4,7 +4,5 @@
 //!
 
 mod edit_action;
-mod motion_actions;
 
 pub use self::edit_action::*;
-pub use self::motion_actions::*;

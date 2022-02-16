@@ -86,11 +86,4 @@ impl<Anim: 'static+Unpin+EditableAnimation> Animation for UndoableAnimation<Anim
         unimplemented!()
         // self.animation.sync(|anim| anim.read_edit_log(range))
     }
-
-    ///
-    /// Supplies a reference which can be used to find the motions associated with this animation
-    ///
-    fn motion<'a>(&'a self) -> &'a dyn AnimationMotion {
-        unimplemented!()
-    }
 }
