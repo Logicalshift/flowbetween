@@ -1,3 +1,4 @@
+use super::edit_log_reader::*;
 use crate::traits::*;
 
 use futures::prelude::*;
@@ -89,8 +90,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> Animation for UndoableAnimation<Anim
     /// Reads from the edit log for this animation
     ///
     fn read_edit_log<'a>(&'a self, range: Range<usize>) -> BoxStream<'a, AnimationEdit> {
-        unimplemented!()
-        // self.animation.sync(|anim| anim.read_edit_log(range))
+        read_desync_edit_log(Arc::clone(&self.animation), range).boxed()
     }
 }
 
