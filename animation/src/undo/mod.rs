@@ -2,8 +2,8 @@
 //! # The undo subsystem
 //!
 
-mod animation;
+mod undo_animation;
 mod edit_log_reader;
 
-pub use self::animation::*;
+pub use self::undo_animation::*;
 
