@@ -1,3 +1,4 @@
+use super::reverse_edits::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use crate::storage::storage_api::*;
@@ -12,13 +13,13 @@ impl StreamAnimationCore {
     ///
     /// Performs a path edit on a layer
     ///
-    pub fn path_edit<'a>(&'a mut self, layer_id: u64, when: Duration, edit: &'a PathEdit) -> impl 'a+Future<Output=()> {
+    pub fn path_edit<'a>(&'a mut self, layer_id: u64, when: Duration, edit: &'a PathEdit) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
             use self::PathEdit::*;
 
             // Ensure that the appropriate keyframe is in the cache. No edit can take place if there's no keyframe at this time
             let current_keyframe = match self.edit_keyframe(layer_id, when).await {
-                None            => { return; }
+                None            => { return ReversedEdits::empty(); }
                 Some(keyframe)  => keyframe
             };
 
@@ -34,13 +35,14 @@ impl StreamAnimationCore {
                         (defn.clone(), props.clone())
                     } else {
                         // No properties set
-                        return;
+                        return ReversedEdits::empty();
                     };
 
                     let (defn_id, props_id) = if let (Some(defn_id), Some(props_id)) = (defn.id().id(), props.id().id()) {
                         (defn_id, props_id)
                     } else {
-                        return;
+                        // Properties don't have IDs set
+                        return ReversedEdits::empty();
                     };
 
                     // Create the path element
@@ -68,6 +70,8 @@ impl StreamAnimationCore {
 
                     // Send to the storage
                     self.request(storage_updates.unwrap()).await;
+
+                    ReversedEdits::unimplemented()
                 }
 
                 SelectBrush(element_id, defn, style)    => {
@@ -84,6 +88,8 @@ impl StreamAnimationCore {
                     element_wrapper.serialize(&mut element_string);
 
                     self.request(vec![StorageCommand::WriteElement(element_id, element_string)]).await;
+
+                    ReversedEdits::unimplemented()
                 }
 
                 BrushProperties(element_id, properties) => {
@@ -100,8 +106,10 @@ impl StreamAnimationCore {
                     element_wrapper.serialize(&mut element_string);
 
                     self.request(vec![StorageCommand::WriteElement(element_id, element_string)]).await;
+
+                    ReversedEdits::unimplemented()
                 }
-            };
+            }
         }
     }
 }

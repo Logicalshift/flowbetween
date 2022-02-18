@@ -1,3 +1,4 @@
+use super::reverse_edits::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use super::pending_storage_change::*;
@@ -162,7 +163,7 @@ impl StreamAnimationCore {
     ///
     /// Applies a layer cut operation to a frame
     ///
-    pub (super) fn apply_layer_cut<'a>(&'a mut self, layer_id: u64, when: Duration, layer_cut: LayerCut, inside_group_id: ElementId) -> impl 'a + Future<Output=()> {
+    pub (super) fn apply_layer_cut<'a>(&'a mut self, layer_id: u64, when: Duration, layer_cut: LayerCut, inside_group_id: ElementId) -> impl 'a + Future<Output=ReversedEdits> {
         async move {
             let mut pending         = PendingStorageChange::new();
 
@@ -173,7 +174,7 @@ impl StreamAnimationCore {
 
             // Fetch the frame that we'll be cutting elements in
             let frame           = self.edit_keyframe(layer_id, when).await;
-            let frame           = match frame { Some(frame) => frame, None => { return; } };
+            let frame           = match frame { Some(frame) => frame, None => { return ReversedEdits::empty(); } };
 
             // Remove the attachments from the elements that we'll be replacing
             let replaced_ids        = outside_path.iter().map(|(elem_id, _)| elem_id.id()).flatten().collect::<Vec<_>>();
@@ -308,6 +309,8 @@ impl StreamAnimationCore {
 
             // Apply the pending storage changes
             self.request(pending).await;
+
+            ReversedEdits::unimplemented()
         }
     }
 }

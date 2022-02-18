@@ -1,3 +1,4 @@
+use super::reverse_edits::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use crate::traits::*;
@@ -11,13 +12,15 @@ impl StreamAnimationCore {
     ///
     /// Performs a paint edit on a layer
     ///
-    pub fn paint_edit<'a>(&'a mut self, layer_id: u64, when: Duration, edit: &'a PaintEdit) -> impl 'a+Future<Output=()> { 
+    pub fn paint_edit<'a>(&'a mut self, layer_id: u64, when: Duration, edit: &'a PaintEdit) -> impl 'a+Future<Output=ReversedEdits> { 
         async move { 
             use self::PaintEdit::*;
 
+            let mut reversed_edits = ReversedEdits::new();
+
             // Ensure that the appropriate keyframe is in the cache. No edit can take place if there's no keyframe at this time
             let current_keyframe = match self.edit_keyframe(layer_id, when).await {
-                None            => { return; }
+                None            => { return ReversedEdits::empty(); }
                 Some(keyframe)  => keyframe
             };
 
@@ -92,6 +95,8 @@ impl StreamAnimationCore {
                 // Send to the storage
                 self.request(storage_updates.unwrap()).await;
             }
+
+            reversed_edits
         }
     }
 }

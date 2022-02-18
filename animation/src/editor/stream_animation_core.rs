@@ -1,4 +1,5 @@
 use super::keyframe_core::*;
+use super::reverse_edits::*;
 use crate::storage::storage_api::*;
 use crate::storage::file_properties::*;
 use crate::traits::*;
@@ -193,6 +194,7 @@ impl StreamAnimationCore {
                 mapped_edits.push(self.assign_element_id_to_edit_log(edit).await);
             }
             let edits               = mapped_edits;
+            let mut reversed_edits  = ReversedEdits::new();
 
             // Send the edits to the edit log by serializing them
             let edit_log = edits.iter()
@@ -212,19 +214,19 @@ impl StreamAnimationCore {
 
                 // Edit the elements
                 match edit {
-                    Layer(layer_id, layer_edit)             => { self.layer_edit(*layer_id, layer_edit).await; }
-                    Element(element_ids, element_edit)      => { self.element_edit(element_ids, element_edit).await; }
-                    Motion(motion_id, motion_edit)          => { self.motion_edit(*motion_id, motion_edit).await; }
-                    SetSize(width, height)                  => { self.set_size(*width, *height).await }
-                    SetFrameLength(length)                  => { self.set_frame_length(*length).await }
-                    SetLength(length)                       => { self.set_length(*length).await }
-                    AddNewLayer(layer_id)                   => { self.add_new_layer(*layer_id).await; }
-                    RemoveLayer(layer_id)                   => { self.remove_layer(*layer_id).await; }
+                    Layer(layer_id, layer_edit)             => { reversed_edits.add_to_start(self.layer_edit(*layer_id, layer_edit).await); }
+                    Element(element_ids, element_edit)      => { reversed_edits.add_to_start(self.element_edit(element_ids, element_edit).await); }
+                    Motion(motion_id, motion_edit)          => { reversed_edits.add_to_start(self.motion_edit(*motion_id, motion_edit).await); }
+                    SetSize(width, height)                  => { reversed_edits.add_to_start(self.set_size(*width, *height).await) }
+                    SetFrameLength(length)                  => { reversed_edits.add_to_start(self.set_frame_length(*length).await) }
+                    SetLength(length)                       => { reversed_edits.add_to_start(self.set_length(*length).await) }
+                    AddNewLayer(layer_id)                   => { reversed_edits.add_to_start(self.add_new_layer(*layer_id).await); }
+                    RemoveLayer(layer_id)                   => { reversed_edits.add_to_start(self.remove_layer(*layer_id).await); }
                 }
             }
 
             // TODO: generate the 'reverse' edits
-            RetiredEdit::new(Arc::new(edits), Arc::new(vec![]))
+            RetiredEdit::new(Arc::new(edits), reversed_edits.into())
         }
     }
 
@@ -325,7 +327,7 @@ impl StreamAnimationCore {
     ///
     /// Sets the size of the animation
     ///
-    pub fn set_size<'a>(&'a mut self, width: f64, height: f64) -> impl 'a+Future<Output=()> {
+    pub fn set_size<'a>(&'a mut self, width: f64, height: f64) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
             // Get the current animation properties
             let properties      = self.request_one(StorageCommand::ReadAnimationProperties).await;
@@ -345,13 +347,15 @@ impl StreamAnimationCore {
             let mut new_properties = String::new();
             properties.serialize(&mut new_properties);
             self.request_one(StorageCommand::WriteAnimationProperties(new_properties)).await;
+
+            ReversedEdits::unimplemented()
         }
     }
 
     ///
     /// Sets the length of a frame in the animation
     ///
-    pub fn set_frame_length<'a>(&'a mut self, frame_length: Duration) -> impl 'a+Future<Output=()> {
+    pub fn set_frame_length<'a>(&'a mut self, frame_length: Duration) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
             // Get the current animation properties
             let properties          = self.request_one(StorageCommand::ReadAnimationProperties).await;
@@ -371,13 +375,15 @@ impl StreamAnimationCore {
             let mut new_properties = String::new();
             properties.serialize(&mut new_properties);
             self.request_one(StorageCommand::WriteAnimationProperties(new_properties)).await;
+
+            ReversedEdits::unimplemented()
         }
     }
 
     ///
     /// Sets the length of the animation as a whole
     ///
-    pub fn set_length<'a>(&'a mut self, length: Duration) -> impl 'a+Future<Output=()> {
+    pub fn set_length<'a>(&'a mut self, length: Duration) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
             // Get the current animation properties
             let properties          = self.request_one(StorageCommand::ReadAnimationProperties).await;
@@ -397,28 +403,34 @@ impl StreamAnimationCore {
             let mut new_properties = String::new();
             properties.serialize(&mut new_properties);
             self.request_one(StorageCommand::WriteAnimationProperties(new_properties)).await;
+
+            ReversedEdits::unimplemented()
         }
     }
 
     ///
     /// Adds a key frame to a layer
     ///
-    pub fn add_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
+    pub fn add_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=ReversedEdits> { 
         async move {
             self.cached_keyframe = None;
             self.cached_layers.remove(&layer_id);
             self.request_one(StorageCommand::AddKeyFrame(layer_id, when)).await;
+
+            ReversedEdits::unimplemented()
         } 
     }
 
     ///
     /// Removes a key frame from a layer
     ///
-    pub fn remove_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
+    pub fn remove_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=ReversedEdits> { 
         async move {
             self.cached_keyframe = None;
             self.cached_layers.remove(&layer_id);
             self.request_one(StorageCommand::DeleteKeyFrame(layer_id, when)).await;
+
+            ReversedEdits::unimplemented()
         } 
     }
 }

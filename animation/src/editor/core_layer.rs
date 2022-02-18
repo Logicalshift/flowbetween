@@ -1,3 +1,4 @@
+use super::reverse_edits::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use crate::traits::*;
@@ -15,7 +16,7 @@ impl StreamAnimationCore {
     ///
     /// Performs a layer edit on this animation
     ///
-    pub fn layer_edit<'a>(&'a mut self, layer_id: u64, layer_edit: &'a LayerEdit) -> impl 'a+Future<Output=()> {
+    pub fn layer_edit<'a>(&'a mut self, layer_id: u64, layer_edit: &'a LayerEdit) -> impl 'a+Future<Output=ReversedEdits> {
         use self::LayerEdit::*;
 
         // Invalidate the layer from the cache
@@ -26,7 +27,7 @@ impl StreamAnimationCore {
             match layer_edit {
                 Paint(when, paint_edit)                         => { self.paint_edit(layer_id, *when, paint_edit).await }
                 Path(when, path_edit)                           => { self.path_edit(layer_id, *when, path_edit).await }
-                CreateAnimation(when, element_id, description)  => { self.create_animation(layer_id, *when, *element_id, description.clone()).await; }
+                CreateAnimation(when, element_id, description)  => { self.create_animation(layer_id, *when, *element_id, description.clone()).await }
                 AddKeyFrame(when)                               => { self.add_key_frame(layer_id, *when).await }
                 RemoveKeyFrame(when)                            => { self.remove_key_frame(layer_id, *when).await }
                 SetName(new_name)                               => { self.set_layer_name(layer_id, new_name).await }
@@ -34,7 +35,7 @@ impl StreamAnimationCore {
                 SetAlpha(alpha)                                 => { self.set_layer_alpha(layer_id, *alpha).await }
                 Cut { path, when, inside_group }   => { 
                     let cut = self.layer_cut(layer_id, *when, Arc::clone(path)).await;
-                    self.apply_layer_cut(layer_id, *when, cut, *inside_group).await;
+                    self.apply_layer_cut(layer_id, *when, cut, *inside_group).await
                 }
             }
         }
@@ -43,11 +44,11 @@ impl StreamAnimationCore {
     ///
     /// Creates an animation element on a keyframe
     ///
-    pub fn create_animation<'a>(&'a mut self, layer_id: u64, when: Duration, element_id: ElementId, description: RegionDescription) -> impl 'a+Future<Output=()> {
+    pub fn create_animation<'a>(&'a mut self, layer_id: u64, when: Duration, element_id: ElementId, description: RegionDescription) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
             // Ensure that the appropriate keyframe is in the cache. No edit can take place if there's no keyframe at this time
             let current_keyframe = match self.edit_keyframe(layer_id, when).await {
-                None            => { return; }
+                None            => { return ReversedEdits::empty(); }
                 Some(keyframe)  => keyframe
             };
 
@@ -70,17 +71,19 @@ impl StreamAnimationCore {
 
             // Send to the storage
             self.request(storage_updates.unwrap()).await;
+
+            ReversedEdits::unimplemented()
         }
     }
 
     ///
     /// Sets the order of a layer (which is effectively the ID of the layer this layer should appear behind)
     ///
-    pub fn set_layer_ordering<'a>(&'a mut self, layer_id: u64, order_behind: u64) -> impl 'a+Future<Output=()> {
+    pub fn set_layer_ordering<'a>(&'a mut self, layer_id: u64, order_behind: u64) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
             // A layer is always ordered behind itself
             if order_behind == layer_id {
-                return;
+                return ReversedEdits::empty();
             }
 
             // Read all of the layers from storage
@@ -115,7 +118,7 @@ impl StreamAnimationCore {
 
             let (layer_index, order_behind_index) = match (layer_index, order_behind_index) {
                 (Some(layer_index), Some(order_behind_index))   => (layer_index, order_behind_index),
-                _                                               => { return; }
+                _                                               => { return ReversedEdits::empty(); }
             };
 
             // Move the layer behind the 'order-behind' index
@@ -141,13 +144,15 @@ impl StreamAnimationCore {
                     })
                     .map(|(layer_id, serialized)| StorageCommand::WriteLayerProperties(layer_id, serialized)))
                 .await;
+
+            ReversedEdits::unimplemented()
         } 
     }
 
     ///
     /// Adds a new layer with a particular ID to this animation
     ///
-    pub fn add_new_layer<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=()> {
+    pub fn add_new_layer<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
             // Create the default properties for this layer
             let properties      = LayerProperties::default();
@@ -156,23 +161,27 @@ impl StreamAnimationCore {
 
             // Add the layer
             self.request_one(StorageCommand::AddLayer(layer_id, serialized)).await;
+
+            ReversedEdits::unimplemented()
         }
     }
 
     ///
     /// Removes the layer with the specified ID from the animation
     ///
-    pub fn remove_layer<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=()> {
+    pub fn remove_layer<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
             // Remove the layer
             self.request_one(StorageCommand::DeleteLayer(layer_id)).await;
+
+            ReversedEdits::unimplemented()
         }
     }
 
     ///
     /// Sets the name of a layer
     ///
-    pub fn set_layer_name<'a>(&'a mut self, layer_id: u64, name: &'a str) -> impl 'a+Future<Output=()> { 
+    pub fn set_layer_name<'a>(&'a mut self, layer_id: u64, name: &'a str) -> impl 'a+Future<Output=ReversedEdits> { 
         async move {
             // Read the current properties for this layer
             let mut properties = match self.request_one(StorageCommand::ReadLayerProperties(layer_id)).await {
@@ -191,13 +200,15 @@ impl StreamAnimationCore {
             let mut serialized = String::new();
             properties.serialize(&mut serialized);
             self.request_one(StorageCommand::WriteLayerProperties(layer_id, serialized)).await;
+
+            ReversedEdits::unimplemented()
         } 
     }
 
     ///
     /// Sets the alpha blend factor of a layer
     ///
-    pub fn set_layer_alpha<'a>(&'a mut self, layer_id: u64, alpha: f64) -> impl 'a+Future<Output=()> { 
+    pub fn set_layer_alpha<'a>(&'a mut self, layer_id: u64, alpha: f64) -> impl 'a+Future<Output=ReversedEdits> { 
         async move {
             // Read the current properties for this layer
             let mut properties = match self.request_one(StorageCommand::ReadLayerProperties(layer_id)).await {
@@ -216,6 +227,8 @@ impl StreamAnimationCore {
             let mut serialized = String::new();
             properties.serialize(&mut serialized);
             self.request_one(StorageCommand::WriteLayerProperties(layer_id, serialized)).await;
+
+            ReversedEdits::unimplemented()
         } 
     }
 }

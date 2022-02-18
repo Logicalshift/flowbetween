@@ -1,4 +1,5 @@
 use super::core_element::*;
+use super::reverse_edits::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use crate::storage::storage_api::*;
@@ -12,14 +13,14 @@ impl StreamAnimationCore {
     ///
     /// Performs a motion edit on this animation
     ///
-    pub fn motion_edit<'a>(&'a mut self, motion_id: ElementId, motion_edit: &'a MotionEdit) -> impl 'a+Future<Output=()> {
+    pub fn motion_edit<'a>(&'a mut self, motion_id: ElementId, motion_edit: &'a MotionEdit) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
             use self::MotionEdit::*;
 
             // Convert the motion ID to an assigned element
             let motion_id = match motion_id.id() {
                 Some(id)    => id,
-                None        => { return; }
+                None        => { return ReversedEdits::empty(); }
             };
 
             match motion_edit {
@@ -32,12 +33,29 @@ impl StreamAnimationCore {
 
                     // Write
                     self.request_one(StorageCommand::WriteElement(motion_id, motion.serialize_to_string())).await;
-                }
-                Delete                  => { self.request_one(StorageCommand::DeleteElement(motion_id)).await; }
 
-                SetType(motion_type)    => { self.update_motion(motion_id, |mut motion| { motion.set_type(*motion_type); motion }).await; }
-                SetOrigin(x, y)         => { self.update_motion(motion_id, |mut motion| { motion.set_origin((*x, *y)); motion }).await; }
-                SetPath(time_curve)     => { self.update_motion(motion_id, |mut motion| { motion.set_path(time_curve.clone()); motion }).await; }
+                    ReversedEdits::unimplemented()
+                }
+
+                Delete                  => { 
+                    self.request_one(StorageCommand::DeleteElement(motion_id)).await;
+                    ReversedEdits::unimplemented()
+                }
+
+                SetType(motion_type)    => { 
+                    self.update_motion(motion_id, |mut motion| { motion.set_type(*motion_type); motion }).await;
+                    ReversedEdits::unimplemented()
+                }
+
+                SetOrigin(x, y)         => { 
+                    self.update_motion(motion_id, |mut motion| { motion.set_origin((*x, *y)); motion }).await; 
+                    ReversedEdits::unimplemented()
+                }
+
+                SetPath(time_curve)     => { 
+                    self.update_motion(motion_id, |mut motion| { motion.set_path(time_curve.clone()); motion }).await; 
+                    ReversedEdits::unimplemented()
+                }
             }
         }
     }

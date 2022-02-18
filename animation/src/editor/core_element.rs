@@ -1,4 +1,5 @@
 use super::keyframe_core::*;
+use super::reverse_edits::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use super::pending_storage_change::*;
@@ -37,7 +38,7 @@ impl StreamAnimationCore {
     ///
     /// Performs an element edit on this animation
     ///
-    pub fn element_edit<'a>(&'a mut self, element_ids: &'a Vec<ElementId>, element_edit: &'a ElementEdit) -> impl 'a+Send+Future<Output=()> {
+    pub fn element_edit<'a>(&'a mut self, element_ids: &'a Vec<ElementId>, element_edit: &'a ElementEdit) -> impl 'a+Send+Future<Output=ReversedEdits> {
         async move {
             use self::ElementEdit::*;
             use self::ElementUpdate::*;
@@ -45,44 +46,75 @@ impl StreamAnimationCore {
             let element_ids = element_ids.iter().map(|elem| elem.id()).flatten().collect();
 
             match element_edit {
-                AddAttachment(attach_id)            => { self.update_elements(element_ids, |_wrapper| { AddAttachments(vec![*attach_id]) }).await; }
-                RemoveAttachment(attach_id)         => { self.update_elements(element_ids, |_wrapper| { RemoveAttachments(vec![*attach_id]) }).await; }
-                SetPath(new_path)                   => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) }).await; }
-                Order(ordering)                     => { self.order_elements(element_ids, *ordering).await; }
-                Group(group_id, group_type)         => { self.group_elements(element_ids, *group_id, *group_type).await; }
+                AddAttachment(attach_id)            => { 
+                    self.update_elements(element_ids, |_wrapper| { AddAttachments(vec![*attach_id]) }).await;
+                    ReversedEdits::unimplemented()
+                }
+
+                RemoveAttachment(attach_id)         => { 
+                    self.update_elements(element_ids, |_wrapper| { RemoveAttachments(vec![*attach_id]) }).await; 
+                    ReversedEdits::unimplemented()
+                }
+
+                SetPath(new_path)                   => { 
+                    self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) }).await; 
+                    ReversedEdits::unimplemented()
+                }
+
+                Order(ordering)                     => { 
+                    self.order_elements(element_ids, *ordering).await;
+                    ReversedEdits::unimplemented()
+                }
+
+                Group(group_id, group_type)         => { 
+                    self.group_elements(element_ids, *group_id, *group_type).await; 
+                    ReversedEdits::unimplemented()
+                }
                 
                 Ungroup                             => { 
                     for id in element_ids {
                         self.ungroup_element(ElementId::Assigned(id)).await; 
                     }
+
+                    ReversedEdits::unimplemented()
                 }
 
                 ConvertToPath                       => {
                     for id in element_ids {
                         self.convert_element_to_path(ElementId::Assigned(id)).await;
                     }
+
+                    ReversedEdits::unimplemented()
                 }
 
                 CollideWithExistingElements         => { 
                     for id in element_ids.iter() {
                         self.collide_with_existing_elements(ElementId::Assigned(*id)).await;
                     }
+
+                    ReversedEdits::unimplemented()
                 }
 
                 Delete                              |
                 DetachFromFrame                     => {
+                    // If the element is attached to another element, remove it from the attachment list
                     self.remove_from_attachments(&element_ids).await;
 
-                    // Delete the elements
                     if element_edit == &ElementEdit::Delete {
+                        // Delete from storage
                         self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id))).await; 
                     } else {
+                        // Remove from the list of elements attached to a particular layer
                         self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id))).await; 
                     }
+
+                    ReversedEdits::unimplemented()
                 },
 
                 Transform(transformations)          => {
                     self.transform_elements(&element_ids, transformations).await;
+
+                    ReversedEdits::unimplemented()
                 }
 
                 SetControlPoints(new_points, when)  => { 
@@ -122,6 +154,8 @@ impl StreamAnimationCore {
 
                     // Send the updates to storage
                     self.request(updates).await;
+
+                    ReversedEdits::unimplemented()
                 }
 
                 SetAnimationDescription(new_description) => {
@@ -130,6 +164,8 @@ impl StreamAnimationCore {
                         wrapper.element = Vector::AnimationRegion(AnimationElement::new(id, new_description.clone())); 
                         ChangeWrapper(wrapper) 
                     }).await;
+
+                    ReversedEdits::unimplemented()
                 }
 
                 SetAnimationBaseType(new_base_type) => {
@@ -145,6 +181,8 @@ impl StreamAnimationCore {
 
                         ChangeWrapper(wrapper)
                     }).await;
+
+                    ReversedEdits::unimplemented()
                 }
 
                 AddAnimationEffect(new_effect_type) => { 
@@ -160,6 +198,8 @@ impl StreamAnimationCore {
 
                         ChangeWrapper(wrapper)
                     }).await;
+
+                    ReversedEdits::unimplemented()
                 }
 
                 ReplaceAnimationEffect(address, description) => {
@@ -178,6 +218,8 @@ impl StreamAnimationCore {
 
                         ChangeWrapper(wrapper)
                     }).await;
+
+                    ReversedEdits::unimplemented()
                 }
             }
         }

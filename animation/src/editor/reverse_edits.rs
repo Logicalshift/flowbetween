@@ -1,5 +1,6 @@
 use crate::traits::*;
 
+use std::mem;
 use std::sync::*;
 use std::ops::{Deref, DerefMut};
 
@@ -10,8 +11,37 @@ use std::ops::{Deref, DerefMut};
 pub struct ReversedEdits(pub Vec<AnimationEdit>);
 
 impl ReversedEdits {
+    ///
+    /// Creates a new reversed edits structure, where the intention is to populate it later on
+    ///
     pub fn new() -> ReversedEdits {
         ReversedEdits(vec![])
+    }
+
+    ///
+    /// Creates a new reversed edits structure, where it's expected to be empty
+    ///
+    pub fn empty() -> ReversedEdits {
+        ReversedEdits(vec![])
+    }
+
+    ///
+    /// As for `new()` except a placeholder for an edit that does not have a reversal yet
+    ///
+    pub fn unimplemented() -> ReversedEdits {
+        Self::empty()
+    }
+
+    ///
+    /// Adds a set of reversed edits to the start of this list of edits
+    ///
+    pub fn add_to_start(&mut self, edits: ReversedEdits) {
+        // Move the 'new' edits so they're the start of a new vector
+        let mut edits = edits.0;
+        mem::swap(&mut self.0, &mut edits);
+
+        // Append the edits that were originally in this object
+        self.0.extend(edits);
     }
 }
 
