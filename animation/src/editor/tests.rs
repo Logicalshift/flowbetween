@@ -58,7 +58,7 @@ fn send_retired_instructions() {
 
     let edits               = match edits {
         Either::Right(_)    => { assert!(false, "Timed out"); unimplemented!() }
-        Either::Left(edits) => edits.0.unwrap()
+        Either::Left(edits) => edits.0.unwrap().committed_edits()
     };
 
     assert!(edits == Arc::new(vec![AnimationEdit::SetSize(1080.0, 720.0)]));
