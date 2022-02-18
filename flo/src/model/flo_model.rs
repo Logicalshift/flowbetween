@@ -356,7 +356,7 @@ impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<A
     ///
     /// Returns a stream of edits as they are being retired (ie, the edits that are now visible on the animation)
     ///
-    fn retired_edits(&self) -> BoxStream<'static, Arc<Vec<AnimationEdit>>> {
+    fn retired_edits(&self) -> BoxStream<'static, RetiredEdit> {
         self.animation.retired_edits()
     }
 

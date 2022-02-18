@@ -75,7 +75,7 @@ pub (super) struct StreamAnimationCore {
     pub (super) path_brush_props: Option<Arc<BrushPropertiesElement>>,
 
     /// Channels for sending retired editing instructions
-    pub (super) retired_edit_senders: Vec<Publisher<Arc<Vec<AnimationEdit>>>>,
+    pub (super) retired_edit_senders: Vec<Publisher<RetiredEdit>>,
 }
 
 impl StreamAnimationCore {
@@ -185,7 +185,7 @@ impl StreamAnimationCore {
     ///
     /// Performs a set of edits on the core
     ///
-    pub fn perform_edits<'a>(&'a mut self, edits: Arc<Vec<AnimationEdit>>) -> impl 'a+Future<Output=()> {
+    pub fn perform_edits<'a>(&'a mut self, edits: Arc<Vec<AnimationEdit>>) -> impl 'a+Future<Output=RetiredEdit> {
         async move {
             // Assign IDs to the edits
             let mut mapped_edits    = Vec::with_capacity(edits.len());
@@ -222,6 +222,9 @@ impl StreamAnimationCore {
                     RemoveLayer(layer_id)                   => { self.remove_layer(*layer_id).await; }
                 }
             }
+
+            // TODO: generate the 'reverse' edits
+            RetiredEdit::new(Arc::new(edits), Arc::new(vec![]))
         }
     }
 

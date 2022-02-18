@@ -253,7 +253,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
             core.future_desync(move |core| {
                 async move {
                     for edit in next_edit {
-                        core.process_edits(&*edit);
+                        core.process_edits(&*edit.committed_edits());
                     }
                 }.boxed()
             }).await.ok();

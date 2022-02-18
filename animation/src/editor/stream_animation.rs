@@ -62,15 +62,15 @@ impl StreamAnimation {
         // Anything published to the editor is piped into the core
         pipe_in(Arc::clone(&core), edit_publisher.subscribe(), |core, edits| {
             async move {
-                // Perform the edits
-                core.perform_edits(Arc::clone(&edits)).await;
+                // Directly perform the edits
+                let retired = core.perform_edits(Arc::clone(&edits)).await;
 
-                // Clean up the edit publishers
+                // Clean up the edit publishers, in case any aren't being listened to any more
                 core.retired_edit_senders.retain(|sender| sender.count_subscribers() > 0);
 
-                // Send them as retired
+                // Send the edits as retired
                 for retired_sender in core.retired_edit_senders.iter_mut() {
-                    retired_sender.publish(Arc::clone(&edits)).await;
+                    retired_sender.publish(retired.clone()).await;
                 }
             }.boxed()
         });
@@ -360,7 +360,7 @@ impl EditableAnimation for StreamAnimation {
     ///
     /// Returns a stream of edits as they are being retired (ie, the edits that are now visible on the animation)
     ///
-    fn retired_edits(&self) -> BoxStream<'static, Arc<Vec<AnimationEdit>>> {
+    fn retired_edits(&self) -> BoxStream<'static, RetiredEdit> {
         // Create a channel to send edits through
         let mut sender  = Publisher::new(10);
         let receiver    = sender.subscribe();

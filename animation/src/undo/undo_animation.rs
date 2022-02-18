@@ -135,7 +135,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> EditableAnimation for UndoableAnimat
     ///
     /// Returns a stream of edits as they are being retired (ie, the edits that are now visible on the animation)
     ///
-    fn retired_edits(&self) -> BoxStream<'static, Arc<Vec<AnimationEdit>>> {
+    fn retired_edits(&self) -> BoxStream<'static, RetiredEdit> {
         self.animation.sync(|anim| anim.retired_edits())
     }
 
