@@ -7,6 +7,7 @@ mod element_align;
 mod element_transform;
 mod motion_edit;
 mod shape;
+mod retired_edit;
 
 pub use self::element_id::*;
 pub use self::animation_edit::*;
@@ -17,3 +18,4 @@ pub use self::element_align::*;
 pub use self::element_transform::*;
 pub use self::motion_edit::*;
 pub use self::shape::*;
+pub use self::retired_edit::*;
