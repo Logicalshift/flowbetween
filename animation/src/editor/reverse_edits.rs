@@ -26,6 +26,20 @@ impl ReversedEdits {
     }
 
     ///
+    /// Creates a reversed edits with a single edit in it
+    ///
+    pub fn with_edit(edit: AnimationEdit) -> ReversedEdits {
+        ReversedEdits(vec![edit])
+    }
+
+    ///
+    /// Creates a reversed edits with a list of edits in it
+    ///
+    pub fn with_edits(edits: impl IntoIterator<Item=AnimationEdit>) -> ReversedEdits {
+        ReversedEdits(edits.into_iter().collect())
+    }
+
+    ///
     /// As for `new()` except a placeholder for an edit that does not have a reversal yet
     ///
     pub fn unimplemented() -> ReversedEdits {
