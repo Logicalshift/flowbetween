@@ -58,8 +58,16 @@ impl StreamAnimationCore {
                 }
 
                 SetPath(new_path)                   => { 
-                    self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) }).await; 
-                    ReversedEdits::unimplemented()
+                    let mut reversed_edits = ReversedEdits::new();
+
+                    self.update_elements(element_ids, |mut wrapper| { 
+                        let id          = wrapper.element.id(); 
+                        reversed_edits.push(AnimationEdit::Element(vec![id], ElementEdit::SetPath(wrapper.element.path_components())));
+
+                        wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) 
+                    }).await; 
+
+                    reversed_edits
                 }
 
                 Order(ordering)                     => { 
