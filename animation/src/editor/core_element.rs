@@ -703,11 +703,23 @@ impl StreamAnimationCore {
                         // Reset the 'before' element to reverse this
                         let wrapper         = keyframe.elements.get(&element_id);
                         if let Some(wrapper) = wrapper {
+                            // Move the element to 'before' the element it is currently behind
                             if let Some(order_before) = wrapper.order_before {
                                 reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Order(ElementOrdering::Before(order_before))));
                             } else {
                                 // The topmost element is the one that has 'None' set as order_before
                                 reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Order(ElementOrdering::ToTop)));
+                            }
+
+                            // Reparent the element before re-ordering (note the 'reverse()' later on, which is why we're adding this afterwards here)
+                            if let ElementOrdering::WithParent(_new_parent_id) = &ordering {
+                                if let Some(old_parent_id) = wrapper.parent {
+                                    // Moving from an existing group
+                                    reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Order(ElementOrdering::WithParent(old_parent_id))));
+                                } else {
+                                    // Ungroup will remove the parent entirely
+                                    reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Ungroup));
+                                }
                             }
                         }
 
