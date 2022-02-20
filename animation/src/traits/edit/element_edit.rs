@@ -13,11 +13,23 @@ use std::time::{Duration};
 ///
 #[derive(Clone, PartialEq, Debug, Copy)]
 pub enum ElementOrdering {
+    /// Moves the element in front of the following element
     InFront,
+
+    /// Moves the element behind the preceding element
     Behind,
+
+    /// Moves the element to the top of the elements owned by its parent element
     ToTop,
+
+    /// Moves the element to the bottom of the elements owned by its parent element
     ToBottom,
-    Before(ElementId)
+
+    /// Moves the element to before the specified element
+    Before(ElementId),
+
+    /// Adds the element to the top of the list of elements owned by the specified parent element (generally a group element)
+    WithParent(ElementId)
 }
 
 ///

@@ -696,6 +696,15 @@ impl KeyFrameCore {
                         updates.extend(self.order_after(element_id, parent, element_id_in_front));
                     }
                 }
+
+                WithParent(new_parent) => {
+                    if let Some(parent_wrapper) = self.elements.get(&new_parent) {
+                        // Order after the last element in the group
+                        let last_element = parent_wrapper.element.topmost_sub_element();
+
+                        updates.extend(self.order_after(element_id, Some(new_parent), last_element));
+                    }
+                }
             }
 
             Some(updates)

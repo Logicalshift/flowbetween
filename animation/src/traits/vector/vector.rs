@@ -134,6 +134,19 @@ impl Vector {
             _                           => Arc::new(vec![]),
         }
     }
+
+    ///
+    /// If this vector contains subelements (eg, is a group), this is the value of the 'topmost' element that it contains
+    ///
+    pub fn topmost_sub_element(&self) -> Option<ElementId> {
+        match self {
+            Vector::Group(group_elem)   => {
+                group_elem.elements().last()
+                    .map(|elem| elem.id())
+            }
+            _                           => None
+        }
+    }
 }
 
 impl DerefMut for Vector {
