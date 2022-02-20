@@ -1,3 +1,4 @@
+use super::reverse_edits::*;
 use super::stream_animation_core::*;
 use crate::storage::storage_api::*;
 use crate::traits::*;
@@ -10,7 +11,7 @@ impl StreamAnimationCore {
     ///
     /// Converts a particular element from its current type to a path element
     ///
-    pub fn convert_element_to_path<'a>(&'a mut self, convert_element_id: ElementId) -> impl 'a+Send+Future<Output=()> {
+    pub fn convert_element_to_path<'a>(&'a mut self, convert_element_id: ElementId) -> impl 'a+Send+Future<Output=ReversedEdits> {
         async move {
             // Fetch the frame that the element is in
             // 
@@ -20,21 +21,37 @@ impl StreamAnimationCore {
             // fetching the frame anyway)
             let assigned_element_id = match convert_element_id.id() {
                 Some(id)        => id,
-                None            => { return; }
+                None            => { return ReversedEdits::empty(); }
             };
 
             let frame = match self.edit_keyframe_for_element(assigned_element_id).await {
                 Some(frame)     => frame,
-                None            => { return; }
+                None            => { return ReversedEdits::empty(); }
             };
 
-            let updates = frame.future_sync(move |frame| {
+            let (updates, reversed) = frame.future_sync(move |frame| {
                 async move {
                     // Fetch the element from the frame
                     let mut wrapper = match frame.elements.get(&convert_element_id) {
                         Some(wrapper)   => wrapper.clone(),
-                        None            => { return vec![]; }
+                        None            => { return (vec![], ReversedEdits::empty()); }
                     };
+
+                    // The reverse recreates the element and reapplies its attachments
+                    let layer_id        = frame.layer_id;
+                    let mut reversed    = ReversedEdits::with_edits(vec![
+                        AnimationEdit::Element(vec![convert_element_id], ElementEdit::Delete),
+                        AnimationEdit::Layer(layer_id, LayerEdit::CreateElement(wrapper.start_time, convert_element_id, wrapper.element.clone())),
+                        AnimationEdit::Element(wrapper.attachments.iter().cloned().collect(), ElementEdit::AttachTo(convert_element_id)),
+                    ]);
+
+                    if let Some(parent) = wrapper.parent {
+                        reversed.push(AnimationEdit::Element(vec![convert_element_id], ElementEdit::Order(ElementOrdering::WithParent(parent))));
+                    }
+
+                    if let Some(before) = wrapper.order_before {
+                        reversed.push(AnimationEdit::Element(vec![convert_element_id], ElementEdit::Order(ElementOrdering::Before(before))));
+                    }
 
                     // Create the vector properties by applying all the attachments for the element
                     let mut vector_properties   = Arc::new(VectorProperties::default());
@@ -67,12 +84,14 @@ impl StreamAnimationCore {
                     frame.invalidate();
                     frame.elements.insert(convert_element_id, wrapper);
 
-                    updates
+                    (updates, reversed)
                 }.boxed()
             }).await.unwrap();
 
             // Send the updates to storage
             self.request(updates).await;
+
+            reversed
         }
     }
 }

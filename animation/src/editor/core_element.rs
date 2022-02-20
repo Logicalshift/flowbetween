@@ -43,18 +43,34 @@ impl StreamAnimationCore {
             use self::ElementEdit::*;
             use self::ElementUpdate::*;
 
-            let reverse_element_ids = element_ids;
-            let element_ids         = element_ids.iter().map(|elem| elem.id()).flatten().collect();
+            let wrapped_element_ids = element_ids;
+            let element_ids         = element_ids.iter().map(|elem| elem.id()).flatten().collect::<Vec<_>>();
 
             match element_edit {
+                AttachTo(element_id)                => {
+                    if let ElementId::Assigned(element_id) = element_id {
+                        self.update_elements(vec![*element_id], |_wrapper| { AddAttachments(wrapped_element_ids.clone()) }).await;
+                        ReversedEdits::with_edits(
+                            wrapped_element_ids
+                                .iter()
+                                .cloned()
+                                .map(|attachment_id| {
+                                    AnimationEdit::Element(vec![ElementId::Assigned(*element_id)], ElementEdit::RemoveAttachment(attachment_id))
+                                })
+                        )
+                    } else {
+                        ReversedEdits::empty()
+                    }
+                }
+
                 AddAttachment(attach_id)            => { 
                     self.update_elements(element_ids, |_wrapper| { AddAttachments(vec![*attach_id]) }).await;
-                    ReversedEdits::with_edit(AnimationEdit::Element(reverse_element_ids.clone(), ElementEdit::RemoveAttachment(*attach_id)))
+                    ReversedEdits::with_edit(AnimationEdit::Element(wrapped_element_ids.clone(), ElementEdit::RemoveAttachment(*attach_id)))
                 }
 
                 RemoveAttachment(attach_id)         => { 
                     self.update_elements(element_ids, |_wrapper| { RemoveAttachments(vec![*attach_id]) }).await; 
-                    ReversedEdits::with_edit(AnimationEdit::Element(reverse_element_ids.clone(), ElementEdit::AddAttachment(*attach_id)))
+                    ReversedEdits::with_edit(AnimationEdit::Element(wrapped_element_ids.clone(), ElementEdit::AddAttachment(*attach_id)))
                 }
 
                 SetPath(new_path)                   => { 
@@ -90,11 +106,13 @@ impl StreamAnimationCore {
                 }
 
                 ConvertToPath                       => {
+                    let mut reversed = ReversedEdits::new();
+
                     for id in element_ids {
-                        self.convert_element_to_path(ElementId::Assigned(id)).await;
+                        reversed.add_to_start(self.convert_element_to_path(ElementId::Assigned(id)).await);
                     }
 
-                    ReversedEdits::unimplemented()
+                    reversed
                 }
 
                 CollideWithExistingElements         => { 

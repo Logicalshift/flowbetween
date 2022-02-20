@@ -16,6 +16,7 @@ impl ElementEdit {
         use self::ElementEdit::*;
 
         match self {
+            AttachTo(elem)                          => { data.write_chr('>'); elem.serialize(data); }
             AddAttachment(elem)                     => { data.write_chr('+'); elem.serialize(data); }
             RemoveAttachment(elem)                  => { data.write_chr('-'); elem.serialize(data); }
             Order(ordering)                         => { data.write_chr('O'); ordering.serialize(data); }
@@ -68,6 +69,11 @@ impl ElementEdit {
     ///
     pub fn deserialize<Src: AnimationDataSource>(data: &mut Src) -> Option<ElementEdit> {
         match data.next_chr() {
+            '>' => {
+                ElementId::deserialize(data)
+                    .map(|elem| ElementEdit::AttachTo(elem))
+            }
+
             '+' => {
                 ElementId::deserialize(data)
                     .map(|elem| ElementEdit::AddAttachment(elem))

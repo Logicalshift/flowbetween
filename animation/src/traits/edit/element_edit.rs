@@ -40,6 +40,9 @@ pub enum ElementOrdering {
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum ElementEdit {
+    /// Attach this element to another one
+    AttachTo(ElementId),
+
     /// Adds an attachment to this element
     AddAttachment(ElementId),
 
