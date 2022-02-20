@@ -16,6 +16,7 @@ use super::super::edit::ElementId;
 use smallvec::*;
 
 use std::ops::{Deref, DerefMut};
+use std::sync::*;
 
 ///
 /// Possible types of vector element
@@ -109,7 +110,7 @@ impl Vector {
     ///
     /// Creates an updated vector element with updated path components
     ///
-    pub fn with_path_components<ComponentList: IntoIterator<Item=PathComponent>>(&self, path_components: ComponentList) -> Vector {
+    pub fn with_path_components(&self, path_components: impl IntoIterator<Item=PathComponent>) -> Vector {
         match self {
             Vector::Path(path_element) => {
                 // Create a clone of the path element with the new properties
@@ -121,6 +122,16 @@ impl Vector {
 
             // Element is unchanged if it's not a path
             _ => self.clone()
+        }
+    }
+
+    ///
+    /// Retrieves the path components that make up this vector element
+    ///
+    pub fn path_components(&self) -> Arc<Vec<PathComponent>> {
+        match self {
+            Vector::Path(path_element)  => path_element.path().elements.clone(),
+            _                           => Arc::new(vec![]),
         }
     }
 }
