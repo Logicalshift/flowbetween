@@ -636,7 +636,9 @@ impl StreamAnimationCore {
             };
 
             // Modify the frame
-            let updates = frame.future_sync(move |frame| {
+            let (reversed, updates) = frame.future_sync(move |frame| {
+                let mut reversed = ReversedEdits::new();
+
                 async move {
                     // The updates that will be performed
                     let mut updates = vec![];
@@ -644,18 +646,29 @@ impl StreamAnimationCore {
                     // Fetch the element as a group
                     let group_wrapper = match frame.elements.get(&ElementId::Assigned(group_element_id)) {
                         Some(wrapper)   => wrapper,
-                        None            => { return vec![] }
+                        None            => { return (reversed, vec![]); }
                     };
 
                     // Gather information on where the grouped elements will go
-                    let parent      = group_wrapper.parent;
-                    let order_after = group_wrapper.order_after;
+                    let parent          = group_wrapper.parent;
+                    let order_after     = group_wrapper.order_after;
+                    let order_before    = group_wrapper.order_before;
 
                     // Fetch the group elements
                     let elements    = match &group_wrapper.element {
                         Vector::Group(group)    => group.elements().map(|elem| elem.id()).collect::<Vec<_>>(),
-                        _                       => { return vec![]; }
+                        _                       => { return (reversed, vec![]); }
                     };
+                    let group_type  = match &group_wrapper.element {
+                        Vector::Group(group)    => group.group_type(),
+                        _                       => { return (reversed, vec![]); },
+                    };
+
+                    // Reverse re-groups the elements
+                    if let Some(order_before) = order_before {
+                        reversed.push(AnimationEdit::Element(vec![ElementId::Assigned(group_element_id)], ElementEdit::Order(ElementOrdering::Before(order_before))));
+                    }
+                    reversed.push(AnimationEdit::Element(elements.clone(), ElementEdit::Group(ElementId::Assigned(group_element_id), group_type)));
 
                     // Unlink all of the elements from the group
                     for elem in elements.iter() {
@@ -671,13 +684,16 @@ impl StreamAnimationCore {
                     }
 
                     // Result is the updates
-                    updates
+                    (reversed, updates)
                 }.boxed()
             }).await.unwrap();
 
             self.request(updates).await;
 
-            ReversedEdits::unimplemented()
+            // Recrete any groups in reverse order
+            let mut reversed = reversed;
+            reversed.reverse();
+            reversed
         }
     }
 
@@ -717,8 +733,9 @@ impl StreamAnimationCore {
                                     // Moving from an existing group
                                     reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Order(ElementOrdering::WithParent(old_parent_id))));
                                 } else {
-                                    // Ungroup will remove the parent entirely
-                                    reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Ungroup));
+                                    // Order at the front of the top-level list of elements
+                                    // reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Order(ElementOrdering::ToTopLevel));
+                                    unimplemented!()
                                 }
                             }
                         }
