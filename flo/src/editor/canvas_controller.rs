@@ -442,6 +442,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
                         LayerEdit::Paint(_, _)                                  => { false /* Tool is responsible for the update, for efficiency when we're just overlaying a brush stroke */ }
                         LayerEdit::Path(_, _)                                   => { false /* Tool is also responsible here */ }
                         LayerEdit::CreateAnimation(_, _, _)                     => { true }
+                        LayerEdit::CreateElement(_, _, _)                       => { true }
                         LayerEdit::Cut { path: _, when: _, inside_group: _ }    => { true }
                         LayerEdit::AddKeyFrame(_)                               => { true }
                         LayerEdit::RemoveKeyFrame(_)                            => { true },
@@ -459,6 +460,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
                 AnimationEdit::Element(elements, edit)          => {
                     // Determine if we should update the layer(s) that these elements are on
                     let update_layer = match edit {
+                        ElementEdit::AttachTo(_)                    => false,
                         ElementEdit::AddAttachment(_)               => false,
                         ElementEdit::RemoveAttachment(_)            => false,
                         ElementEdit::SetControlPoints(_, _)         => true,
