@@ -665,7 +665,7 @@ impl StreamAnimationCore {
                     // Unlink the group itself
                     updates.extend(frame.unlink_element(ElementId::Assigned(group_element_id)));
 
-                    // Order the elements after the place where the group way
+                    // Order the elements after the place where the group was
                     for elem in elements.iter().rev() {
                         updates.extend(frame.order_after(*elem, parent, order_after));
                     }
