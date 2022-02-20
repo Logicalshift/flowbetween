@@ -175,6 +175,9 @@ impl StreamAnimationCore {
                 Layer(layer_id, CreateAnimation(when, element, description)) =>
                     Layer(*layer_id, CreateAnimation(*when, self.assign_element_id(*element).await, description.clone())),
 
+                Layer(layer_id, CreateElement(when, element, vector)) =>
+                    Layer(*layer_id, CreateElement(*when, self.assign_element_id(*element).await, vector.clone())),
+
                 Element(elements, Group(group_id, group_type)) =>
                     Element(elements.clone(), Group(self.assign_element_id(*group_id).await, *group_type)),
 

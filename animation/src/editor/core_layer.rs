@@ -28,6 +28,7 @@ impl StreamAnimationCore {
                 Paint(when, paint_edit)                         => { self.paint_edit(layer_id, *when, paint_edit).await }
                 Path(when, path_edit)                           => { self.path_edit(layer_id, *when, path_edit).await }
                 CreateAnimation(when, element_id, description)  => { self.create_animation(layer_id, *when, *element_id, description.clone()).await }
+                CreateElement(when, element_id, vector)         => { self.create_element(layer_id, *when, *element_id, vector.clone()).await }
                 AddKeyFrame(when)                               => { self.add_key_frame(layer_id, *when).await }
                 RemoveKeyFrame(when)                            => { self.remove_key_frame(layer_id, *when).await }
                 SetName(new_name)                               => { self.set_layer_name(layer_id, new_name).await }
@@ -38,6 +39,44 @@ impl StreamAnimationCore {
                     self.apply_layer_cut(layer_id, *when, cut, *inside_group).await
                 }
             }
+        }
+    }
+
+    ///
+    /// Creates an element with a specific vector definition
+    ///
+    pub fn create_element<'a>(&'a mut self, layer_id: u64, when: Duration, element_id: ElementId, vector: Vector) -> impl 'a+Future<Output=ReversedEdits> {
+        async move {
+            // If the vector won't deserialize properly (which can happen because the vector contains other elements): do nothing as the vector will not show up in the next edit log
+            if vector.requires_resolution_for_deserialize() {
+                return ReversedEdits::empty();
+            }
+
+            // Ensure that the appropriate keyframe is in the cache. No edit can take place if there's no keyframe at this time
+            let current_keyframe = match self.edit_keyframe(layer_id, when).await {
+                None            => { return ReversedEdits::empty(); }
+                Some(keyframe)  => keyframe
+            };
+
+            // Make sure the element ID is in sync (the wrapper is what actually stores the ID so this doesn't matter too much right now but this could be important in the future)
+            let mut vector = vector;
+            vector.set_id(element_id);
+
+            // Create the element wrapper
+            let storage_updates = current_keyframe.future_sync(move |current_keyframe| {
+                async move {
+                    let wrapper     = ElementWrapper::attached_with_element(vector, when);
+                    let add_element = current_keyframe.add_element_to_end(element_id, wrapper);
+
+                    add_element
+                }.boxed()
+            }).await;
+
+            // Send to the storage
+            self.request(storage_updates.unwrap()).await;
+
+            // Reversal is just to delete the element
+            ReversedEdits::with_edit(AnimationEdit::Element(vec![element_id], ElementEdit::Delete))
         }
     }
 

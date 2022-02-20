@@ -1,10 +1,12 @@
 use super::super::source::*;
 use super::super::target::*;
-use super::super::super::traits::*;
+use crate::traits::*;
+use crate::serializer::vector::{ResolveElements};
 
 use serde_json as json;
 
 use std::sync::*;
+use std::str::{Chars};
 
 impl LayerEdit {
     ///
@@ -22,6 +24,7 @@ impl LayerEdit {
             SetOrdering(ordering)                       => { data.write_chr('O'); data.write_u64(*ordering); }
             SetAlpha(alpha)                             => { data.write_chr('a'); data.write_f64(*alpha); }
             CreateAnimation(when, id, description)      => { data.write_chr('A'); data.write_duration(*when); id.serialize(data); data.write_str(&json::to_string(description).unwrap()); }
+            CreateElement(when, id, vector)             => { data.write_chr('V'); data.write_duration(*when); id.serialize(data); vector.serialize(data); },
 
             Cut { path, when, inside_group }   => { 
                 data.write_chr('c'); 
@@ -42,7 +45,7 @@ impl LayerEdit {
     ///
     /// Deserializes a layer edit from the supplied data source
     ///
-    pub fn deserialize<Src: AnimationDataSource>(data: &mut Src) -> Option<LayerEdit> {
+    pub fn deserialize(data: &mut Chars) -> Option<LayerEdit> {
         match data.next_chr() {
             'P' => {
                 let when = data.next_duration();
@@ -60,6 +63,15 @@ impl LayerEdit {
             'O' => { Some(LayerEdit::SetOrdering(data.next_u64())) }
             'A' => { Some(LayerEdit::CreateAnimation(data.next_duration(), ElementId::deserialize(data)?, json::from_str(&data.next_string()).ok()?)) }
             'a' => { Some(LayerEdit::SetAlpha(data.next_f64())) }
+
+            'V' => { 
+                let when    = data.next_duration();
+                let id      = ElementId::deserialize(data)?;
+                let vector  = Vector::deserialize(id, data)?;
+                let vector  = vector.resolve(&mut |_| None)?;
+
+                Some(LayerEdit::CreateElement(when, id, vector)) 
+            }
 
             'c' => {
                 let when            = data.next_duration();

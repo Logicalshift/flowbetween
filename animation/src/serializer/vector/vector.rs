@@ -14,6 +14,29 @@ fn box_fn<TFn: 'static+FnOnce(&mut dyn FnMut(ElementId) -> Option<Vector>) -> Op
 
 impl Vector {
     ///
+    /// Returns true if the deserialization for this vector will 
+    ///
+    pub fn requires_resolution_for_deserialize(&self) -> bool {
+        use self::Vector::*;
+
+        match self {
+            // Vectors that directly contain other elements will need those elements to be resolved (which can't be done when deserializing an edit log)
+            Transformed(_transform)             => { true }
+            Motion(_motion)                     => { true }
+            Group(_group)                       => { true }
+            Error                               => { true }
+
+            BrushDefinition(_defn)              => { false }
+            BrushProperties(_props)             => { false }
+            BrushStroke(_brush)                 => { false }
+            Path(_path)                         => { false }
+            Shape(_shape)                       => { false }
+            AnimationRegion(_region)            => { false }
+            Transformation((_id, _transform))   => { false }
+        }
+    }
+
+    ///
     /// Generates a serialized version of this vector element on the specified data target
     /// 
     /// Vector elements are serialized without their ID (this can be serialized separately if needed)

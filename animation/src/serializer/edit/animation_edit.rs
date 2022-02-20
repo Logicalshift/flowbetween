@@ -2,6 +2,7 @@ use super::super::source::*;
 use super::super::target::*;
 use crate::traits::*;
 
+use std::str::{Chars};
 use std::time::{Duration};
 
 impl AnimationEdit {
@@ -26,7 +27,7 @@ impl AnimationEdit {
     ///
     /// Deserializes an animation edit
     ///
-    pub fn deserialize<Src: AnimationDataSource>(data: &mut Src) -> Option<AnimationEdit> {
+    pub fn deserialize(data: &mut Chars) -> Option<AnimationEdit> {
         match data.next_chr() {
             'L' => { let layer_id = data.next_small_u64(); LayerEdit::deserialize(data).map(move |edit| AnimationEdit::Layer(layer_id, edit)) }
             'M' => { ElementId::deserialize(data).and_then(|elem| MotionEdit::deserialize(data).map(move |edit| AnimationEdit::Motion(elem, edit))) }

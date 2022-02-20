@@ -263,3 +263,29 @@ fn will_assign_element_ids() {
     // Element ID should be assigned
     assert!(match &paint_edit[0] { &AnimationEdit::Layer(0, LayerEdit::Paint(_, PaintEdit::BrushStroke(ElementId::Assigned(_), _))) => true, _ => false });
 }
+
+#[test]
+fn create_vector_element() {
+    let anim                = create_animation();
+    let mut test_element    = Vector::BrushDefinition(BrushDefinitionElement::default());
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+    ]);
+    anim.perform_edits(vec![
+        AnimationEdit::Layer(2, LayerEdit::CreateElement(Duration::from_millis(0), ElementId::Assigned(42), test_element.clone())),
+    ]);
+
+    // Readback
+    let edit_log            = anim.read_edit_log(2..3);
+    let edit_log            = edit_log.collect();
+
+    let create_element: Vec<_>  = executor::block_on(edit_log);
+    test_element.set_id(ElementId::Assigned(42));
+
+    println!("{:?}", create_element);
+
+    assert!(create_element.len() == 1);
+    assert!(create_element[0] == AnimationEdit::Layer(2, LayerEdit::CreateElement(Duration::from_millis(0), ElementId::Assigned(42), test_element.clone())));
+}

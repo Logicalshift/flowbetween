@@ -36,7 +36,9 @@ pub enum LayerEdit {
     CreateAnimation(Duration, ElementId, RegionDescription),
 
     /// Creates the specified vector element on top of the list at the specified time
-    //CreateElement(Duration, Vector),
+    ///
+    /// This will do nothing for vectors that reference other elements: (groups and motions).
+    CreateElement(Duration, ElementId, Vector),
 
     /// Cuts elements within this layer along a path, creating two groups of th e parts of the elements within the path and those outside
     Cut { path: Arc<Vec<PathComponent>>, when: Duration, inside_group: ElementId },

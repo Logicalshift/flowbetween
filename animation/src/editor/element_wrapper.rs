@@ -45,6 +45,8 @@ impl ElementWrapper {
     ///
     /// Creates an element wrapper containing a particular element with its other properties sert to the default values
     ///
+    /// This element is considered to not be in the default render path, but instead might be referred to by another element.
+    ///
     pub fn unattached_with_element(element: Vector, when: Duration) -> ElementWrapper {
         Self::with_element(element, when, true)
     }
