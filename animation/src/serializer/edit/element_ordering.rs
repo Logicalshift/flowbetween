@@ -16,6 +16,7 @@ impl ElementOrdering {
             ToBottom            => { data.write_chr('v'); }
             Before(elem)        => { data.write_chr('B'); elem.serialize(data); }
             WithParent(elem)    => { data.write_chr('P'); elem.serialize(data); }
+            ToTopLevel          => { data.write_chr('T'); }
         }
     }
 
@@ -32,6 +33,7 @@ impl ElementOrdering {
             'v' => Some(ToBottom),
             'B' => ElementId::deserialize(data).map(|elem| Before(elem)),
             'P' => ElementId::deserialize(data).map(|elem| WithParent(elem)),
+            'T' => Some(ToTopLevel),
             _   => None
         }
     }
@@ -87,5 +89,13 @@ mod test {
         ElementOrdering::WithParent(ElementId::Assigned(42)).serialize(&mut encoded);
 
         assert!(ElementOrdering::deserialize(&mut encoded.chars()) == Some(ElementOrdering::WithParent(ElementId::Assigned(42))));
+    }
+
+    #[test]
+    fn to_top_level() {
+        let mut encoded = String::new();
+        ElementOrdering::ToTopLevel.serialize(&mut encoded);
+
+        assert!(ElementOrdering::deserialize(&mut encoded.chars()) == Some(ElementOrdering::ToTopLevel));
     }
 }

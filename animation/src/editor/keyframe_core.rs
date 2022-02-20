@@ -705,6 +705,10 @@ impl KeyFrameCore {
                         updates.extend(self.order_after(element_id, Some(new_parent), last_element));
                     }
                 }
+
+                ToTopLevel => {
+                    updates.extend(self.order_after(element_id, None, self.last_element))
+                }
             }
 
             Some(updates)

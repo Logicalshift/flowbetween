@@ -734,8 +734,7 @@ impl StreamAnimationCore {
                                     reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Order(ElementOrdering::WithParent(old_parent_id))));
                                 } else {
                                     // Order at the front of the top-level list of elements
-                                    // reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Order(ElementOrdering::ToTopLevel));
-                                    unimplemented!()
+                                    reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Order(ElementOrdering::ToTopLevel)));
                                 }
                             }
                         }

@@ -29,7 +29,10 @@ pub enum ElementOrdering {
     Before(ElementId),
 
     /// Adds the element to the top of the list of elements owned by the specified parent element (generally a group element)
-    WithParent(ElementId)
+    WithParent(ElementId),
+
+    /// Moves the element to the front of the top-level element
+    ToTopLevel
 }
 
 ///
