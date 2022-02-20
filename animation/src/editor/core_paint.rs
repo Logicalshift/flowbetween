@@ -94,6 +94,9 @@ impl StreamAnimationCore {
 
                 // Send to the storage
                 self.request(storage_updates.unwrap()).await;
+
+                // Reversing this means deleting the new element
+                reversed_edits.push(AnimationEdit::Element(vec![ElementId::Assigned(id)], ElementEdit::Delete));
             }
 
             reversed_edits
