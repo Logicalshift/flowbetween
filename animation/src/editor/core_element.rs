@@ -43,17 +43,18 @@ impl StreamAnimationCore {
             use self::ElementEdit::*;
             use self::ElementUpdate::*;
 
-            let element_ids = element_ids.iter().map(|elem| elem.id()).flatten().collect();
+            let reverse_element_ids = element_ids;
+            let element_ids         = element_ids.iter().map(|elem| elem.id()).flatten().collect();
 
             match element_edit {
                 AddAttachment(attach_id)            => { 
                     self.update_elements(element_ids, |_wrapper| { AddAttachments(vec![*attach_id]) }).await;
-                    ReversedEdits::unimplemented()
+                    ReversedEdits::with_edit(AnimationEdit::Element(reverse_element_ids.clone(), ElementEdit::RemoveAttachment(*attach_id)))
                 }
 
                 RemoveAttachment(attach_id)         => { 
                     self.update_elements(element_ids, |_wrapper| { RemoveAttachments(vec![*attach_id]) }).await; 
-                    ReversedEdits::unimplemented()
+                    ReversedEdits::with_edit(AnimationEdit::Element(reverse_element_ids.clone(), ElementEdit::AddAttachment(*attach_id)))
                 }
 
                 SetPath(new_path)                   => { 
