@@ -80,11 +80,13 @@ impl StreamAnimationCore {
                 }
                 
                 Ungroup                             => { 
+                    let mut reversed = ReversedEdits::new();
+
                     for id in element_ids {
-                        self.ungroup_element(ElementId::Assigned(id)).await; 
+                        reversed.add_to_start(self.ungroup_element(ElementId::Assigned(id)).await); 
                     }
 
-                    ReversedEdits::unimplemented()
+                    reversed
                 }
 
                 ConvertToPath                       => {
@@ -619,18 +621,18 @@ impl StreamAnimationCore {
     /// Given an element that represents a group, ungroups it and moves all the elements in the group into the parent
     /// element
     ///
-    pub fn ungroup_element<'a>(&'a mut self, group_element_id: ElementId) -> impl 'a+Future<Output=()> {
+    pub fn ungroup_element<'a>(&'a mut self, group_element_id: ElementId) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
             let group_element_id = match group_element_id.id() {
                 Some(id)    => id,
-                None        => { return; }
+                None        => { return ReversedEdits::empty(); }
             };
 
             // Fetch the frame for the grouped element
             let frame = self.edit_keyframe_for_element(group_element_id).await;
             let frame = match frame {
                 Some(frame) => frame,
-                None        => { return; }
+                None        => { return ReversedEdits::empty(); }
             };
 
             // Modify the frame
@@ -674,6 +676,8 @@ impl StreamAnimationCore {
             }).await.unwrap();
 
             self.request(updates).await;
+
+            ReversedEdits::unimplemented()
         }
     }
 
