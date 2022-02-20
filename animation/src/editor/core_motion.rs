@@ -1,8 +1,8 @@
 use super::core_element::*;
-use super::reverse_edits::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use crate::storage::storage_api::*;
+use crate::undo::*;
 use crate::traits::*;
 
 use futures::prelude::*;

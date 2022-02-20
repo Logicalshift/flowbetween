@@ -21,7 +21,6 @@ mod element_convert_to_path;
 mod stream_layer;
 mod stream_frame;
 mod stream_layer_cache;
-mod reverse_edits;
 
 #[cfg(test)] mod tests;
 
