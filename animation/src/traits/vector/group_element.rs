@@ -16,7 +16,7 @@ use std::time::Duration;
 ///
 /// Represents an element consisting of a group of other elements
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct GroupElement {
     /// The ID assigned to this element
     id: ElementId,

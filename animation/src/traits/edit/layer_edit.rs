@@ -1,5 +1,6 @@
 use super::frame_edit::*;
 use super::element_id::*;
+use crate::traits::vector::*;
 
 use crate::traits::path::*;
 
@@ -33,6 +34,9 @@ pub enum LayerEdit {
 
     /// Creates an animation region on the keyframe containing the specified duration
     CreateAnimation(Duration, ElementId, RegionDescription),
+
+    /// Creates the specified vector element on top of the list at the specified time
+    //CreateElement(Duration, Vector),
 
     /// Cuts elements within this layer along a path, creating two groups of th e parts of the elements within the path and those outside
     Cut { path: Arc<Vec<PathComponent>>, when: Duration, inside_group: ElementId },

@@ -15,7 +15,7 @@ use std::time::Duration;
 ///
 /// The motion element describes a Motion as a vector element
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct MotionElement {
     id:     ElementId,
     motion: Arc<Motion>

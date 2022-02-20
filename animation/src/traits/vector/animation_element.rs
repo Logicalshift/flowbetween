@@ -96,6 +96,18 @@ impl AnimationElement {
     }
 }
 
+impl PartialEq for AnimationElement {
+    fn eq(&self, b: &AnimationElement) -> bool{
+        if self.id != b.id {
+            false
+        } else if self.description != b.description {
+            false
+        } else {
+            true
+        }
+    }
+}
+
 impl Clone for AnimationElement {
     fn clone(&self) -> Self {
         AnimationElement {

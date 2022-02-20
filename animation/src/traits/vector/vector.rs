@@ -21,7 +21,7 @@ use std::sync::*;
 ///
 /// Possible types of vector element
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Vector {
     /// Vector that has been transformed from a source vector (eg, by applying a motion)
     Transformed(TransformedVector),

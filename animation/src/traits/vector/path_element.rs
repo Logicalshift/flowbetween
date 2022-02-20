@@ -15,7 +15,7 @@ use std::time::Duration;
 ///
 /// Element representing a path definition
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct PathElement {
     /// The ID of this path
     id: ElementId,

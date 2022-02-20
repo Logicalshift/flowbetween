@@ -15,7 +15,7 @@ use std::time::Duration;
 ///
 /// Element representing selecting some new brush properties
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct BrushPropertiesElement {
     /// The ID of this element
     id: ElementId,
