@@ -71,8 +71,7 @@ impl StreamAnimationCore {
                 }
 
                 Order(ordering)                     => { 
-                    self.order_elements(element_ids, *ordering).await;
-                    ReversedEdits::unimplemented()
+                    self.order_elements(element_ids, *ordering).await
                 }
 
                 Group(group_id, group_type)         => { 
@@ -681,9 +680,10 @@ impl StreamAnimationCore {
     ///
     /// Re-orders a set of elements in their keyframes
     ///
-    pub fn order_elements<'a>(&'a mut self, element_ids: Vec<i64>, ordering: ElementOrdering) -> impl 'a + Future<Output=()>  {
+    pub fn order_elements<'a>(&'a mut self, element_ids: Vec<i64>, ordering: ElementOrdering) -> impl 'a + Future<Output=ReversedEdits>  {
         async move {
             // List of updates to perform as a result of this ordering operation
+            let mut reverse = ReversedEdits::new();
             let mut updates = vec![];
 
             // Order each element in turn
@@ -692,16 +692,37 @@ impl StreamAnimationCore {
                 let current_keyframe = self.edit_keyframe_for_element(element_id).await;
 
                 // Order the element in the keyframe
-                let maybe_updates = current_keyframe.and_then(|keyframe| 
-                    keyframe.sync(|keyframe| 
-                        keyframe.order_element(ElementId::Assigned(element_id), ordering)));
+                let maybe_updates = current_keyframe.and_then(|keyframe| {
+                    keyframe.sync(|keyframe| {
+                        let element_id      = ElementId::Assigned(element_id);
+
+                        // Reset the 'before' element to reverse this
+                        let wrapper         = keyframe.elements.get(&element_id);
+                        if let Some(wrapper) = wrapper {
+                            if let Some(order_before) = wrapper.order_before {
+                                reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Order(ElementOrdering::Before(order_before))));
+                            } else {
+                                // The topmost element is the one that has 'None' set as order_before
+                                reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Order(ElementOrdering::ToTop)));
+                            }
+                        }
+
+                        // Re-order the element
+                        keyframe.order_element(element_id, ordering)
+                    })
+                });
 
                 // Add the updates
                 maybe_updates.map(|keyframe_updates| updates.extend(keyframe_updates));
             }
 
+            // Re-order in reverse order
+            reverse.reverse();
+
             // Perform the updates
             self.request(updates).await;
+
+            reverse
         }
     }
 }
