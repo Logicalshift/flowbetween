@@ -71,6 +71,15 @@ impl Into<Arc<Vec<AnimationEdit>>> for ReversedEdits {
     }
 }
 
+impl IntoIterator for ReversedEdits {
+    type Item = AnimationEdit;
+    type IntoIter = <Vec<AnimationEdit> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
 impl Deref for ReversedEdits {
     type Target = Vec<AnimationEdit>;
 
