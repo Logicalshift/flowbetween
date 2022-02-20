@@ -77,7 +77,7 @@ impl StreamAnimationCore {
 
                 Group(group_id, group_type)         => { 
                     self.group_elements(element_ids, *group_id, *group_type).await; 
-                    ReversedEdits::unimplemented()
+                    ReversedEdits::with_edit(AnimationEdit::Element(vec![*group_id], ElementEdit::Ungroup))
                 }
                 
                 Ungroup                             => { 
