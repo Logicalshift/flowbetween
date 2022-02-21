@@ -116,11 +116,13 @@ impl StreamAnimationCore {
                 }
 
                 CollideWithExistingElements         => { 
+                    let mut reversed = ReversedEdits::new();
+
                     for id in element_ids.iter() {
-                        self.collide_with_existing_elements(ElementId::Assigned(*id)).await;
+                        reversed.add_to_start(self.collide_with_existing_elements(ElementId::Assigned(*id)).await);
                     }
 
-                    ReversedEdits::unimplemented()
+                    reversed
                 }
 
                 Delete                              |

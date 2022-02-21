@@ -2,6 +2,7 @@ use super::keyframe_core::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use super::pending_storage_change::*;
+use crate::undo::*;
 use crate::traits::*;
 
 use futures::prelude::*;
@@ -49,12 +50,12 @@ impl StreamAnimationCore {
     ///
     /// Attempts to combine an element with other elements in the same frame (by joining them into a single path)
     ///
-    pub fn collide_with_existing_elements<'a>(&'a mut self, source_element_id: ElementId) -> impl 'a+Send+Future<Output=()> {
+    pub fn collide_with_existing_elements<'a>(&'a mut self, source_element_id: ElementId) -> impl 'a+Send+Future<Output=ReversedEdits> {
         async move {
             // Fetch the frame that this element belongs to
             let assigned_element_id = match source_element_id.id() {
                 Some(id)    => id,
-                None        => { return }
+                None        => { return ReversedEdits::empty(); }
             };
 
             if let Some(frame) = self.edit_keyframe_for_element(assigned_element_id).await {
@@ -64,7 +65,7 @@ impl StreamAnimationCore {
 
                 // Nothing to do if there are no properties
                 if elements_with_properties.len() == 0 {
-                    return;
+                    return ReversedEdits::empty();
                 }
 
                 let updates = frame.future_sync(move |frame| {
@@ -151,6 +152,11 @@ impl StreamAnimationCore {
                 
                 // Send the updates to storage
                 self.request(updates).await;
+
+                ReversedEdits::unimplemented()
+            } else {
+                // No frame
+                ReversedEdits::empty()
             }
         }
     }
