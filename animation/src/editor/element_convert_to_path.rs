@@ -39,19 +39,7 @@ impl StreamAnimationCore {
 
                     // The reverse recreates the element and reapplies its attachments
                     let layer_id        = frame.layer_id;
-                    let mut reversed    = ReversedEdits::with_edits(vec![
-                        AnimationEdit::Element(vec![convert_element_id], ElementEdit::Delete),
-                        AnimationEdit::Layer(layer_id, LayerEdit::CreateElement(wrapper.start_time, convert_element_id, wrapper.element.clone())),
-                        AnimationEdit::Element(wrapper.attachments.iter().cloned().collect(), ElementEdit::AttachTo(convert_element_id)),
-                    ]);
-
-                    if let Some(parent) = wrapper.parent {
-                        reversed.push(AnimationEdit::Element(vec![convert_element_id], ElementEdit::Order(ElementOrdering::WithParent(parent))));
-                    }
-
-                    if let Some(before) = wrapper.order_before {
-                        reversed.push(AnimationEdit::Element(vec![convert_element_id], ElementEdit::Order(ElementOrdering::Before(before))));
-                    }
+                    let reversed        = ReversedEdits::with_recreated_wrapper(layer_id, &wrapper, &|id| frame.elements.get(&id).cloned());
 
                     // Create the vector properties by applying all the attachments for the element
                     let mut vector_properties   = Arc::new(VectorProperties::default());
