@@ -708,7 +708,7 @@ impl StreamAnimationCore {
 
             self.request(updates).await;
 
-            // Recrete any groups in reverse order
+            // Recreate any groups in reverse order
             let mut reversed = reversed;
             reversed.reverse();
             reversed
