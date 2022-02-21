@@ -140,13 +140,14 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
                     advance_edit_counter = true;
                 }
 
-                AddNewLayer(_)                      |
-                RemoveLayer(_)                      |
-                Element(_, _)                       |
-                Motion(_, _)                        |
-                Layer(_, Path(_, _))                |
-                Layer(_, CreateElement(_, _, _))    |
-                Layer(_, Paint(_, _))               => {
+                AddNewLayer(_)                                      |
+                RemoveLayer(_)                                      |
+                Element(_, _)                                       |
+                Motion(_, _)                                        |
+                Layer(_, Path(_, _))                                |
+                Layer(_, CreateElement(_, _, _))                    |
+                Layer(_, CreateElementUnattachedToFrame(_, _, _))   |
+                Layer(_, Paint(_, _))                               => {
                     advance_edit_counter = true;
                 }
 

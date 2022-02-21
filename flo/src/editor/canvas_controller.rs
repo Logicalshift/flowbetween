@@ -443,6 +443,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
                         LayerEdit::Path(_, _)                                   => { false /* Tool is also responsible here */ }
                         LayerEdit::CreateAnimation(_, _, _)                     => { true }
                         LayerEdit::CreateElement(_, _, _)                       => { true }
+                        LayerEdit::CreateElementUnattachedToFrame(_, _, _)      => { false }
                         LayerEdit::Cut { path: _, when: _, inside_group: _ }    => { true }
                         LayerEdit::AddKeyFrame(_)                               => { true }
                         LayerEdit::RemoveKeyFrame(_)                            => { true },
