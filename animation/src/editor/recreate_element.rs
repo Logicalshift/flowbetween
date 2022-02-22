@@ -6,10 +6,30 @@ use std::iter;
 
 impl ReversedEdits {
     ///
+    /// Restores the links for an element wrapper
+    ///
+    pub fn with_relinked_element(_layer_id: u64, wrapper: &ElementWrapper, _wrapper_for_element: &impl Fn(ElementId) -> Option<ElementWrapper>) -> ReversedEdits {
+        let mut reversed = Self::new();
+
+        // Move to its original parent object
+        if let Some(parent) = wrapper.parent {
+            // Move into the parent
+            reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::Order(ElementOrdering::WithParent(parent))));
+
+            // TODO: re-order within the parent element
+        } else if let Some(order_before) = wrapper.order_before {
+            // No parent, but also not the topmost element
+            reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::Order(ElementOrdering::Before(order_before))));
+        }
+
+        reversed
+    }
+
+    ///
     /// Recreates an element wrapper
     ///
     pub fn with_recreated_wrapper(layer_id: u64, wrapper: &ElementWrapper, wrapper_for_element: &impl Fn(ElementId) -> Option<ElementWrapper>) -> ReversedEdits {
-        let mut reversed = ReversedEdits::new();
+        let mut reversed = Self::new();
 
         use self::Vector::*;
 
@@ -46,15 +66,7 @@ impl ReversedEdits {
         }
 
         // Move to its original parent object
-        if let Some(parent) = wrapper.parent {
-            // Move into the parent
-            reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::Order(ElementOrdering::WithParent(parent))));
-
-            // TODO: re-order within the parent element
-        } else if let Some(order_before) = wrapper.order_before {
-            // No parent, but also not the topmost element
-            reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::Order(ElementOrdering::Before(order_before))));
-        }
+        reversed.extend(Self::with_relinked_element(layer_id, wrapper, wrapper_for_element));
 
         // Reattach any attachments
         if !wrapper.attachments.is_empty() {
