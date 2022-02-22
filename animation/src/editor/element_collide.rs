@@ -68,8 +68,11 @@ impl StreamAnimationCore {
                     return ReversedEdits::empty();
                 }
 
-                let updates = frame.future_sync(move |frame| {
+                let (updates, reversed) = frame.future_sync(move |frame| {
                     async move {
+                        let mut reversed    = ReversedEdits::new();
+                        let layer_id        = frame.layer_id;
+
                         // Find the brush properties for the selected element. These are usually at the end, so a linear search like this should be fine
                         let source_element_properties = elements_with_properties.iter().rev()
                             .filter(|elem| elem.0.element.id() == source_element_id)
@@ -84,7 +87,7 @@ impl StreamAnimationCore {
 
                         let source_wrapper  = match source_wrapper {
                             Some(wrapper)   => wrapper,
-                            None            => { return updates; }
+                            None            => { return (updates, reversed); }
                         };
 
                         // Collide other elements in the frame with this element
@@ -107,8 +110,9 @@ impl StreamAnimationCore {
 
                                     let new_combined = match source_brush.combine_with(combined_so_far, &source_element_properties, &combine_with_wrapper.element, &*properties) {
                                         NewElement(new_combined)    => {
-                                            // Unlink the element from the frame (brushes typicaly put their new element into a group so
+                                            // Unlink the element from the frame (brushes typically put their new element into a group so
                                             // this will set up the element in a way that's appropriate for that)
+                                            reversed.add_to_start(ReversedEdits::with_relinked_element(layer_id, &combine_with_wrapper, &|id| frame.elements.get(&id).cloned()));
                                             updates.extend(frame.unlink_element(combine_with_wrapper.element.id()));
 
                                             Some(new_combined) 
@@ -125,6 +129,10 @@ impl StreamAnimationCore {
                                 // Final update is to replace the old element with the new element
                                 let replacement_element = frame.elements.get(&source_element_id).cloned();
                                 if let (Some(mut combined_element), Some(mut replacement_element)) = (combined_element, replacement_element) {
+                                    // Reversing deletes and recreates the element (after all the internal elements have been moved back to where they belong)
+                                    reversed.push(AnimationEdit::Element(vec![source_element_id], ElementEdit::Delete));
+                                    reversed.extend(ReversedEdits::with_recreated_wrapper(layer_id, &replacement_element, &|id| frame.elements.get(&id).cloned()));
+
                                     // Replace the source element with the combined element
                                     combined_element.set_id(source_element_id);
                                     replacement_element.element = combined_element;
@@ -146,14 +154,14 @@ impl StreamAnimationCore {
                         }
 
                         // The result is the list of updates we want to perform
-                        updates
+                        (updates, reversed)
                     }.boxed()
                 }).await.unwrap();
                 
                 // Send the updates to storage
                 self.request(updates).await;
 
-                ReversedEdits::unimplemented()
+                reversed
             } else {
                 // No frame
                 ReversedEdits::empty()
