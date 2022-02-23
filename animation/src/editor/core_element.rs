@@ -125,18 +125,22 @@ impl StreamAnimationCore {
                     reversed
                 }
 
-                Delete                              |
+                Delete                              => {
+                    // If the element is attached to another element, remove it from the attachment list
+                    self.remove_from_attachments(&element_ids).await;
+
+                    // Delete from storage
+                    self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id))).await; 
+
+                    ReversedEdits::unimplemented()
+                }
+
                 DetachFromFrame                     => {
                     // If the element is attached to another element, remove it from the attachment list
                     self.remove_from_attachments(&element_ids).await;
 
-                    if element_edit == &ElementEdit::Delete {
-                        // Delete from storage
-                        self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id))).await; 
-                    } else {
-                        // Remove from the list of elements attached to a particular layer
-                        self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id))).await; 
-                    }
+                    // Remove from the list of elements attached to a particular layer
+                    self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id))).await; 
 
                     ReversedEdits::unimplemented()
                 },
