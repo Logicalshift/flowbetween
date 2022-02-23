@@ -153,13 +153,30 @@ impl StreamAnimationCore {
                 }
 
                 DetachFromFrame                     => {
+                    let mut reversed = ReversedEdits::new();
+
+                    // Re-link all of the elements
+                    for element_id in element_ids.iter().cloned() {
+                        if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
+                            // Request the element from the frame
+                            let frame_reverse = frame.future_sync(move |frame| {
+                                async move {
+                                    let wrapper = frame.elements.get(&ElementId::Assigned(element_id))?;
+                                    Some(ReversedEdits::with_relinked_element(frame.layer_id, wrapper, &|id| frame.elements.get(&id).cloned()))
+                                }.boxed()
+                            }).await.unwrap();
+
+                            frame_reverse.map(|frame_reverse| reversed.add_to_start(frame_reverse));
+                        }
+                    }
+
                     // If the element is attached to another element, remove it from the attachment list
-                    self.remove_from_attachments(&element_ids).await;
+                    reversed.extend(self.remove_from_attachments(&element_ids).await);
 
                     // Remove from the list of elements attached to a particular layer
                     self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id))).await; 
 
-                    ReversedEdits::unimplemented()
+                    reversed
                 },
 
                 Transform(transformations)          => {
@@ -281,7 +298,8 @@ impl StreamAnimationCore {
     /// This will remove the element from the attachment lists of those related elements.
     /// 
     /// Note that this might leave elements that are no longer attached to anything: this presently does not clean
-    /// up these elements.
+    /// up these elements. The reversed edits will add the element back as an attachment but won't re-link it (use
+    /// `ReversedEdits::with_relinked_element` to do that if needed)
     ///
     pub fn remove_from_attachments<'a>(&'a mut self, element_ids: &'a Vec<i64>) -> impl 'a+Send+Future<Output=ReversedEdits> {
         async move {
