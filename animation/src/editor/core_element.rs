@@ -126,13 +126,30 @@ impl StreamAnimationCore {
                 }
 
                 Delete                              => {
+                    // Create the undo operation for each of the deleted elements
+                    let mut reversed = ReversedEdits::new();
+
+                    for element_id in element_ids.iter().cloned() {
+                        if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
+                            // Request the element from the frame
+                            let frame_reverse = frame.future_sync(move |frame| {
+                                async move {
+                                    let wrapper = frame.elements.get(&ElementId::Assigned(element_id))?;
+                                    Some(ReversedEdits::with_recreated_wrapper(frame.layer_id, wrapper, &|id| frame.elements.get(&id).cloned()))
+                                }.boxed()
+                            }).await.unwrap();
+
+                            frame_reverse.map(|frame_reverse| reversed.add_to_start(frame_reverse));
+                        }
+                    }
+
                     // If the element is attached to another element, remove it from the attachment list
                     self.remove_from_attachments(&element_ids).await;
 
                     // Delete from storage
                     self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id))).await; 
 
-                    ReversedEdits::unimplemented()
+                    reversed
                 }
 
                 DetachFromFrame                     => {
