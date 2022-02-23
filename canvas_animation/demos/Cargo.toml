@@ -7,4 +7,11 @@ members = [
 
 [patch.crates-io]
 flo_canvas_animation    = { path = ".." }
-flo_curves              = { git = "https://github.com/Logicalshift/flo_curves" }
+flo_curves              = { git = "https://github.com/Logicalshift/flo_curves", branch = "v0.6" }
+
+flo_canvas              = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+flo_canvas_events       = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+flo_render              = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+flo_render_canvas       = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+flo_render_gl_offscreen = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+flo_draw                = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
