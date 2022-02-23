@@ -144,7 +144,7 @@ impl StreamAnimationCore {
                     }
 
                     // If the element is attached to another element, remove it from the attachment list
-                    self.remove_from_attachments(&element_ids).await;
+                    reversed.extend(self.remove_from_attachments(&element_ids).await);
 
                     // Delete from storage
                     self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id))).await; 
@@ -283,13 +283,18 @@ impl StreamAnimationCore {
     /// Note that this might leave elements that are no longer attached to anything: this presently does not clean
     /// up these elements.
     ///
-    pub fn remove_from_attachments<'a>(&'a mut self, element_ids: &'a Vec<i64>) -> impl 'a+Send+Future<Output=()> {
+    pub fn remove_from_attachments<'a>(&'a mut self, element_ids: &'a Vec<i64>) -> impl 'a+Send+Future<Output=ReversedEdits> {
         async move {
             let mut attachments         = vec![];
             let mut attached_to         = vec![];
 
             // Use update_elements to read the attachments/attached_to values for the elements that are being deleted
+            let mut reversed = ReversedEdits::new();
+
             self.update_elements(element_ids.clone(), |wrapper| {
+                reversed.push(AnimationEdit::Element(wrapper.attachments.clone(), ElementEdit::AttachTo(wrapper.element.id())));
+                reversed.push(AnimationEdit::Element(wrapper.attached_to.clone(), ElementEdit::AddAttachment(wrapper.element.id())));
+
                 attachments.extend(wrapper.attachments.into_iter().map(|id| id.id()).flatten());
                 attached_to.extend(wrapper.attached_to.into_iter().map(|id| id.id()).flatten());
 
@@ -305,6 +310,8 @@ impl StreamAnimationCore {
                 self.update_elements(attachments, |wrapper| Self::remove_attachments(wrapper, &attachments_to_remove)).await;
                 self.update_elements(attached_to, |wrapper| Self::remove_attachments(wrapper, &attachments_to_remove)).await;
             }
+
+            reversed
         }
     }
 
