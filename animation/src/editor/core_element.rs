@@ -188,13 +188,25 @@ impl StreamAnimationCore {
                 }
 
                 SetAnimationDescription(new_description) => {
-                    self.update_elements(element_ids, move |mut wrapper| { 
-                        let id          = wrapper.element.id(); 
-                        wrapper.element = Vector::AnimationRegion(AnimationElement::new(id, new_description.clone())); 
-                        ChangeWrapper(wrapper) 
+                    let mut reversed = ReversedEdits::empty();
+
+                    self.update_elements(element_ids, |mut wrapper| { 
+                        if let Vector::AnimationRegion(animation_element) = &wrapper.element {
+                            let id          = wrapper.element.id(); 
+
+                            // Reversal is to set the description back to what it was before
+                            let description = animation_element.description().clone();
+                            reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::SetAnimationDescription(description)));
+
+                            wrapper.element = Vector::AnimationRegion(AnimationElement::new(id, new_description.clone())); 
+                            ChangeWrapper(wrapper) 
+                        } else {
+                            // Not an animation element: do nothing
+                            ChangeWrapper(wrapper)
+                        }
                     }).await;
 
-                    ReversedEdits::unimplemented()
+                    reversed
                 }
 
                 SetAnimationBaseType(new_base_type) => {
