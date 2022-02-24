@@ -38,6 +38,7 @@ pub enum LayerEdit {
     /// Creates the specified vector element on top of the list at the specified time
     ///
     /// This will do nothing for vectors that reference other elements: (groups and motions).
+    /// If the element already exists, it will be overwritten rather than re-created (ie, left attached to anything it was already attached to)
     CreateElement(Duration, ElementId, Vector),
 
     /// Creates the specified vector element as an unattached element

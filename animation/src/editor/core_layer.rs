@@ -1,5 +1,6 @@
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
+use super::pending_storage_change::*;
 use crate::undo::*;
 use crate::traits::*;
 use crate::storage::storage_api::*;
@@ -66,14 +67,25 @@ impl StreamAnimationCore {
             // Create the element wrapper
             let storage_updates = current_keyframe.future_sync(move |current_keyframe| {
                 async move {
-                    let wrapper     = if unattached {
-                        ElementWrapper::unattached_with_element(vector, when)
-                    } else {
-                        ElementWrapper::attached_with_element(vector, when)
-                    };
-                    let add_element = current_keyframe.add_element_to_end(element_id, wrapper);
+                    if let Some(existing_wrapper) = current_keyframe.elements.get_mut(&element_id) {
+                        // Update the definition of an existing element
+                        existing_wrapper.element = vector;
 
-                    add_element
+                        let mut changes = PendingStorageChange::new();
+                        changes.push(StorageCommand::WriteElement(element_id.id().unwrap(), existing_wrapper.serialize_to_string()));
+
+                        changes
+                    } else {
+                        // Create a new element
+                        let wrapper     = if unattached {
+                            ElementWrapper::unattached_with_element(vector, when)
+                        } else {
+                            ElementWrapper::attached_with_element(vector, when)
+                        };
+                        let add_element = current_keyframe.add_element_to_end(element_id, wrapper);
+
+                        add_element
+                    }
                 }.boxed()
             }).await;
 
