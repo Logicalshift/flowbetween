@@ -623,7 +623,7 @@ impl StreamAnimationCore {
             // Send the updates to storage
             self.request(updates).await;
 
-            ReversedEdits::unimplemented()
+            reversed
         }
     }
 
