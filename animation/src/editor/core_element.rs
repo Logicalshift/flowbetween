@@ -183,45 +183,8 @@ impl StreamAnimationCore {
                     self.transform_elements(&element_ids, transformations).await
                 }
 
-                SetControlPoints(new_points, when)  => { 
-                    let mut updates = vec![];
-
-                    // Need to process the elements individually with their properties
-                    for element_id in element_ids.iter().cloned() {
-                        if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
-                            let when        = *when;
-                            let new_points  = new_points.clone();
-
-                            // Use the frame to update the element
-                            let element_updates = frame.future_sync(move |frame| {
-                                async move {
-                                    // Fetch the element wrapper
-                                    let mut wrapper = frame.elements.get(&ElementId::Assigned(element_id))?.clone();
-
-                                    // Work out the properties for this element
-                                    let properties  = frame.apply_properties_for_element(&wrapper.element, Arc::new(VectorProperties::default()), when);
-
-                                    // Update the control points
-                                    wrapper.element = wrapper.element.with_adjusted_control_points(new_points, &*properties);
-
-                                    // Generate the updates for this element
-                                    let updates     = vec![StorageCommand::WriteElement(element_id, wrapper.serialize_to_string())]; 
-                                    frame.elements.insert(ElementId::Assigned(element_id), wrapper);
-                                    frame.invalidate();
-
-                                    Some(updates)
-                                }.boxed()
-                            }).await.unwrap();
-
-                            // Add the updates to the overall list
-                            if let Some(element_updates) = element_updates { updates.extend(element_updates); }
-                        }
-                    }
-
-                    // Send the updates to storage
-                    self.request(updates).await;
-
-                    ReversedEdits::unimplemented()
+                SetControlPoints(new_points, when)  => {
+                    self.set_control_points(&element_ids, new_points, *when).await
                 }
 
                 SetAnimationDescription(new_description) => {
@@ -575,6 +538,51 @@ impl StreamAnimationCore {
 
             // Update all of the elements
             self.request(updates).await;
+        }
+    }
+
+    ///
+    /// Updates the control points for a list of elements
+    ///
+    pub fn set_control_points<'a>(&'a mut self, element_ids: &'a Vec<i64>, new_control_points: &'a Vec<(f32, f32)>, when: Duration) -> impl 'a + Future<Output=ReversedEdits> {
+        async move {
+            let mut updates = vec![];
+
+            // Need to process the elements individually with their properties
+            for element_id in element_ids.iter().cloned() {
+                if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
+                    let new_points  = new_control_points.clone();
+
+                    // Use the frame to update the element
+                    let element_updates = frame.future_sync(move |frame| {
+                        async move {
+                            // Fetch the element wrapper
+                            let mut wrapper = frame.elements.get(&ElementId::Assigned(element_id))?.clone();
+
+                            // Work out the properties for this element
+                            let properties  = frame.apply_properties_for_element(&wrapper.element, Arc::new(VectorProperties::default()), when);
+
+                            // Update the control points
+                            wrapper.element = wrapper.element.with_adjusted_control_points(new_points, &*properties);
+
+                            // Generate the updates for this element
+                            let updates     = vec![StorageCommand::WriteElement(element_id, wrapper.serialize_to_string())]; 
+                            frame.elements.insert(ElementId::Assigned(element_id), wrapper);
+                            frame.invalidate();
+
+                            Some(updates)
+                        }.boxed()
+                    }).await.unwrap();
+
+                    // Add the updates to the overall list
+                    if let Some(element_updates) = element_updates { updates.extend(element_updates); }
+                }
+            }
+
+            // Send the updates to storage
+            self.request(updates).await;
+
+            ReversedEdits::unimplemented()
         }
     }
 
