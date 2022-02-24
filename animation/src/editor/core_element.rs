@@ -546,7 +546,8 @@ impl StreamAnimationCore {
     ///
     pub fn set_control_points<'a>(&'a mut self, element_ids: &'a Vec<i64>, new_control_points: &'a Vec<(f32, f32)>, when: Duration) -> impl 'a + Future<Output=ReversedEdits> {
         async move {
-            let mut updates = vec![];
+            let mut reversed    = ReversedEdits::new();
+            let mut updates     = vec![];
 
             // Need to process the elements individually with their properties
             for element_id in element_ids.iter().cloned() {
@@ -554,28 +555,36 @@ impl StreamAnimationCore {
                     let new_points  = new_control_points.clone();
 
                     // Use the frame to update the element
-                    let element_updates = frame.future_sync(move |frame| {
+                    let maybe_updates = frame.future_sync(move |frame| {
                         async move {
                             // Fetch the element wrapper
-                            let mut wrapper = frame.elements.get(&ElementId::Assigned(element_id))?.clone();
+                            let mut wrapper     = frame.elements.get(&ElementId::Assigned(element_id))?.clone();
 
                             // Work out the properties for this element
-                            let properties  = frame.apply_properties_for_element(&wrapper.element, Arc::new(VectorProperties::default()), when);
+                            let properties      = frame.apply_properties_for_element(&wrapper.element, Arc::new(VectorProperties::default()), when);
+                            
+                            // Reversal just restores the original control points for this element
+                            let control_points  = wrapper.element.control_points(&*properties);
+                            let control_points  = control_points.into_iter().map(|cp| cp.position()).map(|(x, y)| (x as f32, y as f32));
+                            let reversed        = ReversedEdits::with_edit(AnimationEdit::Element(vec![ElementId::Assigned(element_id)], ElementEdit::SetControlPoints(control_points.collect(), when)));
 
                             // Update the control points
-                            wrapper.element = wrapper.element.with_adjusted_control_points(new_points, &*properties);
+                            wrapper.element     = wrapper.element.with_adjusted_control_points(new_points, &*properties);
 
                             // Generate the updates for this element
-                            let updates     = vec![StorageCommand::WriteElement(element_id, wrapper.serialize_to_string())]; 
+                            let updates         = vec![StorageCommand::WriteElement(element_id, wrapper.serialize_to_string())]; 
                             frame.elements.insert(ElementId::Assigned(element_id), wrapper);
                             frame.invalidate();
 
-                            Some(updates)
+                            Some((updates, reversed))
                         }.boxed()
                     }).await.unwrap();
 
                     // Add the updates to the overall list
-                    if let Some(element_updates) = element_updates { updates.extend(element_updates); }
+                    if let Some((element_updates, element_reversed)) = maybe_updates {
+                        reversed.add_to_start(element_reversed);
+                        updates.extend(element_updates);
+                    }
                 }
             }
 
