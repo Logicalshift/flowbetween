@@ -180,9 +180,7 @@ impl StreamAnimationCore {
                 },
 
                 Transform(transformations)          => {
-                    self.transform_elements(&element_ids, transformations).await;
-
-                    ReversedEdits::unimplemented()
+                    self.transform_elements(&element_ids, transformations).await
                 }
 
                 SetControlPoints(new_points, when)  => { 

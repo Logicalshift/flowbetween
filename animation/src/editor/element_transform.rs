@@ -2,6 +2,7 @@ use super::core_element::*;
 use super::keyframe_core::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
+use crate::undo::*;
 use crate::traits::*;
 use crate::storage::storage_api::*;
 
@@ -190,12 +191,15 @@ impl StreamAnimationCore {
     ///
     /// Applies transformations to a set of elements
     ///
-    pub fn transform_elements<'a>(&'a mut self, element_ids: &'a Vec<i64>, transformations: &'a Vec<ElementTransform>) -> impl 'a+Send+Future<Output=()> {
+    pub fn transform_elements<'a>(&'a mut self, element_ids: &'a Vec<i64>, transformations: &'a Vec<ElementTransform>) -> impl 'a+Send+Future<Output=ReversedEdits> {
         async move {
             // Nothing to do if there are no elements
             if element_ids.len() == 0 {
-                return;
+                return ReversedEdits::empty();
             }
+
+            // Create the reversed edits
+            let mut reversed = ReversedEdits::new();
 
             // The anchor point starts as the center point of all of the elements: calculate this point by computing the bounding box of all the elements
             // This is also used for alignments
@@ -296,10 +300,21 @@ impl StreamAnimationCore {
 
                             if transform_wrapper.attached_to == vec![ElementId::Assigned(*element_id)] {
                                 // The existing attachment is only attached to the element being edited, so we can edit just the attachment
-                                transform_wrapper.element   = Vector::Transformation((*existing_attachment_id, new_transformations.clone()));
+                                reversed.push(AnimationEdit::Layer(frame.layer_id, 
+                                    LayerEdit::CreateElement(transform_wrapper.start_time, *existing_attachment_id, transform_wrapper.element.clone())));
 
+                                transform_wrapper.element   = Vector::Transformation((*existing_attachment_id, new_transformations.clone()));
                                 update_elements.push(StorageCommand::WriteElement(transform_id, transform_wrapper.serialize_to_string()));
                             } else {
+                                // The existing attachment is attached to more than one element: create a new attachment for the element we're editing
+
+                                // Reversal is to remove the new attachment, add the old attachment and then delete the new attachment
+                                reversed.extend([
+                                    AnimationEdit::Element(vec![ElementId::Assigned(*element_id)], ElementEdit::RemoveAttachment(new_attachment_id)),
+                                    AnimationEdit::Element(vec![ElementId::Assigned(*element_id)], ElementEdit::AddAttachment(*existing_attachment_id)),
+                                    AnimationEdit::Element(vec![new_attachment_id], ElementEdit::Delete),
+                                ]);
+
                                 // Clone the transformation wrapper
                                 let mut transform_wrapper = transform_wrapper.clone();
 
@@ -321,9 +336,17 @@ impl StreamAnimationCore {
                             Some(())
                         });
                     } else {
+                        // The existing element has no transform attachment to change: we're going to create a new one
+
                         // Create a new transformation attachment for this element
                         let attachment_id       = self.assign_element_id(ElementId::Unassigned).await;
                         let attachment_wrapper  = ElementWrapper::unattached_with_element(Vector::Transformation((attachment_id, new_transformations.clone())), Duration::from_millis(0));
+
+                        // Reversal is to remove the new attachment and then delete the new attachment
+                        reversed.extend([
+                            AnimationEdit::Element(vec![ElementId::Assigned(*element_id)], ElementEdit::RemoveAttachment(attachment_id)),
+                            AnimationEdit::Element(vec![attachment_id], ElementEdit::Delete),
+                        ]);
 
                         frame.sync(|frame| {
                             // Create the element and attach it
@@ -352,6 +375,9 @@ impl StreamAnimationCore {
                 self.update_elements(new_attachments.keys().cloned().collect::<Vec<_>>(), 
                     |wrapper| ElementUpdate::AddAttachments(vec![new_attachments.get(&wrapper.element.id().id().unwrap()).unwrap().clone()])).await;
             }
+
+            // Result is the instructions needed to reverse the transformation step
+            reversed
         }
     }
 }
