@@ -188,7 +188,7 @@ impl StreamAnimationCore {
                 }
 
                 SetAnimationDescription(new_description) => {
-                    let mut reversed = ReversedEdits::empty();
+                    let mut reversed = ReversedEdits::new();
 
                     self.update_elements(element_ids, |mut wrapper| { 
                         if let Vector::AnimationRegion(animation_element) = &wrapper.element {
@@ -196,7 +196,7 @@ impl StreamAnimationCore {
 
                             // Reversal is to set the description back to what it was before
                             let description = animation_element.description().clone();
-                            reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::SetAnimationDescription(description)));
+                            reversed.insert(0, AnimationEdit::Element(vec![id], ElementEdit::SetAnimationDescription(description)));
 
                             wrapper.element = Vector::AnimationRegion(AnimationElement::new(id, new_description.clone())); 
                             ChangeWrapper(wrapper) 
@@ -210,9 +210,14 @@ impl StreamAnimationCore {
                 }
 
                 SetAnimationBaseType(new_base_type) => {
-                    self.update_elements(element_ids, move |mut wrapper| {
+                    let mut reversed = ReversedEdits::new();
+
+                    self.update_elements(element_ids, |mut wrapper| {
                         match &mut wrapper.element {
                             Vector::AnimationRegion(region) => {
+                                let old_type            = region.effect().base_animation_type();
+                                reversed.insert(0, AnimationEdit::Element(vec![region.id()], ElementEdit::SetAnimationBaseType(old_type)));
+
                                 let updated_effect      = region.effect().update_effect_animation_type(*new_base_type);
                                 *region.effect_mut()    = updated_effect;
                             }
@@ -223,7 +228,7 @@ impl StreamAnimationCore {
                         ChangeWrapper(wrapper)
                     }).await;
 
-                    ReversedEdits::unimplemented()
+                    reversed
                 }
 
                 AddAnimationEffect(new_effect_type) => { 
