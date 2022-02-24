@@ -232,9 +232,17 @@ impl StreamAnimationCore {
                 }
 
                 AddAnimationEffect(new_effect_type) => { 
-                    self.update_elements(element_ids, move |mut wrapper| {
+                    let mut reversed = ReversedEdits::new();
+
+                    self.update_elements(element_ids, |mut wrapper| {
                         match &mut wrapper.element {
                             Vector::AnimationRegion(region) => {
+                                // Reversal is to set the description back to what it was before
+                                let id          = region.id();
+                                let description = region.description().clone();
+                                reversed.insert(0, AnimationEdit::Element(vec![id], ElementEdit::SetAnimationDescription(description)));
+
+                                // Add the effect and update the region
                                 let updated_effect      = region.effect().add_new_effect(*new_effect_type);
                                 *region.effect_mut()    = updated_effect;
                             }
@@ -245,15 +253,22 @@ impl StreamAnimationCore {
                         ChangeWrapper(wrapper)
                     }).await;
 
-                    ReversedEdits::unimplemented()
+                    reversed
                 }
 
                 ReplaceAnimationEffect(address, description) => {
-                    self.update_elements(element_ids, move |mut wrapper| {
+                    let mut reversed = ReversedEdits::new();
+
+                    self.update_elements(element_ids, |mut wrapper| {
                         match &mut wrapper.element {
                             Vector::AnimationRegion(region) => {
+                                let id          = region.id();
                                 let subeffect   = region.effect().sub_effects().into_iter().filter(|item| &item.address() == address).nth(0);
                                 if let Some(subeffect) = subeffect {
+                                    // Reversal replaces the effect with the original effect
+                                    reversed.insert(0, AnimationEdit::Element(vec![id], ElementEdit::ReplaceAnimationEffect(address.clone(), subeffect.effect_description().clone())));
+
+                                    // Update the effect
                                     let updated_effect      = region.effect().replace_sub_effect(&subeffect, description.clone());
                                     *region.effect_mut()    = updated_effect;
                                 }
@@ -265,7 +280,7 @@ impl StreamAnimationCore {
                         ChangeWrapper(wrapper)
                     }).await;
 
-                    ReversedEdits::unimplemented()
+                    reversed
                 }
             }
         }
