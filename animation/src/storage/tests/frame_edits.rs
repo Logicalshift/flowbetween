@@ -366,3 +366,43 @@ fn detach_element() {
         assert!(all_elements == vec![ElementId::Assigned(126), ElementId::Assigned(128)]);
     }
 }
+
+#[test]
+fn recreate_element() {
+    let anim = create_animation();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(50))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
+                ElementId::Unassigned,
+                BrushDefinition::Ink(InkDefinition::default()),
+                BrushDrawingStyle::Draw
+            )
+        )),
+
+        AnimationEdit::Layer(2, 
+            LayerEdit::CreateElement(Duration::from_millis(442), ElementId::Assigned(42),  
+                Vector::Shape(ShapeElement::circle(ElementId::Assigned(42), (100.0, 100.0), (43.0, 43.0)))))
+    ]);
+
+    let layer = anim.get_layer_with_id(2).unwrap();
+
+    {
+        let frame               = layer.get_frame_at_time(Duration::from_millis(442));
+        let element42           = frame.element_with_id(ElementId::Assigned(42));
+
+        assert!(match element42 {
+            Some(Vector::Shape(ref shape)) => Some(shape.id()),
+            _ => None
+        } == Some(ElementId::Assigned(42)));
+    }
+
+    {
+        let frame               = layer.get_frame_at_time(Duration::from_millis(442));
+        let elements: Vec<_>    = frame.vector_elements().unwrap().collect();
+
+        assert!(frame.time_index() == Duration::from_millis(442));
+        assert!(elements.len() == 1);
+    }
+}
