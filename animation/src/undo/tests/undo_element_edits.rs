@@ -41,6 +41,8 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
         .map(|elem| (elem, first_frame.attached_elements(elem)))
         .collect::<HashMap<_, _>>();
 
+    println!("First frame: {:?}", initial_elements);
+
     // The undo action appears when the edits are retired
     let timeout             = Delay::new(Duration::from_secs(10));
     let mut retired_edits   = animation.retired_edits();
@@ -59,6 +61,9 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     let committed       = retired_edit.committed_edits();
     let reverse         = retired_edit.reverse_edits();
 
+    println!("Committed: {:?}", committed);
+    println!("Reverse: {:?}", reverse);
+
     // These edits should be equivalent (assuming the example doesn't use unassigned IDs, as the IDs will be assigned at this point)
     assert!(committed == undo_test);
 
@@ -75,6 +80,8 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
         .map(|elem| elem.id())
         .map(|elem| (elem, after_frame.attached_elements(elem)))
         .collect::<HashMap<_, _>>();
+
+    println!("After undo: {:?}", after_elements);
 
     // Note: we don't read the attachments of group elements recursively so this might miss some differences
     assert!(after_elements == initial_elements);
