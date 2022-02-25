@@ -313,8 +313,12 @@ impl StreamAnimationCore {
             let mut reversed = ReversedEdits::new();
 
             self.update_elements(element_ids.clone(), |wrapper| {
-                reversed.push(AnimationEdit::Element(wrapper.attachments.clone(), ElementEdit::AttachTo(wrapper.element.id())));
-                reversed.push(AnimationEdit::Element(wrapper.attached_to.clone(), ElementEdit::AddAttachment(wrapper.element.id())));
+                if !wrapper.attachments.is_empty() {
+                    reversed.push(AnimationEdit::Element(wrapper.attachments.clone(), ElementEdit::AttachTo(wrapper.element.id())));
+                }
+                if !wrapper.attached_to.is_empty() {
+                    reversed.push(AnimationEdit::Element(wrapper.attached_to.clone(), ElementEdit::AddAttachment(wrapper.element.id())));
+                }
 
                 attachments.extend(wrapper.attachments.into_iter().map(|id| id.id()).flatten());
                 attached_to.extend(wrapper.attached_to.into_iter().map(|id| id.id()).flatten());
