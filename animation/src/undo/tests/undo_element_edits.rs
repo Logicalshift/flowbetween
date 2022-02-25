@@ -12,7 +12,40 @@ use futures_timer::{Delay};
 
 use std::sync::*;
 use std::time::{Duration};
-use std::collections::{HashMap};
+use std::collections::{HashSet, HashMap};
+
+///
+/// Make sure that an element is not attached to an item more than once in a list of edits
+///
+fn test_no_duplicate_attaches(edits: &Arc<Vec<AnimationEdit>>) {
+    use self::AnimationEdit::*;
+    use self::ElementEdit::*;
+
+    let mut attached_to = HashMap::new();
+
+    for edit in edits.iter() {
+        match edit {
+            Element(attachments, AttachTo(attach_to)) => { 
+                let element_attachments = attached_to.entry(attach_to).or_insert_with(|| HashSet::new());
+
+                for attachment in attachments.iter() {
+                    assert!(!element_attachments.contains(attachment));
+                    element_attachments.insert(*attachment);
+                }
+            }
+
+            Element(attach_to, AddAttachment(attachment)) => { 
+                for attach_to in attach_to.iter() {
+                    let element_attachments = attached_to.entry(attach_to).or_insert_with(|| HashSet::new());
+                    assert!(!element_attachments.contains(attachment));
+                    element_attachments.insert(*attachment);
+                }
+            }
+
+            _ => { }
+        }
+    }
+}
 
 ///
 /// Tests that frame 0 has the same content after running the edits in undo_test
@@ -69,6 +102,9 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
 
     // The reverse actions should be non-empty (there are ways to create edits that have no effect, but the assumption is the tests won't do this)
     assert!(!reverse.is_empty());
+
+    // Sometimes things like attachments can be added twice to elements: make sure that doesn't happen
+    test_no_duplicate_attaches(&reverse);
 
     // Undo the actions
     animation.edit().publish(Arc::clone(&reverse)).await;
