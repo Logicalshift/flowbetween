@@ -108,6 +108,7 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
 
     // Undo the actions
     animation.edit().publish(Arc::clone(&reverse)).await;
+    animation.edit().when_empty().await;
 
     // Re-read the first frame and compare to the original: should be identical
     let after_frame         = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
