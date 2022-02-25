@@ -2,9 +2,11 @@ use crate::*;
 use crate::editor::*;
 use crate::storage::*;
 
+use flo_canvas::*;
 use flo_stream::*;
 
 use futures::prelude::*;
+use futures::executor;
 use futures::future::{select, Either};
 use futures_timer::{Delay};
 
@@ -77,4 +79,75 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     // Note: we don't read the attachments of group elements recursively so this might miss some differences
     assert!(after_elements == initial_elements);
     assert!(after_attachments == initial_attachments);
+}
+
+///
+/// Creates path components for a circular path
+///
+fn circle_path(pos: (f64, f64), radius: f64) -> Arc<Vec<PathComponent>> {
+    let mut drawing = vec![];
+
+    drawing.new_path();
+    drawing.circle(pos.0 as _, pos.1 as _, radius as _);
+
+    let path        = Path::from_drawing(drawing);
+
+    Arc::new(path.elements().collect())
+}
+
+#[test]
+fn delete_first_element() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_element_edit_undo(
+            vec![
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+            ],
+            vec![
+                Element(vec![ElementId::Assigned(0)], ElementEdit::Delete)
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn delete_middle_element() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_element_edit_undo(
+            vec![
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+            ],
+            vec![
+                Element(vec![ElementId::Assigned(1)], ElementEdit::Delete)
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn delete_last_element() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_element_edit_undo(
+            vec![
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+            ],
+            vec![
+                Element(vec![ElementId::Assigned(2)], ElementEdit::Delete)
+            ]
+        ).await;
+    });
 }
