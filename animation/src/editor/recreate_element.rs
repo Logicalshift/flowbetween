@@ -28,6 +28,8 @@ impl ReversedEdits {
     ///
     /// Recreates an element wrapper
     ///
+    /// This recreates the element, adds it back in order and adds its attachments back again, as well as re-attaching it to anything it was attached to.
+    ///
     pub fn with_recreated_wrapper(layer_id: u64, wrapper: &ElementWrapper, wrapper_for_element: &impl Fn(ElementId) -> Option<ElementWrapper>) -> ReversedEdits {
         let mut reversed = Self::new();
 

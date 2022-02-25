@@ -144,7 +144,7 @@ impl StreamAnimationCore {
                     }
 
                     // If the element is attached to another element, remove it from the attachment list
-                    reversed.extend(self.remove_from_attachments(&element_ids).await);
+                    self.remove_from_attachments(&element_ids).await;
 
                     // Delete from storage
                     self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id))).await; 
@@ -171,7 +171,7 @@ impl StreamAnimationCore {
                     }
 
                     // If the element is attached to another element, remove it from the attachment list
-                    reversed.extend(self.remove_from_attachments(&element_ids).await);
+                    self.remove_from_attachments(&element_ids).await;
 
                     // Remove from the list of elements attached to a particular layer
                     self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id))).await; 
