@@ -94,8 +94,8 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     let committed       = retired_edit.committed_edits();
     let reverse         = retired_edit.reverse_edits();
 
-    println!("Committed: {:?}", committed);
-    println!("Reverse: {:?}", reverse);
+    println!("Committed: {}", committed.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
+    println!("Reverse: {}", reverse.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
 
     // These edits should be equivalent (assuming the example doesn't use unassigned IDs, as the IDs will be assigned at this point)
     assert!(committed == undo_test);
