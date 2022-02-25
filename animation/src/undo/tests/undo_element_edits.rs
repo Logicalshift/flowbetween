@@ -10,6 +10,7 @@ use futures_timer::{Delay};
 
 use std::sync::*;
 use std::time::{Duration};
+use std::collections::{HashMap};
 
 ///
 /// Tests that frame 0 has the same content after running the edits in undo_test
@@ -26,7 +27,13 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     animation.edit().publish(Arc::new(setup)).await;
     animation.edit().when_empty().await;
 
-    // TODO: read the first frame
+    // Read the first frame
+    let first_frame         = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
+    let initial_elements    = first_frame.vector_elements().unwrap().collect::<Vec<_>>();
+    let initial_attachments = initial_elements.iter()
+        .map(|elem| elem.id())
+        .map(|elem| (elem, first_frame.attached_elements(elem)))
+        .collect::<HashMap<_, _>>();
 
     // The undo action appears when the edits are retired
     let timeout             = Delay::new(Duration::from_secs(10));
@@ -48,8 +55,21 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     // These edits should be equivalent (assuming the example doesn't use unassigned IDs, as the IDs will be assigned at this point)
     assert!(committed == undo_test);
 
+    // The reverse actions should be non-empty (there are ways to create edits that have no effect, but the assumption is the tests won't do this)
+    assert!(!reverse.is_empty());
+
     // Undo the actions
     animation.edit().publish(Arc::clone(&reverse)).await;
 
-    // TODO: re-read the first frame and compare to the original: should be identical
+    // Re-read the first frame and compare to the original: should be identical
+    let after_frame         = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
+    let after_elements      = after_frame.vector_elements().unwrap().collect::<Vec<_>>();
+    let after_attachments   = after_elements.iter()
+        .map(|elem| elem.id())
+        .map(|elem| (elem, after_frame.attached_elements(elem)))
+        .collect::<HashMap<_, _>>();
+
+    // Note: we don't read the attachments of group elements recursively so this might miss some differences
+    assert!(after_elements == initial_elements);
+    assert!(after_attachments == initial_attachments);
 }
