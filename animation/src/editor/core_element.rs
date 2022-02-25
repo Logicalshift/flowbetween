@@ -127,7 +127,8 @@ impl StreamAnimationCore {
 
                 Delete                              => {
                     // Create the undo operation for each of the deleted elements
-                    let mut reversed = ReversedEdits::new();
+                    let mut reversed        = ReversedEdits::new();
+                    let mut element_frames  = vec![];
 
                     for element_id in element_ids.iter().cloned() {
                         if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
@@ -140,6 +141,9 @@ impl StreamAnimationCore {
                             }).await.unwrap();
 
                             frame_reverse.map(|frame_reverse| reversed.add_to_start(frame_reverse));
+
+                            // Remember the frames for later
+                            element_frames.push((element_id, frame));
                         }
                     }
 
@@ -147,7 +151,13 @@ impl StreamAnimationCore {
                     self.remove_from_attachments(&element_ids).await;
 
                     // Delete from storage
-                    self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id))).await; 
+                    self.request(element_ids.iter().cloned().map(|id| StorageCommand::DeleteElement(id))).await;
+
+                    // Remove the element from the edit frames, so it's not cached
+                    element_frames.into_iter()
+                        .for_each(|(element_id, frame)| {
+                            frame.desync(move |frame| { frame.elements.remove(&ElementId::Assigned(element_id)); });
+                        });
 
                     reversed
                 }
@@ -155,7 +165,7 @@ impl StreamAnimationCore {
                 DetachFromFrame                     => {
                     let mut reversed = ReversedEdits::new();
 
-                    // Re-link all of the elements
+                    // Re-link all of the elements when undoing this action
                     for element_id in element_ids.iter().cloned() {
                         if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
                             // Request the element from the frame
