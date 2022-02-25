@@ -24,6 +24,10 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
 
     // Send the setup actions and wait for them to be accepted
+    animation.edit().publish(Arc::new(vec![
+        AnimationEdit::AddNewLayer(0),
+        AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0)))
+    ])).await;
     animation.edit().publish(Arc::new(setup)).await;
     animation.edit().when_empty().await;
 
@@ -42,6 +46,7 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     // Publish the undo test edits
     let undo_test           = Arc::new(undo_test);
     animation.edit().publish(Arc::clone(&undo_test)).await;
+    animation.edit().when_empty().await;
 
     // The next set of edits from the retired_edits stream should be the undo edits
     let retired_edit    = match select(retired_edits.next(), timeout).await {
