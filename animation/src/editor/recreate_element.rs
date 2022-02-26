@@ -16,8 +16,7 @@ impl ReversedEdits {
             // Fetch the parent element and re-order within
             if let Some(parent_wrapper) = wrapper_for_element(parent) {
                 // Order within the parent element
-                let siblings    = parent_wrapper.element.sub_elements();
-                let siblings    = siblings.map(|siblings| siblings.map(|sibling| sibling.id()).collect()).unwrap_or_else(|| vec![]);
+                let siblings    = parent_wrapper.element.sub_element_ids();
 
                 let our_id      = wrapper.element.id();
                 let our_index   = siblings.iter().enumerate().filter(|(_, id)| *id == &our_id).nth(0);

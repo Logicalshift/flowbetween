@@ -149,6 +149,18 @@ impl Vector {
     }
 
     ///
+    /// The IDs of the sub-elements of this element
+    ///
+    pub fn sub_element_ids(&self) -> Vec<ElementId> {
+        let sub_elements    = self.sub_elements();
+        let sub_element_ids = sub_elements
+            .map(|sub_elements| sub_elements.map(|elem| elem.id()).collect())
+            .unwrap_or_else(|| vec![]);
+
+        sub_element_ids
+    }
+
+    ///
     /// If this vector contains subelements (eg, is a group), this is the value of the 'topmost' element that it contains
     ///
     pub fn topmost_sub_element(&self) -> Option<ElementId> {
