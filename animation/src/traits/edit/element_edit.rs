@@ -62,9 +62,6 @@ pub enum ElementEdit {
     /// Removes elements entirely from the frame
     Delete,
 
-    /// Detaches elements from any keyframe it's a part of
-    DetachFromFrame,
-
     /// Combines the specified elements into a Group, removing them from any other group they might already
     /// be in. The group is created with the element ID specified here.
     ///

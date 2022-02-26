@@ -162,33 +162,6 @@ impl StreamAnimationCore {
                     reversed
                 }
 
-                DetachFromFrame                     => {
-                    let mut reversed = ReversedEdits::new();
-
-                    // Re-link all of the elements when undoing this action
-                    for element_id in element_ids.iter().cloned() {
-                        if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
-                            // Request the element from the frame
-                            let frame_reverse = frame.future_sync(move |frame| {
-                                async move {
-                                    let wrapper = frame.elements.get(&ElementId::Assigned(element_id))?;
-                                    Some(ReversedEdits::with_relinked_element(frame.layer_id, wrapper, &|id| frame.elements.get(&id).cloned()))
-                                }.boxed()
-                            }).await.unwrap();
-
-                            frame_reverse.map(|frame_reverse| reversed.add_to_start(frame_reverse));
-                        }
-                    }
-
-                    // If the element is attached to another element, remove it from the attachment list
-                    reversed.extend(self.remove_from_attachments(&element_ids).await);
-
-                    // Remove from the list of elements attached to a particular layer
-                    self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id))).await; 
-
-                    reversed
-                },
-
                 Transform(transformations)          => {
                     self.transform_elements(&element_ids, transformations).await
                 }

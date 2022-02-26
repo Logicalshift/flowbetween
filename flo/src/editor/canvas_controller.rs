@@ -468,7 +468,6 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
                         ElementEdit::SetPath(_)                     => true,
                         ElementEdit::Order(_)                       => true,
                         ElementEdit::Delete                         => true,
-                        ElementEdit::DetachFromFrame                => true,
                         ElementEdit::Group(_, _)                    => true,
                         ElementEdit::Ungroup                        => false,
                         ElementEdit::CollideWithExistingElements    => false,

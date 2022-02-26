@@ -21,7 +21,6 @@ impl ElementEdit {
             RemoveAttachment(elem)                  => { data.write_chr('-'); elem.serialize(data); }
             Order(ordering)                         => { data.write_chr('O'); ordering.serialize(data); }
             Delete                                  => { data.write_chr('X'); }
-            DetachFromFrame                         => { data.write_chr('D'); }
             CollideWithExistingElements             => { data.write_chr('j'); }
             ConvertToPath                           => { data.write_chr('p'); }
             Group(group_id, group_type)             => { data.write_chr('g'); group_id.serialize(data); group_type.serialize(data); }
@@ -94,7 +93,7 @@ impl ElementEdit {
             }
 
             'D' => {
-                Some(ElementEdit::DetachFromFrame)
+                unimplemented!("DetachFromFrame is no longer supported")
             }
 
             'j' => {
@@ -240,14 +239,6 @@ mod test {
         ElementEdit::Delete.serialize(&mut encoded);
 
         assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Delete));
-    }
-
-    #[test]
-    fn detach_from_frame() {
-        let mut encoded = String::new();
-        ElementEdit::DetachFromFrame.serialize(&mut encoded);
-
-        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::DetachFromFrame));
     }
 
     #[test]
