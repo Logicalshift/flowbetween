@@ -10,6 +10,7 @@ use futures::executor;
 use futures::future::{select, Either};
 use futures_timer::{Delay};
 
+use std::mem;
 use std::sync::*;
 use std::time::{Duration};
 use std::collections::{HashSet, HashMap};
@@ -61,7 +62,8 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     // Send the setup actions and wait for them to be accepted
     animation.edit().publish(Arc::new(vec![
         AnimationEdit::AddNewLayer(0),
-        AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0)))
+        AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+        AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(20000))),
     ])).await;
     animation.edit().publish(Arc::new(setup)).await;
     animation.edit().when_empty().await;
@@ -119,6 +121,25 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
         .collect::<HashMap<_, _>>();
 
     println!("After undo: {}", after_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
+
+    // Note: we don't read the attachments of group elements recursively so this might miss some differences
+    assert!(after_elements == initial_elements);
+    assert!(after_attachments == initial_attachments);
+
+    // Fetch a future frame and then re-fetch the 'after' frame to make sure the edits were saved properly to storage as well as the cache
+    mem::drop(first_frame);
+    mem::drop(after_frame);
+
+    animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(20000));
+
+    let after_frame         = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
+    let after_elements      = after_frame.vector_elements().unwrap().collect::<Vec<_>>();
+    let after_attachments   = after_elements.iter()
+        .map(|elem| elem.id())
+        .map(|elem| (elem, after_frame.attached_elements(elem)))
+        .collect::<HashMap<_, _>>();
+
+    println!("After undo and refetch: {}", after_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
 
     // Note: we don't read the attachments of group elements recursively so this might miss some differences
     assert!(after_elements == initial_elements);
