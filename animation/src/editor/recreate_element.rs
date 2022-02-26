@@ -8,15 +8,36 @@ impl ReversedEdits {
     ///
     /// Restores the links for an element wrapper
     ///
-    pub fn with_relinked_element(_layer_id: u64, wrapper: &ElementWrapper, _wrapper_for_element: &impl Fn(ElementId) -> Option<ElementWrapper>) -> ReversedEdits {
+    pub fn with_relinked_element(_layer_id: u64, wrapper: &ElementWrapper, wrapper_for_element: &impl Fn(ElementId) -> Option<ElementWrapper>) -> ReversedEdits {
         let mut reversed = Self::new();
 
         // Move to its original parent object
         if let Some(parent) = wrapper.parent {
-            // Move into the parent
-            reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::Order(ElementOrdering::WithParent(parent))));
+            // Fetch the parent element and re-order within
+            if let Some(parent_wrapper) = wrapper_for_element(parent) {
+                // Order within the parent element
+                let siblings    = parent_wrapper.element.sub_elements();
+                let siblings    = siblings.map(|siblings| siblings.map(|sibling| sibling.id()).collect()).unwrap_or_else(|| vec![]);
 
-            // TODO: re-order within the parent element
+                let our_id      = wrapper.element.id();
+                let our_index   = siblings.iter().enumerate().filter(|(_, id)| *id == &our_id).nth(0);
+
+                if let Some((our_index, _)) = our_index {
+                    if our_index >= siblings.len()-1 {
+                        // Last item
+                        reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::Order(ElementOrdering::WithParent(parent))));
+                    } else {
+                        // Order before
+                        reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::Order(ElementOrdering::Before(siblings[our_index+1]))));
+                    }
+                } else {
+                    // Unknown sibling: just move into the parent
+                    reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::Order(ElementOrdering::WithParent(parent))));
+                }
+            } else {
+                // Move into the parent
+                reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::Order(ElementOrdering::WithParent(parent))));
+            }
         } else if let Some(order_before) = wrapper.order_before {
             // No parent, but also not the topmost element
             reversed.push(AnimationEdit::Element(vec![wrapper.element.id()], ElementEdit::Order(ElementOrdering::Before(order_before))));
