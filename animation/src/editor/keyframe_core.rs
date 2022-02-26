@@ -680,9 +680,6 @@ impl KeyFrameCore {
                 }
 
                 Before(before)    => {
-                    // Record what we need from the parent
-                    let parent = element.parent;
-
                     // Fetch the 'before' element
                     if self.elements.contains_key(&before) {
                         // Unlink the element
@@ -690,6 +687,7 @@ impl KeyFrameCore {
 
                         // We'll order after the element that's behind the element this is currently in front of
                         let before                  = self.elements.get(&before).unwrap();
+                        let parent                  = before.parent;
                         let element_id_in_front     = before.order_after;
 
                         // Update the ordering
