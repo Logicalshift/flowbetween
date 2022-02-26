@@ -136,6 +136,19 @@ impl Vector {
     }
 
     ///
+    /// If this vector element has sub-elements, this returns the list of them
+    ///
+    pub fn sub_elements(&self) -> Option<impl Iterator<Item=&Vector>> {
+        match self {
+            Vector::Group(group_elem) => {
+                Some(Box::new(group_elem.elements()))
+            }
+
+            _ => None
+        }
+    }
+
+    ///
     /// If this vector contains subelements (eg, is a group), this is the value of the 'topmost' element that it contains
     ///
     pub fn topmost_sub_element(&self) -> Option<ElementId> {
