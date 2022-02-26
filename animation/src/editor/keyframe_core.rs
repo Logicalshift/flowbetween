@@ -679,16 +679,37 @@ impl KeyFrameCore {
                     }
                 }
 
-                Before(before)    => {
+                Before(before_id)    => {
                     // Fetch the 'before' element
-                    if self.elements.contains_key(&before) {
+                    if self.elements.contains_key(&before_id) {
                         // Unlink the element
                         updates.extend(self.unlink_element(element_id));
 
                         // We'll order after the element that's behind the element this is currently in front of
-                        let before                  = self.elements.get(&before).unwrap();
+                        let before                  = self.elements.get(&before_id).unwrap();
                         let parent                  = before.parent;
-                        let element_id_in_front     = before.order_after;
+                        let element_id_in_front     = if let Some(parent) = parent {
+                            // Fetch the siblings of this element
+                            let siblings    = self.elements.get(&parent)
+                                .map(|parent_wrapper| parent_wrapper.element.sub_element_ids())
+                                .unwrap_or_else(|| vec![]);
+
+                            // Find the index of the 'before' element
+                            let before_idx  = siblings.iter().enumerate().filter(|(_, sibling_id)| *sibling_id == &before_id).nth(0);
+
+                            if let Some((before_idx, _)) = before_idx {
+                                // Found the 'before' item
+                                if before_idx > 0 {
+                                    Some(siblings[before_idx-1])
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        } else {
+                            before.order_after
+                        };
 
                         // Update the ordering
                         updates.extend(self.order_after(element_id, parent, element_id_in_front));
