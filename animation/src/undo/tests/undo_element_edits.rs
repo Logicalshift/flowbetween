@@ -76,6 +76,7 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     animation.edit().when_empty().await;
 
     // Read the first frame
+    // TODO: iterate into at least one level of subelements here
     let first_frame         = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
     let initial_elements    = first_frame.vector_elements().unwrap().collect::<Vec<_>>();
     let initial_attachments = initial_elements.iter()
