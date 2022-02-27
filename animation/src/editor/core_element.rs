@@ -822,7 +822,7 @@ impl StreamAnimationCore {
                         let wrapper         = keyframe.elements.get(&element_id);
                         if let Some(wrapper) = wrapper {
                             // Move the element to 'before' the element it is currently behind
-                            if let Some(order_before) = wrapper.order_before {
+                            if let Some(order_before) = keyframe.element_after(element_id) {
                                 reverse.push(AnimationEdit::Element(vec![element_id], ElementEdit::Order(ElementOrdering::Before(order_before))));
                             } else {
                                 // The topmost element is the one that has 'None' set as order_before
