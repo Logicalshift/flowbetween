@@ -106,18 +106,18 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     println!("Committed: {}", committed.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
     println!("Reverse: {}", reverse.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
 
+    let commit_frame        = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
+    let commit_elements     = commit_frame.vector_elements().unwrap().collect::<Vec<_>>();
+    println!("After commit: {}", commit_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
+
     // These edits should be equivalent (assuming the example doesn't use unassigned IDs, as the IDs will be assigned at this point)
     assert!(committed == undo_test);
-
-    // The reverse actions should be non-empty (there are ways to create edits that have no effect, but the assumption is the tests won't do this)
-    assert!(!reverse.is_empty());
 
     // Sometimes things like attachments can be added twice to elements: make sure that doesn't happen
     test_no_duplicate_attaches(&reverse);
 
-    let commit_frame        = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
-    let commit_elements     = commit_frame.vector_elements().unwrap().collect::<Vec<_>>();
-    println!("After commit: {}", commit_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
+    // The reverse actions should be non-empty (there are ways to create edits that have no effect, but the assumption is the tests won't do this)
+    assert!(!reverse.is_empty());
 
     // Undo the actions
     animation.edit().publish(Arc::clone(&reverse)).await;
@@ -170,6 +170,26 @@ fn circle_path(pos: (f64, f64), radius: f64) -> Arc<Vec<PathComponent>> {
     let path        = Path::from_drawing(drawing);
 
     Arc::new(path.elements().collect())
+}
+
+///
+/// Generates a circular brush stroke
+///
+fn circle_brush_stroke(pos: (f64, f64), radius: f64) -> Arc<Vec<RawPoint>> {
+    use std::f64;
+    let mut points = vec![];
+
+    for p in 0..100 {
+        let p = (p as f64) / 100.0;
+        let p = (2.0*f64::consts::PI) * p;
+
+        let x = p.sin() * radius + pos.0;
+        let y = p.cos() * radius + pos.1;
+
+        points.push(RawPoint::from((x as _, y as _)));
+    }
+
+    Arc::new(points)
 }
 
 #[test]
@@ -676,6 +696,96 @@ fn order_to_top_level() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1)], ElementEdit::Order(ElementOrdering::ToTopLevel))
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn convert_to_path() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_element_edit_undo(
+            vec![
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+            ],
+            vec![
+                Element(vec![ElementId::Assigned(1), ElementId::Assigned(0)], ElementEdit::ConvertToPath)
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn convert_to_path_in_group() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_element_edit_undo(
+            vec![
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+
+                Element(vec![ElementId::Assigned(0), ElementId::Assigned(1), ElementId::Assigned(2)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal))
+            ],
+            vec![
+                Element(vec![ElementId::Assigned(1), ElementId::Assigned(0)], ElementEdit::ConvertToPath)
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn collide_with_existing_elements_brush_strokes() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_element_edit_undo(
+            vec![
+                Layer(0, Paint(Duration::from_millis(0), PaintEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Paint(Duration::from_millis(0), PaintEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Paint(Duration::from_millis(0), PaintEdit::BrushStroke(ElementId::Assigned(0), circle_brush_stroke((100.0, 100.0), 80.0)))),
+                Layer(0, Paint(Duration::from_millis(0), PaintEdit::BrushStroke(ElementId::Assigned(1), circle_brush_stroke((100.0, 150.0), 80.0)))),
+                Layer(0, Paint(Duration::from_millis(0), PaintEdit::BrushStroke(ElementId::Assigned(2), circle_brush_stroke((100.0, 200.0), 80.0)))),
+            ],
+            vec![
+                Element(vec![ElementId::Assigned(2)], ElementEdit::CollideWithExistingElements)
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn collide_with_existing_elements_then_convert_to_path() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_element_edit_undo(
+            vec![
+                Layer(0, Paint(Duration::from_millis(0), PaintEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Paint(Duration::from_millis(0), PaintEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Paint(Duration::from_millis(0), PaintEdit::BrushStroke(ElementId::Assigned(0), circle_brush_stroke((100.0, 100.0), 80.0)))),
+                Layer(0, Paint(Duration::from_millis(0), PaintEdit::BrushStroke(ElementId::Assigned(1), circle_brush_stroke((100.0, 150.0), 80.0)))),
+                Layer(0, Paint(Duration::from_millis(0), PaintEdit::BrushStroke(ElementId::Assigned(2), circle_brush_stroke((100.0, 200.0), 80.0)))),
+            ],
+            vec![
+                Element(vec![ElementId::Assigned(2)], ElementEdit::CollideWithExistingElements)
             ]
         ).await;
     });
