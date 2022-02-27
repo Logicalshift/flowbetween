@@ -557,10 +557,7 @@ impl KeyFrameCore {
     ///
     pub fn child_elements_for_parent(&self, parent_element_id: ElementId) -> Vec<ElementId> {
         if let Some(parent_wrapper) = self.elements.get(&parent_element_id) {
-            match &parent_wrapper.element {
-                Vector::Group(group)    => group.elements().map(|elem| elem.id()).collect(),
-                _                       => vec![]
-            }
+            parent_wrapper.element.sub_element_ids()
         } else {
             vec![]
         }
