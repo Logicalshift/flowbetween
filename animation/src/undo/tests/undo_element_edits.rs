@@ -62,6 +62,8 @@ fn test_no_duplicate_attaches(edits: &Arc<Vec<AnimationEdit>>) {
 /// The edits should generate at least one undo action, so 0 undo actions is considered a failure.
 ///
 async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<AnimationEdit>) {
+    // TODO: check for no unassigned element IDs, especially in groups
+
     // Create the animation
     let in_memory_store = InMemoryStorage::new();
     let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
