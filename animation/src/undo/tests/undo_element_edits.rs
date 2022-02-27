@@ -350,6 +350,30 @@ fn group_2() {
 }
 
 #[test]
+fn group_3() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_element_edit_undo(
+            vec![
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+
+                Element(vec![ElementId::Assigned(0), ElementId::Assigned(1), ElementId::Assigned(2)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal))
+            ],
+            vec![
+                Element(vec![ElementId::Assigned(0), ElementId::Assigned(1)], ElementEdit::Group(ElementId::Assigned(4), GroupType::Normal))
+            ]
+        ).await;
+    });
+}
+
+#[test]
 fn ungroup() {
     executor::block_on(async {
         use self::AnimationEdit::*;
@@ -368,6 +392,31 @@ fn ungroup() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(3)], ElementEdit::Ungroup)
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn ungroup_2() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_element_edit_undo(
+            vec![
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+
+                Element(vec![ElementId::Assigned(0), ElementId::Assigned(1), ElementId::Assigned(2)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal)),
+                Element(vec![ElementId::Assigned(0), ElementId::Assigned(1)], ElementEdit::Group(ElementId::Assigned(4), GroupType::Normal))
+            ],
+            vec![
+                Element(vec![ElementId::Assigned(4)], ElementEdit::Ungroup)
             ]
         ).await;
     });
