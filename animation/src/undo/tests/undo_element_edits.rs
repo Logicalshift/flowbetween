@@ -785,7 +785,8 @@ fn collide_with_existing_elements_then_convert_to_path() {
                 Layer(0, Paint(Duration::from_millis(0), PaintEdit::BrushStroke(ElementId::Assigned(2), circle_brush_stroke((100.0, 200.0), 80.0)))),
             ],
             vec![
-                Element(vec![ElementId::Assigned(2)], ElementEdit::CollideWithExistingElements)
+                Element(vec![ElementId::Assigned(2)], ElementEdit::CollideWithExistingElements),
+                Element(vec![ElementId::Assigned(2)], ElementEdit::ConvertToPath),
             ]
         ).await;
     });
