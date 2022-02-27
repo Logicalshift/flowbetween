@@ -112,7 +112,7 @@ impl StreamAnimationCore {
                                         NewElement(new_combined)    => {
                                             // Unlink the element from the frame (brushes typically put their new element into a group so
                                             // this will set up the element in a way that's appropriate for that)
-                                            reversed.add_to_start(ReversedEdits::with_relinked_element(layer_id, &combine_with_wrapper, &|id| frame.elements.get(&id).cloned()));
+                                            reversed.extend(ReversedEdits::with_relinked_element(layer_id, &combine_with_wrapper, &|id| frame.elements.get(&id).cloned()));
                                             updates.extend(frame.unlink_element(combine_with_wrapper.element.id()));
 
                                             Some(new_combined) 
@@ -130,8 +130,8 @@ impl StreamAnimationCore {
                                 let replacement_element = frame.elements.get(&source_element_id).cloned();
                                 if let (Some(mut combined_element), Some(mut replacement_element)) = (combined_element, replacement_element) {
                                     // Reversing deletes and recreates the element (after all the internal elements have been moved back to where they belong)
-                                    reversed.push(AnimationEdit::Element(vec![source_element_id], ElementEdit::Delete));
-                                    reversed.extend(ReversedEdits::with_recreated_wrapper(layer_id, &replacement_element, &|id| frame.elements.get(&id).cloned()));
+                                    reversed.add_to_start(ReversedEdits::with_recreated_wrapper(layer_id, &replacement_element, &|id| frame.elements.get(&id).cloned()));
+                                    reversed.insert(0, AnimationEdit::Element(vec![source_element_id], ElementEdit::Delete));
 
                                     // Replace the source element with the combined element
                                     combined_element.set_id(source_element_id);
