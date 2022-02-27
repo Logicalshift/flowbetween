@@ -649,7 +649,7 @@ impl StreamAnimationCore {
 
                     let first_element   = frame.elements.get(&ElementId::Assigned(element_ids[0])).unwrap().clone();
                     let mut start_time  = first_element.start_time;
-                    let mut order_after = first_element.order_after;
+                    let mut order_after = frame.element_before(ElementId::Assigned(element_ids[0]));
                     let parent          = first_element.parent;
 
                     // Find all the elements and unlink them
@@ -753,8 +753,8 @@ impl StreamAnimationCore {
 
                     // Gather information on where the grouped elements will go
                     let parent          = group_wrapper.parent;
-                    let order_after     = group_wrapper.order_after;
-                    let order_before    = group_wrapper.order_before;
+                    let order_after     = frame.element_before(ElementId::Assigned(group_element_id));
+                    let order_before    = frame.element_after(ElementId::Assigned(group_element_id));
 
                     // Fetch the group elements
                     let elements    = match &group_wrapper.element {
