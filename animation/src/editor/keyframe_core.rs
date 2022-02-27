@@ -688,28 +688,7 @@ impl KeyFrameCore {
                         // We'll order after the element that's behind the element this is currently in front of
                         let before                  = self.elements.get(&before_id).unwrap();
                         let parent                  = before.parent;
-                        let element_id_in_front     = if let Some(parent) = parent {
-                            // Fetch the siblings of this element
-                            let siblings    = self.elements.get(&parent)
-                                .map(|parent_wrapper| parent_wrapper.element.sub_element_ids())
-                                .unwrap_or_else(|| vec![]);
-
-                            // Find the index of the 'before' element
-                            let before_idx  = siblings.iter().enumerate().filter(|(_, sibling_id)| *sibling_id == &before_id).nth(0);
-
-                            if let Some((before_idx, _)) = before_idx {
-                                // Found the 'before' item
-                                if before_idx > 0 {
-                                    Some(siblings[before_idx-1])
-                                } else {
-                                    None
-                                }
-                            } else {
-                                None
-                            }
-                        } else {
-                            before.order_after
-                        };
+                        let element_id_in_front     = self.element_before(before_id);
 
                         // Update the ordering
                         updates.extend(self.order_after(element_id, parent, element_id_in_front));
@@ -996,8 +975,8 @@ impl KeyFrameCore {
                 None
             }
         } else {
-            // 'order_after' is what this element is ordered after, ie, it's the element that's before this one
-            wrapper.order_after
+            // 'order_before' is what this element is ordered before, ie, it's the element that's after this one
+            wrapper.order_before
         }
     }
 
