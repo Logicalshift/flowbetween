@@ -1028,8 +1028,8 @@ impl KeyFrameCore {
         };
 
         // We need a clone of the element we're going to add
-        let mut wrapper_to_add = match self.elements.get(&ElementId::Assigned(element_id)).cloned() {
-            Some(wrapper_to_add)    => wrapper_to_add,
+        let element_to_add = match self.elements.get(&ElementId::Assigned(element_id)) {
+            Some(wrapper_to_add)    => wrapper_to_add.element.clone(),
             None                    => { return PendingStorageChange::new(); }
         };
 
@@ -1050,23 +1050,22 @@ impl KeyFrameCore {
 
                 // Update the element list
                 match after_index {
-                    None        => group_elements.insert(0, wrapper_to_add.element.clone()),
-                    Some(idx)   => group_elements.insert(idx+1, wrapper_to_add.element.clone())
+                    None        => group_elements.insert(0, element_to_add),
+                    Some(idx)   => group_elements.insert(idx+1, element_to_add)
                 }
 
                 // Update the group
                 let new_group               = group.with_elements(group_elements);
                 parent_wrapper.element      = Vector::Group(new_group);
 
+                updates.push_element(parent_id, parent_wrapper.clone());
+
                 // Update the element wrapper
+                let wrapper_to_add          = self.elements.get_mut(&ElementId::Assigned(element_id)).unwrap();
                 wrapper_to_add.parent       = Some(ElementId::Assigned(parent_id));
                 wrapper_to_add.unattached   = true;
 
-                // Update storage
-                updates.push_element(parent_id, parent_wrapper.clone());
                 updates.push_element(element_id, wrapper_to_add.clone());
-
-                self.elements.insert(ElementId::Assigned(element_id), wrapper_to_add);
             },
 
             _ => { }
