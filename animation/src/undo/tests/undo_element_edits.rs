@@ -66,14 +66,29 @@ fn test_no_duplicate_attaches(edits: &Arc<Vec<AnimationEdit>>) {
 }
 
 ///
+/// Returns true if any of the IDs referenced by a list of vectors or 
+///
+fn vectors_have_unassigned_ids<'a>(elements: impl Iterator<Item=&'a Vector>) -> bool {
+    for elem in elements {
+        if elem.id().is_unassigned() {
+            return true;
+        }
+
+        if vectors_have_unassigned_ids(elem.sub_elements()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+///
 /// Tests that frame 0 has the same content after running the edits in undo_test
 ///
 /// This will compare the contents of frame 0 before making the edits and after making the edits and running the corresponding undo actions.
 /// The edits should generate at least one undo action, so 0 undo actions is considered a failure.
 ///
 async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<AnimationEdit>) {
-    // TODO: check for no unassigned element IDs, especially in groups
-
     // Create the animation
     let in_memory_store = InMemoryStorage::new();
     let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
@@ -92,6 +107,7 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     let initial_elements    = first_frame.vector_elements().unwrap().collect::<Vec<_>>();
 
     println!("First frame: {}", initial_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
+    assert!(!vectors_have_unassigned_ids(initial_elements.iter()));
 
     let initial_subs        = initial_elements.iter().flat_map(|elem| elem.sub_elements().cloned()).collect::<Vec<_>>();
 
@@ -185,6 +201,8 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     assert!(after_subs == initial_subs);
     assert!(after_attachments == initial_attachments);
     assert!(after_sub_attachs == initial_sub_attachs);
+
+    assert!(!vectors_have_unassigned_ids(after_elements.iter()));
 }
 
 ///
