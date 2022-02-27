@@ -151,6 +151,7 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
 
     // Sometimes things like attachments can be added twice to elements: make sure that doesn't happen
     test_no_duplicate_attaches(&reverse);
+    assert!(!vectors_have_unassigned_ids(commit_elements.iter()));
 
     // The reverse actions should be non-empty (there are ways to create edits that have no effect, but the assumption is the tests won't do this)
     assert!(!reverse.is_empty());
