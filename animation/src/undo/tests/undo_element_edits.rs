@@ -88,7 +88,6 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     animation.edit().when_empty().await;
 
     // Read the first frame
-    // TODO: iterate into at least one level of subelements here
     let first_frame         = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
     let initial_elements    = first_frame.vector_elements().unwrap().collect::<Vec<_>>();
 
@@ -100,6 +99,11 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
         .map(|elem| elem.id())
         .map(|elem| (elem, first_frame.attached_elements(elem)))
         .collect::<HashMap<_, _>>();
+    let initial_sub_attachs = initial_subs.iter()
+        .map(|elem| elem.id())
+        .map(|elem| (elem, first_frame.attached_elements(elem)))
+        .collect::<HashMap<_, _>>();
+
 
     // The undo action appears when the edits are retired
     let timeout             = Delay::new(Duration::from_secs(10));
@@ -169,6 +173,10 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
         .map(|elem| elem.id())
         .map(|elem| (elem, after_frame.attached_elements(elem)))
         .collect::<HashMap<_, _>>();
+    let after_sub_attachs   = initial_subs.iter()
+        .map(|elem| elem.id())
+        .map(|elem| (elem, after_frame.attached_elements(elem)))
+        .collect::<HashMap<_, _>>();
 
     println!("After undo and refetch: {}", after_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
 
@@ -176,6 +184,7 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     assert!(after_elements == initial_elements);
     assert!(after_subs == initial_subs);
     assert!(after_attachments == initial_attachments);
+    assert!(after_sub_attachs == initial_sub_attachs);
 }
 
 ///
