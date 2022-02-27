@@ -1063,7 +1063,9 @@ impl KeyFrameCore {
 
                 // Update storage
                 updates.push_element(parent_id, parent_wrapper.clone());
-                updates.push_element(element_id, wrapper_to_add);
+                updates.push_element(element_id, wrapper_to_add.clone());
+
+                self.elements.insert(ElementId::Assigned(element_id), wrapper_to_add);
             },
 
             _ => { }
