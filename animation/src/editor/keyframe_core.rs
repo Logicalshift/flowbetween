@@ -1060,6 +1060,7 @@ impl KeyFrameCore {
 
                 // Update the element wrapper
                 wrapper_to_add.parent       = Some(ElementId::Assigned(parent_id));
+                wrapper_to_add.unattached   = true;
 
                 // Update storage
                 updates.push_element(parent_id, parent_wrapper.clone());
