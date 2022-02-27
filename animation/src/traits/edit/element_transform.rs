@@ -23,6 +23,6 @@ pub enum ElementTransform {
     /// Scales the element around the anchor
     Scale(f64, f64),
 
-    /// Rotates the element around the anchor
+    /// Rotates the element around the anchor (angle in radians)
     Rotate(f64)
 }

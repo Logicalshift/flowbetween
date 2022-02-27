@@ -36,7 +36,7 @@ pub enum Transformation {
     /// Scale around a point
     Scale(f64, f64, (f64, f64)),
 
-    /// Rotate around a point
+    /// Rotate around a point, with an angle in radians
     Rotate(f64, (f64, f64))
 }
 

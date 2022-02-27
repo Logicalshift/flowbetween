@@ -149,7 +149,7 @@ impl TransformsForElements {
     }
 
     ///
-    /// Rotates the element around a point
+    /// Rotates the element around a point with an angle in radians
     ///
     fn rotate(&mut self, angle: f64, origin: Coord2) {
         self.transform(|_| smallvec![Transformation::Rotate(angle, (origin.x(), origin.y()))]);
