@@ -687,6 +687,8 @@ impl StreamAnimationCore {
                     let group       = Vector::Group(group);
                     let mut group   = ElementWrapper::attached_with_element(group, start_time);
 
+                    group.parent    = parent;
+
                     // Normal groups take their properties from their internal elements. Other groups use
                     // the properties of their first element.
                     if group_type != GroupType::Normal {
