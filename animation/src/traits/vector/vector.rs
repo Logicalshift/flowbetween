@@ -17,6 +17,7 @@ use smallvec::*;
 
 use std::ops::{Deref, DerefMut};
 use std::sync::*;
+use std::iter;
 
 ///
 /// Possible types of vector element
@@ -138,14 +139,16 @@ impl Vector {
     ///
     /// If this vector element has sub-elements, this returns the list of them
     ///
-    pub fn sub_elements(&self) -> Option<impl Iterator<Item=&Vector>> {
-        match self {
+    pub fn sub_elements<'a>(&'a self) -> impl 'a+Iterator<Item=&Vector> {
+        let result: Box<dyn 'a+Iterator<Item=&'a Vector>> = match self {
             Vector::Group(group_elem) => {
-                Some(Box::new(group_elem.elements()))
+                Box::new(group_elem.elements())
             }
 
-            _ => None
-        }
+            _ => Box::new(iter::empty())
+        };
+
+        result
     }
 
     ///
@@ -153,9 +156,7 @@ impl Vector {
     ///
     pub fn sub_element_ids(&self) -> Vec<ElementId> {
         let sub_elements    = self.sub_elements();
-        let sub_element_ids = sub_elements
-            .map(|sub_elements| sub_elements.map(|elem| elem.id()).collect())
-            .unwrap_or_else(|| vec![]);
+        let sub_element_ids = sub_elements.map(|elem| elem.id()).collect();
 
         sub_element_ids
     }
