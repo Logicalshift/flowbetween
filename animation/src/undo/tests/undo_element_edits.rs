@@ -50,6 +50,16 @@ fn test_no_duplicate_attaches(edits: &Arc<Vec<AnimationEdit>>) {
                 }
             }
 
+            Element(deleted, Delete) => {
+                for delete in deleted {
+                    attached_to.remove(delete);
+
+                    for (_, attachments) in attached_to.iter_mut() {
+                        attachments.remove(delete);
+                    }
+                }
+            }
+
             _ => { }
         }
     }
