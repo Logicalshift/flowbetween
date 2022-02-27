@@ -115,6 +115,10 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     // Sometimes things like attachments can be added twice to elements: make sure that doesn't happen
     test_no_duplicate_attaches(&reverse);
 
+    let commit_frame        = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
+    let commit_elements     = commit_frame.vector_elements().unwrap().collect::<Vec<_>>();
+    println!("After commit: {}", commit_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
+
     // Undo the actions
     animation.edit().publish(Arc::clone(&reverse)).await;
     animation.edit().when_empty().await;
@@ -136,6 +140,7 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     // Fetch a future frame and then re-fetch the 'after' frame to make sure the edits were saved properly to storage as well as the cache
     mem::drop(first_frame);
     mem::drop(after_frame);
+    mem::drop(commit_frame);
 
     animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(20000));
 
