@@ -91,12 +91,15 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     // TODO: iterate into at least one level of subelements here
     let first_frame         = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
     let initial_elements    = first_frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+    println!("First frame: {}", initial_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
+
+    let initial_subs        = initial_elements.iter().flat_map(|elem| elem.sub_elements().cloned()).collect::<Vec<_>>();
+
     let initial_attachments = initial_elements.iter()
         .map(|elem| elem.id())
         .map(|elem| (elem, first_frame.attached_elements(elem)))
         .collect::<HashMap<_, _>>();
-
-    println!("First frame: {}", initial_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
 
     // The undo action appears when the edits are retired
     let timeout             = Delay::new(Duration::from_secs(10));
@@ -139,12 +142,15 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     // Re-read the first frame and compare to the original: should be identical
     let after_frame         = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
     let after_elements      = after_frame.vector_elements().unwrap().collect::<Vec<_>>();
-    let after_attachments   = after_elements.iter()
-        .map(|elem| elem.id())
-        .map(|elem| (elem, after_frame.attached_elements(elem)))
-        .collect::<HashMap<_, _>>();
 
     println!("After undo: {}", after_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
+
+    let after_subs          = after_elements.iter().flat_map(|elem| elem.sub_elements().cloned()).collect::<Vec<_>>();
+
+    let after_attachments   = after_elements.iter()
+        .map(|elem| elem.id())
+        .map(|elem| (elem, first_frame.attached_elements(elem)))
+        .collect::<HashMap<_, _>>();
 
     // Note: we don't read the attachments of group elements recursively so this might miss some differences
     assert!(after_elements == initial_elements);
@@ -168,6 +174,7 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
 
     // Note: we don't read the attachments of group elements recursively so this might miss some differences
     assert!(after_elements == initial_elements);
+    assert!(after_subs == initial_subs);
     assert!(after_attachments == initial_attachments);
 }
 
