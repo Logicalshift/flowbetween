@@ -950,6 +950,58 @@ impl KeyFrameCore {
     }
 
     ///
+    /// Returns the element that comes before the specified element (or None if there is none)
+    ///
+    pub fn element_before(&self, element_id: ElementId) -> Option<ElementId> {
+        // Fetch the element wrapper. Non-existent elements are considered to have no 'before' element
+        let wrapper = self.elements.get(&element_id)?;
+
+        if let Some(parent_id) = wrapper.parent {
+            // Fetch the sub-elements of the parent element
+            let parent_wrapper  = self.elements.get(&parent_id)?;
+            let sub_element_ids = parent_wrapper.element.sub_element_ids();
+
+            // Find the index of the element with the specified ID
+            let (idx, _)        = sub_element_ids.iter().enumerate().filter(|(_, id)| *id == &element_id).nth(0)?;
+
+            if idx > 0 {
+                Some(sub_element_ids[idx-1])
+            } else {
+                None
+            }
+        } else {
+            // 'order_after' is what this element is ordered after, ie, it's the element that's before this one
+            wrapper.order_after
+        }
+    }
+
+    ///
+    /// Returns the element that comes after the specified element (or None if there is none)
+    ///
+    pub fn element_after(&self, element_id: ElementId) -> Option<ElementId> {
+        // Fetch the element wrapper. Non-existent elements are considered to have no 'before' element
+        let wrapper = self.elements.get(&element_id)?;
+
+        if let Some(parent_id) = wrapper.parent {
+            // Fetch the sub-elements of the parent element
+            let parent_wrapper  = self.elements.get(&parent_id)?;
+            let sub_element_ids = parent_wrapper.element.sub_element_ids();
+
+            // Find the index of the element with the specified ID
+            let (idx, _)        = sub_element_ids.iter().enumerate().filter(|(_, id)| *id == &element_id).nth(0)?;
+
+            if idx < sub_element_ids.len()-1 {
+                Some(sub_element_ids[idx+1])
+            } else {
+                None
+            }
+        } else {
+            // 'order_after' is what this element is ordered after, ie, it's the element that's before this one
+            wrapper.order_after
+        }
+    }
+
+    ///
     /// Adds the specified element so that it appears after the `after` element, with the specified `parent`.
     /// If `after` is None, then the element is inserted at the start. If `parent` is none, the element is added
     /// to the main list for this frame, otherwise it's added to a group.
