@@ -43,6 +43,13 @@ fn test_no_duplicate_attaches(edits: &Arc<Vec<AnimationEdit>>) {
                 }
             }
 
+            Element(detach_from, RemoveAttachment(attachment)) => {
+                for detach_from in detach_from.iter() {
+                    let element_attachments = attached_to.entry(detach_from).or_insert_with(|| HashSet::new());
+                    element_attachments.remove(attachment);
+                }
+            }
+
             _ => { }
         }
     }
