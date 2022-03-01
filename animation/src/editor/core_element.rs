@@ -8,6 +8,7 @@ use crate::traits::*;
 use crate::serializer::*;
 
 use futures::prelude::*;
+use futures::future::{BoxFuture};
 use ::desync::*;
 
 use std::sync::*;
@@ -797,6 +798,67 @@ impl StreamAnimationCore {
             reversed.reverse();
             reversed
         }
+    }
+
+    ///
+    /// For the specified element, or any of its sub-elements, finds any element without an ID and assigns an ID to it. The reversed
+    /// changes will be changed to delete any element that has a new ID assigned to it.
+    ///
+    /// The element will be changed as an unattached element, so if there are any storage changes and the element is supposed to be attached,
+    /// it's a good idea to update it again.
+    ///
+    pub fn assign_ids_to_elements<'a>(&'a mut self, element: &'a mut Vector, reverse: &'a mut ReversedEdits, when: Duration) -> BoxFuture<'a, PendingStorageChange> {
+        async move {
+            let mut changes = PendingStorageChange::new();
+
+            // Assign an ID to this item if necessary
+            if element.id().is_unassigned() {
+                let new_id = self.assign_element_id(ElementId::Unassigned).await;
+                element.set_id(new_id);
+
+                // Add as an unattached element
+                changes.push_element(new_id.id().unwrap(), ElementWrapper::unattached_with_element(element.clone(), when));
+
+                // Delete when reversed
+                reverse.push(AnimationEdit::Element(vec![new_id], ElementEdit::Delete));
+            }
+
+            // Assign IDs to sub-elements
+            match element {
+                Vector::Group(group_element) => {
+                    // Copy the group's elements to assign IDs to them
+                    let mut new_elements    = group_element.elements().cloned().collect::<Vec<_>>();
+                    let mut have_changes    = false;
+
+                    for sub_element in new_elements.iter_mut() {
+                        // Assign IDs to this element
+                        let sub_element_changes = self.assign_ids_to_elements(sub_element, reverse, when).await;
+
+                        // Flag if there are changes
+                        if !sub_element_changes.is_empty() { 
+                            have_changes = true; 
+                            changes.extend(sub_element_changes);
+                        }
+                    }
+
+                    // Update the group element if there are any changes
+                    if have_changes {
+                        let id          = group_element.id();
+                        let group_type  = group_element.group_type();
+
+                        *element        = Vector::Group(GroupElement::new(id, group_type, Arc::new(new_elements)));
+
+                        // Add as an unattached element
+                        changes.push_element(id.id().unwrap(), ElementWrapper::unattached_with_element(element.clone(), when));
+                    }
+                }
+
+                _ => { }
+            }
+
+            // Return the changes
+            changes
+        }.boxed()
     }
 
     ///
