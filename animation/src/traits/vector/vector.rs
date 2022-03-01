@@ -137,7 +137,7 @@ impl Vector {
     }
 
     ///
-    /// If this vector element has sub-elements, this returns the list of them
+    /// Returns an iterator of any sub-elements this vector has
     ///
     pub fn sub_elements<'a>(&'a self) -> impl 'a+Iterator<Item=&Vector> {
         let result: Box<dyn 'a+Iterator<Item=&'a Vector>> = match self {
