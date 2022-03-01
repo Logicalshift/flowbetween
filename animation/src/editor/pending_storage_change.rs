@@ -40,6 +40,13 @@ impl PendingStorageChange {
     }
 
     ///
+    /// True if there are no changes in this item
+    ///
+    pub fn is_empty(&self) -> bool {
+        self.element_changes.is_empty() && self.storage_changes.is_empty()
+    }
+
+    ///
     /// Adds a new command to the end of the list supported by this change
     ///
     pub fn push(&mut self, command: StorageCommand) {
@@ -76,6 +83,20 @@ impl PendingStorageChange {
         for write_element in elements {
             self.push(write_element);
         }
+    }
+
+    ///
+    /// Returns the element wrappers that are being written by these changes
+    ///
+    pub fn pending_element_wrappers<'a>(&'a mut self) -> impl 'a+Iterator<Item=&'_ mut ElementWrapper> {
+        self.element_changes
+            .iter_mut()
+            .flat_map(|(_, elem)| {
+                match elem {
+                    ElementChange::Wrapper(wrapper) => Some(wrapper),
+                    ElementChange::Serialized(_)    => None
+                }
+            })
     }
 }
 
