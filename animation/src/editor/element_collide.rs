@@ -133,8 +133,10 @@ impl StreamAnimationCore {
                                     reversed.add_to_start(ReversedEdits::with_recreated_wrapper(layer_id, &replacement_element, &|id| frame.elements.get(&id).cloned()));
                                     reversed.insert(0, AnimationEdit::Element(vec![source_element_id], ElementEdit::Delete));
 
-                                    // Replace the source element with the combined element
+                                    // The new combined element inherits the ID of the original source element
                                     combined_element.set_id(source_element_id);
+
+                                    // Replace the source element with the combined element
                                     replacement_element.element = combined_element;
 
                                     // Update it in the storage
@@ -157,6 +159,28 @@ impl StreamAnimationCore {
                         (updates, reversed)
                     }.boxed()
                 }).await.unwrap();
+
+                // Assign IDs to the elements in the updates
+                let mut updates     = updates;
+                let mut reversed    = reversed;
+                let mut new_updates = PendingStorageChange::new();
+
+                for update_wrapper in updates.pending_element_wrappers() {
+                    // If there are any elements without IDs in the pending changes, add them
+                    let assign_id_changes = self.assign_ids_to_elements(&mut update_wrapper.element, &mut reversed, update_wrapper.start_time).await;
+
+                    if !assign_id_changes.is_empty() {
+                        // Append the changes created for the element
+                        new_updates.extend(assign_id_changes);
+
+                        // If the top-level element was changed, then it'll end up unattached, so re-create it in the new updates
+                        new_updates.push_element(update_wrapper.element.id().id().unwrap(), update_wrapper.clone());
+                    }
+                }
+
+                if !new_updates.is_empty() {
+                    updates.extend(new_updates);
+                }
                 
                 // Send the updates to storage
                 self.request(updates).await;
