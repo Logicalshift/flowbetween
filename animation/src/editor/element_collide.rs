@@ -167,7 +167,7 @@ impl StreamAnimationCore {
 
                 for update_wrapper in updates.pending_element_wrappers() {
                     // If there are any elements without IDs in the pending changes, add them
-                    let assign_id_changes = self.assign_ids_to_elements(&mut update_wrapper.element, &mut reversed, update_wrapper.start_time).await;
+                    let assign_id_changes = self.assign_ids_to_elements(&mut update_wrapper.element, &mut reversed, update_wrapper.start_time, update_wrapper.parent).await;
 
                     if !assign_id_changes.is_empty() {
                         // Append the changes created for the element

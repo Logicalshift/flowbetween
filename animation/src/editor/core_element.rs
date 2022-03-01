@@ -807,7 +807,7 @@ impl StreamAnimationCore {
     /// The element will be changed as an unattached element, so if there are any storage changes and the element is supposed to be attached,
     /// it's a good idea to update it again.
     ///
-    pub fn assign_ids_to_elements<'a>(&'a mut self, element: &'a mut Vector, reverse: &'a mut ReversedEdits, when: Duration) -> BoxFuture<'a, PendingStorageChange> {
+    pub fn assign_ids_to_elements<'a>(&'a mut self, element: &'a mut Vector, reverse: &'a mut ReversedEdits, when: Duration, parent: Option<ElementId>) -> BoxFuture<'a, PendingStorageChange> {
         async move {
             let mut changes = PendingStorageChange::new();
 
@@ -817,7 +817,9 @@ impl StreamAnimationCore {
                 element.set_id(new_id);
 
                 // Add as an unattached element
-                changes.push_element(new_id.id().unwrap(), ElementWrapper::unattached_with_element(element.clone(), when));
+                let mut wrapper = ElementWrapper::unattached_with_element(element.clone(), when);
+                wrapper.parent  = parent;
+                changes.push_element(new_id.id().unwrap(), wrapper);
 
                 // Delete when reversed
                 reverse.push(AnimationEdit::Element(vec![new_id], ElementEdit::Delete));
@@ -832,7 +834,7 @@ impl StreamAnimationCore {
 
                     for sub_element in new_elements.iter_mut() {
                         // Assign IDs to this element
-                        let sub_element_changes = self.assign_ids_to_elements(sub_element, reverse, when).await;
+                        let sub_element_changes = self.assign_ids_to_elements(sub_element, reverse, when, Some(sub_element.id())).await;
 
                         // Flag if there are changes
                         if !sub_element_changes.is_empty() { 
@@ -848,8 +850,11 @@ impl StreamAnimationCore {
 
                         *element        = Vector::Group(GroupElement::new(id, group_type, Arc::new(new_elements)));
 
+                        let mut wrapper = ElementWrapper::unattached_with_element(element.clone(), when);
+                        wrapper.parent  = parent;
+
                         // Add as an unattached element
-                        changes.push_element(id.id().unwrap(), ElementWrapper::unattached_with_element(element.clone(), when));
+                        changes.push_element(id.id().unwrap(), wrapper);
                     }
                 }
 
