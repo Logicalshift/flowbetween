@@ -825,20 +825,24 @@ impl StreamAnimationCore {
                             let mut new_wrapper = ElementWrapper::unattached_with_element(sub_element.clone(), wrapper.start_time);
 
                             new_wrapper.parent = Some(wrapper.element.id());
-                            changes.push_element(new_id.id().unwrap(), new_wrapper);
+                            changes.push_element(new_id.id().unwrap(), new_wrapper.clone());
                             reverse.push(AnimationEdit::Element(vec![new_id], ElementEdit::Delete));
+
+                            // Update the elements in the cached frame
+                            let frame       = self.edit_keyframe_for_element(group_element.id().id().unwrap()).await;
+                            frame.map(|frame| frame.desync(move |frame| { frame.elements.insert(new_id, new_wrapper); }));
                         }
                     }
 
                     // Update the group element if there are any changes
                     if have_changes {
-                        let id          = group_element.id();
+                        let group_id    = group_element.id();
                         let group_type  = group_element.group_type();
 
-                        wrapper.element = Vector::Group(GroupElement::new(id, group_type, Arc::new(new_elements)));
+                        wrapper.element = Vector::Group(GroupElement::new(group_id, group_type, Arc::new(new_elements)));
 
                         // Add as an unattached element
-                        changes.push_element(id.id().unwrap(), wrapper.clone());
+                        changes.push_element(group_id.id().unwrap(), wrapper.clone());
                     }
                 }
 
