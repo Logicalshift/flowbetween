@@ -839,10 +839,20 @@ impl StreamAnimationCore {
                         let group_id    = group_element.id();
                         let group_type  = group_element.group_type();
 
-                        wrapper.element = Vector::Group(GroupElement::new(group_id, group_type, Arc::new(new_elements)));
+                        let mut new_group = GroupElement::new(group_id, group_type, Arc::new(new_elements));
+                        if let Some(hint_path) = group_element.hint_path() {
+                            new_group.set_hint_path(hint_path);
+                        }
+
+                        wrapper.element = Vector::Group(new_group);
 
                         // Add as an unattached element
                         changes.push_element(group_id.id().unwrap(), wrapper.clone());
+
+                        // Update the group in the cached frame
+                        let frame           = self.edit_keyframe_for_element(group_id.id().unwrap()).await;
+                        let group_wrapper   = wrapper.clone();
+                        frame.map(|frame| frame.desync(move |frame| { frame.elements.insert(group_id, group_wrapper); }));
                     }
                 }
 
