@@ -1,4 +1,5 @@
 use super::element_wrapper::*;
+use crate::traits::*;
 use crate::storage::storage_api::*;
 
 use std::collections::{HashMap};
@@ -59,8 +60,13 @@ impl PendingStorageChange {
     ///
     /// Adds an update to an element to this change
     ///
-    pub fn push_element(&mut self, element_id: i64, element: ElementWrapper) {
-        self.element_changes.insert(element_id, ElementChange::Wrapper(element));
+    pub fn push_element(&mut self, element_id: i64, wrapper: ElementWrapper) {
+        let mut wrapper = wrapper;
+        if wrapper.element.id() != ElementId::Assigned(element_id) {
+            wrapper.element.set_id(ElementId::Assigned(element_id));
+        }
+
+        self.element_changes.insert(element_id, ElementChange::Wrapper(wrapper));
     }
 
     ///
