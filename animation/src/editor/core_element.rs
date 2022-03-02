@@ -824,7 +824,7 @@ impl StreamAnimationCore {
                             // Create a new unattached wrapper for this element
                             let mut new_wrapper = ElementWrapper::unattached_with_element(sub_element.clone(), wrapper.start_time);
 
-                            new_wrapper.parent = Some(wrapper.element.id());
+                            new_wrapper.parent = Some(group_element.id());
                             changes.push_element(new_id.id().unwrap(), new_wrapper.clone());
                             reverse.push(AnimationEdit::Element(vec![new_id], ElementEdit::Delete));
 
