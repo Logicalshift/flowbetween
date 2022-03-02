@@ -172,9 +172,6 @@ impl StreamAnimationCore {
                     if !assign_id_changes.is_empty() {
                         // Append the changes created for the element
                         new_updates.extend(assign_id_changes);
-
-                        // If the top-level element was changed, then it'll end up unattached, so re-create it in the new updates
-                        new_updates.push_element(update_wrapper.element.id().id().unwrap(), update_wrapper.clone());
                     }
                 }
 
