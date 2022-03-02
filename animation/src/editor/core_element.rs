@@ -801,45 +801,32 @@ impl StreamAnimationCore {
     }
 
     ///
-    /// For the specified element, or any of its sub-elements, finds any element without an ID and assigns an ID to it. The reversed
-    /// changes will be changed to delete any element that has a new ID assigned to it.
+    /// For any sub-elements in the given element wrapper, ensures that any sub-elements have assigned IDs
     ///
-    /// The element will be changed as an unattached element, so if there are any storage changes and the element is supposed to be attached,
-    /// it's a good idea to update it again.
-    ///
-    pub fn assign_ids_to_elements<'a>(&'a mut self, element: &'a mut Vector, reverse: &'a mut ReversedEdits, when: Duration, parent: Option<ElementId>) -> BoxFuture<'a, PendingStorageChange> {
+    pub fn assign_ids_to_elements<'a>(&'a mut self, wrapper: &'a mut ElementWrapper, reverse: &'a mut ReversedEdits) -> BoxFuture<'a, PendingStorageChange> {
         async move {
             let mut changes = PendingStorageChange::new();
 
-            // Assign an ID to this item if necessary
-            if element.id().is_unassigned() {
-                let new_id = self.assign_element_id(ElementId::Unassigned).await;
-                element.set_id(new_id);
-
-                // Add as an unattached element
-                let mut wrapper = ElementWrapper::unattached_with_element(element.clone(), when);
-                wrapper.parent  = parent;
-                changes.push_element(new_id.id().unwrap(), wrapper);
-
-                // Delete when reversed
-                reverse.push(AnimationEdit::Element(vec![new_id], ElementEdit::Delete));
-            }
-
             // Assign IDs to sub-elements
-            match element {
+            match &wrapper.element {
                 Vector::Group(group_element) => {
-                    // Copy the group's elements to assign IDs to them
+                    // Copy the group's elements (we'll need to create a new group to assign IDs to them)
                     let mut new_elements    = group_element.elements().cloned().collect::<Vec<_>>();
                     let mut have_changes    = false;
 
                     for sub_element in new_elements.iter_mut() {
-                        // Assign IDs to this element
-                        let sub_element_changes = self.assign_ids_to_elements(sub_element, reverse, when, Some(sub_element.id())).await;
+                        if sub_element.id().is_unassigned() {
+                            // Set the ID of this sub element
+                            let new_id = self.assign_element_id(ElementId::Unassigned).await;
+                            sub_element.set_id(new_id);
+                            have_changes = true;
 
-                        // Flag if there are changes
-                        if !sub_element_changes.is_empty() { 
-                            have_changes = true; 
-                            changes.extend(sub_element_changes);
+                            // Create a new unattached wrapper for this element
+                            let mut new_wrapper = ElementWrapper::unattached_with_element(sub_element.clone(), wrapper.start_time);
+
+                            new_wrapper.parent = Some(wrapper.element.id());
+                            changes.push_element(new_id.id().unwrap(), new_wrapper);
+                            reverse.push(AnimationEdit::Element(vec![new_id], ElementEdit::Delete));
                         }
                     }
 
@@ -848,13 +835,10 @@ impl StreamAnimationCore {
                         let id          = group_element.id();
                         let group_type  = group_element.group_type();
 
-                        *element        = Vector::Group(GroupElement::new(id, group_type, Arc::new(new_elements)));
-
-                        let mut wrapper = ElementWrapper::unattached_with_element(element.clone(), when);
-                        wrapper.parent  = parent;
+                        wrapper.element = Vector::Group(GroupElement::new(id, group_type, Arc::new(new_elements)));
 
                         // Add as an unattached element
-                        changes.push_element(id.id().unwrap(), wrapper);
+                        changes.push_element(id.id().unwrap(), wrapper.clone());
                     }
                 }
 
