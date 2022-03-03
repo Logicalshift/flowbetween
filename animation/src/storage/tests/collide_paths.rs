@@ -134,7 +134,12 @@ fn collide_three_paths_all_at_once() {
     // Group should contain three elements. The original element is subsumed by the group and has no independent ID.
     assert!(group.group_type() == GroupType::Added);
     assert!(group.elements().count() == 3);
-    assert!(group.elements().map(|elem| elem.id().id()).collect::<Vec<_>>() == vec![Some(0), Some(3), None]);
+
+    let subelement_ids = elements[0].sub_element_ids();
+    assert!(subelement_ids[0] == ElementId::Assigned(0));
+    assert!(subelement_ids[1] == ElementId::Assigned(3));
+    assert!(subelement_ids[2].is_assigned());
+    assert!(subelement_ids.len() == 3);
 
     // It should combine to be a single path
     let properties = frame.apply_properties_for_element(&elements[0], Arc::new(VectorProperties::default()));
