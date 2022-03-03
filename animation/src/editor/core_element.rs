@@ -825,12 +825,15 @@ impl StreamAnimationCore {
                             let mut new_wrapper = ElementWrapper::unattached_with_element(sub_element.clone(), wrapper.start_time);
 
                             new_wrapper.parent = Some(group_element.id());
-                            changes.push_element(new_id.id().unwrap(), new_wrapper.clone());
-                            reverse.push(AnimationEdit::Element(vec![new_id], ElementEdit::Delete));
 
                             // Update the elements in the cached frame
                             let frame       = self.edit_keyframe_for_element(group_element.id().id().unwrap()).await;
-                            frame.map(|frame| frame.desync(move |frame| { frame.elements.insert(new_id, new_wrapper); }));
+                            let add_to_end  = frame.unwrap().future_sync(move |frame| { async move {
+                                frame.add_element_to_end(new_id, new_wrapper)
+                            }.boxed() }).await.unwrap();
+
+                            changes.extend(add_to_end);
+                            reverse.push(AnimationEdit::Element(vec![new_id], ElementEdit::Delete));
                         }
                     }
 
