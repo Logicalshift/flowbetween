@@ -905,6 +905,8 @@ impl KeyFrameCore {
         // Update any elements that are out of date
         let mut updates = PendingStorageChange::new();
         for attachment_id in attachments {
+            debug_assert!(attachment_id != element_id);
+
             // Update any element in this child element that does not have its parent set properly
             updates.extend(self.update_parents(attachment_id));
 
