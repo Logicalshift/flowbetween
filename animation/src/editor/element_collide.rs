@@ -136,6 +136,29 @@ impl StreamAnimationCore {
                                     // The new combined element inherits the ID of the original source element
                                     combined_element.set_id(source_element_id);
 
+                                    if combined_element.sub_element_ids().into_iter().any(|id| id == source_element_id) {
+                                        // Create a new set of sub-elements where the source ID is unassigned
+                                        let new_elements = combined_element.sub_elements().map(|elem| {
+                                            if elem.id() == source_element_id {
+                                                elem.with_id(ElementId::Unassigned)
+                                            } else {
+                                                elem.clone()
+                                            }
+                                        }).collect();
+
+                                        // Re-group the elements
+                                        combined_element = match combined_element {
+                                            Vector::Group(group_elem) => {
+                                                let mut new_group = GroupElement::new(source_element_id, group_elem.group_type(), Arc::new(new_elements));
+                                                if let Some(hint) = group_elem.hint_path() { new_group.set_hint_path(hint); }
+
+                                                Vector::Group(new_group)
+                                            }
+
+                                            other => other
+                                        }
+                                    }
+
                                     // Replace the source element with the combined element
                                     replacement_element.element = combined_element;
 
