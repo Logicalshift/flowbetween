@@ -77,6 +77,16 @@ impl Vector {
     }
 
     ///
+    /// Creates a new vector with a particular ID
+    ///
+    #[inline]
+    pub fn with_id(&self, new_id: ElementId) -> Vector {
+        let mut new_vector = self.clone();
+        new_vector.set_id(new_id);
+        new_vector
+    }
+
+    ///
     /// If this element was transformed from an original element, returns that original element
     ///
     pub fn original_without_transformations(&self) -> Vector {
