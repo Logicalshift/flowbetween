@@ -101,6 +101,27 @@ impl StreamAnimationCore {
     }
 
     ///
+    /// Returns a mutable copy of the element ID that will be assigned by the next call to next_element_id
+    ///
+    fn next_element_id<'a>(&'a mut self) -> impl 'a+Future<Output=&'a mut i64> {
+        async move {
+            if self.next_element_id.is_some() {
+                // Use the existing next element ID
+                self.next_element_id.as_mut().unwrap()
+            } else {
+                // Load the next element ID from storage
+                let next_id = match self.request_one(StorageCommand::ReadHighestUnusedElementId).await {
+                    Some(StorageResponse::HighestUnusedElementId(next_id))  => next_id,
+                    _                                                       => { panic!("No next element ID is available"); }
+                };
+
+                self.next_element_id = Some(next_id+1);
+                self.next_element_id.as_mut().unwrap()
+            }
+        }
+    }
+
+    ///
     /// Ensures that an element ID has an assigned value
     ///
     pub fn assign_element_id<'a>(&'a mut self, element_id: ElementId) -> impl 'a+Future<Output=ElementId> {
@@ -191,6 +212,24 @@ impl StreamAnimationCore {
     ///
     pub fn perform_edits<'a>(&'a mut self, edits: Arc<Vec<AnimationEdit>>) -> impl 'a+Future<Output=RetiredEdit> {
         async move {
+            // If the edits contain element IDs that have not been used before, ensure that they're not returned by assign_element_id()
+            let mut max_element_id = None;
+
+            for edit_element_id in edits.iter().flat_map(|edit| edit.used_element_ids()).filter_map(|element_id| element_id.id()) {
+                if let Some(max_element_id) = &mut max_element_id {
+                    *max_element_id = i64::max(*max_element_id, edit_element_id);
+                } else {
+                    max_element_id = Some(edit_element_id);
+                }
+            }
+
+            if let Some(max_element_id) = max_element_id {
+                let next_assign_id = self.next_element_id().await;
+                if max_element_id >= *next_assign_id {
+                    *next_assign_id = max_element_id + 1;
+                }
+            }
+
             // Assign IDs to the edits
             let mut mapped_edits    = Vec::with_capacity(edits.len());
             for edit in edits.iter() {
