@@ -130,7 +130,7 @@ impl StreamAnimationCore {
                 };
 
                 // Assign the element to the next available ID
-                ElementId::Assigned(next_element_id+200)
+                ElementId::Assigned(next_element_id)
             }
         }
     }
