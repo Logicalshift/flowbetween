@@ -1,5 +1,8 @@
+use super::element_id::*;
 use super::super::motion::*;
 use super::super::time_path::*;
+
+use smallvec::*;
 
 ///
 /// Represents an edit that creates a motion description on a layer
@@ -22,4 +25,22 @@ pub enum MotionEdit {
 
     /// Sets the time curve for this motion
     SetPath(TimeCurve),
+}
+
+impl MotionEdit {
+    ///
+    /// Retrieves the element IDs used by this edit
+    ///
+    #[inline]
+    pub fn used_element_ids(&self) -> SmallVec<[ElementId; 4]> {
+        use MotionEdit::*;
+
+        match self {
+            Create          => smallvec![],
+            Delete          => smallvec![],
+            SetType(_)      => smallvec![],
+            SetOrigin(_, _) => smallvec![],
+            SetPath(_)      => smallvec![],
+        }
+    }
 }

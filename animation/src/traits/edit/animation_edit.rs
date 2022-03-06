@@ -4,6 +4,7 @@ use super::motion_edit::*;
 use super::element_edit::*;
 
 use smallvec::*;
+use std::iter;
 use std::time::{Duration};
 
 ///
@@ -48,7 +49,7 @@ impl AnimationEdit {
         match self {
             Layer(_, edit)                      => edit.used_element_ids(),
             Element(element_ids, element_edit)  => element_ids.iter().cloned().chain(element_edit.used_element_ids()).collect(),
-            Motion(_, _)                        => unimplemented!("Motion edits are obsolete"),
+            Motion(element_id, motion_edit)     => iter::once(*element_id).chain(motion_edit.used_element_ids()).collect(),
 
             SetSize(_, _)                       |
             SetFrameLength(_)                   |
