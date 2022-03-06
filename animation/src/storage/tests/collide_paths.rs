@@ -281,6 +281,7 @@ fn join_two_groups() {
     let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
 
     // The two plus signs should not join together but will each form their own group
+    assert!(elements.len() != 1);
     assert!(elements.len() == 2);
 
     // Join the two plus signs into a single grouped shape
