@@ -6,6 +6,7 @@ use crate::traits::path::*;
 
 use flo_canvas_animation::description::*;
 
+use smallvec::*;
 use std::sync::*;
 use std::time::Duration;
 
@@ -69,6 +70,29 @@ pub enum LayerEdit {
 }
 
 impl LayerEdit {
+    ///
+    /// Retrieves the element IDs used by this edit
+    ///
+    #[inline]
+    pub fn used_element_ids(&self) -> SmallVec<[ElementId; 4]> {
+        use LayerEdit::*;
+
+        match self {
+            Paint(_, edit)                          => edit.used_element_ids(),
+            Path(_, edit)                           => edit.used_element_ids(),
+            CreateElement(_, element_id, _)         => smallvec![*element_id],
+            CreateAnimation(_, element_id, _)       => smallvec![*element_id],
+            Cut { path: _, when: _, inside_group }  => smallvec![*inside_group],
+
+            CreateElementUnattachedToFrame(_, _, _) |
+            AddKeyFrame(_)                          |
+            RemoveKeyFrame(_)                       |
+            SetName(_)                              |
+            SetOrdering(_)                          |
+            SetAlpha(_)                             => smallvec![]
+        }
+    }
+
     ///
     /// If this edit contains an unassigned element ID, calls the specified function to supply a new
     /// element ID. If the edit already has an ID, leaves it unchanged.

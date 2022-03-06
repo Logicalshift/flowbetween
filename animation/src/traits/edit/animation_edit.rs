@@ -3,6 +3,7 @@ use super::layer_edit::*;
 use super::motion_edit::*;
 use super::element_edit::*;
 
+use smallvec::*;
 use std::time::{Duration};
 
 ///
@@ -38,6 +39,25 @@ pub enum AnimationEdit {
 }
 
 impl AnimationEdit {
+    ///
+    /// Retrieves the element IDs used by this edit
+    ///
+    pub fn used_element_ids(&self) -> SmallVec<[ElementId; 4]> {
+        use AnimationEdit::*;
+
+        match self {
+            Layer(_, edit)                      => edit.used_element_ids(),
+            Element(element_ids, element_edit)  => element_ids.iter().cloned().chain(element_edit.used_element_ids()).collect(),
+            Motion(_, _)                        => unimplemented!("Motion edits are obsolete"),
+
+            SetSize(_, _)                       |
+            SetFrameLength(_)                   |
+            SetLength(_)                        |
+            AddNewLayer(_)                      |
+            RemoveLayer(_)                      => smallvec![]
+        }
+    }
+
     ///
     /// If this edit contains an unassigned element ID, calls the specified function to supply a new
     /// element ID. If the edit already has an ID, leaves it unchanged.

@@ -5,6 +5,7 @@ use crate::traits::group_type::*;
 
 use flo_canvas_animation::description::*;
 
+use smallvec::*;
 use std::sync::*;
 use std::time::{Duration};
 
@@ -96,5 +97,36 @@ pub enum ElementEdit {
 
     /// If this element is an animation element, replaces the subeffect at the specified address with a new description
     /// (Follow the same rules as `EffectDescription::replace_sub_effect()` when the effect is nested: ie, will preserve the nested contents of the effect)
-    ReplaceAnimationEffect(Vec<usize>, EffectDescription)
+    ReplaceAnimationEffect(Vec<usize>, EffectDescription),
+}
+
+impl ElementEdit {
+    ///
+    /// Retrieves the element IDs used by this edit
+    ///
+    #[inline]
+    pub fn used_element_ids(&self) -> SmallVec<[ElementId; 4]> {
+        use ElementEdit::*;
+
+        match self {
+            AttachTo(element_id)            => smallvec![*element_id],
+            AddAttachment(element_id)       => smallvec![*element_id],
+            RemoveAttachment(element_id)    => smallvec![*element_id],
+            Group(element_id, _)            => smallvec![*element_id],
+
+            Delete                          => smallvec![],
+            Ungroup                         => smallvec![],
+            CollideWithExistingElements     => smallvec![],
+            ConvertToPath                   => smallvec![],
+
+            SetControlPoints(_, _)          => smallvec![],
+            SetPath(_)                      => smallvec![],
+            Order(_)                        => smallvec![],
+            Transform(_)                    => smallvec![],
+            SetAnimationDescription(_)      => smallvec![],
+            SetAnimationBaseType(_)         => smallvec![],
+            AddAnimationEffect(_)           => smallvec![],
+            ReplaceAnimationEffect(_, _)    => smallvec![],
+        }
+    }
 }

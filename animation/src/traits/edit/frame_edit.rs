@@ -8,6 +8,7 @@ use super::super::brush_properties::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 
+use smallvec::*;
 use std::sync::*;
 
 ///
@@ -44,7 +45,23 @@ pub enum PaintEdit {
 
     /// Creates a path by flood-filling at the specified point on the current layer. The current brush/properties are used to generate
     /// the fill path, and some other options can be set in the fill options.
-    Fill(ElementId, RawPoint, Vec<FillOption>)
+    Fill(ElementId, RawPoint, Vec<FillOption>),
+}
+
+impl PathEdit {
+    ///
+    /// Retrieves the element IDs used by this edit
+    ///
+    #[inline]
+    pub fn used_element_ids(&self) -> SmallVec<[ElementId; 4]> {
+        use PathEdit::*;
+
+        match self {
+            SelectBrush(element_id, _, _)   => smallvec![*element_id],
+            BrushProperties(element_id, _)  => smallvec![*element_id],
+            CreatePath(element_id, _)       => smallvec![*element_id],
+        }
+    }
 }
 
 impl PaintEdit {
@@ -52,7 +69,7 @@ impl PaintEdit {
     /// The element ID for this edit
     ///
     pub fn id(&self) -> ElementId {
-        use self::PaintEdit::*;
+        use PaintEdit::*;
 
         match self {
             SelectBrush(id, _, _)   => *id,
@@ -60,6 +77,22 @@ impl PaintEdit {
             BrushStroke(id, _)      => *id,
             CreateShape(id, _, _)   => *id,
             Fill(id, _, _)          => *id
+        }
+    }
+
+    ///
+    /// Retrieves the element IDs used by this edit
+    ///
+    #[inline]
+    pub fn used_element_ids(&self) -> SmallVec<[ElementId; 4]> {
+        use PaintEdit::*;
+
+        match self {
+            SelectBrush(element_id, _, _)   => smallvec![*element_id],
+            BrushProperties(element_id, _)  => smallvec![*element_id],
+            BrushStroke(element_id, _)      => smallvec![*element_id],
+            CreateShape(element_id, _, _)   => smallvec![*element_id],
+            Fill(element_id, _, _)          => smallvec![*element_id],
         }
     }
 
