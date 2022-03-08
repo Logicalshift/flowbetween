@@ -14,7 +14,7 @@ mod keyframe_raycast;
 mod pending_storage_change;
 mod paint_fill;
 mod layer_cut;
-mod element_wrapper;
+pub (crate) mod element_wrapper;
 mod element_collide;
 mod element_transform;
 mod element_convert_to_path;
