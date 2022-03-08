@@ -74,11 +74,11 @@ impl ReversedEdits {
                 } else if wrapper.unattached {
                     // Unattached elements can be created in any order (if they're not otherwise needed)
                     existing_elements.insert(next_element);
-                    recreate_keyframe.push(AnimationEdit::Layer(layer_id, LayerEdit::CreateElementUnattachedToFrame(keyframe, next_element, wrapper.element.clone())));
+                    recreate_keyframe.push(AnimationEdit::Layer(layer_id, LayerEdit::CreateElementUnattachedToFrame(wrapper.start_time, next_element, wrapper.element.clone())));
                 } else {
                     // Attached elements are created in order, so we don't need to re-order them
                     existing_elements.insert(next_element);
-                    recreate_keyframe.push(AnimationEdit::Layer(layer_id, LayerEdit::CreateElement(keyframe, next_element, wrapper.element.clone())));
+                    recreate_keyframe.push(AnimationEdit::Layer(layer_id, LayerEdit::CreateElement(wrapper.start_time, next_element, wrapper.element.clone())));
                 }
             }
 
