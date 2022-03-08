@@ -3,7 +3,6 @@ use super::element_wrapper::*;
 use super::pending_storage_change::*;
 use crate::storage::*;
 use crate::traits::*;
-use crate::serializer::*;
 
 use flo_canvas::*;
 use flo_canvas_animation::*;
