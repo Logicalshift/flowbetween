@@ -22,6 +22,7 @@ mod stream_layer;
 mod stream_frame;
 mod stream_layer_cache;
 mod recreate_element;
+mod recreate_frames;
 
 #[cfg(test)] mod tests;
 
