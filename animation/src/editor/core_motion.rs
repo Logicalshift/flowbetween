@@ -1,7 +1,7 @@
 use super::core_element::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
-use crate::storage::storage_api::*;
+use crate::storage::*;
 use crate::undo::*;
 use crate::traits::*;
 

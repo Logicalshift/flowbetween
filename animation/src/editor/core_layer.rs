@@ -3,7 +3,7 @@ use super::stream_animation_core::*;
 use super::pending_storage_change::*;
 use crate::undo::*;
 use crate::traits::*;
-use crate::storage::storage_api::*;
+use crate::storage::*;
 use crate::storage::layer_properties::*;
 
 use futures::prelude::*;

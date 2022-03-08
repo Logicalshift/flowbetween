@@ -20,13 +20,17 @@
 
 pub (super) mod file_properties;
 pub (super) mod layer_properties;
-pub (super) mod storage_api;
+pub (super) mod storage_command;
+pub (super) mod storage_response;
+pub (super) mod storage_error;
 pub (super) mod in_memory_storage;
 pub (super) mod animation_loader;
 
 #[cfg(test)] mod tests;
 
 pub use super::editor::*;
-pub use self::storage_api::*;
+pub use self::storage_command::*;
+pub use self::storage_response::*;
+pub use self::storage_error::*;
 pub use self::in_memory_storage::*;
 pub use self::animation_loader::*;

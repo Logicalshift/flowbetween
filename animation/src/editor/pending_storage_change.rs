@@ -1,6 +1,6 @@
 use super::element_wrapper::*;
 use crate::traits::*;
-use crate::storage::storage_api::*;
+use crate::storage::*;
 
 use std::collections::{HashMap};
 

@@ -27,7 +27,7 @@ mod recreate_frames;
 #[cfg(test)] mod tests;
 
 use self::stream_animation::*;
-use crate::storage::storage_api::*;
+use crate::storage::*;
 use crate::traits::*;
 
 use futures::stream::{BoxStream};
