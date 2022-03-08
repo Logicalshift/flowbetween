@@ -1,5 +1,6 @@
 use super::storage_command::*;
 use super::storage_response::*;
+use super::storage_keyframe::*;
 use crate::traits::*;
 use crate::editor::element_wrapper::*;
 use crate::serializer::*;
@@ -53,7 +54,7 @@ impl StorageConnection {
     ///
     /// Reads all of the elements in a particular keyframe
     ///
-    pub fn read_keyframe<'a>(&'a mut self, layer_id: u64, keyframe: Duration) -> impl 'a+Future<Output=Option<HashMap<ElementId, ElementWrapper>>> {
+    pub fn read_keyframe<'a>(&'a mut self, layer_id: u64, keyframe: Duration) -> impl 'a+Future<Output=Option<StorageKeyFrame>> {
         async move {
             // Request the keyframe from the core
             let responses = self.request(vec![StorageCommand::ReadElementsForKeyFrame(layer_id, keyframe)]).await.unwrap_or_else(|| vec![]);
@@ -115,7 +116,11 @@ impl StorageConnection {
                 }
             }
 
-            Some(resolved)
+            Some(StorageKeyFrame {
+                start_time:     start_time,
+                end_time:       end_time,
+                elements:       resolved
+            })
         }
     }
 }
