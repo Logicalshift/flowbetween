@@ -119,7 +119,8 @@ impl StorageConnection {
             Some(StorageKeyFrame {
                 start_time:     start_time,
                 end_time:       end_time,
-                elements:       resolved
+                elements:       resolved,
+                element_ids:    element_ids
             })
         }
     }
