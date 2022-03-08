@@ -43,11 +43,11 @@ impl StreamAnimation {
         let commands            = requests.subscribe().boxed();
         let storage_responses   = connect_stream(commands);
         let mut edit_publisher  = Publisher::new(10);
+        let storage_connection  = StorageConnection::new(requests, storage_responses);
 
         // The core is used to actually execute the requests
         let core            = StreamAnimationCore {
-            storage_responses:      storage_responses,
-            storage_requests:       requests,
+            storage_connection:     storage_connection,
             next_element_id:        None,
             cached_layers:          HashMap::new(),
             cached_keyframe:        None,

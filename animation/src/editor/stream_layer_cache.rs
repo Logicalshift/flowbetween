@@ -3,7 +3,6 @@ use crate::storage::*;
 use crate::traits::*;
 
 use flo_canvas::*;
-use flo_stream::*;
 
 use ::desync::*;
 use futures::prelude::*;
@@ -57,8 +56,7 @@ impl CanvasCache for StreamLayerCache {
         // Ask the core to delete the cached value
         let _       = self.core.future_desync(move |core| {
             async move {
-                core.storage_requests.publish(vec![StorageCommand::DeleteLayerCache(layer_id, when, key)]).await;
-                core.storage_responses.next().await;
+                core.storage_connection.request(vec![StorageCommand::DeleteLayerCache(layer_id, when, key)]).await;
             }.boxed()
         });
     }
@@ -80,8 +78,7 @@ impl CanvasCache for StreamLayerCache {
         // Ask the core to store the cached value
         let _               = self.core.future_desync(move |core| {
             async move {
-                core.storage_requests.publish(vec![StorageCommand::WriteLayerCache(layer_id, when, key, drawing)]).await;
-                core.storage_responses.next().await;
+                core.storage_connection.request(vec![StorageCommand::WriteLayerCache(layer_id, when, key, drawing)]).await;
             }.boxed()
         });
     }
@@ -102,8 +99,7 @@ impl CanvasCache for StreamLayerCache {
         // Request the value from the storage layer
         let value       = core.future_desync(move |core| {
                 async move {
-                    core.storage_requests.publish(vec![StorageCommand::ReadLayerCache(layer_id, when, key)]).await;
-                    core.storage_responses.next().await
+                    core.storage_connection.request(vec![StorageCommand::ReadLayerCache(layer_id, when, key)]).await
                 }.boxed()
             })
             .sync().unwrap()
@@ -151,8 +147,7 @@ impl CanvasCache for StreamLayerCache {
                 // Store using the core
                 let _ = core.future_desync(move |core| {
                     async move {
-                        core.storage_requests.publish(vec![StorageCommand::WriteLayerCache(layer_id, when, key, serialized)]).await;
-                        core.storage_responses.next().await;
+                        core.storage_connection.request(vec![StorageCommand::WriteLayerCache(layer_id, when, key, serialized)]).await;
                     }.boxed()
                 });
 

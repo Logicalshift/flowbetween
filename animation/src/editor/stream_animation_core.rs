@@ -9,7 +9,6 @@ use flo_stream::*;
 
 use futures::future;
 use futures::prelude::*;
-use futures::stream::{BoxStream};
 
 use std::sync::*;
 use std::time::{Duration};
@@ -21,8 +20,7 @@ use std::collections::{HashMap};
 pub (super) fn request_core_async(core: &Arc<Desync<StreamAnimationCore>>, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {
     core.future_desync(move |core| {
         async move {
-            core.storage_requests.publish(request).await;
-            core.storage_responses.next().await
+            core.storage_connection.request(request).await
         }.boxed()
     }).map(|res| {
         res.unwrap_or(None)
@@ -38,8 +36,7 @@ pub (super) fn request_core_sync(core: Arc<Desync<StreamAnimationCore>>, request
     // Queue the request
     let result = core.future_desync(|core| {
         async move {
-            core.storage_requests.publish(request).await;
-            core.storage_responses.next().await
+            core.storage_connection.request(request).await
         }.boxed()
     }).sync().unwrap_or(None);
 
@@ -48,11 +45,8 @@ pub (super) fn request_core_sync(core: Arc<Desync<StreamAnimationCore>>, request
 }
 
 pub (super) struct StreamAnimationCore {
-    /// Stream where responses to the storage requests are sent
-    pub (super) storage_responses: BoxStream<'static, Vec<StorageResponse>>,
-
-    /// Publisher where we can send requests for storage actions
-    pub (super) storage_requests: Publisher<Vec<StorageCommand>>,
+    /// The connection to the storage sub-system
+    pub (super) storage_connection: StorageConnection,
 
     /// The next element ID to assign (None if we haven't retrieved the element ID yet)
     pub (super) next_element_id: Option<i64>,
@@ -84,20 +78,14 @@ impl StreamAnimationCore {
     /// Sends a request to the storage layer
     ///
     pub fn request<'a, Commands: 'a+IntoIterator<Item=StorageCommand>>(&'a mut self, request: Commands) -> impl 'a+Future<Output=Option<Vec<StorageResponse>>> {
-        async move {
-            self.storage_requests.publish(request.into_iter().collect()).await;
-            self.storage_responses.next().await
-        }
+        self.storage_connection.request(request)
     }
 
     ///
     /// Sends a single request that produces a single response to the storage layer
     ///
     pub fn request_one<'a>(&'a mut self, request: StorageCommand) -> impl 'a+Future<Output=Option<StorageResponse>> {
-        async move {
-            self.request(vec![request]).await
-                .and_then(|mut result| result.pop())
-        }
+        self.storage_connection.request_one(request)
     }
 
     ///
