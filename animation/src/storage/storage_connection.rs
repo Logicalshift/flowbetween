@@ -53,6 +53,24 @@ impl StorageConnection {
     }
 
     ///
+    /// Reads the IDs of the layers making up the animation
+    ///
+    pub fn read_layer_ids<'a>(&'a mut self) -> impl 'a+Future<Output=Vec<u64>> {
+        async move {
+            let responses = self.request(vec![StorageCommand::ReadLayers]).await.unwrap_or_else(|| vec![]);
+
+            responses.into_iter()
+                .flat_map(|response| {
+                    match response {
+                        StorageResponse::LayerProperties(id, _props)    => Some(id),
+                        _                                               => None
+                    }
+                })
+                .collect()
+        }
+    }
+
+    ///
     /// Reads all of the keyframes for a layer within a particular time range
     ///
     pub fn read_keyframes_for_layer<'a>(&'a mut self, layer_id: u64, range: Range<Duration>) -> impl 'a+Future<Output=Option<Vec<Range<Duration>>>> {
