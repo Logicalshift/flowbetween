@@ -22,6 +22,8 @@ impl ReversedEdits {
             let keyframe_content = storage_connection.read_keyframe(layer_id, keyframe).await;
             let keyframe_content = if let Some(keyframe_content) = keyframe_content { keyframe_content } else { return recreate_keyframe; };
 
+            // TODO: anything in existing_elements needs to be attached to the keyframe instead of created (right now we're just ignoring them)
+
             // Recreate each of the elements in the keyframe
             // Elements need to be created after their 'order_before' element
             // Attachments need to be created ahead of the element they're attached to
