@@ -9,6 +9,7 @@ use flo_stream::*;
 use futures::prelude::*;
 use futures::stream::{BoxStream};
 
+use std::ops::{Range};
 use std::time::{Duration};
 use std::collections::{HashMap};
 
@@ -48,6 +49,31 @@ impl StorageConnection {
         async move {
             self.request(vec![request]).await
                 .and_then(|mut result| result.pop())
+        }
+    }
+
+    ///
+    /// Reads all of the keyframes for a layer within a particular time range
+    ///
+    pub fn read_keyframes_for_layer<'a>(&'a mut self, layer_id: u64, range: Range<Duration>) -> impl 'a+Future<Output=Option<Vec<Range<Duration>>>> {
+        async move {
+            // Request the keyframes from the core
+            let responses = self.request(vec![StorageCommand::ReadKeyFrames(layer_id, range)]).await.unwrap_or_else(|| vec![]);
+
+            if responses.len() == 1 && responses[0] == StorageResponse::NotFound {
+                // Layer doesn't exist
+                None
+            } else {
+                // Convert the responses into keyframe times
+                Some(responses.into_iter()
+                    .flat_map(|response| {
+                        match response {
+                            StorageResponse::KeyFrame(from, until)  => Some(from..until),
+                            _                                       => None
+                        }
+                    })
+                    .collect())
+            }
         }
     }
 
