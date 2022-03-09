@@ -94,10 +94,21 @@ impl ReversedEdits {
     pub (crate) fn with_recreated_layer<'a>(layer_id: u64, storage_connection: &'a mut StorageConnection) -> impl 'a + Future<Output=ReversedEdits> {
         async move {
             // Start by recreating the layer
-            // TODO: and ordering it relative to the other layers
-            let mut recreate_layer = ReversedEdits::with_edits(vec![
-                AnimationEdit::AddNewLayer(layer_id)
-            ]);
+            let mut recreate_layer = ReversedEdits::with_edit(AnimationEdit::AddNewLayer(layer_id));
+
+            // Order it relative to other layers
+            let all_layers  = storage_connection.read_layer_ids().await;
+            let layer_idx   = all_layers.iter()
+                .enumerate()
+                .filter(|(_idx, other_layer_id)| *other_layer_id == &layer_id)
+                .map(|(idx, _layer_id)| idx)
+                .next()
+                .unwrap_or(all_layers.len()-1);
+
+            if layer_idx < all_layers.len()-1 {
+                let order_before_layer_id = all_layers[layer_idx + 1];
+                recreate_layer.push(AnimationEdit::Layer(layer_id, LayerEdit::SetOrdering(order_before_layer_id)));
+            }
 
             // Fetch the keyframes for this layer
             let forever     = Duration::from_millis(0)..Duration::from_micros(i64::MAX as u64);
