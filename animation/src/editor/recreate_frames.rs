@@ -87,4 +87,32 @@ impl ReversedEdits {
             recreate_keyframe
         }
     }
+
+    ///
+    /// Returns the edits required to recreate a whole layer
+    ///
+    pub (crate) fn with_recreated_layer<'a>(layer_id: u64, storage_connection: &'a mut StorageConnection) -> impl 'a + Future<Output=ReversedEdits> {
+        async move {
+            // Start by recreating the layer
+            // TODO: and ordering it relative to the other layers
+            let mut recreate_layer = ReversedEdits::with_edits(vec![
+                AnimationEdit::AddNewLayer(layer_id)
+            ]);
+
+            // Fetch the keyframes for this layer
+            let forever     = Duration::from_millis(0)..Duration::from_micros(i64::MAX as u64);
+            let keyframes   = storage_connection.read_keyframes_for_layer(layer_id, forever).await;
+            let keyframes   = if let Some(keyframes) = keyframes { keyframes } else { return recreate_layer; };
+
+            // Recreate each keyframe in turn
+            let mut created_elements = HashSet::new();
+            for keyframe in keyframes {
+                let recreate_keyframe = Self::with_recreated_keyframe(layer_id, keyframe.start, &mut created_elements, storage_connection).await;
+                recreate_layer.extend(recreate_keyframe);
+            }
+
+            // Return the instructions to recreate the layer
+            recreate_layer
+        }        
+    }
 }
