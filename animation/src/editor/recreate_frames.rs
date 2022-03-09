@@ -38,11 +38,11 @@ impl ReversedEdits {
                 let wrapper = keyframe_content.elements.get(&next_element);
                 let wrapper = if let Some(wrapper) = wrapper { wrapper } else { continue; };
 
-                if let Some(order_before) = wrapper.order_before {
-                    // If this element has an 'order_before', then create that first, then this new element
-                    if !existing_elements.contains(&order_before) {
+                if let Some(order_after) = wrapper.order_after {
+                    // If this element has an 'order_after', then create that first, then this new element
+                    if !existing_elements.contains(&order_after) {
                         pending_elements.push(next_element);
-                        pending_elements.push(order_before);
+                        pending_elements.push(order_after);
                         continue;
                     }
                 }
