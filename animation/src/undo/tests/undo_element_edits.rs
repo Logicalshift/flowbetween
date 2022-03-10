@@ -97,7 +97,7 @@ pub struct FrameData {
 /// Reads out the data for a frame from an animation
 ///
 pub async fn read_frame(animation: &impl Animation, layer_id: u64, frame: Duration) -> FrameData {
-    let frame           = animation.get_layer_with_id(0).unwrap().get_frame_at_time(frame);
+    let frame           = animation.get_layer_with_id(layer_id).unwrap().get_frame_at_time(frame);
     let elements        = frame.vector_elements().unwrap().collect::<Vec<_>>();
 
     let sub_elements    = elements.iter().flat_map(|elem| elem.sub_elements().cloned()).collect::<Vec<_>>();
@@ -140,22 +140,15 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     animation.edit().when_empty().await;
 
     // Read the first frame
-    let first_frame         = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
-    let initial_elements    = first_frame.vector_elements().unwrap().collect::<Vec<_>>();
+    let first_frame         = read_frame(&animation, 0, Duration::from_millis(0)).await;
+    let initial_elements    = first_frame.elements;
 
     println!("First frame: {}", initial_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
     assert!(!vectors_have_unassigned_ids(initial_elements.iter()));
 
-    let initial_subs        = initial_elements.iter().flat_map(|elem| elem.sub_elements().cloned()).collect::<Vec<_>>();
-
-    let initial_attachments = initial_elements.iter()
-        .map(|elem| elem.id())
-        .map(|elem| (elem, first_frame.attached_elements(elem)))
-        .collect::<HashMap<_, _>>();
-    let initial_sub_attachs = initial_subs.iter()
-        .map(|elem| elem.id())
-        .map(|elem| (elem, first_frame.attached_elements(elem)))
-        .collect::<HashMap<_, _>>();
+    let initial_subs        = first_frame.sub_elements;
+    let initial_attachments = first_frame.attachments;
+    let initial_sub_attachs = first_frame.sub_element_attachments;
 
     // The undo action appears when the edits are retired
     let timeout             = Delay::new(Duration::from_secs(10));
@@ -206,7 +199,7 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
 
     let after_attachments   = after_elements.iter()
         .map(|elem| elem.id())
-        .map(|elem| (elem, first_frame.attached_elements(elem)))
+        .map(|elem| (elem, after_frame.attached_elements(elem)))
         .collect::<HashMap<_, _>>();
 
     // Note: we don't read the attachments of group elements recursively so this might miss some differences
@@ -214,7 +207,6 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     assert!(after_attachments == initial_attachments);
 
     // Fetch a future frame and then re-fetch the 'after' frame to make sure the edits were saved properly to storage as well as the cache
-    mem::drop(first_frame);
     mem::drop(after_frame);
     mem::drop(commit_frame);
 
