@@ -93,18 +93,21 @@ impl ReversedEdits {
     ///
     pub (crate) fn with_recreated_layer<'a>(layer_id: u64, storage_connection: &'a mut StorageConnection) -> impl 'a + Future<Output=ReversedEdits> {
         async move {
-            // Start by recreating the layer
-            let mut recreate_layer = ReversedEdits::with_edit(AnimationEdit::AddNewLayer(layer_id));
-
-            // Order it relative to other layers
+            // Find the layer to recreate by querying the storage
             let all_layers  = storage_connection.read_layer_ids().await;
             let layer_idx   = all_layers.iter()
                 .enumerate()
                 .filter(|(_idx, other_layer_id)| *other_layer_id == &layer_id)
                 .map(|(idx, _layer_id)| idx)
-                .next()
-                .unwrap_or(all_layers.len()-1);
+                .next();
+            let layer_idx   = if let Some(layer_idx) = layer_idx { layer_idx } else { return ReversedEdits::empty() };
 
+            if all_layers.len() == 0 { return ReversedEdits::empty(); }
+
+            // Start by recreating the layer
+            let mut recreate_layer = ReversedEdits::with_edit(AnimationEdit::AddNewLayer(layer_id));
+
+            // Order it relative to other layers
             if layer_idx < all_layers.len()-1 {
                 let order_before_layer_id = all_layers[layer_idx + 1];
                 recreate_layer.push(AnimationEdit::Layer(layer_id, LayerEdit::SetOrdering(order_before_layer_id)));

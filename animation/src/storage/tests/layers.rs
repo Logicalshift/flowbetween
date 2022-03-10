@@ -14,7 +14,6 @@ fn add_layer() {
     ]);
 
     assert!(anim.get_layer_ids().len() == 1);
-
 }
 
 #[test]
@@ -28,7 +27,6 @@ fn add_multiple_layers() {
     ]);
 
     assert!(anim.get_layer_ids().len() == 3);
-
 }
 
 #[test]
@@ -46,7 +44,19 @@ fn remove_layer() {
     ]);
 
     assert!(anim.get_layer_ids().len() == 0);
+}
 
+#[test]
+fn remove_nonexistent_layer() {
+    let anim = create_animation();
+
+    assert!(anim.get_layer_ids().len() == 0);
+
+    anim.perform_edits(vec![
+        AnimationEdit::RemoveLayer(2)
+    ]);
+
+    assert!(anim.get_layer_ids().len() == 0);
 }
 
 #[test]
@@ -77,7 +87,6 @@ fn retrieve_layer_ids() {
     layer_ids.sort();
     assert!(layer_ids.len() == 2);
     assert!(layer_ids == vec![2, 42]);
-
 }
 
 #[test]
@@ -91,7 +100,6 @@ fn retrieve_layer() {
     let layer = anim.get_layer_with_id(2);
     assert!(layer.is_some());
     assert!(layer.unwrap().id() == 2);
-
 }
 
 #[test]
@@ -104,7 +112,6 @@ fn non_existent_layer() {
 
     let layer = anim.get_layer_with_id(3);
     assert!(layer.is_none());
-
 }
 
 #[test]
@@ -190,7 +197,6 @@ fn retrieve_keyframe() {
         AnimationEdit::AddNewLayer(2),
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))
     ]);
-
 }
 
 #[test]
@@ -246,7 +252,6 @@ fn remove_layer_with_keyframe() {
 
     let layer = anim.get_layer_with_id(2);
     assert!(layer.is_none());
-
 }
 
 #[test]
