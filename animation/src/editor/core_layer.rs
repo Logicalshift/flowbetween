@@ -218,7 +218,7 @@ impl StreamAnimationCore {
             // Add the layer
             self.request_one(StorageCommand::AddLayer(layer_id, serialized)).await;
 
-            ReversedEdits::unimplemented()
+            ReversedEdits::with_edit(AnimationEdit::RemoveLayer(layer_id))
         }
     }
 
@@ -227,10 +227,13 @@ impl StreamAnimationCore {
     ///
     pub fn remove_layer<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
+            // Generate the commands to recreate the layer
+            let reverse = ReversedEdits::with_recreated_layer(layer_id, &mut self.storage_connection).await;
+
             // Remove the layer
             self.request_one(StorageCommand::DeleteLayer(layer_id)).await;
 
-            ReversedEdits::unimplemented()
+            reverse
         }
     }
 
@@ -250,6 +253,7 @@ impl StreamAnimationCore {
             };
 
             // Update the name
+            let old_name    = properties.name;
             properties.name = name.to_string();
 
             // Save back to the storage
@@ -257,7 +261,7 @@ impl StreamAnimationCore {
             properties.serialize(&mut serialized);
             self.request_one(StorageCommand::WriteLayerProperties(layer_id, serialized)).await;
 
-            ReversedEdits::unimplemented()
+            ReversedEdits::with_edit(AnimationEdit::Layer(layer_id, LayerEdit::SetName(old_name)))
         } 
     }
 
@@ -277,14 +281,15 @@ impl StreamAnimationCore {
             };
 
             // Update the alpha value
-            properties.alpha = f64::min(1.0, f64::max(0.0, alpha));
+            let old_alpha       = properties.alpha;
+            properties.alpha    = f64::min(1.0, f64::max(0.0, alpha));
 
             // Save back to the storage
             let mut serialized = String::new();
             properties.serialize(&mut serialized);
             self.request_one(StorageCommand::WriteLayerProperties(layer_id, serialized)).await;
 
-            ReversedEdits::unimplemented()
+            ReversedEdits::with_edit(AnimationEdit::Layer(layer_id, LayerEdit::SetAlpha(old_alpha)))
         } 
     }
 }
