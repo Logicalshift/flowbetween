@@ -10,7 +10,6 @@ use futures::executor;
 use futures::future::{select, Either};
 use futures_timer::{Delay};
 
-use std::mem;
 use std::sync::*;
 use std::time::{Duration};
 use std::collections::{HashSet, HashMap};
@@ -171,8 +170,8 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     println!("Committed: {}", committed.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
     println!("Reverse: {}", reverse.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
 
-    let commit_frame        = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
-    let commit_elements     = commit_frame.vector_elements().unwrap().collect::<Vec<_>>();
+    let commit_frame        = read_frame(&animation, 0, Duration::from_millis(0)).await;
+    let commit_elements     = commit_frame.elements;
     println!("After commit: {}", commit_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
 
     // These edits should be equivalent (assuming the example doesn't use unassigned IDs, as the IDs will be assigned at this point)
@@ -190,38 +189,25 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     animation.edit().when_empty().await;
 
     // Re-read the first frame and compare to the original: should be identical
-    let after_frame         = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
-    let after_elements      = after_frame.vector_elements().unwrap().collect::<Vec<_>>();
+    let after_frame         = read_frame(&animation, 0, Duration::from_millis(0)).await;
+    let after_elements      = after_frame.elements;
 
     println!("After undo: {}", after_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
 
-    let after_subs          = after_elements.iter().flat_map(|elem| elem.sub_elements().cloned()).collect::<Vec<_>>();
-
-    let after_attachments   = after_elements.iter()
-        .map(|elem| elem.id())
-        .map(|elem| (elem, after_frame.attached_elements(elem)))
-        .collect::<HashMap<_, _>>();
+    let after_subs          = after_frame.sub_elements;
+    let after_attachments   = after_frame.attachments;
 
     // Note: we don't read the attachments of group elements recursively so this might miss some differences
     assert!(after_elements == initial_elements);
     assert!(after_attachments == initial_attachments);
 
     // Fetch a future frame and then re-fetch the 'after' frame to make sure the edits were saved properly to storage as well as the cache
-    mem::drop(after_frame);
-    mem::drop(commit_frame);
-
     animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(20000));
 
-    let after_frame         = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
-    let after_elements      = after_frame.vector_elements().unwrap().collect::<Vec<_>>();
-    let after_attachments   = after_elements.iter()
-        .map(|elem| elem.id())
-        .map(|elem| (elem, after_frame.attached_elements(elem)))
-        .collect::<HashMap<_, _>>();
-    let after_sub_attachs   = initial_subs.iter()
-        .map(|elem| elem.id())
-        .map(|elem| (elem, after_frame.attached_elements(elem)))
-        .collect::<HashMap<_, _>>();
+    let after_frame         = read_frame(&animation, 0, Duration::from_millis(0)).await;
+    let after_elements      = after_frame.elements;
+    let after_attachments   = after_frame.attachments;
+    let after_sub_attachs   = after_frame.sub_element_attachments;
 
     println!("After undo and refetch: {}", after_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
 
