@@ -66,7 +66,7 @@ fn test_no_duplicate_attaches(edits: &Arc<Vec<AnimationEdit>>) {
 }
 
 ///
-/// Returns true if any of the IDs referenced by a list of vectors or 
+/// Returns true if any of the IDs referenced by a list of vectors or their sub elements have an unassigned ID
 ///
 fn vectors_have_unassigned_ids<'a>(elements: impl Iterator<Item=&'a Vector>) -> bool {
     for elem in elements {
@@ -80,6 +80,43 @@ fn vectors_have_unassigned_ids<'a>(elements: impl Iterator<Item=&'a Vector>) -> 
     }
 
     return false;
+}
+
+///
+/// The contents of a frame
+///
+#[derive(Clone, PartialEq)]
+pub struct FrameData {
+    pub elements:                   Vec<Vector>,
+    pub sub_elements:               Vec<Vector>,
+    pub attachments:                HashMap<ElementId, Vec<(ElementId, VectorType)>>,
+    pub sub_element_attachments:    HashMap<ElementId, Vec<(ElementId, VectorType)>>
+}
+
+///
+/// Reads out the data for a frame from an animation
+///
+pub async fn read_frame(animation: &impl Animation, layer_id: u64, frame: Duration) -> FrameData {
+    let frame           = animation.get_layer_with_id(0).unwrap().get_frame_at_time(frame);
+    let elements        = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+    let sub_elements    = elements.iter().flat_map(|elem| elem.sub_elements().cloned()).collect::<Vec<_>>();
+
+    let attachments     = elements.iter()
+        .map(|elem| elem.id())
+        .map(|elem| (elem, frame.attached_elements(elem)))
+        .collect::<HashMap<_, _>>();
+    let sub_attachments = sub_elements.iter()
+        .map(|elem| elem.id())
+        .map(|elem| (elem, frame.attached_elements(elem)))
+        .collect::<HashMap<_, _>>();
+
+    FrameData {
+        elements:                   elements,
+        sub_elements:               sub_elements,
+        attachments:                attachments,
+        sub_element_attachments:    sub_attachments,
+    }
 }
 
 ///
@@ -119,7 +156,6 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
         .map(|elem| elem.id())
         .map(|elem| (elem, first_frame.attached_elements(elem)))
         .collect::<HashMap<_, _>>();
-
 
     // The undo action appears when the edits are retired
     let timeout             = Delay::new(Duration::from_secs(10));
