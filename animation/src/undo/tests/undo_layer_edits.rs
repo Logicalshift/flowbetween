@@ -5,8 +5,10 @@ use crate::storage::*;
 use super::undo_element_edits::*;
 
 use flo_stream::*;
+use flo_canvas::*;
 
 use futures::prelude::*;
+use futures::executor;
 use futures::future::{select, Either};
 use futures_timer::{Delay};
 
@@ -45,14 +47,14 @@ pub async fn read_layer(animation: &impl Animation, layer_id: u64) -> Option<Lay
 ///
 /// Reads all of the layers in an animation
 ///
-pub async fn read_all_layers(animation: &impl Animation) -> HashMap<u64, LayerData> {
+pub async fn read_all_layers(animation: &impl Animation) -> Vec<(u64, LayerData)> {
     let layer_ids   = animation.get_layer_ids();
-    let mut layers  = HashMap::new();
+    let mut layers  = vec![];
 
     for layer_id in layer_ids {
         let layer_data = read_layer(animation, layer_id).await;
         let layer_data = layer_data.expect("All layers listed in the animation should exist");
-        layers.insert(layer_id, layer_data);
+        layers.push((layer_id, layer_data));
     }
 
     layers
@@ -61,17 +63,12 @@ pub async fn read_all_layers(animation: &impl Animation) -> HashMap<u64, LayerDa
 ///
 /// Tests that a layer has the same content before and and after undoing another edit
 ///
-async fn test_layer_edit(setup: Vec<AnimationEdit>, undo_test: Vec<AnimationEdit>) {
+async fn test_layer_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<AnimationEdit>) {
     // Create the animation
     let in_memory_store = InMemoryStorage::new();
     let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
 
     // Perform the setup edits
-    animation.edit().publish(Arc::new(vec![
-        AnimationEdit::AddNewLayer(0),
-        AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
-        AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(20000))),
-    ])).await;
     animation.edit().publish(Arc::new(setup)).await;
     animation.edit().when_empty().await;
 
@@ -96,6 +93,9 @@ async fn test_layer_edit(setup: Vec<AnimationEdit>, undo_test: Vec<AnimationEdit
     let committed       = retired_edit.committed_edits();
     let reverse         = retired_edit.reverse_edits();
 
+    println!("Committed: {}", committed.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
+    println!("Reverse: {}", reverse.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
+
     // Sanity check: we should be able to detect the edit made by the test edits
     let during_edit     = read_all_layers(&animation).await;
     assert!(initial_layers != during_edit);
@@ -115,4 +115,91 @@ async fn test_layer_edit(setup: Vec<AnimationEdit>, undo_test: Vec<AnimationEdit
 
     // The undo action should have restored the original state
     assert!(initial_layers == after_layers);
+}
+
+///
+/// Creates path components for a circular path
+///
+fn circle_path(pos: (f64, f64), radius: f64) -> Arc<Vec<PathComponent>> {
+    let mut drawing = vec![];
+
+    drawing.new_path();
+    drawing.circle(pos.0 as _, pos.1 as _, radius as _);
+
+    let path        = Path::from_drawing(drawing);
+
+    Arc::new(path.elements().collect())
+}
+
+#[test]
+fn remove_simple_layer() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_layer_edit_undo(
+            vec![
+                AddNewLayer(0),
+                Layer(0, AddKeyFrame(Duration::from_millis(0))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+            ],
+            vec![
+                RemoveLayer(0)
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn remove_layer_multi_elements() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_layer_edit_undo(
+            vec![
+                AddNewLayer(0),
+                Layer(0, AddKeyFrame(Duration::from_millis(0))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+            ],
+            vec![
+                RemoveLayer(0)
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn add_simple_layer() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_layer_edit_undo(
+            vec![
+                AddNewLayer(0),
+                Layer(0, AddKeyFrame(Duration::from_millis(0))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+            ],
+            vec![
+                AddNewLayer(1),
+            ]
+        ).await;
+    });
 }
