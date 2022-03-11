@@ -140,14 +140,14 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
 
     // Read the first frame
     let first_frame         = read_frame(&animation, 0, Duration::from_millis(0)).await;
-    let initial_elements    = first_frame.elements;
+    let initial_elements    = first_frame.elements.clone();
 
     println!("First frame: {}", initial_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
     assert!(!vectors_have_unassigned_ids(initial_elements.iter()));
 
-    let initial_subs        = first_frame.sub_elements;
-    let initial_attachments = first_frame.attachments;
-    let initial_sub_attachs = first_frame.sub_element_attachments;
+    let initial_subs        = first_frame.sub_elements.clone();
+    let initial_attachments = first_frame.attachments.clone();
+    let initial_sub_attachs = first_frame.sub_element_attachments.clone();
 
     // The undo action appears when the edits are retired
     let timeout             = Delay::new(Duration::from_secs(10));
@@ -171,7 +171,7 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     println!("Reverse: {}", reverse.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
 
     let commit_frame        = read_frame(&animation, 0, Duration::from_millis(0)).await;
-    let commit_elements     = commit_frame.elements;
+    let commit_elements     = commit_frame.elements.clone();
     println!("After commit: {}", commit_elements.iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
 
     // These edits should be equivalent (assuming the example doesn't use unassigned IDs, as the IDs will be assigned at this point)
@@ -183,6 +183,9 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
 
     // The reverse actions should be non-empty (there are ways to create edits that have no effect, but the assumption is the tests won't do this)
     assert!(!reverse.is_empty());
+
+    // We should be able to detect the edit made by the test (we won't be able to detect that it was undone if we can't)
+    assert!(commit_frame != first_frame);
 
     // Undo the actions
     animation.edit().publish(Arc::clone(&reverse)).await;

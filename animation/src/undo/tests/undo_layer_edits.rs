@@ -96,6 +96,10 @@ async fn test_layer_edit(setup: Vec<AnimationEdit>, undo_test: Vec<AnimationEdit
     let committed       = retired_edit.committed_edits();
     let reverse         = retired_edit.reverse_edits();
 
+    // Sanity check: we should be able to detect the edit made by the test edits
+    let during_edit     = read_all_layers(&animation).await;
+    assert!(initial_layers != during_edit);
+
     // These edits should be equivalent (assuming the example doesn't use unassigned IDs, as the IDs will be assigned at this point)
     assert!(committed == undo_test);
 
