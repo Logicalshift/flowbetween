@@ -82,6 +82,10 @@ impl ReversedEdits {
                     existing_elements.insert(next_element);
                     recreate_keyframe.push(AnimationEdit::Layer(layer_id, LayerEdit::CreateElement(wrapper.start_time, next_element, wrapper.element.clone())));
                 }
+
+                if !wrapper.attachments.is_empty() {
+                    recreate_keyframe.push(AnimationEdit::Element(wrapper.attachments.clone(), ElementEdit::AttachTo(next_element)));
+                }
             }
 
             recreate_keyframe

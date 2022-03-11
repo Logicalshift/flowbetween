@@ -84,7 +84,7 @@ fn vectors_have_unassigned_ids<'a>(elements: impl Iterator<Item=&'a Vector>) -> 
 ///
 /// The contents of a frame
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct FrameData {
     pub elements:                   Vec<Vector>,
     pub sub_elements:               Vec<Vector>,

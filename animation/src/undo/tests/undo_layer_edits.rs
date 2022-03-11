@@ -19,7 +19,7 @@ use std::collections::{HashMap};
 ///
 /// Data for all of the keyframes in a layer
 ///
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct LayerData {
     /// Data at each of the keyframes for this layer
     pub keyframes: HashMap<Duration, FrameData>
@@ -114,6 +114,13 @@ async fn test_layer_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animatio
     let after_layers    = read_all_layers(&animation).await;
 
     // The undo action should have restored the original state
+    println!();
+    println!("=== INITIAL");
+    println!("{:?}", initial_layers);
+
+    println!();
+    println!("=== AFTER");
+    println!("{:?}", after_layers);
     assert!(initial_layers == after_layers);
 }
 
