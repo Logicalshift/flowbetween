@@ -447,7 +447,7 @@ impl StreamAnimationCore {
             self.cached_layers.remove(&layer_id);
             self.request_one(StorageCommand::AddKeyFrame(layer_id, when)).await;
 
-            ReversedEdits::unimplemented()
+            ReversedEdits::with_edit(AnimationEdit::Layer(layer_id, LayerEdit::RemoveKeyFrame(when)))
         } 
     }
 
