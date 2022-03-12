@@ -12,7 +12,7 @@ use futures::prelude::*;
 
 use std::sync::*;
 use std::time::{Duration};
-use std::collections::{HashMap};
+use std::collections::{HashMap, HashSet};
 
 ///
 /// Performs an asynchronous request on a storage layer for this animation
@@ -456,11 +456,17 @@ impl StreamAnimationCore {
     ///
     pub fn remove_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=ReversedEdits> { 
         async move {
+            // Create the undo action
+            let reverse_action = ReversedEdits::with_recreated_keyframe(layer_id, when, &mut HashSet::new(), &mut self.storage_connection).await;
+
+            // Remove from the cache
             self.cached_keyframe = None;
             self.cached_layers.remove(&layer_id);
+
+            // Request that the storage layer deletes the keyframe
             self.request_one(StorageCommand::DeleteKeyFrame(layer_id, when)).await;
 
-            ReversedEdits::unimplemented()
+            reverse_action
         } 
     }
 }
