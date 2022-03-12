@@ -1,6 +1,7 @@
 use super::storage_command::*;
 use super::storage_response::*;
 use super::storage_keyframe::*;
+use super::layer_properties::*;
 use crate::traits::*;
 use crate::editor::element_wrapper::*;
 use crate::serializer::*;
@@ -49,6 +50,25 @@ impl StorageConnection {
         async move {
             self.request(vec![request]).await
                 .and_then(|mut result| result.pop())
+        }
+    }
+
+    ///
+    /// Reads the properties for a single layer from this connection
+    ///
+    pub fn read_layer_properties<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=Option<LayerProperties>> {
+        async move {
+            // Retrieve the serialized layer properties
+            let responses           = self.request(vec![StorageCommand::ReadLayerProperties(layer_id)]).await?;
+            let layer_properties    = responses.into_iter()
+                .filter_map(|response| match response {
+                    StorageResponse::LayerProperties(_, properties) => Some(properties),
+                    _                                               => None
+                })
+                .next()?;
+
+            // Deserialize to generate the results
+            LayerProperties::deserialize(&mut layer_properties.chars())
         }
     }
 
