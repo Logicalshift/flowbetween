@@ -21,6 +21,12 @@ use std::collections::{HashMap};
 ///
 #[derive(PartialEq, Clone, Debug)]
 pub struct LayerData {
+    /// The name of the layer
+    pub name: String,
+
+    /// The alpha value of the layer
+    pub alpha: f64,
+
     /// Data at each of the keyframes for this layer
     pub keyframes: HashMap<Duration, FrameData>
 }
@@ -31,6 +37,9 @@ pub struct LayerData {
 pub async fn read_layer(animation: &impl Animation, layer_id: u64) -> Option<LayerData> {
     let layer               = animation.get_layer_with_id(layer_id)?;
     let keyframe_times      = layer.get_key_frames();
+    let layer_name          = layer.name().expect("Missing layer name");
+    let layer_alpha         = layer.alpha();
+
     let mut keyframe_data   = HashMap::new();
 
     // Read the frame for each keyframe (note that this does not read things like elements that are introduced later on)
@@ -40,7 +49,9 @@ pub async fn read_layer(animation: &impl Animation, layer_id: u64) -> Option<Lay
     }
 
     Some(LayerData {
-        keyframes: keyframe_data
+        keyframes:  keyframe_data,
+        name:       layer_name,
+        alpha:      layer_alpha
     })
 }
 
@@ -213,6 +224,117 @@ fn remove_layer_with_group() {
     });
 }
 
+#[test]
+fn remove_layer_with_different_name() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_layer_edit_undo(
+            vec![
+                AddNewLayer(0),
+                Layer(0, AddKeyFrame(Duration::from_millis(0))),
+                Layer(0, SetName("Test layer".into())),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+
+                Element(vec![ElementId::Assigned(0), ElementId::Assigned(1)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal)),
+            ],
+            vec![
+                RemoveLayer(0)
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn remove_layer_with_different_alpha() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_layer_edit_undo(
+            vec![
+                AddNewLayer(0),
+                Layer(0, AddKeyFrame(Duration::from_millis(0))),
+                Layer(0, SetAlpha(0.5)),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+
+                Element(vec![ElementId::Assigned(0), ElementId::Assigned(1)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal)),
+            ],
+            vec![
+                RemoveLayer(0)
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn rename_layer() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_layer_edit_undo(
+            vec![
+                AddNewLayer(0),
+                Layer(0, AddKeyFrame(Duration::from_millis(0))),
+                Layer(0, SetName("Test layer".into())),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+
+                Element(vec![ElementId::Assigned(0), ElementId::Assigned(1)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal)),
+            ],
+            vec![
+                Layer(0, SetName("New name".into())),
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn set_alpha() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_layer_edit_undo(
+            vec![
+                AddNewLayer(0),
+                Layer(0, AddKeyFrame(Duration::from_millis(0))),
+                Layer(0, SetAlpha(0.6)),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+
+                Element(vec![ElementId::Assigned(0), ElementId::Assigned(1)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal)),
+            ],
+            vec![
+                Layer(0, SetAlpha(0.4)),
+            ]
+        ).await;
+    });
+}
 #[test]
 fn remove_layer_with_multiple_keyframes() {
     executor::block_on(async {
