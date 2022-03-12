@@ -316,7 +316,7 @@ impl SqliteCore {
     }
 
     ///
-    /// Adds a new layer or updates its properties
+    /// Removes a keyframe and any elements it contains
     ///
     fn delete_key_frame(&mut self, layer_id: u64, when: Duration) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         let transaction = self.connection.transaction()?;
