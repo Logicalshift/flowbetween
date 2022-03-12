@@ -108,8 +108,13 @@ impl ReversedEdits {
 
             if all_layers.len() == 0 { return ReversedEdits::empty(); }
 
-            // Start by recreating the layer
+            // Start by recreating the layer and setting its properties
             let mut recreate_layer = ReversedEdits::with_edit(AnimationEdit::AddNewLayer(layer_id));
+
+            if let Some(layer_properties) = storage_connection.read_layer_properties(layer_id).await {
+                recreate_layer.push(AnimationEdit::Layer(layer_id, LayerEdit::SetName(layer_properties.name)));
+                recreate_layer.push(AnimationEdit::Layer(layer_id, LayerEdit::SetAlpha(layer_properties.alpha)));
+            }
 
             // Order it relative to other layers
             if layer_idx < all_layers.len()-1 {
