@@ -8,6 +8,7 @@ use crate::storage::layer_properties::*;
 use ::desync::*;
 use flo_stream::*;
 
+use itertools::*;
 use futures::prelude::*;
 use futures::task::{Poll};
 use futures::stream;
@@ -175,13 +176,16 @@ impl Animation for StreamAnimation {
 
         layer_responses
             .into_iter()
-            .map(|response| {
+            .flat_map(|response| {
                 match response {
-                    StorageResponse::LayerProperties(id, _) => Some(id),
-                    _                                       => None
+                    StorageResponse::LayerProperties(id, properties)    => Some((id, LayerProperties::deserialize(&mut properties.chars())?)),
+                    _                                                   => None
                 }
             })
-            .flatten()
+            .sorted_by(|(_, layer_a), (_, layer_b)| {
+                layer_a.ordering.cmp(&layer_b.ordering)
+            })
+            .map(|(id, _props)| id)
             .collect()
     }
 
