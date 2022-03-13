@@ -6,6 +6,7 @@ use crate::traits::*;
 use crate::editor::element_wrapper::*;
 use crate::serializer::*;
 
+use itertools::*;
 use flo_stream::*;
 use futures::prelude::*;
 use futures::stream::{BoxStream};
@@ -75,6 +76,8 @@ impl StorageConnection {
     ///
     /// Reads the IDs of the layers making up the animation
     ///
+    /// Note that these are returned unsorted. `read_layer_ids()` will return sorted IDs, however.
+    ///
     pub fn read_all_layer_properties<'a>(&'a mut self) -> impl 'a+Future<Output=Vec<(u64, LayerProperties)>> {
         async move {
             let responses = self.request(vec![StorageCommand::ReadLayers]).await.unwrap_or_else(|| vec![]);
@@ -91,7 +94,7 @@ impl StorageConnection {
     }
 
     ///
-    /// Reads the IDs of the layers making up the animation
+    /// Reads the IDs of the layers making up the animation, sorted into order
     ///
     pub fn read_layer_ids<'a>(&'a mut self) -> impl 'a+Future<Output=Vec<u64>> {
         async move {
@@ -100,10 +103,18 @@ impl StorageConnection {
             responses.into_iter()
                 .flat_map(|response| {
                     match response {
-                        StorageResponse::LayerProperties(id, _props)    => Some(id),
+                        StorageResponse::LayerProperties(id, props)     => Some((id, LayerProperties::deserialize(&mut props.chars())?)),
                         _                                               => None
                     }
                 })
+                .sorted_by(|(id_a, layer_a), (id_b, layer_b)| {
+                    if layer_a.ordering == layer_b.ordering {
+                        id_a.cmp(&id_b)
+                    } else {
+                        layer_a.ordering.cmp(&layer_b.ordering)
+                    }
+                })
+                .map(|(id, _)| id)
                 .collect()
         }
     }
