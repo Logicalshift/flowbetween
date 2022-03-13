@@ -71,7 +71,7 @@ impl StreamAnimationCore {
                     // Send to the storage
                     self.request(storage_updates.unwrap()).await;
 
-                    ReversedEdits::unimplemented()
+                    ReversedEdits::with_edit(AnimationEdit::Element(vec![element_id], ElementEdit::Delete))
                 }
 
                 SelectBrush(element_id, defn, style)    => {
@@ -89,7 +89,7 @@ impl StreamAnimationCore {
 
                     self.request(vec![StorageCommand::WriteElement(element_id, element_string)]).await;
 
-                    ReversedEdits::unimplemented()
+                    ReversedEdits::with_edit(AnimationEdit::Element(vec![ElementId::Assigned(element_id)], ElementEdit::Delete))
                 }
 
                 BrushProperties(element_id, properties) => {
@@ -107,7 +107,7 @@ impl StreamAnimationCore {
 
                     self.request(vec![StorageCommand::WriteElement(element_id, element_string)]).await;
 
-                    ReversedEdits::unimplemented()
+                    ReversedEdits::with_edit(AnimationEdit::Element(vec![ElementId::Assigned(element_id)], ElementEdit::Delete))
                 }
             }
         }

@@ -904,6 +904,30 @@ fn transform() {
 }
 
 #[test]
+fn create_path() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_element_edit_undo(
+            vec![
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+            ],
+            vec![
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(102), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(103), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+            ]
+        ).await;
+    });
+}
+
+#[test]
 fn set_control_points() {
     executor::block_on(async {
         use self::AnimationEdit::*;
