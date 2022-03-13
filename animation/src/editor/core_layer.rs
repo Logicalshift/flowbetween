@@ -181,6 +181,20 @@ impl StreamAnimationCore {
                 _                                               => { return ReversedEdits::empty(); }
             };
 
+            // The reverse is to move the layer back behind whatever layer it is already behind
+            let reversed_edits = if layer_index < layers.len() - 2 {
+                // Move the layer behind the layer it's already behind
+                let originally_behind_id = layers[layer_index+1].0;
+                ReversedEdits::with_edit(AnimationEdit::Layer(layer_id, LayerEdit::SetOrdering(originally_behind_id)))
+            } else {
+                // Move the layer to the front (we can't actually move to the front in one operation, so we move behind the frontmost layer and then move it back behind it)
+                let frontmost_id = layers[layers.len()-2].0;
+                ReversedEdits::with_edits(vec![
+                    AnimationEdit::Layer(layer_id, LayerEdit::SetOrdering(frontmost_id)),
+                    AnimationEdit::Layer(frontmost_id, LayerEdit::SetOrdering(layer_id))
+                ])
+            };
+
             // Move the layer behind the 'order-behind' index
             let (_, layer_props) = layers.remove(layer_index);
             if order_behind_index > layer_index {
@@ -205,7 +219,7 @@ impl StreamAnimationCore {
                     .map(|(layer_id, serialized)| StorageCommand::WriteLayerProperties(layer_id, serialized)))
                 .await;
 
-            ReversedEdits::unimplemented()
+            reversed_edits
         } 
     }
 
