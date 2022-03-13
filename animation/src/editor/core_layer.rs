@@ -210,8 +210,21 @@ impl StreamAnimationCore {
     ///
     pub fn add_new_layer<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=ReversedEdits> {
         async move {
+            // Fetch the existing layers to discover the maximum ordering ID
+            let existing_layers = self.storage_connection.read_all_layer_properties().await;
+            let max_ordering    = existing_layers.iter()
+                .flat_map(|(_id, layer)| {
+                    if layer.ordering == i64::max_value() {
+                        None
+                    } else {
+                        Some(layer.ordering)
+                    }
+                })
+                .reduce(|a, b| i64::max(a, b));
+
             // Create the default properties for this layer
-            let properties      = LayerProperties::default();
+            let mut properties  = LayerProperties::default();
+            properties.ordering = max_ordering.unwrap_or(0) + 1;
             let mut serialized  = String::new();
             properties.serialize(&mut serialized);
 

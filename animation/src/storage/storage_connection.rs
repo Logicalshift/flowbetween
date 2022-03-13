@@ -75,6 +75,24 @@ impl StorageConnection {
     ///
     /// Reads the IDs of the layers making up the animation
     ///
+    pub fn read_all_layer_properties<'a>(&'a mut self) -> impl 'a+Future<Output=Vec<(u64, LayerProperties)>> {
+        async move {
+            let responses = self.request(vec![StorageCommand::ReadLayers]).await.unwrap_or_else(|| vec![]);
+
+            responses.into_iter()
+                .flat_map(|response| {
+                    match response {
+                        StorageResponse::LayerProperties(id, props)     => Some((id, LayerProperties::deserialize(&mut props.chars())?)),
+                        _                                               => None
+                    }
+                })
+                .collect()
+        }
+    }
+
+    ///
+    /// Reads the IDs of the layers making up the animation
+    ///
     pub fn read_layer_ids<'a>(&'a mut self) -> impl 'a+Future<Output=Vec<u64>> {
         async move {
             let responses = self.request(vec![StorageCommand::ReadLayers]).await.unwrap_or_else(|| vec![]);
