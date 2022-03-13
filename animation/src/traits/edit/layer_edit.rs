@@ -47,7 +47,7 @@ pub enum LayerEdit {
     /// 'Unattached' means it's not in the list of top-level elements but can be used as an attachment or as part of a group.
     CreateElementUnattachedToFrame(Duration, ElementId, Vector),
 
-    /// Cuts elements within this layer along a path, creating two groups of th e parts of the elements within the path and those outside
+    /// Cuts elements within this layer along a path, creating two groups of the parts of the elements within the path and those outside
     Cut { path: Arc<Vec<PathComponent>>, when: Duration, inside_group: ElementId },
 
     /// Adds a keyframe at a particular point in time
