@@ -662,6 +662,136 @@ fn remove_last_layer() {
 }
 
 #[test]
+fn order_first() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_layer_edit_undo(
+            vec![
+                AddNewLayer(0),
+                Layer(0, AddKeyFrame(Duration::from_millis(0))),
+                AddNewLayer(1),
+                Layer(1, AddKeyFrame(Duration::from_millis(0))),
+                AddNewLayer(2),
+                Layer(2, AddKeyFrame(Duration::from_millis(0))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+
+                Layer(1, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(102), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(1, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(103), BrushProperties::new()))),
+
+                Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(3), circle_path((100.0, 100.0), 50.0)))),
+                Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(4), circle_path((100.0, 150.0), 50.0)))),
+                Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(5), circle_path((100.0, 200.0), 50.0)))),
+
+                Layer(2, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(104), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(2, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(105), BrushProperties::new()))),
+
+                Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(6), circle_path((100.0, 100.0), 50.0)))),
+                Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(7), circle_path((100.0, 150.0), 50.0)))),
+                Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(8), circle_path((100.0, 200.0), 50.0)))),
+            ],
+            vec![
+                Layer(2, SetOrdering(0))
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn order_middle() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_layer_edit_undo(
+            vec![
+                AddNewLayer(0),
+                Layer(0, AddKeyFrame(Duration::from_millis(0))),
+                AddNewLayer(1),
+                Layer(1, AddKeyFrame(Duration::from_millis(0))),
+                AddNewLayer(2),
+                Layer(2, AddKeyFrame(Duration::from_millis(0))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+
+                Layer(1, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(102), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(1, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(103), BrushProperties::new()))),
+
+                Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(3), circle_path((100.0, 100.0), 50.0)))),
+                Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(4), circle_path((100.0, 150.0), 50.0)))),
+                Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(5), circle_path((100.0, 200.0), 50.0)))),
+
+                Layer(2, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(104), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(2, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(105), BrushProperties::new()))),
+
+                Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(6), circle_path((100.0, 100.0), 50.0)))),
+                Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(7), circle_path((100.0, 150.0), 50.0)))),
+                Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(8), circle_path((100.0, 200.0), 50.0)))),
+            ],
+            vec![
+                Layer(2, SetOrdering(1)),
+            ]
+        ).await;
+    });
+}
+
+#[test]
+fn order_last() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_layer_edit_undo(
+            vec![
+                AddNewLayer(0),
+                Layer(0, AddKeyFrame(Duration::from_millis(0))),
+                AddNewLayer(1),
+                Layer(1, AddKeyFrame(Duration::from_millis(0))),
+                AddNewLayer(2),
+                Layer(2, AddKeyFrame(Duration::from_millis(0))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+
+                Layer(1, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(102), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(1, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(103), BrushProperties::new()))),
+
+                Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(3), circle_path((100.0, 100.0), 50.0)))),
+                Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(4), circle_path((100.0, 150.0), 50.0)))),
+                Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(5), circle_path((100.0, 200.0), 50.0)))),
+
+                Layer(2, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(104), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(2, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(105), BrushProperties::new()))),
+
+                Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(6), circle_path((100.0, 100.0), 50.0)))),
+                Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(7), circle_path((100.0, 150.0), 50.0)))),
+                Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(8), circle_path((100.0, 200.0), 50.0)))),
+            ],
+            vec![
+                Layer(0, SetOrdering(2)),
+                Layer(2, SetOrdering(0)),
+            ]
+        ).await;
+    });
+}
+
+#[test]
 fn add_simple_layer() {
     executor::block_on(async {
         use self::AnimationEdit::*;

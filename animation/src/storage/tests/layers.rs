@@ -1,9 +1,24 @@
 use super::*;
 
 use flo_stream::*;
+use flo_canvas::*;
 
 use std::sync::*;
 use std::time::Duration;
+
+///
+/// Creates path components for a circular path
+///
+fn circle_path(pos: (f64, f64), radius: f64) -> Arc<Vec<PathComponent>> {
+    let mut drawing = vec![];
+
+    drawing.new_path();
+    drawing.circle(pos.0 as _, pos.1 as _, radius as _);
+
+    let path        = Path::from_drawing(drawing);
+
+    Arc::new(path.elements().collect())
+}
 
 #[test]
 fn add_layer() {
@@ -368,4 +383,54 @@ fn delete_last_item() {
 
     assert!(elements[0].id() == ElementId::Assigned(4));
     assert!(elements[1].id() == ElementId::Assigned(5));
+}
+
+#[test]
+fn reorder_1() {
+    use AnimationEdit::*;
+    use LayerEdit::*;
+
+    let anim = create_animation();
+
+    anim.perform_edits(vec![
+        AddNewLayer(0),
+        Layer(0, AddKeyFrame(Duration::from_millis(0))),
+        AddNewLayer(1),
+        Layer(1, AddKeyFrame(Duration::from_millis(0))),
+        AddNewLayer(2),
+        Layer(2, AddKeyFrame(Duration::from_millis(0))),
+
+        Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+        Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+        Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+        Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+        Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+
+        Layer(1, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(102), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+        Layer(1, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(103), BrushProperties::new()))),
+
+        Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(3), circle_path((100.0, 100.0), 50.0)))),
+        Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(4), circle_path((100.0, 150.0), 50.0)))),
+        Layer(1, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(5), circle_path((100.0, 200.0), 50.0)))),
+
+        Layer(2, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(104), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+        Layer(2, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(105), BrushProperties::new()))),
+
+        Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(6), circle_path((100.0, 100.0), 50.0)))),
+        Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(7), circle_path((100.0, 150.0), 50.0)))),
+        Layer(2, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(8), circle_path((100.0, 200.0), 50.0)))),
+    ]);
+
+    let layers = anim.get_layer_ids();
+    println!("{:?}", layers);
+    assert!(layers == vec![0, 1, 2]);
+
+    anim.perform_edits(vec![
+        Layer(2, SetOrdering(0))
+    ]);
+
+    let layers = anim.get_layer_ids();
+    println!("{:?}", layers);
+    assert!(layers == vec![1, 0, 2]);
 }
