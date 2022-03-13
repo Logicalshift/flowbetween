@@ -156,8 +156,12 @@ impl StreamAnimationCore {
                 .collect::<Vec<_>>();
 
             // Sort the layers into order
-            layers.sort_by(|(_, layer_a), (_, layer_b)| {
-                layer_a.ordering.cmp(&layer_b.ordering)
+            layers.sort_by(|(id_a, layer_a), (id_b, layer_b)| {
+                if layer_a.ordering == layer_b.ordering {
+                    id_a.cmp(&id_b)
+                } else {
+                    layer_a.ordering.cmp(&layer_b.ordering)
+                }
             });
 
             // Find the layer and the layer we need to order behind

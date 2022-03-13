@@ -182,8 +182,12 @@ impl Animation for StreamAnimation {
                     _                                                   => None
                 }
             })
-            .sorted_by(|(_, layer_a), (_, layer_b)| {
-                layer_a.ordering.cmp(&layer_b.ordering)
+            .sorted_by(|(id_a, layer_a), (id_b, layer_b)| {
+                if layer_a.ordering == layer_b.ordering {
+                    id_a.cmp(&id_b)
+                } else {
+                    layer_a.ordering.cmp(&layer_b.ordering)
+                }
             })
             .map(|(id, _props)| id)
             .collect()
