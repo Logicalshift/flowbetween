@@ -432,5 +432,5 @@ fn reorder_1() {
 
     let layers = anim.get_layer_ids();
     println!("{:?}", layers);
-    assert!(layers == vec![1, 0, 2]);
+    assert!(layers == vec![2, 0, 1]);
 }
