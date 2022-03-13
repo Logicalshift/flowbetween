@@ -181,6 +181,11 @@ impl StreamAnimationCore {
                 _                                               => { return ReversedEdits::empty(); }
             };
 
+            // Do nothing if the layer is being ordered back to where it already is
+            if layer_index == order_behind_index || order_behind_index == layer_index + 1 {
+                return ReversedEdits::empty();
+            }
+
             // The reverse is to move the layer back behind whatever layer it is already behind
             let reversed_edits = if layer_index < layers.len() - 2 {
                 // Move the layer behind the layer it's already behind
