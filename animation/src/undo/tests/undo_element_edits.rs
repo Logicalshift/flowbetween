@@ -954,3 +954,25 @@ fn set_control_points() {
         ).await;
     });
 }
+
+#[test]
+fn cut() {
+    executor::block_on(async {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+
+        test_element_edit_undo(
+            vec![
+                Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 150.0), 50.0)))),
+                Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
+            ],
+            vec![
+                Layer(0, Cut { path: circle_path((100.0, 125.0), 100.0), when: Duration::from_millis(0), inside_group: ElementId::Assigned(3) })
+            ]
+        ).await;
+    });
+}
