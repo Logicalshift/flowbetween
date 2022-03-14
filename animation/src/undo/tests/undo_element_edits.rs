@@ -1066,6 +1066,7 @@ fn set_control_points() {
     });
 }
 
+/*
 #[test]
 fn cut() {
     executor::block_on(async {
@@ -1087,3 +1088,4 @@ fn cut() {
         ).await;
     });
 }
+*/
