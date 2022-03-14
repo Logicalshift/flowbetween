@@ -57,6 +57,13 @@ impl ReversedEdits {
         // Append the edits that were originally in this object
         self.0.extend(edits);
     }
+
+    ///
+    /// Adds an edit to the start of the list
+    ///
+    pub fn push_front(&mut self, edit: AnimationEdit) {
+        self.0.insert(0, edit);
+    }
 }
 
 impl From<Vec<AnimationEdit>> for ReversedEdits {
