@@ -17,10 +17,10 @@ use std::time::{Duration};
 ///
 #[derive(Clone)]
 pub (super) struct LayerCut {
-    /// The group of elements that are outside of the path, and the element that they replace
+    /// The group of elements that are outside of the path (but cut by it), and the element that they replace
     pub outside_path: Vec<(ElementId, ElementWrapper)>,
 
-    /// The group of elements that are inside of the path
+    /// The group of elements that are inside of the path (created as new elements after the cut operation)
     pub inside_path: Vec<ElementWrapper>,
 
     /// The elements that have been moved into either the inside or outside path
@@ -173,17 +173,16 @@ impl StreamAnimationCore {
             let outside_path        = layer_cut.outside_path;
 
             // Fetch the frame that we'll be cutting elements in
-            let frame           = self.edit_keyframe(layer_id, when).await;
-            let frame           = match frame { Some(frame) => frame, None => { return ReversedEdits::empty(); } };
+            let frame               = self.edit_keyframe(layer_id, when).await;
+            let frame               = match frame { Some(frame) => frame, None => { return ReversedEdits::empty(); } };
 
             // Remove the attachments from the elements that we'll be replacing
             let replaced_ids        = outside_path.iter().map(|(elem_id, _)| elem_id.id()).flatten().collect::<Vec<_>>();
 
             // Assign element IDs to the outside elements if needed
-            let mut outside_path_with_ids = vec![];
+            let mut outside_path_with_ids       = vec![];
             for (replaced_element_id, outside_element_wrapper) in outside_path.into_iter() {
                 let id = self.assign_element_id(outside_element_wrapper.element.id()).await.id().unwrap();
-
                 outside_path_with_ids.push((replaced_element_id, id, outside_element_wrapper));
             }
 
