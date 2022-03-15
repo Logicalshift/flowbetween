@@ -136,7 +136,7 @@ impl StreamAnimationCore {
 
                     for element_id in recreate_order {
                         let element_id = element_id.id().unwrap();
-                        
+
                         if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
                             // Request the element from the frame
                             let frame_reverse = frame.future_sync(move |frame| {
@@ -146,7 +146,7 @@ impl StreamAnimationCore {
                                 }.boxed()
                             }).await.unwrap();
 
-                            frame_reverse.map(|frame_reverse| reversed.add_to_start(frame_reverse));
+                            frame_reverse.map(|frame_reverse| reversed.extend(frame_reverse));
 
                             // Remember the frames for later
                             element_frames.push((element_id, frame));
