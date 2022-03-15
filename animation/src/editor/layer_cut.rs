@@ -183,8 +183,9 @@ impl StreamAnimationCore {
             // The reverse instructions recreate all of the replaced and moved elements
             let revert_element_ids  = outside_path.iter().flat_map(|(elem_id, _)| elem_id.id());
             let revert_element_ids  = revert_element_ids.chain(moved_elements.iter().flat_map(|id| id.id()));
-            let replaced_wrappers   = self.wrappers_for_elements(revert_element_ids).await;
-            let revert_order        = replaced_ids.iter().map(|id| ElementId::Assigned(*id)).collect();
+            let revert_element_ids  = revert_element_ids.collect::<Vec<_>>();
+            let replaced_wrappers   = self.wrappers_for_elements(revert_element_ids.iter().cloned()).await;
+            let revert_order        = revert_element_ids.iter().map(|id| ElementId::Assigned(*id)).collect();
             let revert_order        = ReversedEdits::recreate_order(revert_order, &|id| id.id().and_then(|id| replaced_wrappers.get(&id).cloned()));
             let mut revert_replace  = frame.future_sync(move |frame| {
                 async move {
