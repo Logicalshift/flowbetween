@@ -7,6 +7,7 @@ use crate::editor::*;
 
 use flo_curves::bezier::path::*;
 
+use itertools::*;
 use futures::prelude::*;
 
 use std::sync::*;
@@ -179,12 +180,33 @@ impl StreamAnimationCore {
             // Remove the attachments from the elements that we'll be replacing
             let replaced_ids        = outside_path.iter().map(|(elem_id, _)| elem_id.id()).flatten().collect::<Vec<_>>();
 
+            // The reverse instructions recreate all of the replaced elements
+            let replaced_wrappers   = self.wrappers_for_elements(replaced_ids.iter().cloned()).await;
+            let revert_order        = replaced_ids.iter().map(|id| ElementId::Assigned(*id)).collect();
+            let revert_order        = ReversedEdits::recreate_order(revert_order, &|id| id.id().and_then(|id| replaced_wrappers.get(&id).cloned()));
+            let mut revert_replace  = frame.future_sync(move |frame| {
+                async move {
+                    let mut revert_replace = ReversedEdits::new();
+
+                    for revert_element_id in revert_order {
+                        let wrapper = replaced_wrappers.get(&revert_element_id.id().unwrap()).unwrap();
+                        revert_replace.extend(ReversedEdits::with_recreated_wrapper(layer_id, &wrapper, &|id| frame.elements.get(&id).cloned()));
+                    }
+
+                    revert_replace
+                }.boxed()
+            }).await.unwrap();
+
             // Assign element IDs to the outside elements if needed
             let mut outside_path_with_ids       = vec![];
             for (replaced_element_id, outside_element_wrapper) in outside_path.into_iter() {
                 let id = self.assign_element_id(outside_element_wrapper.element.id()).await.id().unwrap();
                 outside_path_with_ids.push((replaced_element_id, id, outside_element_wrapper));
             }
+
+            // Delete all of the elements before replacing them
+            let delete_ids = outside_path_with_ids.iter().flat_map(|(old_id, new_id, _)| [*old_id, ElementId::Assigned(*new_id)]).unique();
+            revert_replace.push_front(AnimationEdit::Element(delete_ids.collect(), ElementEdit::Delete));
 
             // Add the replacement elements after the elements they replace
             let mut pending = frame.future_sync(move |frame| {
