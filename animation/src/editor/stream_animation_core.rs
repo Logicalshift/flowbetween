@@ -359,7 +359,7 @@ impl StreamAnimationCore {
     ///
     /// Finds the wrappers for the elements with the specified IDs
     ///
-    pub fn wrappers_for_elements<'a>(&'a mut self, elements: impl 'a + Send+Iterator<Item=i64>) -> impl 'a + Future<Output=HashMap<i64, ElementWrapper>> {
+    pub fn wrappers_for_elements<'a>(&'a mut self, elements: impl 'a + Iterator<Item=i64>) -> impl 'a + Future<Output=HashMap<i64, ElementWrapper>> {
         async move {
             let mut remaining           = elements.collect::<SmallVec<[_; 4]>>();
             let mut wrappers            = HashMap::new();
