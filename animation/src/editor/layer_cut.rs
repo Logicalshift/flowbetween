@@ -180,8 +180,10 @@ impl StreamAnimationCore {
             // Remove the attachments from the elements that we'll be replacing
             let replaced_ids        = outside_path.iter().map(|(elem_id, _)| elem_id.id()).flatten().collect::<Vec<_>>();
 
-            // The reverse instructions recreate all of the replaced elements
-            let replaced_wrappers   = self.wrappers_for_elements(replaced_ids.iter().cloned()).await;
+            // The reverse instructions recreate all of the replaced and moved elements
+            let revert_element_ids  = outside_path.iter().flat_map(|(elem_id, _)| elem_id.id());
+            let revert_element_ids  = revert_element_ids.chain(moved_elements.iter().flat_map(|id| id.id()));
+            let replaced_wrappers   = self.wrappers_for_elements(revert_element_ids).await;
             let revert_order        = replaced_ids.iter().map(|id| ElementId::Assigned(*id)).collect();
             let revert_order        = ReversedEdits::recreate_order(revert_order, &|id| id.id().and_then(|id| replaced_wrappers.get(&id).cloned()));
             let mut revert_replace  = frame.future_sync(move |frame| {
@@ -205,7 +207,9 @@ impl StreamAnimationCore {
             }
 
             // Delete all of the elements before replacing them
-            let delete_ids = outside_path_with_ids.iter().flat_map(|(old_id, new_id, _)| [*old_id, ElementId::Assigned(*new_id)]).unique().collect::<Vec<_>>();
+            let delete_ids = outside_path_with_ids.iter().flat_map(|(old_id, new_id, _)| [*old_id, ElementId::Assigned(*new_id)]);
+            let delete_ids = delete_ids.chain(moved_elements.iter().cloned());
+            let delete_ids = delete_ids.unique().collect::<Vec<ElementId>>();
             revert_replace.push_front(AnimationEdit::Element(delete_ids, ElementEdit::Delete));
 
             // Add the replacement elements after the elements they replace
