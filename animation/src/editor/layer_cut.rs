@@ -273,6 +273,7 @@ impl StreamAnimationCore {
             // Create the inside elements (all those without an assigned element ID)
             let mut updated_elements    = vec![];
             let mut inside_group        = vec![];
+            let mut inside_element_ids  = vec![inside_group_id];
             let mut inside_when         = when;
             for mut inside_element_wrapper in inside_path {
                 // Assign an ID to this element
@@ -281,6 +282,7 @@ impl StreamAnimationCore {
                 } else {
                     self.assign_element_id(ElementId::Unassigned).await.id().unwrap()
                 };
+                inside_element_ids.push(ElementId::Assigned(id));
 
                 // Add the element to the group
                 inside_element_wrapper.element.set_id(ElementId::Assigned(id));
@@ -321,6 +323,8 @@ impl StreamAnimationCore {
             let inside_group        = GroupElement::new(inside_group_id, GroupType::Normal, Arc::new(inside_group));
             let inside_group        = ElementWrapper::attached_with_element(Vector::Group(inside_group), inside_when);
 
+            let revert_inside_group = ReversedEdits::with_edit(AnimationEdit::Element(inside_element_ids, ElementEdit::Delete));
+
             // Add the two groups to the frame
             let pending = frame.future_sync(move |frame| {
                 async move {
@@ -335,7 +339,8 @@ impl StreamAnimationCore {
             // Apply the pending storage changes
             self.request(pending).await;
 
-            ReversedEdits::unimplemented()
+            // Reversion is to delete the group then recreate the elements
+            ReversedEdits::with_edits(revert_inside_group.into_iter().chain(revert_replace))
         }
     }
 }
