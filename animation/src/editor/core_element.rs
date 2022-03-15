@@ -129,9 +129,14 @@ impl StreamAnimationCore {
                 Delete                              => {
                     // Create the undo operation for each of the deleted elements
                     let mut reversed        = ReversedEdits::new();
+                    let wrappers            = self.wrappers_for_elements(element_ids.iter().cloned()).await;
+                    let recreate_order      = element_ids.iter().map(|id| ElementId::Assigned(*id)).collect();
+                    let recreate_order      = ReversedEdits::recreate_order(recreate_order, &move |id: ElementId| id.id().and_then(|id| wrappers.get(&id).cloned()));
                     let mut element_frames  = vec![];
 
-                    for element_id in element_ids.iter().cloned() {
+                    for element_id in recreate_order {
+                        let element_id = element_id.id().unwrap();
+                        
                         if let Some(frame) = self.edit_keyframe_for_element(element_id).await {
                             // Request the element from the frame
                             let frame_reverse = frame.future_sync(move |frame| {
