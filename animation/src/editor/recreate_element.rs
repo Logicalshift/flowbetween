@@ -84,6 +84,7 @@ impl ReversedEdits {
                 if waiting_elements.contains(&order_before) {
                     element_ids.push(next_element);
                     element_ids.push(order_before);
+                    continue;
                 }
             }
 
