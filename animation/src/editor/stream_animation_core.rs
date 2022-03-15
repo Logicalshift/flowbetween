@@ -1,4 +1,5 @@
 use super::keyframe_core::*;
+use super::element_wrapper::*;
 use crate::undo::*;
 use crate::traits::*;
 use crate::storage::*;
@@ -7,6 +8,7 @@ use crate::storage::file_properties::*;
 use ::desync::*;
 use flo_stream::*;
 
+use smallvec::*;
 use futures::future;
 use futures::prelude::*;
 
@@ -351,6 +353,48 @@ impl StreamAnimationCore {
             } else {
                 None
             }
+        }
+    }
+
+    ///
+    /// Finds the wrappers for the elements with the specified IDs
+    ///
+    pub fn wrappers_for_elements<'a>(&'a mut self, elements: impl 'a + Send+Iterator<Item=i64>) -> impl 'a + Future<Output=HashMap<i64, ElementWrapper>> {
+        async move {
+            let mut remaining           = elements.collect::<SmallVec<[_; 4]>>();
+            let mut wrappers            = HashMap::new();
+
+            // While there's another element...
+            while let Some(next_element) = remaining.last() {
+                // Fetch the keyframe corresponding to the next element
+                let keyframe = self.edit_keyframe_for_element(*next_element).await;
+
+                if let Some(keyframe) = keyframe {
+                    // Retrieve as many elements as possible from the keyframe and update the wrappers list and the remaining list of elements in other keyframes
+                    (remaining, wrappers) = keyframe.future_sync(move |keyframe| {
+                        async move {
+                            // The elements that can't be found in this frame
+                            let mut not_in_frame = smallvec![];
+
+                            // Try to resolve all the elements we can. There should always be at least one (the one we used to look up the keyframe)
+                            for element_id in remaining {
+                                if let Some(wrapper) = keyframe.elements.get(&ElementId::Assigned(element_id)) {
+                                    wrappers.insert(element_id, wrapper.clone());
+                                } else {
+                                    not_in_frame.push(element_id);
+                                }
+                            }
+
+                            (not_in_frame, wrappers)
+                        }.boxed()
+                    }).await.unwrap();
+                } else {
+                    // This element has no keyframe, so we can't look up the wrapper
+                    remaining.pop();
+                }
+            }
+
+            wrappers
         }
     }
 
