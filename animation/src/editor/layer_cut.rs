@@ -205,8 +205,8 @@ impl StreamAnimationCore {
             }
 
             // Delete all of the elements before replacing them
-            let delete_ids = outside_path_with_ids.iter().flat_map(|(old_id, new_id, _)| [*old_id, ElementId::Assigned(*new_id)]).unique();
-            revert_replace.push_front(AnimationEdit::Element(delete_ids.collect(), ElementEdit::Delete));
+            let delete_ids = outside_path_with_ids.iter().flat_map(|(old_id, new_id, _)| [*old_id, ElementId::Assigned(*new_id)]).unique().collect::<Vec<_>>();
+            revert_replace.push_front(AnimationEdit::Element(delete_ids, ElementEdit::Delete));
 
             // Add the replacement elements after the elements they replace
             let mut pending = frame.future_sync(move |frame| {
