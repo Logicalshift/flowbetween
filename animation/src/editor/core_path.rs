@@ -88,6 +88,7 @@ impl StreamAnimationCore {
                     element_wrapper.serialize(&mut element_string);
 
                     self.request(vec![StorageCommand::WriteElement(element_id, element_string)]).await;
+                    current_keyframe.desync(move |current_keyframe| { current_keyframe.elements.insert(ElementId::Assigned(element_id), element_wrapper); });
 
                     ReversedEdits::with_edit(AnimationEdit::Element(vec![ElementId::Assigned(element_id)], ElementEdit::Delete))
                 }
@@ -106,6 +107,7 @@ impl StreamAnimationCore {
                     element_wrapper.serialize(&mut element_string);
 
                     self.request(vec![StorageCommand::WriteElement(element_id, element_string)]).await;
+                    current_keyframe.desync(move |current_keyframe| { current_keyframe.elements.insert(ElementId::Assigned(element_id), element_wrapper); });
 
                     ReversedEdits::with_edit(AnimationEdit::Element(vec![ElementId::Assigned(element_id)], ElementEdit::Delete))
                 }
