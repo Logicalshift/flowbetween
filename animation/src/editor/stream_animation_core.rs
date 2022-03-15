@@ -367,12 +367,15 @@ impl StreamAnimationCore {
             // While there's another element...
             while let Some(next_element) = remaining.last() {
                 // Fetch the keyframe corresponding to the next element
-                let keyframe = self.edit_keyframe_for_element(*next_element).await;
+                let next_element    = *next_element;
+                let keyframe        = self.edit_keyframe_for_element(next_element).await;
 
                 if let Some(keyframe) = keyframe {
                     // Retrieve as many elements as possible from the keyframe and update the wrappers list and the remaining list of elements in other keyframes
                     (remaining, wrappers) = keyframe.future_sync(move |keyframe| {
                         async move {
+                            debug_assert!(keyframe.elements.contains_key(&ElementId::Assigned(next_element)), "Element missing from keyframe");
+
                             // The elements that can't be found in this frame
                             let mut not_in_frame = smallvec![];
 
