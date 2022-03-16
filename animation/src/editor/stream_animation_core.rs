@@ -312,6 +312,7 @@ impl StreamAnimationCore {
             self.cached_layers.remove(&layer_id);
 
             // Return the cached keyframe if it matches the layer and time
+            /*
             if let Some(keyframe) = self.cached_keyframe.as_ref() {
                 let (frame_layer_id, start, end) = keyframe.future_sync(|keyframe| future::ready((keyframe.layer_id, keyframe.start, keyframe.end)).boxed()).await.unwrap();
 
@@ -319,6 +320,7 @@ impl StreamAnimationCore {
                     return Some(Arc::clone(keyframe));
                 }
             }
+            */
 
             // Update the cached keyframe if it doesn't
             self.cached_keyframe = self.load_keyframe(layer_id, when).await
