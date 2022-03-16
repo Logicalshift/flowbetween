@@ -418,6 +418,7 @@ impl StreamAnimationCore {
             self.cached_layers.clear();
 
             // Update the size
+            let old_size        = properties.size;
             properties.size     = (width, height);
 
             // Send the new file size to the storage
@@ -425,7 +426,7 @@ impl StreamAnimationCore {
             properties.serialize(&mut new_properties);
             self.request_one(StorageCommand::WriteAnimationProperties(new_properties)).await;
 
-            ReversedEdits::unimplemented()
+            ReversedEdits::with_edit(AnimationEdit::SetSize(old_size.0, old_size.1))
         }
     }
 
@@ -446,6 +447,7 @@ impl StreamAnimationCore {
             self.cached_layers.clear();
 
             // Update the frame length
+            let old_frame_length    = properties.frame_length;
             properties.frame_length = frame_length;
 
             // Send the new file size to the storage
@@ -453,7 +455,7 @@ impl StreamAnimationCore {
             properties.serialize(&mut new_properties);
             self.request_one(StorageCommand::WriteAnimationProperties(new_properties)).await;
 
-            ReversedEdits::unimplemented()
+            ReversedEdits::with_edit(AnimationEdit::SetFrameLength(old_frame_length))
         }
     }
 
@@ -474,6 +476,7 @@ impl StreamAnimationCore {
             self.cached_layers.clear();
 
             // Update the length of the animation
+            let old_duration        = properties.duration;
             properties.duration     = length;
 
             // Send the new file size to the storage
@@ -481,7 +484,7 @@ impl StreamAnimationCore {
             properties.serialize(&mut new_properties);
             self.request_one(StorageCommand::WriteAnimationProperties(new_properties)).await;
 
-            ReversedEdits::unimplemented()
+            ReversedEdits::with_edit(AnimationEdit::SetLength(old_duration))
         }
     }
 
