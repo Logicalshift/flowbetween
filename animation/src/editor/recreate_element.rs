@@ -134,7 +134,7 @@ impl ReversedEdits {
             Shape(_)                |
             AnimationRegion(_)      |
             Transformation((_, _))  => {
-                if wrapper.unattached {
+                if wrapper.unattached && wrapper.parent.is_none() {
                     reversed.push(AnimationEdit::Layer(layer_id, LayerEdit::CreateElementUnattachedToFrame(wrapper.start_time, wrapper.element.id(), wrapper.element.clone())))
                 } else {
                     reversed.push(AnimationEdit::Layer(layer_id, LayerEdit::CreateElement(wrapper.start_time, wrapper.element.id(), wrapper.element.clone())))
