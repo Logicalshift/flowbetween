@@ -633,7 +633,7 @@ fn delete_group_and_element_inside() {
             vec![
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(3)], ElementEdit::Delete)
             ],
-            false
+            true
         ).await;
     });
 }
@@ -657,7 +657,7 @@ fn group_and_delete_group_and_element_inside() {
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(1), ElementId::Assigned(2)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal)),
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(3)], ElementEdit::Delete),
             ],
-            false
+            true
         ).await;
     });
 }
