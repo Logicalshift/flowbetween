@@ -18,8 +18,6 @@ use std::collections::{HashSet, HashMap};
 /// Make sure that an element is not attached to an item more than once in a list of edits
 ///
 fn test_no_duplicate_attaches(edits: &Arc<Vec<AnimationEdit>>) {
-    return;
-
     use self::AnimationEdit::*;
     use self::ElementEdit::*;
 
@@ -126,7 +124,7 @@ pub async fn read_frame(animation: &impl Animation, layer_id: u64, frame: Durati
 /// This will compare the contents of frame 0 before making the edits and after making the edits and running the corresponding undo actions.
 /// The edits should generate at least one undo action, so 0 undo actions is considered a failure.
 ///
-async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<AnimationEdit>) {
+async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<AnimationEdit>, allow_duplicates: bool) {
     // Create the animation
     let in_memory_store = InMemoryStorage::new();
     let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
@@ -180,7 +178,9 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     assert!(committed == undo_test);
 
     // Sometimes things like attachments can be added twice to elements: make sure that doesn't happen
-    test_no_duplicate_attaches(&reverse);
+    if !allow_duplicates {
+        test_no_duplicate_attaches(&reverse);
+    }
     assert!(!vectors_have_unassigned_ids(commit_elements.iter()));
 
     // The reverse actions should be non-empty (there are ways to create edits that have no effect, but the assumption is the tests won't do this)
@@ -276,7 +276,8 @@ fn delete_first_element() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -298,7 +299,8 @@ fn delete_middle_element() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -320,7 +322,8 @@ fn delete_last_element() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(2)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -342,7 +345,8 @@ fn delete_many_1() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(1)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -364,7 +368,8 @@ fn delete_many_2() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1), ElementId::Assigned(0)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -386,7 +391,8 @@ fn delete_many_3() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1), ElementId::Assigned(2)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -408,7 +414,8 @@ fn delete_many_4() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(2), ElementId::Assigned(1)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -431,7 +438,8 @@ fn delete_many_5() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(2), ElementId::Assigned(1)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -453,7 +461,8 @@ fn delete_many_6() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(1), ElementId::Assigned(2)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -475,7 +484,8 @@ fn delete_with_attachments_1() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(1), ElementId::Assigned(2), ElementId::Assigned(100), ElementId::Assigned(101)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -497,7 +507,8 @@ fn delete_with_attachments_2() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(100), ElementId::Assigned(101), ElementId::Assigned(0), ElementId::Assigned(1), ElementId::Assigned(2)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -521,7 +532,8 @@ fn delete_group() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(3)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -545,7 +557,8 @@ fn delete_group_first_element() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -569,7 +582,8 @@ fn delete_group_middle_element() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -593,7 +607,8 @@ fn delete_group_last_element() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(2)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -617,7 +632,8 @@ fn delete_group_and_element_inside() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(3)], ElementEdit::Delete)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -640,7 +656,8 @@ fn group_and_delete_group_and_element_inside() {
             vec![
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(1), ElementId::Assigned(2)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal)),
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(3)], ElementEdit::Delete),
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -662,7 +679,8 @@ fn group_1() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(1), ElementId::Assigned(2)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -684,7 +702,8 @@ fn group_2() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(1)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -708,7 +727,8 @@ fn group_3() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0), ElementId::Assigned(1)], ElementEdit::Group(ElementId::Assigned(4), GroupType::Normal))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -732,7 +752,8 @@ fn group_4() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1), ElementId::Assigned(2)], ElementEdit::Group(ElementId::Assigned(4), GroupType::Normal))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -756,7 +777,8 @@ fn group_5() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(4), ElementId::Assigned(2)], ElementEdit::Group(ElementId::Assigned(3), GroupType::Normal))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -780,7 +802,8 @@ fn ungroup() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(3)], ElementEdit::Ungroup)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -805,7 +828,8 @@ fn ungroup_2() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(4)], ElementEdit::Ungroup)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -829,7 +853,8 @@ fn set_path() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1), ElementId::Assigned(2)], ElementEdit::SetPath(new_path))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -851,7 +876,8 @@ fn order_in_front() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1)], ElementEdit::Order(ElementOrdering::InFront))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -873,7 +899,8 @@ fn order_behind() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1)], ElementEdit::Order(ElementOrdering::Behind))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -897,7 +924,8 @@ fn order_behind_in_group() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1)], ElementEdit::Order(ElementOrdering::Behind))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -919,7 +947,8 @@ fn order_to_top() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0)], ElementEdit::Order(ElementOrdering::ToTop))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -941,7 +970,8 @@ fn order_to_bottom() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(2)], ElementEdit::Order(ElementOrdering::ToBottom))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -963,7 +993,8 @@ fn order_before() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0)], ElementEdit::Order(ElementOrdering::Before(ElementId::Assigned(2))))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -987,7 +1018,8 @@ fn order_with_parent() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(0)], ElementEdit::Order(ElementOrdering::WithParent(ElementId::Assigned(3))))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -1011,7 +1043,8 @@ fn order_to_top_level() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1)], ElementEdit::Order(ElementOrdering::ToTopLevel))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -1033,7 +1066,8 @@ fn convert_to_path() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1), ElementId::Assigned(0)], ElementEdit::ConvertToPath)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -1057,7 +1091,8 @@ fn convert_to_path_in_group() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1), ElementId::Assigned(0)], ElementEdit::ConvertToPath)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -1079,7 +1114,8 @@ fn collide_with_existing_elements_brush_strokes() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(2)], ElementEdit::CollideWithExistingElements)
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -1102,7 +1138,8 @@ fn collide_with_existing_elements_then_convert_to_path() {
             vec![
                 Element(vec![ElementId::Assigned(2)], ElementEdit::CollideWithExistingElements),
                 Element(vec![ElementId::Assigned(2)], ElementEdit::ConvertToPath),
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -1124,7 +1161,8 @@ fn transform() {
             ],
             vec![
                 Element(vec![ElementId::Assigned(1), ElementId::Assigned(0)], ElementEdit::Transform(vec![ElementTransform::MoveTo(2.0, 3.0), ElementTransform::SetAnchor(100.0, 100.0), ElementTransform::Rotate(2.0)]))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -1148,7 +1186,8 @@ fn create_path() {
                 Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(103), BrushProperties::new()))),
 
                 Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(2), circle_path((100.0, 200.0), 50.0)))),
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -1176,7 +1215,8 @@ fn set_control_points() {
                     (7.0, 7.0), (8.0, 8.0), (10.0, 10.0), 
                     (11.0, 11.0), (12.0, 12.0), (13.0, 13.0),
                 ], Duration::from_millis(0)))
-            ]
+            ],
+            false
         ).await;
     });
 }
@@ -1198,7 +1238,8 @@ fn cut() {
             ],
             vec![
                 Layer(0, Cut { path: circle_path((100.0, 125.0), 100.0), when: Duration::from_millis(0), inside_group: ElementId::Assigned(3) })
-            ]
+            ],
+            false
         ).await;
     });
 }
