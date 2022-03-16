@@ -264,6 +264,7 @@ impl StreamAnimationCore {
 
                     // Delete all the elements in the replaced list
                     for delete_element_id in replaced_elements.iter().map(|elem_id| elem_id.id()).flatten() {
+                        frame.elements.remove(&ElementId::Assigned(delete_element_id));
                         pending.push(StorageCommand::DeleteElement(delete_element_id));
                     }
 
