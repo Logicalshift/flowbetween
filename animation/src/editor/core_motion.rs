@@ -34,7 +34,7 @@ impl StreamAnimationCore {
                     // Write
                     self.request_one(StorageCommand::WriteElement(motion_id, motion.serialize_to_string())).await;
 
-                    ReversedEdits::unimplemented()
+                    ReversedEdits::with_edit(AnimationEdit::Motion(ElementId::Assigned(motion_id), MotionEdit::Delete))
                 }
 
                 Delete                  => { 
