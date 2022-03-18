@@ -197,6 +197,13 @@ impl InMemoryStorageCore {
                     response.push(StorageResponse::Updated); 
                 }
 
+                DeleteRecentEdits(num_edits)                        => {
+                    for _ in 0..num_edits {
+                        self.edit_log.pop();
+                    }
+                    response.push(StorageResponse::Updated);
+                }
+
                 ReadHighestUnusedElementId                          => { 
                     response.push(StorageResponse::HighestUnusedElementId(self.elements.keys().cloned().max().unwrap_or(-1)+1)); 
                 }

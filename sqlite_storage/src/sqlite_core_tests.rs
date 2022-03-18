@@ -59,6 +59,42 @@ fn write_two_edits() {
 }
 
 #[test]
+fn write_four_edits_and_delete_two() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::WriteEdit("Test1".to_string()), 
+            StorageCommand::WriteEdit("Test2".to_string()),
+            StorageCommand::WriteEdit("Test3".to_string()),
+            StorageCommand::WriteEdit("Test4".to_string()),
+            StorageCommand::DeleteRecentEdits(2),
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadEditLogLength]) == vec![StorageResponse::NumberOfEdits(2)]);
+}
+
+#[test]
+fn write_edit_after_deletion() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::WriteEdit("Test1".to_string()), 
+            StorageCommand::WriteEdit("Test2".to_string()),
+            StorageCommand::WriteEdit("Test3".to_string()),
+            StorageCommand::WriteEdit("Test4".to_string()),
+            StorageCommand::DeleteRecentEdits(2),
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+    assert!(core.run_commands(vec![StorageCommand::ReadEditLogLength]) == vec![StorageResponse::NumberOfEdits(2)]);
+
+    assert!(core.run_commands(vec![
+            StorageCommand::WriteEdit("Test5".to_string())
+        ]) == vec![StorageResponse::Updated]);
+    assert!(core.run_commands(vec![StorageCommand::ReadEditLogLength]) == vec![StorageResponse::NumberOfEdits(3)]);
+}
+
+#[test]
 fn read_all_edits() {
     let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
     core.initialize().unwrap();
@@ -69,6 +105,23 @@ fn read_all_edits() {
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated]);
 
     assert!(core.run_commands(vec![StorageCommand::ReadEdits(0..2)]) == vec![StorageResponse::Edit(0, "Test1".to_string()), StorageResponse::Edit(1, "Test2".to_string())]);
+}
+
+#[test]
+fn read_all_edits_after_deletion() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::WriteEdit("Test1".to_string()), 
+            StorageCommand::WriteEdit("Test2".to_string()),
+            StorageCommand::WriteEdit("Test3".to_string()),
+            StorageCommand::DeleteRecentEdits(2),
+            StorageCommand::WriteEdit("Test4".to_string()),
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadEditLogLength]) == vec![StorageResponse::NumberOfEdits(2)]);
+    assert!(core.run_commands(vec![StorageCommand::ReadEdits(0..2)]) == vec![StorageResponse::Edit(0, "Test1".to_string()), StorageResponse::Edit(1, "Test4".to_string())]);
 }
 
 #[test]

@@ -86,6 +86,7 @@ impl SqliteCore {
             WriteAnimationProperties(properties)                => { self.write_animation_properties(properties) },
             ReadAnimationProperties                             => { self.read_animation_properties() },
             WriteEdit(edit)                                     => { self.write_edit(edit) },
+            DeleteRecentEdits(num_edits)                        => { self.delete_recent_edits(num_edits) }
             ReadHighestUnusedElementId                          => { self.read_highest_unused_element_id() },
             ReadEditLogLength                                   => { self.read_edit_log_length() },
             ReadEdits(edit_range)                               => { self.read_edits(edit_range) },
@@ -161,6 +162,31 @@ impl SqliteCore {
     fn write_edit(&mut self, edit: String) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         let mut write   = self.connection.prepare_cached("INSERT INTO EditLog (Edit) VALUES (?);")?;
         write.execute(&[edit])?;
+
+        Ok(vec![StorageResponse::Updated])
+    }
+
+    ///
+    /// Deletes a number of recent edits from the edit log
+    ///
+    fn delete_recent_edits(&mut self, num_edits: u64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let num_edits = num_edits as i64;
+
+        // Read the current max edit ID
+        let mut max_edit_id = self.connection.prepare_cached("SELECT COALESCE(MAX(EditId), 0) FROM EditLog;")?;
+        let max_edit_id     = max_edit_id.query_row(NO_PARAMS, |row| row.get::<_, i64>(0))?;
+
+        if max_edit_id < num_edits { 
+            return Ok(vec![StorageResponse::Error(StorageError::General, "Not enough edits to delete".to_string())]);
+        }
+
+        // Delete the edit log entries and update the table sequence
+        let min_edit    = max_edit_id - num_edits;
+        let mut write   = self.connection.prepare_cached("DELETE FROM EditLog WHERE EditId > ?;")?;
+        write.execute(&[min_edit])?;
+
+        let mut update_sequence = self.connection.prepare_cached("UPDATE sqlite_sequence SET seq = (SELECT MAX(EditId) FROM EditLog) WHERE name = 'EditLog';")?;
+        update_sequence.execute(NO_PARAMS)?;
 
         Ok(vec![StorageResponse::Updated])
     }

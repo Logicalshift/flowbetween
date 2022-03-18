@@ -15,6 +15,9 @@ pub enum StorageCommand {
     /// Appends a serialized edit to the edit log
     WriteEdit(String),
 
+    /// Removes the specified number of edits from the end of the edit log
+    DeleteRecentEdits(u64),
+
     /// Retrieves the highest unused element ID (this ID and any higher are guaranteed to be unassigned)
     ReadHighestUnusedElementId,
 
