@@ -199,11 +199,11 @@ fn add_keyframe() {
 
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
-            StorageCommand::AddKeyFrame(1, Duration::from_millis(420))
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(400))
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated]);
 
-    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(420)..Duration::from_millis(420))])
-        == vec![StorageResponse::KeyFrame(Duration::from_millis(420), Duration::from_micros(i64::MAX as u64))]);
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(400)..Duration::from_millis(400))])
+        == vec![StorageResponse::KeyFrame(Duration::from_millis(400), Duration::from_micros(i64::MAX as u64))]);
 }
 
 #[test]
@@ -213,7 +213,7 @@ fn read_many_keyframes() {
 
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
-            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(400)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(600)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(700))
@@ -231,7 +231,7 @@ fn read_many_keyframes() {
 
     assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(0)..Duration::from_millis(599))]) ==
         vec![
-            StorageResponse::KeyFrame(Duration::from_millis(420), Duration::from_millis(500)),
+            StorageResponse::KeyFrame(Duration::from_millis(400), Duration::from_millis(500)),
             StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_millis(600))
         ]);
 
@@ -256,7 +256,7 @@ fn read_missing_keyframe() {
 
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
-            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(400)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(600)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(700))
@@ -264,7 +264,7 @@ fn read_missing_keyframe() {
 
     assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(0)..Duration::from_millis(1))]) ==
         vec![
-            StorageResponse::NotInAFrame(Duration::from_millis(420))
+            StorageResponse::NotInAFrame(Duration::from_millis(400))
         ]);
 }
 
@@ -289,7 +289,7 @@ fn read_past_last_keyframe() {
 
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
-            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(400)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(600)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(700))
@@ -308,7 +308,7 @@ fn delete_keyframe() {
 
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
-            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(400)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(600)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(700))
@@ -320,7 +320,7 @@ fn delete_keyframe() {
 
     assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(0)..Duration::from_millis(700))]) ==
         vec![
-            StorageResponse::KeyFrame(Duration::from_millis(420), Duration::from_millis(600)),
+            StorageResponse::KeyFrame(Duration::from_millis(400), Duration::from_millis(600)),
             StorageResponse::KeyFrame(Duration::from_millis(600), Duration::from_millis(700))
         ]);
 }
@@ -332,7 +332,7 @@ fn delete_nonexistent_keyframe() {
 
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
-            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(400)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(600)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(700))
@@ -344,7 +344,7 @@ fn delete_nonexistent_keyframe() {
 
     assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(0)..Duration::from_millis(700))]) ==
         vec![
-            StorageResponse::KeyFrame(Duration::from_millis(420), Duration::from_millis(500)),
+            StorageResponse::KeyFrame(Duration::from_millis(400), Duration::from_millis(500)),
             StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_millis(600)),
             StorageResponse::KeyFrame(Duration::from_millis(600), Duration::from_millis(700))
         ]);
@@ -358,18 +358,19 @@ fn attach_element_to_keyframe() {
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
 
-            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(400)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
 
             StorageCommand::WriteElement(1, "Test1".to_string()),
             StorageCommand::WriteElement(2, "Test2".to_string()),
 
-            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(420)),
-            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(420)),
+            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(400)),
+            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(400)),
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
 
-    assert!(core.run_commands(vec![StorageCommand::ReadElementsForKeyFrame(1, Duration::from_millis(420))]) ==
+    assert!(core.run_commands(vec![StorageCommand::ReadElementsForKeyFrame(1, Duration::from_millis(400))]) ==
         vec![
+            StorageResponse::KeyFrame(Duration::from_millis(400), Duration::from_millis(500)),
             StorageResponse::Element(1, "Test1".to_string()),
             StorageResponse::Element(2, "Test2".to_string()),
         ]);
@@ -383,26 +384,28 @@ fn attach_element_to_several_keyframes() {
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
 
-            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(400)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
 
             StorageCommand::WriteElement(1, "Test1".to_string()),
             StorageCommand::WriteElement(2, "Test2".to_string()),
 
-            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(420)),
-            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(420)),
+            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(400)),
+            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(400)),
 
             StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(500)),
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
 
-    assert!(core.run_commands(vec![StorageCommand::ReadElementsForKeyFrame(1, Duration::from_millis(420))]) ==
+    assert!(core.run_commands(vec![StorageCommand::ReadElementsForKeyFrame(1, Duration::from_millis(400))]) ==
         vec![
+            StorageResponse::KeyFrame(Duration::from_millis(400), Duration::from_millis(500)),
             StorageResponse::Element(1, "Test1".to_string()),
             StorageResponse::Element(2, "Test2".to_string()),
         ]);
 
     assert!(core.run_commands(vec![StorageCommand::ReadElementsForKeyFrame(1, Duration::from_millis(500))]) ==
         vec![
+            StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_secs(u32::max_value() as _)),
             StorageResponse::Element(2, "Test2".to_string()),
         ]);
 }
@@ -415,21 +418,22 @@ fn double_attach_element_to_keyframe() {
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
 
-            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(400)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
 
             StorageCommand::WriteElement(1, "Test1".to_string()),
             StorageCommand::WriteElement(2, "Test2".to_string()),
 
-            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(420)),
-            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(420)),
+            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(400)),
+            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(400)),
 
-            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(420)),
-            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(420)),
+            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(400)),
+            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(400)),
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
 
-    assert!(core.run_commands(vec![StorageCommand::ReadElementsForKeyFrame(1, Duration::from_millis(420))]) ==
+    assert!(core.run_commands(vec![StorageCommand::ReadElementsForKeyFrame(1, Duration::from_millis(400))]) ==
         vec![
+            StorageResponse::KeyFrame(Duration::from_millis(400), Duration::from_millis(500)),
             StorageResponse::Element(1, "Test1".to_string()),
             StorageResponse::Element(2, "Test2".to_string()),
         ]);
@@ -443,14 +447,14 @@ fn detach_element() {
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
 
-            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(400)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
 
             StorageCommand::WriteElement(1, "Test1".to_string()),
             StorageCommand::WriteElement(2, "Test2".to_string()),
 
-            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(420)),
-            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(420)),
+            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(400)),
+            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(400)),
 
             StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(500)),
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
@@ -459,13 +463,15 @@ fn detach_element() {
             StorageCommand::DetachElementFromLayer(2), 
         ]) == vec![StorageResponse::Updated]);
 
-    assert!(core.run_commands(vec![StorageCommand::ReadElementsForKeyFrame(1, Duration::from_millis(420))]) ==
+    assert!(core.run_commands(vec![StorageCommand::ReadElementsForKeyFrame(1, Duration::from_millis(400))]) ==
         vec![
+            StorageResponse::KeyFrame(Duration::from_millis(400), Duration::from_millis(500)),
             StorageResponse::Element(1, "Test1".to_string()),
         ]);
 
     assert!(core.run_commands(vec![StorageCommand::ReadElementsForKeyFrame(1, Duration::from_millis(500))]) ==
         vec![
+            StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_secs(u32::max_value() as _)),
         ]);
 }
 
@@ -477,26 +483,26 @@ fn read_element_attachments() {
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
 
-            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(400)),
             StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
 
             StorageCommand::WriteElement(1, "Test1".to_string()),
             StorageCommand::WriteElement(2, "Test2".to_string()),
 
-            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(420)),
-            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(420)),
+            StorageCommand::AttachElementToLayer(1, 1, Duration::from_millis(400)),
+            StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(400)),
 
             StorageCommand::AttachElementToLayer(1, 2, Duration::from_millis(500)),
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
 
     assert!(core.run_commands(vec![StorageCommand::ReadElementAttachments(1)]) ==
         vec![
-            StorageResponse::ElementAttachments(1, vec![(1, Duration::from_millis(420))]),
+            StorageResponse::ElementAttachments(1, vec![(1, Duration::from_millis(400))]),
         ]);
 
     assert!(core.run_commands(vec![StorageCommand::ReadElementAttachments(2)]) ==
         vec![
-            StorageResponse::ElementAttachments(2, vec![(1, Duration::from_millis(420)), (1, Duration::from_millis(500))]),
+            StorageResponse::ElementAttachments(2, vec![(1, Duration::from_millis(400)), (1, Duration::from_millis(500))]),
         ]);
 }
 
@@ -507,11 +513,11 @@ fn read_layer_cache() {
 
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
-            StorageCommand::WriteLayerCache(1, Duration::from_millis(420), "Type".to_string(), "Cache1".to_string()),
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(400), "Type".to_string(), "Cache1".to_string()),
             StorageCommand::WriteLayerCache(1, Duration::from_millis(500), "Type".to_string(), "Cache2".to_string())
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
 
-    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(420), "Type".to_string())]) ==
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(400), "Type".to_string())]) ==
         vec![StorageResponse::LayerCache("Cache1".to_string())]);
     assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(500), "Type".to_string())]) ==
         vec![StorageResponse::LayerCache("Cache2".to_string())]);
@@ -524,15 +530,15 @@ fn overwrite_layer_cache() {
 
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
-            StorageCommand::WriteLayerCache(1, Duration::from_millis(420), "Type".to_string(), "Cache1".to_string()),
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(400), "Type".to_string(), "Cache1".to_string()),
             StorageCommand::WriteLayerCache(1, Duration::from_millis(500), "Type".to_string(), "Cache2".to_string())
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
 
     assert!(core.run_commands(vec![
-            StorageCommand::WriteLayerCache(1, Duration::from_millis(420), "Type".to_string(), "Cache1Updated".to_string()),
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(400), "Type".to_string(), "Cache1Updated".to_string()),
         ]) == vec![StorageResponse::Updated]);
 
-    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(420), "Type".to_string())]) ==
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(400), "Type".to_string())]) ==
         vec![StorageResponse::LayerCache("Cache1Updated".to_string())]);
     assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(500), "Type".to_string())]) ==
         vec![StorageResponse::LayerCache("Cache2".to_string())]);
@@ -545,7 +551,7 @@ fn read_missing_layer_cache() {
 
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
-            StorageCommand::WriteLayerCache(1, Duration::from_millis(420), "Type".to_string(), "Cache1".to_string()),
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(400), "Type".to_string(), "Cache1".to_string()),
             StorageCommand::WriteLayerCache(1, Duration::from_millis(500), "Type".to_string(), "Cache2".to_string())
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
 
@@ -573,15 +579,15 @@ fn delete_from_layer_cache() {
 
     assert!(core.run_commands(vec![
             StorageCommand::AddLayer(1, "Test1".to_string()), 
-            StorageCommand::WriteLayerCache(1, Duration::from_millis(420), "Type".to_string(), "Cache1".to_string()),
+            StorageCommand::WriteLayerCache(1, Duration::from_millis(400), "Type".to_string(), "Cache1".to_string()),
             StorageCommand::WriteLayerCache(1, Duration::from_millis(500), "Type".to_string(), "Cache2".to_string())
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
 
     assert!(core.run_commands(vec![
-            StorageCommand::DeleteLayerCache(1, Duration::from_millis(420), "Type".to_string()),
+            StorageCommand::DeleteLayerCache(1, Duration::from_millis(400), "Type".to_string()),
         ]) == vec![StorageResponse::Updated]);
 
-    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(420), "Type".to_string())]) ==
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(400), "Type".to_string())]) ==
         vec![StorageResponse::NotFound]);
     assert!(core.run_commands(vec![StorageCommand::ReadLayerCache(1, Duration::from_millis(500), "Type".to_string())]) ==
         vec![StorageResponse::LayerCache("Cache2".to_string())]);
