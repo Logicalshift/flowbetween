@@ -99,7 +99,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
     ///
     fn subscribe_to_animation_edits(&mut self) {
         // Subscribe to the edits posted to the model and gather them together
-        let subscription            = self.edit_publisher.sync(|publisher| publisher.subscribe());
+        let subscription            = self.retired_edits().map(|retired_edit| retired_edit.committed_edits());
 
         // Gather together the properties we're going to update
         let size_binding            = self.size_binding.clone();
