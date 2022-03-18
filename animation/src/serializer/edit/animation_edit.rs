@@ -28,7 +28,7 @@ impl AnimationEdit {
 
             // Most undo actions are not actually serialized (they're used for internal signalling instead)
             Undo(PrepareToUndo(_))      => { },
-            Undo(CompletedUndo)         => { },
+            Undo(CompletedUndo(_))      => { },
             Undo(FailedUndo(_))         => { },
             Undo(PerformUndo { original_actions: _, undo_actions: _ }) => { },
         }
