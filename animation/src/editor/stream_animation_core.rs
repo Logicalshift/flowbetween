@@ -258,7 +258,6 @@ impl StreamAnimationCore {
                 }
             }
 
-            // TODO: generate the 'reverse' edits
             RetiredEdit::new(Arc::new(edits), reversed_edits.into())
         }
     }
