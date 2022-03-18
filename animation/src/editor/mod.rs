@@ -4,6 +4,7 @@
 
 mod stream_animation;
 mod stream_animation_core;
+mod core_undo;
 mod core_path;
 mod core_paint;
 mod core_layer;

@@ -7,6 +7,9 @@ use std::sync::*;
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum UndoFailureReason {
+    /// The undo operation was not supported by the editor
+    NotSupported,
+
     /// The actions being undone do not match the actions on top of the edit log
     OriginalActionsDoNotMatch
 }

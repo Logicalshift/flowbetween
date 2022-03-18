@@ -225,7 +225,7 @@ impl StreamAnimationCore {
             for edit in edits.iter() {
                 mapped_edits.push(self.assign_element_id_to_edit_log(edit).await);
             }
-            let edits               = mapped_edits;
+            let mut edits           = mapped_edits;
             let mut reversed_edits  = ReversedEdits::new();
 
             // Send the edits to the edit log by serializing them
@@ -241,7 +241,7 @@ impl StreamAnimationCore {
             self.request(edit_log).await;
 
             // Process the edits in the order that they arrive
-            for edit in edits.iter() {
+            for edit in edits.iter_mut() {
                 use self::AnimationEdit::*;
 
                 // Edit the elements
@@ -249,7 +249,7 @@ impl StreamAnimationCore {
                     Layer(layer_id, layer_edit)             => { reversed_edits.add_to_start(self.layer_edit(*layer_id, layer_edit).await); }
                     Element(element_ids, element_edit)      => { reversed_edits.add_to_start(self.element_edit(element_ids, element_edit).await); }
                     Motion(motion_id, motion_edit)          => { reversed_edits.add_to_start(self.motion_edit(*motion_id, motion_edit).await); }
-                    Undo(undo_edit)                         => { todo!() },
+                    Undo(undo_edit)                         => { let undo_edit = undo_edit.clone(); self.undo_edit(edit, &undo_edit).await; },
                     SetSize(width, height)                  => { reversed_edits.add_to_start(self.set_size(*width, *height).await) }
                     SetFrameLength(length)                  => { reversed_edits.add_to_start(self.set_frame_length(*length).await) }
                     SetLength(length)                       => { reversed_edits.add_to_start(self.set_length(*length).await) }
