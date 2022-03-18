@@ -3,20 +3,38 @@ use super::animation_edit::*;
 use std::sync::*;
 
 ///
+/// Reasons why a PerformUndo might fail
+///
+#[derive(Clone, PartialEq, Debug)]
+pub enum UndoFailureReason {
+    /// The actions being undone do not match the actions on top of the edit log
+    OriginalActionsDoNotMatch
+}
+
+///
 /// Undo edits do not affect the animation but instead are used to annotate the edit log to mark where 
 /// undo actions occur, and to rewrite the edit log after an undo action has occurred.
+///
+/// Note that only BeginAction and FinishAction are serialized to the edit log: other undo actions are
+/// always left out.
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum UndoEdit {
     /// Provides a synchronisation point so that an undo action can be performed once all pending edits have been retired
     PrepareToUndo(String),
 
+    /// A 'PerformUndo' is retired as a 'CompletedUndo' if successful
+    CompletedUndo,
+
+    /// A 'PerformUndo' is retired as a 'FailedUndo' if unsuccessful, along with a reason why the operation couldn't be performed
+    FailedUndo(UndoFailureReason),
+
     /// Indicates that the subsequent edit operations all form part of a single action
-    BeginAction(String),
+    BeginAction,
 
     /// Finishes an action started by BeginAction()
-    FinishAction(String),
+    FinishAction,
 
-    /// Performs a set of undo actions, removing the original actions from the log
+    /// Performs a set of undo actions, removing the original actions from the log (this is never serialized to the log)
     PerformUndo { original_actions: Arc<Vec<AnimationEdit>>, undo_actions: Arc<Vec<AnimationEdit>> }
 }
