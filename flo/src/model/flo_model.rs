@@ -182,7 +182,9 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
 
                 Layer(layer_id, SetOrdering(at_index)) => {
                     unimplemented!("Cannot update model with layer ordering yet")
-                }
+                },
+
+                Undo(_) => { }
             }
         }
 

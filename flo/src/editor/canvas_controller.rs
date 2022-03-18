@@ -493,6 +493,8 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
                         }
                     }
                 },
+
+                AnimationEdit::Undo(_)                          => { },
             }
         }
     }

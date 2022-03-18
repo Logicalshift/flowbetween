@@ -11,6 +11,7 @@ impl AnimationEdit {
     ///
     pub fn serialize<Tgt: AnimationDataTarget>(&self, data: &mut Tgt) {
         use self::AnimationEdit::*;
+        use self::UndoEdit::*;
 
         match self {
             Layer(layer_id, edit)       => { data.write_chr('L'); data.write_small_u64(*layer_id); edit.serialize(data); },
@@ -20,7 +21,16 @@ impl AnimationEdit {
             SetFrameLength(len)         => { data.write_chr('f'); data.write_small_u64(len.as_nanos() as _); }
             SetLength(len)              => { data.write_chr('l'); data.write_duration(*len); },
             AddNewLayer(layer_id)       => { data.write_chr('+'); data.write_small_u64(*layer_id); },
-            RemoveLayer(layer_id)       => { data.write_chr('-'); data.write_small_u64(*layer_id); }
+            RemoveLayer(layer_id)       => { data.write_chr('-'); data.write_small_u64(*layer_id); },
+
+            Undo(BeginAction)           => { data.write_chr('U'); data.write_chr('+'); },
+            Undo(FinishAction)          => { data.write_chr('U'); data.write_chr('-'); },
+
+            // Most undo actions are not actually serialized (they're used for internal signalling instead)
+            Undo(PrepareToUndo(_))      => { },
+            Undo(CompletedUndo)         => { },
+            Undo(FailedUndo(_))         => { },
+            Undo(PerformUndo { original_actions: _, undo_actions: _ }) => { },
         }
     }
 
@@ -46,6 +56,14 @@ impl AnimationEdit {
                 elements.and_then(|elements|
                     ElementEdit::deserialize(data)
                         .map(move |edit| AnimationEdit::Element(elements, edit)))
+            }
+
+            'U' => {
+                match data.next_chr() {
+                    '+'     => Some(AnimationEdit::Undo(UndoEdit::BeginAction)),
+                    '-'     => Some(AnimationEdit::Undo(UndoEdit::FinishAction)),
+                    _       => None,
+                }
             }
 
             // Unknown character
@@ -162,6 +180,24 @@ mod test {
     fn motion_edit() {
         let mut encoded = String::new();
         let edit        = AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Create);
+        edit.serialize(&mut encoded);
+
+        assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+
+    #[test]
+    fn undo_begin_action() {
+        let mut encoded = String::new();
+        let edit        = AnimationEdit::Undo(UndoEdit::BeginAction);
+        edit.serialize(&mut encoded);
+
+        assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+
+    #[test]
+    fn undo_finish_action() {
+        let mut encoded = String::new();
+        let edit        = AnimationEdit::Undo(UndoEdit::FinishAction);
         edit.serialize(&mut encoded);
 
         assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(edit));

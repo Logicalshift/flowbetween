@@ -1,4 +1,5 @@
 use super::element_id::*;
+use super::undo_edit::*;
 use super::layer_edit::*;
 use super::motion_edit::*;
 use super::element_edit::*;
@@ -21,6 +22,9 @@ pub enum AnimationEdit {
     /// Edit to a motion (which is a description of how an element moves over time)
     /// Motions have element IDs so can be treated as elements but are not attached to a layer
     Motion(ElementId, MotionEdit),
+
+    /// Performs actions relating to undoing other edits
+    Undo(UndoEdit),
 
     /// Sets the canvas size for this animation
     SetSize(f64, f64),
@@ -51,6 +55,7 @@ impl AnimationEdit {
             Element(element_ids, element_edit)  => element_ids.iter().cloned().chain(element_edit.used_element_ids()).collect(),
             Motion(element_id, motion_edit)     => iter::once(*element_id).chain(motion_edit.used_element_ids()).collect(),
 
+            Undo(_)                             |
             SetSize(_, _)                       |
             SetFrameLength(_)                   |
             SetLength(_)                        |

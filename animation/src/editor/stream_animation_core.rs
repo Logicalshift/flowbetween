@@ -249,6 +249,7 @@ impl StreamAnimationCore {
                     Layer(layer_id, layer_edit)             => { reversed_edits.add_to_start(self.layer_edit(*layer_id, layer_edit).await); }
                     Element(element_ids, element_edit)      => { reversed_edits.add_to_start(self.element_edit(element_ids, element_edit).await); }
                     Motion(motion_id, motion_edit)          => { reversed_edits.add_to_start(self.motion_edit(*motion_id, motion_edit).await); }
+                    Undo(undo_edit)                         => { todo!() },
                     SetSize(width, height)                  => { reversed_edits.add_to_start(self.set_size(*width, *height).await) }
                     SetFrameLength(length)                  => { reversed_edits.add_to_start(self.set_frame_length(*length).await) }
                     SetLength(length)                       => { reversed_edits.add_to_start(self.set_length(*length).await) }
