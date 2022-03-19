@@ -55,6 +55,42 @@ impl StorageConnection {
     }
 
     ///
+    /// Reads the number of entries in the edit log
+    ///
+    pub fn read_edit_log_length<'a>(&'a mut self) -> impl 'a + Future<Output=Option<usize>> {
+        async move {
+            let response    = self.request(vec![StorageCommand::ReadEditLogLength]).await?;
+            let log_length  = response.into_iter()
+                .filter_map(|response| match response {
+                    StorageResponse::NumberOfEdits(result)  => Some(result),
+                    _                                       => None
+                })
+                .next();
+
+            log_length
+        }
+    }
+
+    ///
+    /// Read and deserializes a set of edits from the edit log
+    ///
+    pub fn read_edit_log<'a>(&'a mut self, edits: Range<usize>) -> impl 'a + Future<Output=Option<Vec<AnimationEdit>>> {
+        async move {
+            let response    = self.request(vec![StorageCommand::ReadEdits(edits)]).await?;
+
+            let mut result  = vec![];
+            for response in response {
+                match response {
+                    StorageResponse::Edit(_idx, edit)   => { result.push(AnimationEdit::deserialize(&mut edit.chars())?); },
+                    _                                   => { return None; },
+                }
+            }
+
+            Some(result)
+        }
+    }
+
+    ///
     /// Reads the properties for a single layer from this connection
     ///
     pub fn read_layer_properties<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=Option<LayerProperties>> {
