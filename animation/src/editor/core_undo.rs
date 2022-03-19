@@ -39,6 +39,21 @@ impl StreamAnimationCore {
     ///
     pub fn perform_undo<'a>(&'a mut self, original_actions: Arc<Vec<AnimationEdit>>, undo_actions: Arc<Vec<AnimationEdit>>) -> impl 'a + Future<Output=Result<(), UndoFailureReason>> {
         async move {
+            // Check that the original actions match what's in the edit log
+            let num_original_actions    = original_actions.len();
+            let edit_log_length         = self.storage_connection.read_edit_log_length().await.ok_or(UndoFailureReason::StorageError)?;
+
+            if edit_log_length < num_original_actions { 
+                return Err(UndoFailureReason::EditLogTooShort);
+            }
+
+            let edit_log_start          = edit_log_length - num_original_actions;
+            let expected_actions        = self.storage_connection.read_edit_log(edit_log_start..edit_log_length).await.ok_or(UndoFailureReason::CannotReadOriginalActions)?;
+
+            if &expected_actions != &*original_actions {
+                return Err(UndoFailureReason::OriginalActionsDoNotMatch);
+            }
+
             Err(UndoFailureReason::NotSupported)
         }
     }

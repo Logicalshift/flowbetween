@@ -10,6 +10,15 @@ pub enum UndoFailureReason {
     /// The undo operation was not supported by the editor
     NotSupported,
 
+    /// There was an unexpected problem accessing the backing store
+    StorageError,
+
+    /// There are not enough edits to cover the original actions
+    EditLogTooShort,
+
+    /// The original actions could not be read from the edit log for comparison
+    CannotReadOriginalActions,
+
     /// The actions being undone do not match the actions on top of the edit log
     OriginalActionsDoNotMatch
 }
