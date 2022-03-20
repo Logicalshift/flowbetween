@@ -249,6 +249,25 @@ impl StreamAnimationCore {
     }
 
     ///
+    /// Checks for any undo edits in an edit list and updates the edits with the results
+    ///
+    /// This is done before serializing the edits, so undo edits never make it to the edit log, and are also carried out ahead of other edits
+    /// (this isn't noticeable provided that `PerformUndo` edits are not accompanied by any other edit type)
+    ///
+    pub fn process_undo_edits<'a>(&'a mut self, edits: &'a mut Vec<AnimationEdit>) -> impl 'a + Future<Output=()> {
+        async move {
+            for edit in edits.iter_mut() {
+                use self::AnimationEdit::*;
+
+                match edit {
+                    Undo(undo_edit) => { let undo_edit = undo_edit.clone(); self.undo_edit(edit, &undo_edit).await; }
+                    _               => { }
+                }
+            }
+        }
+    }
+
+    ///
     /// Carries out a set of edits
     ///
     /// Usually, `assign_ids_to_edits` and `serialize_edits_to_log` should be called before this. Edits without assigned IDs might not

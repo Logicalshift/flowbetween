@@ -63,10 +63,13 @@ impl StreamAnimation {
         // Anything published to the editor is piped into the core
         pipe_in(Arc::clone(&core), edit_publisher.subscribe(), |core, edits: Arc<Vec<AnimationEdit>>| {
             async move {
-                // Directly perform the edits
-                let edits   = core.assign_ids_to_edits(&*edits).await;
+                // Edits require some pre-processing: assign the IDs, perform undo actions and write to the log (note that undo edits are performed before serialization)
+                let mut edits   = core.assign_ids_to_edits(&*edits).await;
+                core.process_undo_edits(&mut edits).await;
                 core.serialize_edits_to_log(&edits).await;
-                let retired = core.perform_edits(edits).await;
+
+                // Perform the edits to retire them
+                let retired     = core.perform_edits(edits).await;
 
                 // Clean up the edit publishers, in case any aren't being listened to any more
                 core.retired_edit_senders.retain(|sender| sender.count_subscribers() > 0);
