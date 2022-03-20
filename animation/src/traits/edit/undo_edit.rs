@@ -1,11 +1,12 @@
 use super::animation_edit::*;
+use crate::storage::*;
 
 use std::sync::*;
 
 ///
 /// Reasons why a PerformUndo might fail
 ///
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum UndoFailureReason {
     /// The undo operation was not supported by the editor
     NotSupported,
@@ -21,6 +22,18 @@ pub enum UndoFailureReason {
 
     /// The actions being undone do not match the actions on top of the edit log
     OriginalActionsDoNotMatch
+}
+
+impl From<StorageError> for UndoFailureReason {
+    fn from(error: StorageError) -> UndoFailureReason {
+        use StorageError::*;
+
+        match error {
+            General                     |
+            FailedToInitialise          |
+            CannotContinueAfterError    => { UndoFailureReason::StorageError }
+        }
+    }
 }
 
 ///
