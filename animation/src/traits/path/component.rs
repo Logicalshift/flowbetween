@@ -33,7 +33,9 @@ fn is_close(a: &PathPoint, b: &PathPoint) -> bool {
 }
 
 ///
-/// Two path components are considered to match if their coordinates are 'close enough' (as when we serialize f64 values we compress them in a way that loses a lot of precision)
+/// Two path components are considered to match if their coordinates are 'close enough' (as when we serialize f64 values we 
+/// compress them in a way that loses a lot of precision). This is quite important when comparing the logs prior to performing
+/// an undo action.
 ///
 impl PartialEq for PathComponent {
     fn eq(&self, b: &PathComponent) -> bool {
