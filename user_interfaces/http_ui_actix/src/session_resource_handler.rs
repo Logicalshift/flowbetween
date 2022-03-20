@@ -264,7 +264,7 @@ pub fn session_resource_handler<Session: 'static+ActixSession>(req: HttpRequest)
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use super::{decode_url, ResourceType};
 
     #[test]
     fn can_decode_valid_uri() {
