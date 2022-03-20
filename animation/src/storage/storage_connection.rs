@@ -1,3 +1,4 @@
+use super::storage_error::*;
 use super::storage_command::*;
 use super::storage_response::*;
 use super::storage_keyframe::*;
@@ -76,10 +77,10 @@ impl StorageConnection {
     ///
     pub fn read_edit_log<'a>(&'a mut self, edits: Range<usize>) -> impl 'a + Future<Output=Option<Vec<AnimationEdit>>> {
         async move {
-            let response    = self.request(vec![StorageCommand::ReadEdits(edits)]).await?;
+            let responses   = self.request(vec![StorageCommand::ReadEdits(edits)]).await?;
 
             let mut result  = vec![];
-            for response in response {
+            for response in responses {
                 match response {
                     StorageResponse::Edit(_idx, edit)   => { result.push(AnimationEdit::deserialize(&mut edit.chars())?); },
                     _                                   => { return None; },
@@ -87,6 +88,24 @@ impl StorageConnection {
             }
 
             Some(result)
+        }
+    }
+
+    ///
+    /// Removes the specified number of entries from the end of the edit log (for use during an undo operation)
+    ///
+    pub fn delete_recent_edits<'a>(&'a mut self, count: usize) -> impl 'a + Future<Output=Result<(), StorageError>> {
+        async move {
+            let responses = self.request(vec![StorageCommand::DeleteRecentEdits(count as _)]).await.ok_or(StorageError::General)?;
+
+            for response in responses {
+                match response {
+                    StorageResponse::Error(error, _)    => { return Err(error); }
+                    _                                   => { }
+                }
+            }
+
+            Ok(())
         }
     }
 
