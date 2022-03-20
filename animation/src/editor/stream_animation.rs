@@ -64,7 +64,9 @@ impl StreamAnimation {
         pipe_in(Arc::clone(&core), edit_publisher.subscribe(), |core, edits: Arc<Vec<AnimationEdit>>| {
             async move {
                 // Directly perform the edits
-                let retired = core.perform_edits(&*edits).await;
+                let edits   = core.assign_ids_to_edits(&*edits).await;
+                core.serialize_edits_to_log(&edits).await;
+                let retired = core.perform_edits(edits).await;
 
                 // Clean up the edit publishers, in case any aren't being listened to any more
                 core.retired_edit_senders.retain(|sender| sender.count_subscribers() > 0);

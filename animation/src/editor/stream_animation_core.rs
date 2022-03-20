@@ -249,17 +249,14 @@ impl StreamAnimationCore {
     }
 
     ///
-    /// Carries out a set of edits, updating the storage as needed
+    /// Carries out a set of edits
     ///
-    pub fn perform_edits<'a>(&'a mut self, edits: &'a Vec<AnimationEdit>) -> impl 'a+Future<Output=RetiredEdit> {
+    /// Usually, `assign_ids_to_edits` and `serialize_edits_to_log` should be called before this. Edits without assigned IDs might not
+    /// be performed cleanly, and edits should be written to the backing store before being executed.
+    ///
+    pub fn perform_edits<'a>(&'a mut self, edits: Vec<AnimationEdit>) -> impl 'a+Future<Output=RetiredEdit> {
         async move {
             let mut reversed_edits  = ReversedEdits::new();
-
-            // Assign IDs to all of the edits
-            let edits               = self.assign_ids_to_edits(edits).await;
-
-            // Store the edits (with their newly assigned IDs) to the backing store
-            self.serialize_edits_to_log(&edits).await;
 
             // Process the edits in the order that they arrive
             for edit in edits.iter() {
