@@ -190,8 +190,28 @@ async fn test_element_edit_undo(setup: Vec<AnimationEdit>, undo_test: Vec<Animat
     assert!(commit_frame != first_frame);
 
     // Undo the actions
-    animation.edit().publish(Arc::clone(&reverse)).await;
+    let perform_undo = AnimationEdit::Undo(UndoEdit::PerformUndo { original_actions: Arc::clone(&committed), undo_actions: Arc::clone(&reverse) });
+    animation.edit().publish(Arc::new(vec![perform_undo])).await;
     animation.edit().when_empty().await;
+
+    // Should retire the undo actions immediately after this
+    let timeout             = Delay::new(Duration::from_secs(10));
+    let retired_undos = match select(retired_edits.next(), timeout).await {
+        Either::Right(_)    => { assert!(false, "Timed out"); unimplemented!() }
+        Either::Left(edits) => edits.0.unwrap()
+    };
+
+    if retired_undos.committed_edits() != reverse {
+        println!("Failed to undo: {}", retired_undos.committed_edits().iter().fold(String::new(), |string, elem| format!("{}\n    {:?}", string, elem)));
+    }
+    assert!(retired_undos.committed_edits() == reverse);
+
+    let timeout             = Delay::new(Duration::from_secs(10));
+    let undo_success = match select(retired_edits.next(), timeout).await {
+        Either::Right(_)    => { assert!(false, "Timed out"); unimplemented!() }
+        Either::Left(edits) => edits.0.unwrap()
+    };
+    assert!(undo_success.committed_edits() == Arc::new(vec![AnimationEdit::Undo(UndoEdit::CompletedUndo(Arc::clone(&reverse)))]));
 
     // Re-read the first frame and compare to the original: should be identical
     let after_frame         = read_frame(&animation, 0, Duration::from_millis(0)).await;
