@@ -38,7 +38,7 @@ impl PartialOrd for VectorCollision {
 }
 
 impl PartialEq for VectorCollision {
-    fn eq(&self, b: &VectorCollision) -> bool{
+    fn eq(&self, b: &VectorCollision) -> bool {
         self.line_t == b.line_t
     }
 }
