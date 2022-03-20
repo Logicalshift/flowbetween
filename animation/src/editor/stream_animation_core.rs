@@ -236,10 +236,14 @@ impl StreamAnimationCore {
     pub fn serialize_edits_to_log<'a>(&'a mut self, edits: &'a Vec<AnimationEdit>) -> impl 'a + Future<Output=()> {
         async move {
             let edit_log = edits.iter()
-                .map(|edit| {
-                    let mut serialized = String::new();
-                    edit.serialize(&mut serialized);
-                    serialized
+                .filter_map(|edit| {
+                        if edit.is_serialized() {
+                        let mut serialized = String::new();
+                        edit.serialize(&mut serialized);
+                        Some(serialized)
+                    } else {
+                        None
+                    }
                 })
                 .map(|edit| StorageCommand::WriteEdit(edit))
                 .collect::<Vec<_>>();

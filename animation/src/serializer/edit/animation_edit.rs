@@ -7,6 +7,35 @@ use std::time::{Duration};
 
 impl AnimationEdit {
     ///
+    /// Returns true if this edit should be written to the log
+    ///
+    /// Some edits (such as those relating to an in-progress undo action) are not serialized to the edit log
+    ///
+    pub fn is_serialized(&self) -> bool {
+        use self::AnimationEdit::*;
+        use self::UndoEdit::*;
+
+        match self {
+            Layer(_, _)             |
+            Element(_, _)           |
+            Motion(_, _)            |
+            SetSize(_, _)           |
+            SetFrameLength(_)       |
+            SetLength(_)            |
+            AddNewLayer(_)          |
+            RemoveLayer(_)          => true,
+
+            Undo(BeginAction)       |
+            Undo(FinishAction)      => true,
+
+            Undo(PrepareToUndo(_))  |
+            Undo(CompletedUndo(_))  |
+            Undo(FailedUndo(_))     |
+            Undo(PerformUndo { original_actions: _, undo_actions: _ }) => false,
+        }
+    }
+
+    ///
     /// Generates a serialized version of this edit on the specified data target
     ///
     pub fn serialize<Tgt: AnimationDataTarget>(&self, data: &mut Tgt) {
