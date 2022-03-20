@@ -54,7 +54,7 @@ use self::flo_session::*;
 #[cfg(feature="http")]
 fn main_actix() -> Option<JoinHandle<()>> {
     Some(thread::spawn(|| {
-        actix_rt::System::new("FlowBetween").block_on(async {
+        actix_rt::System::new().block_on(async {
             let log = LogPublisher::new("main_actix");
 
             // Create the web session structure

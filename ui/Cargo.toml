@@ -20,7 +20,7 @@ modifier        = "0.1"
 futures         = { version = "0.3", features = ["thread-pool"] }
 png             = "0.16"
 lazy_static     = "1.2"
-bytes           = "0.5"
+bytes           = "1.1"
 itertools       = "0.9"
 
 futures-timer   = "3.0"

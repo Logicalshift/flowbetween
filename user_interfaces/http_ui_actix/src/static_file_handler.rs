@@ -32,20 +32,20 @@ pub fn static_file_handler(static_files: StaticService) -> impl Fn(HttpRequest) 
             if req.method() == &Method::GET {
                 // Append the body and return
                 let found           = HttpResponse::Ok()
-                    .header(http::header::ETAG, etag)
-                    .header(http::header::CONTENT_TYPE, content_type)
-                    .header(http::header::CONTENT_LENGTH, format!("{}", file.content().len()))
-                    .header(http::header::CACHE_CONTROL, "public, max-age=60")
+                    .append_header((http::header::ETAG, etag))
+                    .append_header((http::header::CONTENT_TYPE, content_type))
+                    .append_header((http::header::CONTENT_LENGTH, format!("{}", file.content().len())))
+                    .append_header((http::header::CACHE_CONTROL, "public, max-age=60"))
                     .body(Vec::from(file.content()));
 
                 Box::pin(future::ok(found))
             } else if req.method() == &Method::HEAD {
                 // Just the headers
                 let found           = HttpResponse::Ok()
-                    .header(http::header::ETAG, etag)
-                    .header(http::header::CONTENT_TYPE, content_type)
-                    .header(http::header::CONTENT_LENGTH, format!("{}", file.content().len()))
-                    .header(http::header::CACHE_CONTROL, "public, max-age=60")
+                    .append_header((http::header::ETAG, etag))
+                    .append_header((http::header::CONTENT_TYPE, content_type))
+                    .append_header((http::header::CONTENT_LENGTH, format!("{}", file.content().len())))
+                    .append_header((http::header::CACHE_CONTROL, "public, max-age=60"))
                     .finish();
 
                 Box::pin(future::ok(found))

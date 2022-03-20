@@ -142,14 +142,14 @@ fn handle_image_request<Session: ActixSession>(_req: HttpRequest, session: &Http
                 Image::Png(data) => {
                     // PNG data
                     future::ok(HttpResponse::Ok()
-                        .header(http::header::CONTENT_TYPE, "image/png")
+                        .append_header((http::header::CONTENT_TYPE, "image/png"))
                         .streaming(data.read_future().map(|bytes| -> Result<_, Error> { Ok(bytes) })))
                 },
 
                 Image::Svg(data) => {
                     // SVG data
                     future::ok(HttpResponse::Ok()
-                        .header(http::header::CONTENT_TYPE, "image/svg+xml; charset=utf-8")
+                        .append_header((http::header::CONTENT_TYPE, "image/svg+xml; charset=utf-8"))
                         .streaming(data.read_future().map(|bytes| -> Result<_, Error> { Ok(bytes) })))
                 },
             }
@@ -203,7 +203,7 @@ fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &Htt
 
             // Turn into a response
             future::ok(HttpResponse::Ok()
-                .header(http::header::CONTENT_TYPE, "application/flocanvas; charset=utf-8")
+                .append_header((http::header::CONTENT_TYPE, "application/flocanvas; charset=utf-8"))
                 .streaming(encoded_drawing))
         } else {
             // Canvas not found

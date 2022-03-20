@@ -131,7 +131,7 @@ fn handle_ui_request<Session: ActixSession+Sync+Send+'static>(req: HttpRequest, 
         .map(move |response| {
             response.map(|response| {
                 HttpResponse::Ok()
-                    .header(http::header::CONTENT_TYPE, "application/json; charset=utf-8")
+                    .append_header((http::header::CONTENT_TYPE, "application/json; charset=utf-8"))
                     .json(response)
                 })
         })
