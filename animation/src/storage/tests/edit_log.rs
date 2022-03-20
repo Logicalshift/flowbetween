@@ -289,3 +289,129 @@ fn create_vector_element() {
     assert!(create_element.len() == 1);
     assert!(create_element[0] == AnimationEdit::Layer(2, LayerEdit::CreateElement(Duration::from_millis(0), ElementId::Assigned(42), test_element.clone())));
 }
+
+#[test]
+fn undo_begin_action() {
+    let anim                = create_animation();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+    ]);
+    anim.perform_edits(vec![
+        AnimationEdit::Undo(UndoEdit::BeginAction)
+    ]);
+
+    // Readback
+    let edit_log            = anim.read_edit_log(2..3);
+    let edit_log            = edit_log.collect();
+
+    let undo_action: Vec<_> = executor::block_on(edit_log);
+
+    assert!(undo_action.len() == 1);
+    assert!(undo_action[0] == AnimationEdit::Undo(UndoEdit::BeginAction));
+}
+
+#[test]
+fn undo_prepare_to_undo_not_written() {
+    let anim                = create_animation();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+    ]);
+    anim.perform_edits(vec![
+        AnimationEdit::Undo(UndoEdit::PrepareToUndo("Test".to_string()))
+    ]);
+
+    // Readback
+    let edit_log_len        = anim.get_num_edits();
+    assert!(edit_log_len == 2);
+
+    let edit_log            = anim.read_edit_log(0..3);
+    let edit_log            = edit_log.collect();
+
+    let edit_log: Vec<_>    = executor::block_on(edit_log);
+
+    assert!(edit_log.len() == 2);
+}
+
+#[test]
+fn undo_perform_undo_not_written() {
+    let anim                = create_animation();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+    ]);
+    anim.perform_edits(vec![
+        AnimationEdit::Undo(UndoEdit::PerformUndo { original_actions: Arc::new(vec![]), undo_actions: Arc::new(vec![]) })
+    ]);
+
+    // Readback
+    let edit_log_len        = anim.get_num_edits();
+    assert!(edit_log_len == 2);
+
+    let edit_log            = anim.read_edit_log(0..3);
+    let edit_log            = edit_log.collect();
+
+    let edit_log: Vec<_>    = executor::block_on(edit_log);
+
+    assert!(edit_log.len() == 2);
+}
+
+#[test]
+fn undo_perform_undo_rolls_back_log() {
+    let anim                = create_animation();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+    ]);
+    anim.perform_edits(vec![
+        AnimationEdit::Undo(UndoEdit::PerformUndo { 
+            original_actions:   Arc::new(vec![AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0)))]), 
+            undo_actions:       Arc::new(vec![]) 
+        })
+    ]);
+
+    // Readback
+    let edit_log_len        = anim.get_num_edits();
+    assert!(edit_log_len == 1);
+    
+    let edit_log            = anim.read_edit_log(0..3);
+    let edit_log            = edit_log.collect();
+
+    let edit_log: Vec<_>    = executor::block_on(edit_log);
+
+    assert!(edit_log.len() == 1);
+}
+
+#[test]
+fn undo_bad_undo_does_not_roll_back_log() {
+    let anim                = create_animation();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+    ]);
+
+    // Actions in original_actions do not match the actions on top of the edit log so the undo will not be performed
+    anim.perform_edits(vec![
+        AnimationEdit::Undo(UndoEdit::PerformUndo { 
+            original_actions:   Arc::new(vec![AnimationEdit::AddNewLayer(2)]), 
+            undo_actions:       Arc::new(vec![]) 
+        })
+    ]);
+
+    // Readback
+    let edit_log_len        = anim.get_num_edits();
+    assert!(edit_log_len == 2);
+    
+    let edit_log            = anim.read_edit_log(0..3);
+    let edit_log            = edit_log.collect();
+
+    let edit_log: Vec<_>    = executor::block_on(edit_log);
+
+    assert!(edit_log.len() == 2);
+}
