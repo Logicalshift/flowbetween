@@ -1,6 +1,7 @@
 use super::stream_animation_core::*;
 use crate::traits::*;
 
+use flo_stream::*;
 use futures::prelude::*;
 
 use std::sync::*;
@@ -54,7 +55,20 @@ impl StreamAnimationCore {
                 return Err(UndoFailureReason::OriginalActionsDoNotMatch);
             }
 
-            Err(UndoFailureReason::NotSupported)
+            // Perform the undo actions, without adding them to the edit log
+            let undo_actions        = self.assign_ids_to_edits(&*undo_actions).await;
+            let retired_edits       = self.perform_edits(undo_actions).await;
+
+            // Send the retired edits to anything that's listening (as if they're normal edits)
+            for retired_sender in self.retired_edit_senders.iter_mut() {
+                retired_sender.publish(retired_edits.clone()).await;
+            }
+
+            // Remove the actions that were undone from the storage log
+            self.storage_connection.delete_recent_edits(num_original_actions).await?;
+
+            // Undo is complete
+            Ok(())
         }
     }
 }
