@@ -61,10 +61,10 @@ impl StreamAnimation {
         let core            = Arc::new(Desync::new(core));
 
         // Anything published to the editor is piped into the core
-        pipe_in(Arc::clone(&core), edit_publisher.subscribe(), |core, edits| {
+        pipe_in(Arc::clone(&core), edit_publisher.subscribe(), |core, edits: Arc<Vec<AnimationEdit>>| {
             async move {
                 // Directly perform the edits
-                let retired = core.perform_edits(Arc::clone(&edits)).await;
+                let retired = core.perform_edits(&*edits).await;
 
                 // Clean up the edit publishers, in case any aren't being listened to any more
                 core.retired_edit_senders.retain(|sender| sender.count_subscribers() > 0);

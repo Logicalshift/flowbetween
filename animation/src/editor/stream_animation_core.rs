@@ -198,9 +198,9 @@ impl StreamAnimationCore {
     }
 
     ///
-    /// Carries out a set of edits, updating the storage as needed
+    /// Assigns element IDs to a set of 
     ///
-    pub fn perform_edits<'a>(&'a mut self, edits: Arc<Vec<AnimationEdit>>) -> impl 'a+Future<Output=RetiredEdit> {
+    pub fn assign_ids_to_edits<'a>(&'a mut self, edits: &'a Vec<AnimationEdit>) -> impl 'a + Future<Output=Vec<AnimationEdit>> {
         async move {
             // If the edits contain element IDs that have not been used before, ensure that they're not returned by assign_element_id()
             let mut max_element_id = None;
@@ -225,10 +225,16 @@ impl StreamAnimationCore {
             for edit in edits.iter() {
                 mapped_edits.push(self.assign_element_id_to_edit_log(edit).await);
             }
-            let mut edits           = mapped_edits;
-            let mut reversed_edits  = ReversedEdits::new();
 
-            // Send the edits to the edit log by serializing them
+            mapped_edits
+        }
+    }
+
+    ///
+    /// Writes a set of AnimationEdits to the backing store
+    ///
+    pub fn serialize_edits_to_log<'a>(&'a mut self, edits: &'a Vec<AnimationEdit>) -> impl 'a + Future<Output=()> {
+        async move {
             let edit_log = edits.iter()
                 .map(|edit| {
                     let mut serialized = String::new();
@@ -239,9 +245,24 @@ impl StreamAnimationCore {
                 .collect::<Vec<_>>();
 
             self.request(edit_log).await;
+        }
+    }
+
+    ///
+    /// Carries out a set of edits, updating the storage as needed
+    ///
+    pub fn perform_edits<'a>(&'a mut self, edits: &'a Vec<AnimationEdit>) -> impl 'a+Future<Output=RetiredEdit> {
+        async move {
+            let mut reversed_edits  = ReversedEdits::new();
+
+            // Assign IDs to all of the edits
+            let edits               = self.assign_ids_to_edits(edits).await;
+
+            // Store the edits (with their newly assigned IDs) to the backing store
+            self.serialize_edits_to_log(&edits).await;
 
             // Process the edits in the order that they arrive
-            for edit in edits.iter_mut() {
+            for edit in edits.iter() {
                 use self::AnimationEdit::*;
 
                 // Edit the elements
@@ -249,7 +270,7 @@ impl StreamAnimationCore {
                     Layer(layer_id, layer_edit)             => { reversed_edits.add_to_start(self.layer_edit(*layer_id, layer_edit).await); }
                     Element(element_ids, element_edit)      => { reversed_edits.add_to_start(self.element_edit(element_ids, element_edit).await); }
                     Motion(motion_id, motion_edit)          => { reversed_edits.add_to_start(self.motion_edit(*motion_id, motion_edit).await); }
-                    Undo(undo_edit)                         => { let undo_edit = undo_edit.clone(); self.undo_edit(edit, &undo_edit).await; },
+                    Undo(_undo_edit)                        => { /* Undo edits, particularly perform_undo need to be done in a separate pass, in a separate function */ },
                     SetSize(width, height)                  => { reversed_edits.add_to_start(self.set_size(*width, *height).await) }
                     SetFrameLength(length)                  => { reversed_edits.add_to_start(self.set_frame_length(*length).await) }
                     SetLength(length)                       => { reversed_edits.add_to_start(self.set_length(*length).await) }
