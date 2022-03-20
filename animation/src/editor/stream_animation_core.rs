@@ -198,7 +198,7 @@ impl StreamAnimationCore {
     }
 
     ///
-    /// Performs a set of edits on the core
+    /// Carries out a set of edits, updating the storage as needed
     ///
     pub fn perform_edits<'a>(&'a mut self, edits: Arc<Vec<AnimationEdit>>) -> impl 'a+Future<Output=RetiredEdit> {
         async move {
