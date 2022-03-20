@@ -2,6 +2,8 @@
 //! # The undo subsystem
 //!
 
+mod undo_log;
+mod undo_step;
 mod undo_animation;
 mod edit_log_reader;
 mod reversed_edits;
