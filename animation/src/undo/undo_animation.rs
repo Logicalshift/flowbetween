@@ -1,3 +1,4 @@
+use super::undo_log::*;
 use super::edit_log_reader::*;
 use crate::traits::*;
 
@@ -18,6 +19,9 @@ pub struct UndoableAnimation<Anim: 'static+Unpin+EditableAnimation> {
     /// The animation that this will add undo support to
     animation:      Arc<Desync<Anim>>,
 
+    /// The actions to undo or redo in the animation
+    undo_log:       Arc<Desync<UndoLog>>,
+
     /// The input stream of edits for this animation
     edits:          Publisher<Arc<Vec<AnimationEdit>>>,
 
@@ -25,21 +29,40 @@ pub struct UndoableAnimation<Anim: 'static+Unpin+EditableAnimation> {
     pending_edits:  Desync<()>,
 }
 
-impl<Anim: Unpin+EditableAnimation> UndoableAnimation<Anim> {
+impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
     ///
     /// Adds undo support to an existing animation
     ///
     pub fn new(animation: Anim) -> UndoableAnimation<Anim> {
         // Box up the animation and create the edit stream
         let animation       = Arc::new(Desync::new(animation));
-        let edits           = Publisher::new(10);
+        let undo_log        = Arc::new(Desync::new(UndoLog::new()));
+        let mut edits       = Publisher::new(10);
         let pending_edits   = Desync::new(());
+
+        // Set up communication with the animation and with the undo log
+        Self::pipe_edits_to_animation(&animation, &mut edits);
 
         UndoableAnimation {
             animation,
+            undo_log,
             edits,
             pending_edits,
         }
+    }
+
+    ///
+    /// Sends edits from the undo animation to the 'main' animation
+    ///
+    fn pipe_edits_to_animation(animation: &Arc<Desync<Anim>>, edits: &mut Publisher<Arc<Vec<AnimationEdit>>>) {
+        pipe_in(Arc::clone(animation), edits.subscribe(), move |animation, edits| {
+            async move {
+                // TODO: block if we're in the middle of performing an undo operation
+
+                // Send the edits on to the animation stream
+                animation.edit().publish(edits).await;
+            }.boxed()
+        });
     }
 }
 
