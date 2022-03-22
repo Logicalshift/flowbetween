@@ -26,7 +26,7 @@ impl UndoLog {
     ///
     /// Retires an edit to this undo log
     ///
-    pub fn retire_edit(&mut self, edit: RetiredEdit) {
+    pub fn retire(&mut self, edit: RetiredEdit) {
         // Create the initial undo step if needed
         if self.undo.is_empty() {
             self.undo.push(UndoStep::new());

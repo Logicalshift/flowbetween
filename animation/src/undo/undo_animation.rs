@@ -42,6 +42,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
 
         // Set up communication with the animation and with the undo log
         Self::pipe_edits_to_animation(&animation, &mut edits);
+        Self::pipe_retired_edits_to_undo_log(&animation, &undo_log);
 
         UndoableAnimation {
             animation,
@@ -61,6 +62,19 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
 
                 // Send the edits on to the animation stream
                 animation.edit().publish(edits).await;
+            }.boxed()
+        });
+    }
+
+    ///
+    /// When the underlying animation retires its edits, send them to the undo log
+    ///
+    fn pipe_retired_edits_to_undo_log(animation: &Arc<Desync<Anim>>, undo_log: &Arc<Desync<UndoLog>>) {
+        let retired_edits = animation.sync(|anim| anim.retired_edits());
+
+        pipe_in(Arc::clone(undo_log), retired_edits, move |undo_log, retired_edits| {
+            async move {
+                undo_log.retire(retired_edits);
             }.boxed()
         });
     }
