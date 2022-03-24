@@ -10,7 +10,6 @@ use flo_stream::*;
 
 use uuid::*;
 
-use std::mem;
 use std::sync::*;
 use std::time::{Duration};
 use std::ops::{Range};
@@ -107,20 +106,39 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                         }
                     }
 
-                    // Finished with the retired edits, so drop them to avoid blocking the animation
-                    mem::drop(retired_edits);
-
                     // Fetch the undo action that we're about to perform
                     let undo_edit = undo_log.future_sync(|undo_log| async move {
+                        undo_log.start_undoing();
                         undo_log.undo()
                     }.boxed()).await.unwrap();
-                    let undo_edit = if let Some(undo_edit) = undo_edit { undo_edit } else { return Err(UndoFailureReason::NothingToUndo); };
+
+                    let undo_edit = if let Some(undo_edit) = undo_edit { 
+                        undo_edit 
+                    } else { 
+                        undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
+                        return Err(UndoFailureReason::NothingToUndo); 
+                    };
 
                     // Carry out the undo action on the animation
-                    // TODO: avoid retiring the undo actions
                     animation.edit().publish(Arc::new(vec![AnimationEdit::Undo(undo_edit)])).await;
 
-                    Ok(())
+                    // Read until we get a 'CompletedUndo' or 'FailedUndo' action (should really be only two following actions: the undo actions and the 'completion' report)
+                    let _undo_actions       = retired_edits.next().await;
+                    let completion_action   = retired_edits.next().await;
+
+                    // The undo is complete at this point
+                    undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
+
+                    // Single completion action
+                    let completion_action   = completion_action.ok_or(UndoFailureReason::BadEditingSequence)?;
+                    let completion_action   = completion_action.committed_edits();
+                    if completion_action.len() != 1 { return Err(UndoFailureReason::BadEditingSequence); }
+
+                    match completion_action[0] {
+                        AnimationEdit::Undo(UndoEdit::CompletedUndo(_)) => Ok(()),
+                        AnimationEdit::Undo(UndoEdit::FailedUndo(err))  => Err(err),
+                        _                                               => Err(UndoFailureReason::BadEditingSequence),
+                    }
                 }.boxed()
             }).await.unwrap()
         }

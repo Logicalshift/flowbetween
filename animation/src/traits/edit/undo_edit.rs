@@ -24,7 +24,10 @@ pub enum UndoFailureReason {
     CannotReadOriginalActions,
 
     /// The actions being undone do not match the actions on top of the edit log
-    OriginalActionsDoNotMatch
+    OriginalActionsDoNotMatch,
+
+    /// The animation failed to report the undo success/failure properly
+    BadEditingSequence,
 }
 
 impl From<StorageError> for UndoFailureReason {
