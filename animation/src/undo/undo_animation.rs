@@ -123,7 +123,6 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     animation.edit().publish(Arc::new(vec![AnimationEdit::Undo(undo_edit)])).await;
 
                     // Read until we get a 'CompletedUndo' or 'FailedUndo' action (should really be only two following actions: the undo actions and the 'completion' report)
-                    let _undo_actions       = retired_edits.next().await;
                     let completion_action   = retired_edits.next().await;
 
                     // The undo is complete at this point
