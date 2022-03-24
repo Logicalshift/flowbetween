@@ -145,12 +145,12 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     // Carry out the undo action on the animation
                     animation.edit().publish(Arc::new(vec![AnimationEdit::Undo(undo_edit)])).await;
 
-                    // The undo is complete at this point
-                    undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
-
                     // A failure will produce a single retired edit, and a success will produce two, so read up to two edits
                     let undo_result = Self::read_undo_completion(&mut retired_edits).await;
                     let undo_result = if let Some(undo_result) = undo_result { Some(undo_result) } else { Self::read_undo_completion(&mut retired_edits).await };
+
+                    // The undo is complete at this point
+                    undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
 
                     match undo_result {
                         Some(Ok(()))        => Ok(()),
