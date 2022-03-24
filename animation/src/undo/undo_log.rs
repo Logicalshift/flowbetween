@@ -32,6 +32,9 @@ impl UndoLog {
             self.undo.push(UndoStep::new());
         }
 
+        // Any redo actions are destroyed when a new action is created
+        self.redo.drain(..);
+
         // Determine if the edit finishes an action group
         let finishes_action_group = edit.committed_edits().iter().any(|edit| match edit {
             AnimationEdit::Undo(UndoEdit::FinishAction) => true,
@@ -45,5 +48,24 @@ impl UndoLog {
         if finishes_action_group {
             self.undo.push(UndoStep::new());
         }
+    }
+
+    ///
+    /// Pops the action on top of the 
+    ///
+    pub fn undo(&mut self) -> Option<UndoEdit> {
+        // Pop up to two actions (in case the first one is empty)
+        let most_recent_action = self.undo.pop()?;
+        let most_recent_action = if most_recent_action.is_empty() { self.undo.pop()? } else { most_recent_action };
+
+        let undo_edit = most_recent_action.undo_edit();
+
+        // Add as a redo action
+        self.redo.push(most_recent_action);
+
+        // Add a new action group to the undo list so if there are any future actions, they won't extend an existing one
+        self.undo.push(UndoStep::new());
+
+        Some(undo_edit)
     }
 }
