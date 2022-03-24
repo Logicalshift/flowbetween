@@ -112,6 +112,7 @@ fn undo_create_element() {
             Either::Right(_)        => { assert!(false, "Timed out"); unimplemented!() }
             Either::Left(result)    => result.0,
         };
+        println!("{:?}", undo_result);
         assert!(undo_result.is_ok());
 
         // Element should no longer exist
