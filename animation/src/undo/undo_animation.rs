@@ -60,8 +60,6 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
     fn pipe_edits_to_animation(animation: &Arc<Desync<Anim>>, edits: &mut Publisher<Arc<Vec<AnimationEdit>>>) {
         pipe_in(Arc::clone(animation), edits.subscribe(), move |animation, edits| {
             async move {
-                // TODO: block if we're in the middle of performing an undo operation
-
                 // Send the edits on to the animation stream
                 animation.edit().publish(edits).await;
             }.boxed()
@@ -79,6 +77,31 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                 undo_log.retire(retired_edits);
             }.boxed()
         });
+    }
+
+    ///
+    /// Reads the next element from a retired edits stream and returns either `None` to indicate it's not an undo result,
+    /// `Some(Ok(()))` to indicate success or `Some(Err(_)))` to indicate failure
+    ///
+    fn read_undo_completion<'a>(retired_edits: &'a mut (impl Stream<Item=RetiredEdit> + Unpin)) -> impl 'a+Future<Output=Option<Result<(), UndoFailureReason>>> {
+        async move {
+            // Read the next action
+            let action      = retired_edits.next().await;
+            let action      = if let Some(action) = action { action } else { return Some(Err(UndoFailureReason::BadEditingSequence)); };
+
+            // If the next action is an undo completion or failure action, then indicate success or failure
+            let committed   = action.committed_edits();
+            if committed.len() == 1 {
+                match committed[0] {
+                    AnimationEdit::Undo(UndoEdit::CompletedUndo(_)) => Some(Ok(())),
+                    AnimationEdit::Undo(UndoEdit::FailedUndo(err))  => Some(Err(err)),
+                    _                                               => None,
+                }
+            } else {
+                // Too long to be the completion action
+                None
+            }
+        }
     }
 
     ///
@@ -122,21 +145,17 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     // Carry out the undo action on the animation
                     animation.edit().publish(Arc::new(vec![AnimationEdit::Undo(undo_edit)])).await;
 
-                    // Read until we get a 'CompletedUndo' or 'FailedUndo' action (should really be only two following actions: the undo actions and the 'completion' report)
-                    let completion_action   = retired_edits.next().await;
-
                     // The undo is complete at this point
                     undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
 
-                    // Single completion action
-                    let completion_action   = completion_action.ok_or(UndoFailureReason::BadEditingSequence)?;
-                    let completion_action   = completion_action.committed_edits();
-                    if completion_action.len() != 1 { return Err(UndoFailureReason::BadEditingSequence); }
+                    // A failure will produce a single retired edit, and a success will produce two, so read up to two edits
+                    let undo_result = Self::read_undo_completion(&mut retired_edits).await;
+                    let undo_result = if let Some(undo_result) = undo_result { Some(undo_result) } else { Self::read_undo_completion(&mut retired_edits).await };
 
-                    match completion_action[0] {
-                        AnimationEdit::Undo(UndoEdit::CompletedUndo(_)) => Ok(()),
-                        AnimationEdit::Undo(UndoEdit::FailedUndo(err))  => Err(err),
-                        _                                               => Err(UndoFailureReason::BadEditingSequence),
+                    match undo_result {
+                        Some(Ok(()))        => Ok(()),
+                        Some(Err(failure))  => Err(failure),
+                        None                => Err(UndoFailureReason::BadEditingSequence),
                     }
                 }.boxed()
             }).await.unwrap()
