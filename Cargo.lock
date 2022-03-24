@@ -190,7 +190,7 @@ dependencies = [
  "serde_urlencoded",
  "smallvec",
  "socket2",
- "time 0.3.7",
+ "time 0.3.9",
  "url",
 ]
 
@@ -620,7 +620,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94d4706de1b0fa5b132270cddffa8585166037822e260a944fe161acd137ca05"
 dependencies = [
  "percent-encoding",
- "time 0.3.7",
+ "time 0.3.9",
  "version_check",
 ]
 
@@ -966,6 +966,7 @@ dependencies = [
  "serde_json",
  "smallvec",
  "typemap",
+ "uuid",
 ]
 
 [[package]]
@@ -982,7 +983,7 @@ dependencies = [
 [[package]]
 name = "flo_canvas"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#72e37ecf15ce7dcb0cde63b7cdab76f4bd3a4350"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#e354f02d23f78d603d70a8a2e28430fed01995e3"
 dependencies = [
  "desync",
  "flo_curves",
@@ -1197,7 +1198,7 @@ dependencies = [
 [[package]]
 name = "flo_render"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#72e37ecf15ce7dcb0cde63b7cdab76f4bd3a4350"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#e354f02d23f78d603d70a8a2e28430fed01995e3"
 dependencies = [
  "bindgen",
  "cocoa 0.24.0",
@@ -1212,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "flo_render_canvas"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#72e37ecf15ce7dcb0cde63b7cdab76f4bd3a4350"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#e354f02d23f78d603d70a8a2e28430fed01995e3"
 dependencies = [
  "desync",
  "flo_canvas",
@@ -1226,7 +1227,7 @@ dependencies = [
 [[package]]
 name = "flo_render_gl_offscreen"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#72e37ecf15ce7dcb0cde63b7cdab76f4bd3a4350"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#e354f02d23f78d603d70a8a2e28430fed01995e3"
 dependencies = [
  "bindgen",
  "cgl",
@@ -1983,9 +1984,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.14"
+version = "0.4.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51b9bbe6c47d51fc3e1a9b945965946b4c44142ab8792c50835a980d362c2710"
+checksum = "6389c490849ff5bc16be905ae24bc913a9c8892e19b2341dbc175e14c341c2b8"
 dependencies = [
  "cfg-if",
 ]
@@ -2948,14 +2949,14 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.3.7"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "004cbc98f30fa233c61a38bc77e96a9106e65c88f2d3bef182ae952027e5753d"
+checksum = "c2702e08a7a860f005826c6815dcac101b19b5eb330c27fe4a5928fec1d20ddd"
 dependencies = [
  "itoa",
  "libc 0.2.121",
  "num_threads",
- "time-macros 0.2.3",
+ "time-macros 0.2.4",
 ]
 
 [[package]]
@@ -2970,9 +2971,9 @@ dependencies = [
 
 [[package]]
 name = "time-macros"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25eb0ca3468fc0acc11828786797f6ef9aa1555e4a211a60d64cc8e4d1be47d6"
+checksum = "42657b1a6f4d817cda8e7a0ace261fe0cc946cf3a80314390b22cc61ae080792"
 
 [[package]]
 name = "time-macros-impl"
