@@ -11,6 +11,9 @@ pub enum UndoFailureReason {
     /// The undo operation was not supported by the editor
     NotSupported,
 
+    /// There were no actions to undo
+    NothingToUndo,
+
     /// There was an unexpected problem accessing the backing store
     StorageError,
 

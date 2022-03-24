@@ -26,3 +26,4 @@ smallvec                = "1.7"
 desync                  = "0.7"
 lazy_static             = "1.4"
 log                     = "0.4"
+uuid                    = { version = "0.8", features = [ "v4" ] }

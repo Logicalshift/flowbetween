@@ -8,6 +8,9 @@ use futures::stream::{BoxStream};
 use ::desync::*;
 use flo_stream::*;
 
+use uuid::*;
+
+use std::mem;
 use std::sync::*;
 use std::time::{Duration};
 use std::ops::{Range};
@@ -77,6 +80,50 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                 undo_log.retire(retired_edits);
             }.boxed()
         });
+    }
+
+    ///
+    /// Undoes the last action performed on this animation
+    ///
+    pub fn undo<'a>(&'a self) -> impl 'a + Future<Output=Result<(), UndoFailureReason>> {
+        async move {
+            // Scheduling on the animation desync will prevent any further edits from occurring while we're performing the undo
+            let undo_log = self.undo_log.clone();
+
+            self.animation.future_sync(move |animation| {
+                async move {
+                    // We'll monitor the retired edits from the animation
+                    let mut retired_edits   = animation.retired_edits();
+
+                    // Use 'prepare to undo' to ensure that all the edits have retired
+                    let id                  = Uuid::new_v4().to_simple().to_string();
+                    let prepare_undo        = Arc::new(vec![AnimationEdit::Undo(UndoEdit::PrepareToUndo(id))]);
+                    animation.edit().publish(Arc::clone(&prepare_undo)).await;
+
+                    // Process edits from retired_edits until the 'prepare' event is relayed back to us
+                    while let Some(edit) = retired_edits.next().await {
+                        if edit.committed_edits() == prepare_undo {
+                            break;
+                        }
+                    }
+
+                    // Finished with the retired edits, so drop them to avoid blocking the animation
+                    mem::drop(retired_edits);
+
+                    // Fetch the undo action that we're about to perform
+                    let undo_edit = undo_log.future_sync(|undo_log| async move {
+                        undo_log.undo()
+                    }.boxed()).await.unwrap();
+                    let undo_edit = if let Some(undo_edit) = undo_edit { undo_edit } else { return Err(UndoFailureReason::NothingToUndo); };
+
+                    // Carry out the undo action on the animation
+                    // TODO: avoid retiring the undo actions
+                    animation.edit().publish(Arc::new(vec![AnimationEdit::Undo(undo_edit)])).await;
+
+                    Ok(())
+                }.boxed()
+            }).await.unwrap()
+        }
     }
 }
 
