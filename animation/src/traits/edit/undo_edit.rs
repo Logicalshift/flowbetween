@@ -14,6 +14,9 @@ pub enum UndoFailureReason {
     /// There were no actions to undo
     NothingToUndo,
 
+    /// There were no actions to redo
+    NothingToRedo,
+
     /// There was an unexpected problem accessing the backing store
     StorageError,
 

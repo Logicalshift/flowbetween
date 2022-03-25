@@ -150,6 +150,8 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     let undo_result = if let Some(undo_result) = undo_result { Some(undo_result) } else { Self::read_undo_completion(&mut retired_edits).await };
 
                     // The undo is complete at this point
+                    // Note: we're relying on the edit to have been queued in sequence here so that the 'finish_undoing' happens after the
+                    // undo log pipe has received this edit
                     undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
 
                     match undo_result {
@@ -157,6 +159,62 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                         Some(Err(failure))  => Err(failure),
                         None                => Err(UndoFailureReason::BadEditingSequence),
                     }
+                }.boxed()
+            }).await.unwrap()
+        }
+    }
+
+    ///
+    /// Redoes the last action that was undone by undo
+    ///
+    pub fn redo<'a>(&'a self) -> impl 'a + Future<Output=Result<(), UndoFailureReason>> {
+        async move {
+            // Scheduling on the animation desync will prevent any further edits from occurring while we're performing the undo
+            let undo_log = self.undo_log.clone();
+
+            self.animation.future_sync(move |animation| {
+                async move {
+                    // We'll monitor the retired edits from the animation
+                    let mut retired_edits   = animation.retired_edits();
+
+                    // Use 'prepare to undo' to ensure that all the edits have retired
+                    let id                  = Uuid::new_v4().to_simple().to_string();
+                    let prepare_undo        = Arc::new(vec![AnimationEdit::Undo(UndoEdit::PrepareToUndo(id))]);
+                    animation.edit().publish(Arc::clone(&prepare_undo)).await;
+
+                    // Process edits from retired_edits until the 'prepare' event is relayed back to us 
+                    // (as we're blocking the animation, no other actions will interfere with this redo action)
+                    while let Some(edit) = retired_edits.next().await {
+                        if edit.committed_edits() == prepare_undo {
+                            break;
+                        }
+                    }
+
+                    // Fetch the redo action that we're about to perform
+                    let redo_edit = undo_log.future_sync(|undo_log| async move {
+                        undo_log.start_undoing();
+                        undo_log.redo()
+                    }.boxed()).await.unwrap();
+
+                    let redo_edit = if let Some(redo_edit) = redo_edit { 
+                        redo_edit 
+                    } else { 
+                        undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
+                        return Err(UndoFailureReason::NothingToRedo); 
+                    };
+
+                    // Carry out the redo action on the animation
+                    animation.edit().publish(redo_edit).await;
+
+                    // Wait for the redo edit to retire
+                    // Note: we're relying on the edit to have been queued in sequence here so that the 'finish_undoing' happens after the
+                    // undo log pipe has received this edit
+                    retired_edits.next().await;
+
+                    // The redo is complete at this point
+                    undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
+
+                    Ok(())
                 }.boxed()
             }).await.unwrap()
         }
