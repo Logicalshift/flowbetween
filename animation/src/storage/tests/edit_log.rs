@@ -291,7 +291,7 @@ fn create_vector_element() {
 }
 
 #[test]
-fn undo_begin_action() {
+fn undo_finish_action() {
     let anim                = create_animation();
 
     anim.perform_edits(vec![
@@ -299,7 +299,7 @@ fn undo_begin_action() {
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
     ]);
     anim.perform_edits(vec![
-        AnimationEdit::Undo(UndoEdit::BeginAction)
+        AnimationEdit::Undo(UndoEdit::FinishAction)
     ]);
 
     // Readback
@@ -309,7 +309,7 @@ fn undo_begin_action() {
     let undo_action: Vec<_> = executor::block_on(edit_log);
 
     assert!(undo_action.len() == 1);
-    assert!(undo_action[0] == AnimationEdit::Undo(UndoEdit::BeginAction));
+    assert!(undo_action[0] == AnimationEdit::Undo(UndoEdit::FinishAction));
 }
 
 #[test]

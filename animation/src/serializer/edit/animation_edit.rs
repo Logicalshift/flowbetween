@@ -25,7 +25,6 @@ impl AnimationEdit {
             AddNewLayer(_)          |
             RemoveLayer(_)          => true,
 
-            Undo(BeginAction)       |
             Undo(FinishAction)      => true,
 
             Undo(PrepareToUndo(_))  |
@@ -52,7 +51,6 @@ impl AnimationEdit {
             AddNewLayer(layer_id)       => { data.write_chr('+'); data.write_small_u64(*layer_id); },
             RemoveLayer(layer_id)       => { data.write_chr('-'); data.write_small_u64(*layer_id); },
 
-            Undo(BeginAction)           => { data.write_chr('U'); data.write_chr('+'); },
             Undo(FinishAction)          => { data.write_chr('U'); data.write_chr('-'); },
 
             // Most undo actions are not actually serialized (they're used for internal signalling instead)
@@ -89,7 +87,6 @@ impl AnimationEdit {
 
             'U' => {
                 match data.next_chr() {
-                    '+'     => Some(AnimationEdit::Undo(UndoEdit::BeginAction)),
                     '-'     => Some(AnimationEdit::Undo(UndoEdit::FinishAction)),
                     _       => None,
                 }
@@ -209,15 +206,6 @@ mod test {
     fn motion_edit() {
         let mut encoded = String::new();
         let edit        = AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Create);
-        edit.serialize(&mut encoded);
-
-        assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(edit));
-    }
-
-    #[test]
-    fn undo_begin_action() {
-        let mut encoded = String::new();
-        let edit        = AnimationEdit::Undo(UndoEdit::BeginAction);
         edit.serialize(&mut encoded);
 
         assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(edit));

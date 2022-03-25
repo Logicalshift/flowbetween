@@ -22,7 +22,6 @@ impl StreamAnimationCore {
                 PrepareToUndo(_name)                            => { /* Sent straight to the retired stream for synchronisation */ }
                 CompletedUndo(_edits)                           => { /* original_edit is changed to this if PerformUndo is successful */ }
                 FailedUndo(_reason)                             => { /* original_edit is changed to this if PerformUndo is unsuccessful */ }
-                BeginAction                                     => { /* Sent straight to the retired stream for organization */ }
                 FinishAction                                    => { /* Sent straight to the retired stream for organization */ },
                 PerformUndo { original_actions, undo_actions }  => {
                     // The original edit is updated according to whether or not the undo succeeds or fails

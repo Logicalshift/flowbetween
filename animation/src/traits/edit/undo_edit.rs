@@ -49,8 +49,7 @@ impl From<StorageError> for UndoFailureReason {
 /// Undo edits do not affect the animation but instead are used to annotate the edit log to mark where 
 /// undo actions occur, and to rewrite the edit log after an undo action has occurred.
 ///
-/// Note that only BeginAction and FinishAction are serialized to the edit log: other undo actions are
-/// always left out.
+/// Note that only FinishAction is serialized to the edit log: other undo actions are always left out.
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum UndoEdit {
@@ -65,10 +64,7 @@ pub enum UndoEdit {
     /// (Ie, when a `PerformUndo` edit is committed, the retired stream will have either a 'completed' or 'failed' edit to replace it)
     FailedUndo(UndoFailureReason),
 
-    /// Indicates that the subsequent edit operations all form part of a single action
-    BeginAction,
-
-    /// Finishes an action started by BeginAction()
+    /// Finishes an undo action (all preceding edits are grouped into a single undo request)
     FinishAction,
 
     /// Performs a set of undo actions, removing the original actions from the log (this is never serialized to the log)
