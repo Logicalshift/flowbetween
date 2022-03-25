@@ -1,6 +1,8 @@
 use super::undo_step::*;
 use crate::traits::*;
 
+use std::sync::*;
+
 ///
 /// A log of undo elements
 ///
@@ -82,7 +84,9 @@ impl UndoLog {
     }
 
     ///
-    /// Pops the action on top of the 
+    /// Pops the action on top of the undo stack and moves it to the redo stack. Returns the edit to perform the action.
+    ///
+    /// Returns 'None' if the stack is empty.
     ///
     pub fn undo(&mut self) -> Option<UndoEdit> {
         // Pop up to two actions (in case the first one is empty)
@@ -98,5 +102,19 @@ impl UndoLog {
         self.undo.push(UndoStep::new());
 
         Some(undo_edit)
+    }
+
+    ///
+    /// Pops the action on top of the redo stack and moves it to the undo stack. Returns the edit to perform the action.
+    ///
+    pub fn redo(&mut self) -> Option<Arc<Vec<AnimationEdit>>> {
+        // Pop the next redo action and 
+        let next_redo = self.redo.pop()?;
+        let redo_edit = next_redo.redo_edit();
+
+        // Add as an undo action
+        self.undo.push(next_redo);
+
+        Some(redo_edit)
     }
 }

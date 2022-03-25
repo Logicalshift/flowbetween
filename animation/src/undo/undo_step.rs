@@ -48,4 +48,14 @@ impl UndoStep {
 
         UndoEdit::PerformUndo { original_actions, undo_actions }
     }
+
+    ///
+    /// Creates the redo edit for this step
+    ///
+    pub fn redo_edit(&self) -> Arc<Vec<AnimationEdit>> {
+        let original_actions    = self.edits.iter().flat_map(|edit| edit.committed_edits().iter().cloned().collect::<Vec<_>>()).collect();
+        let original_actions    = Arc::new(original_actions);
+
+        original_actions
+    }
 }
