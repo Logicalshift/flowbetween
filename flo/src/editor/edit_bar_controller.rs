@@ -32,10 +32,16 @@ fn edit_bar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAni
                         Control::button()
                             .with(undo.clone())
                             .with(Bounds::next_horiz(32.0))
+                            .with(ControlAttribute::Padding((4, 2), (0, 2)))
+                            .with(Hover::Tooltip("Undo".to_string()))
+                            .with((ActionTrigger::Command(Command::with_id("undo").named("Undo")), "Undo"))
                             .with((ActionTrigger::Click, "Undo")),
                         Control::button()
                             .with(redo.clone())
                             .with(Bounds::next_horiz(32.0))
+                            .with(ControlAttribute::Padding((0, 2), (4, 2)))
+                            .with(Hover::Tooltip("Redo".to_string()))
+                            .with((ActionTrigger::Command(Command::with_id("redo").named("Redo")), "Redo"))
                             .with((ActionTrigger::Click, "Redo")),
                     ]),
 
@@ -43,6 +49,21 @@ fn edit_bar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAni
                     .with(Bounds::next_horiz(12.0)),
             ])
     }).into()
+}
+
+///
+/// Carries out the undo operation on the animation
+///
+async fn perform_undo<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAnimation<Anim>>>) {
+    model.undo().await;
+}
+
+///
+/// Carries out the redo operation on the animation
+///
+async fn perform_redo<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAnimation<Anim>>>) {
+    println!("Performing redo");
+    model.redo().await;
 }
 
 ///
@@ -68,6 +89,19 @@ pub fn edit_bar_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel
 
             // Receive events for this controller
             while let Some(next_event) = events.next().await {
+                // Dispatch each event as it arrives
+                match next_event {
+                    ControllerEvent::Action(action_name, _params) => {
+                        match action_name.as_str() {
+                            "Undo"  => { perform_undo(&model).await; }
+                            "Redo"  => { perform_redo(&model).await; }
+
+                            _       => { }
+                        }
+                    }
+
+                    _ => { }
+                }
             }
         }
     })
