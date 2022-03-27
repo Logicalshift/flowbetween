@@ -13,7 +13,7 @@ include     = [ "Cargo.toml", "src/**/*", "sql/**/*" ]
 flo_animation       = "0.2"
 flo_logging         = "0.2"
 
-rusqlite            = { version = "0.23", features = ["bundled"] }
+rusqlite            = { version = "0.27", features = ["bundled"] }
 futures             = "0.3"
 desync              = "0.7"
 

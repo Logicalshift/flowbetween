@@ -1,7 +1,6 @@
 use flo_animation::storage::*;
 
 use rusqlite;
-use rusqlite::{NO_PARAMS};
 
 use std::i64;
 use std::ops::{Range};
@@ -136,7 +135,7 @@ impl SqliteCore {
     ///
     fn write_animation_properties(&mut self, properties: String) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         let mut write   = self.connection.prepare_cached("INSERT OR REPLACE INTO AnimationProperties (PropertyId, Value) VALUES (0, ?);")?;
-        write.execute(&[properties])?;
+        write.execute([properties])?;
 
         Ok(vec![StorageResponse::Updated])
     }
@@ -149,7 +148,7 @@ impl SqliteCore {
 
         let mut read = self.connection.prepare_cached("SELECT Value FROM AnimationProperties WHERE PropertyId = 0;")?;
 
-        match read.query_row(NO_PARAMS, |row| row.get(0)) {
+        match read.query_row([], |row| row.get(0)) {
             Ok(properties)              => Ok(vec![StorageResponse::AnimationProperties(properties)]),
             Err(QueryReturnedNoRows)    => Ok(vec![StorageResponse::NotFound]),
             Err(other)                  => Err(other)
@@ -161,7 +160,7 @@ impl SqliteCore {
     ///
     fn write_edit(&mut self, edit: String) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         let mut write   = self.connection.prepare_cached("INSERT INTO EditLog (Edit) VALUES (?);")?;
-        write.execute(&[edit])?;
+        write.execute([edit])?;
 
         Ok(vec![StorageResponse::Updated])
     }
@@ -174,7 +173,7 @@ impl SqliteCore {
 
         // Read the current max edit ID
         let mut max_edit_id = self.connection.prepare_cached("SELECT COALESCE(MAX(EditId), 0) FROM EditLog;")?;
-        let max_edit_id     = max_edit_id.query_row(NO_PARAMS, |row| row.get::<_, i64>(0))?;
+        let max_edit_id     = max_edit_id.query_row([], |row| row.get::<_, i64>(0))?;
 
         if max_edit_id < num_edits { 
             return Ok(vec![StorageResponse::Error(StorageError::General, "Not enough edits to delete".to_string())]);
@@ -183,10 +182,10 @@ impl SqliteCore {
         // Delete the edit log entries and update the table sequence
         let min_edit    = max_edit_id - num_edits;
         let mut write   = self.connection.prepare_cached("DELETE FROM EditLog WHERE EditId > ?;")?;
-        write.execute(&[min_edit])?;
+        write.execute([min_edit])?;
 
         let mut update_sequence = self.connection.prepare_cached("UPDATE sqlite_sequence SET seq = (SELECT MAX(EditId) FROM EditLog) WHERE name = 'EditLog';")?;
-        update_sequence.execute(NO_PARAMS)?;
+        update_sequence.execute([])?;
 
         Ok(vec![StorageResponse::Updated])
     }
@@ -196,7 +195,7 @@ impl SqliteCore {
     ///
     fn read_edit_log_length(&mut self) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         let mut read    = self.connection.prepare_cached("SELECT COALESCE(MAX(EditId), 0) FROM EditLog;")?;
-        let count       = read.query_row(NO_PARAMS, |row| row.get::<_, i64>(0))?;
+        let count       = read.query_row([], |row| row.get::<_, i64>(0))?;
 
         Ok(vec![StorageResponse::NumberOfEdits(count as usize)])
     }
@@ -208,7 +207,7 @@ impl SqliteCore {
         use rusqlite::Error::QueryReturnedNoRows;
 
         let mut read    = self.connection.prepare_cached("SELECT COALESCE(MAX(ElementId)+1, 0) FROM Elements;")?;
-        let count       = read.query_row(NO_PARAMS, |row| row.get::<_, i64>(0));
+        let count       = read.query_row([], |row| row.get::<_, i64>(0));
 
         match count {
             Ok(count)                   => Ok(vec![StorageResponse::HighestUnusedElementId(count)]),
@@ -222,7 +221,7 @@ impl SqliteCore {
     ///
     fn read_edits(&mut self, range: Range<usize>) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         let mut read    = self.connection.prepare_cached("SELECT EditId, Edit FROM EditLog WHERE EditId >= ? AND EditId < ? ORDER BY EditId ASC;")?;
-        let edits       = read.query_map(&[(range.start as i64)+1, (range.end as i64)+1], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)))?;
+        let edits       = read.query_map([(range.start as i64)+1, (range.end as i64)+1], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)))?;
         let edits       = edits.map(|row| row.map(|(edit_id, edit)| StorageResponse::Edit((edit_id-1) as usize, edit)));
 
         Ok(edits.collect::<Result<_, _>>()?)
@@ -245,7 +244,7 @@ impl SqliteCore {
         use rusqlite::Error::QueryReturnedNoRows;
 
         let mut read    = self.connection.prepare_cached("SELECT Element FROM Elements WHERE ElementId = ?;")?;
-        let element     = read.query_row(&[element_id], |row| row.get(0));
+        let element     = read.query_row([element_id], |row| row.get(0));
 
         match element {
             Ok(element)                 => Ok(vec![StorageResponse::Element(element_id, element)]),
@@ -262,10 +261,10 @@ impl SqliteCore {
 
         {
             let mut delete  = transaction.prepare_cached("DELETE FROM ElementKeyframeAttachment WHERE ElementId = ?;")?;
-            delete.execute(&[element_id])?;
+            delete.execute([element_id])?;
 
             let mut delete  = transaction.prepare_cached("DELETE FROM Elements WHERE ElementId = ?;")?;
-            delete.execute(&[element_id])?;
+            delete.execute([element_id])?;
         }
 
         transaction.commit()?;
@@ -291,13 +290,13 @@ impl SqliteCore {
 
         {
             let mut delete  = transaction.prepare_cached("DELETE FROM ElementKeyframeAttachment WHERE LayerId = ?;")?;
-            delete.execute(&[layer_id as i64])?;
+            delete.execute([layer_id as i64])?;
 
             let mut delete  = transaction.prepare_cached("DELETE FROM LayerCache WHERE LayerId = ?;")?;
-            delete.execute(&[layer_id as i64])?;
+            delete.execute([layer_id as i64])?;
 
             let mut delete  = transaction.prepare_cached("DELETE FROM Layers WHERE LayerId = ?;")?;
-            delete.execute(&[layer_id as i64])?;
+            delete.execute([layer_id as i64])?;
         }
 
         transaction.commit()?;
@@ -310,7 +309,7 @@ impl SqliteCore {
     ///
     fn read_layers(&mut self) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         let mut read    = self.connection.prepare_cached("SELECT LayerId, Layer FROM Layers;")?;
-        let layers      = read.query_map(NO_PARAMS, |row| Ok((row.get::<_, i64>(0)?, row.get(1)?)))?;
+        let layers      = read.query_map([], |row| Ok((row.get::<_, i64>(0)?, row.get(1)?)))?;
         let layers      = layers.map(|layer| layer.map(|(layer_id, layer)| StorageResponse::LayerProperties(layer_id as u64, layer)));
 
         Ok(layers.collect::<Result<_, _>>()?)
@@ -324,7 +323,7 @@ impl SqliteCore {
 
         let mut read            = self.connection.prepare_cached("SELECT LayerId, Layer FROM Layers WHERE LayerId = ?;")?;
 
-        match read.query_row(&[layer_id as i64], |row| Ok((row.get::<_, i64>(0)?, row.get(1)?))) {
+        match read.query_row([layer_id as i64], |row| Ok((row.get::<_, i64>(0)?, row.get(1)?))) {
             Ok((layer_id, layer))       => Ok(vec![StorageResponse::LayerProperties(layer_id as u64, layer)]),
             Err(QueryReturnedNoRows)    => Ok(vec![StorageResponse::NotFound]),
             Err(other)                  => Err(other)
@@ -351,13 +350,13 @@ impl SqliteCore {
             let time_microseconds   = Self::time_to_int(when);
 
             let mut delete  = transaction.prepare_cached("DELETE FROM ElementKeyframeAttachment WHERE LayerId = ? AND TimeMicroseconds = ?;")?;
-            delete.execute(&[layer_id as i64, time_microseconds])?;
+            delete.execute([layer_id as i64, time_microseconds])?;
 
             let mut delete  = transaction.prepare_cached("DELETE FROM LayerCache WHERE LayerId = ? AND TimeMicroseconds = ?;")?;
-            delete.execute(&[layer_id as i64, time_microseconds])?;
+            delete.execute([layer_id as i64, time_microseconds])?;
 
             let mut delete  = transaction.prepare_cached("DELETE FROM Keyframe WHERE LayerId = ? AND TimeMicroseconds = ?;")?;
-            delete.execute(&[layer_id as i64, time_microseconds])?;
+            delete.execute([layer_id as i64, time_microseconds])?;
         }
 
         transaction.commit()?;
@@ -372,7 +371,7 @@ impl SqliteCore {
         use rusqlite::Error::QueryReturnedNoRows;
 
         let mut read_keyframe   = self.connection.prepare_cached("SELECT TimeMicroseconds FROM Keyframe WHERE LayerId = ? AND TimeMicroseconds <= ? ORDER BY TimeMicroseconds DESC LIMIT 1")?;
-        let result              = read_keyframe.query_row(&[layer_id as i64, when_micros], |row| row.get::<_, i64>(0));
+        let result              = read_keyframe.query_row([layer_id as i64, when_micros], |row| row.get::<_, i64>(0));
 
         match result {
             Ok(keyframe_time)           => Ok(Some(keyframe_time)),
@@ -388,7 +387,7 @@ impl SqliteCore {
         use rusqlite::Error::QueryReturnedNoRows;
 
         let mut read_keyframe   = self.connection.prepare_cached("SELECT TimeMicroseconds FROM Keyframe WHERE LayerId = ? AND TimeMicroseconds >= ? ORDER BY TimeMicroseconds ASC LIMIT 1")?;
-        let result              = read_keyframe.query_row(&[layer_id as i64, when_micros], |row| row.get::<_, i64>(0));
+        let result              = read_keyframe.query_row([layer_id as i64, when_micros], |row| row.get::<_, i64>(0));
 
         match result {
             Ok(keyframe_time)           => Ok(Some(keyframe_time)),
@@ -430,7 +429,7 @@ impl SqliteCore {
 
         // Read the keyframes that exist in this time
         let mut read_keyframes  = self.connection.prepare_cached("SELECT TimeMicroseconds FROM Keyframe WHERE LayerId = ? AND TimeMicroseconds >= ? AND TimeMicroseconds <= ? ORDER BY TimeMicroseconds ASC")?;
-        let keyframes           = read_keyframes.query_map(&[layer_id as i64, start, end], |row| row.get::<_, i64>(0))?;
+        let keyframes           = read_keyframes.query_map([layer_id as i64, start, end], |row| row.get::<_, i64>(0))?;
 
         let mut result          = vec![];
         let mut last_time       = None;
@@ -479,7 +478,7 @@ impl SqliteCore {
 
         // Write out the attachment
         let mut write   = self.connection.prepare_cached("INSERT OR REPLACE INTO ElementKeyframeAttachment (ElementId, LayerId, TimeMicroseconds) VALUES (?, ?, ?);")?;
-        write.execute(&[element_id, layer_id as i64, when])?;
+        write.execute([element_id, layer_id as i64, when])?;
 
         return Ok(vec![StorageResponse::Updated]);
     }
@@ -490,7 +489,7 @@ impl SqliteCore {
     fn detach_element_from_layer(&mut self, element_id: i64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         // Remove the attachment
         let mut delete   = self.connection.prepare_cached("DELETE FROM ElementKeyframeAttachment WHERE ElementId = ?;")?;
-        delete.execute(&[element_id])?;
+        delete.execute([element_id])?;
 
         return Ok(vec![StorageResponse::Updated]);
     }
@@ -500,7 +499,7 @@ impl SqliteCore {
     ///
     fn read_element_attachments(&mut self, element_id: i64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         let mut read    = self.connection.prepare_cached("SELECT LayerId, TimeMicroseconds FROM ElementKeyframeAttachment WHERE ElementId = ?;")?;
-        let attachments = read.query_map(&[element_id], |row| Ok((row.get::<_, i64>(0)? as u64, Self::int_to_time(row.get(1)?))))?;
+        let attachments = read.query_map([element_id], |row| Ok((row.get::<_, i64>(0)? as u64, Self::int_to_time(row.get(1)?))))?;
 
         Ok(vec![StorageResponse::ElementAttachments(element_id, attachments.collect::<Result<Vec<_>, _>>()?)])
     }
@@ -528,7 +527,7 @@ impl SqliteCore {
             INNER JOIN ElementKeyframeAttachment ON ElementKeyframeAttachment.ElementId = Elements.ElementId
             WHERE ElementKeyframeAttachment.LayerId = ? AND ElementKeyFrameAttachment.TimeMicroseconds = ?;")?;
 
-        let elements    = read.query_map(&[layer_id as i64, when], |row| Ok((row.get(0)?, row.get(1)?)))?;
+        let elements    = read.query_map([layer_id as i64, when], |row| Ok((row.get(0)?, row.get(1)?)))?;
         let elements    = elements.map(|element| element.map(|(element_id, element)| StorageResponse::Element(element_id, element)));
         let elements    = iter::once(Ok(StorageResponse::KeyFrame(start_time, end_time))).chain(elements);
 

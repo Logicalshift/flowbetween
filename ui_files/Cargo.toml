@@ -17,7 +17,7 @@ flo_binding = "2.0"
 flo_logging = "0.2"
 
 desync      = "0.7"
-rusqlite    = { version = "0.23", features = ["bundled"] }
+rusqlite    = { version = "0.27", features = ["bundled"] }
 dirs        = "3.0"
 uuid        = { version = "0.8", features = [ "v4" ] }
 lazy_static = "1.2"
