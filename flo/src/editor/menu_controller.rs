@@ -81,6 +81,9 @@ impl<Anim: 'static+EditableAnimation> MenuController<Anim> {
                         .with_controller(&tool_controller),
 
                     // RHS controls
+                    Control::empty()
+                        .with(Bounds::next_horiz(240.0))
+                        .with_controller("EditBarController")
                 ])
                 .with(Appearance::Background(MENU_BACKGROUND))
         }))
