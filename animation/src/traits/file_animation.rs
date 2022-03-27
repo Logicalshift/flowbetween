@@ -5,7 +5,7 @@ use std::path::Path;
 ///
 /// Trait implemented by animations that can be created from files
 ///
-pub trait FileAnimation : Send+Sync {
+pub trait FileAnimation : Unpin+Send+Sync {
     type NewAnimation: EditableAnimation;
 
     ///

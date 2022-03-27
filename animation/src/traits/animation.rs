@@ -12,7 +12,7 @@ use std::ops::Range;
 ///
 /// Represents an animation
 ///
-pub trait Animation : Send+Sync {
+pub trait Animation : Unpin+Send+Sync {
     ///
     /// Retrieves the frame size of this animation
     ///
