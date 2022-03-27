@@ -78,7 +78,7 @@ impl<TFuture: 'static+Send+Future<Output=()>, TNewFuture: Sync+Send+Fn(Controlle
         ImmediateController {
             make_runtime:   create_runtime,
             ui:             BindRef::from(ui),
-            resources:      ControllerResources::new(),
+            resources:      resources,
             core:           Arc::new(Mutex::new(core))
         }
     }
