@@ -379,7 +379,7 @@ impl EditableAnimation for StreamAnimation {
         let receiver    = sender.subscribe();
 
         // Add to the list in the core
-        self.core.desync(move |core| {
+        self.core.sync(move |core| {
             core.retired_edit_senders.push(sender);
         });
 
