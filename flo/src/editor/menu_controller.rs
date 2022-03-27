@@ -1,7 +1,8 @@
-use super::super::menu::*;
-use super::super::style::*;
-use super::super::model::*;
-use super::super::tools::*;
+use super::edit_bar_controller::*;
+use crate::menu::*;
+use crate::style::*;
+use crate::model::*;
+use crate::tools::*;
 
 use flo_ui::*;
 use flo_binding::*;
@@ -15,11 +16,12 @@ use std::collections::HashMap;
 /// The menu controller handles the menu at the top of the UI
 ///
 pub struct MenuController<Anim: 'static+EditableAnimation> {
-    anim_model:         Arc<FloModel<UndoableAnimation<Anim>>>,
-    ui:                 BindRef<Control>,
-    tool_controllers:   Mutex<HashMap<String, Arc<dyn Controller>>>,
+    anim_model:             Arc<FloModel<UndoableAnimation<Anim>>>,
+    ui:                     BindRef<Control>,
+    tool_controllers:       Mutex<HashMap<String, Arc<dyn Controller>>>,
+    edit_bar_controller:    Arc<dyn Controller>,
 
-    empty_menu:         Arc<EmptyMenuController>
+    empty_menu:             Arc<EmptyMenuController>
 }
 
 impl<Anim: 'static+EditableAnimation> MenuController<Anim> {
@@ -28,18 +30,21 @@ impl<Anim: 'static+EditableAnimation> MenuController<Anim> {
     ///
     pub fn new(anim_model: &FloModel<UndoableAnimation<Anim>>) -> MenuController<Anim> {
         // Create the UI
-        let effective_tool  = anim_model.tools().effective_tool.clone();
-        let tool_controller = BindRef::from(computed(move || format!("Tool_{}", effective_tool.get().map(|tool| tool.tool_name()).unwrap_or(String::new()))));
-        let ui              = Self::create_ui(&tool_controller);
-        let empty_menu      = Arc::new(EmptyMenuController::new());
+        let effective_tool          = anim_model.tools().effective_tool.clone();
+        let tool_controller         = BindRef::from(computed(move || format!("Tool_{}", effective_tool.get().map(|tool| tool.tool_name()).unwrap_or(String::new()))));
+        let ui                      = Self::create_ui(&tool_controller);
+        let empty_menu              = Arc::new(EmptyMenuController::new());
+        let anim_model              = Arc::new(anim_model.clone());
+        let edit_bar_controller     = Arc::new(edit_bar_controller(&anim_model));
 
         // Create the controller
         MenuController {
-            anim_model:         Arc::new(anim_model.clone()),
-            ui:                 BindRef::from(ui),
-            tool_controllers:   Mutex::new(HashMap::new()),
+            anim_model:             anim_model,
+            ui:                     BindRef::from(ui),
+            tool_controllers:       Mutex::new(HashMap::new()),
+            edit_bar_controller:    edit_bar_controller,
 
-            empty_menu:         empty_menu
+            empty_menu:             empty_menu,
         }
     }
 
@@ -101,6 +106,11 @@ impl<Anim: 'static+EditableAnimation> Controller for MenuController<Anim>  {
 
     fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
         use std::collections::hash_map::Entry::*;
+
+        // Internal controllers
+        if id == "EditBarController" {
+            return Some(Arc::clone(&self.edit_bar_controller));
+        }
 
         // Try to fetch the existing controller for this ID
         let mut tool_controllers    = self.tool_controllers.lock().unwrap();
