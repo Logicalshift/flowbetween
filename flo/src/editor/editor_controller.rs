@@ -13,6 +13,7 @@ use flo_ui::*;
 use flo_ui_files::ui::*;
 use flo_binding::*;
 use flo_animation::*;
+use flo_animation::undo::*;
 
 use std::sync::*;
 use std::str::{FromStr};
@@ -56,6 +57,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     /// Creates a new editor controller from an animation
     ///
     pub fn new(animation: Loader::NewAnimation) -> EditorController<Loader> {
+        let animation   = UndoableAnimation::new(animation);
         let animation   = FloModel::new(animation);
 
         Self::from_model(animation)
@@ -64,7 +66,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates a new editor controller from a model
     ///
-    pub fn from_model(animation: FloModel<Loader::NewAnimation>) -> EditorController<Loader> {
+    pub fn from_model(animation: FloModel<UndoableAnimation<Loader::NewAnimation>>) -> EditorController<Loader> {
         // Load the image resources
         let images          = Arc::new(ResourceManager::new());
 
@@ -266,7 +268,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates the UI tree for this controller
     ///
-    pub fn ui(model: &FloModel<Loader::NewAnimation>, images: &Arc<ResourceManager<Image>>) -> BindRef<Control> {
+    pub fn ui(model: &FloModel<UndoableAnimation<Loader::NewAnimation>>, images: &Arc<ResourceManager<Image>>) -> BindRef<Control> {
         use self::Position::*;
 
         let sidebar_open        = BindRef::from(model.sidebar().open_state.clone());
@@ -372,7 +374,7 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates this controller with the specified instance model
     ///
-    fn open(model: FloModel<Loader::NewAnimation>) -> Self {
+    fn open(model: FloModel<UndoableAnimation<Loader::NewAnimation>>) -> Self {
         Self::from_model(model)
     }
 }
