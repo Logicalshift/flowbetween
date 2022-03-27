@@ -437,8 +437,15 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
         let layers = self.model.frame().layers.get();
 
         // Everything that happens in a single tick should show up as a single undo action
-        if !edits.is_empty() && edits != &vec![AnimationEdit::Undo(UndoEdit::FinishAction)] {
-           self.pending_finish_action = true;
+        if !edits.is_empty() {
+            if edits.len() == 1 {
+                match edits[0] {
+                    AnimationEdit::Undo(_)  => { }
+                    _                       => { self.pending_finish_action = true; }
+                }
+            } else {
+                self.pending_finish_action = true;
+            }
         }
 
         for edit in edits.iter() {
