@@ -55,15 +55,18 @@ fn edit_bar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAni
 /// Carries out the undo operation on the animation
 ///
 async fn perform_undo<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAnimation<Anim>>>) {
-    model.undo().await;
+    if let Err(undo_err) = model.undo().await {
+        warn!("Undo failed: {:?}", undo_err);
+    }
 }
 
 ///
 /// Carries out the redo operation on the animation
 ///
 async fn perform_redo<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAnimation<Anim>>>) {
-    println!("Performing redo");
-    model.redo().await;
+    if let Err(redo_err) = model.redo().await {
+        warn!("Redo failed: {:?}", redo_err);
+    }
 }
 
 ///
