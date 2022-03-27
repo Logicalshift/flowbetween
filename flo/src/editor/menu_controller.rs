@@ -6,26 +6,27 @@ use super::super::tools::*;
 use flo_ui::*;
 use flo_binding::*;
 use flo_animation::*;
+use flo_animation::undo::*;
 
 use std::sync::*;
 use std::collections::HashMap;
 
 ///
-/// The menu controller handles the menbu at the top of the UI
+/// The menu controller handles the menu at the top of the UI
 ///
-pub struct MenuController<Anim: Animation> {
-    anim_model:         Arc<FloModel<Anim>>,
+pub struct MenuController<Anim: 'static+EditableAnimation> {
+    anim_model:         Arc<FloModel<UndoableAnimation<Anim>>>,
     ui:                 BindRef<Control>,
     tool_controllers:   Mutex<HashMap<String, Arc<dyn Controller>>>,
 
     empty_menu:         Arc<EmptyMenuController>
 }
 
-impl<Anim: 'static+Animation> MenuController<Anim> {
+impl<Anim: 'static+EditableAnimation> MenuController<Anim> {
     ///
     /// Creates a new menu controller
     ///
-    pub fn new(anim_model: &FloModel<Anim>) -> MenuController<Anim> {
+    pub fn new(anim_model: &FloModel<UndoableAnimation<Anim>>) -> MenuController<Anim> {
         // Create the UI
         let effective_tool  = anim_model.tools().effective_tool.clone();
         let tool_controller = BindRef::from(computed(move || format!("Tool_{}", effective_tool.get().map(|tool| tool.tool_name()).unwrap_or(String::new()))));
@@ -56,6 +57,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
             Control::empty()
                 .with(Bounds::fill_all())
                 .with(vec![
+                    // LHS controls
                     Control::empty()
                         .with(Bounds::next_horiz(6.0))
                         .with(Appearance::Background(MENU_BACKGROUND_ALT)),
@@ -67,10 +69,13 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                         .with(Font::Size(17.0))
                         .with(Bounds::next_horiz(160.0)),
 
+                    // Tool controls
                     Control::empty()
                         .with(Bounds::stretch_horiz(1.0))
                         .with(Font::Size(12.0))
                         .with_controller(&tool_controller),
+
+                    // RHS controls
                 ])
                 .with(Appearance::Background(MENU_BACKGROUND))
         }))
@@ -79,7 +84,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     ///
     /// Given a controller name (something like Tool_Foo), finds the tool that manages it
     ///
-    fn tool_for_controller_name(&self, controller_name: &str) -> Option<Arc<FloTool<Anim>>> {
+    fn tool_for_controller_name(&self, controller_name: &str) -> Option<Arc<FloTool<UndoableAnimation<Anim>>>> {
         // Go through the tool sets and find the first that matches the name
         let tool_sets = self.anim_model.tools().tool_sets.get();
         tool_sets.into_iter()
@@ -89,7 +94,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     }
 }
 
-impl<Anim: EditableAnimation+Animation+'static> Controller for MenuController<Anim>  {
+impl<Anim: 'static+EditableAnimation> Controller for MenuController<Anim>  {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
