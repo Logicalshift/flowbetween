@@ -27,7 +27,7 @@ impl FileList {
 
             // Assign IDs to everything
             let mut existing_files  = transaction.prepare("SELECT RelativePath FROM Flo_Files")?;
-            let existing_files      = existing_files.query_map::<String, _, _>(NO_PARAMS, |file| file.get(0))?;
+            let existing_files      = existing_files.query_map::<String, _, _>([], |file| file.get(0))?;
 
             let mut file_ids        = vec![];
             let mut add_id          = transaction.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (-1)")?;
@@ -37,7 +37,7 @@ impl FileList {
                 let relative_path = relative_path?;
 
                 // Generate an ID
-                let new_id = add_id.insert(NO_PARAMS)?;
+                let new_id = add_id.insert([])?;
                 file_ids.push(new_id);
 
                 // Update this file

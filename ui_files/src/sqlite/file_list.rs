@@ -95,7 +95,7 @@ impl FileList {
     fn version_number(connection: &Connection) -> Option<i64> {
         // Try to fetch from the version number table
         let version_number  = connection.prepare("SELECT MAX(VersionNumber) FROM Flo_Files_Version");
-        let version_number  = version_number.and_then(|mut version_number| version_number.query_row(NO_PARAMS, |row| row.get(0)));
+        let version_number  = version_number.and_then(|mut version_number| version_number.query_row([], |row| row.get(0)));
 
         if let Ok(version_number) = version_number {
             // Database has a version number in it
@@ -104,7 +104,7 @@ impl FileList {
             // V1 had no version number
             let all_files = connection.prepare("SELECT COUNT(*) FROM Flo_Files");
 
-            if all_files.and_then(|mut all_files| all_files.query_row::<i64, _, _>(NO_PARAMS, |row| row.get(0))).is_ok() {
+            if all_files.and_then(|mut all_files| all_files.query_row::<i64, _, _>([], |row| row.get(0))).is_ok() {
                 // V1
                 Some(1)
             } else {
