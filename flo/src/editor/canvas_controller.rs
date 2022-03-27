@@ -29,6 +29,9 @@ struct CanvasCore<Anim: Animation+EditableAnimation> {
     /// The animation model
     model: Arc<FloModel<Anim>>,
 
+    /// Set to true if the current tick contains an edit of some kind
+    pending_finish_action: bool,
+
     /// The canvas invalidation count specified in the model when the canvas was drawn
     current_invalidation_count: u64,
 
@@ -82,6 +85,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         let core                = Desync::new(CanvasCore {
                 renderer:                   renderer,
                 model:                      view_model.clone(),
+                pending_finish_action:      false,
                 canvas_tools:               canvas_tools,
                 last_paint_device:          None,
                 current_time:               Duration::new(0, 0),
@@ -269,6 +273,11 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
     fn tick(&self) {
         let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
 
+        if self.core.sync(|core| core.pending_finish_action) {
+            self.core.desync(|core| { core.pending_finish_action = false; });
+            self.anim_model.perform_edits(vec![AnimationEdit::Undo(UndoEdit::FinishAction)]);
+        }
+
         // Ensure that the active tool is up to date
         if *self.tool_changed.lock().unwrap() {
             // Tool has changed: need to call refresh()
@@ -426,6 +435,11 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
     fn process_edits(&mut self, edits: &Vec<AnimationEdit>) {
         // The layers are used to determine which layers are affected by an element edit
         let layers = self.model.frame().layers.get();
+
+        // Everything that happens in a single tick should show up as a single undo action
+        if !edits.is_empty() && edits != &vec![AnimationEdit::Undo(UndoEdit::FinishAction)] {
+           self.pending_finish_action = true;
+        }
 
         for edit in edits.iter() {
             match edit {
