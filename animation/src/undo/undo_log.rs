@@ -77,8 +77,8 @@ impl UndoLog {
         // Add the edit to the current undo step
         self.undo.last_mut().unwrap().push_edit(edit);
 
-        // Start a new action group if this edit finished one
-        if finishes_action_group {
+        // Start a new action group if this edit finished one (and there were any actions performed in the last step)
+        if finishes_action_group && self.undo.last().map(|last_step| !last_step.is_empty()).unwrap_or(true) {
             self.undo.push(UndoStep::new());
         }
     }
