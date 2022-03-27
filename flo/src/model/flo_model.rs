@@ -8,6 +8,7 @@ use super::onion_skin::*;
 use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
+use flo_animation::undo::*;
 use futures::*;
 use futures::stream::{BoxStream};
 use ::desync::*;
@@ -266,6 +267,22 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     ///
     pub fn subscribe_edits(&self) -> impl Stream<Item=Arc<Vec<AnimationEdit>>>+Unpin+Clone+Send {
         self.edit_publisher.sync(|publisher| publisher.subscribe())
+    }
+}
+
+impl<Anim: 'static+EditableAnimation> FloModel<UndoableAnimation<Anim>> {
+    ///
+    /// Undoes the last action performed on this animation
+    ///
+    pub async fn undo(&self) -> Result<(), UndoFailureReason> {
+        self.animation.undo().await
+    }
+
+    ///
+    /// Redoes the last undone action performed on this animation
+    ///
+    pub async fn redo(&self) -> Result<(), UndoFailureReason> {
+        self.animation.redo().await
     }
 }
 
