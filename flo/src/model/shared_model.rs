@@ -2,6 +2,7 @@ use crate::sidebar::*;
 use crate::model::flo_model::*;
 
 use flo_animation::*;
+use flo_animation::undo::*;
 use flo_ui_files::*;
 
 use std::sync::*;
@@ -18,10 +19,10 @@ pub struct FloSharedModel<Loader> {
     path: PathBuf
 }
 
-impl<Loader: FileAnimation+Send+Sync+'static> FileModel for FloSharedModel<Loader>
-where Loader::NewAnimation: 'static+EditableAnimation {
+impl<Loader: 'static+FileAnimation+Send+Sync> FileModel for FloSharedModel<Loader>
+where Loader::NewAnimation: 'static+Unpin+EditableAnimation {
     // TODO: we should probably actually share the file between instances :-)
-    type InstanceModel  = FloModel<Loader::NewAnimation>;
+    type InstanceModel  = FloModel<UndoableAnimation<Loader::NewAnimation>>;
     type Loader         = Loader;
 
     ///
@@ -38,9 +39,10 @@ where Loader::NewAnimation: 'static+EditableAnimation {
     ///
     /// Creates a new instance model from the shared model. This is used for a single session.
     ///
-    fn new_instance(&self) -> FloModel<Loader::NewAnimation> {
+    fn new_instance(&self) -> FloModel<UndoableAnimation<Loader::NewAnimation>> {
         // Create the animation
         let animation   = self.loader.open(self.path.as_path());
+        let animation   = UndoableAnimation::new(animation);
 
         // The base model
         let model       = FloModel::new(animation);
