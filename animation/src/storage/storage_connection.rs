@@ -73,6 +73,25 @@ impl StorageConnection {
     }
 
     ///
+    /// Read the serialized version of a set of edits from the edit log
+    ///
+    pub fn read_edit_log_serialized<'a>(&'a mut self, edits: Range<usize>) -> impl 'a + Future<Output=Option<Vec<String>>> {
+        async move {
+            let responses   = self.request(vec![StorageCommand::ReadEdits(edits)]).await?;
+
+            let mut result  = vec![];
+            for response in responses {
+                match response {
+                    StorageResponse::Edit(_idx, edit)   => { result.push(edit); },
+                    _                                   => { return None; },
+                }
+            }
+
+            Some(result)
+        }
+    }
+
+    ///
     /// Read and deserializes a set of edits from the edit log
     ///
     pub fn read_edit_log<'a>(&'a mut self, edits: Range<usize>) -> impl 'a + Future<Output=Option<Vec<AnimationEdit>>> {
