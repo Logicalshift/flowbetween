@@ -112,7 +112,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
             // Scheduling on the animation desync will prevent any further edits from occurring while we're performing the undo
             let undo_log = self.undo_log.clone();
 
-            self.animation.future_sync(move |animation| {
+            self.animation.future_desync(move |animation| {
                 async move {
                     // We'll monitor the retired edits from the animation
                     let mut retired_edits   = animation.retired_edits();
@@ -172,7 +172,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
             // Scheduling on the animation desync will prevent any further edits from occurring while we're performing the undo
             let undo_log = self.undo_log.clone();
 
-            self.animation.future_sync(move |animation| {
+            self.animation.future_desync(move |animation| {
                 async move {
                     // We'll monitor the retired edits from the animation
                     let mut retired_edits   = animation.retired_edits();
