@@ -47,10 +47,16 @@ impl StreamAnimationCore {
                 return Err(UndoFailureReason::EditLogTooShort);
             }
 
+            // We compare the serialized version of the original to what was passed in as serialization is sometimes lossy
             let edit_log_start          = edit_log_length - num_original_actions;
-            let expected_actions        = self.storage_connection.read_edit_log(edit_log_start..edit_log_length).await.ok_or(UndoFailureReason::CannotReadOriginalActions)?;
+            let expected_actions        = self.storage_connection.read_edit_log_serialized(edit_log_start..edit_log_length).await.ok_or(UndoFailureReason::CannotReadOriginalActions)?;
+            let original_actions        = original_actions.iter().map(|action| {
+                let mut serialized = String::new();
+                action.serialize(&mut serialized);
+                serialized
+            }).collect::<Vec<_>>();
 
-            if &expected_actions != &*original_actions {
+            if &expected_actions != &original_actions {
                 return Err(UndoFailureReason::OriginalActionsDoNotMatch);
             }
 
