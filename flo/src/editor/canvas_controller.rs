@@ -500,17 +500,10 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
                         ElementEdit::ReplaceAnimationEffect(_, _)   => true,
                     };
 
-                    // Update all of the layers for all of the elements if needed
+                    // Update all of the layers if needed
                     if update_layer {
                         for layer in layers.iter() {
-                            let frame               = layer.frame.get();
-                            let frame               = frame.as_ref();
-                            let update_this_layer   = elements.iter().any(|element_id| 
-                                frame.map(|frame| frame.element_with_id(*element_id).is_some()).unwrap_or(false));
-
-                            if update_this_layer {
-                                self.model.timeline().invalidate_canvas_layer(layer.layer_id);
-                            }
+                            self.model.timeline().invalidate_canvas_layer(layer.layer_id);
                         }
                     }
                 },
