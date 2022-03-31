@@ -79,6 +79,9 @@ impl StreamAnimationCore {
                 Fill(element_id, point, options)        => {
                     let element_id = element_id.id().unwrap_or(0);
                     self.paint_fill(layer_id, when, ElementId::Assigned(element_id), *point, options).await;
+
+                    // We don't return a wrapper from here so add the element delete manually
+                    reversed_edits.push(AnimationEdit::Element(vec![ElementId::Assigned(element_id)], ElementEdit::Delete));
                     (element_id, None)
                 }
             };
