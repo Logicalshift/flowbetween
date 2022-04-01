@@ -6,6 +6,7 @@ use futures::prelude::*;
 use futures::stream::{BoxStream};
 
 use ::desync::*;
+use ::desync::scheduler;
 use flo_stream::*;
 
 use uuid::*;
@@ -28,7 +29,7 @@ pub struct UndoableAnimation<Anim: 'static+Unpin+EditableAnimation> {
     edits:          Publisher<Arc<Vec<AnimationEdit>>>,
 
     /// Used to schedule edits for the animation
-    pending_edits:  Desync<()>,
+    pending_edits:  Arc<scheduler::JobQueue>,
 }
 
 impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
@@ -40,7 +41,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
         let animation       = Arc::new(Desync::new(animation));
         let undo_log        = Arc::new(Desync::new(UndoLog::new()));
         let mut edits       = Publisher::new(10);
-        let pending_edits   = Desync::new(());
+        let pending_edits   = scheduler::queue();
 
         // Set up communication with the animation and with the undo log
         Self::pipe_edits_to_animation(&animation, &mut edits);
@@ -302,7 +303,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> EditableAnimation for UndoableAnimat
         let mut edit_stream = self.edit();
 
         // Dispatch via the pending edits queue, synchronously (so the edits are on the animation's queue when this returns)
-        self.pending_edits.future_desync(move |_| {
+        scheduler::scheduler().future_desync(&self.pending_edits, move || {
             async move {
                 edit_stream.publish(Arc::new(edits)).await;
                 edit_stream.when_empty().await;
