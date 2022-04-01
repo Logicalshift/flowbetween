@@ -1,4 +1,5 @@
 use super::undo_log::*;
+use super::undo_log_size::*;
 use super::edit_log_reader::*;
 use super::undoable_animation_core::*;
 use crate::traits::*;
@@ -39,15 +40,17 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
     ///
     pub fn new(animation: Anim) -> UndoableAnimation<Anim> {
         // Box up the animation and create the edit stream
-        let animation       = Arc::new(Desync::new(animation));
-        let undo_log        = UndoLog::new();
-        let mut edits       = Publisher::new(10);
-        let pending_edits   = scheduler::queue();
+        let animation           = Arc::new(Desync::new(animation));
+        let undo_log            = UndoLog::new();
+        let log_size_publisher  = ExpiringPublisher::new(1);
+        let mut edits           = Publisher::new(10);
+        let pending_edits       = scheduler::queue();
 
-        let core            = UndoableAnimationCore {
-            undo_log
+        let core                = UndoableAnimationCore {
+            undo_log,
+            log_size_publisher
         };
-        let core            = Arc::new(Desync::new(core));
+        let core                = Arc::new(Desync::new(core));
 
         // Set up communication with the animation and with the undo log
         Self::pipe_edits_to_animation(&animation, &mut edits);
@@ -82,6 +85,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
         pipe_in(Arc::clone(core), retired_edits, move |core, retired_edits| {
             async move {
                 core.undo_log.retire(retired_edits);
+                core.update_undo_log_size().await;
             }.boxed()
         });
     }
@@ -145,7 +149,10 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     let undo_edit = if let Some(undo_edit) = undo_edit { 
                         undo_edit 
                     } else { 
-                        core.future_sync(|core| async move { core.undo_log.finish_undoing(); }.boxed()).await.unwrap();
+                        core.future_sync(|core| async move { 
+                            core.undo_log.finish_undoing(); 
+                            core.update_undo_log_size().await;
+                        }.boxed()).await.unwrap();
                         return Err(UndoFailureReason::NothingToUndo); 
                     };
 
@@ -159,7 +166,10 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     // The undo is complete at this point
                     // Note: we're relying on the edit to have been queued in sequence here so that the 'finish_undoing' happens after the
                     // undo log pipe has received this edit
-                    core.future_sync(|core| async move { core.undo_log.finish_undoing(); }.boxed()).await.unwrap();
+                    core.future_sync(|core| async move { 
+                        core.undo_log.finish_undoing(); 
+                        core.update_undo_log_size().await;
+                    }.boxed()).await.unwrap();
 
                     match undo_result {
                         Some(Ok(()))        => Ok(()),
@@ -206,7 +216,10 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     let redo_edit = if let Some(redo_edit) = redo_edit { 
                         redo_edit 
                     } else { 
-                        core.future_sync(|core| async move { core.undo_log.finish_undoing(); }.boxed()).await.unwrap();
+                        core.future_sync(|core| async move { 
+                            core.undo_log.finish_undoing(); 
+                            core.update_undo_log_size().await;
+                        }.boxed()).await.unwrap();
                         return Err(UndoFailureReason::NothingToRedo); 
                     };
 
@@ -219,12 +232,23 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     retired_edits.next().await;
 
                     // The redo is complete at this point
-                    core.future_sync(|core| async move { core.undo_log.finish_undoing(); }.boxed()).await.unwrap();
+                    core.future_sync(|core| async move { 
+                        core.undo_log.finish_undoing(); 
+                        core.update_undo_log_size().await;
+                    }.boxed()).await.unwrap();
 
                     Ok(())
                 }.boxed()
             }).await.unwrap()
         }
+    }
+
+    ///
+    /// Retrieves a stream that tracks the size of the undo log (this is an expiring stream, so backpressure will cause
+    /// updates to be discarded: ie, reads will always return the lastest value)
+    ///
+    pub fn follow_undo_log_size_changes(&self) -> impl Send + Sync + Stream<Item=UndoLogSize> {
+        self.core.sync(|core| core.log_size_publisher.subscribe())
     }
 }
 

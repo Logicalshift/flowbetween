@@ -3,6 +3,6 @@
 ///
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct UndoLogSize {
-    undo_depth: usize,
-    redo_depth: usize
+    pub undo_depth: usize,
+    pub redo_depth: usize
 }
