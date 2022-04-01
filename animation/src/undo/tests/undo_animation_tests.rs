@@ -375,3 +375,43 @@ fn double_redo() {
         assert!(elements[1].id() == ElementId::Assigned(1));
     });
 }
+
+#[test]
+fn follow_undo_log_size() {
+    executor::block_on(async {
+        use AnimationEdit::*;
+        use LayerEdit::*;
+
+        // Create the animation
+        let in_memory_store     = InMemoryStorage::new();
+        let animation           = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
+        let animation           = UndoableAnimation::new(animation);
+        let mut undo_log_size   = animation.follow_undo_log_size_changes();
+
+        let next_log_size       = undo_log_size.next().await;
+        assert!(next_log_size == Some(UndoLogSize { undo_depth: 0, redo_depth: 0 }));
+
+        // Setup a layer
+        animation.edit().publish(Arc::new(vec![
+            AddNewLayer(0),
+            Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+            Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(20000))),
+            Undo(UndoEdit::FinishAction),
+        ])).await;
+
+        let next_log_size       = undo_log_size.next().await;
+        assert!(next_log_size == Some(UndoLogSize { undo_depth: 1, redo_depth: 0 }));
+
+        // Create a single element
+        animation.edit().publish(Arc::new(vec![
+            Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+            Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+
+            Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+            Undo(UndoEdit::FinishAction),
+        ])).await;
+
+        let next_log_size       = undo_log_size.next().await;
+        assert!(next_log_size == Some(UndoLogSize { undo_depth: 2, redo_depth: 0 }));
+    });
+}

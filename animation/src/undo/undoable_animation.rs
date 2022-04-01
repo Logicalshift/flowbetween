@@ -248,7 +248,11 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
     /// updates to be discarded: ie, reads will always return the lastest value)
     ///
     pub fn follow_undo_log_size_changes(&self) -> impl Send + Sync + Stream<Item=UndoLogSize> {
-        self.core.sync(|core| core.log_size_publisher.subscribe())
+        let log_size_stream = self.core.sync(|core| core.log_size_publisher.subscribe());
+
+        self.core.future_desync(|core| async move { core.update_undo_log_size().await; }.boxed()).detach();
+
+        log_size_stream
     }
 }
 
