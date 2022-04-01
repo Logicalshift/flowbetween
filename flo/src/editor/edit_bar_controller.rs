@@ -14,15 +14,6 @@ use std::sync::*;
 /// Creates the UI binding for the edit controller
 ///
 fn edit_bar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAnimation<Anim>>>, undo: Resource<Image>, redo: Resource<Image>) -> BindRef<Control> {
-    // Turn the undo log size change stream into a binding
-    let undo_log_size   = bind_stream(model.follow_undo_log_size_changes(), UndoLogSize::default(), |new_value| new_value);
-
-    // Computed bindings for whether or not the undo/redo buttons are enabled
-    let undo_log_size_2 = undo_log_size.clone();
-    let undo_log_size_3 = undo_log_size.clone();
-    let enable_undo     = computed(move || undo_log_size_2.get().undo_depth > 0);
-    let disable_undo    = computed(move || undo_log_size_3.get().redo_depth > 0);
-
     computed(move || {
         Control::container()
             .with(Bounds::fill_all())
@@ -43,6 +34,7 @@ fn edit_bar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAni
                             .with(Bounds::next_horiz(32.0))
                             .with(ControlAttribute::Padding((4, 2), (0, 2)))
                             .with(Hover::Tooltip("Undo".to_string()))
+                            .with(State::Enabled(Property::bound("CanUndo")))
                             .with((ActionTrigger::Command(Command::with_id("undo").named("Undo")), "Undo"))
                             .with((ActionTrigger::Click, "Undo")),
                         Control::button()
@@ -50,6 +42,7 @@ fn edit_bar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAni
                             .with(Bounds::next_horiz(32.0))
                             .with(ControlAttribute::Padding((0, 2), (4, 2)))
                             .with(Hover::Tooltip("Redo".to_string()))
+                            .with(State::Enabled(Property::bound("CanRedo")))
                             .with((ActionTrigger::Command(Command::with_id("redo").named("Redo")), "Redo"))
                             .with((ActionTrigger::Click, "Redo")),
                     ]),
@@ -92,11 +85,17 @@ pub fn edit_bar_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel
             let mut actions = actions;
 
             // Load resources
-            let undo    = resources.images().register_named("undo", svg_static(include_bytes!("../../svg/menu_controls/undo.svg")));
-            let redo    = resources.images().register_named("redo", svg_static(include_bytes!("../../svg/menu_controls/redo.svg")));
+            let undo        = resources.images().register_named("undo", svg_static(include_bytes!("../../svg/menu_controls/undo.svg")));
+            let redo        = resources.images().register_named("redo", svg_static(include_bytes!("../../svg/menu_controls/redo.svg")));
+
+            // Properties
+            let can_undo    = bind_stream(model.follow_undo_log_size_changes(), PropertyValue::Bool(false), |_, size| PropertyValue::Bool(size.undo_depth > 0));
+            let can_redo    = bind_stream(model.follow_undo_log_size_changes(), PropertyValue::Bool(false), |_, size| PropertyValue::Bool(size.redo_depth > 0));
+            actions.send(ControllerAction::SetPropertyBinding("CanUndo".into(), can_undo.clone().into())).await.ok();
+            actions.send(ControllerAction::SetPropertyBinding("CanRedo".into(), can_redo.clone().into())).await.ok();
 
             // Set up the UI
-            let ui      = edit_bar_ui(&model, undo, redo);
+            let ui          = edit_bar_ui(&model, undo, redo);
             actions.send(ControllerAction::SetUi(ui)).await.ok();
 
             // Receive events for this controller
@@ -105,8 +104,8 @@ pub fn edit_bar_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel
                 match next_event {
                     ControllerEvent::Action(action_name, _params) => {
                         match action_name.as_str() {
-                            "Undo"  => { perform_undo(&model).await; }
-                            "Redo"  => { perform_redo(&model).await; }
+                            "Undo"  => { if can_undo.get() == PropertyValue::Bool(true) { perform_undo(&model).await; } }
+                            "Redo"  => { if can_redo.get() == PropertyValue::Bool(true) { perform_redo(&model).await; } }
 
                             _       => { }
                         }
