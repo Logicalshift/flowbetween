@@ -33,7 +33,12 @@ impl UndoLog {
     /// The number of entries in the undo log
     ///
     pub fn undo_depth(&self) -> usize {
-        self.undo.len()
+        if self.undo.last().map(|last| last.is_empty()).unwrap_or(false) {
+            // If the last edit is empty, it doesn't count
+            self.undo.len()-1
+        } else {
+            self.undo.len()
+        }
     }
 
     ///
