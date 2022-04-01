@@ -477,3 +477,166 @@ fn follow_undo_log_size() {
         assert!(next_log_size == Some(UndoLogSize { undo_depth: 2, redo_depth: 0 }));
     });
 }
+
+#[test]
+fn undo_redo_undo_create_element() {
+    executor::block_on(async {
+        use AnimationEdit::*;
+        use LayerEdit::*;
+
+        // Create the animation
+        let in_memory_store = InMemoryStorage::new();
+        let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
+        let animation       = UndoableAnimation::new(animation);
+
+        // Setup a layer
+        animation.edit().publish(Arc::new(vec![
+            AddNewLayer(0),
+            Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+            Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(20000))),
+            Undo(UndoEdit::FinishAction),
+        ])).await;
+
+        // Create a single element
+        animation.edit().publish(Arc::new(vec![
+            Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+            Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+            Undo(UndoEdit::FinishAction),
+        ])).await;
+
+        animation.edit().publish(Arc::new(vec![
+            Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+            Undo(UndoEdit::FinishAction),
+        ])).await;
+
+        // Wait for the edits to commit
+        animation.edit().when_empty().await;
+
+        // Element should exist
+        let frame       = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
+        let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+        assert!(elements.len() == 1);
+
+        // Undo the create action
+        let timeout     = Delay::new(Duration::from_secs(10));
+        let undo_result = match select(animation.undo().boxed(), timeout).await {
+            Either::Right(_)        => { assert!(false, "Timed out"); unimplemented!() }
+            Either::Left(result)    => result.0,
+        };
+        println!("{:?}", undo_result);
+        assert!(undo_result.is_ok());
+
+        // Redo it
+        let timeout     = Delay::new(Duration::from_secs(10));
+        let undo_result = match select(animation.redo().boxed(), timeout).await {
+            Either::Right(_)        => { assert!(false, "Timed out"); unimplemented!() }
+            Either::Left(result)    => result.0,
+        };
+        println!("{:?}", undo_result);
+        assert!(undo_result.is_ok());
+
+        // Element should be back
+        let frame       = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
+        let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+        assert!(elements.len() == 1);
+
+        // Undo it again
+        let timeout     = Delay::new(Duration::from_secs(10));
+        let undo_result = match select(animation.undo().boxed(), timeout).await {
+            Either::Right(_)        => { assert!(false, "Timed out"); unimplemented!() }
+            Either::Left(result)    => result.0,
+        };
+        println!("{:?}", undo_result);
+        assert!(undo_result.is_ok());
+
+        // Element should no longer exist
+        let frame       = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
+        let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+        assert!(elements.len() == 0);
+    });
+}
+
+#[test]
+fn double_undo_with_errant_finish_action() {
+    executor::block_on(async {
+        use AnimationEdit::*;
+        use LayerEdit::*;
+
+        // Create the animation
+        let in_memory_store = InMemoryStorage::new();
+        let animation       = create_animation_editor(move |commands| in_memory_store.get_responses(commands).boxed());
+        let animation       = UndoableAnimation::new(animation);
+
+        // Setup a layer
+        animation.edit().publish(Arc::new(vec![
+            AddNewLayer(0),
+            Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+            Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(20000))),
+            Undo(UndoEdit::FinishAction),
+        ])).await;
+
+        // Create a couple of elements
+        animation.edit().publish(Arc::new(vec![
+            Layer(0, Path(Duration::from_millis(0), PathEdit::SelectBrush(ElementId::Assigned(100), BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+            Layer(0, Path(Duration::from_millis(0), PathEdit::BrushProperties(ElementId::Assigned(101), BrushProperties::new()))),
+            Undo(UndoEdit::FinishAction),
+        ])).await;
+
+        animation.edit().publish(Arc::new(vec![
+            Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(0), circle_path((100.0, 100.0), 50.0)))),
+            Undo(UndoEdit::FinishAction),
+        ])).await;
+
+        animation.edit().publish(Arc::new(vec![
+            Layer(0, Path(Duration::from_millis(0), PathEdit::CreatePath(ElementId::Assigned(1), circle_path((100.0, 100.0), 50.0)))),
+            Undo(UndoEdit::FinishAction),
+        ])).await;
+
+        // Wait for the edits to commit
+        animation.edit().when_empty().await;
+
+        // Element should exist
+        let frame       = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
+        let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+        assert!(elements.len() == 2);
+
+        // Undo the create action
+        let timeout     = Delay::new(Duration::from_secs(10));
+        let undo_result = match select(animation.undo().boxed(), timeout).await {
+            Either::Right(_)        => { assert!(false, "Timed out"); unimplemented!() }
+            Either::Left(result)    => result.0,
+        };
+        println!("{:?}", undo_result);
+        assert!(undo_result.is_ok());
+
+        // One element left after the first undo
+        let frame       = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
+        let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+        assert!(elements.len() == 1);
+
+        // Add a 'finish action' in response to the undo (canvas_controller will do this as it interprets the undo as an action)
+        animation.edit().publish(Arc::new(vec![
+            Undo(UndoEdit::FinishAction),
+        ])).await;
+
+        // Then undo the next create action
+        let timeout     = Delay::new(Duration::from_secs(10));
+        let undo_result = match select(animation.undo().boxed(), timeout).await {
+            Either::Right(_)        => { assert!(false, "Timed out"); unimplemented!() }
+            Either::Left(result)    => result.0,
+        };
+        println!("{:?}", undo_result);
+        assert!(undo_result.is_ok());
+
+        // Elements should no longer exist
+        let frame       = animation.get_layer_with_id(0).unwrap().get_frame_at_time(Duration::from_millis(0));
+        let elements    = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+        assert!(elements.len() == 0);
+    });
+}
