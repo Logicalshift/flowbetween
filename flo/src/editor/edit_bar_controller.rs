@@ -14,6 +14,15 @@ use std::sync::*;
 /// Creates the UI binding for the edit controller
 ///
 fn edit_bar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAnimation<Anim>>>, undo: Resource<Image>, redo: Resource<Image>) -> BindRef<Control> {
+    // Turn the undo log size change stream into a binding
+    let undo_log_size   = bind_stream(model.follow_undo_log_size_changes(), UndoLogSize::default(), |new_value| new_value);
+
+    // Computed bindings for whether or not the undo/redo buttons are enabled
+    let undo_log_size_2 = undo_log_size.clone();
+    let undo_log_size_3 = undo_log_size.clone();
+    let enable_undo     = computed(move || undo_log_size_2.get().undo_depth > 0);
+    let disable_undo    = computed(move || undo_log_size_3.get().redo_depth > 0);
+
     computed(move || {
         Control::container()
             .with(Bounds::fill_all())

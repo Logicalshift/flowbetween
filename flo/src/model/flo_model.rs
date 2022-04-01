@@ -284,6 +284,14 @@ impl<Anim: 'static+EditableAnimation> FloModel<UndoableAnimation<Anim>> {
     pub async fn redo(&self) -> Result<(), UndoFailureReason> {
         self.animation.redo().await
     }
+
+    ///
+    /// Retrieves a stream that tracks the size of the undo log (this is an expiring stream, so backpressure will cause
+    /// updates to be discarded: ie, reads will always return the lastest value)
+    ///
+    pub fn follow_undo_log_size_changes(&self) -> impl Send + Sync + Stream<Item=UndoLogSize> {
+        self.animation.follow_undo_log_size_changes()
+    }
 }
 
 // Clone because for some reason #[derive(Clone)] does something weird
