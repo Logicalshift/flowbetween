@@ -623,7 +623,6 @@ let flo_canvas = (function() {
             },
 
             layer_alpha: (layer_id, alpha) => {
-                console.log('Layer alpha set', layer_id, alpha);
                 alpha_for_layer[layer_id] = alpha;
             },
 
