@@ -30,6 +30,20 @@ impl UndoLog {
     }
 
     ///
+    /// The number of entries in the undo log
+    ///
+    pub fn undo_depth(&self) -> usize {
+        self.undo.len()
+    }
+
+    ///
+    /// The number of entries in the redo log
+    ///
+    pub fn redo_depth(&self) -> usize {
+        self.redo.len()
+    }
+
+    ///
     /// Indicates that we're about to start an undo or a redo action
     ///
     pub fn start_undoing(&mut self) {
@@ -56,6 +70,12 @@ impl UndoLog {
         if committed_edits.len() == 1 {
             match committed_edits[0] {
                 AnimationEdit::Undo(UndoEdit::PrepareToUndo(_)) => { return; }
+                AnimationEdit::Undo(UndoEdit::FinishAction)     => {
+                    // Don't push a 'finish action' undo edit onto an otherwise empty undo step
+                    if self.undo.last().map(|last_step| last_step.is_empty()).unwrap_or(true) {
+                        return;
+                    }
+                }
                 _                                               => { }
             }
         }
