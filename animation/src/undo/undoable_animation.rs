@@ -1,5 +1,6 @@
 use super::undo_log::*;
 use super::edit_log_reader::*;
+use super::undoable_animation_core::*;
 use crate::traits::*;
 
 use futures::prelude::*;
@@ -23,7 +24,7 @@ pub struct UndoableAnimation<Anim: 'static+Unpin+EditableAnimation> {
     animation:      Arc<Desync<Anim>>,
 
     /// The actions to undo or redo in the animation
-    undo_log:       Arc<Desync<UndoLog>>,
+    core:           Arc<Desync<UndoableAnimationCore>>,
 
     /// The input stream of edits for this animation
     edits:          Publisher<Arc<Vec<AnimationEdit>>>,
@@ -39,17 +40,22 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
     pub fn new(animation: Anim) -> UndoableAnimation<Anim> {
         // Box up the animation and create the edit stream
         let animation       = Arc::new(Desync::new(animation));
-        let undo_log        = Arc::new(Desync::new(UndoLog::new()));
+        let undo_log        = UndoLog::new();
         let mut edits       = Publisher::new(10);
         let pending_edits   = scheduler::queue();
 
+        let core            = UndoableAnimationCore {
+            undo_log
+        };
+        let core            = Arc::new(Desync::new(core));
+
         // Set up communication with the animation and with the undo log
         Self::pipe_edits_to_animation(&animation, &mut edits);
-        Self::pipe_retired_edits_to_undo_log(&animation, &undo_log);
+        Self::pipe_retired_edits_to_undo_log(&animation, &core);
 
         UndoableAnimation {
             animation,
-            undo_log,
+            core,
             edits,
             pending_edits,
         }
@@ -70,12 +76,12 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
     ///
     /// When the underlying animation retires its edits, send them to the undo log
     ///
-    fn pipe_retired_edits_to_undo_log(animation: &Arc<Desync<Anim>>, undo_log: &Arc<Desync<UndoLog>>) {
+    fn pipe_retired_edits_to_undo_log(animation: &Arc<Desync<Anim>>, core: &Arc<Desync<UndoableAnimationCore>>) {
         let retired_edits = animation.sync(|anim| anim.retired_edits());
 
-        pipe_in(Arc::clone(undo_log), retired_edits, move |undo_log, retired_edits| {
+        pipe_in(Arc::clone(core), retired_edits, move |core, retired_edits| {
             async move {
-                undo_log.retire(retired_edits);
+                core.undo_log.retire(retired_edits);
             }.boxed()
         });
     }
@@ -111,7 +117,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
     pub fn undo<'a>(&'a self) -> impl 'a + Future<Output=Result<(), UndoFailureReason>> {
         async move {
             // Scheduling on the animation desync will prevent any further edits from occurring while we're performing the undo
-            let undo_log = self.undo_log.clone();
+            let core = self.core.clone();
 
             self.animation.future_desync(move |animation| {
                 async move {
@@ -131,15 +137,15 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     }
 
                     // Fetch the undo action that we're about to perform
-                    let undo_edit = undo_log.future_sync(|undo_log| async move {
-                        undo_log.start_undoing();
-                        undo_log.undo()
+                    let undo_edit = core.future_sync(|core| async move {
+                        core.undo_log.start_undoing();
+                        core.undo_log.undo()
                     }.boxed()).await.unwrap();
 
                     let undo_edit = if let Some(undo_edit) = undo_edit { 
                         undo_edit 
                     } else { 
-                        undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
+                        core.future_sync(|core| async move { core.undo_log.finish_undoing(); }.boxed()).await.unwrap();
                         return Err(UndoFailureReason::NothingToUndo); 
                     };
 
@@ -153,7 +159,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     // The undo is complete at this point
                     // Note: we're relying on the edit to have been queued in sequence here so that the 'finish_undoing' happens after the
                     // undo log pipe has received this edit
-                    undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
+                    core.future_sync(|core| async move { core.undo_log.finish_undoing(); }.boxed()).await.unwrap();
 
                     match undo_result {
                         Some(Ok(()))        => Ok(()),
@@ -171,7 +177,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
     pub fn redo<'a>(&'a self) -> impl 'a + Future<Output=Result<(), UndoFailureReason>> {
         async move {
             // Scheduling on the animation desync will prevent any further edits from occurring while we're performing the undo
-            let undo_log = self.undo_log.clone();
+            let core = self.core.clone();
 
             self.animation.future_desync(move |animation| {
                 async move {
@@ -192,15 +198,15 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     }
 
                     // Fetch the redo action that we're about to perform
-                    let redo_edit = undo_log.future_sync(|undo_log| async move {
-                        undo_log.start_undoing();
-                        undo_log.redo()
+                    let redo_edit = core.future_sync(|core| async move {
+                        core.undo_log.start_undoing();
+                        core.undo_log.redo()
                     }.boxed()).await.unwrap();
 
                     let redo_edit = if let Some(redo_edit) = redo_edit { 
                         redo_edit 
                     } else { 
-                        undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
+                        core.future_sync(|core| async move { core.undo_log.finish_undoing(); }.boxed()).await.unwrap();
                         return Err(UndoFailureReason::NothingToRedo); 
                     };
 
@@ -213,7 +219,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
                     retired_edits.next().await;
 
                     // The redo is complete at this point
-                    undo_log.future_sync(|undo_log| async move { undo_log.finish_undoing(); }.boxed()).await.unwrap();
+                    core.future_sync(|core| async move { core.undo_log.finish_undoing(); }.boxed()).await.unwrap();
 
                     Ok(())
                 }.boxed()
