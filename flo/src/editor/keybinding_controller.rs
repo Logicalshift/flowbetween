@@ -30,7 +30,11 @@ impl KeyBindingController {
         use self::KeyPress::*;
 
         bind(Control::empty()
-            .with((KeyBinding::ctrl(KeyNumpadAdd), Command::with_id("layer_add"))))
+            .with((KeyBinding::ctrl(KeyNumpadAdd), Command::with_id("layer_add")))
+
+            .with((KeyBinding::ctrl(KeyZ), Command::with_id("undo")))
+            .with((KeyBinding::ctrl_shift(KeyZ), Command::with_id("redo")))
+        )
     }
 }
 
