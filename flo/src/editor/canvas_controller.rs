@@ -277,7 +277,7 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
     fn tick(&self) {
         let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
 
-        if self.core.sync(|core| core.pending_finish_action) {
+        if self.core.sync(|core| core.pending_finish_action && !core.undo_or_redo_in_progress) {
             self.core.desync(|core| { core.pending_finish_action = false; });
             self.anim_model.perform_edits(vec![AnimationEdit::Undo(UndoEdit::FinishAction)]);
         }
