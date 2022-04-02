@@ -32,9 +32,6 @@ pub struct SelectionModel<Anim: Animation> {
     /// The animation this model is for
     animation: Arc<Anim>,
 
-    /// The layers in the current frame
-    layers: BindRef<Vec<FrameLayerModel>>,
-
     /// The currently selected time
     current_time: BindRef<Duration>,
 
@@ -51,7 +48,6 @@ impl<Anim: Animation> Clone for SelectionModel<Anim> {
             selected_elements_binding:  self.selected_elements_binding.clone(),
             selected_sub_effect:        self.selected_sub_effect.clone(),
             animation:                  self.animation.clone(),
-            layers:                     self.layers.clone(),
             current_time:               self.current_time.clone(),
             selected_layer:             self.selected_layer.clone(),
         }
@@ -77,7 +73,6 @@ impl<Anim: 'static+Animation> SelectionModel<Anim> {
             selection_in_order:         selection_in_order,
             selected_sub_effect:        selected_sub_effect,
             animation:                  animation,
-            layers:                     frame_model.layers.clone(),
             current_time:               BindRef::from(&timeline_model.current_time),
             selected_layer:             BindRef::from(&timeline_model.selected_layer),
         }
@@ -191,15 +186,14 @@ impl<Anim: 'static+EditableAnimation> SelectionModel<Anim> {
         })]);
 
         // Read the contents of the inner group (cut has no effect if applied to a non-existent layer)
-        let layers          = self.layers.get();
-        let frame           = layers.iter().filter(|layer| layer.layer_id == layer_id).nth(0);
-        let frame           = if let Some(frame) = frame { frame.frame.get() } else { return; };
-        let frame           = if let Some(frame) = frame { frame } else { return; };
+        let layer           = self.animation.get_layer_with_id(layer_id);
+        let layer           = if let Some(layer) = layer { layer } else { warn!("Cut layer {} was not found", layer_id); return; };
+        let frame           = layer.get_frame_at_time(when);
 
         let cut_elements    = frame.element_with_id(inside_group);
-        let cut_elements    = if let Some(Vector::Group(cut_elements)) = &cut_elements { cut_elements.elements().collect::<Vec<_>>() } else { vec![] };
+        let cut_elements    = if let Some(Vector::Group(cut_elements)) = &cut_elements { cut_elements.elements().collect::<Vec<_>>() } else { warn!("No elements inside cut"); vec![] };
 
-        // Ungroup the two cut groups
+        // Ungroup the cut group
         self.animation.perform_edits(vec![AnimationEdit::Element(vec![inside_group], ElementEdit::Ungroup)]);
 
         // Set the selection to be the cut elements
