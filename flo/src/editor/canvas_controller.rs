@@ -26,6 +26,9 @@ struct CanvasCore<Anim: Animation+EditableAnimation> {
     /// The canvas renderer
     renderer: CanvasRenderer,
 
+    /// Set to true if an undo or redo operation is currently in progress
+    undo_or_redo_in_progress: bool,
+
     /// The animation model
     model: Arc<FloModel<Anim>>,
 
@@ -84,6 +87,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         // Create the core to perform the actual rendering
         let core                = Desync::new(CanvasCore {
                 renderer:                   renderer,
+                undo_or_redo_in_progress:   false,
                 model:                      view_model.clone(),
                 pending_finish_action:      false,
                 canvas_tools:               canvas_tools,
@@ -439,13 +443,46 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasCore<Anim> {
         // Everything that happens in a single tick should show up as a single undo action
         if !edits.is_empty() {
             if edits.len() == 1 {
-                match edits[0] {
+                match &edits[0] {
+                    AnimationEdit::Undo(UndoEdit::PrepareToUndo(undo_msg)) => {
+                        // Undo edits always clear the 'pending finish action' message
+                        self.pending_finish_action = false;
+
+                        // Other actions may be taken based on the undo message. See edit_bar_controller.rs for where these are generated.
+                        match undo_msg.as_str() {
+                            "Undo_START" |
+                            "Redo_START" => {
+                                self.undo_or_redo_in_progress   = true;
+                                self.pending_finish_action      = false;
+                            }
+
+                            "Undo_FINISH" |
+                            "Redo_FINISH" => {
+                                self.undo_or_redo_in_progress   = false;
+                                self.pending_finish_action      = false;
+
+                                // Redraw the canvas at the end of an undo operation
+                                self.model.timeline().invalidate_canvas();
+                            }
+
+                            _  => { }
+                        }
+
+                        // These undo messages are not processed further
+                        return;
+                    }
+
                     AnimationEdit::Undo(_)  => { }
                     _                       => { self.pending_finish_action = true; }
                 }
             } else {
                 self.pending_finish_action = true;
             }
+        }
+
+        // Do not process the edits during an undo (we're only deciding on whether or not to redraw here, and a redraw is triggered when the undo has completed)
+        if self.undo_or_redo_in_progress {
+            return;
         }
 
         for edit in edits.iter() {

@@ -2,6 +2,7 @@ use crate::model::*;
 use crate::style::*;
 
 use flo_ui::*;
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 use flo_animation::undo::*;
@@ -57,18 +58,28 @@ fn edit_bar_ui<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAni
 /// Carries out the undo operation on the animation
 ///
 async fn perform_undo<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAnimation<Anim>>>) {
+    // We use the 'prepare to undo' event to signal anything that's listening that an undo is in progress for the following set of edits
+    model.edit().publish(Arc::new(vec![AnimationEdit::Undo(UndoEdit::PrepareToUndo("Undo_START".into()))])).await;
+
     if let Err(undo_err) = model.undo().await {
         warn!("Undo failed: {:?}", undo_err);
     }
+
+    model.edit().publish(Arc::new(vec![AnimationEdit::Undo(UndoEdit::PrepareToUndo("Undo_FINISH".into()))])).await;
 }
 
 ///
 /// Carries out the redo operation on the animation
 ///
 async fn perform_redo<Anim: 'static+EditableAnimation>(model: &Arc<FloModel<UndoableAnimation<Anim>>>) {
+    // We use the 'prepare to undo' event to signal anything that's listening that an redo is in progress for the following set of edits
+    model.edit().publish(Arc::new(vec![AnimationEdit::Undo(UndoEdit::PrepareToUndo("Redo_START".into()))])).await;
+
     if let Err(redo_err) = model.redo().await {
         warn!("Redo failed: {:?}", redo_err);
     }
+
+    model.edit().publish(Arc::new(vec![AnimationEdit::Undo(UndoEdit::PrepareToUndo("Redo_FINISH".into()))])).await;
 }
 
 ///
@@ -110,8 +121,6 @@ pub fn edit_bar_controller<Anim: 'static+EditableAnimation>(model: &Arc<FloModel
                             _       => { }
                         }
                     }
-
-                    _ => { }
                 }
             }
         }
