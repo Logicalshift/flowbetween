@@ -118,6 +118,9 @@ impl StreamAnimation {
 
         // Synchronise after the future has completed
         wait_for_edits.sync(|_| { });
+
+        // Synchronise with the animation core so that all the edits are performed
+        self.core.sync(|_| { });
     }
 
     ///
@@ -360,14 +363,14 @@ impl EditableAnimation for StreamAnimation {
             async move {
                 // Publish the edits
                 publisher.publish(Arc::new(edits)).await;
-
-                // Wait for them to be processed
-                publisher.when_empty().await;
             }.boxed()
         }).sync().ok();
 
         // Return the sync_request to the pool
         self.idle_sync_requests.desync(move |reqs| { reqs.push(sync_request) });
+
+        // Wait for the edits to complete
+        self.wait_for_edits();
     }
 
     ///
