@@ -78,6 +78,11 @@ impl UndoLog {
                 AnimationEdit::Undo(UndoEdit::FinishAction)     => {
                     // Don't push a 'finish action' undo edit onto an otherwise empty undo step
                     if self.undo.last().map(|last_step| last_step.is_empty()).unwrap_or(true) {
+                        // Apply to the previous undo step
+                        if self.undo.len() > 1 {
+                            let previous_step_idx = self.undo.len()-2;
+                            self.undo[previous_step_idx].push_edit(edit);
+                        }
                         return;
                     }
                 }
