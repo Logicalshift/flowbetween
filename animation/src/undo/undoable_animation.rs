@@ -8,7 +8,6 @@ use futures::prelude::*;
 use futures::stream::{BoxStream};
 
 use ::desync::*;
-use ::desync::scheduler;
 use flo_stream::*;
 
 use uuid::*;
@@ -26,12 +25,6 @@ pub struct UndoableAnimation<Anim: 'static+Unpin+EditableAnimation> {
 
     /// The actions to undo or redo in the animation
     core:           Arc<Desync<UndoableAnimationCore>>,
-
-    /// The input stream of edits for this animation
-    edits:          Publisher<Arc<Vec<AnimationEdit>>>,
-
-    /// Used to schedule edits for the animation
-    pending_edits:  Arc<scheduler::JobQueue>,
 }
 
 impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
@@ -43,8 +36,6 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
         let animation           = Arc::new(Desync::new(animation));
         let undo_log            = UndoLog::new();
         let log_size_publisher  = ExpiringPublisher::new(1);
-        let mut edits           = Publisher::new(10);
-        let pending_edits       = scheduler::queue();
 
         let core                = UndoableAnimationCore {
             undo_log,
@@ -53,27 +44,12 @@ impl<Anim: 'static+Unpin+EditableAnimation> UndoableAnimation<Anim> {
         let core                = Arc::new(Desync::new(core));
 
         // Set up communication with the animation and with the undo log
-        Self::pipe_edits_to_animation(&animation, &mut edits);
         Self::pipe_retired_edits_to_undo_log(&animation, &core);
 
         UndoableAnimation {
             animation,
             core,
-            edits,
-            pending_edits,
         }
-    }
-
-    ///
-    /// Sends edits from the undo animation to the 'main' animation
-    ///
-    fn pipe_edits_to_animation(animation: &Arc<Desync<Anim>>, edits: &mut Publisher<Arc<Vec<AnimationEdit>>>) {
-        pipe_in(Arc::clone(animation), edits.subscribe(), move |animation, edits| {
-            async move {
-                // Send the edits on to the animation stream
-                animation.edit().publish(edits).await;
-            }.boxed()
-        });
     }
 
     ///
@@ -324,7 +300,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> EditableAnimation for UndoableAnimat
     /// a set of related edits are performed atomically
     ///
     fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> {
-        self.edits.republish()
+        self.animation.sync(|anim| anim.edit())
     }
 
     ///
@@ -333,16 +309,7 @@ impl<Anim: 'static+Unpin+EditableAnimation> EditableAnimation for UndoableAnimat
     /// (Note that these are not always published to the publisher)
     ///
     fn perform_edits(&self, edits: Vec<AnimationEdit>) {
-        // Connect to the edit stream (this will capture undo context)
-        let mut edit_stream = self.edit();
-
-        // Dispatch via the pending edits queue, synchronously (so the edits are on the animation's queue when this returns)
-        scheduler::scheduler().future_desync(&self.pending_edits, move || {
-            async move {
-                edit_stream.publish(Arc::new(edits)).await;
-                edit_stream.when_empty().await;
-            }.boxed()
-        }).sync().ok();
+        self.animation.sync(|anim| anim.perform_edits(edits));
     }
 
     ///
