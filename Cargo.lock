@@ -837,9 +837,9 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
 name = "encoding_rs"
-version = "0.8.30"
+version = "0.8.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7896dc8abb250ffdda33912550faa54c88ec8b998dec0b2c55ab224921ce11df"
+checksum = "9852635589dc9f9ea1b6fe9f05b50ef208c85c834a562f0c6abb1c475736ec2b"
 dependencies = [
  "cfg-if",
 ]
@@ -884,9 +884,9 @@ dependencies = [
 
 [[package]]
 name = "euclid"
-version = "0.22.6"
+version = "0.22.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da96828553a086d7b18dcebfc579bd9628b016f86590d7453c115e490fa74b80"
+checksum = "b52c2ef4a78da0ba68fbe1fd920627411096d2ac478f7f4c9f3a54ba6705bade"
 dependencies = [
  "num-traits",
 ]
@@ -983,7 +983,7 @@ dependencies = [
 [[package]]
 name = "flo_canvas"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#0e7332f1f672100ae1f20f80b6b3eacdcc639eaa"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#fc52333631a7c8ea771adc00a0f652f0606548a3"
 dependencies = [
  "desync",
  "flo_curves",
@@ -1198,7 +1198,7 @@ dependencies = [
 [[package]]
 name = "flo_render"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#0e7332f1f672100ae1f20f80b6b3eacdcc639eaa"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#fc52333631a7c8ea771adc00a0f652f0606548a3"
 dependencies = [
  "bindgen",
  "cocoa 0.24.0",
@@ -1213,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "flo_render_canvas"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#0e7332f1f672100ae1f20f80b6b3eacdcc639eaa"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#fc52333631a7c8ea771adc00a0f652f0606548a3"
 dependencies = [
  "desync",
  "flo_canvas",
@@ -1227,7 +1227,7 @@ dependencies = [
 [[package]]
 name = "flo_render_gl_offscreen"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#0e7332f1f672100ae1f20f80b6b3eacdcc639eaa"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#fc52333631a7c8ea771adc00a0f652f0606548a3"
 dependencies = [
  "bindgen",
  "cgl",
@@ -2714,9 +2714,9 @@ checksum = "2e24979f63a11545f5f2c60141afe249d4f19f84581ea2138065e400941d83d3"
 
 [[package]]
 name = "slab"
-version = "0.4.5"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9def91fd1e018fe007022791f865d0ccc9b3a0d5001e01aabb8b40e46000afb5"
+checksum = "eb703cfe953bccee95685111adeedb76fabe4e97549a58d16f03ea7b9367bb32"
 
 [[package]]
 name = "smallvec"
@@ -3082,9 +3082,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.23"
+version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa31669fa42c09c34d94d8165dd2012e8ff3c66aca50f3bb226b68f216f2706c"
+checksum = "90442985ee2f57c9e1b548ee72ae842f4a9a20e3f417cc38dbc5dc684d9bb4ee"
 dependencies = [
  "lazy_static",
 ]
