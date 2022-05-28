@@ -778,7 +778,7 @@ dependencies = [
 [[package]]
 name = "desync"
 version = "0.8.0"
-source = "git+https://github.com/Logicalshift/desync?branch=v0.8.0#138eb9109723c0a617fbfdf1536c7dfb3b5be8fa"
+source = "git+https://github.com/Logicalshift/desync?branch=v0.8.0#299be98d058e6bdf167139249b3a685ef181ca74"
 dependencies = [
  "futures",
  "lazy_static",
