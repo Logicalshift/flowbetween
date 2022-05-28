@@ -137,6 +137,7 @@ impl LayerDrawingToPaths {
                     ClearSprite                                     => { debug_assert!(false, "Operation unsupported in an animation layer"); },
                     SpriteTransform(_sprite_transform)              => { debug_assert!(false, "Operation unsupported in an animation layer"); },
                     DrawSprite(_sprite_id)                          => { debug_assert!(false, "Cannot draw sprites on animation layers"); },
+                    DrawSpriteWithFilters(_sprite_id, _filters)     => { debug_assert!(false, "Cannot draw sprites on animation layers"); }
                     Texture(_texture_id, _texture_op)               => { debug_assert!(false, "Operation unsupported in an animation layer"); },
 
                     Font(_font_id, _font_op)                        => { debug_assert!(false, "Operation unsupported in an animation layer"); },

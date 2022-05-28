@@ -429,6 +429,7 @@ impl CairoDraw {
             ClearSprite                                 => { unimplemented!(); },
             SpriteTransform(transform)                  => { unimplemented!(); },
             DrawSprite(sprite_id)                       => { unimplemented!(); },
+            DrawSpriteWithFilters(sprite_id, filters)   => { unimplemented!(); }
 
             StartFrame | ShowFrame | ResetFrame         => { /* Frames should be implemented elsewhere */ }
 

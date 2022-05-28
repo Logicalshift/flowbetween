@@ -238,7 +238,8 @@ impl ViewCanvas {
                     context.get_state().set_sprite_transform(old_transform * new_transform);
                 }
 
-                DrawSprite(sprite_id) => {
+                DrawSprite(sprite_id) |
+                DrawSpriteWithFilters(sprite_id, _) => {
                     // Push the existing state
                     context.draw(&PushState);
 
