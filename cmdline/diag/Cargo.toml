@@ -13,5 +13,5 @@ flo_commands    = { path = "../commands", version = "0.2" }
 flo_animation   = "0.2"
 
 futures         = "0.3"
-tokio           = { version = "0.2", features = [ "fs", "io-std", "io-util", "rt-core", "rt-threaded", "macros" ] }
+tokio           = { version = "1.19", features = [ "fs", "io-std", "io-util", "macros" ] }
 clap            = "2.0"
