@@ -19,7 +19,7 @@ flo_canvas              = "0.4"
 flo_canvas_animation    = "0.3"
 flo_ui_files            = "0.2"
 flo_rope                = "0.2"
-desync                  = "0.8"
+desync                  = "0.9"
 
 strum                   = "0.23"
 strum_macros            = "0.23"

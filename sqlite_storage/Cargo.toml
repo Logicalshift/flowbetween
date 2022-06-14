@@ -15,7 +15,7 @@ flo_logging         = "0.2"
 
 rusqlite            = { version = "0.27", features = ["bundled"] }
 futures             = "0.3"
-desync              = "0.8"
+desync              = "0.9"
 
 [dev-dependencies]
 flo_canvas          = "0.4"

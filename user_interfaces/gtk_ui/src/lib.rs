@@ -16,7 +16,6 @@ extern crate gio;
 extern crate gdk_pixbuf;
 extern crate cairo;
 extern crate glib;
-extern crate anymap;
 extern crate futures;
 extern crate itertools;
 extern crate gl;

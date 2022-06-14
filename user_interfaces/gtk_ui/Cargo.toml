@@ -14,7 +14,7 @@ flo_canvas          = "0.4"
 flo_stream          = "0.7"
 flo_render          = { version = "0.4", features = [ "opengl" ] }
 flo_render_canvas   = "0.4"
-desync              = "0.8"
+desync              = "0.9"
 
 gtk                 = { version = "0.9", features = ["v3_20"] }
 gdk                 = { version = "0.13", features = ["v3_18"] }
@@ -27,7 +27,6 @@ gl                  = "0.14"
 epoxy               = "0.1"
 shared_library      = "0.1"
 futures             = "0.3"
-anymap              = "0.12"
 itertools           = "0.9"
 time                = "0.2"
 lazy_static         = "1.2"

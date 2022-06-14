@@ -24,7 +24,7 @@ uuid                = { version = "0.8", features = [ "v4" ] }
 percent-encoding    = "2.1"
 futures             = { version = "0.3", features = [ "thread-pool" ] }
 futures-timer       = "3.0"
-desync              = "0.8"
+desync              = "0.9"
 itertools           = "0.9"
 bytes               = "1.1"
 lazy_static         = "1.2"

@@ -1,9 +1,8 @@
 use super::widget::*;
 use super::super::gtk_action::*;
 
-use anymap::*;
-
 use std::rc::*;
+use std::any::*;
 use std::cell::*;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -40,7 +39,7 @@ pub struct WidgetData {
     widgets: RefCell<HashMap<WidgetId, Rc<RefCell<dyn GtkUiWidget>>>>,
 
     /// Data attached to a particular widget ID
-    widget_data: RefCell<HashMap<WidgetId, AnyMap>>
+    widget_data: RefCell<HashMap<WidgetId, HashMap<TypeId, Box<dyn Any>>>>,
 }
 
 impl WidgetData {
@@ -61,7 +60,7 @@ impl WidgetData {
         self.widgets.borrow_mut().insert(widget_id, Rc::new(RefCell::new(widget)));
         self.widget_data.borrow_mut()
             .entry(widget_id)
-            .or_insert_with(|| AnyMap::new());
+            .or_insert_with(|| HashMap::new());
     }
 
     ///
@@ -94,8 +93,8 @@ impl WidgetData {
     pub fn set_widget_data<TData: 'static>(&self, widget_id: WidgetId, new_data: TData) {
         self.widget_data.borrow_mut()
             .entry(widget_id)
-            .or_insert_with(|| AnyMap::new())
-            .insert(Rc::new(RefCell::new(new_data)));
+            .or_insert_with(|| HashMap::new())
+            .insert(TypeId::of::<TData>(), Box::new(Rc::new(RefCell::new(new_data))));
     }
 
     ///
@@ -104,7 +103,8 @@ impl WidgetData {
     pub fn get_widget_data<'a, TData: 'static>(&'a self, widget_id: WidgetId) -> Option<WidgetDataEntry<TData>> {
         self.widget_data.borrow_mut()
             .get_mut(&widget_id)
-            .and_then(move |anymap| anymap.get::<Rc<RefCell<TData>>>())
+            .and_then(move |anymap| anymap.get(TypeId::of::<TData>()))
+            .and_then(move |any| any.downcast_ref::<Rc<RefCell<TData>>>())
             .map(|data| WidgetDataEntry { data: Rc::clone(&data) })
     }
 
@@ -114,7 +114,8 @@ impl WidgetData {
     pub fn get_widget_data_or_insert<'a, TData: 'static, FnInsert: FnOnce() -> TData>(&'a self, widget_id: WidgetId, or_insert: FnInsert) -> Option<WidgetDataEntry<TData>> {
         self.widget_data.borrow_mut()
             .get_mut(&widget_id)
-            .map(move |anymap| anymap.entry::<Rc<RefCell<TData>>>().or_insert_with(move || Rc::new(RefCell::new(or_insert()))))
+            .map(move |anymap| anymap.entry(TypeId::of::<TData>()).or_insert_with(move || Box::new(Rc::new(RefCell::new(or_insert())))))
+            .and_then(|any| any.downcast_ref::<Rc<RefCell<TData>>>())
             .map(|data| WidgetDataEntry { data: Rc::clone(&data) })
     }
 }
