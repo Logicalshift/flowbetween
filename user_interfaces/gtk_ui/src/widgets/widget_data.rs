@@ -103,7 +103,7 @@ impl WidgetData {
     pub fn get_widget_data<'a, TData: 'static>(&'a self, widget_id: WidgetId) -> Option<WidgetDataEntry<TData>> {
         self.widget_data.borrow_mut()
             .get_mut(&widget_id)
-            .and_then(move |anymap| anymap.get(TypeId::of::<TData>()))
+            .and_then(move |anymap| anymap.get(&TypeId::of::<TData>()))
             .and_then(move |any| any.downcast_ref::<Rc<RefCell<TData>>>())
             .map(|data| WidgetDataEntry { data: Rc::clone(&data) })
     }
