@@ -1,9 +1,7 @@
 use flo_commands::*;
 
-use tokio::prelude::*;
-use tokio::prelude::{AsyncWrite};
 use tokio::fs;
-use tokio::io::{stdout, stderr};
+use tokio::io::{stdout, stderr, AsyncWrite, AsyncWriteExt};
 use futures::prelude::*;
 
 use std::path::*;

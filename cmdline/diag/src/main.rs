@@ -1,10 +1,10 @@
 use flo_commands::*;
 use flo_animation::*;
 
-use tokio::prelude::*;
-use tokio::io::{stdin, stderr};
-use tokio::fs;
 use futures::prelude::*;
+
+use tokio::io::{stdin, stderr, AsyncWriteExt, AsyncReadExt};
+use tokio::fs;
 use clap::{App, Arg, SubCommand};
 
 mod console;
