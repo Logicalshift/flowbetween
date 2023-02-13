@@ -229,6 +229,7 @@ impl QuartzContext {
                 DrawText(font_id, text, x, y)                           => { unimplemented!() }
 
                 Sprite(_sprite_id)                                      => { unimplemented!() }
+                MoveSpriteFrom(_sprite_id)                              => { unimplemented!() }
                 SpriteTransform(_transform)                             => { unimplemented!() }
                 ClearSprite                                             => { unimplemented!() }
                 DrawSprite(_sprite_id)                                  => { unimplemented!() }
