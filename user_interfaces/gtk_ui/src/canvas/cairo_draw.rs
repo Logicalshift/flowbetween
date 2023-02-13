@@ -426,6 +426,7 @@ impl CairoDraw {
             }
 
             Sprite(sprite_id)                           => { unimplemented!(); },
+            MoveSpriteFrom(sprite_id)                   => { unimplemented!(); },
             ClearSprite                                 => { unimplemented!(); },
             SpriteTransform(transform)                  => { unimplemented!(); },
             DrawSprite(sprite_id)                       => { unimplemented!(); },
