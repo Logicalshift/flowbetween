@@ -134,6 +134,7 @@ impl LayerDrawingToPaths {
 
                     SwapLayers(_layer_id1, _layer_id2)              => { debug_assert!(false, "Operation unsupported in an animation layer"); },
                     Sprite(_sprite_id)                              => { debug_assert!(false, "Cannot define sprites on animation layers"); },
+                    MoveSpriteFrom(_sprite_id)                      => { debug_assert!(false, "Cannot define sprites on animation layers"); },
                     ClearSprite                                     => { debug_assert!(false, "Operation unsupported in an animation layer"); },
                     SpriteTransform(_sprite_transform)              => { debug_assert!(false, "Operation unsupported in an animation layer"); },
                     DrawSprite(_sprite_id)                          => { debug_assert!(false, "Cannot draw sprites on animation layers"); },
