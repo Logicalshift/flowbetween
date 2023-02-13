@@ -959,7 +959,7 @@ dependencies = [
  "flo_binding",
  "flo_canvas",
  "flo_canvas_animation",
- "flo_curves 0.6.1",
+ "flo_curves",
  "flo_rope",
  "flo_stream",
  "flo_ui",
@@ -981,7 +981,7 @@ dependencies = [
  "desync 0.9.0",
  "flo_canvas",
  "flo_canvas_animation",
- "flo_curves 0.6.1",
+ "flo_curves",
  "flo_float_encoder",
  "flo_stream",
  "futures",
@@ -1014,7 +1014,7 @@ version = "0.4.0"
 source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#1242713c5870bc78eb869e7fa53b807b19c3d764"
 dependencies = [
  "desync 0.9.0",
- "flo_curves 0.7.0",
+ "flo_curves",
  "flo_stream",
  "futures",
  "itertools 0.10.5",
@@ -1031,7 +1031,7 @@ version = "0.3.0"
 dependencies = [
  "desync 0.9.0",
  "flo_canvas",
- "flo_curves 0.6.1",
+ "flo_curves",
  "futures",
  "itertools 0.10.5",
  "lazy_static",
@@ -1109,23 +1109,12 @@ dependencies = [
  "desync 0.9.0",
  "flo_animation",
  "flo_canvas",
- "flo_curves 0.6.1",
+ "flo_curves",
  "flo_sqlite_storage",
  "flo_stream",
  "flo_ui_files",
  "futures",
  "itertools 0.9.0",
-]
-
-[[package]]
-name = "flo_curves"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9deedc0ff8e4848dbc1029e555af16390a8d2ff406f05a2f46c8bd14b2f4de4d"
-dependencies = [
- "itertools 0.10.5",
- "roots",
- "smallvec",
 ]
 
 [[package]]

@@ -10,7 +10,7 @@ include             = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
 
 [dependencies]
 flo_stream          = "0.7"
-flo_curves          = "0.6"
+flo_curves          = "0.7"
 flo_animation       = "0.2"
 flo_sqlite_storage  = "0.1"
 flo_canvas          = "0.4"

@@ -9,7 +9,7 @@ edition                 = "2018"
 
 [dependencies]
 flo_canvas              = "0.4"
-flo_curves              = "0.6"
+flo_curves              = "0.7"
 flo_float_encoder       = "0.1"
 flo_stream              = "0.7"
 flo_canvas_animation    = "0.3"
