@@ -56,7 +56,7 @@ pub fn raycast_to_svg<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'
         for (path_num, path) in paths.into_iter().enumerate().rev() {
             // Generate a graph from this path
             let mut remove_interior = GraphPath::new();
-            remove_interior         = remove_interior.merge(GraphPath::from_merged_paths(path.iter().map(|sub_path| (sub_path, PathLabel(0, PathDirection::from(sub_path))))));
+            remove_interior         = remove_interior.merge(GraphPath::from_merged_paths(path.iter().map(|sub_path| (sub_path, PathLabel(0)))));
 
             // Self-collide to generate the 'remove interior points' status
             remove_interior.self_collide(0.01);
@@ -86,8 +86,8 @@ pub fn raycast_to_svg<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'
             if let Some(existing_path) = current_path {
                 // Add to the existing 'current' path
                 let mut combined_path   = GraphPath::new();
-                combined_path           = combined_path.merge(GraphPath::from_merged_paths(existing_path.iter().map(|sub_path| (sub_path, PathLabel(1, PathDirection::from(sub_path))))));
-                combined_path           = combined_path.collide(GraphPath::from_merged_paths(remove_interior.iter().map(|sub_path| (sub_path, PathLabel(0, PathDirection::from(sub_path))))), 0.01);
+                combined_path           = combined_path.merge(GraphPath::from_merged_paths(existing_path.iter().map(|sub_path| (sub_path, PathLabel(1)))));
+                combined_path           = combined_path.collide(GraphPath::from_merged_paths(remove_interior.iter().map(|sub_path| (sub_path, PathLabel(0)))), 0.01);
                 combined_path.round(0.01);
 
                 // Add the paths
