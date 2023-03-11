@@ -16,8 +16,7 @@ impl AnimationPath {
         let mut animation_path = GraphPath::new();
 
         for our_component in self.path.iter() {
-            let direction       = if our_component.is_clockwise() { PathDirection::Clockwise } else { PathDirection::Anticlockwise };
-            let component_path  = GraphPath::from_path(our_component, PathLabel(0, direction));
+            let component_path  = GraphPath::from_path(our_component, PathLabel(0));
 
             animation_path      = animation_path.merge(component_path);
         }
@@ -28,8 +27,7 @@ impl AnimationPath {
         let mut region_path     = GraphPath::new();
 
         for their_component in path.iter() {
-            let direction       = if their_component.is_clockwise() { PathDirection::Clockwise } else { PathDirection::Anticlockwise };
-            let component_path  = GraphPath::from_path(their_component, PathLabel(1, direction));
+            let component_path  = GraphPath::from_path(their_component, PathLabel(1));
 
             region_path         = region_path.merge(component_path);
         }

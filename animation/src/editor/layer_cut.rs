@@ -111,7 +111,7 @@ impl StreamAnimationCore {
                         // Cut the paths to determine which parts of the element are inside or outside the cut path
                         for path in element_path.iter() {
                             // Try to cut the path
-                            let cut = path_cut::<_, _, Path>(&path.to_subpaths(), &cut_path, 0.01);
+                            let cut = path_cut::<Path>(&path.to_subpaths(), &cut_path, 0.01);
 
                             // TODO: deal with the case where there are multiple paths in element_path?
                             if cut.interior_path.len() == 0 {

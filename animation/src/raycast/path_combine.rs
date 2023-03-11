@@ -34,8 +34,8 @@ where P::Point: Coordinate2D {
         None
     } else {
         // Convert both to graph paths
-        let graph_path1 = GraphPath::from_merged_paths(path1.iter().map(|path| (path, PathLabel(0, PathDirection::from(path)))));
-        let graph_path2 = GraphPath::from_merged_paths(path2.iter().map(|path| (path, PathLabel(1, PathDirection::from(path)))));
+        let graph_path1 = GraphPath::from_merged_paths(path1.iter().map(|path| (path, PathLabel(0))));
+        let graph_path2 = GraphPath::from_merged_paths(path2.iter().map(|path| (path, PathLabel(1))));
 
         match graph_path1.collide_or_merge(graph_path2, accuracy) {
             CollidedGraphPath::Collided(collided_path)  => Some(collided_path),
@@ -71,15 +71,11 @@ where P::Point: Coordinate2D {
 
             for (collision, curve_t, _line_t, _position) in collisions {
                 // Work out which direction we're crossing in
-                let edge                                = collision.edge();
-                let PathLabel(path_number, direction)   = merged_path.edge_label(edge);
-                let normal                              = merged_path.get_edge(edge).normal_at_pos(curve_t);
+                let edge                    = collision.edge();
+                let PathLabel(path_number)  = merged_path.edge_label(edge);
+                let normal                  = merged_path.get_edge(edge).normal_at_pos(curve_t);
 
                 let side                                = ray_direction.dot(&normal).signum() as i32;
-                let side                                = match direction {
-                    PathDirection::Clockwise        => { side },
-                    PathDirection::Anticlockwise    => { -side }
-                };
 
                 // Add to the crossing count for this path (we assume the path numbers are 0 or 1 here)
                 crossings[path_number as usize] += side;
