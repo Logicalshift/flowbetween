@@ -15,6 +15,8 @@ flo_binding         = "3.0"
 flo_scene           = "0.2"
 flo_scene_guest     = "0.2"
 
+futures             = "0.3"
+
 [patch.crates-io]
 flo_curves              = { git = "https://github.com/Logicalshift/flo_curves", branch = "v0.8" }
 
