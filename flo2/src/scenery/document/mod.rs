@@ -5,3 +5,7 @@
 //! in its own scene, which is generally shut down at the point where all of the windows for that document are 
 //! closed.
 //!
+
+mod document_id;
+
+pub use document_id::*;

@@ -1,5 +1,7 @@
 mod scenery;
 
+use crate::scenery::app::*;
+
 use flo_draw::*;
 use flo_scene::*;
 
@@ -16,17 +18,21 @@ fn main() {
         // Run the main application program
         let (stop_send, stop_recv) = oneshot::channel();
 
+        // Run the flowbetween app
+        app_scene.add_subprogram(FlowBetween::default_target().target_sub_program().unwrap(), flowbetween, 20);
+
+        // Run a subprogram we use to keep things alive and shutdown when we're done
         app_scene.add_subprogram(SubProgramId::called("flowbetween::main"), |events: InputStream<()>, _context| async move { 
             let mut events = events;
 
-            while let Some(evt) = events.next().await {
+            while let Some(_evt) = events.next().await {
 
             }
 
-            stop_send.send(());
+            stop_send.send(()).unwrap();
         }, 1);
 
         // Wait for the main subprogram to stop (whole application will stop once this function ends, and all the windows are closed)
-        executor::block_on(async move { stop_recv.await; });
+        executor::block_on(async move { stop_recv.await.unwrap(); });
     });
 }
