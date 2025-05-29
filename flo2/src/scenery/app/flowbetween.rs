@@ -3,6 +3,7 @@ use super::document::*;
 
 use flo_draw::*;
 use flo_draw::draw_scene::*;
+use flo_draw::canvas::scenery::*;
 use flo_scene::*;
 use flo_binding::*;
 use futures::prelude::*;
@@ -55,9 +56,14 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
         }
     }, 100);
 
+    // Allow drawing requests to be sent directly to the window
+    let drawing_request_filter = FilterHandle::for_filter(|drawing_requests| drawing_requests.map(|req| DrawingWindowRequest::Draw(req)));
+    document_scene.connect_programs((), StreamTarget::Filtered(drawing_request_filter, subprogram_window()), StreamId::with_message_type::<DrawingRequest>()).unwrap();
+
     // Add a subprogram to the app scene that relays events from the window to the document scene
 
     // Start the main document program within the document scene
+    document_scene.add_subprogram(subprogram_flowbetween_document(), flowbetween_document, 20);
 
     // Run the document scene in its own subprogram (within the app)
     scene.add_subprogram(document_program_id, move |input, context| document(document_scene, input, context), 1);

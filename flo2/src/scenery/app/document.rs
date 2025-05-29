@@ -9,18 +9,18 @@ use std::sync::*;
 /// The actions that can be performed on a document in the main app scene
 ///
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum DocumentRequest {
+pub enum AppDocumentRequest {
 
 }
 
-impl SceneMessage for DocumentRequest {
+impl SceneMessage for AppDocumentRequest {
 
 }
 
 ///
 /// The 'document' subprogram, one of which runs for each document in the application
 ///
-pub async fn document(document_scene: Arc<Scene>, input: InputStream<DocumentRequest>, context: SceneContext) {
+pub async fn document(document_scene: Arc<Scene>, input: InputStream<AppDocumentRequest>, context: SceneContext) {
     // Run the scene
     let run_scene = document_scene.run_scene_with_threads(4);
 
