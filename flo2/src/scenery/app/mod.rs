@@ -6,5 +6,7 @@
 //!
 
 mod flowbetween;
+mod document;
 
 pub use flowbetween::*;
+pub use document::*;

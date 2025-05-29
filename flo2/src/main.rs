@@ -5,6 +5,8 @@ use crate::scenery::app::*;
 use flo_draw::*;
 use flo_scene::*;
 
+use std::sync::*;
+
 fn main() {
     with_2d_graphics(|| {
         use futures::prelude::*;
@@ -19,7 +21,8 @@ fn main() {
         let (stop_send, stop_recv) = oneshot::channel();
 
         // Run the flowbetween app
-        app_scene.add_subprogram(FlowBetween::default_target().target_sub_program().unwrap(), flowbetween, 20);
+        let scene = Arc::clone(&app_scene);
+        app_scene.add_subprogram(FlowBetween::default_target().target_sub_program().unwrap(), move |input, context| flowbetween(scene, input, context), 20);
 
         // Run a subprogram we use to keep things alive and shutdown when we're done
         app_scene.add_subprogram(SubProgramId::called("flowbetween::main"), |events: InputStream<()>, _context| async move { 

@@ -4,7 +4,7 @@ use ::serde::*;
 ///
 /// Identifier used to specify a document within the flowbetween app
 ///
-#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DocumentId(Uuid);
 
 impl DocumentId {

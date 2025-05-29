@@ -7,5 +7,7 @@
 //!
 
 mod document_id;
+mod subprograms;
 
 pub use document_id::*;
+pub use subprograms::*;
