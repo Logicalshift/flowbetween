@@ -25,9 +25,9 @@ impl SceneMessage for DocumentRequest {
 }
 
 ///
-/// The main document subprogram
+/// The main document subprogram (runs a flowbetween document window)
 ///
-pub async fn flowbetween_document(input: InputStream<DocumentRequest>, context: SceneContext) {
+pub async fn flowbetween_document(_document_scene: Arc<Scene>, input: InputStream<DocumentRequest>, context: SceneContext) {
     // Set up the window to its initial state
     let mut window_drawing  = context.send::<DrawingRequest>(subprogram_window()).unwrap();
     let mut window_setup    = vec![];

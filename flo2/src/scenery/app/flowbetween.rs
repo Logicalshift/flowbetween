@@ -63,7 +63,8 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
     // Add a subprogram to the app scene that relays events from the window to the document scene
 
     // Start the main document program within the document scene
-    document_scene.add_subprogram(subprogram_flowbetween_document(), flowbetween_document, 20);
+    let document_scene_clone = Arc::clone(&document_scene);
+    document_scene.add_subprogram(subprogram_flowbetween_document(), move |input, context| flowbetween_document(document_scene_clone, input, context), 20);
 
     // Run the document scene in its own subprogram (within the app)
     scene.add_subprogram(document_program_id, move |input, context| document(document_scene, input, context), 1);
