@@ -1,8 +1,8 @@
 use crate::scenery::document::*;
+use super::document::*;
 
 use flo_draw::*;
 use flo_draw::draw_scene::*;
-use flo_draw::events::*;
 use flo_scene::*;
 use flo_binding::*;
 use futures::prelude::*;
@@ -60,9 +60,7 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
     // Start the main document program within the document scene
 
     // Run the document scene in its own subprogram (within the app)
-    scene.add_subprogram(document_program_id, move |_: InputStream<()>, _| async move { 
-        document_scene.run_scene_with_threads(4).await;
-    }, 1);
+    scene.add_subprogram(document_program_id, move |input, context| document(document_scene, input, context), 1);
 }
 
 ///
