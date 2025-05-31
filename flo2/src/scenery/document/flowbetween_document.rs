@@ -45,6 +45,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     let program_id = context.current_program_id().unwrap();
 
     // Set up to receive idle events and drawing requests
+    document_scene.connect_programs((), program_id, StreamId::with_message_type::<DocumentRequest>()).unwrap();
     document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg: IdleNotification| DocumentRequest::Idle))), (), StreamId::with_message_type::<IdleNotification>()).unwrap();
     document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), (), StreamId::with_message_type::<DrawingRequest>()).unwrap();
     document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), program_id, StreamId::with_message_type::<DrawingRequest>()).unwrap();
