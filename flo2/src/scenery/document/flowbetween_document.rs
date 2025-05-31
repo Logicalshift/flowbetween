@@ -4,6 +4,7 @@ use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
 use flo_scene::*;
+use flo_scene::programs::*;
 
 use futures::prelude::*;
 use serde::*;
@@ -34,7 +35,16 @@ impl SceneMessage for DocumentRequest {
 ///
 /// The main document subprogram (runs a flowbetween document window)
 ///
-pub async fn flowbetween_document(_document_scene: Arc<Scene>, input: InputStream<DocumentRequest>, context: SceneContext) {
+pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream<DocumentRequest>, context: SceneContext) {
+    let program_id = context.current_program_id().unwrap();
+
+    // Set up to receive idle events and drawing requests
+    document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg: IdleNotification| DocumentRequest::Idle))), (), StreamId::with_message_type::<IdleNotification>()).unwrap();
+    document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), (), StreamId::with_message_type::<DrawingRequest>()).unwrap();
+    document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), program_id, StreamId::with_message_type::<DrawingRequest>()).unwrap();
+
+    context.send_message(IdleRequest::WhenIdle(program_id)).await.ok();
+
     // Set up the window to its initial state
     let mut window_drawing  = context.send::<DrawingRequest>(subprogram_window()).unwrap();
     let mut window_setup    = vec![];
@@ -49,7 +59,7 @@ pub async fn flowbetween_document(_document_scene: Arc<Scene>, input: InputStrea
 
     // The document canvas contains the drawing instructions to regenerate the canvas (except for the 'clear canvas' instruction that begins it)
     // We re-use this whenever the document is resized
-    let mut document_canvas = Canvas::new();
+    let document_canvas = Canvas::new();
     document_canvas.write([Draw::ClearCanvas(Color::Rgba(0.8, 0.8, 0.8, 1.0))].into_iter().collect());
 
     // Drawing instructions that are waiting for this document scene to become idle
