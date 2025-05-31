@@ -70,7 +70,8 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     document_canvas.write([Draw::ClearCanvas(Color::Rgba(0.8, 0.8, 0.8, 1.0))].into_iter().collect());
 
     // Drawing instructions that are waiting for this document scene to become idle
-    let mut pending_drawing = Vec::with_capacity(128);
+    let mut pending_drawing         = Vec::with_capacity(128);
+    let mut waiting_for_new_frame   = false;
 
     // TODO: start the other document subprograms
 
@@ -121,17 +122,37 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                 }
 
                 DocumentRequest::Event(event) => {
+                    match &event {
+                        DrawEvent::NewFrame => {
+                            waiting_for_new_frame = false;
+
+                            if !pending_drawing.is_empty() && !waiting_for_new_frame {
+                                use std::mem;
+
+                                let mut recent_drawing = Vec::with_capacity(128);
+                                mem::swap(&mut recent_drawing, &mut pending_drawing);
+
+                                window_drawing.send(DrawingRequest::Draw(Arc::new(recent_drawing))).await.ok();
+
+                                waiting_for_new_frame = true;
+                            }
+                        }
+
+                        _ => { }
+                    }
                 }
 
                 DocumentRequest::Idle => {
                     // Send any pending drawing instructions whenever the scene processing stops
-                    if !pending_drawing.is_empty() {
+                    if !pending_drawing.is_empty() && !waiting_for_new_frame {
                         use std::mem;
 
                         let mut recent_drawing = Vec::with_capacity(128);
                         mem::swap(&mut recent_drawing, &mut pending_drawing);
 
                         window_drawing.send(DrawingRequest::Draw(Arc::new(recent_drawing))).await.ok();
+
+                        waiting_for_new_frame = true;
                     }
                 }
 
@@ -146,12 +167,16 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
         if new_size != size {
             size = new_size;
 
-            use std::mem;
+            if !waiting_for_new_frame {
+                use std::mem;
 
-            let mut recent_drawing = Vec::with_capacity(128);
-            mem::swap(&mut recent_drawing, &mut pending_drawing);
+                let mut recent_drawing = Vec::with_capacity(128);
+                mem::swap(&mut recent_drawing, &mut pending_drawing);
 
-            window_drawing.send(DrawingRequest::Draw(Arc::new(recent_drawing))).await.ok();
+                window_drawing.send(DrawingRequest::Draw(Arc::new(recent_drawing))).await.ok();
+
+                waiting_for_new_frame = true;
+            }
         }
     }
 }
