@@ -121,7 +121,6 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                 }
 
                 DocumentRequest::Event(event) => {
-                    println!("{:?}", event);
                 }
 
                 DocumentRequest::Idle => {
