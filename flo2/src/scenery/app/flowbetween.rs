@@ -5,6 +5,7 @@ use flo_draw::*;
 use flo_draw::draw_scene::*;
 use flo_draw::canvas::scenery::*;
 use flo_scene::*;
+use flo_scene::programs::*;
 use flo_binding::*;
 use futures::prelude::*;
 use serde::*;
@@ -35,6 +36,7 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
     // Create a window for this document
     let render_window_program   = SubProgramId::new();
     let drawing_window_program  = SubProgramId::new();
+    let event_relay_program     = SubProgramId::new();
 
     create_render_window_sub_program(&scene, render_window_program, properties.size().get()).unwrap();
     create_drawing_window_program(&scene, drawing_window_program, render_window_program).unwrap();
@@ -61,6 +63,38 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
     document_scene.connect_programs((), StreamTarget::Filtered(drawing_request_filter, subprogram_window()), StreamId::with_message_type::<DrawingRequest>()).unwrap();
 
     // Add a subprogram to the app scene that relays events from the window to the document scene
+    let mut drawing_events = document_scene.send_to_scene(()).unwrap();
+    scene.add_subprogram(event_relay_program, |input, context| async move {
+        let mut input = input;
+
+        while let Some(event) = input.next().await {
+            // Interpret some special events
+            match &event {
+                DrawEvent::Resize(w, h) => {
+                    // Send a resize request for the resize event
+                    drawing_events.send(DocumentRequest::Resize(*w as _, *h as _)).await.ok();
+                }
+
+                DrawEvent::Closed => {
+                    // Tell the document to close down when the close request arrives
+                    drawing_events.send(DocumentRequest::Close).await.ok();
+
+                    // Also close down the main document scene when the window is closed
+                    context.send_message(SceneControl::Close(document_program_id)).await.ok();
+                }
+
+                _ => { }
+            }
+
+            // Send the event as a normal event
+            if drawing_events.send(DocumentRequest::Event(event)).await.is_err() {
+                break;
+            }
+        }
+    }, 20);
+
+    context.send(drawing_window_program).unwrap()
+        .send(DrawingWindowRequest::SendEvents(event_relay_program)).await.ok();
 
     // Start the main document program within the document scene
     let document_scene_clone = Arc::clone(&document_scene);

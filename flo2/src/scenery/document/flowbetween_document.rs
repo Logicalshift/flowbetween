@@ -25,6 +25,9 @@ pub enum DocumentRequest {
     /// Renders some items to the drawing window
     Draw(DrawingRequest),
 
+    /// Event has occurred on the window
+    Event(DrawEvent),
+
     /// Indicates that this document is being closed
     Close,
 }
@@ -114,6 +117,10 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                             ]);
                         }
                     }
+                }
+
+                DocumentRequest::Event(event) => {
+                    println!("{:?}", event);
                 }
 
                 DocumentRequest::Idle => {
