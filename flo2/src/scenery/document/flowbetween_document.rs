@@ -50,8 +50,6 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), (), StreamId::with_message_type::<DrawingRequest>()).unwrap();
     document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), program_id, StreamId::with_message_type::<DrawingRequest>()).unwrap();
 
-    context.send_message(IdleRequest::WhenIdle(program_id)).await.ok();
-
     // Set up the window to its initial state
     let mut window_drawing  = context.send::<DrawingRequest>(subprogram_window()).unwrap();
     let mut window_setup    = vec![];
@@ -72,6 +70,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     // Drawing instructions that are waiting for this document scene to become idle
     let mut pending_drawing         = Vec::with_capacity(128);
     let mut waiting_for_new_frame   = false;
+    let mut waiting_for_idle        = false;
 
     // TODO: start the other document subprograms
 
@@ -127,6 +126,12 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                             }
                         }
                     }
+
+                    // Request an idle message (we'll draw once everything is idle)
+                    if !waiting_for_idle {
+                        context.send_message(IdleRequest::WhenIdle(program_id)).await.ok();
+                        waiting_for_idle = true;
+                    }
                 }
 
                 DocumentRequest::Resize(width, height) => {
@@ -154,15 +159,10 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                         DrawEvent::NewFrame => {
                             waiting_for_new_frame = false;
 
-                            if !pending_drawing.is_empty() && !waiting_for_new_frame {
-                                use std::mem;
-
-                                let mut recent_drawing = Vec::with_capacity(128);
-                                mem::swap(&mut recent_drawing, &mut pending_drawing);
-
-                                window_drawing.send(DrawingRequest::Draw(Arc::new(recent_drawing))).await.ok();
-
-                                waiting_for_new_frame = true;
+                            if !pending_drawing.is_empty() && !waiting_for_idle {
+                                // Request an idle event if there's more to draw waiting
+                                context.send_message(IdleRequest::WhenIdle(program_id)).await.ok();
+                                waiting_for_idle = true;
                             }
                         }
 
@@ -171,6 +171,9 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                 }
 
                 DocumentRequest::Idle => {
+                    // No longer expecting an idle request
+                    waiting_for_idle = false;
+
                     // Send any pending drawing instructions whenever the scene processing stops
                     if !pending_drawing.is_empty() && !waiting_for_new_frame {
                         use std::mem;
