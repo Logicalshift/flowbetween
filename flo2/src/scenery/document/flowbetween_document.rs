@@ -24,6 +24,9 @@ pub enum DocumentRequest {
 
     /// Renders some items to the drawing window
     Draw(DrawingRequest),
+
+    /// Indicates that this document is being closed
+    Close,
 }
 
 impl SceneMessage for DocumentRequest {
@@ -123,6 +126,11 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
                         window_drawing.send(DrawingRequest::Draw(Arc::new(recent_drawing))).await.ok();
                     }
+                }
+
+                DocumentRequest::Close => {
+                    // When the document is closed, we stop the whole scene
+                    context.send_message(SceneControl::StopScene).await.ok();
                 }
             }
         }
