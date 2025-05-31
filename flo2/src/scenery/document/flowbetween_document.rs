@@ -75,6 +75,34 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
     // TODO: start the other document subprograms
 
+    document_scene.add_subprogram(SubProgramId::new(), |input: InputStream<TimeOut>, context| async move {
+        use std::time::{Duration, Instant};
+
+        context.send_message(TimerRequest::CallEvery(context.current_program_id().unwrap(), 1, Duration::from_millis(16))).await.ok();
+
+        let mut input = input;
+        let mut drawing = context.send::<DrawingRequest>(()).unwrap();
+
+        let start = Instant::now();
+
+        while let Some(TimeOut(_, when)) = input.next().await {
+            let when = Instant::now().duration_since(start);
+
+            let t = when.as_millis() as f64;
+            let t = t / 2000.0;
+
+            let mut circle = vec![];
+            circle.layer(LayerId(1));
+            circle.clear_layer();
+            circle.new_path();
+            circle.circle((t.sin()*400.0 + 500.0) as f32, ((t*0.32).cos()*400.0 + 500.0) as f32, 100.0);
+            circle.fill_color(Color::Rgba(0.4, 0.4, 0.8, 1.0));
+            circle.fill();
+
+            drawing.send(DrawingRequest::Draw(Arc::new(circle))).await.ok();
+        }
+    }, 1);
+
     // Process the events for this document (in chunks, so we group together multiple drawing or resize requests if they occur)
     let mut input = input.ready_chunks(100);
     while let Some(many_requests) = input.next().await {
