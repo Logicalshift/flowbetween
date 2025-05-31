@@ -62,6 +62,10 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
     let drawing_request_filter = FilterHandle::for_filter(|drawing_requests| drawing_requests.map(|req| DrawingWindowRequest::Draw(req)));
     document_scene.connect_programs((), StreamTarget::Filtered(drawing_request_filter, subprogram_window()), StreamId::with_message_type::<DrawingRequest>()).unwrap();
 
+    // Start the main document program within the document scene
+    let document_scene_clone = Arc::clone(&document_scene);
+    document_scene.add_subprogram(subprogram_flowbetween_document(), move |input, context| flowbetween_document(document_scene_clone, input, context), 20);
+
     // Add a subprogram to the app scene that relays events from the window to the document scene
     let mut drawing_events = document_scene.send_to_scene(()).unwrap();
     scene.add_subprogram(event_relay_program, |input, context| async move {
@@ -95,10 +99,6 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
 
     context.send(drawing_window_program).unwrap()
         .send(DrawingWindowRequest::SendEvents(event_relay_program)).await.ok();
-
-    // Start the main document program within the document scene
-    let document_scene_clone = Arc::clone(&document_scene);
-    document_scene.add_subprogram(subprogram_flowbetween_document(), move |input, context| flowbetween_document(document_scene_clone, input, context), 20);
 
     // Run the document scene in its own subprogram (within the app)
     scene.add_subprogram(document_program_id, move |input, context| document(document_scene, input, context), 1);
