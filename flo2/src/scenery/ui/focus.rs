@@ -198,17 +198,26 @@ impl FocusProgram {
             controls_for_program.first_control = Some(control_id);
         }
 
-        // Get the existing previous control ID
+        let first_control   = controls_for_program.first_control.unwrap();
+        let last_control    = controls_for_program.controls.get(&first_control).map(|first| first.previous).unwrap_or(first_control);
+
+        // Get the existing previous control ID, if it exists
         let previous_control_id = {
             let next_control = controls_for_program.controls.entry(next_control_id)
                 .or_insert_with(|| KeyboardControl {
                     control_id: next_control_id,
-                    next:       next_control_id,
-                    previous:   next_control_id,
+                    next:       first_control,
+                    previous:   last_control,
                 });
 
             let previous_control    = next_control.previous;
             next_control.previous   = control_id;
+
+            if previous_control == last_control {
+                if let Some(first_control) = controls_for_program.controls.get_mut(&first_control) {
+                    first_control.previous = next_control_id;
+                }
+            }
 
             previous_control
         };
@@ -438,7 +447,7 @@ mod test {
         TestBuilder::new()
             .send_message(Focus::SetFollowingControl(test_program, control_1, control_2))
             .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
-            
+
             .send_message(Focus::SetKeyboardFocus(test_program, control_1))
             .expect_message(move |evt: FocusEvent| expect_focus(evt, control_1, 1))
             .send_message(Focus::FocusNext)
