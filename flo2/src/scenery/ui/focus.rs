@@ -394,7 +394,6 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
