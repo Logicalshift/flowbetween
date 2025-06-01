@@ -81,14 +81,14 @@ impl SceneMessage for Focus {
 
     fn initialise(init_context: &impl SceneInitialisationContext) {
         // Set up filters for the focus events/updates
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|scene_updates| scene_updates.map(|update| Focus::Update(update)))), (), StreamId::with_message_type::<SceneUpdate>());
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|draw_events| draw_events.map(|event| Focus::Event(event)))), (), StreamId::with_message_type::<DrawEvent>());
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|scene_updates| scene_updates.map(|update| Focus::Update(update)))), (), StreamId::with_message_type::<SceneUpdate>()).ok();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|draw_events| draw_events.map(|event| Focus::Event(event)))), (), StreamId::with_message_type::<DrawEvent>()).ok();
 
         // Create the standard focus subprogram when a message is sent for the first tiem
         init_context.add_subprogram(subprogram_focus(), focus, 20);
 
         // This is the default target for focus messages to this scene
-        init_context.connect_programs((), subprogram_focus(), StreamId::with_message_type::<Focus>());
+        init_context.connect_programs((), subprogram_focus(), StreamId::with_message_type::<Focus>()).ok();
     }
 }
 
