@@ -306,6 +306,42 @@ impl FocusProgram {
     }
 
     ///
+    /// Figures out the preceding control
+    ///
+    fn previous_control(&self, current_program: Option<SubProgramId>, current_control: Option<ControlId>) -> Option<(SubProgramId, ControlId)> {
+        let current_program = current_program?;
+        let current_control = current_control?;
+
+        // Get the data for the current control
+        let program_data = self.tab_ordering.get(&current_program)?;
+        let control_data = program_data.controls.get(&current_control)?;
+        let last_control = program_data.controls.get(&program_data.first_control?)?.previous;
+
+        // If this would loop back to the end then focus the previous subprogram
+        if control_data.previous == last_control {
+            let previous_program    = self.tab_ordering.get(&program_data.previous)?;
+            let last_control        = previous_program.controls.get(&previous_program.first_control?)?.previous;
+
+            Some((program_data.previous, last_control))
+        } else {
+            // Just the previous control in the same program
+            Some((current_program, control_data.previous))
+        }
+    }
+
+    ///
+    /// Focuses the previous control in the list
+    ///
+    async fn focus_previous(&mut self, context: &SceneContext) {
+        if let Some((previous_program, previous_control)) = self.previous_control(self.focused_subprogram, self.focused_control) {
+            // Currently focused control has a 'next'
+            self.set_keyboard_focus(previous_program, previous_control, context).await;
+        } else {
+            // TODO: focus the last control in the first program
+        }
+    }
+
+    ///
     /// Sets the program where mouse events go if there's no region defined
     ///
     async fn set_canvas(&mut self, canvas_program: SubProgramId) {
@@ -346,7 +382,7 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             SetFollowingControl(program_id, control_id, next_control_id)    => focus.set_following_control(program_id, control_id, next_control_id).await,
             SetFollowingSubProgram(program_id, next_program_id)             => focus.set_following_subprogram(program_id, next_program_id).await,
             FocusNext                                                       => focus.focus_next(&context).await,
-            FocusPrevious                                                   => { todo!() },
+            FocusPrevious                                                   => focus.focus_previous(&context).await,
 
             // Control handling
             RemoveClaim(program_id)                                     => { todo!() },
