@@ -3,9 +3,9 @@ use flo_scene::*;
 ///
 /// ID of the main document subprogram
 ///
-pub fn subprogram_flowbetween_document() -> SubProgramId { SubProgramId::called("flowbetween::document") }
+pub fn subprogram_flowbetween_document() -> SubProgramId { SubProgramId::called("flowbetween::document::document") }
 
 ///
 /// ID of the subprogram where DrawingWindowRequests can be sent to
 ///
-pub fn subprogram_window() -> SubProgramId { SubProgramId::called("flowbetween::window") }
+pub fn subprogram_window() -> SubProgramId { SubProgramId::called("flowbetween::document::window") }
