@@ -199,7 +199,13 @@ impl FocusProgram {
         }
 
         let first_control   = controls_for_program.first_control.unwrap();
-        let last_control    = controls_for_program.controls.get(&first_control).map(|first| first.previous).unwrap_or(first_control);
+        let last_control    = controls_for_program.controls.entry(first_control)
+            .or_insert_with(|| KeyboardControl {
+                control_id: first_control,
+                next:       first_control,
+                previous:   first_control,
+            })
+            .previous;
 
         // Get the existing previous control ID, if it exists
         let previous_control_id = {
