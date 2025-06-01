@@ -271,6 +271,41 @@ impl FocusProgram {
     }
 
     ///
+    /// Figures out the following control
+    ///
+    fn next_control(&self, current_program: Option<SubProgramId>, current_control: Option<ControlId>) -> Option<(SubProgramId, ControlId)> {
+        let current_program = current_program?;
+        let current_control = current_control?;
+
+        // Get the data for the current control
+        let program_data = self.tab_ordering.get(&current_program)?;
+        let control_data = program_data.controls.get(&current_control)?;
+
+        // If this would loop back to the beginning then focus the next subprogram
+        if Some(control_data.next) == program_data.first_control {
+            let next_program    = self.tab_ordering.get(&program_data.next)?;
+            let first_control   = next_program.first_control?;
+
+            Some((program_data.next, first_control))
+        } else {
+            // Just the next control in the same program
+            Some((current_program, control_data.next))
+        }
+    }
+
+    ///
+    /// Focuses the next control in the list
+    ///
+    async fn focus_next(&mut self, context: &SceneContext) {
+        if let Some((next_program, next_control)) = self.next_control(self.focused_subprogram, self.focused_control) {
+            // Currently focused control has a 'next'
+            self.set_keyboard_focus(next_program, next_control, context).await;
+        } else {
+            // TODO: focus the first control in the first program
+        }
+    }
+
+    ///
     /// Sets the program where mouse events go if there's no region defined
     ///
     async fn set_canvas(&mut self, canvas_program: SubProgramId) {
@@ -310,7 +345,7 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             SetKeyboardFocus(program_id, control_id)                        => focus.set_keyboard_focus(program_id, control_id, &context).await,
             SetFollowingControl(program_id, control_id, next_control_id)    => focus.set_following_control(program_id, control_id, next_control_id).await,
             SetFollowingSubProgram(program_id, next_program_id)             => focus.set_following_subprogram(program_id, next_program_id).await,
-            FocusNext                                                       => { todo!() },
+            FocusNext                                                       => focus.focus_next(&context).await,
             FocusPrevious                                                   => { todo!() },
 
             // Control handling
