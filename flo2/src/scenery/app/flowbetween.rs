@@ -110,10 +110,10 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
     create_render_window_sub_program(&scene, render_window_program_id, properties.size().get()).unwrap();
     create_drawing_window_program(&scene, drawing_window_program_id, render_window_program_id).unwrap();
 
-    // Each document runs in its own isolated scene (which lets us run subprograms in the scene with their own IDs)
+    // Each document runs in its own isolated scene (which lets us run subprograms in the scene with their own IDs + shut everything down cleanly when we're done)
     let document_scene = Arc::new(Scene::default());
 
-    // Add a subprogram in the document scene that relays drawing instructions to the drawing window
+    // Add a subprogram in the document scene that relays drawing instructions from the document scene to the drawing window (as the window runs in the 'main' scene, we don't have access here)
     let mut drawing_requests = context.send::<DrawingWindowRequest>(drawing_window_program_id).unwrap();
     document_scene.add_subprogram(subprogram_window(), move |input, context| drawing_relay_program(drawing_requests, input, context), 100);
 
@@ -121,9 +121,19 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
     let drawing_request_filter = FilterHandle::for_filter(|drawing_requests| drawing_requests.map(|req| DrawingWindowRequest::Draw(req)));
     document_scene.connect_programs((), StreamTarget::Filtered(drawing_request_filter, subprogram_window()), StreamId::with_message_type::<DrawingRequest>()).unwrap();
 
-    // Start the main document program within the document scene
-    let document_scene_clone = Arc::clone(&document_scene);
-    document_scene.add_subprogram(subprogram_flowbetween_document(), move |input, context| flowbetween_document(document_scene_clone, input, context), 20);
+    // Start the main program within the document scene
+    let document_scene_clone    = Arc::clone(&document_scene);
+    let app_scene_control       = context.send(()).unwrap();
+    document_scene.add_subprogram(subprogram_flowbetween_document(), move |input, context| async move {
+        // We want to close the document program in the app scene when the program in the document scene finishes
+        let mut app_scene_control = app_scene_control;
+
+        // Run the document program
+        flowbetween_document(document_scene_clone, input, context).await;
+
+        // Shut down the app document program when the document scene's main program stops
+        app_scene_control.send(SceneControl::Close(document_program_id)).await.ok();
+    }, 20);
 
     // Add a subprogram to the app scene that relays events from the window to the document scene
     let drawing_events = document_scene.send_to_scene(()).unwrap();
@@ -149,8 +159,7 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
 ///
 pub async fn flowbetween(scene: Arc<Scene>, events: InputStream<FlowBetween>, context: SceneContext) {
     let mut events      = events;
-
-    let mut documents = HashMap::new();
+    let mut documents   = HashMap::new();
 
     while let Some(evt) = events.next().await {
         use FlowBetween::*;
