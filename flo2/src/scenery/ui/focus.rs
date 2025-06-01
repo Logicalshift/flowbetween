@@ -120,8 +120,6 @@ struct SubProgramRegion {
 struct KeyboardSubProgram {
     subprogram_id:  SubProgramId,
     control_order:  Vec<ControlId>,
-    next:           SubProgramId,
-    previous:       SubProgramId,
 }
 
 ///
@@ -136,6 +134,9 @@ struct FocusProgram {
 
     /// The data for each subprogram region
     subprogram_data: HashMap<SubProgramId, SubProgramRegion>,
+
+    /// The focus order for the subprograms
+    subprogram_order: Vec<SubProgramId>,
 
     /// The subprogram that currently has keyboard focus
     focused_subprogram: Option<SubProgramId>,
@@ -175,64 +176,76 @@ impl FocusProgram {
     ///
     async fn set_following_control(&mut self, program_id: SubProgramId, control_id: ControlId, next_control_id: ControlId) {
         // Find the subprogram for these controls
+        if !self.subprogram_order.iter().any(|prog| prog == &program_id) {
+            self.subprogram_order.push(program_id);
+        }
+
         let controls_for_program = self.tab_ordering.entry(program_id)
             .or_insert_with(|| KeyboardSubProgram {
                 subprogram_id:  program_id,
                 control_order:  vec![],
-                next:           program_id,
-                previous:       program_id,
             });
 
+        // Remove the control if it already has an order
+        controls_for_program.control_order.retain(|ctrl| ctrl != &control_id);
+
         // Add the first control to the end of the list for the program if it's not there already (generally this should be called with controls that already exist)
-        let before_idx = if let Some(idx) = controls_for_program.control_order.iter().position(|ctrl| ctrl == &control_id) {
+        let before_idx = if let Some(idx) = controls_for_program.control_order.iter().position(|ctrl| ctrl == &next_control_id) {
             idx
         } else {
             let idx = controls_for_program.control_order.len();
-            controls_for_program.control_order.push(control_id);
+            controls_for_program.control_order.push(next_control_id);
 
             idx
         };
 
-        // Insert the next control after this index
-        controls_for_program.control_order.insert(before_idx + 1, next_control_id);
+        // Insert the control before the 'next' control
+        controls_for_program.control_order.insert(before_idx, control_id);
     }
 
     ///
     /// Sets the following subprogram for keyboard focus (inserting program_id before next_program_id)
     ///
     async fn set_following_subprogram(&mut self, program_id: SubProgramId, next_program_id: SubProgramId) {
-        // Get the existing previous program ID
-        let previous_program_id = {
-            let next_program = self.tab_ordering.entry(next_program_id)
-                .or_insert_with(|| KeyboardSubProgram {
-                    subprogram_id:  next_program_id,
-                    control_order:  vec![],
-                    next:           next_program_id,
-                    previous:       next_program_id,
-                });
-
-            let previous_control    = next_program.previous;
-            next_program.previous   = program_id;
-
-            previous_control
-        };
-
-        // Get the current program
-        let current_program = self.tab_ordering.entry(program_id)
+        // Ensure that the control order exists for the programs
+        self.tab_ordering.entry(program_id)
             .or_insert_with(|| KeyboardSubProgram {
                 subprogram_id:  program_id,
                 control_order:  vec![],
-                next:           program_id,
-                previous:       program_id,
+            });
+        self.tab_ordering.entry(next_program_id)
+            .or_insert_with(|| KeyboardSubProgram {
+                subprogram_id:  program_id,
+                control_order:  vec![],
             });
 
-        current_program.next        = next_program_id;
-        current_program.previous    = previous_program_id;
+        // Remove program_id from the existing list
+        self.subprogram_order.retain(|prog| prog != &program_id);
+        
+        // Find the index to add the program ID before
+        let before_idx = if let Some(idx) = self.subprogram_order.iter().position(|prog| prog == &next_program_id) {
+            idx
+        } else {
+            // Add next_program_id at the end of the ordering if it doesn't already exist
+            let idx = self.subprogram_order.len();
+            self.subprogram_order.push(next_program_id);
 
-        // Update the previous control
-        if let Some(previous_program) = self.tab_ordering.get_mut(&previous_program_id) {
-            previous_program.next = program_id;
-        }
+            idx
+        };
+
+        // Insert program_id before next_program_id
+        self.subprogram_order.insert(before_idx, program_id);
+    }
+
+    ///
+    /// Figures out the following subprogram ID in focus order
+    ///
+    fn next_subprogram(&self, current_program: Option<SubProgramId>) -> Option<SubProgramId> {
+        let current_program = current_program?;
+        let current_idx     = self.subprogram_order.iter().position(|prog| prog == &current_program)?;
+        let next_idx        = if current_idx+1 >= self.subprogram_order.len() { 0 } else { current_idx+1 };
+
+        Some(self.subprogram_order[next_idx])
     }
 
     ///
@@ -248,10 +261,11 @@ impl FocusProgram {
 
         // If this would loop back to the beginning then focus the next subprogram
         if control_pos+1 >= program_data.control_order.len() {
-            let next_program    = self.tab_ordering.get(&program_data.next)?;
+            let next_program_id = self.next_subprogram(Some(current_program))?;
+            let next_program    = self.tab_ordering.get(&next_program_id)?;
             let first_control   = next_program.control_order.iter().copied().next()?;
 
-            Some((program_data.next, first_control))
+            Some((next_program_id, first_control))
         } else {
             // Just the next control in the same program
             Some((current_program, program_data.control_order[control_pos+1]))
@@ -271,6 +285,17 @@ impl FocusProgram {
     }
 
     ///
+    /// Figures out the previous subprogram ID in focus order
+    ///
+    fn previous_subprogram(&self, current_program: Option<SubProgramId>) -> Option<SubProgramId> {
+        let current_program = current_program?;
+        let current_idx     = self.subprogram_order.iter().position(|prog| prog == &current_program)?;
+        let previous_idx    = if current_idx == 0 { self.subprogram_order.len()-1 } else { current_idx-1 };
+
+        Some(self.subprogram_order[previous_idx])
+    }
+
+    ///
     /// Figures out the preceding control
     ///
     fn previous_control(&self, current_program: Option<SubProgramId>, current_control: Option<ControlId>) -> Option<(SubProgramId, ControlId)> {
@@ -283,10 +308,11 @@ impl FocusProgram {
 
         if control_pos == 0 {
             // Return the last control of the previous program
-            let previous_program = self.tab_ordering.get(&program_data.previous)?;
-            let previous_control = previous_program.control_order.last()?;
+            let previous_program_id = self.previous_subprogram(Some(current_program))?;
+            let previous_program    = self.tab_ordering.get(&previous_program_id)?;
+            let previous_control    = previous_program.control_order.last()?;
 
-            Some((program_data.previous, *previous_control))
+            Some((previous_program_id, *previous_control))
         } else {
             // Retur nthe preceding control
             Some((current_program, program_data.control_order[control_pos-1]))
@@ -328,6 +354,7 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
         canvas_program:     None,
         subprogram_space:   Space1D::empty(),
         subprogram_data:    HashMap::new(),
+        subprogram_order:   vec![],
         focused_subprogram: None,
         focused_control:    None,
         tab_ordering:       HashMap::new(),
