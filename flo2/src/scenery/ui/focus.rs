@@ -31,9 +31,13 @@ pub enum Focus {
     SetKeyboardFocus(SubProgramId, ControlId),
 
     /// Sets which control should receive keyboard focus after the specified control (within a subprogram, which might have several controls)
+    ///
+    /// This moves the first control so that it's ordered before the second control (new controls are added at the end of the list)
     SetFollowingControl(SubProgramId, ControlId, ControlId),
 
-    /// Sets which subprogram should receive keyboard focus after reaching the end of the controls in the specified 
+    /// Sets which subprogram should receive keyboard focus after reaching the end of the controls in the first subprogram 
+    ///
+    /// This moves the first subprogram so that it's ordered before the second program (new subprograms are added at the end of the list)
     SetFollowingSubProgram(SubProgramId, SubProgramId),
 
     /// Move keyboard focus to the next control
