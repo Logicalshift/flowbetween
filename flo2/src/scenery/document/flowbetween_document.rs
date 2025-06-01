@@ -51,6 +51,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), program_id, StreamId::with_message_type::<DrawingRequest>()).unwrap();
 
     // Set up the window to its initial state
+    let mut idle_requests   = context.send::<IdleRequest>(()).unwrap();
     let mut window_drawing  = context.send::<DrawingRequest>(subprogram_window()).unwrap();
     let mut window_setup    = vec![];
 
@@ -129,7 +130,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
                     // Request an idle message (we'll draw once everything is idle)
                     if !waiting_for_idle {
-                        context.send_message(IdleRequest::WhenIdle(program_id)).await.ok();
+                        idle_requests.send(IdleRequest::WhenIdle(program_id)).await.ok();
                         waiting_for_idle = true;
                     }
                 }
@@ -161,7 +162,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
                             if !pending_drawing.is_empty() && !waiting_for_idle {
                                 // Request an idle event if there's more to draw waiting
-                                context.send_message(IdleRequest::WhenIdle(program_id)).await.ok();
+                                idle_requests.send(IdleRequest::WhenIdle(program_id)).await.ok();
                                 waiting_for_idle = true;
                             }
                         }
