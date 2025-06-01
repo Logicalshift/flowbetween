@@ -134,6 +134,149 @@ struct KeyboardSubProgram {
     previous:       SubProgramId,
 }
 
+///
+/// Helps manage the state for the focus subprogram
+///
+struct FocusProgram {
+    /// The program that canvas events get sent to (events that aren't for any region)
+    canvas_program: Option<SubProgramId>,
+
+    /// x-oriented 1D scan space for subprogram regions
+    subprogram_space: Space1D<SubProgramId>,
+
+    /// The data for each subprogram region
+    subprogram_data: HashMap<SubProgramId, SubProgramRegion>,
+
+    /// The subprogram that currently has keyboard focus
+    focused_subprogram: Option<SubProgramId>,
+
+    /// The control within the subprogram that has keyboard focus
+    focused_control: Option<ControlId>,
+
+    /// The tab ordering for the controls within this program
+    tab_ordering: HashMap<SubProgramId, KeyboardSubProgram>,
+}
+
+impl FocusProgram {
+    ///
+    /// Sets keyboard focus to a specific program/control
+    ///
+    async fn set_keyboard_focus(&mut self, program_id: SubProgramId, control_id: ControlId, context: &SceneContext) {
+        // Unfocus the existing program
+        if let (Some(old_program_id), Some(old_control_id)) = (self.focused_subprogram, self.focused_control) {
+            if let Ok(mut channel) = context.send(old_program_id) {
+                channel.send(FocusEvent::Unfocused(old_control_id)).await.ok();
+            }
+
+            self.focused_subprogram  = None;
+            self.focused_control     = None;
+        }
+
+        // Update the focused control and inform the relevant program
+        if let Ok(mut channel) = context.send(program_id) {
+            self.focused_subprogram  = Some(program_id);
+            self.focused_control     = Some(control_id);
+            channel.send(FocusEvent::Focused(control_id)).await.ok();
+        }
+    }
+
+    ///
+    /// Sets the following control for keyboard focus (inserting control_id before next_control_id)
+    ///
+    async fn set_following_control(&mut self, program_id: SubProgramId, control_id: ControlId, next_control_id: ControlId) {
+        // Find the subprogram for these controls
+        let controls_for_program = self.tab_ordering.entry(program_id)
+            .or_insert_with(|| KeyboardSubProgram {
+                subprogram_id:  program_id,
+                first_control:  Some(control_id),
+                controls:       HashMap::new(),
+                next:           program_id,
+                previous:       program_id,
+            });
+
+        if controls_for_program.first_control.is_none() {
+            controls_for_program.first_control = Some(control_id);
+        }
+
+        // Get the existing previous control ID
+        let previous_control_id = {
+            let next_control = controls_for_program.controls.entry(next_control_id)
+                .or_insert_with(|| KeyboardControl {
+                    control_id: next_control_id,
+                    next:       next_control_id,
+                    previous:   next_control_id,
+                });
+
+            let previous_control    = next_control.previous;
+            next_control.previous   = control_id;
+
+            previous_control
+        };
+
+        // Get the current control
+        let current_control = controls_for_program.controls.entry(control_id)
+            .or_insert_with(|| KeyboardControl {
+                control_id: control_id,
+                next:       control_id,
+                previous:   control_id,
+            });
+
+        current_control.next        = next_control_id;
+        current_control.previous    = previous_control_id;
+
+        // Update the previous control
+        if let Some(previous_control) = controls_for_program.controls.get_mut(&previous_control_id) {
+            previous_control.next = control_id;
+        }
+    }
+
+    ///
+    /// Sets the following subprogram for keyboard focus (inserting program_id before next_program_id)
+    ///
+    async fn set_following_subprogram(&mut self, program_id: SubProgramId, next_program_id: SubProgramId) {
+        // Get the existing previous program ID
+        let previous_program_id = {
+            let next_program = self.tab_ordering.entry(next_program_id)
+                .or_insert_with(|| KeyboardSubProgram {
+                    subprogram_id:  next_program_id,
+                    first_control:  None,
+                    controls:       HashMap::new(),
+                    next:           next_program_id,
+                    previous:       next_program_id,
+                });
+
+            let previous_control    = next_program.previous;
+            next_program.previous   = program_id;
+
+            previous_control
+        };
+
+        // Get the current program
+        let current_program = self.tab_ordering.entry(program_id)
+            .or_insert_with(|| KeyboardSubProgram {
+                subprogram_id:  program_id,
+                first_control:  None,
+                controls:       HashMap::new(),
+                next:           program_id,
+                previous:       program_id,
+            });
+
+        current_program.next        = next_program_id;
+        current_program.previous    = previous_program_id;
+
+        // Update the previous control
+        if let Some(previous_program) = self.tab_ordering.get_mut(&previous_program_id) {
+            previous_program.next = program_id;
+        }
+    }
+
+    ///
+    /// Sets the program where mouse events go if there's no region defined
+    ///
+    async fn set_canvas(&mut self, canvas_program: SubProgramId) {
+        self.canvas_program = Some(canvas_program);
+    }
+}
 
 ///
 /// Runs the UI focus subprogram
@@ -145,15 +288,15 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
     // Request updates from the scene (which we'll use to remove subprograms that aren't running any more)
     context.send_message(SceneControl::Subscribe(program_id.into())).await.ok();
 
-    // We use a 1D space to store the regions (so we do an x-sweep to find them)
-    let mut canvas_program      = None;
-    let mut subprogram_space    = Space1D::<SubProgramId>::empty();
-    //let mut subprogram_data     = HashMap::new();
-
-    // We also store the tab ordering of subprograms (and the controls within those subprograms)
-    let mut focused_subprogram  = None;
-    let mut focused_control     = None;
-    let mut tab_ordering        = HashMap::new();
+    // Create the state
+    let mut focus = FocusProgram {
+        canvas_program:     None,
+        subprogram_space:   Space1D::empty(),
+        subprogram_data:    HashMap::new(),
+        focused_subprogram: None,
+        focused_control:    None,
+        tab_ordering:       HashMap::new(),
+    };
 
     while let Some(request) = input.next().await {
         use Focus::*;
@@ -164,126 +307,18 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             Update(scene_update) => { todo!() },
 
             // Keyboard handling
-            SetKeyboardFocus(program_id, control_id) => {
-                // Unfocus the existing program
-                if let (Some(old_program_id), Some(old_control_id)) = (focused_subprogram, focused_control) {
-                    if let Ok(mut channel) = context.send(old_program_id) {
-                        channel.send(FocusEvent::Unfocused(old_control_id)).await.ok();
-                    }
-
-                    focused_subprogram  = None;
-                    focused_control     = None;
-                }
-
-                // Update the focused control and inform the relevant program
-                if let Ok(mut channel) = context.send(program_id) {
-                    focused_subprogram  = Some(program_id);
-                    focused_control     = Some(control_id);
-                    channel.send(FocusEvent::Focused(control_id)).await.ok();
-                }
-            },
-
-            SetFollowingControl(program_id, control_id, next_control_id) => {
-                // Insert control_id into the list before next_control_id
-
-                // Find the subprogram for this control
-                let controls_for_program = tab_ordering.entry(program_id)
-                    .or_insert_with(|| KeyboardSubProgram {
-                        subprogram_id:  program_id,
-                        first_control:  Some(control_id),
-                        controls:       HashMap::new(),
-                        next:           program_id,
-                        previous:       program_id,
-                    });
-
-                if controls_for_program.first_control.is_none() {
-                    controls_for_program.first_control = Some(control_id);
-                }
-
-                // Get the existing previous control ID
-                let previous_control_id = {
-                    let next_control = controls_for_program.controls.entry(next_control_id)
-                        .or_insert_with(|| KeyboardControl {
-                            control_id: next_control_id,
-                            next:       next_control_id,
-                            previous:   next_control_id,
-                        });
-
-                    let previous_control    = next_control.previous;
-                    next_control.previous   = control_id;
-
-                    previous_control
-                };
-
-                // Get the current control
-                let current_control = controls_for_program.controls.entry(control_id)
-                    .or_insert_with(|| KeyboardControl {
-                        control_id: control_id,
-                        next:       control_id,
-                        previous:   control_id,
-                    });
-
-                current_control.next        = next_control_id;
-                current_control.previous    = previous_control_id;
-
-                // Update the previous control
-                if let Some(previous_control) = controls_for_program.controls.get_mut(&previous_control_id) {
-                    previous_control.next = control_id;
-                }
-            },
-
-            SetFollowingSubProgram(program_id, next_program_id) => {
-                // Insert program_id into the list before next_program_id
-
-                // Get the existing previous program ID
-                let previous_program_id = {
-                    let next_program = tab_ordering.entry(next_program_id)
-                        .or_insert_with(|| KeyboardSubProgram {
-                            subprogram_id:  next_program_id,
-                            first_control:  None,
-                            controls:       HashMap::new(),
-                            next:           next_program_id,
-                            previous:       next_program_id,
-                        });
-
-                    let previous_control    = next_program.previous;
-                    next_program.previous   = program_id;
-
-                    previous_control
-                };
-
-                // Get the current program
-                let current_program = tab_ordering.entry(program_id)
-                    .or_insert_with(|| KeyboardSubProgram {
-                        subprogram_id:  program_id,
-                        first_control:  None,
-                        controls:       HashMap::new(),
-                        next:           program_id,
-                        previous:       program_id,
-                    });
-
-                current_program.next        = next_program_id;
-                current_program.previous    = previous_program_id;
-
-                // Update the previous control
-                if let Some(previous_program) = tab_ordering.get_mut(&previous_program_id) {
-                    previous_program.next = program_id;
-                }
-            },
-
-            FocusNext => { todo!() },
-            FocusPrevious => { todo!() },
+            SetKeyboardFocus(program_id, control_id)                        => focus.set_keyboard_focus(program_id, control_id, &context).await,
+            SetFollowingControl(program_id, control_id, next_control_id)    => focus.set_following_control(program_id, control_id, next_control_id).await,
+            SetFollowingSubProgram(program_id, next_program_id)             => focus.set_following_subprogram(program_id, next_program_id).await,
+            FocusNext                                                       => { todo!() },
+            FocusPrevious                                                   => { todo!() },
 
             // Control handling
-            RemoveClaim(program_id) => { todo!() },
-            RemoveControlClaim(program_id, control_id) => { todo!() },
-
-            SetCanvas(canvas_program_id) => {
-                canvas_program = Some(canvas_program_id);
-            },
-
-            ClaimRegion { program, region, z_index } => { todo!() },
-            ClaimControlRegion { program, region, control, z_index } => { todo!() },
+            RemoveClaim(program_id)                                     => { todo!() },
+            RemoveControlClaim(program_id, control_id)                  => { todo!() },
+            SetCanvas(canvas_program_id)                                => focus.set_canvas(canvas_program_id).await,
+            ClaimRegion { program, region, z_index }                    => { todo!() },
+            ClaimControlRegion { program, region, control, z_index }    => { todo!() },
         }
     }
 }
