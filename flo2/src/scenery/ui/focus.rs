@@ -438,6 +438,7 @@ mod test {
         TestBuilder::new()
             .send_message(Focus::SetFollowingControl(test_program, control_1, control_2))
             .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
+            
             .send_message(Focus::SetKeyboardFocus(test_program, control_1))
             .expect_message(move |evt: FocusEvent| expect_focus(evt, control_1, 1))
             .send_message(Focus::FocusNext)
@@ -446,7 +447,6 @@ mod test {
             .send_message(Focus::FocusNext)
             .expect_message(move |evt: FocusEvent| expect_unfocus(evt, control_2, 2))
             .expect_message(move |evt: FocusEvent| expect_focus(evt, control_3, 3))
-            .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
             .run_in_scene_with_threads(&scene, test_program, 5);
     }
 
@@ -466,6 +466,7 @@ mod test {
             .send_message(Focus::SetFollowingControl(test_program, control_1, control_2))
             .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
             .send_message(Focus::SetFollowingControl(test_program, control_3, control_4))
+
             .send_message(Focus::SetKeyboardFocus(test_program, control_4))
             .expect_message(move |evt: FocusEvent| expect_focus(evt, control_4, 4))
             .send_message(Focus::FocusPrevious)
@@ -477,7 +478,6 @@ mod test {
             .send_message(Focus::FocusPrevious)
             .expect_message(move |evt: FocusEvent| expect_unfocus(evt, control_2, 2))
             .expect_message(move |evt: FocusEvent| expect_focus(evt, control_1, 1))
-            .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
             .run_in_scene_with_threads(&scene, test_program, 5);
     }
 
@@ -496,6 +496,8 @@ mod test {
         TestBuilder::new()
             .send_message(Focus::SetFollowingControl(test_program, control_1, control_2))
             .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
+            .send_message(Focus::SetFollowingControl(test_program, control_3, control_4))
+
             .send_message(Focus::SetKeyboardFocus(test_program, control_1))
             .expect_message(move |evt: FocusEvent| expect_focus(evt, control_1, 1))
             .send_message(Focus::FocusNext)
@@ -510,7 +512,6 @@ mod test {
             .send_message(Focus::FocusNext)
             .expect_message(move |evt: FocusEvent| expect_unfocus(evt, control_4, 4))
             .expect_message(move |evt: FocusEvent| expect_focus(evt, control_1, 1))
-            .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
             .run_in_scene_with_threads(&scene, test_program, 5);
     }
 }
