@@ -115,21 +115,11 @@ struct SubProgramRegion {
 }
 
 ///
-/// Represents the ordering of controls that can receive keyboard focus
-///
-struct KeyboardControl {
-    control_id: ControlId,
-    next:       ControlId,
-    previous:   ControlId,
-}
-
-///
 /// Represents the ordering of subprograms that can receive keyboard focus
 ///
 struct KeyboardSubProgram {
     subprogram_id:  SubProgramId,
-    first_control:  Option<ControlId>,
-    controls:       HashMap<ControlId, KeyboardControl>,
+    control_order:  Vec<ControlId>,
     next:           SubProgramId,
     previous:       SubProgramId,
 }
@@ -188,61 +178,23 @@ impl FocusProgram {
         let controls_for_program = self.tab_ordering.entry(program_id)
             .or_insert_with(|| KeyboardSubProgram {
                 subprogram_id:  program_id,
-                first_control:  Some(control_id),
-                controls:       HashMap::new(),
+                control_order:  vec![],
                 next:           program_id,
                 previous:       program_id,
             });
 
-        if controls_for_program.first_control.is_none() {
-            controls_for_program.first_control = Some(control_id);
-        }
+        // Add the first control to the end of the list for the program if it's not there already (generally this should be called with controls that already exist)
+        let before_idx = if let Some(idx) = controls_for_program.control_order.iter().position(|ctrl| ctrl == &control_id) {
+            idx
+        } else {
+            let idx = controls_for_program.control_order.len();
+            controls_for_program.control_order.push(control_id);
 
-        let first_control   = controls_for_program.first_control.unwrap();
-        let last_control    = controls_for_program.controls.entry(first_control)
-            .or_insert_with(|| KeyboardControl {
-                control_id: first_control,
-                next:       first_control,
-                previous:   first_control,
-            })
-            .previous;
-
-        // Get the existing previous control ID, if it exists
-        let previous_control_id = {
-            let next_control = controls_for_program.controls.entry(next_control_id)
-                .or_insert_with(|| KeyboardControl {
-                    control_id: next_control_id,
-                    next:       first_control,
-                    previous:   last_control,
-                });
-
-            let previous_control    = next_control.previous;
-            next_control.previous   = control_id;
-
-            if previous_control == last_control {
-                if let Some(first_control) = controls_for_program.controls.get_mut(&first_control) {
-                    first_control.previous = next_control_id;
-                }
-            }
-
-            previous_control
+            idx
         };
 
-        // Get the current control
-        let current_control = controls_for_program.controls.entry(control_id)
-            .or_insert_with(|| KeyboardControl {
-                control_id: control_id,
-                next:       control_id,
-                previous:   control_id,
-            });
-
-        current_control.next        = next_control_id;
-        current_control.previous    = previous_control_id;
-
-        // Update the previous control
-        if let Some(previous_control) = controls_for_program.controls.get_mut(&previous_control_id) {
-            previous_control.next = control_id;
-        }
+        // Insert the next control after this index
+        controls_for_program.control_order.insert(before_idx + 1, next_control_id);
     }
 
     ///
@@ -254,8 +206,7 @@ impl FocusProgram {
             let next_program = self.tab_ordering.entry(next_program_id)
                 .or_insert_with(|| KeyboardSubProgram {
                     subprogram_id:  next_program_id,
-                    first_control:  None,
-                    controls:       HashMap::new(),
+                    control_order:  vec![],
                     next:           next_program_id,
                     previous:       next_program_id,
                 });
@@ -270,8 +221,7 @@ impl FocusProgram {
         let current_program = self.tab_ordering.entry(program_id)
             .or_insert_with(|| KeyboardSubProgram {
                 subprogram_id:  program_id,
-                first_control:  None,
-                controls:       HashMap::new(),
+                control_order:  vec![],
                 next:           program_id,
                 previous:       program_id,
             });
@@ -293,18 +243,18 @@ impl FocusProgram {
         let current_control = current_control?;
 
         // Get the data for the current control
-        let program_data = self.tab_ordering.get(&current_program)?;
-        let control_data = program_data.controls.get(&current_control)?;
+        let program_data    = self.tab_ordering.get(&current_program)?;
+        let control_pos     = program_data.control_order.iter().position(|ctrl| ctrl == &current_control)?;
 
         // If this would loop back to the beginning then focus the next subprogram
-        if Some(control_data.next) == program_data.first_control {
+        if control_pos+1 >= program_data.control_order.len() {
             let next_program    = self.tab_ordering.get(&program_data.next)?;
-            let first_control   = next_program.first_control?;
+            let first_control   = next_program.control_order.iter().copied().next()?;
 
             Some((program_data.next, first_control))
         } else {
             // Just the next control in the same program
-            Some((current_program, control_data.next))
+            Some((current_program, program_data.control_order[control_pos+1]))
         }
     }
 
@@ -328,19 +278,18 @@ impl FocusProgram {
         let current_control = current_control?;
 
         // Get the data for the current control
-        let program_data = self.tab_ordering.get(&current_program)?;
-        let control_data = program_data.controls.get(&current_control)?;
-        let last_control = program_data.controls.get(&program_data.first_control?)?.previous;
+        let program_data    = self.tab_ordering.get(&current_program)?;
+        let control_pos     = program_data.control_order.iter().position(|ctrl| ctrl == &current_control)?;
 
-        // If this would loop back to the end then focus the previous subprogram
-        if control_data.previous == last_control {
-            let previous_program    = self.tab_ordering.get(&program_data.previous)?;
-            let last_control        = previous_program.controls.get(&previous_program.first_control?)?.previous;
+        if control_pos == 0 {
+            // Return the last control of the previous program
+            let previous_program = self.tab_ordering.get(&program_data.previous)?;
+            let previous_control = previous_program.control_order.last()?;
 
-            Some((program_data.previous, last_control))
+            Some((program_data.previous, *previous_control))
         } else {
-            // Just the previous control in the same program
-            Some((current_program, control_data.previous))
+            // Retur nthe preceding control
+            Some((current_program, program_data.control_order[control_pos-1]))
         }
     }
 
@@ -498,6 +447,40 @@ mod test {
             .send_message(Focus::FocusPrevious)
             .expect_message(move |evt: FocusEvent| expect_unfocus(evt, control_2, 2))
             .expect_message(move |evt: FocusEvent| expect_focus(evt, control_1, 1))
+            .run_in_scene_with_threads(&scene, test_program, 5);
+    }
+
+    #[test]
+    fn focus_previous_control_makes_loop() {
+        let test_program    = SubProgramId::called("focus_following_control");
+        let scene           = Scene::default();
+
+        let control_1       = ControlId::new();
+        let control_2       = ControlId::new();
+        let control_3       = ControlId::new();
+        let control_4       = ControlId::new();
+
+        println!("1 = {:?}, 2 = {:?}, 3 = {:?}, 4 = {:?}", control_1, control_2, control_3, control_4);
+
+        TestBuilder::new()
+            .send_message(Focus::SetFollowingControl(test_program, control_1, control_2))
+            .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
+            .send_message(Focus::SetFollowingControl(test_program, control_3, control_4))
+
+            .send_message(Focus::SetKeyboardFocus(test_program, control_4))
+            .expect_message(move |evt: FocusEvent| expect_focus(evt, control_4, 4))
+            .send_message(Focus::FocusPrevious)
+            .expect_message(move |evt: FocusEvent| expect_unfocus(evt, control_4, 4))
+            .expect_message(move |evt: FocusEvent| expect_focus(evt, control_3, 3))
+            .send_message(Focus::FocusPrevious)
+            .expect_message(move |evt: FocusEvent| expect_unfocus(evt, control_3, 3))
+            .expect_message(move |evt: FocusEvent| expect_focus(evt, control_2, 2))
+            .send_message(Focus::FocusPrevious)
+            .expect_message(move |evt: FocusEvent| expect_unfocus(evt, control_2, 2))
+            .expect_message(move |evt: FocusEvent| expect_focus(evt, control_1, 1))
+            .send_message(Focus::FocusPrevious)
+            .expect_message(move |evt: FocusEvent| expect_unfocus(evt, control_1, 1))
+            .expect_message(move |evt: FocusEvent| expect_focus(evt, control_4, 4))
             .run_in_scene_with_threads(&scene, test_program, 5);
     }
 
