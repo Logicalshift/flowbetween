@@ -120,7 +120,15 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
         .send(DrawingWindowRequest::SendEvents(event_relay_program_id)).await.ok();
 
     // Run the document scene in its own subprogram (within the app)
-    scene.add_subprogram(document_program_id, move |input, context| document(document_scene, input, context), 1);
+    scene.add_subprogram(document_program_id, move |input, context| async move {
+        // Run the scene
+        document(document_scene, input, context.clone()).await;
+
+        // When the scene is finished, stop all of the subprograms running in the main scene
+        context.send_message(SceneControl::Close(event_relay_program_id)).await.ok();
+        context.send_message(SceneControl::Close(drawing_window_program_id)).await.ok();
+        context.send_message(SceneControl::Close(render_window_program_id)).await.ok();
+    }, 1);
 }
 
 ///
