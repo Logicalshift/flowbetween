@@ -331,7 +331,7 @@ impl FocusProgram {
             // Currently focused control has a 'next'
             self.set_keyboard_focus(previous_program, previous_control, context).await;
         } else {
-            // TODO: focus the last control in the first program
+            // TODO: focus the last control in the last program
         }
     }
 
