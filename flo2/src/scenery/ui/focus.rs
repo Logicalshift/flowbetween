@@ -375,7 +375,7 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
         match request {
             Event(event) => { todo!() },
 
-            Update(scene_update) => { todo!() },
+            Update(scene_update) => { /* todo!() */ },
 
             // Keyboard handling
             SetKeyboardFocus(program_id, control_id)                        => focus.set_keyboard_focus(program_id, control_id, &context).await,
@@ -391,5 +391,92 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             ClaimRegion { program, region, z_index }                    => { todo!() },
             ClaimControlRegion { program, region, control, z_index }    => { todo!() },
         }
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn focus_following_control() {
+        let test_program    = SubProgramId::called("focus_following_control");
+        let scene           = Scene::default();
+
+        let control_1       = ControlId::new();
+        let control_2       = ControlId::new();
+        let control_3       = ControlId::new();
+
+        println!("1 = {:?}, 2 = {:?}, 3 = {:?}", control_1, control_2, control_3);
+
+        TestBuilder::new()
+            .send_message(Focus::SetFollowingControl(test_program, control_1, control_2))
+            .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
+            .send_message(Focus::SetKeyboardFocus(test_program, control_1))
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_1 { Ok(()) } else { Err(format!("Expected focus control 1, got {:?}", evt)) } } else { Err(format!("Expected focus control 1, got {:?}", evt)) })
+            .send_message(Focus::FocusNext)
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Unfocused(ctrl) = evt { if ctrl == control_1 { Ok(()) } else { Err(format!("Expected unfocus control 1, got {:?}", evt)) } } else { Err(format!("Expected unfocus control 1, got {:?}", evt)) })
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_2 { Ok(()) } else { Err(format!("Expected focus control 2, got {:?}", evt)) } } else { Err(format!("Expected focus control 2, got {:?}", evt)) })
+            .send_message(Focus::FocusNext)
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Unfocused(ctrl) = evt { if ctrl == control_2 { Ok(()) } else { Err(format!("Expected unfocus control 2, got {:?}", evt)) } } else { Err(format!("Expected unfocus control 2, got {:?}", evt)) })
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_3 { Ok(()) } else { Err(format!("Expected focus control 3, got {:?}", evt)) } } else { Err(format!("Expected focus control 3, got {:?}", evt)) })
+            .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
+            .run_in_scene_with_threads(&scene, test_program, 5);
+    }
+
+    #[test]
+    fn focus_previous_control() {
+        let test_program    = SubProgramId::called("focus_following_control");
+        let scene           = Scene::default();
+
+        let control_1       = ControlId::new();
+        let control_2       = ControlId::new();
+        let control_3       = ControlId::new();
+
+        println!("1 = {:?}, 2 = {:?}, 3 = {:?}", control_1, control_2, control_3);
+
+        TestBuilder::new()
+            .send_message(Focus::SetFollowingControl(test_program, control_1, control_2))
+            .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
+            .send_message(Focus::SetKeyboardFocus(test_program, control_3))
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_3 { Ok(()) } else { Err(format!("Expected focus control 3, got {:?}", evt)) } } else { Err(format!("Expected focus control 3, got {:?}", evt)) })
+            .send_message(Focus::FocusPrevious)
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Unfocused(ctrl) = evt { if ctrl == control_3 { Ok(()) } else { Err(format!("Expected unfocus control 3, got {:?}", evt)) } } else { Err(format!("Expected unfocus control 3, got {:?}", evt)) })
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_2 { Ok(()) } else { Err(format!("Expected focus control 2, got {:?}", evt)) } } else { Err(format!("Expected focus control 2, got {:?}", evt)) })
+            .send_message(Focus::FocusPrevious)
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Unfocused(ctrl) = evt { if ctrl == control_2 { Ok(()) } else { Err(format!("Expected unfocus control 2, got {:?}", evt)) } } else { Err(format!("Expected unfocus control 2, got {:?}", evt)) })
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_1 { Ok(()) } else { Err(format!("Expected focus control 1, got {:?}", evt)) } } else { Err(format!("Expected focus control 1, got {:?}", evt)) })
+            .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
+            .run_in_scene_with_threads(&scene, test_program, 5);
+    }
+
+    #[test]
+    fn focus_following_control_makes_loop() {
+        let test_program    = SubProgramId::called("focus_following_control");
+        let scene           = Scene::default();
+
+        let control_1       = ControlId::new();
+        let control_2       = ControlId::new();
+        let control_3       = ControlId::new();
+
+        println!("1 = {:?}, 2 = {:?}, 3 = {:?}", control_1, control_2, control_3);
+
+        TestBuilder::new()
+            .send_message(Focus::SetFollowingControl(test_program, control_1, control_2))
+            .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
+            .send_message(Focus::SetKeyboardFocus(test_program, control_1))
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_1 { Ok(()) } else { Err(format!("Expected focus control 1, got {:?}", evt)) } } else { Err(format!("Expected focus control 1, got {:?}", evt)) })
+            .send_message(Focus::FocusNext)
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Unfocused(ctrl) = evt { if ctrl == control_1 { Ok(()) } else { Err(format!("Expected unfocus control 1, got {:?}", evt)) } } else { Err(format!("Expected unfocus control 1, got {:?}", evt)) })
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_2 { Ok(()) } else { Err(format!("Expected focus control 2, got {:?}", evt)) } } else { Err(format!("Expected focus control 2, got {:?}", evt)) })
+            .send_message(Focus::FocusNext)
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Unfocused(ctrl) = evt { if ctrl == control_2 { Ok(()) } else { Err(format!("Expected unfocus control 2, got {:?}", evt)) } } else { Err(format!("Expected unfocus control 2, got {:?}", evt)) })
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_3 { Ok(()) } else { Err(format!("Expected focus control 3, got {:?}", evt)) } } else { Err(format!("Expected focus control 3, got {:?}", evt)) })
+            .send_message(Focus::FocusNext)
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Unfocused(ctrl) = evt { if ctrl == control_3 { Ok(()) } else { Err(format!("Expected unfocus control 3, got {:?}", evt)) } } else { Err(format!("Expected unfocus control 3, got {:?}", evt)) })
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_1 { Ok(()) } else { Err(format!("Expected focus control 1, got {:?}", evt)) } } else { Err(format!("Expected focus control 1, got {:?}", evt)) })
+            .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
+            .run_in_scene_with_threads(&scene, test_program, 5);
     }
 }
