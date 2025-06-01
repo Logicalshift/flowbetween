@@ -61,6 +61,29 @@ async fn event_relay_program(drawing_events: impl Unpin + Send + Sink<DocumentRe
 }
 
 ///
+/// Program that runs in the document scene and sends DrawingWindowRequests out to the application scene (where the actual window lives)
+///
+async fn drawing_relay_program(drawing_requests: OutputSink<DrawingWindowRequest>, input: InputStream<DrawingWindowRequest>, _context: SceneContext) {
+    let mut drawing_requests = drawing_requests;
+    let mut input            = input;
+
+    while let Some(request) = input.next().await {
+        // We can't wire up 'SendEvents' or similar messages here as they'll send their responses to the app scene, so we ignore them for now
+        if let DrawingWindowRequest::SendEvents(_) = &request {
+            // TODO: could start an event relay program here instead (we'd have to manage it and stop it when we're done though)
+            continue;
+        }
+
+        // Pass the event on to the application scene
+        let maybe_err = drawing_requests.send(request).await;
+
+        if !maybe_err.is_ok() {
+            break;
+        }
+    }
+}
+
+///
 /// Creates an empty document in the context
 ///
 async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgramId, context: &SceneContext) {
@@ -79,17 +102,7 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
 
     // Add a subprogram in the document scene that relays drawing instructions to the drawing window
     let mut drawing_requests = context.send::<DrawingWindowRequest>(drawing_window_program_id).unwrap();
-    document_scene.add_subprogram(subprogram_window(), move |input_stream, context| async move {
-        let mut input_stream = input_stream;
-
-        while let Some(request) = input_stream.next().await {
-            let maybe_err = drawing_requests.send(request).await;
-
-            if !maybe_err.is_ok() {
-                break;
-            }
-        }
-    }, 100);
+    document_scene.add_subprogram(subprogram_window(), move |input, context| drawing_relay_program(drawing_requests, input, context), 100);
 
     // Allow drawing requests to be sent directly to the window
     let drawing_request_filter = FilterHandle::for_filter(|drawing_requests| drawing_requests.map(|req| DrawingWindowRequest::Draw(req)));
