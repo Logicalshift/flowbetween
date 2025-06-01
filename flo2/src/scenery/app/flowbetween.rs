@@ -28,24 +28,57 @@ impl SceneMessage for FlowBetween {
 }
 
 ///
+/// Program that relays events originating from the window in the app scene to the main document in the document scene
+///
+async fn event_relay_program(drawing_events: impl Unpin + Send + Sink<DocumentRequest>, document_program_id: SubProgramId, input: InputStream<DrawEvent>, context: SceneContext) {
+    let mut input           = input;
+    let mut drawing_events  = drawing_events;
+
+    while let Some(event) = input.next().await {
+        // Interpret some special events
+        match &event {
+            DrawEvent::Resize(w, h) => {
+                // Send a resize request for the resize event
+                drawing_events.send(DocumentRequest::Resize(*w as _, *h as _)).await.ok();
+            }
+
+            DrawEvent::Closed => {
+                // Tell the document to close down when the close request arrives
+                drawing_events.send(DocumentRequest::Close).await.ok();
+
+                // Also close down the main document scene when the window is closed
+                context.send_message(SceneControl::Close(document_program_id)).await.ok();
+            }
+
+            _ => { }
+        }
+
+        // Send the event as a normal event
+        if drawing_events.send(DocumentRequest::Event(event)).await.is_err() {
+            break;
+        }
+    }
+}
+
+///
 /// Creates an empty document in the context
 ///
 async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgramId, context: &SceneContext) {
     let properties = WindowProperties::from(&());
 
     // Create a window for this document
-    let render_window_program   = SubProgramId::new();
-    let drawing_window_program  = SubProgramId::new();
-    let event_relay_program     = SubProgramId::new();
+    let render_window_program_id   = SubProgramId::new();
+    let drawing_window_program_id  = SubProgramId::new();
+    let event_relay_program_id     = SubProgramId::new();
 
-    create_render_window_sub_program(&scene, render_window_program, properties.size().get()).unwrap();
-    create_drawing_window_program(&scene, drawing_window_program, render_window_program).unwrap();
+    create_render_window_sub_program(&scene, render_window_program_id, properties.size().get()).unwrap();
+    create_drawing_window_program(&scene, drawing_window_program_id, render_window_program_id).unwrap();
 
     // Each document runs in its own isolated scene (which lets us run subprograms in the scene with their own IDs)
     let document_scene = Arc::new(Scene::default());
 
     // Add a subprogram in the document scene that relays drawing instructions to the drawing window
-    let mut drawing_requests = context.send::<DrawingWindowRequest>(drawing_window_program).unwrap();
+    let mut drawing_requests = context.send::<DrawingWindowRequest>(drawing_window_program_id).unwrap();
     document_scene.add_subprogram(subprogram_window(), move |input_stream, context| async move {
         let mut input_stream = input_stream;
 
@@ -67,38 +100,11 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
     document_scene.add_subprogram(subprogram_flowbetween_document(), move |input, context| flowbetween_document(document_scene_clone, input, context), 20);
 
     // Add a subprogram to the app scene that relays events from the window to the document scene
-    let mut drawing_events = document_scene.send_to_scene(()).unwrap();
-    scene.add_subprogram(event_relay_program, |input, context| async move {
-        let mut input = input;
+    let drawing_events = document_scene.send_to_scene(()).unwrap();
+    scene.add_subprogram(event_relay_program_id, move |input, context| event_relay_program(drawing_events, document_program_id, input, context), 20);
 
-        while let Some(event) = input.next().await {
-            // Interpret some special events
-            match &event {
-                DrawEvent::Resize(w, h) => {
-                    // Send a resize request for the resize event
-                    drawing_events.send(DocumentRequest::Resize(*w as _, *h as _)).await.ok();
-                }
-
-                DrawEvent::Closed => {
-                    // Tell the document to close down when the close request arrives
-                    drawing_events.send(DocumentRequest::Close).await.ok();
-
-                    // Also close down the main document scene when the window is closed
-                    context.send_message(SceneControl::Close(document_program_id)).await.ok();
-                }
-
-                _ => { }
-            }
-
-            // Send the event as a normal event
-            if drawing_events.send(DocumentRequest::Event(event)).await.is_err() {
-                break;
-            }
-        }
-    }, 20);
-
-    context.send(drawing_window_program).unwrap()
-        .send(DrawingWindowRequest::SendEvents(event_relay_program)).await.ok();
+    context.send(drawing_window_program_id).unwrap()
+        .send(DrawingWindowRequest::SendEvents(event_relay_program_id)).await.ok();
 
     // Run the document scene in its own subprogram (within the app)
     scene.add_subprogram(document_program_id, move |input, context| document(document_scene, input, context), 1);
