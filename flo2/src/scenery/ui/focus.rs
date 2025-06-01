@@ -441,12 +441,14 @@ mod test {
         let control_1       = ControlId::new();
         let control_2       = ControlId::new();
         let control_3       = ControlId::new();
+        let control_4       = ControlId::new();
 
-        println!("1 = {:?}, 2 = {:?}, 3 = {:?}", control_1, control_2, control_3);
+        println!("1 = {:?}, 2 = {:?}, 3 = {:?}, 4 = {:?}", control_1, control_2, control_3, control_4);
 
         TestBuilder::new()
             .send_message(Focus::SetFollowingControl(test_program, control_1, control_2))
             .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
+            .send_message(Focus::SetFollowingControl(test_program, control_3, control_4))
 
             .send_message(Focus::SetKeyboardFocus(test_program, control_1))
             .expect_message(move |evt: FocusEvent| expect_focus(evt, control_1, 1))
@@ -456,6 +458,9 @@ mod test {
             .send_message(Focus::FocusNext)
             .expect_message(move |evt: FocusEvent| expect_unfocus(evt, control_2, 2))
             .expect_message(move |evt: FocusEvent| expect_focus(evt, control_3, 3))
+            .send_message(Focus::FocusNext)
+            .expect_message(move |evt: FocusEvent| expect_unfocus(evt, control_3, 3))
+            .expect_message(move |evt: FocusEvent| expect_focus(evt, control_4, 4))
             .run_in_scene_with_threads(&scene, test_program, 5);
     }
 
