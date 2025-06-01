@@ -33,13 +33,26 @@ impl SceneMessage for FlowBetween {
 async fn event_relay_program(drawing_events: impl Unpin + Send + Sink<DocumentRequest>, document_program_id: SubProgramId, input: InputStream<DrawEvent>, context: SceneContext) {
     let mut input           = input;
     let mut drawing_events  = drawing_events;
+    let mut scale           = 1.0;
+    let mut size            = (0.0, 0.0);
 
     while let Some(event) = input.next().await {
         // Interpret some special events
         match &event {
             DrawEvent::Resize(w, h) => {
                 // Send a resize request for the resize event
-                drawing_events.send(DocumentRequest::Resize(*w as _, *h as _)).await.ok();
+                drawing_events.send(DocumentRequest::Resize((w/scale) as _, (h/scale) as _)).await.ok();
+                size = (*w, *h);
+            }
+
+            DrawEvent::Scale(new_scale) => {
+                // Send a resize event when the scale changes
+                if *new_scale != 0.0 && *new_scale != scale {
+                    let (w, h) = size;
+                    scale = *new_scale;
+
+                    drawing_events.send(DocumentRequest::Resize((w/scale) as _, (h/scale) as _)).await.ok();
+                }
             }
 
             DrawEvent::Closed => {
