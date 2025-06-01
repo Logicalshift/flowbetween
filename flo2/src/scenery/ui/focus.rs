@@ -432,13 +432,18 @@ mod test {
         let control_1       = ControlId::new();
         let control_2       = ControlId::new();
         let control_3       = ControlId::new();
+        let control_4       = ControlId::new();
 
-        println!("1 = {:?}, 2 = {:?}, 3 = {:?}", control_1, control_2, control_3);
+        println!("1 = {:?}, 2 = {:?}, 3 = {:?}, 4 = {:?}", control_1, control_2, control_3, control_4);
 
         TestBuilder::new()
             .send_message(Focus::SetFollowingControl(test_program, control_1, control_2))
             .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
-            .send_message(Focus::SetKeyboardFocus(test_program, control_3))
+            .send_message(Focus::SetFollowingControl(test_program, control_3, control_4))
+            .send_message(Focus::SetKeyboardFocus(test_program, control_4))
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_4 { Ok(()) } else { Err(format!("Expected focus control 4, got {:?}", evt)) } } else { Err(format!("Expected focus control 4, got {:?}", evt)) })
+            .send_message(Focus::FocusPrevious)
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Unfocused(ctrl) = evt { if ctrl == control_4 { Ok(()) } else { Err(format!("Expected unfocus control 4, got {:?}", evt)) } } else { Err(format!("Expected unfocus control 4, got {:?}", evt)) })
             .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_3 { Ok(()) } else { Err(format!("Expected focus control 3, got {:?}", evt)) } } else { Err(format!("Expected focus control 3, got {:?}", evt)) })
             .send_message(Focus::FocusPrevious)
             .expect_message(move |evt: FocusEvent| if let FocusEvent::Unfocused(ctrl) = evt { if ctrl == control_3 { Ok(()) } else { Err(format!("Expected unfocus control 3, got {:?}", evt)) } } else { Err(format!("Expected unfocus control 3, got {:?}", evt)) })
@@ -458,8 +463,9 @@ mod test {
         let control_1       = ControlId::new();
         let control_2       = ControlId::new();
         let control_3       = ControlId::new();
+        let control_4       = ControlId::new();
 
-        println!("1 = {:?}, 2 = {:?}, 3 = {:?}", control_1, control_2, control_3);
+        println!("1 = {:?}, 2 = {:?}, 3 = {:?}, 4 = {:?}", control_1, control_2, control_3, control_4);
 
         TestBuilder::new()
             .send_message(Focus::SetFollowingControl(test_program, control_1, control_2))
@@ -474,6 +480,9 @@ mod test {
             .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_3 { Ok(()) } else { Err(format!("Expected focus control 3, got {:?}", evt)) } } else { Err(format!("Expected focus control 3, got {:?}", evt)) })
             .send_message(Focus::FocusNext)
             .expect_message(move |evt: FocusEvent| if let FocusEvent::Unfocused(ctrl) = evt { if ctrl == control_3 { Ok(()) } else { Err(format!("Expected unfocus control 3, got {:?}", evt)) } } else { Err(format!("Expected unfocus control 3, got {:?}", evt)) })
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_4 { Ok(()) } else { Err(format!("Expected focus control 4, got {:?}", evt)) } } else { Err(format!("Expected focus control 4, got {:?}", evt)) })
+            .send_message(Focus::FocusNext)
+            .expect_message(move |evt: FocusEvent| if let FocusEvent::Unfocused(ctrl) = evt { if ctrl == control_4 { Ok(()) } else { Err(format!("Expected unfocus control 4, got {:?}", evt)) } } else { Err(format!("Expected unfocus control 4, got {:?}", evt)) })
             .expect_message(move |evt: FocusEvent| if let FocusEvent::Focused(ctrl) = evt { if ctrl == control_1 { Ok(()) } else { Err(format!("Expected focus control 1, got {:?}", evt)) } } else { Err(format!("Expected focus control 1, got {:?}", evt)) })
             .send_message(Focus::SetFollowingControl(test_program, control_2, control_3))
             .run_in_scene_with_threads(&scene, test_program, 5);
