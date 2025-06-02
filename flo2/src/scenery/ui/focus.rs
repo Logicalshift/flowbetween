@@ -145,6 +145,9 @@ struct FocusProgram {
     /// The control within the subprogram that has keyboard focus
     focused_control: Option<ControlId>,
 
+    /// Where keyboard events should be sent
+    focused_event_target: Option<OutputSink<FocusEvent>>,
+
     /// The tab ordering for the controls within this program
     tab_ordering: HashMap<SubProgramId, KeyboardSubProgram>,
 
@@ -172,6 +175,10 @@ impl FocusProgram {
             self.focused_subprogram  = Some(program_id);
             self.focused_control     = Some(control_id);
             channel.send(FocusEvent::Focused(control_id)).await.ok();
+
+            self.focused_event_target = Some(channel);
+        } else {
+            self.focused_event_target = None;
         }
     }
 
@@ -405,6 +412,19 @@ impl FocusProgram {
             program_data.controls.retain(|item| item.id != control);
         }
     }
+
+    ///
+    /// Sends an event to whichever program/control is focused
+    ///
+    async fn send_to_focus(&mut self, event: DrawEvent) {
+        let control = self.focused_control;
+
+        if let Some(focus_target) = &mut self.focused_event_target {
+            if focus_target.send(FocusEvent::Event(control, event)).await.is_err() {
+                self.focused_event_target = None;
+            }
+        }
+    }
 }
 
 ///
@@ -419,20 +439,34 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
 
     // Create the state
     let mut focus = FocusProgram {
-        canvas_program:     None,
-        subprogram_space:   None,
-        subprogram_data:    HashMap::new(),
-        subprogram_order:   vec![],
-        focused_subprogram: None,
-        focused_control:    None,
-        tab_ordering:       HashMap::new(),
+        canvas_program:         None,
+        subprogram_space:       None,
+        subprogram_data:        HashMap::new(),
+        subprogram_order:       vec![],
+        focused_subprogram:     None,
+        focused_control:        None,
+        focused_event_target:   None,
+        tab_ordering:           HashMap::new(),
     };
 
     while let Some(request) = input.next().await {
         use Focus::*;
 
         match request {
-            Event(event) => { todo!() },
+            Event(DrawEvent::Redraw)                        => { },
+            Event(DrawEvent::NewFrame)                      => { },
+            Event(DrawEvent::Scale(_))                      => { },
+            Event(DrawEvent::Resize(_, _))                  => { },
+            Event(DrawEvent::CanvasTransform(_))            => { },
+            Event(DrawEvent::Closed)                        => { }
+
+            Event(DrawEvent::Pointer(PointerAction::Enter, _, _))                           => { },
+            Event(DrawEvent::Pointer(PointerAction::Leave, _, _))                           => { },
+            Event(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => { },
+            Event(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state))   => { },
+            Event(DrawEvent::Pointer(other_action, pointer_id, pointer_state))              => { },
+            Event(DrawEvent::KeyDown(scancode, key))                                        => { focus.send_to_focus(DrawEvent::KeyDown(scancode, key)).await; },
+            Event(DrawEvent::KeyUp(scancode, key))                                          => { focus.send_to_focus(DrawEvent::KeyUp(scancode, key)).await; },
 
             Update(SceneUpdate::Stopped(program_id))    => { focus.remove_program_claims(program_id).await; focus.remove_program_focus(program_id).await; },
             Update(_)                                   => { }
