@@ -139,9 +139,6 @@ struct FocusProgram {
     /// The data for each subprogram region
     subprogram_data: HashMap<SubProgramId, SubProgramRegion>,
 
-    /// The focus order for the subprograms
-    subprogram_order: Vec<SubProgramId>,
-
     /// The subprogram that currently has keyboard focus
     focused_subprogram: Option<SubProgramId>,
 
@@ -150,6 +147,9 @@ struct FocusProgram {
 
     /// The tab ordering for the controls within this program
     tab_ordering: HashMap<SubProgramId, KeyboardSubProgram>,
+
+    /// The focus order for the subprograms
+    subprogram_order: Vec<SubProgramId>,
 }
 
 impl FocusProgram {
@@ -390,6 +390,14 @@ impl FocusProgram {
     }
 
     ///
+    /// Removes all claims to space that match the specified subprogram
+    ///
+    async fn remove_program_focus(&mut self, program: SubProgramId) {
+        self.tab_ordering.remove(&program);
+        self.subprogram_order.retain(|prog| prog != &program);
+    }
+
+    ///
     /// Removes the claim that matches the specified control
     ///
     async fn remove_control_claims(&mut self, program: SubProgramId, control: ControlId) {
@@ -426,7 +434,8 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
         match request {
             Event(event) => { todo!() },
 
-            Update(scene_update) => { /* todo!() */ },
+            Update(SceneUpdate::Stopped(program_id))    => { focus.remove_program_claims(program_id).await; focus.remove_program_focus(program_id).await; },
+            Update(_)                                   => { }
 
             // Keyboard handling
             SetKeyboardFocus(program_id, control_id)                        => focus.set_keyboard_focus(program_id, control_id, &context).await,
