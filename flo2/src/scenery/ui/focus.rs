@@ -133,8 +133,8 @@ struct FocusProgram {
     /// The program that canvas events get sent to (events that aren't for any region)
     canvas_program: Option<SubProgramId>,
 
-    /// x-oriented 1D scan space for subprogram regions
-    subprogram_space: Space1D<SubProgramId>,
+    /// x-oriented 1D scan space for subprogram regions (or None if this hasn't been calculated)
+    subprogram_space: Option<Space1D<SubProgramId>>,
 
     /// The data for each subprogram region
     subprogram_data: HashMap<SubProgramId, SubProgramRegion>,
@@ -341,6 +341,62 @@ impl FocusProgram {
     async fn set_canvas(&mut self, canvas_program: SubProgramId) {
         self.canvas_program = Some(canvas_program);
     }
+
+    ///
+    /// Marks a region as belonging to a certain control
+    ///
+    async fn claim_region(&mut self, program: SubProgramId, region: Vec<UiPath>, control: Option<ControlId>, z_index: usize) {
+        // Get the bounds of the region
+        let bounds = region.iter()
+            .map(|path| path.bounding_box::<Bounds<_>>())
+            .reduce(|a, b| a.union_bounds(b))
+            .unwrap_or(Bounds::empty());
+
+        // Create a new region
+        let program_data = self.subprogram_data.entry(program)
+            .or_insert_with(|| {
+                SubProgramRegion {
+                    region:     region.clone(),
+                    bounds:     bounds.clone(),
+                    controls:   vec![],
+                    z_index:    z_index,
+                }
+            });
+
+        if let Some(control) = control {
+            // Add a new control
+            program_data.controls.push(SubProgramControl {
+                id:         control,
+                region:     region,
+                z_index:    z_index,
+            })
+        } else {
+            // Not setting the region for a control: update the region set for the subprogram
+            program_data.region   = region;
+            program_data.bounds   = bounds;
+            program_data.z_index  = z_index;
+        }
+
+        // Space becomes None (need to recalculate it before we can handle click events)
+        self.subprogram_space = None;
+    }
+
+    ///
+    /// Removes all claims to space that match the specified subprogram
+    ///
+    async fn remove_program_claims(&mut self, program: SubProgramId) {
+        self.subprogram_data.remove(&program);
+        self.subprogram_space = None;
+    }
+
+    ///
+    /// Removes the claim that matches the specified control
+    ///
+    async fn remove_control_claims(&mut self, program: SubProgramId, control: ControlId) {
+        if let Some(program_data) = self.subprogram_data.get_mut(&program) {
+            program_data.controls.retain(|item| item.id != control);
+        }
+    }
 }
 
 ///
@@ -356,7 +412,7 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
     // Create the state
     let mut focus = FocusProgram {
         canvas_program:     None,
-        subprogram_space:   Space1D::empty(),
+        subprogram_space:   None,
         subprogram_data:    HashMap::new(),
         subprogram_order:   vec![],
         focused_subprogram: None,
@@ -380,11 +436,11 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             FocusPrevious                                                   => focus.focus_previous(&context).await,
 
             // Control handling
-            RemoveClaim(program_id)                                     => { todo!() },
-            RemoveControlClaim(program_id, control_id)                  => { todo!() },
+            RemoveClaim(program_id)                                     => focus.remove_program_claims(program_id).await,
+            RemoveControlClaim(program_id, control_id)                  => focus.remove_control_claims(program_id, control_id).await,
             SetCanvas(canvas_program_id)                                => focus.set_canvas(canvas_program_id).await,
-            ClaimRegion { program, region, z_index }                    => { todo!() },
-            ClaimControlRegion { program, region, control, z_index }    => { todo!() },
+            ClaimRegion { program, region, z_index }                    => focus.claim_region(program, region, None, z_index).await,
+            ClaimControlRegion { program, region, control, z_index }    => focus.claim_region(program, region, Some(control), z_index).await,
         }
     }
 }
