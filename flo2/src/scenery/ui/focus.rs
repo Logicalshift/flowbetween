@@ -7,6 +7,8 @@ use flo_scene::programs::*;
 use flo_draw::*;
 use flo_curves::geo::*;
 use flo_curves::bezier::path::*;
+use flo_curves::bezier::rasterize::*;
+use flo_curves::bezier::vectorize::*;
 
 use futures::prelude::*;
 use serde::*;
@@ -104,7 +106,7 @@ impl SceneMessage for FocusEvent {
 ///
 struct SubProgramControl {
     id:         ControlId,
-    region:     Vec<UiPath>,
+    region:     PathContour,
     z_index:    usize,
 }
 
@@ -112,7 +114,7 @@ struct SubProgramControl {
 /// Definition for a region of the canvas where a subprogram owns the events
 ///
 struct SubProgramRegion {
-    region:     Vec<UiPath>,
+    region:     PathContour,
     bounds:     Bounds<UiPoint>,
     controls:   Vec<SubProgramControl>,
     z_index:    usize,
@@ -139,6 +141,18 @@ struct FocusProgram {
     /// The data for each subprogram region
     subprogram_data: HashMap<SubProgramId, SubProgramRegion>,
 
+    /// The control that pointer events should be sent to
+    pointer_target: Option<OutputSink<FocusEvent>>,
+
+    /// The subprogram ID of the active pointer target
+    pointer_target_program: Option<SubProgramId>,
+
+    /// The control of the active pointer target
+    pointer_target_control: Option<ControlId>,
+
+    /// >0 if the pointer target is locked (eg, due to a mouse down that hasn't yet been matched by a mouse up)
+    pointer_target_lock_count: usize,
+
     /// The subprogram that currently has keyboard focus
     focused_subprogram: Option<SubProgramId>,
 
@@ -153,6 +167,26 @@ struct FocusProgram {
 
     /// The focus order for the subprograms
     subprogram_order: Vec<SubProgramId>,
+}
+
+impl SubProgramRegion {
+    ///
+    /// Returns true if the specified point is inside this region
+    ///
+    fn point_is_inside(&self, x: f64, y: f64) -> bool {
+        let intercepts = self.region.intercepts_on_line(y);
+        intercepts.into_iter().any(|intercept| intercept.contains(&x))
+    }
+}
+
+impl SubProgramControl {
+    ///
+    /// Returns true if the specified point is inside this region
+    ///
+    fn point_is_inside(&self, x: f64, y: f64) -> bool {
+        let intercepts = self.region.intercepts_on_line(y);
+        intercepts.into_iter().any(|intercept| intercept.contains(&x))
+    }
 }
 
 impl FocusProgram {
@@ -359,7 +393,11 @@ impl FocusProgram {
             .reduce(|a, b| a.union_bounds(b))
             .unwrap_or(Bounds::empty());
 
-        // Create a new region
+        // Create a path contour from the region (we use a contour size of 0, 0 as we're not actually scan-converting this path)
+        let contour_size    = ContourSize(0, 0);
+        let region          = PathContour::from_path(region, contour_size);
+
+        // Look up or create the subprogram data
         let program_data = self.subprogram_data.entry(program)
             .or_insert_with(|| {
                 SubProgramRegion {
@@ -425,6 +463,49 @@ impl FocusProgram {
             }
         }
     }
+
+    ///
+    /// Sets the target of the pointer target, according to the pointer state
+    ///
+    async fn set_pointer_target(&mut self, pointer_state: &PointerState) {
+        // Do nothing if the pointer target is locked (usually by a mouse down operation)
+        if self.pointer_target_lock_count > 0 {
+            return;
+        }
+
+        let space                       = &mut self.subprogram_space;
+        let subprogram_data             = &self.subprogram_data;
+
+        // Generate the space if it's not already generated
+        let space = if let Some(space) = space {
+            space
+        } else {
+            *space = Some(Space1D::from_data(subprogram_data.iter().map(|(program_id, region)| (region.bounds.min().x()..region.bounds.max().x(), *program_id))));
+            space.as_mut().unwrap()
+        };
+
+        // Locate the subprogram that the pointer is over
+        let target_program = if let Some((x, y)) = pointer_state.location_in_canvas {
+            // Find all of the subprograms where the point might be inside
+            let mut possible_matches = space.data_at_point(x)
+                .flat_map(|subprogram_id| subprogram_data.get(subprogram_id).map(|region| (subprogram_id, region)))
+                .filter(|(_, region)| UiPoint(x, y).in_bounds(&region.bounds))
+                .filter(|(_, region)| region.point_is_inside(x, y))
+                .collect::<Vec<_>>();
+
+            // Order by z-index if there are multiple possibilities
+            if possible_matches.len() > 1 {
+                possible_matches.sort_by_key(|(_, region)| region.z_index);
+            }
+
+            // Highest z index is the target program
+            possible_matches.last().map(|(program_id, _)| **program_id)
+        } else {
+            None
+        };
+
+        // TODO: find the control that the point might be inside
+    }
 }
 
 ///
@@ -439,14 +520,18 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
 
     // Create the state
     let mut focus = FocusProgram {
-        canvas_program:         None,
-        subprogram_space:       None,
-        subprogram_data:        HashMap::new(),
-        subprogram_order:       vec![],
-        focused_subprogram:     None,
-        focused_control:        None,
-        focused_event_target:   None,
-        tab_ordering:           HashMap::new(),
+        canvas_program:             None,
+        subprogram_space:           None,
+        subprogram_data:            HashMap::new(),
+        subprogram_order:           vec![],
+        pointer_target:             None,
+        pointer_target_program:     None,
+        pointer_target_control:     None,
+        pointer_target_lock_count:  0,
+        focused_subprogram:         None,
+        focused_control:            None,
+        focused_event_target:       None,
+        tab_ordering:               HashMap::new(),
     };
 
     while let Some(request) = input.next().await {

@@ -19,6 +19,22 @@ pub struct UiPath {
     points: (UiPoint, Vec<(UiPoint, UiPoint, UiPoint)>),
 }
 
+impl UiPoint {
+    ///
+    /// Returns true if this point is within the specified bounding box
+    ///
+    #[inline]
+    pub fn in_bounds(&self, bounds: &impl BoundingBox<Point=UiPoint>) -> bool {
+        let min = bounds.min();
+        let max = bounds.max();
+
+        min.x() <= self.0 
+            && min.y() <= self.1 
+            && max.x() >= self.0 
+            && max.y() >= self.1
+    }
+}
+
 impl Coordinate2D for UiPoint {
     ///
     /// X component of this coordinate
