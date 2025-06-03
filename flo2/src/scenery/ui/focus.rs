@@ -106,6 +106,7 @@ impl SceneMessage for FocusEvent {
 ///
 struct SubProgramControl {
     id:         ControlId,
+    bounds:     Bounds<UiPoint>,
     region:     PathContour,
     z_index:    usize,
 }
@@ -413,6 +414,7 @@ impl FocusProgram {
             program_data.controls.push(SubProgramControl {
                 id:         control,
                 region:     region,
+                bounds:     bounds,
                 z_index:    z_index,
             })
         } else {
@@ -467,14 +469,17 @@ impl FocusProgram {
     ///
     /// Sets the target of the pointer target, according to the pointer state
     ///
-    async fn set_pointer_target(&mut self, pointer_state: &PointerState) {
+    async fn set_pointer_target(&mut self, pointer_state: &PointerState, context: &SceneContext) {
         // Do nothing if the pointer target is locked (usually by a mouse down operation)
         if self.pointer_target_lock_count > 0 {
             return;
         }
 
-        let space                       = &mut self.subprogram_space;
-        let subprogram_data             = &self.subprogram_data;
+        let space                   = &mut self.subprogram_space;
+        let subprogram_data         = &self.subprogram_data;
+        let pointer_target          = &mut self.pointer_target;
+        let pointer_target_program  = &mut self.pointer_target_program;
+        let pointer_target_control  = &mut self.pointer_target_control;
 
         // Generate the space if it's not already generated
         let space = if let Some(space) = space {
@@ -504,7 +509,45 @@ impl FocusProgram {
             None
         };
 
-        // TODO: find the control that the point might be inside
+        // Connect to the program
+        *pointer_target_program = target_program;
+
+        if let Some(target_program) = target_program {
+            // Over a specific region
+            *pointer_target = context.send(target_program).ok();
+        } else if let Some(canvas_program) = self.canvas_program {
+            // Over the canvas
+            *pointer_target         = context.send(canvas_program).ok();
+            *pointer_target_program = Some(canvas_program);
+        } else {
+            // No canvas program set
+            self.pointer_target = None;
+        }
+
+        if let (Some(target_program), Some((x, y))) = (target_program, pointer_state.location_in_canvas) {
+            let target_program_data = subprogram_data.get(&target_program);
+
+            if let Some(target_program_data) = target_program_data {
+                // Find the control that the point might be inside
+                let mut possible_controls = target_program_data.controls.iter()
+                    .filter(|control| UiPoint(x, y).in_bounds(&control.bounds))
+                    .filter(|control| control.point_is_inside(x, y))
+                    .collect::<Vec<_>>();
+
+                // Order by z-index if there are multiple possibilities
+                if possible_controls.len() > 1 {
+                    possible_controls.sort_by_key(|control| control.z_index);
+                }
+
+                // The highest z-index is the target control
+                *pointer_target_control = possible_controls.last().map(|control| control.id);
+            } else {
+                *pointer_target_control = None;
+            }
+        } else {
+            // Target is the canvas
+            *pointer_target_control = None;
+        }
     }
 }
 
