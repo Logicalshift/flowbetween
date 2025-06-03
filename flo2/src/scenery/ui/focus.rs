@@ -555,6 +555,19 @@ impl FocusProgram {
             *pointer_target_control = None;
         }
     }
+
+    ///
+    /// Sends an event to whichever program/control is the pointer target
+    ///
+    async fn send_to_pointer_target(&mut self, event: DrawEvent) {
+        let control = self.pointer_target_control;
+
+        if let Some(pointer_target) = &mut self.pointer_target {
+            if pointer_target.send(FocusEvent::Event(control, event)).await.is_err() {
+                self.pointer_target = None;
+            }
+        }
+    }
 }
 
 ///
