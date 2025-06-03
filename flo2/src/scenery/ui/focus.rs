@@ -600,18 +600,18 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
         use Focus::*;
 
         match request {
-            Event(DrawEvent::Redraw)                        => { },
-            Event(DrawEvent::NewFrame)                      => { },
-            Event(DrawEvent::Scale(_))                      => { },
-            Event(DrawEvent::Resize(_, _))                  => { },
-            Event(DrawEvent::CanvasTransform(_))            => { },
-            Event(DrawEvent::Closed)                        => { }
+            Event(DrawEvent::Redraw)                => { },
+            Event(DrawEvent::NewFrame)              => { },
+            Event(DrawEvent::Scale(_))              => { },
+            Event(DrawEvent::Resize(_, _))          => { },
+            Event(DrawEvent::CanvasTransform(_))    => { },
+            Event(DrawEvent::Closed)                => { }
 
             Event(DrawEvent::Pointer(PointerAction::Enter, _, _))                           => { },
             Event(DrawEvent::Pointer(PointerAction::Leave, _, _))                           => { },
-            Event(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => { },
-            Event(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state))   => { },
-            Event(DrawEvent::Pointer(other_action, pointer_id, pointer_state))              => { },
+            Event(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => { focus.set_pointer_target(&pointer_state, &context).await; focus.pointer_target_lock_count += 1; focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)).await; },
+            Event(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state))   => { focus.pointer_target_lock_count -= 1; focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)).await; },
+            Event(DrawEvent::Pointer(other_action, pointer_id, pointer_state))              => { focus.set_pointer_target(&pointer_state, &context).await; focus.send_to_pointer_target(DrawEvent::Pointer(other_action, pointer_id, pointer_state)).await; },
             Event(DrawEvent::KeyDown(scancode, key))                                        => { focus.send_to_focus(DrawEvent::KeyDown(scancode, key)).await; },
             Event(DrawEvent::KeyUp(scancode, key))                                          => { focus.send_to_focus(DrawEvent::KeyUp(scancode, key)).await; },
 
