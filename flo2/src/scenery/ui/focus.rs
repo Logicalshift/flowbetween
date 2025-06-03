@@ -510,18 +510,24 @@ impl FocusProgram {
         };
 
         // Connect to the program
-        *pointer_target_program = target_program;
-
         if let Some(target_program) = target_program {
             // Over a specific region
-            *pointer_target = context.send(target_program).ok();
+            if *pointer_target_program != Some(target_program) {
+                *pointer_target = context.send(target_program).ok();
+            }
+
+            *pointer_target_program = Some(target_program);
         } else if let Some(canvas_program) = self.canvas_program {
             // Over the canvas
-            *pointer_target         = context.send(canvas_program).ok();
+            if *pointer_target_program != Some(canvas_program) {
+                *pointer_target = context.send(canvas_program).ok();
+            }
+
             *pointer_target_program = Some(canvas_program);
         } else {
             // No canvas program set
-            self.pointer_target = None;
+            self.pointer_target     = None;
+            *pointer_target_program = None;
         }
 
         if let (Some(target_program), Some((x, y))) = (target_program, pointer_state.location_in_canvas) {
