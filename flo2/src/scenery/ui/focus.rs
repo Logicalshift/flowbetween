@@ -794,4 +794,46 @@ mod test {
             .expect_message(move |evt: FocusEvent| expect_focus(evt, control_1, 1))
             .run_in_scene_with_threads(&scene, test_program, 5);
     }
+
+    #[test]
+    fn mouse_click_in_region() {
+        use flo_curves::arc::*;
+
+        let test_program    = SubProgramId::called("focus_following_control");
+        let scene           = Scene::default();
+
+        // Couple of subprograms
+        #[derive(Serialize, Deserialize, Debug, Clone)]
+        struct SubProgram1(FocusEvent);
+        #[derive(Serialize, Deserialize, Debug, Clone)]
+        struct SubProgram2(FocusEvent);
+
+        impl SceneMessage for SubProgram1 { }
+        impl SceneMessage for SubProgram2 { }
+
+        // Paths for our two subprograms
+        let program1_path = Circle::new(UiPoint(300.0, 500.0), 100.0).to_path();
+        let program2_path = Circle::new(UiPoint(500.0, 500.0), 100.0).to_path();
+
+        let program1 = SubProgramId::called("Subprogram1");
+        let program2 = SubProgramId::called("Subprogram2");
+
+        // Add test programs that relay the messages
+        scene.add_subprogram(program1, |mut input, context| async move { while let Some(msg) = input.next().await { println!("{:?}", msg); context.send_message(SubProgram1(msg)).await.unwrap(); } }, 10);
+        scene.add_subprogram(program2, |mut input, context| async move { while let Some(msg) = input.next().await { println!("{:?}", msg); context.send_message(SubProgram2(msg)).await.unwrap(); } }, 10);
+
+        // Create some points for mouse events
+        let mut in_program1_path = PointerState::new();
+
+        in_program1_path.location_in_canvas = Some((300.0, 500.0));
+
+        TestBuilder::new()
+            .send_message(Focus::ClaimRegion { program: program1, region: vec![program1_path], z_index: 0 })
+            .send_message(Focus::ClaimRegion { program: program2, region: vec![program2_path], z_index: 1 })
+
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::ButtonDown, PointerId(0), in_program1_path)))
+            .expect_message(move |evt: SubProgram1| Ok(()))
+
+            .run_in_scene_with_threads(&scene, test_program, 5);
+    }
 }
