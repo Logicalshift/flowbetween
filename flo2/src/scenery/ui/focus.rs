@@ -395,7 +395,7 @@ impl FocusProgram {
             .unwrap_or(Bounds::empty());
 
         // Create a path contour from the region (we use a contour size of 0, 0 as we're not actually scan-converting this path)
-        let contour_size    = ContourSize(0, 0);
+        let contour_size    = ContourSize(bounds.max().x().max(0.0) as _, bounds.max().y().max(0.0) as _);
         let region          = PathContour::from_path(region, contour_size);
 
         // Look up or create the subprogram data
@@ -813,7 +813,7 @@ mod test {
 
         // Paths for our two subprograms
         let program1_path = Circle::new(UiPoint(300.0, 500.0), 100.0).to_path();
-        let program2_path = Circle::new(UiPoint(500.0, 500.0), 100.0).to_path();
+        let program2_path = Circle::new(UiPoint(700.0, 500.0), 100.0).to_path();
 
         let program1 = SubProgramId::called("Subprogram1");
         let program2 = SubProgramId::called("Subprogram2");
@@ -824,14 +824,27 @@ mod test {
 
         // Create some points for mouse events
         let mut in_program1_path = PointerState::new();
+        let mut in_program2_path = PointerState::new();
 
         in_program1_path.location_in_canvas = Some((300.0, 500.0));
+        in_program2_path.location_in_canvas = Some((700.0, 500.0));
 
         TestBuilder::new()
             .send_message(Focus::ClaimRegion { program: program1, region: vec![program1_path], z_index: 0 })
             .send_message(Focus::ClaimRegion { program: program2, region: vec![program2_path], z_index: 1 })
 
-            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::ButtonDown, PointerId(0), in_program1_path)))
+            // Should keep tracking the mouse after the button goes down as staying in program 1
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::ButtonDown, PointerId(0), in_program1_path.clone())))
+            .expect_message(move |evt: SubProgram1| Ok(()))
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program2_path.clone())))
+            .expect_message(move |evt: SubProgram1| Ok(()))
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::ButtonUp, PointerId(0), in_program2_path.clone())))
+            .expect_message(move |evt: SubProgram1| Ok(()))
+
+            // Moves should get sent to whichever program they're over
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program2_path.clone())))
+            .expect_message(move |evt: SubProgram2| Ok(()))
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program1_path.clone())))
             .expect_message(move |evt: SubProgram1| Ok(()))
 
             .run_in_scene_with_threads(&scene, test_program, 5);
