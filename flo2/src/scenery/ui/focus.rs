@@ -873,9 +873,12 @@ mod test {
         struct SubProgram1(FocusEvent);
         #[derive(Serialize, Deserialize, Debug, Clone)]
         struct SubProgram2(FocusEvent);
+        #[derive(Serialize, Deserialize, Debug, Clone)]
+        struct CanvasProgram(FocusEvent);
 
         impl SceneMessage for SubProgram1 { }
         impl SceneMessage for SubProgram2 { }
+        impl SceneMessage for CanvasProgram { }
 
         // Paths for our two subprograms
         let program1_path = Circle::new(UiPoint(300.0, 500.0), 100.0).to_path();
@@ -883,21 +886,26 @@ mod test {
 
         let program1 = SubProgramId::called("Subprogram1");
         let program2 = SubProgramId::called("Subprogram2");
+        let canvas   = SubProgramId::called("CanvasProgram");
 
         // Add test programs that relay the messages
         scene.add_subprogram(program1, |mut input, context| async move { while let Some(msg) = input.next().await { println!("Program1: {:?}", msg); context.send_message(SubProgram1(msg)).await.unwrap(); } }, 10);
         scene.add_subprogram(program2, |mut input, context| async move { while let Some(msg) = input.next().await { println!("Program2: {:?}", msg); context.send_message(SubProgram2(msg)).await.unwrap(); } }, 10);
+        scene.add_subprogram(canvas, |mut input, context| async move { while let Some(msg) = input.next().await { println!("Canvas: {:?}", msg); context.send_message(CanvasProgram(msg)).await.unwrap(); } }, 10);
 
         // Create some points for mouse events
         let mut in_program1_path = PointerState::new();
         let mut in_program2_path = PointerState::new();
+        let mut on_canvas        = PointerState::new();
 
         in_program1_path.location_in_canvas = Some((300.0, 500.0));
         in_program2_path.location_in_canvas = Some((700.0, 500.0));
+        on_canvas.location_in_canvas        = Some((500.0, 500.0));
 
         TestBuilder::new()
             .send_message(Focus::ClaimRegion { program: program1, region: vec![program1_path], z_index: 0 })
             .send_message(Focus::ClaimRegion { program: program2, region: vec![program2_path], z_index: 1 })
+            .send_message(Focus::SetCanvas(canvas))
 
             // Should keep tracking the mouse after the button goes down as staying in program 1
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::ButtonDown, PointerId(0), in_program1_path.clone())))
@@ -921,6 +929,13 @@ mod test {
             .expect_message(move |evt: SubProgram1| Ok(()))     // Move
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program1_path.clone())))
             .expect_message(move |evt: SubProgram1| Ok(()))     // Move
+
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), on_canvas.clone())))
+            .expect_message(move |evt: SubProgram1| Ok(()))     // Leave
+            .expect_message(move |evt: CanvasProgram| Ok(()))   // Enter
+            .expect_message(move |evt: CanvasProgram| Ok(()))   // Move
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), on_canvas.clone())))
+            .expect_message(move |evt: CanvasProgram| Ok(()))   // Move
 
             .run_in_scene(&scene, test_program);        // No threads because otherwise the switch between programs is unreliable
     }
