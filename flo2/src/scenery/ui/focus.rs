@@ -913,9 +913,13 @@ mod test {
             .expect_message(move |evt: SubProgram1| Ok(()))     // Leave
             .expect_message(move |evt: SubProgram2| Ok(()))     // Enter
             .expect_message(move |evt: SubProgram2| Ok(()))     // Move
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program2_path.clone())))
+            .expect_message(move |evt: SubProgram2| Ok(()))     // Move
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program1_path.clone())))
             .expect_message(move |evt: SubProgram2| Ok(()))     // Leave
             .expect_message(move |evt: SubProgram1| Ok(()))     // Enter
+            .expect_message(move |evt: SubProgram1| Ok(()))     // Move
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program1_path.clone())))
             .expect_message(move |evt: SubProgram1| Ok(()))     // Move
 
             .run_in_scene(&scene, test_program);        // No threads because otherwise the switch between programs is unreliable
