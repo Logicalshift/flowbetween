@@ -541,14 +541,41 @@ impl FocusProgram {
             *pointer_target_program = Some(target_program);
         } else if let Some(canvas_program) = self.canvas_program {
             // Over the canvas
-            // TODO: send enter/leave messages
             if *pointer_target_program != Some(canvas_program) {
+                // Leave the old subprogram + control
+                let old_target_control = pointer_target_control.clone();
+                if let Some(old_target) = pointer_target {
+                    // Leave the control
+                    old_target.send(FocusEvent::Event(old_target_control, DrawEvent::Pointer(PointerAction::Leave, PointerId(0), PointerState::new()))).await.ok();
+
+                    if old_target_control.is_some() {
+                        // Also leave the subprogram if we were in a control
+                        old_target.send(FocusEvent::Event(None, DrawEvent::Pointer(PointerAction::Leave, PointerId(0), PointerState::new()))).await.ok();
+                    }
+                }
+
                 *pointer_target = context.send(canvas_program).ok();
+
+                // Enter the canvas
+                if let Some(new_target) = pointer_target {
+                    // Indicate that we've entered the new program
+                    new_target.send(FocusEvent::Event(None, DrawEvent::Pointer(PointerAction::Enter, PointerId(0), PointerState::new()))).await.ok();
+                }
             }
 
             *pointer_target_program = Some(canvas_program);
         } else {
-            // TODO: send leave messages
+            // Leave the current control
+            let old_target_control = pointer_target_control.clone();
+            if let Some(old_target) = pointer_target {
+                // Leave the control
+                old_target.send(FocusEvent::Event(old_target_control, DrawEvent::Pointer(PointerAction::Leave, PointerId(0), PointerState::new()))).await.ok();
+
+                if old_target_control.is_some() {
+                    // Also leave the subprogram if we were in a control
+                    old_target.send(FocusEvent::Event(None, DrawEvent::Pointer(PointerAction::Leave, PointerId(0), PointerState::new()))).await.ok();
+                }
+            }
 
             // No canvas program set
             *pointer_target         = None;
