@@ -350,7 +350,7 @@ fn draw_stroke(stroke: &egui::Stroke, drawing: &mut Vec<canvas::Draw>) {
     // Do nothing if the width is < 0.0
     if stroke.width <= 0.0 { return; }
 
-    // Conver the colour, and do nothing if it's empty
+    // Convert the colour, and do nothing if it's empty
     let rgba = egui::Rgba::from(stroke.color);
     if rgba.a() <= 0.0 { return; }
 
@@ -358,6 +358,32 @@ fn draw_stroke(stroke: &egui::Stroke, drawing: &mut Vec<canvas::Draw>) {
     drawing.line_width(stroke.width);
     drawing.stroke_color(canvas::Color::Rgba(rgba.r(), rgba.g(), rgba.b(), rgba.a()));
     drawing.stroke();
+}
+
+///
+/// Writes out the instructions to stroke a region
+///
+fn draw_path_stroke(stroke: &egui::epaint::PathStroke, drawing: &mut Vec<canvas::Draw>) {
+    // Do nothing if the width is < 0.0
+    if stroke.width <= 0.0 { return; }
+
+    // TODO: deal with StrokeKind (flo_draw doesn't natively support this)
+
+    // Stroke with this width and colour
+    match &stroke.color {
+        egui::epaint::ColorMode::Solid(color) => {
+            let rgba = egui::Rgba::from(*color);
+            if rgba.a() <= 0.0 { return; }
+
+            drawing.line_width(stroke.width);
+            drawing.stroke_color(canvas::Color::Rgba(rgba.r(), rgba.g(), rgba.b(), rgba.a()));
+            drawing.stroke();
+        }
+
+        egui::epaint::ColorMode::UV(callback) => {
+            // TODO: flo_draw doesn't have Gouraud shading, so we can't really implement this
+        }
+    }
 }
 
 ///
@@ -369,11 +395,18 @@ fn draw_shape(shape: &egui::Shape, drawing: &mut Vec<canvas::Draw>) {
     use Shape::*;
 
     match shape {
-        Noop            => { }
-        Vec(shapes)     => { shapes.iter().for_each(|shape| draw_shape(shape, drawing)); }
-        Circle(circle)  => { drawing.new_path(); drawing.circle(circle.center.x, circle.center.y, circle.radius); draw_fill(&circle.fill, drawing); draw_stroke(&circle.stroke, drawing); }
-
-        _ => todo!()
+        Noop                            => { }
+        Vec(shapes)                     => { shapes.iter().for_each(|shape| draw_shape(shape, drawing)); }
+        Circle(circle)                  => { drawing.new_path(); drawing.circle(circle.center.x, circle.center.y, circle.radius); draw_fill(&circle.fill, drawing); draw_stroke(&circle.stroke, drawing); }
+        Ellipse(_)                      => { /* TODO */ }
+        LineSegment{points, stroke}     => { drawing.new_path(); drawing.move_to(points[0].x, points[0].y); points.iter().skip(1).for_each(|point| drawing.line_to(point.x, point.y)); draw_stroke(stroke, drawing); }
+        Path(path_shape)                => { drawing.new_path(); drawing.move_to(path_shape.points[0].x, path_shape.points[0].y); path_shape.points.iter().skip(1).for_each(|point| drawing.line_to(point.x, point.y)); if path_shape.closed { drawing.close_path(); } draw_fill(&path_shape.fill, drawing); draw_path_stroke(&path_shape.stroke, drawing); }
+        Rect(rect_shape)                => { }
+        Text(text_shape)                => { }
+        Mesh(mesh_shape)                => { }
+        QuadraticBezier(quad_bezier)    => { }
+        CubicBezier(cubic_bezier)       => { }
+        Callback(_)                     => { /* Not supported */ }
     }
 }
 
