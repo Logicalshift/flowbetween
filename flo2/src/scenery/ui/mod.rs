@@ -8,8 +8,10 @@ mod control_id;
 mod focus;
 mod subprograms;
 mod ui_path;
+mod dialog;
 
 pub use control_id::*;
 pub use focus::*;
 pub use subprograms::*;
 pub use ui_path::*;
+pub use dialog::*;
