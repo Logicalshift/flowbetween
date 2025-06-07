@@ -7,6 +7,7 @@ use super::focus::*;
 use super::subprograms::*;
 
 use flo_scene::*;
+use flo_scene::programs::*;
 
 use futures::prelude::*;
 use serde::*;
@@ -16,8 +17,11 @@ use serde::*;
 ///
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Dialog {
+    /// Event indicating that the scene is idle
+    Idle,
+
     /// Event from the focus subprogram (used to direct events to the dialog program)
-    FocusEvent(FocusEvent)
+    FocusEvent(FocusEvent),
 }
 
 ///
@@ -43,6 +47,7 @@ impl SceneMessage for Dialog {
     fn initialise(init_context: &impl SceneInitialisationContext) {
         // Set up filters for the focus events/updates
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|focus_events| focus_events.map(|focus| Dialog::FocusEvent(focus)))), (), StreamId::with_message_type::<FocusEvent>()).ok();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|idle_events| idle_events.map(|_idle: IdleNotification| Dialog::Idle))), (), StreamId::with_message_type::<IdleNotification>()).ok();
     }
 }
 

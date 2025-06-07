@@ -9,9 +9,11 @@ mod focus;
 mod subprograms;
 mod ui_path;
 mod dialog;
+mod dialog_egui;
 
 pub use control_id::*;
 pub use focus::*;
 pub use subprograms::*;
 pub use ui_path::*;
 pub use dialog::*;
+pub use dialog_egui::*;
