@@ -3,17 +3,21 @@
 //!
 
 use super::control_id::*;
+use super::focus::*;
+use super::subprograms::*;
 
 use flo_scene::*;
 
+use futures::prelude::*;
 use serde::*;
 
 ///
-/// Dialog actions that happen within a document window
+/// Low-level actions related to creating dialog boxes
 ///
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Dialog {
-
+    /// Event from the focus subprogram (used to direct events to the dialog program)
+    FocusEvent(FocusEvent)
 }
 
 ///
@@ -32,7 +36,14 @@ pub enum DialogEvent {
 }
 
 impl SceneMessage for Dialog {
+    fn default_target() -> StreamTarget {
+        subprogram_dialog().into()
+    }
 
+    fn initialise(init_context: &impl SceneInitialisationContext) {
+        // Set up filters for the focus events/updates
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|focus_events| focus_events.map(|focus| Dialog::FocusEvent(focus)))), (), StreamId::with_message_type::<FocusEvent>()).ok();
+    }
 }
 
 impl SceneMessage for DialogEvent {
