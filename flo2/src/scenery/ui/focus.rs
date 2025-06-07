@@ -857,6 +857,61 @@ mod test {
             .run_in_scene_with_threads(&scene, test_program, 5);
     }
 
+    ///
+    /// Checks that evt is an enter event
+    ///
+    fn expect_enter(evt: FocusEvent) -> Result<(), String> {
+        if matches!(evt, FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Enter, _, _))) {
+            Ok(())
+        } else {
+            Err(format!("Expected PointerAction::Enter, got {:?}", evt))
+        }
+    }
+
+    ///
+    /// Checks that evt is an leave event
+    ///
+    fn expect_leave(evt: FocusEvent) -> Result<(), String> {
+        if matches!(evt, FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Leave, _, _))) {
+            Ok(())
+        } else {
+            Err(format!("Expected PointerAction::Leave, got {:?}", evt))
+        }
+    }
+
+    ///
+    /// Checks that evt is a button down event
+    ///
+    fn expect_buttondown(evt: FocusEvent) -> Result<(), String> {
+        if matches!(evt, FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonDown, _, _))) {
+            Ok(())
+        } else {
+            Err(format!("Expected PointerAction::ButtonDown, got {:?}", evt))
+        }
+    }
+
+    ///
+    /// Checks that evt is a button up event
+    ///
+    fn expect_buttonup(evt: FocusEvent) -> Result<(), String> {
+        if matches!(evt, FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, _, _))) {
+            Ok(())
+        } else {
+            Err(format!("Expected PointerAction::ButtonUp, got {:?}", evt))
+        }
+    }
+
+    ///
+    /// Checks that evt is a move event
+    ///
+    fn expect_move(evt: FocusEvent) -> Result<(), String> {
+        if matches!(evt, FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, _, _))) {
+            Ok(())
+        } else {
+            Err(format!("Expected PointerAction::Move, got {:?}", evt))
+        }
+    }
+
     #[test]
     fn mouse_click_in_region() {
         use flo_curves::arc::*;
@@ -905,33 +960,33 @@ mod test {
 
             // Should keep tracking the mouse after the button goes down as staying in program 1
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::ButtonDown, PointerId(0), in_program1_path.clone())))
-            .expect_message(move |evt: SubProgram1| Ok(()))     // Enter
-            .expect_message(move |evt: SubProgram1| Ok(()))     // Mouse down
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_enter(evt))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_buttondown(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program2_path.clone())))
-            .expect_message(move |evt: SubProgram1| Ok(()))     // Mouse move
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_move(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::ButtonUp, PointerId(0), in_program2_path.clone())))
-            .expect_message(move |evt: SubProgram1| Ok(()))     // Button up
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_buttonup(evt))
 
             // Moves should get sent to whichever program they're over
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program2_path.clone())))
-            .expect_message(move |evt: SubProgram1| Ok(()))     // Leave
-            .expect_message(move |evt: SubProgram2| Ok(()))     // Enter
-            .expect_message(move |evt: SubProgram2| Ok(()))     // Move
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_leave(evt))
+            .expect_message(move |SubProgram2(evt): SubProgram2| expect_enter(evt))
+            .expect_message(move |SubProgram2(evt): SubProgram2| expect_move(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program2_path.clone())))
-            .expect_message(move |evt: SubProgram2| Ok(()))     // Move
+            .expect_message(move |SubProgram2(evt): SubProgram2| expect_move(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program1_path.clone())))
-            .expect_message(move |evt: SubProgram2| Ok(()))     // Leave
-            .expect_message(move |evt: SubProgram1| Ok(()))     // Enter
-            .expect_message(move |evt: SubProgram1| Ok(()))     // Move
+            .expect_message(move |SubProgram2(evt): SubProgram2| expect_leave(evt))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_enter(evt))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_move(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program1_path.clone())))
-            .expect_message(move |evt: SubProgram1| Ok(()))     // Move
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_move(evt))
 
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), on_canvas.clone())))
-            .expect_message(move |evt: SubProgram1| Ok(()))     // Leave
-            .expect_message(move |evt: CanvasProgram| Ok(()))   // Enter
-            .expect_message(move |evt: CanvasProgram| Ok(()))   // Move
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_leave(evt))
+            .expect_message(move |CanvasProgram(evt): CanvasProgram| expect_enter(evt))
+            .expect_message(move |CanvasProgram(evt): CanvasProgram| expect_move(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), on_canvas.clone())))
-            .expect_message(move |evt: CanvasProgram| Ok(()))   // Move
+            .expect_message(move |CanvasProgram(evt): CanvasProgram| expect_move(evt))
 
             .run_in_scene(&scene, test_program);        // No threads because otherwise the switch between programs is unreliable
     }
