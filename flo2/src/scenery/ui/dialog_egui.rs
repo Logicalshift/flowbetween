@@ -47,10 +47,21 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
 
         match input {
             Idle => {
+                use std::mem;
+
                 // Not waiting for any more idle events
                 awaiting_idle = false;
 
-                // TODO: run the egui context
+                // Cycle the pending input
+                let mut new_input   = egui::RawInput::default();
+                new_input.modifiers = pending_input.modifiers;
+                mem::swap(&mut new_input, &mut pending_input);
+
+                // Run the egui context
+                let output = egui_context.run(new_input, |_ctxt| { });
+
+                // Process the output, generating draw events
+                process_drawing_output(&output, &mut drawing, dialog_namespace).await;
             },
 
             FocusEvent(focus_event) => {
@@ -315,5 +326,33 @@ fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent) {
                 });
             }
         }
+    }
+}
+
+///
+/// Processes the drawing instructions in the output from egui into flo_draw canvas instructions
+///
+async fn process_drawing_output(output: &egui::FullOutput, drawing_target: &mut OutputSink<DrawingRequest>, namespace: canvas::NamespaceId) {
+    use canvas::{Draw, LayerId};
+
+    let mut drawing = vec![];
+
+    // Start by selecting the namespace and storing the state
+    drawing.extend([
+        Draw::PushState,
+        Draw::Namespace(namespace),
+        Draw::Layer(LayerId(0)),
+    ]);
+    let initial_len = drawing.len();
+
+    // TODO: process drawing commands
+
+    // Send the drawing if we generated any drawing instructions
+    if drawing.len() > initial_len {
+        drawing.extend([
+            Draw::PopState,
+        ]);
+
+        drawing_target.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
     }
 }
