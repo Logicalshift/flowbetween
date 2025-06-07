@@ -13,6 +13,67 @@ use futures::prelude::*;
 use std::sync::*;
 
 ///
+/// Defines dialog behavior by using egui (with rendering via flo_canvas requests)
+///
+pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
+    use canvas::{Draw, LayerId};
+
+    // Create a namespace for the dialog graphics
+    let dialog_subprogram   = context.current_program_id().unwrap();
+    let dialog_namespace    = canvas::NamespaceId::new();
+
+    // We'll be sending drawing requests
+    let mut drawing         = context.send::<DrawingRequest>(()).unwrap();
+    let mut idle_requests   = context.send::<IdleRequest>(()).unwrap();
+
+    // Set up the dialog layer (it'll go on top of anything else in the drawing at the moment)
+    drawing.send(DrawingRequest::Draw(Arc::new(vec![
+        Draw::PushState,
+        Draw::Namespace(dialog_namespace),
+        Draw::Layer(LayerId(0)),
+        Draw::PopState,
+    ]))).await.ok();
+
+    // Set up the EGUI context
+    let egui_context        = egui::Context::default();
+    let mut pending_input   = egui::RawInput::default();
+
+    // Set to true if we've requested an idle event
+    let mut awaiting_idle   = false;
+    let mut input           = input;
+
+    while let Some(input) = input.next().await {
+        use Dialog::*;
+
+        match input {
+            Idle => {
+                // Not waiting for any more idle events
+                awaiting_idle = false;
+
+                // TODO: run the egui context
+            },
+
+            FocusEvent(focus_event) => {
+                // Process the event
+                use super::focus::{FocusEvent};
+
+                match focus_event {
+                    FocusEvent::Event(_control, event)  => { convert_events(&mut pending_input, event); }
+                    FocusEvent::Focused(_control)       => { }
+                    FocusEvent::Unfocused(_control)     => { }
+                }
+
+                // Request an idle event (we'll use this to run the egui)
+                if !awaiting_idle {
+                    awaiting_idle = true;
+                    idle_requests.send(IdleRequest::WhenIdle(dialog_subprogram)).await.ok();
+                }
+            }
+        }
+    }
+}
+
+///
 /// Converts a keypress from flo_draw to an egui Key object, if there's an equivalent
 ///
 fn convert_key(draw_key: draw::Key) -> Option<egui::Key> {
@@ -252,67 +313,6 @@ fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent) {
                     repeat:         false,
                     modifiers:      pending_input.modifiers,
                 });
-            }
-        }
-    }
-}
-
-///
-/// Defines dialog behavior by using egui (with rendering via flo_canvas requests)
-///
-pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
-    use canvas::{Draw, LayerId};
-
-    // Create a namespace for the dialog graphics
-    let dialog_subprogram   = context.current_program_id().unwrap();
-    let dialog_namespace    = canvas::NamespaceId::new();
-
-    // We'll be sending drawing requests
-    let mut drawing         = context.send::<DrawingRequest>(()).unwrap();
-    let mut idle_requests   = context.send::<IdleRequest>(()).unwrap();
-
-    // Set up the dialog layer (it'll go on top of anything else in the drawing at the moment)
-    drawing.send(DrawingRequest::Draw(Arc::new(vec![
-        Draw::PushState,
-        Draw::Namespace(dialog_namespace),
-        Draw::Layer(LayerId(0)),
-        Draw::PopState,
-    ]))).await.ok();
-
-    // Set up the EGUI context
-    let egui_context        = egui::Context::default();
-    let mut pending_input   = egui::RawInput::default();
-
-    // Set to true if we've requested an idle event
-    let mut awaiting_idle   = false;
-    let mut input           = input;
-
-    while let Some(input) = input.next().await {
-        use Dialog::*;
-
-        match input {
-            Idle => {
-                // Not waiting for any more idle events
-                awaiting_idle = false;
-
-                // TODO: run the egui context
-            },
-
-            FocusEvent(focus_event) => {
-                // Process the event
-                use super::focus::{FocusEvent};
-
-                match focus_event {
-                    FocusEvent::Event(_control, event)  => { convert_events(&mut pending_input, event); }
-                    FocusEvent::Focused(_control)       => { }
-                    FocusEvent::Unfocused(_control)     => { }
-                }
-
-                // Request an idle event (we'll use this to run the egui)
-                if !awaiting_idle {
-                    awaiting_idle = true;
-                    idle_requests.send(IdleRequest::WhenIdle(dialog_subprogram)).await.ok();
-                }
             }
         }
     }
