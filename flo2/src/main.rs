@@ -1,4 +1,4 @@
-mod scenery;
+pub mod scenery;
 
 use crate::scenery::app::*;
 use crate::scenery::document::*;

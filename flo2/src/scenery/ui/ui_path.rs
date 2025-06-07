@@ -3,7 +3,7 @@ use flo_curves::bezier::path::*;
 
 use serde::*;
 use std::vec;
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{Add, Sub, Mul};
 
 ///
 /// Coordinate in the user interface

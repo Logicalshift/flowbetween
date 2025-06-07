@@ -114,7 +114,7 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
     let document_scene = Arc::new(Scene::default());
 
     // Add a subprogram in the document scene that relays drawing instructions from the document scene to the drawing window (as the window runs in the 'main' scene, we don't have access here)
-    let mut drawing_requests = context.send::<DrawingWindowRequest>(drawing_window_program_id).unwrap();
+    let drawing_requests = context.send::<DrawingWindowRequest>(drawing_window_program_id).unwrap();
     document_scene.add_subprogram(subprogram_window(), move |input, context| drawing_relay_program(drawing_requests, input, context), 100);
 
     // Allow drawing requests to be sent directly to the window

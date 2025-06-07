@@ -125,7 +125,6 @@ struct SubProgramRegion {
 /// Represents the ordering of subprograms that can receive keyboard focus
 ///
 struct KeyboardSubProgram {
-    subprogram_id:  SubProgramId,
     control_order:  Vec<ControlId>,
 }
 
@@ -232,8 +231,7 @@ impl FocusProgram {
 
         let controls_for_program = self.tab_ordering.entry(program_id)
             .or_insert_with(|| KeyboardSubProgram {
-                subprogram_id:  program_id,
-                control_order:  vec![],
+                control_order: vec![],
             });
 
         // Remove the control if it already has an order
@@ -260,13 +258,11 @@ impl FocusProgram {
         // Ensure that the control order exists for the programs
         self.tab_ordering.entry(program_id)
             .or_insert_with(|| KeyboardSubProgram {
-                subprogram_id:  program_id,
-                control_order:  vec![],
+                control_order: vec![],
             });
         self.tab_ordering.entry(next_program_id)
             .or_insert_with(|| KeyboardSubProgram {
-                subprogram_id:  program_id,
-                control_order:  vec![],
+                control_order: vec![],
             });
 
         // Remove program_id from the existing list

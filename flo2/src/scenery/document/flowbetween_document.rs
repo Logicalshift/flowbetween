@@ -46,7 +46,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
     // Set up to receive idle events and drawing requests
     document_scene.connect_programs((), program_id, StreamId::with_message_type::<DocumentRequest>()).unwrap();
-    document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg: IdleNotification| DocumentRequest::Idle))), (), StreamId::with_message_type::<IdleNotification>()).unwrap();
+    document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|_msg: IdleNotification| DocumentRequest::Idle))), (), StreamId::with_message_type::<IdleNotification>()).unwrap();
     document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), (), StreamId::with_message_type::<DrawingRequest>()).unwrap();
     document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), program_id, StreamId::with_message_type::<DrawingRequest>()).unwrap();
 
@@ -85,7 +85,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
         let start = Instant::now();
 
-        while let Some(TimeOut(_, when)) = input.next().await {
+        while let Some(TimeOut(_, _)) = input.next().await {
             let when = Instant::now().duration_since(start);
 
             let t = when.as_millis() as f64;
@@ -119,7 +119,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                     for draw in drawing.iter() {
                         match draw {
                             Draw::ClearCanvas(background) => {
-                                pending_drawing = vec![draw.clone()];
+                                pending_drawing = vec![Draw::ClearCanvas(*background)];
                             }
 
                             _ => {
