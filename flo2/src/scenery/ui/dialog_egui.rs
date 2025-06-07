@@ -148,12 +148,61 @@ fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent) {
 
         }
 
-        KeyDown(_, key) => {
+        // Modifiers: key down
+        KeyDown(_, Some(draw::Key::ModifierShift))  => { pending_input.modifiers.shift = true; },
+        KeyDown(_, Some(draw::Key::ModifierAlt))    => { pending_input.modifiers.alt = true; },
 
+        #[cfg(target_os="macos")]
+        KeyDown(_, Some(draw::Key::ModifierMeta))   => { pending_input.modifiers.mac_cmd = true; pending_input.modifiers.command = true; },
+        #[cfg(target_os="macos")]
+        KeyDown(_, Some(draw::Key::ModifierCtrl))   => { pending_input.modifiers.ctrl = true; },
+
+        #[cfg(not(target_os="macos"))]
+        KeyDown(_, Some(draw::Key::ModifierMeta))   => { pending_input.modifiers.mac_cmd = true; },
+        #[cfg(not(target_os="macos"))]
+        KeyDown(_, Some(draw::Key::ModifierCtrl))   => { pending_input.modifiers.ctrl = true; pending_input.modifiers.command = true; },
+
+        // Modifiers: key up
+        KeyUp(_, Some(draw::Key::ModifierShift))    => { pending_input.modifiers.shift = false; },
+        KeyUp(_, Some(draw::Key::ModifierAlt))      => { pending_input.modifiers.alt = false; },
+
+        #[cfg(target_os="macos")]
+        KeyUp(_, Some(draw::Key::ModifierMeta))     => { pending_input.modifiers.mac_cmd = false; pending_input.modifiers.command = false; },
+        #[cfg(target_os="macos")]
+        KeyUp(_, Some(draw::Key::ModifierCtrl))     => { pending_input.modifiers.ctrl = false; },
+
+        #[cfg(not(target_os="macos"))]
+        KeyUp(_, Some(draw::Key::ModifierMeta))     => { pending_input.modifiers.mac_cmd = false; },
+        #[cfg(not(target_os="macos"))]
+        KeyUp(_, Some(draw::Key::ModifierCtrl))     => { pending_input.modifiers.ctrl = false; pending_input.modifiers.command = false; },
+
+        // Other key presses
+        KeyDown(_, key) => {
+            if let Some(key) = key.and_then(|key| convert_key(key)) {
+                // Add a key down event
+                // TODO: we can't currently track repeats
+                pending_input.events.push(egui::Event::Key {
+                    key:            key,
+                    physical_key:   None,
+                    pressed:        true,
+                    repeat:         false,
+                    modifiers:      pending_input.modifiers,
+                });
+            }
         }
 
         KeyUp(_, key) => {
-
+            if let Some(key) = key.and_then(|key| convert_key(key)) {
+                // Add a key up event
+                // TODO: we can't currently track repeats
+                pending_input.events.push(egui::Event::Key {
+                    key:            key,
+                    physical_key:   None,
+                    pressed:        false,
+                    repeat:         false,
+                    modifiers:      pending_input.modifiers,
+                });
+            }
         }
     }
 }
@@ -199,8 +248,15 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
                 // TODO: run the egui context
             },
 
-            FocusEvent(event) => {
-                // TODO: process the event
+            FocusEvent(focus_event) => {
+                // Process the event
+                use super::focus::{FocusEvent};
+
+                match focus_event {
+                    FocusEvent::Event(_control, event)  => { convert_events(&mut pending_input, event); }
+                    FocusEvent::Focused(_control)       => { }
+                    FocusEvent::Unfocused(_control)     => { }
+                }
 
                 // Request an idle event (we'll use this to run the egui)
                 if !awaiting_idle {
