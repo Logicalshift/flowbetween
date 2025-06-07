@@ -6,6 +6,7 @@ use flo_scene::programs::*;
 use flo_draw as draw;
 use flo_draw::canvas as canvas;
 use flo_draw::canvas::scenery::*;
+use flo_draw::canvas::{GraphicsContext, GraphicsPrimitives};
 
 use egui;
 use futures::prelude::*;
@@ -330,6 +331,53 @@ fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent) {
 }
 
 ///
+/// Writes out the instructions to fill a region
+///
+fn draw_fill(fill: &egui::Color32, drawing: &mut Vec<canvas::Draw>) {
+    // Convert to rgba and do nothing if the colour is empty
+    let rgba = egui::Rgba::from(*fill);
+    if rgba.a() <= 0.0 { return; }
+
+    // Fill with this colour
+    drawing.fill_color(canvas::Color::Rgba(rgba.r(), rgba.g(), rgba.b(), rgba.a()));
+    drawing.fill();
+}
+
+///
+/// Writes out the instructions to stroke a region
+///
+fn draw_stroke(stroke: &egui::Stroke, drawing: &mut Vec<canvas::Draw>) {
+    // Do nothing if the width is < 0.0
+    if stroke.width <= 0.0 { return; }
+
+    // Conver the colour, and do nothing if it's empty
+    let rgba = egui::Rgba::from(stroke.color);
+    if rgba.a() <= 0.0 { return; }
+
+    // Stroke with this width and colour
+    drawing.line_width(stroke.width);
+    drawing.stroke_color(canvas::Color::Rgba(rgba.r(), rgba.g(), rgba.b(), rgba.a()));
+    drawing.stroke();
+}
+
+///
+/// Draws a shape to a drawing vec
+///
+fn draw_shape(shape: &egui::Shape, drawing: &mut Vec<canvas::Draw>) {
+    use canvas::{Draw, LayerId};
+    use egui::{Shape};
+    use Shape::*;
+
+    match shape {
+        Noop            => { }
+        Vec(shapes)     => { shapes.iter().for_each(|shape| draw_shape(shape, drawing)); }
+        Circle(circle)  => { drawing.new_path(); drawing.circle(circle.center.x, circle.center.y, circle.radius); draw_fill(&circle.fill, drawing); draw_stroke(&circle.stroke, drawing); }
+
+        _ => todo!()
+    }
+}
+
+///
 /// Processes the drawing instructions in the output from egui into flo_draw canvas instructions
 ///
 async fn process_drawing_output(output: &egui::FullOutput, drawing_target: &mut OutputSink<DrawingRequest>, namespace: canvas::NamespaceId) {
@@ -345,7 +393,10 @@ async fn process_drawing_output(output: &egui::FullOutput, drawing_target: &mut 
     ]);
     let initial_len = drawing.len();
 
-    // TODO: process drawing commands
+    // Process drawing commands
+    for shape in output.shapes.iter() {
+        draw_shape(&shape.shape, &mut drawing);
+    }
 
     // Send the drawing if we generated any drawing instructions
     if drawing.len() > initial_len {
