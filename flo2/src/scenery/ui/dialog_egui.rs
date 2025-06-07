@@ -131,10 +131,27 @@ fn convert_key(draw_key: draw::Key) -> Option<egui::Key> {
 }
 
 ///
+/// Converts a button press from flo_draw to egui
+///
+fn convert_button(button: draw::Button) -> egui::PointerButton {
+    use draw::Button;
+
+    match button {
+        Button::Left        => egui::PointerButton::Primary,
+        Button::Right       => egui::PointerButton::Secondary,
+        Button::Middle      => egui::PointerButton::Middle,
+        Button::Other(0)    => egui::PointerButton::Extra1,
+        Button::Other(1)    => egui::PointerButton::Extra2,
+        Button::Other(_)    => egui::PointerButton::Extra2,   
+    }
+}
+
+///
 /// Converts DrawEvents to egui events
 ///
 fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent) {
     use draw::DrawEvent::*;
+    use draw::PointerAction;
 
     match event {
         Redraw              => { }
@@ -144,8 +161,41 @@ fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent) {
         CanvasTransform(_)  => { }
         Closed              => { }
 
-        Pointer(action, pointer_id, pointer_state) => {
+        // Pointer actions
+        Pointer(PointerAction::Move, _, pointer_state) => {
+            if let Some(location) = pointer_state.location_in_canvas {
+                pending_input.events.push(egui::Event::PointerMoved(egui::Pos2 { x: location.0 as _, y: location.1 as _ }));
+            }
+        }
 
+        Pointer(PointerAction::ButtonDown, _, pointer_state) => {
+            if let Some(location) = pointer_state.location_in_canvas {
+                for button in pointer_state.buttons.iter() {
+                    pending_input.events.push(egui::Event::PointerButton {
+                        pos:        egui::Pos2 { x: location.0 as _, y: location.1 as _ },
+                        button:     convert_button(*button),
+                        pressed:    true,
+                        modifiers:  pending_input.modifiers,
+                    });
+                }
+            }
+        }
+
+        Pointer(PointerAction::ButtonUp, _, pointer_state) => {
+            if let Some(location) = pointer_state.location_in_canvas {
+                for button in pointer_state.buttons.iter() {
+                    pending_input.events.push(egui::Event::PointerButton {
+                        pos:        egui::Pos2 { x: location.0 as _, y: location.1 as _ },
+                        button:     convert_button(*button),
+                        pressed:    false,
+                        modifiers:  pending_input.modifiers,
+                    });
+                }
+            }
+        }
+
+        Pointer(_, _, _) => {
+            // Other pointer actions (Enter, Leave, Drag, Cancel) are ignored
         }
 
         // Modifiers: key down
