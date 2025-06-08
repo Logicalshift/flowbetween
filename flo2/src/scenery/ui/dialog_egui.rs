@@ -545,10 +545,41 @@ async fn process_drawing_output(output: &egui::FullOutput, drawing_target: &mut 
 }
 
 ///
+/// Returns the size and bytes ready to send to the canvas for a texture
+///
+fn canvas_texture_bytes(image: &epaint::ImageData) -> (usize, usize, Arc<Vec<u8>>) {
+    let (width, height, bytes) = match image {
+        epaint::ImageData::Color(color_image) => {
+            let bytes = color_image.pixels.iter()
+                .flat_map(|pixel| {
+                    let (r, g, b, a) = pixel.to_tuple();
+                    [r, g, b, a]
+                })
+                .collect();
+
+            (color_image.size[0], color_image.size[1], bytes)
+        }
+
+        epaint::ImageData::Font(font_image) => {
+            let bytes = font_image.srgba_pixels(None)
+                .flat_map(|pixel| {
+                    let (r, g, b, a) = pixel.to_tuple();
+                    [r, g, b, a]
+                })
+                .collect();
+
+            (font_image.size[0], font_image.size[1], bytes)
+        }
+    };
+
+    (width, height, Arc::new(bytes))
+}
+
+///
 /// Processes the texture instructions in the output from egui into flo_draw canvas instructions
 ///
 async fn process_texture_output(output: &egui::FullOutput, drawing_target: &mut OutputSink<DrawingRequest>, namespace: canvas::NamespaceId) {
-    use canvas::{Draw, LayerId};
+    use canvas::{Draw, LayerId, TextureOp, TexturePosition, TextureSize, TextureFormat};
 
     let mut drawing = vec![];
 
@@ -561,7 +592,26 @@ async fn process_texture_output(output: &egui::FullOutput, drawing_target: &mut 
     ]);
     let initial_len = drawing.len();
 
-    // TODO: Deal with any textures to set during the following drawing instructions (free instructions have to be dealt with after drawing)
+    // Deal with any textures to set during the following drawing instructions (free instructions have to be dealt with after drawing)
+    output.textures_delta.set.iter()
+        .for_each(|(texture_id, image_delta)| { 
+            // Convert the texture ID
+            let texture_id              = canvas_texture_id(texture_id);
+            let (width, height, bytes)  = canvas_texture_bytes(&image_delta.image);
+
+            if let Some(pos) = image_delta.pos {
+                // Update an existing texture
+                drawing.extend([
+                    Draw::Texture(texture_id, TextureOp::SetBytes(TexturePosition(pos[0] as _, pos[1] as _), TextureSize(width as _, height as _), bytes)),
+                ]);
+            } else {
+                // Create a new texture
+                drawing.extend([
+                    Draw::Texture(texture_id, TextureOp::Create(TextureSize(width as _, height as _), TextureFormat::Rgba)),
+                    Draw::Texture(texture_id, TextureOp::SetBytes(TexturePosition(0, 0), TextureSize(width as _, height as _), bytes)),
+                ]);
+            }
+        });
 
     // Send the drawing if we generated any drawing instructions
     if drawing.len() > initial_len {
