@@ -43,7 +43,6 @@ impl SceneMessage for DocumentRequest {
         init_context.connect_programs((), subprogram_flowbetween_document(), StreamId::with_message_type::<DocumentRequest>()).unwrap();
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|_msg: IdleNotification| DocumentRequest::Idle))), (), StreamId::with_message_type::<IdleNotification>()).unwrap();
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), (), StreamId::with_message_type::<DrawingRequest>()).unwrap();
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), subprogram_flowbetween_document(), StreamId::with_message_type::<DrawingRequest>()).unwrap();
     }
 }
 
@@ -52,6 +51,8 @@ impl SceneMessage for DocumentRequest {
 ///
 pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream<DocumentRequest>, context: SceneContext) {
     let program_id = context.current_program_id().unwrap();
+
+    document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), program_id, StreamId::with_message_type::<DrawingRequest>()).unwrap();
 
     // Set up the window to its initial state
     let mut idle_requests   = context.send::<IdleRequest>(()).unwrap();
