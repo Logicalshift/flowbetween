@@ -453,7 +453,7 @@ fn draw_shape(shape: &egui::Shape, drawing: &mut Vec<canvas::Draw>) {
         Path(path_shape)                => { drawing.new_path(); drawing.move_to(path_shape.points[0].x, path_shape.points[0].y); path_shape.points.iter().skip(1).for_each(|point| drawing.line_to(point.x, point.y)); if path_shape.closed { drawing.close_path(); } draw_fill(&path_shape.fill, drawing); draw_path_stroke(&path_shape.stroke, drawing); }
         Rect(rect_shape)                => { draw_rect(rect_shape, drawing); }
         Text(text_shape)                => { }
-        Mesh(mesh_shape)                => { }
+        Mesh(mesh_shape)                => { todo!() }
         QuadraticBezier(_quad_bezier)   => { todo!() }
         CubicBezier(_cubic_bezier)      => { todo!() }
         Callback(_)                     => { /* Not supported */ }
