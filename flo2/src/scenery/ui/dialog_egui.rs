@@ -85,6 +85,8 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
                         if ui.button("Click me").clicked() {
                             // take some action here
                         }
+                        let mut checked = true;
+                        ui.checkbox(&mut checked, "Test");
                     });
                 });
 
