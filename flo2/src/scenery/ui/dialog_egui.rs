@@ -1,5 +1,6 @@
 use super::dialog::*;
 use super::focus::*;
+use super::ui_path::*;
 
 use flo_scene::*;
 use flo_scene::programs::*;
@@ -7,8 +8,10 @@ use flo_draw as draw;
 use flo_draw::canvas as canvas;
 use flo_draw::canvas::scenery::*;
 use flo_draw::canvas::{GraphicsContext, GraphicsPrimitives};
+use flo_curves::geo::*;
 
 use egui;
+use egui::epaint;
 use futures::prelude::*;
 
 use std::sync::*;
@@ -363,7 +366,7 @@ fn draw_stroke(stroke: &egui::Stroke, drawing: &mut Vec<canvas::Draw>) {
 ///
 /// Writes out the instructions to stroke a region
 ///
-fn draw_path_stroke(stroke: &egui::epaint::PathStroke, drawing: &mut Vec<canvas::Draw>) {
+fn draw_path_stroke(stroke: &epaint::PathStroke, drawing: &mut Vec<canvas::Draw>) {
     // Do nothing if the width is < 0.0
     if stroke.width <= 0.0 { return; }
 
@@ -371,7 +374,7 @@ fn draw_path_stroke(stroke: &egui::epaint::PathStroke, drawing: &mut Vec<canvas:
 
     // Stroke with this width and colour
     match &stroke.color {
-        egui::epaint::ColorMode::Solid(color) => {
+        epaint::ColorMode::Solid(color) => {
             let rgba = egui::Rgba::from(*color);
             if rgba.a() <= 0.0 { return; }
 
@@ -380,9 +383,55 @@ fn draw_path_stroke(stroke: &egui::epaint::PathStroke, drawing: &mut Vec<canvas:
             drawing.stroke();
         }
 
-        egui::epaint::ColorMode::UV(callback) => {
+        epaint::ColorMode::UV(callback) => {
             // TODO: flo_draw doesn't have Gouraud shading, so we can't really implement this
         }
+    }
+}
+
+///
+/// Draws a filled region using the specified brush
+///
+fn draw_fill_brush(brush: &epaint::Brush, drawing: &mut Vec<canvas::Draw>, region: ((f32, f32), (f32, f32))) {
+    // Select the flo_draw texture to use (TODO: use separate namespaces for the user and managed textures?)
+    let texture_id = match brush.fill_texture_id {
+        epaint::TextureId::Managed(id)  => canvas::TextureId(id as _),
+        epaint::TextureId::User(id)     => canvas::TextureId((id | 0x100000000) as _),
+    };
+
+    // The UVs go from 0-1 so we need to add/multiply the region as flo_draw works by setting the position of the texture on the canvas
+    let mx = region.1.0 - region.0.0;
+    let my = region.1.1 - region.0.1;
+
+    let uv_min_x = (brush.uv.min.x + region.0.0) * mx;
+    let uv_min_y = (brush.uv.min.y + region.0.1) * my;
+    let uv_max_x = (brush.uv.max.x + region.0.0) * mx;
+    let uv_max_y = (brush.uv.max.y + region.0.1) * my;
+
+    drawing.fill_texture(texture_id, uv_min_x, uv_min_y, uv_max_x, uv_max_y);
+    drawing.fill();
+}
+
+///
+/// Draws a rectangle shape
+///
+fn draw_rect(rect_shape: &epaint::RectShape, drawing: &mut Vec<canvas::Draw>) {
+    // Create the rectangle path
+    // TODO: rounded corners
+    // TODO: round to pixels if requested
+    // TODO: deal with the stroke kind
+    drawing.new_path();
+    drawing.rect(rect_shape.rect.min.x, rect_shape.rect.min.y, rect_shape.rect.max.x, rect_shape.rect.max.y);
+
+    // TODO: render to a sprite and blur if there's a blur width set
+    // Fill with the requested fill colour
+    draw_fill(&rect_shape.fill, drawing);
+    draw_stroke(&rect_shape.stroke, drawing);
+
+    // Render the texture if there is one
+    if let Some(brush) = &rect_shape.brush {
+        let bounds = ((rect_shape.rect.min.x, rect_shape.rect.min.y), (rect_shape.rect.max.x, rect_shape.rect.max.y));
+        draw_fill_brush(&**brush, drawing, bounds);
     }
 }
 
@@ -401,7 +450,7 @@ fn draw_shape(shape: &egui::Shape, drawing: &mut Vec<canvas::Draw>) {
         Ellipse(_)                      => { /* TODO */ }
         LineSegment{points, stroke}     => { drawing.new_path(); drawing.move_to(points[0].x, points[0].y); points.iter().skip(1).for_each(|point| drawing.line_to(point.x, point.y)); draw_stroke(stroke, drawing); }
         Path(path_shape)                => { drawing.new_path(); drawing.move_to(path_shape.points[0].x, path_shape.points[0].y); path_shape.points.iter().skip(1).for_each(|point| drawing.line_to(point.x, point.y)); if path_shape.closed { drawing.close_path(); } draw_fill(&path_shape.fill, drawing); draw_path_stroke(&path_shape.stroke, drawing); }
-        Rect(rect_shape)                => { }
+        Rect(rect_shape)                => { draw_rect(rect_shape, drawing); }
         Text(text_shape)                => { }
         Mesh(mesh_shape)                => { }
         QuadraticBezier(quad_bezier)    => { }
@@ -423,6 +472,7 @@ async fn process_drawing_output(output: &egui::FullOutput, drawing_target: &mut 
         Draw::PushState,
         Draw::Namespace(namespace),
         Draw::Layer(LayerId(0)),
+        Draw::ClearLayer,
     ]);
     let initial_len = drawing.len();
 
