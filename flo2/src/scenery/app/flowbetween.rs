@@ -14,6 +14,31 @@ use std::sync::*;
 use std::collections::*;
 
 ///
+/// Runs the main flowbetween program
+///
+pub async fn flowbetween(scene: Arc<Scene>, events: InputStream<FlowBetween>, context: SceneContext) {
+    let mut events      = events;
+    let mut documents   = HashMap::new();
+
+    while let Some(evt) = events.next().await {
+        use FlowBetween::*;
+
+        match evt {
+            CreateEmptyDocument(document_id) => {
+                // Create a program ID for the document program
+                let document_program_id = SubProgramId::new();
+
+                // Create the document program
+                create_empty_document(Arc::clone(&scene), document_program_id, &context).await;
+
+                // Store as in the list of known document programs
+                documents.insert(document_id, document_program_id);
+            }
+        }
+    }
+}
+
+///
 /// Commands for controlling the main flowbetween program
 ///
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -155,29 +180,4 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
         context.send_message(SceneControl::Close(drawing_window_program_id)).await.ok();
         context.send_message(SceneControl::Close(render_window_program_id)).await.ok();
     }, 1);
-}
-
-///
-/// Runs the main flowbetween program
-///
-pub async fn flowbetween(scene: Arc<Scene>, events: InputStream<FlowBetween>, context: SceneContext) {
-    let mut events      = events;
-    let mut documents   = HashMap::new();
-
-    while let Some(evt) = events.next().await {
-        use FlowBetween::*;
-
-        match evt {
-            CreateEmptyDocument(document_id) => {
-                // Create a program ID for the document program
-                let document_program_id = SubProgramId::new();
-
-                // Create the document program
-                create_empty_document(Arc::clone(&scene), document_program_id, &context).await;
-
-                // Store as in the list of known document programs
-                documents.insert(document_id, document_program_id);
-            }
-        }
-    }
 }
