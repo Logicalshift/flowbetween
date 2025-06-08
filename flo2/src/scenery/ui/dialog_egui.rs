@@ -15,6 +15,7 @@ use egui::epaint;
 use futures::prelude::*;
 
 use std::sync::*;
+use std::time::{Duration, Instant};
 
 ///
 /// Defines dialog behavior by using egui (with rendering via flo_canvas requests)
@@ -41,6 +42,7 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
     // Set up the EGUI context
     let egui_context        = egui::Context::default();
     let mut pending_input   = egui::RawInput::default();
+    let start_time          = Instant::now();
 
     // TODO: size is where this dialog appears on screen (if we use one viewport per dialog)
     pending_input.screen_rect = Some(egui::Rect { min: egui::Pos2 { x: 0.0, y: 0.0 }, max: egui::Pos2 { x: 1000.0, y: 1000.0 } });
@@ -55,6 +57,13 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
         match input {
             Idle => {
                 use std::mem;
+
+                // Set the time on the events
+                let since_start = start_time.elapsed();
+                let since_start = since_start.as_micros();
+                let since_start = (since_start as f64)/1_000_000.0;
+
+                pending_input.time = Some(since_start);
 
                 // Not waiting for any more idle events
                 awaiting_idle = false;
