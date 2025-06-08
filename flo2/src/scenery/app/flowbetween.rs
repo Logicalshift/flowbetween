@@ -119,7 +119,10 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
 
     // Allow drawing requests to be sent directly to the window
     let drawing_request_filter = FilterHandle::for_filter(|drawing_requests| drawing_requests.map(|req| DrawingWindowRequest::Draw(req)));
-    document_scene.connect_programs((), StreamTarget::Filtered(drawing_request_filter, subprogram_window()), StreamId::with_message_type::<DrawingRequest>()).unwrap();
+    document_scene.connect_programs((), StreamTarget::Filtered(drawing_request_filter.clone(), subprogram_window()), StreamId::with_message_type::<DrawingRequest>()).unwrap();
+
+    // Document program sends to the window (it also is the default target for drawing requests for the scene)
+    document_scene.connect_programs(subprogram_flowbetween_document(), StreamTarget::Filtered(drawing_request_filter, subprogram_window()), StreamId::with_message_type::<DrawingRequest>()).unwrap();
 
     // Start the main program within the document scene
     let document_scene_clone    = Arc::clone(&document_scene);
