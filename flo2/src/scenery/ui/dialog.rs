@@ -3,6 +3,7 @@
 //!
 
 use super::control_id::*;
+use super::dialog_egui::*;
 use super::focus::*;
 use super::subprograms::*;
 
@@ -48,6 +49,9 @@ impl SceneMessage for Dialog {
         // Set up filters for the focus events/updates
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|focus_events| focus_events.map(|focus| Dialog::FocusEvent(focus)))), (), StreamId::with_message_type::<FocusEvent>()).ok();
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|idle_events| idle_events.map(|_idle: IdleNotification| Dialog::Idle))), (), StreamId::with_message_type::<IdleNotification>()).ok();
+
+        // Create the standard focus subprogram when a message is sent for the first tiem
+        init_context.add_subprogram(subprogram_dialog(), dialog_egui, 20);
     }
 }
 
