@@ -498,27 +498,49 @@ fn draw_rect(rect_shape: &epaint::RectShape, drawing: &mut Vec<canvas::Draw>) {
 fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>) {
     // flo_canvas doesn't have an ideal format for the way that egui generates glyphs, so this is probably slower than it could be
 
-    let fallback_color  = canvas_color(&text_shape.fallback_color);
-    let texture_id      = canvas::TextureId(0);
-    let texture_size    = (2048.0, 64.0);           // TODO: hard coding this for testing, we need to actually store this somewhere, used for converting the UVs
-    let mut pos_x       = text_shape.pos.x;
-    let mut pos_y       = text_shape.pos.y;
+    let fallback_color      = canvas_color(&text_shape.fallback_color);
+    let texture_id          = canvas::TextureId(0);
+    let texture_size        = (2048.0, 64.0);           // TODO: hard coding this for testing, we need to actually store this somewhere, used for converting the UVs
+    let mut pos_x           = text_shape.pos.x;
+    let mut pos_y           = text_shape.pos.y;
+    let mut active_color    = None;
 
     for row in text_shape.galley.rows.iter() {
         // Draw the glyphs in this row
         for glyph in row.glyphs.iter() {
+            // Position of the glyph (coordinates are upside-down)
             let glyph_min_x = pos_x + glyph.pos.x;
             let glyph_min_y = pos_y + glyph.pos.y;
             let glyph_max_x = glyph_min_x + glyph.uv_rect.size.x;
             let glyph_max_y = glyph_min_y - glyph.uv_rect.size.y;
 
+            // UV coordinates (flo_canvas positions the whole texture, which is more convenient if you're rendering stuff but kind of annoying if you have coords for a GPU so this is a bit involved)
+
+            // Texture coordinate that should appear at glyph_min_x, etc
+            let texture_min_x = (glyph.uv_rect.min[0] as f32 / 65535.0) * texture_size.0;
+            let texture_min_y = (glyph.uv_rect.min[1] as f32 / 65535.0) * texture_size.1;
+            let texture_max_x = (glyph.uv_rect.max[0] as f32 / 65535.0) * texture_size.0;
+            let texture_max_y = (glyph.uv_rect.max[1] as f32 / 65535.0) * texture_size.1;
+
+            // TODO: map to where the texture appears on canvas
+
+            // Colour and other formatting is done by looking up the section in the original rendering job
             let section     = glyph.section_index;
             let glyph_color = text_shape.galley.job.sections[section as usize].format.color;
             let glyph_color = if glyph_color == egui::Color32::PLACEHOLDER { fallback_color } else { canvas_color(&glyph_color) };
 
+            // Render the glyph
             drawing.new_path();
             drawing.rect(glyph_min_x, glyph_min_y, glyph_max_y, glyph_max_y);
-            drawing.fill_color(glyph_color);
+
+            if active_color != Some(glyph_color) {
+                // TODO: pick a better texture ID here, figure out why things hang when resizing with this in, figure out why we get mipmap errors too
+                drawing.copy_texture(texture_id, canvas::TextureId(1));
+                drawing.filter_texture(canvas::TextureId(1), canvas::TextureFilter::Tint(glyph_color));
+                active_color = Some(glyph_color);
+            }
+
+            drawing.fill_texture(canvas::TextureId(1), texture_min_x, texture_min_y, texture_max_x, texture_max_y);
             drawing.fill();
         }
 
