@@ -9,6 +9,7 @@ use flo_draw::canvas as canvas;
 use flo_draw::canvas::scenery::*;
 use flo_draw::canvas::{GraphicsContext, GraphicsPrimitives};
 use flo_curves::geo::*;
+use flo_curves::bezier::path::*;
 
 use egui;
 use egui::epaint;
@@ -26,6 +27,15 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
     // Create a namespace for the dialog graphics
     let dialog_subprogram   = context.current_program_id().unwrap();
     let dialog_namespace    = canvas::NamespaceId::new();
+
+    // TODO: this claims a large region so we get events (but we'll only want events for things actually covered by a dialog when we're done)
+    let region = BezierPathBuilder::<UiPath>::start(UiPoint(0.0, 0.0))
+        .line_to(UiPoint(0.0, 1000.0))
+        .line_to(UiPoint(1000.0, 1000.0))
+        .line_to(UiPoint(1000.0, 0.0))
+        .line_to(UiPoint(0.0, 0.0))
+        .build();
+    context.send_message(Focus::ClaimRegion { program: dialog_subprogram, region: vec![region], z_index: 0 }).await.ok();
 
     // We'll be sending drawing requests
     let mut drawing         = context.send::<DrawingRequest>(()).unwrap();
