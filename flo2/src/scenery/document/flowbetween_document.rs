@@ -1,4 +1,5 @@
 use super::subprograms::*;
+use crate::scenery::ui::*;
 
 use flo_draw::*;
 use flo_draw::canvas::*;
@@ -52,7 +53,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
     // Set up the window to its initial state
     let mut idle_requests   = context.send::<IdleRequest>(()).unwrap();
-    let mut window_drawing  = context.send::<DrawingRequest>(subprogram_window()).unwrap();
+    let mut window_drawing  = context.send::<DrawingRequest>(()).unwrap();
     let mut window_setup    = vec![];
 
     window_setup.clear_canvas(Color::Rgba(0.8, 0.8, 0.8, 1.0));
