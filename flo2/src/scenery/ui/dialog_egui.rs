@@ -47,15 +47,6 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
     // TODO: size is where this dialog appears on screen (if we use one viewport per dialog)
     pending_input.screen_rect = Some(egui::Rect { min: egui::Pos2 { x: 0.0, y: 0.0 }, max: egui::Pos2 { x: 1000.0, y: 1000.0 } });
 
-    // TODO: simple test of the dialog
-    egui::CentralPanel::default().show(&egui_context, |ui| {
-        ui.add(egui::Label::new("Hello World!"));
-        ui.label("A shorter and more convenient way to add a label.");
-        if ui.button("Click me").clicked() {
-            // take some action here
-        }
-    });
-
     // Request an idle event after startup so we render any UI we need to
     idle_requests.send(IdleRequest::WhenIdle(dialog_subprogram)).await.ok();
 
@@ -86,7 +77,16 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
                 mem::swap(&mut new_input, &mut pending_input);
 
                 // Run the egui context
-                let output = egui_context.run(new_input, |_ctxt| { });
+                let output = egui_context.run(new_input, |ctxt| {
+                    // TODO: simple test of the dialog
+                    egui::CentralPanel::default().show(&ctxt, |ui| {
+                        ui.add(egui::Label::new("Hello World!"));
+                        ui.label("A shorter and more convenient way to add a label.");
+                        if ui.button("Click me").clicked() {
+                            // take some action here
+                        }
+                    });
+                });
 
                 // Process the output, generating draw events
                 process_drawing_output(&output, &mut drawing, dialog_namespace).await;
