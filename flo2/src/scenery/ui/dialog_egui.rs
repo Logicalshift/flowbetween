@@ -400,6 +400,7 @@ fn draw_fill_brush(brush: &epaint::Brush, drawing: &mut Vec<canvas::Draw>, regio
     };
 
     // The UVs go from 0-1 so we need to add/multiply the region as flo_draw works by setting the position of the texture on the canvas
+    // TODO: there are monochrome textures that we have to draw using a colour instead
     let mx = region.1.0 - region.0.0;
     let my = region.1.1 - region.0.1;
 
@@ -453,8 +454,8 @@ fn draw_shape(shape: &egui::Shape, drawing: &mut Vec<canvas::Draw>) {
         Rect(rect_shape)                => { draw_rect(rect_shape, drawing); }
         Text(text_shape)                => { }
         Mesh(mesh_shape)                => { }
-        QuadraticBezier(quad_bezier)    => { }
-        CubicBezier(cubic_bezier)       => { }
+        QuadraticBezier(_quad_bezier)   => { todo!() }
+        CubicBezier(_cubic_bezier)      => { todo!() }
         Callback(_)                     => { /* Not supported */ }
     }
 }
