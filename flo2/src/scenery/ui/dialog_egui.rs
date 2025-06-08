@@ -101,6 +101,7 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
                 });
 
                 // Process the output, generating draw events
+                process_texture_output(&output, &mut drawing, dialog_namespace).await;
                 process_drawing_output(&output, &mut drawing, dialog_namespace).await;
             },
 
@@ -426,14 +427,23 @@ fn draw_path_stroke(stroke: &epaint::PathStroke, drawing: &mut Vec<canvas::Draw>
 }
 
 ///
+/// Converts an egui texture ID to a canvas texture ID
+///
+#[inline]
+fn canvas_texture_id(egui_texture_id: &egui::TextureId) -> canvas::TextureId {
+    // Select the flo_draw texture to use (TODO: use separate namespaces for the user and managed textures?)
+    match *egui_texture_id {
+        epaint::TextureId::Managed(id)  => canvas::TextureId(id as _),
+        epaint::TextureId::User(id)     => canvas::TextureId((id | 0x100000000) as _),
+    }
+}
+
+///
 /// Draws a filled region using the specified brush
 ///
 fn draw_fill_brush(brush: &epaint::Brush, drawing: &mut Vec<canvas::Draw>, region: ((f32, f32), (f32, f32))) {
     // Select the flo_draw texture to use (TODO: use separate namespaces for the user and managed textures?)
-    let texture_id = match brush.fill_texture_id {
-        epaint::TextureId::Managed(id)  => canvas::TextureId(id as _),
-        epaint::TextureId::User(id)     => canvas::TextureId((id | 0x100000000) as _),
-    };
+    let texture_id = canvas_texture_id(&brush.fill_texture_id);
 
     // The UVs go from 0-1 so we need to add/multiply the region as flo_draw works by setting the position of the texture on the canvas
     // TODO: there are monochrome textures that we have to draw using a colour instead
@@ -517,6 +527,41 @@ async fn process_drawing_output(output: &egui::FullOutput, drawing_target: &mut 
     for shape in output.shapes.iter() {
         draw_shape(&shape.shape, &mut drawing);
     }
+
+    // Free any textures that aren't used any more
+    output.textures_delta.free.iter()
+        .for_each(|texture_id| {
+            drawing.push(Draw::Texture(canvas_texture_id(texture_id), canvas::TextureOp::Free));
+        });
+
+    // Send the drawing if we generated any drawing instructions
+    if drawing.len() > initial_len {
+        drawing.extend([
+            Draw::PopState,
+        ]);
+
+        drawing_target.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
+    }
+}
+
+///
+/// Processes the texture instructions in the output from egui into flo_draw canvas instructions
+///
+async fn process_texture_output(output: &egui::FullOutput, drawing_target: &mut OutputSink<DrawingRequest>, namespace: canvas::NamespaceId) {
+    use canvas::{Draw, LayerId};
+
+    let mut drawing = vec![];
+
+    // Start by selecting the namespace and storing the state
+    drawing.extend([
+        Draw::PushState,
+        Draw::Namespace(namespace),
+        Draw::Layer(LayerId(0)),
+        Draw::ClearLayer,
+    ]);
+    let initial_len = drawing.len();
+
+    // TODO: Deal with any textures to set during the following drawing instructions (free instructions have to be dealt with after drawing)
 
     // Send the drawing if we generated any drawing instructions
     if drawing.len() > initial_len {
