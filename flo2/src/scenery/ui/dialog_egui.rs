@@ -42,6 +42,9 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
     let egui_context        = egui::Context::default();
     let mut pending_input   = egui::RawInput::default();
 
+    // TODO: size is where this dialog appears on screen (if we use one viewport per dialog)
+    pending_input.screen_rect = Some(egui::Rect { min: egui::Pos2 { x: 0.0, y: 0.0 }, max: egui::Pos2 { x: 1000.0, y: 1000.0 } });
+
     // Set to true if we've requested an idle event
     let mut awaiting_idle   = false;
     let mut input           = input;
