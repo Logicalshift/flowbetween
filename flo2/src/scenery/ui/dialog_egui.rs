@@ -371,6 +371,16 @@ fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent) {
 }
 
 ///
+/// Converts an egui color to a canvas color
+///
+#[inline]
+fn canvas_color(egui_color: &epaint::Color32) -> canvas::Color {
+    let rgba = egui::Rgba::from(*egui_color);
+
+    canvas::Color::Rgba(rgba.r(), rgba.g(), rgba.b(), rgba.a())
+}
+
+///
 /// Writes out the instructions to fill a region
 ///
 fn draw_fill(fill: &egui::Color32, drawing: &mut Vec<canvas::Draw>) {
@@ -483,6 +493,42 @@ fn draw_rect(rect_shape: &epaint::RectShape, drawing: &mut Vec<canvas::Draw>) {
 }
 
 ///
+/// Creates rendering instructions for text
+///
+fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>) {
+    // flo_canvas doesn't have an ideal format for the way that egui generates glyphs, so this is probably slower than it could be
+
+    let fallback_color  = canvas_color(&text_shape.fallback_color);
+    let texture_id      = canvas::TextureId(0);
+    let texture_size    = (2048.0, 64.0);           // TODO: hard coding this for testing, we need to actually store this somewhere, used for converting the UVs
+    let mut pos_x       = text_shape.pos.x;
+    let mut pos_y       = text_shape.pos.y;
+
+    for row in text_shape.galley.rows.iter() {
+        // Draw the glyphs in this row
+        for glyph in row.glyphs.iter() {
+            let glyph_min_x = pos_x + glyph.pos.x;
+            let glyph_min_y = pos_y + glyph.pos.y;
+            let glyph_max_x = glyph_min_x + glyph.uv_rect.size.x;
+            let glyph_max_y = glyph_min_y - glyph.uv_rect.size.y;
+
+            let section     = glyph.section_index;
+            let glyph_color = text_shape.galley.job.sections[section as usize].format.color;
+            let glyph_color = if glyph_color == egui::Color32::PLACEHOLDER { fallback_color } else { canvas_color(&glyph_color) };
+
+            drawing.new_path();
+            drawing.rect(glyph_min_x, glyph_min_y, glyph_max_y, glyph_max_y);
+            drawing.fill_color(glyph_color);
+            drawing.fill();
+        }
+
+        // Assuming the row begins at 0,0
+        pos_y += row.rect.bottom();
+    }
+
+}
+
+///
 /// Draws a shape to a drawing vec
 ///
 fn draw_shape(shape: &egui::Shape, drawing: &mut Vec<canvas::Draw>) {
@@ -498,7 +544,7 @@ fn draw_shape(shape: &egui::Shape, drawing: &mut Vec<canvas::Draw>) {
         LineSegment{points, stroke}     => { drawing.new_path(); drawing.move_to(points[0].x, points[0].y); points.iter().skip(1).for_each(|point| drawing.line_to(point.x, point.y)); draw_stroke(stroke, drawing); }
         Path(path_shape)                => { drawing.new_path(); drawing.move_to(path_shape.points[0].x, path_shape.points[0].y); path_shape.points.iter().skip(1).for_each(|point| drawing.line_to(point.x, point.y)); if path_shape.closed { drawing.close_path(); } draw_fill(&path_shape.fill, drawing); draw_path_stroke(&path_shape.stroke, drawing); }
         Rect(rect_shape)                => { draw_rect(rect_shape, drawing); }
-        Text(text_shape)                => { }
+        Text(text_shape)                => { draw_text(text_shape, drawing); }
         Mesh(mesh_shape)                => { todo!() }
         QuadraticBezier(_quad_bezier)   => { todo!() }
         CubicBezier(_cubic_bezier)      => { todo!() }
