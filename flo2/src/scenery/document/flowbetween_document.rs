@@ -58,6 +58,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     let mut idle_requests   = context.send::<IdleRequest>(()).unwrap();
     let mut window_drawing  = context.send::<DrawingRequest>(()).unwrap();
     let mut dialog          = context.send::<Dialog>(()).unwrap();
+    let mut focus           = context.send::<Focus>(()).unwrap();
     let mut window_setup    = vec![];
 
     window_setup.clear_canvas(Color::Rgba(0.8, 0.8, 0.8, 1.0));
@@ -161,6 +162,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                 }
 
                 DocumentRequest::Event(event) => {
+                    // Process the event
                     match &event {
                         DrawEvent::NewFrame => {
                             waiting_for_new_frame = false;
@@ -174,6 +176,9 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
                         _ => { }
                     }
+
+                    // Send to the focus program
+                    focus.send(Focus::Event(event)).await.ok();
                 }
 
                 DocumentRequest::Idle => {
