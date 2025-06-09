@@ -170,8 +170,8 @@ pub fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>
             // UV coordinates (flo_canvas positions the whole texture, which is more convenient if you're rendering stuff but kind of annoying if you have coords for a GPU so this is a bit involved)
 
             // Texture coordinate that should appear at glyph_min_x, etc
-            let (texture_min_x, texture_max_x) = texture_pos_for_uv(glyph_min_x, glyph_max_x, glyph.uv_rect.min[0] as f32 / 2048.0, glyph.uv_rect.max[0] as f32 / 2048.0);
-            let (texture_min_y, texture_max_y) = texture_pos_for_uv(glyph_min_y, glyph_max_y, glyph.uv_rect.min[1] as f32 / 2048.0, glyph.uv_rect.max[1] as f32 / 2048.0);
+            let (texture_min_x, texture_max_x) = texture_pos_for_uv(glyph_min_x, glyph_max_x, glyph.uv_rect.min[0] as f32 / texture_size.0, glyph.uv_rect.max[0] as f32 / texture_size.0);
+            let (texture_min_y, texture_max_y) = texture_pos_for_uv(glyph_min_y, glyph_max_y, glyph.uv_rect.min[1] as f32 / texture_size.1, glyph.uv_rect.max[1] as f32 / texture_size.1);
 
             // Colour and other formatting is done by looking up the section in the original rendering job
             let section     = glyph.section_index;

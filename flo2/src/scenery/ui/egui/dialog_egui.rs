@@ -231,7 +231,7 @@ async fn process_texture_output(output: &egui::FullOutput, drawing_target: &mut 
                 // Create a new texture
                 // TODO: hard coding the texture size to be 2048, 2048 as that seems to be what's expected for the font
                 drawing.extend([
-                    Draw::Texture(texture_id, TextureOp::Create(TextureSize(2048, 2048), TextureFormat::Rgba)),
+                    Draw::Texture(texture_id, TextureOp::Create(TextureSize(width as _, height as _), TextureFormat::Rgba)),
                     Draw::Texture(texture_id, TextureOp::SetBytes(TexturePosition(0, 0), TextureSize(width as _, height as _), bytes)),
                 ]);
             }
