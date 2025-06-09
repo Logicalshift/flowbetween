@@ -541,7 +541,7 @@ fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>) {
 
             // Texture coordinate that should appear at glyph_min_x, etc
             let (texture_min_x, texture_max_x) = texture_pos_for_uv(glyph_min_x, glyph_max_x, glyph.uv_rect.min[0] as f32 / 65535.0, glyph.uv_rect.max[0] as f32 / 65535.0);
-            let (texture_min_y, texture_max_y) = texture_pos_for_uv(glyph_max_y, glyph_min_y, 1.0-(glyph.uv_rect.min[1] as f32 / 65535.0), 1.0-(glyph.uv_rect.max[1] as f32 / 65535.0));
+            let (texture_min_y, texture_max_y) = texture_pos_for_uv(glyph_max_y, glyph_min_y, glyph.uv_rect.min[1] as f32 / 65535.0, glyph.uv_rect.max[1] as f32 / 65535.0);
 
             // Colour and other formatting is done by looking up the section in the original rendering job
             let section     = glyph.section_index;
