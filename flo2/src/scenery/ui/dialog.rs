@@ -3,7 +3,7 @@
 //!
 
 use super::control_id::*;
-use super::dialog_egui::*;
+use super::egui::*;
 use super::focus::*;
 use super::subprograms::*;
 
