@@ -550,7 +550,7 @@ fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>) {
 
             // Render the glyph
             drawing.new_path();
-            drawing.rect(glyph_min_x, glyph_min_y, glyph_max_y, glyph_max_y);
+            drawing.rect(glyph_min_x, glyph_min_y, glyph_max_x, glyph_max_y);
 
             if active_color != Some(glyph_color) {
                 // TODO: pick a better texture ID here, figure out why things hang when resizing with this in, figure out why we get mipmap errors too
