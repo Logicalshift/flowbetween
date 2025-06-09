@@ -63,6 +63,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
     window_setup.clear_canvas(Color::Rgba(0.8, 0.8, 0.8, 1.0));
     window_setup.canvas_height(1000.0);
+    window_setup.transform(Transform2D::scale(1.0, -1.0));
     window_setup.center_region(0.0, 0.0, 1000.0, 1000.0);
 
     window_drawing.send(DrawingRequest::Draw(Arc::new(window_setup))).await.ok();
@@ -155,6 +156,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                         if let Some(clear_canvas_idx) = clear_canvas_idx {
                             pending_drawing.splice(clear_canvas_idx+1..clear_canvas_idx+1, [
                                 Draw::CanvasHeight(height as _),
+                                Draw::MultiplyTransform(Transform2D::scale(1.0, -1.0)),
                                 Draw::CenterRegion((0.0, 0.0), (width as _, height as _)),
                             ]);
                         }
