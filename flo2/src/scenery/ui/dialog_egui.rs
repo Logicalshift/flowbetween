@@ -519,6 +519,11 @@ fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>) {
     let mut pos_y           = text_shape.pos.y;
     let mut active_color    = None;
 
+    drawing.new_path();
+    drawing.rect(0.0, 1000.0, 1000.0, 2000.0);
+    drawing.fill_texture(texture_id, 0.0, 1000.0, 1000.0, 2000.0);
+    drawing.fill();
+
     for row in text_shape.galley.rows.iter() {
         // Draw the glyphs in this row
         for glyph in row.glyphs.iter() {
@@ -536,7 +541,7 @@ fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>) {
 
             // Texture coordinate that should appear at glyph_min_x, etc
             let (texture_min_x, texture_max_x) = texture_pos_for_uv(glyph_min_x, glyph_max_x, glyph.uv_rect.min[0] as f32 / 65535.0, glyph.uv_rect.max[0] as f32 / 65535.0);
-            let (texture_min_y, texture_max_y) = texture_pos_for_uv(glyph_max_y, glyph_min_y, glyph.uv_rect.min[1] as f32 / 65535.0, glyph.uv_rect.max[1] as f32 / 65535.0);
+            let (texture_min_y, texture_max_y) = texture_pos_for_uv(glyph_max_y, glyph_min_y, 1.0-(glyph.uv_rect.min[1] as f32 / 65535.0), 1.0-(glyph.uv_rect.max[1] as f32 / 65535.0));
 
             // Colour and other formatting is done by looking up the section in the original rendering job
             let section     = glyph.section_index;
@@ -549,12 +554,12 @@ fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>) {
 
             if active_color != Some(glyph_color) {
                 // TODO: pick a better texture ID here, figure out why things hang when resizing with this in, figure out why we get mipmap errors too
-                drawing.copy_texture(texture_id, canvas::TextureId(1));
-                drawing.filter_texture(canvas::TextureId(1), canvas::TextureFilter::Tint(glyph_color));
-                active_color = Some(glyph_color);
+                //drawing.copy_texture(texture_id, canvas::TextureId(1));
+                //drawing.filter_texture(canvas::TextureId(1), canvas::TextureFilter::Tint(glyph_color));
+                //active_color = Some(glyph_color);
             }
 
-            drawing.fill_texture(canvas::TextureId(1), texture_min_x, texture_min_y, texture_max_x, texture_max_y);
+            drawing.fill_texture(texture_id, texture_min_x, texture_min_y, texture_max_x, texture_max_y);
             drawing.fill();
         }
 
