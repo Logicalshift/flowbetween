@@ -493,6 +493,20 @@ fn draw_rect(rect_shape: &epaint::RectShape, drawing: &mut Vec<canvas::Draw>) {
 }
 
 ///
+/// Given min/max UV coordinates and canvas coordinates, calculates where the start and end of the texture will appear in canvas coordinates
+///
+/// (This converts from UV coordinates to how flo_canvas represents texture positions)
+///
+#[inline]
+fn texture_pos_for_uv(pos_min: f32, pos_max: f32, uv_min: f32, uv_max: f32) -> (f32, f32) {
+    // Solve for uv_min = (pos_min-a)/(b-a), uv_max = (pos_max-a)/(b-a):
+    let a = (-pos_min*uv_max + pos_max*uv_min)/(uv_min-uv_max);
+    let b = (pos_min*uv_max - pos_max*uv_min - pos_min + pos_max)/(-uv_min+uv_max);
+
+    (a, b)
+}
+
+///
 /// Creates rendering instructions for text
 ///
 fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>) {
@@ -514,15 +528,15 @@ fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>) {
             let glyph_max_x = glyph_min_x + glyph.uv_rect.size.x;
             let glyph_max_y = glyph_min_y - glyph.uv_rect.size.y;
 
+            if glyph_max_x == glyph_min_x || glyph_max_y == glyph_min_y {
+                continue;
+            }
+
             // UV coordinates (flo_canvas positions the whole texture, which is more convenient if you're rendering stuff but kind of annoying if you have coords for a GPU so this is a bit involved)
 
             // Texture coordinate that should appear at glyph_min_x, etc
-            let texture_min_x = (glyph.uv_rect.min[0] as f32 / 65535.0) * texture_size.0;
-            let texture_min_y = (glyph.uv_rect.min[1] as f32 / 65535.0) * texture_size.1;
-            let texture_max_x = (glyph.uv_rect.max[0] as f32 / 65535.0) * texture_size.0;
-            let texture_max_y = (glyph.uv_rect.max[1] as f32 / 65535.0) * texture_size.1;
-
-            // TODO: map to where the texture appears on canvas
+            let (texture_min_x, texture_max_x) = texture_pos_for_uv(glyph_min_x, glyph_max_x, glyph.uv_rect.min[0] as f32 / 65535.0, glyph.uv_rect.max[0] as f32 / 65535.0);
+            let (texture_min_y, texture_max_y) = texture_pos_for_uv(glyph_max_y, glyph_min_y, glyph.uv_rect.min[1] as f32 / 65535.0, glyph.uv_rect.max[1] as f32 / 65535.0);
 
             // Colour and other formatting is done by looking up the section in the original rendering job
             let section     = glyph.section_index;
@@ -674,8 +688,9 @@ async fn process_texture_output(output: &egui::FullOutput, drawing_target: &mut 
                 ]);
             } else {
                 // Create a new texture
+                // TODO: hard coding the texture size to be 2048, 2048 as that seems to be what's expected for the font
                 drawing.extend([
-                    Draw::Texture(texture_id, TextureOp::Create(TextureSize(width as _, height as _), TextureFormat::Rgba)),
+                    Draw::Texture(texture_id, TextureOp::Create(TextureSize(2048, 2048), TextureFormat::Rgba)),
                     Draw::Texture(texture_id, TextureOp::SetBytes(TexturePosition(0, 0), TextureSize(width as _, height as _), bytes)),
                 ]);
             }
