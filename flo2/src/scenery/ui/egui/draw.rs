@@ -1,6 +1,4 @@
-use flo_draw as draw;
 use flo_draw::canvas as canvas;
-use flo_draw::canvas::scenery::*;
 use flo_draw::canvas::{GraphicsContext, GraphicsPrimitives};
 use egui;
 use egui::epaint;
@@ -150,8 +148,8 @@ pub fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>
     let fallback_color      = canvas_color(&text_shape.fallback_color);
     let texture_id          = canvas::TextureId(0);
     let texture_size        = (2048.0, 64.0);           // TODO: hard coding this for testing, we need to actually store this somewhere, used for converting the UVs
-    let mut pos_x           = text_shape.pos.x;
-    let mut pos_y           = text_shape.pos.y;
+    let pos_x               = text_shape.pos.x;
+    let pos_y               = text_shape.pos.y;
     let mut active_color    = None;
 
     for row in text_shape.galley.rows.iter() {
@@ -192,9 +190,6 @@ pub fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>
             drawing.fill_texture(texture_id, texture_min_x, texture_min_y, texture_max_x, texture_max_y);
             drawing.fill();
         }
-
-        // Assuming the row begins at 0,0
-        pos_y += row.rect.bottom();
     }
 
 }
@@ -203,7 +198,6 @@ pub fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>
 /// Draws a shape to a drawing vec
 ///
 pub fn draw_shape(shape: &egui::Shape, drawing: &mut Vec<canvas::Draw>) {
-    use canvas::{Draw, LayerId};
     use egui::{Shape};
     use Shape::*;
 

@@ -1,4 +1,3 @@
-use super::key::*;
 use super::events::*;
 use super::draw::*;
 
@@ -8,11 +7,8 @@ use crate::scenery::ui::ui_path::*;
 
 use flo_scene::*;
 use flo_scene::programs::*;
-use flo_draw as draw;
 use flo_draw::canvas as canvas;
 use flo_draw::canvas::scenery::*;
-use flo_draw::canvas::{GraphicsContext, GraphicsPrimitives};
-use flo_curves::geo::*;
 use flo_curves::bezier::path::*;
 
 use egui;
@@ -20,7 +16,7 @@ use egui::epaint;
 use futures::prelude::*;
 
 use std::sync::*;
-use std::time::{Duration, Instant};
+use std::time::{Instant};
 
 ///
 /// Defines dialog behavior by using egui (with rendering via flo_canvas requests)
