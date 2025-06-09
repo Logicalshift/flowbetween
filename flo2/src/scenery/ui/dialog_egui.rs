@@ -519,11 +519,6 @@ fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>) {
     let mut pos_y           = text_shape.pos.y;
     let mut active_color    = None;
 
-    drawing.new_path();
-    drawing.rect(0.0, 1000.0, 1000.0, 2000.0);
-    drawing.fill_texture(texture_id, 0.0, 1000.0, 1000.0, 2000.0);
-    drawing.fill();
-
     for row in text_shape.galley.rows.iter() {
         // Draw the glyphs in this row
         for glyph in row.glyphs.iter() {
