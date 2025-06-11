@@ -13,7 +13,7 @@ use flo_curves::bezier::vectorize::*;
 use futures::prelude::*;
 use serde::*;
 
-use std::collections::{HashMap};
+use std::collections::{HashMap, HashSet};
 
 ///
 /// Runs the UI focus subprogram
@@ -47,10 +47,10 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
         match request {
             Event(DrawEvent::Redraw)                => { },
             Event(DrawEvent::NewFrame)              => { },
-            Event(DrawEvent::Scale(_))              => { },
-            Event(DrawEvent::Resize(_, _))          => { },
+            Event(DrawEvent::Scale(scale))          => { focus.send_to_all(DrawEvent::Scale(scale), &context).await; },
+            Event(DrawEvent::Resize(w, h))          => { focus.send_to_all(DrawEvent::Resize(w, h), &context).await; },
             Event(DrawEvent::CanvasTransform(_))    => { },
-            Event(DrawEvent::Closed)                => { }
+            Event(DrawEvent::Closed)                => { focus.send_to_all(DrawEvent::Closed, &context).await; }
 
             Event(DrawEvent::Pointer(PointerAction::Enter, _, _))                           => { },
             Event(DrawEvent::Pointer(PointerAction::Leave, _, _))                           => { },
@@ -694,6 +694,28 @@ impl FocusProgram {
                 self.pointer_target = None;
             }
         }
+    }
+
+    ///
+    /// Sends an event to all registered programs
+    ///
+    async fn send_to_all(&mut self, event: DrawEvent, context: &SceneContext) {
+        // Make a list of all the subprograms we know about
+        let all_subprograms = self.subprogram_data.keys().copied()
+            .chain(self.subprogram_order.iter().copied())
+            .collect::<HashSet<_>>();
+
+        // Send copies of the events to each one
+        let mut send_actions = vec![];
+        for program in all_subprograms {
+            // Send to each program in turn
+            if let Ok(mut target) = context.send(program) {
+                let event = event.clone();
+                send_actions.push(async move { target.send(event).await.ok(); });
+            }
+        }
+
+        future::join_all(send_actions).await;
     }
 }
 
