@@ -713,7 +713,7 @@ impl FocusProgram {
                 let event = event.clone();
                 send_actions.push(async move { 
                     if target.is_attached() {
-                        target.send(event).await.ok(); 
+                        target.send(FocusEvent::Event(None, event)).await.ok(); 
                     }
                 });
             }
