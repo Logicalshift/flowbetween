@@ -36,3 +36,11 @@ flo_render              = { git = "https://github.com/Logicalshift/flo_draw", br
 flo_render_canvas       = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
 flo_render_gl_offscreen = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
 flo_render_software     = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+
+# flo_draw                = { path = "../../flo_draw/draw"}
+# flo_canvas              = { path = "../../flo_draw/canvas"}
+# flo_canvas_events       = { path = "../../flo_draw/canvas_events"}
+# flo_render              = { path = "../../flo_draw/render"}
+# flo_render_canvas       = { path = "../../flo_draw/render_canvas"}
+# flo_render_gl_offscreen = { path = "../../flo_draw/render_gl_offscreen"}
+# flo_render_software     = { path = "../../flo_draw/render_software"}
