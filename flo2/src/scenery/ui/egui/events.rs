@@ -29,10 +29,16 @@ pub fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent
     match event {
         Redraw              => { }
         NewFrame            => { }
-        Scale(new_scale)    => { }  // TODO: think this affects egui's texture rendering
         Resize(_, _)        => { }
         CanvasTransform(_)  => { }
         Closed              => { }
+
+        Scale(new_scale)    => {
+            let mut viewport_info                   = egui::ViewportInfo::default();
+            viewport_info.native_pixels_per_point   = Some(new_scale as _);
+
+            pending_input.viewports.insert(egui::ViewportId::ROOT, viewport_info);
+        }
 
         // Pointer actions
         Pointer(PointerAction::Move, _, pointer_state) => {
