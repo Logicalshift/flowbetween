@@ -711,7 +711,11 @@ impl FocusProgram {
             // Send to each program in turn
             if let Ok(mut target) = context.send(program) {
                 let event = event.clone();
-                send_actions.push(async move { target.send(event).await.ok(); });
+                send_actions.push(async move { 
+                    if target.is_attached() {
+                        target.send(event).await.ok(); 
+                    }
+                });
             }
         }
 
