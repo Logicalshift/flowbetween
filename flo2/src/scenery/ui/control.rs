@@ -1,9 +1,13 @@
+use super::control_id::*;
+
 use ::serde::*;
+
+use std::ops::{Range};
 
 ///
 /// Specifies the type of a control
 ///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, PartialOrd)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum ControlType {
     Label,
     Button,

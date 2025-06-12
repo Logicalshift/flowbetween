@@ -14,14 +14,30 @@ use flo_curves::bezier::path::*;
 use egui;
 use egui::epaint;
 use futures::prelude::*;
+use serde::*;
 
 use std::sync::*;
 use std::time::{Instant};
 
 ///
+/// Request sent to an egui dialog
+///
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub (crate) enum EguiDialogRequest {
+    /// Event indicating that the scene is idle
+    Idle,
+
+    /// Event from the focus subprogram (used to direct events to the dialog program)
+    FocusEvent(FocusEvent),
+
+    /// Other dialog request (the egui dialog programs manage one dialog each, so they )
+    Dialog(Dialog),
+}
+
+///
 /// Defines dialog behavior by using egui (with rendering via flo_canvas requests)
 ///
-pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
+pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context: SceneContext, dialog_namespace: canvas::NamespaceId, dialog_layer: canvas::LayerId, bounds: (UiPoint, UiPoint)) {
     use canvas::{Draw, LayerId};
 
     // Create a namespace for the dialog graphics
@@ -65,7 +81,7 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
     let mut input           = input;
 
     while let Some(input) = input.next().await {
-        use Dialog::*;
+        use EguiDialogRequest::*;
 
         match input {
             Idle => {
@@ -124,6 +140,15 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
 
             _ => { }
         }
+    }
+}
+
+impl SceneMessage for EguiDialogRequest {
+    fn initialise(init_context: &impl SceneInitialisationContext) {
+        // Set up filters for the events that an EguiDialog can handle
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|focus_events| focus_events.map(|focus| EguiDialogRequest::FocusEvent(focus)))), (), StreamId::with_message_type::<FocusEvent>()).ok();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|idle_events| idle_events.map(|_idle: IdleNotification| EguiDialogRequest::Idle))), (), StreamId::with_message_type::<IdleNotification>()).ok();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|dialog_events| dialog_events.map(|dialog| EguiDialogRequest::Dialog(dialog)))), (), StreamId::with_message_type::<IdleNotification>()).ok();
     }
 }
 
