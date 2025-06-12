@@ -121,6 +121,8 @@ pub async fn dialog_egui(input: InputStream<Dialog>, context: SceneContext) {
                     idle_requests.send(IdleRequest::WhenIdle(dialog_subprogram)).await.ok();
                 }
             }
+
+            _ => { }
         }
     }
 }

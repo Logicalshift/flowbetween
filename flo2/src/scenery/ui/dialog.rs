@@ -2,10 +2,13 @@
 //! The Dialog subprogram provides conventional 'dialog' type user interface elements
 //!
 
+use super::control::*;
 use super::control_id::*;
+use super::dialog::*;
 use super::egui::*;
 use super::focus::*;
 use super::subprograms::*;
+use super::ui_path::*;
 
 use flo_scene::*;
 use flo_scene::programs::*;
@@ -23,6 +26,27 @@ pub enum Dialog {
 
     /// Event from the focus subprogram (used to direct events to the dialog program)
     FocusEvent(FocusEvent),
+
+    /// Creates a dialog region in the canvas. Events for the dialog are sent to the supplied subprogram ID.
+    CreateDialog(DialogId, SubProgramId, Bounds<UiPoint>),
+
+    /// Removes a dialog from the canvas (dialogs are also removed if the subprogram stops)
+    RemoveDialog(DialogId, Bounds<UiPoint>),
+
+    /// Changes the position of a dialog
+    MoveDialog(DialogId, Bounds<UiPoint>),
+
+    /// Adds a control to a dialog. Coordinates are relative to the top-left corner of the dialog
+    AddControl(DialogId, ControlId, Bounds<UiPoint>, ControlType, ControlValue),
+
+    /// Changes the value of a control
+    SetControlValue(DialogId, ControlId, ControlValue),
+
+    /// Moves a control to a new position in the dialog
+    MoveControl(DialogId, ControlId, Bounds<UiPoint>),
+
+    /// Sets whether or not a control is visible
+    SetVisible(DialogId, ControlId, bool),
 }
 
 ///
