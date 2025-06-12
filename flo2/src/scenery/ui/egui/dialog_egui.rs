@@ -45,11 +45,11 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
     let dialog_namespace    = canvas::NamespaceId::new();
 
     // TODO: this claims a large region so we get events (but we'll only want events for things actually covered by a dialog when we're done)
-    let region = BezierPathBuilder::<UiPath>::start(UiPoint(0.0, 0.0))
-        .line_to(UiPoint(0.0, 1000.0))
-        .line_to(UiPoint(1000.0, 1000.0))
-        .line_to(UiPoint(1000.0, 0.0))
-        .line_to(UiPoint(0.0, 0.0))
+    let region = BezierPathBuilder::<UiPath>::start(bounds.0)
+        .line_to(UiPoint(bounds.0.0, bounds.1.1))
+        .line_to(bounds.1)
+        .line_to(UiPoint(bounds.1.0, bounds.0.1))
+        .line_to(bounds.0)
         .build();
     context.send_message(Focus::ClaimRegion { program: dialog_subprogram, region: vec![region], z_index: 0 }).await.ok();
 
@@ -71,7 +71,7 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
     let start_time          = Instant::now();
 
     // TODO: size is where this dialog appears on screen (if we use one viewport per dialog)
-    pending_input.screen_rect = Some(egui::Rect { min: egui::Pos2 { x: 0.0, y: 0.0 }, max: egui::Pos2 { x: 1000.0, y: 1000.0 } });
+    pending_input.screen_rect = Some(egui::Rect { min: egui::Pos2 { x: bounds.0.0 as _, y: bounds.0.1 as _ }, max: egui::Pos2 { x: bounds.1.0 as _, y: bounds.1.1 as _ } });
 
     // Request an idle event after startup so we render any UI we need to
     idle_requests.send(IdleRequest::WhenIdle(dialog_subprogram)).await.ok();
