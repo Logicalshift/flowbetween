@@ -5,13 +5,10 @@
 use super::control::*;
 use super::control_id::*;
 use super::dialog_id::*;
-use super::egui::*;
-use super::focus::*;
 use super::subprograms::*;
 use super::ui_path::*;
 
 use flo_scene::*;
-use flo_scene::programs::*;
 
 use futures::prelude::*;
 use serde::*;
@@ -25,7 +22,7 @@ pub enum Dialog {
     CreateDialog(DialogId, SubProgramId, (UiPoint, UiPoint)),
 
     /// Removes a dialog from the canvas (dialogs are also removed if the subprogram stops)
-    RemoveDialog(DialogId, (UiPoint, UiPoint)),
+    RemoveDialog(DialogId),
 
     /// Changes the position of a dialog
     MoveDialog(DialogId, (UiPoint, UiPoint)),
