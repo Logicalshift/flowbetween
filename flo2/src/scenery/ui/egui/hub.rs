@@ -63,7 +63,7 @@ pub async fn dialog_egui_hub(input_stream: InputStream<Dialog>, context: SceneCo
                 // Start a program to run this dialog
                 context.send_message(SceneControl::start_program(program_id, move |input, context| dialog_egui(input, context, dialog_namespace, layer_id, bounds), 20)).await.ok();
 
-                // Send to this dialog
+                // Make a connection to the new program
                 let sink = context.send::<Dialog>(program_id).ok();
                 if let Some(sink) = sink {
                     dialog_subprograms.insert(dialog_id, sink);

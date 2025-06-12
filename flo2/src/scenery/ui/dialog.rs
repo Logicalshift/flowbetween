@@ -5,6 +5,7 @@
 use super::control::*;
 use super::control_id::*;
 use super::dialog_id::*;
+use super::egui::*;
 use super::subprograms::*;
 use super::ui_path::*;
 
@@ -61,8 +62,7 @@ impl SceneMessage for Dialog {
     }
 
     fn initialise(init_context: &impl SceneInitialisationContext) {
-        // TODO: Create the standard focus subprogram when a message is sent for the first tiem
-        // init_context.add_subprogram(subprogram_dialog(), dialog_egui, 20);
+        init_context.add_subprogram(subprogram_dialog(), dialog_egui_hub, 20);
     }
 }
 

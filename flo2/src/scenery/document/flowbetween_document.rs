@@ -70,6 +70,8 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
     let mut size = (1000, 1000);
 
+    dialog.send(Dialog::CreateDialog(DialogId::new(), program_id, (UiPoint(200.0, 200.0), UiPoint(400.0, 400.0)))).await.ok();
+
     // The document canvas contains the drawing instructions to regenerate the canvas (except for the 'clear canvas' instruction that begins it)
     // We re-use this whenever the document is resized
     let document_canvas = Canvas::new();
