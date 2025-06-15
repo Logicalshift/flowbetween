@@ -16,8 +16,10 @@ use flo_binding::binding_context::*;
 
 use egui;
 use egui::epaint;
-use futures::prelude::*;
 use serde::*;
+use futures::prelude::*;
+use futures::select;
+use futures::task;
 
 use std::sync::*;
 use std::time::{Instant};
@@ -30,11 +32,41 @@ pub (crate) enum EguiDialogRequest {
     /// Event indicating that the scene is idle
     Idle,
 
+    /// Event indicating that the bindings have changed
+    BindingsChanged,
+
     /// Event from the focus subprogram (used to direct events to the dialog program)
     FocusEvent(FocusEvent),
 
     /// Other dialog request (the egui dialog programs manage one dialog each, so they )
     Dialog(Dialog),
+}
+
+///
+/// State used to wake the egui dialog when there's a change to the bindings
+///
+struct ChangeWakeState {
+    awake: bool,
+    waker: Option<task::Waker>,
+}
+
+///
+/// Creates a future that wakes up when the ChangeWakeState is awoken
+///
+#[inline]
+fn change_waker_future(state: &Arc<Mutex<ChangeWakeState>>) -> impl Future<Output=EguiDialogRequest> {
+    let state = Arc::clone(state);
+
+    future::poll_fn(move |context| {
+        let mut state = state.lock().unwrap();
+
+        if state.awake {
+            task::Poll::Ready(EguiDialogRequest::BindingsChanged)
+        } else {
+            state.waker = Some(context.waker().clone());
+            task::Poll::Pending
+        }
+    })
 }
 
 ///
@@ -60,6 +92,9 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
     // We'll be sending drawing requests
     let mut drawing         = context.send::<DrawingRequest>(()).unwrap();
     let mut idle_requests   = context.send::<IdleRequest>(()).unwrap();
+
+    // The wake state is used to 
+    let mut change_wake_state = Arc::new(Mutex::new(ChangeWakeState { awake: false, waker: None }));
 
     // Set up the dialog layer (it'll go on top of anything else in the drawing at the moment)
     drawing.send(DrawingRequest::Draw(Arc::new(vec![
@@ -87,7 +122,7 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
     let mut awaiting_idle   = true;
     let mut input           = input;
 
-    while let Some(input) = input.next().await {
+    while let Some(input) = select! { evt = input.next().fuse() => evt, evt = change_waker_future(&change_wake_state).fuse() => Some(evt) } {
         use EguiDialogRequest::*;
 
         match input {
@@ -121,13 +156,38 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
                     });
 
                     // When any of the bindings change, create a notification to wake us up
-                    binding_monitor = Some(deps.when_changed(notify(|| { /* TODO */ })));
+                    let change_wake_state = change_wake_state.clone();
+                    binding_monitor = Some(deps.when_changed(notify(move || {
+                        // Mark as changed and take the waker from the state
+                        let waker = {
+                            let mut change_wake_state = change_wake_state.lock().unwrap();
+
+                            change_wake_state.awake = true;
+                            change_wake_state.waker.take()
+                        };
+
+                        // If we got a waker, wake it up (waking up the dialog to be redrawn)
+                        if let Some(waker) = waker {
+                            waker.wake();
+                        }
+                    })));
                 });
 
                 // Process the output, generating draw events
                 process_texture_output(&output, &mut drawing, dialog_namespace).await;
                 process_drawing_output(&output, &mut drawing, dialog_namespace).await;
             },
+
+            BindingsChanged => {
+                // Reset the change state to be asleep again so we don't immediately wake up again
+                change_wake_state.lock().unwrap().awake = false;
+
+                // Requesting an idle event will cause the dialog to be redrawn with any changes
+                if !awaiting_idle {
+                    awaiting_idle = true;
+                    idle_requests.send(IdleRequest::WhenIdle(dialog_subprogram)).await.ok();
+                }
+            }
 
             FocusEvent(focus_event) => {
                 // Process the event
