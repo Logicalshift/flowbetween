@@ -107,7 +107,7 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
                 // Run the egui context
                 let mut events = None;
                 let output = egui_context.run(new_input, |ctxt| {
-                    events = Some(dialog_state.run(ctxt));
+                    events = Some(dialog_state.run(ctxt, bounds));
                 });
 
                 // Process the output, generating draw events

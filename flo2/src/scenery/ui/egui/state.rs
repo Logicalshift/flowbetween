@@ -79,13 +79,16 @@ impl EguiDialogState {
     ///
     /// Runs this control state, returning the events that should be sent
     ///
-    pub fn run(&mut self, context: &egui::Context) -> Vec<ControlEvent> {
+    pub fn run(&mut self, context: &egui::Context, dialog_bounds: (UiPoint, UiPoint)) -> Vec<ControlEvent> {
         // Events that are generated for this UI
         let mut events = vec![];
 
         // Borrow the fields
         let controls    = &mut self.controls;
         let states      = &mut self.states;
+
+        let min_x = dialog_bounds.0.0;
+        let min_y = dialog_bounds.0.1;
 
         // Render each control in order
         egui::CentralPanel::default().show(&context, |ui| {
@@ -98,8 +101,8 @@ impl EguiDialogState {
                     if control_state.visible {
                         // Select the region the control will be in (we don't use egui's own layout)
                         let pos = egui::Rect {
-                            min: egui::Pos2 { x: control_state.location.0.0 as _, y: control_state.location.0.1 as _ },
-                            max: egui::Pos2 { x: control_state.location.1.0 as _, y: control_state.location.1.1 as _ },
+                            min: egui::Pos2 { x: (control_state.location.0.0 + min_x) as _, y: (control_state.location.0.1 + min_y) as _ },
+                            max: egui::Pos2 { x: (control_state.location.1.0 + min_x) as _, y: (control_state.location.1.1 + min_y) as _ },
                         };
 
                         // Render the control
