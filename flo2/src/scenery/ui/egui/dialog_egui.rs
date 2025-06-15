@@ -11,6 +11,8 @@ use flo_scene::programs::*;
 use flo_draw::canvas as canvas;
 use flo_draw::canvas::scenery::*;
 use flo_curves::bezier::path::*;
+use flo_binding::*;
+use flo_binding::binding_context::*;
 
 use egui;
 use egui::epaint;
@@ -67,7 +69,10 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
         Draw::PopState,
     ]))).await.ok();
 
-    // Set up the EGUI context
+    // Releasable used to stop monitoring out-of-date binding
+    let mut binding_monitor = None;
+
+    // Set up the egui context
     let egui_context        = egui::Context::default();
     let mut pending_input   = egui::RawInput::default();
     let start_time          = Instant::now();
@@ -105,9 +110,18 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
                 mem::swap(&mut new_input, &mut pending_input);
 
                 // Run the egui context
-                let mut events = None;
+                let mut events  = None;
+                binding_monitor = None;
+
                 let output = egui_context.run(new_input, |ctxt| {
-                    events = Some(dialog_state.run(ctxt, bounds));
+                    // Use a binding context to monitor the bindings
+                    let (_, deps) = BindingContext::bind(|| {
+                        // Run the UI request
+                        events = Some(dialog_state.run(ctxt, bounds));
+                    });
+
+                    // When any of the bindings change, create a notification to wake us up
+                    binding_monitor = Some(deps.when_changed(notify(|| { /* TODO */ })));
                 });
 
                 // Process the output, generating draw events
