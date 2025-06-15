@@ -217,6 +217,14 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
                 }
             }
         }
+
+        // If the context requires it, schedule an update
+        if egui_context.has_requested_repaint() {
+            if !awaiting_idle {
+                awaiting_idle = true;
+                idle_requests.send(IdleRequest::WhenIdle(dialog_subprogram)).await.ok();
+            }
+        }
     }
 }
 
