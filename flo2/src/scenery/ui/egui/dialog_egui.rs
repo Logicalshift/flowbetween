@@ -157,9 +157,9 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
 impl SceneMessage for EguiDialogRequest {
     fn initialise(init_context: &impl SceneInitialisationContext) {
         // Set up filters for the events that an EguiDialog can handle
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|focus_events| focus_events.map(|focus| EguiDialogRequest::FocusEvent(focus)))), (), StreamId::with_message_type::<FocusEvent>()).ok();
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|idle_events| idle_events.map(|_idle: IdleNotification| EguiDialogRequest::Idle))), (), StreamId::with_message_type::<IdleNotification>()).ok();
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|dialog_events| dialog_events.map(|dialog| EguiDialogRequest::Dialog(dialog)))), (), StreamId::with_message_type::<IdleNotification>()).ok();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|focus_events| focus_events.map(|focus| EguiDialogRequest::FocusEvent(focus)))), (), StreamId::with_message_type::<FocusEvent>()).unwrap();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|idle_events| idle_events.map(|_idle: IdleNotification| EguiDialogRequest::Idle))), (), StreamId::with_message_type::<IdleNotification>()).unwrap();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|dialog_events| dialog_events.map(|dialog| EguiDialogRequest::Dialog(dialog)))), (), StreamId::with_message_type::<Dialog>()).unwrap();
     }
 }
 
