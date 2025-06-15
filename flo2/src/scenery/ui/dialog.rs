@@ -17,7 +17,7 @@ use serde::*;
 ///
 /// Low-level actions related to creating dialog boxes
 ///
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum Dialog {
     /// Creates a dialog region in the canvas. Events for the dialog are sent to the supplied subprogram ID.
     CreateDialog(DialogId, SubProgramId, (UiPoint, UiPoint)),
@@ -53,7 +53,7 @@ pub enum DialogEvent {
     SetValueString(ControlId, String),
 
     /// Indicates that a control's numeric value has changed
-    SetValueNumber(ControlId, usize),
+    SetValueNumber(ControlId, i64),
 }
 
 impl SceneMessage for Dialog {

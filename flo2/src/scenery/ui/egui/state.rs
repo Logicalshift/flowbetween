@@ -3,6 +3,7 @@ use crate::scenery::ui::control_id::*;
 use crate::scenery::ui::dialog::*;
 use crate::scenery::ui::ui_path::*;
 
+use flo_binding::*;
 use egui;
 
 use std::collections::{HashMap};
@@ -107,8 +108,8 @@ impl EguiDialogState {
 
                         // Render the control
                         match control_type {
-                            Label(label)        => { ui.put(pos, egui::Label::new(label)); },
-                            Button(label)       => { if ui.button(label).clicked() { events.push(ControlEvent::Pressed(*control_id)); } }
+                            Label(label)        => { ui.put(pos, egui::Label::new(label.get())); },
+                            Button(label)       => { if ui.button(label.get()).clicked() { events.push(ControlEvent::Pressed(*control_id)); } }
                             Checkbox(label)     => { },
                             RadioButton(label)  => { },
                             ProgressBar         => { },

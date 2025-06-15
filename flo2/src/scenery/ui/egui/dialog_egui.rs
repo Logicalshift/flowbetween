@@ -23,7 +23,7 @@ use std::time::{Instant};
 ///
 /// Request sent to an egui dialog
 ///
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub (crate) enum EguiDialogRequest {
     /// Event indicating that the scene is idle
     Idle,
