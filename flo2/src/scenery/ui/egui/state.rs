@@ -96,11 +96,15 @@ impl EguiDialogState {
                     use ControlType::*;
 
                     if control_state.visible {
-                        // TODO: Select the region the control will be in (we don't use egui's own layout)
+                        // Select the region the control will be in (we don't use egui's own layout)
+                        let pos = egui::Rect {
+                            min: egui::Pos2 { x: control_state.location.0.0 as _, y: control_state.location.0.1 as _ },
+                            max: egui::Pos2 { x: control_state.location.1.0 as _, y: control_state.location.1.1 as _ },
+                        };
 
                         // Render the control
                         match control_type {
-                            Label(label)        => { ui.label(label); },
+                            Label(label)        => { ui.put(pos, egui::Label::new(label)); },
                             Button(label)       => { if ui.button(label).clicked() { events.push(ControlEvent::Pressed(*control_id)); } }
                             Checkbox(label)     => { },
                             RadioButton(label)  => { },
