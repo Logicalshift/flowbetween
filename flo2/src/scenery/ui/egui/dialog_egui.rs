@@ -1,5 +1,6 @@
 use super::events::*;
 use super::draw::*;
+use super::state::*;
 
 use crate::scenery::ui::dialog::*;
 use crate::scenery::ui::focus::*;
@@ -44,7 +45,6 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
     let dialog_subprogram   = context.current_program_id().unwrap();
     let dialog_namespace    = canvas::NamespaceId::new();
 
-    // TODO: this claims a large region so we get events (but we'll only want events for things actually covered by a dialog when we're done)
     let region = BezierPathBuilder::<UiPath>::start(bounds.0)
         .line_to(UiPoint(bounds.0.0, bounds.1.1))
         .line_to(bounds.1)
@@ -52,6 +52,8 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
         .line_to(bounds.0)
         .build();
     context.send_message(Focus::ClaimRegion { program: dialog_subprogram, region: vec![region], z_index: 0 }).await.ok();
+
+    let mut dialog_state = EguiDialogState::new();
 
     // We'll be sending drawing requests
     let mut drawing         = context.send::<DrawingRequest>(()).unwrap();
@@ -138,7 +140,16 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
                 }
             }
 
-            _ => { }
+            Dialog(other_dialog_event) => {
+                // Update the state of the dialog according to this event
+                dialog_state.update_state(&other_dialog_event);
+
+                // Request an idle event (we'll use this to run the egui)
+                if !awaiting_idle {
+                    awaiting_idle = true;
+                    idle_requests.send(IdleRequest::WhenIdle(dialog_subprogram)).await.ok();
+                }
+            }
         }
     }
 }
