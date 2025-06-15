@@ -105,17 +105,9 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
                 mem::swap(&mut new_input, &mut pending_input);
 
                 // Run the egui context
+                let mut events = None;
                 let output = egui_context.run(new_input, |ctxt| {
-                    // TODO: simple test of the dialog
-                    egui::CentralPanel::default().show(&ctxt, |ui| {
-                        ui.add(egui::Label::new("Hello World!"));
-                        ui.label("A shorter and more convenient way to add a label.");
-                        if ui.button("Click me").clicked() {
-                            // take some action here
-                        }
-                        let mut checked = true;
-                        ui.checkbox(&mut checked, "Test");
-                    });
+                    events = Some(dialog_state.run(ctxt));
                 });
 
                 // Process the output, generating draw events

@@ -3,6 +3,8 @@ use crate::scenery::ui::control_id::*;
 use crate::scenery::ui::dialog::*;
 use crate::scenery::ui::ui_path::*;
 
+use egui;
+
 use std::collections::{HashMap};
 
 struct ControlState {
@@ -72,5 +74,46 @@ impl EguiDialogState {
                 }
             }
         }
+    }
+
+    ///
+    /// Runs this control state, returning the events that should be sent
+    ///
+    pub fn run(&mut self, context: &egui::Context) -> Vec<ControlEvent> {
+        // Events that are generated for this UI
+        let mut events = vec![];
+
+        // Borrow the fields
+        let controls    = &mut self.controls;
+        let states      = &mut self.states;
+
+        // Render each control in order
+        egui::CentralPanel::default().show(&context, |ui| {
+            // Render all the controls
+            for (control_id, control_type) in controls.iter() {
+                // Each control must have a state
+                if let Some(control_state) = states.get_mut(&control_id) {
+                    use ControlType::*;
+
+                    if control_state.visible {
+                        // TODO: Select the region the control will be in (we don't use egui's own layout)
+
+                        // Render the control
+                        match control_type {
+                            Label(label)        => { ui.label(label); },
+                            Button(label)       => { if ui.button(label).clicked() { events.push(ControlEvent::Pressed(*control_id)); } }
+                            Checkbox(label)     => { },
+                            RadioButton(label)  => { },
+                            ProgressBar         => { },
+                            Spinner             => { },
+                            Separator           => { },
+                            Slider(range)       => { },
+                        }
+                    }
+                }
+            }
+        });
+
+        events
     }
 }
