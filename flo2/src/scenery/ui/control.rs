@@ -9,12 +9,12 @@ use std::ops::{Range};
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum ControlType {
-    Label,
-    Button,
-    Checkbox,
+    Label(String),
+    Button(String),
+    Checkbox(String),
     ProgressBar,
     Spinner,
-    RadioButton,
+    RadioButton(String),
     Separator,
     Slider(Range<f64>),
 }
@@ -24,6 +24,7 @@ pub enum ControlType {
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, PartialOrd)]
 pub enum ControlValue {
+    None,
     Checked(bool),
     Text(String),
     Integer(String),
