@@ -120,7 +120,7 @@ pub enum Focus {
     /// Clicks in this region will have 'None' as the control ID
     ClaimRegion { program: SubProgramId, region: Vec<UiPath>, z_index: usize },
 
-    /// Claims a region for a single control within the region for a subprogram. The z-index here is used 
+    /// Claims a region for a single control within the region for a subprogram. The z-index here is used to disambiguate when multiple regions matches
     ClaimControlRegion { program: SubProgramId, region: Vec<UiPath>, control: ControlId, z_index: usize },
 
     /// Removes a claim added by ClaimRegion
