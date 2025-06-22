@@ -77,7 +77,6 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
 
     // Create a namespace for the dialog graphics
     let dialog_subprogram   = context.current_program_id().unwrap();
-    let dialog_namespace    = canvas::NamespaceId::new();
 
     let region = BezierPathBuilder::<UiPath>::start(bounds.0)
         .line_to(UiPoint(bounds.0.0, bounds.1.1))
