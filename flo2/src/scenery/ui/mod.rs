@@ -14,6 +14,7 @@ mod dialog_id;
 mod dialog;
 mod egui;
 mod physics;
+mod physics_tool;
 
 pub use namespaces::*;
 pub use control::*;
@@ -25,3 +26,4 @@ pub use dialog_id::*;
 pub use dialog::*;
 pub use egui::*;
 pub use physics::*;
+pub use physics_tool::*;
