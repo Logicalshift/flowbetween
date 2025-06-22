@@ -99,7 +99,7 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
     drawing.send(DrawingRequest::Draw(Arc::new(vec![
         Draw::PushState,
         Draw::Namespace(dialog_namespace),
-        Draw::Layer(LayerId(0)),
+        Draw::Layer(dialog_layer),
         Draw::PopState,
     ]))).await.ok();
 
@@ -173,8 +173,8 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
                 });
 
                 // Process the output, generating draw events
-                process_texture_output(&output, &mut drawing, dialog_namespace).await;
-                process_drawing_output(&output, &mut drawing, dialog_namespace).await;
+                process_texture_output(&output, &mut drawing, dialog_namespace, dialog_layer).await;
+                process_drawing_output(&output, &mut drawing, dialog_namespace, dialog_layer).await;
             },
 
             BindingsChanged => {
@@ -239,7 +239,7 @@ impl SceneMessage for EguiDialogRequest {
 ///
 /// Processes the drawing instructions in the output from egui into flo_draw canvas instructions
 ///
-async fn process_drawing_output(output: &egui::FullOutput, drawing_target: &mut OutputSink<DrawingRequest>, namespace: canvas::NamespaceId) {
+async fn process_drawing_output(output: &egui::FullOutput, drawing_target: &mut OutputSink<DrawingRequest>, namespace: canvas::NamespaceId, layer_id: canvas::LayerId) {
     use canvas::{Draw, LayerId};
 
     let mut drawing = vec![];
@@ -248,7 +248,7 @@ async fn process_drawing_output(output: &egui::FullOutput, drawing_target: &mut 
     drawing.extend([
         Draw::PushState,
         Draw::Namespace(namespace),
-        Draw::Layer(LayerId(0)),
+        Draw::Layer(layer_id),
         Draw::ClearLayer,
     ]);
     let initial_len = drawing.len();
@@ -308,7 +308,7 @@ fn canvas_texture_bytes(image: &epaint::ImageData) -> (usize, usize, Arc<Vec<u8>
 ///
 /// Processes the texture instructions in the output from egui into flo_draw canvas instructions
 ///
-async fn process_texture_output(output: &egui::FullOutput, drawing_target: &mut OutputSink<DrawingRequest>, namespace: canvas::NamespaceId) {
+async fn process_texture_output(output: &egui::FullOutput, drawing_target: &mut OutputSink<DrawingRequest>, namespace: canvas::NamespaceId, layer_id: canvas::LayerId) {
     use canvas::{Draw, LayerId, TextureOp, TexturePosition, TextureSize, TextureFormat};
 
     let mut drawing = vec![];
@@ -317,7 +317,7 @@ async fn process_texture_output(output: &egui::FullOutput, drawing_target: &mut 
     drawing.extend([
         Draw::PushState,
         Draw::Namespace(namespace),
-        Draw::Layer(LayerId(0)),
+        Draw::Layer(layer_id),
         Draw::ClearLayer,
     ]);
     let initial_len = drawing.len();
