@@ -1,6 +1,7 @@
 use super::dialog_egui::*;
 use crate::scenery::ui::dialog::*;
 use crate::scenery::ui::dialog_id::*;
+use crate::scenery::ui::namespaces::*;
 
 use flo_scene::*;
 use flo_scene::programs::*;
@@ -16,7 +17,7 @@ use std::sync::*;
 ///
 pub async fn dialog_egui_hub(input_stream: InputStream<Dialog>, context: SceneContext) {
     // Details about where to render on the canvas
-    let mut dialog_namespace    = canvas::NamespaceId::new();
+    let mut dialog_namespace    = *DIALOG_LAYER;
     let mut next_layer_id       = 0;
     let mut available_layers    = vec![];
     let mut dialog_layers       = HashMap::new();

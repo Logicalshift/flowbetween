@@ -4,6 +4,7 @@
 //! This defines subprograms that can run parts of the UI for FlowBetween. These subprograms are likely re-usable in other projects.
 //!
 
+mod namespaces;
 mod control;
 mod control_id;
 mod focus;
@@ -14,6 +15,7 @@ mod dialog;
 mod egui;
 mod physics;
 
+pub use namespaces::*;
 pub use control::*;
 pub use control_id::*;
 pub use focus::*;
