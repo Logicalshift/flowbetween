@@ -114,7 +114,7 @@ impl PhysicsTool {
     ///
     /// Sets the selection group for this tool
     ///
-    pub fn with_selection_group(mut self, group: ToolGroupId) -> Self {
+    pub fn with_selection_group(self, group: ToolGroupId) -> Self {
         self.selection_group.set(group);
         self
     }
@@ -122,7 +122,7 @@ impl PhysicsTool {
     ///
     /// Sets the tools that this can be bound with
     ///
-    pub fn with_bind_with(mut self, bind_with: Vec<ToolGroupId>) -> Self {
+    pub fn with_bind_with(self, bind_with: Vec<ToolGroupId>) -> Self {
         self.bind_with.set(bind_with);
         self
     }
@@ -152,6 +152,6 @@ impl PhysicsTool {
     /// The tool groups that can be 'bound' to this tool (eg, properties like colour)
     ///
     pub fn bind_with(&self) -> Vec<ToolGroupId> {
-        self.bind_with()
+        self.bind_with.get()
     }
 }
