@@ -83,3 +83,43 @@ impl<TMessage> Clone for SendMessageCommand<TMessage> {
         SendMessageCommand(Arc::clone(&self.0), self.1.clone())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use flo_scene::programs::*;
+    use ::serde::*;
+
+    #[test]
+    pub fn send_message_on_change() {
+        let scene = Scene::default();
+
+        // Message that we send
+        #[derive(Serialize, Deserialize, Clone, Debug)]
+        enum TestMessage {
+            BindingChanged,
+        }
+
+        impl SceneMessage for TestMessage { }
+
+        // Bind a value
+        let binding = bind(0);
+
+        // Set up a message to be sent to a scene whenever the binding is changed
+        let program_id      = SubProgramId::called("BindingSubProgram");
+        let program_binding = binding.clone();
+        scene.add_subprogram(program_id, |input: InputStream<()>, context| async move {
+            // Use the notification to send a message
+            program_binding.when_changed(NotifySubprogram::send(TestMessage::BindingChanged, &context, ())).keep_alive();
+
+            // Cause the message to be sent
+            program_binding.set(1);
+        }, 20);
+
+        // Test: expect the message to be sent
+        TestBuilder::new()
+            .expect_message(move |evt: TestMessage| Ok(()))
+            .run_in_scene(&scene, SubProgramId::new());
+    }
+}
