@@ -73,7 +73,7 @@ fn change_waker_future(state: &Arc<Mutex<ChangeWakeState>>) -> impl Future<Outpu
 /// Defines dialog behavior by using egui (with rendering via flo_canvas requests)
 ///
 pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context: SceneContext, dialog_namespace: canvas::NamespaceId, dialog_layer: canvas::LayerId, bounds: (UiPoint, UiPoint)) {
-    use canvas::{Draw, LayerId};
+    use canvas::{Draw};
 
     // Create a namespace for the dialog graphics
     let dialog_subprogram   = context.current_program_id().unwrap();
@@ -240,7 +240,7 @@ impl SceneMessage for EguiDialogRequest {
 /// Processes the drawing instructions in the output from egui into flo_draw canvas instructions
 ///
 async fn process_drawing_output(output: &egui::FullOutput, drawing_target: &mut OutputSink<DrawingRequest>, namespace: canvas::NamespaceId, layer_id: canvas::LayerId) {
-    use canvas::{Draw, LayerId};
+    use canvas::{Draw};
 
     let mut drawing = vec![];
 
@@ -309,7 +309,7 @@ fn canvas_texture_bytes(image: &epaint::ImageData) -> (usize, usize, Arc<Vec<u8>
 /// Processes the texture instructions in the output from egui into flo_draw canvas instructions
 ///
 async fn process_texture_output(output: &egui::FullOutput, drawing_target: &mut OutputSink<DrawingRequest>, namespace: canvas::NamespaceId, layer_id: canvas::LayerId) {
-    use canvas::{Draw, LayerId, TextureOp, TexturePosition, TextureSize, TextureFormat};
+    use canvas::{Draw, TextureOp, TexturePosition, TextureSize, TextureFormat};
 
     let mut drawing = vec![];
 

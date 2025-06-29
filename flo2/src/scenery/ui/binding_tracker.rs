@@ -1,11 +1,7 @@
-use ::serde::*;
-
 use flo_scene::*;
-use flo_draw::canvas::*;
 use flo_binding::*;
 
 use futures::prelude::*;
-use futures::future::{BoxFuture};
 
 use std::sync::*;
 
