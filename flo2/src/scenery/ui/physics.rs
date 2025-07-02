@@ -9,8 +9,10 @@
 use super::physics_tool::*;
 use super::subprograms::*;
 
-use flo_scene::*;
+use flo_binding::*;
 use flo_draw::*;
+use flo_draw::canvas::*;
+use flo_scene::*;
 
 use futures::prelude::*;
 
@@ -25,17 +27,23 @@ pub enum PhysicsLayer {
     /// Adds a new physics tool to this layer, managed by the specified program
     AddTool(PhysicsTool, SubProgramId),
 
-    /// Adds a tool to the LHS 'tool' dock
-    DockLeft(PhysicsToolId),
+    /// Moves a tool to the LHS 'tool' dock
+    DockTool(PhysicsToolId),
 
-    /// Adds a tool to the RHS 'properties' dock
-    DockRight(PhysicsToolId),
+    /// Moves a tool to the RHS 'properties' dock
+    DockProperties(PhysicsToolId),
 
-    /// Adds a floating version of a tool
-    Float(PhysicsToolId),
+    /// Moves a tool to a floating position
+    Float(PhysicsToolId, (f64, f64)),
 
     /// Event to process
     Event(DrawEvent),
+
+    /// Redraw the positions of the tools
+    UpdatePositions,
+
+    /// Redraw the sprite attached to a tool
+    RedrawIcon(PhysicsToolId),
 }
 
 ///
@@ -54,11 +62,43 @@ pub enum PhysicsEvent {
 /// Runs the physics layer subprogram
 ///
 pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneContext) {
+    // Objects on the layer
+    let mut objects: Vec<PhysicsObject> = vec![];
+
+    // Run the main loop
     let mut input = input;
-
     while let Some(request) = input.next().await {
+        // Before processing the event, redraw the sprites for the tools
 
+        // Process the events
     }
+}
+
+#[derive(Clone, Debug)]
+enum ToolPosition {
+    /// Docked to the tool bar
+    DockTool,
+
+    /// Docked to the properties bar
+    DockProperties,
+
+    /// Floating, centered at a position
+    Float(f64, f64),
+}
+
+///
+/// Object on the physics layer
+///
+struct PhysicsObject {
+    /// The physics tool itself
+    tool: PhysicsTool,
+
+    /// The sprite that draws this tool (or None if there's no sprite ID)
+    sprite: Option<SpriteId>,
+
+    /// Location of the tool 
+    position: Binding<ToolPosition>,
+
 }
 
 impl Serialize for PhysicsLayer {
