@@ -6,12 +6,14 @@
 //! controls overlapping.
 //!
 
+use super::physics_object::*;
 use super::physics_tool::*;
 use super::subprograms::*;
 
 use flo_binding::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
+use flo_draw::canvas::scenery::*;
 use flo_scene::*;
 
 use futures::prelude::*;
@@ -19,6 +21,8 @@ use futures::prelude::*;
 use ::serde::*;
 use serde::de::{Error as DeError};
 use serde::ser::{Error as SeError};
+
+use std::sync::*;
 
 ///
 /// Instructions for the subprogram that manages the physics layer
@@ -35,6 +39,9 @@ pub enum PhysicsLayer {
 
     /// Moves a tool to a floating position
     Float(PhysicsToolId, (f64, f64)),
+
+    /// Removes the tool with the specified ID from the physics layer
+    RemoveTool(PhysicsToolId),
 
     /// Event to process
     Event(DrawEvent),
@@ -62,43 +69,39 @@ pub enum PhysicsEvent {
 /// Runs the physics layer subprogram
 ///
 pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneContext) {
+    let mut drawing_requests = context.send::<DrawingRequest>(()).unwrap();
+
     // Objects on the layer
     let mut objects: Vec<PhysicsObject> = vec![];
+
+    // Sprite IDs that we're not using any more, 
+    let mut sprites: Vec<SpriteId>  = vec![];
+    let mut next_sprite_id          = 0;
 
     // Run the main loop
     let mut input = input;
     while let Some(request) = input.next().await {
-        // Before processing the event, redraw the sprites for the tools
+        // What to draw for this pass through the loop
+        let mut drawing = vec![];
 
         // Process the events
+
+        // Before processing the next event, redraw the sprites for the tools
+        for object in objects.iter_mut() {
+            if object.needs_redraw() {
+                // Assign a new sprite ID
+                let sprite_id = if let Some(sprite) = sprites.pop() { sprite } else { next_sprite_id += 1; SpriteId(next_sprite_id) };
+
+                // Add to the rendering instructions for this pass
+                drawing.extend(object.draw(sprite_id, &context));
+            }
+        }
+
+        // Send any waiting drawing instructions
+        if !drawing.is_empty() {
+            drawing_requests.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
+        }
     }
-}
-
-#[derive(Clone, Debug)]
-enum ToolPosition {
-    /// Docked to the tool bar
-    DockTool,
-
-    /// Docked to the properties bar
-    DockProperties,
-
-    /// Floating, centered at a position
-    Float(f64, f64),
-}
-
-///
-/// Object on the physics layer
-///
-struct PhysicsObject {
-    /// The physics tool itself
-    tool: PhysicsTool,
-
-    /// The sprite that draws this tool (or None if there's no sprite ID)
-    sprite: Option<SpriteId>,
-
-    /// Location of the tool 
-    position: Binding<ToolPosition>,
-
 }
 
 impl Serialize for PhysicsLayer {

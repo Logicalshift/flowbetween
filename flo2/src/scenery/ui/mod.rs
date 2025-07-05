@@ -15,6 +15,7 @@ mod dialog;
 mod egui;
 mod physics;
 mod physics_tool;
+mod physics_object;
 mod binding_tracker;
 
 pub use namespaces::*;

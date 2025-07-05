@@ -128,6 +128,13 @@ impl PhysicsTool {
     }
 
     ///
+    /// Retrieves the ID of this tol
+    ///
+    pub fn id(&self) -> PhysicsToolId {
+        self.id
+    }
+
+    ///
     /// The icon to display to represent this tool
     ///
     pub fn icon(&self) -> Vec<Draw> {
