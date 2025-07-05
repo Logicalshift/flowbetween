@@ -87,8 +87,10 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
     // Drawing settings
     let mut state = PhysicsLayerState {
-        objects:    vec![],
-        bounds:     (1024.0, 768.0)
+        objects:        vec![],
+        bounds:         (1024.0, 768.0),
+        sprites:        vec![],
+        next_sprite_id: 0,
     };
 
     // Objects on the layer
@@ -104,43 +106,27 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     let mut next_sprite_id          = 0;
 
     // Run the main loop
-    let mut input = input;
-    while let Some(request) = input.next().await {
+    let mut input = input.ready_chunks(100);
+    while let Some(request_chunk) = input.next().await {
         // What to draw for this pass through the loop
         let mut drawing                 = vec![];
         let mut positions_invalidated   = false;
 
         // Process the events
-        use PhysicsLayer::*;
-        match request {
-            AddTool(new_tool, program_id) => { state.add_tool(new_tool, program_id); positions_invalidated = true; },
+        for request in request_chunk.into_iter() {
+            use PhysicsLayer::*;
+            match request {
+                AddTool(new_tool, program_id)   => { state.add_tool(new_tool, program_id); positions_invalidated = true; },
+                DockTool(tool_id)               => { state.dock_tool(tool_id); positions_invalidated = true; }
+                DockProperties(tool_id)         => { state.dock_properties(tool_id); positions_invalidated = true; }
+                Float(tool_id, position)        => { state.float(tool_id, position); positions_invalidated = true; }
+                RemoveTool(tool_id)             => { state.remove_tool(tool_id); positions_invalidated = true; }
+                UpdatePositions                 => { positions_invalidated = true; }
+                RedrawIcon(tool_id)             => { state.invalidate_sprite(tool_id); }
 
-            DockTool(tool_id) => {
+                Event(_draw_event) => {
 
-            }
-
-            DockProperties(tool_id) => {
-
-            }
-
-            Float(tool_id, position) => {
-
-            }
-
-            RemoveTool(tool_id) => {
-
-            }
-
-            Event(_draw_event) => {
-
-            }
-
-            UpdatePositions => {
-                positions_invalidated = true;
-            }
-
-            RedrawIcon(tool_id) => {
-
+                }
             }
         }
 
@@ -148,7 +134,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         for object in state.objects.iter_mut() {
             if object.sprite_needs_redraw() {
                 // Assign a new sprite ID
-                let sprite_id = if let Some(sprite) = sprites.pop() { sprite } else { next_sprite_id += 1; SpriteId(next_sprite_id) };
+                let sprite_id = if let Some(sprite) = state.sprites.pop() { sprite } else { state.next_sprite_id += 1; SpriteId(state.next_sprite_id) };
 
                 // Add to the rendering instructions for this pass
                 drawing.extend(object.draw_sprite(sprite_id, &context));
@@ -188,6 +174,12 @@ struct PhysicsLayerState {
 
     /// Bounds of the drawing area
     bounds: (f64, f64),
+
+    /// The pool of sprite IDs that have been used by the tools but are now available for other uses
+    sprites: Vec<SpriteId>,
+
+    /// The sprite ID that will be assigned if no sprites are available in the pool
+    next_sprite_id: u64,
 }
 
 impl PhysicsLayerState {
@@ -207,6 +199,71 @@ impl PhysicsLayerState {
             // Create a new object
             let object = PhysicsObject::new(new_tool, target_program.into());
             self.objects.push(object);
+        }
+    }
+
+    ///
+    /// Add a tool to the end of the tool dock
+    ///
+    pub fn dock_tool(&mut self, tool_id: PhysicsToolId) {
+        // TODO
+    }
+
+    ///
+    /// Add a tool to the end of the properties dock
+    ///
+    pub fn dock_properties(&mut self, tool_id: PhysicsToolId) {
+        // TODO
+    }
+
+    ///
+    /// Sets the floating position of a tool
+    ///
+    pub fn float(&mut self, tool_id: PhysicsToolId, new_position: (f64, f64)) {
+        let existing_idx = self.objects.iter().enumerate()
+            .filter(|(_, object)| object.tool().id() == tool_id)
+            .map(|(idx, _)| idx)
+            .next();
+
+        if let Some(existing_idx) = existing_idx {
+            self.objects[existing_idx].set_position(ToolPosition::Float(new_position.0, new_position.1));
+        }
+    }
+
+    ///
+    /// Removes a tool entirely from the state
+    ///
+    pub fn remove_tool(&mut self, tool_id: PhysicsToolId) {
+        let existing_idx = self.objects.iter().enumerate()
+            .filter(|(_, object)| object.tool().id() == tool_id)
+            .map(|(idx, _)| idx)
+            .next();
+
+        if let Some(existing_idx) = existing_idx {
+            // Invalidate the sprite and return it to the pool
+            if let Some(sprite) = self.objects[existing_idx].invalidate_sprite() {
+                self.sprites.push(sprite);
+            }
+
+            // Remove from the list of objects
+            self.objects.remove(existing_idx);
+        }
+    }
+
+    ///
+    /// Invalidates the sprite for a tool, prompting it to be redrawn
+    ///
+    pub fn invalidate_sprite(&mut self, tool_id: PhysicsToolId) {
+        let existing_idx = self.objects.iter().enumerate()
+            .filter(|(_, object)| object.tool().id() == tool_id)
+            .map(|(idx, _)| idx)
+            .next();
+
+        if let Some(existing_idx) = existing_idx {
+            // Invalidate the sprite and return it to the pool
+            if let Some(sprite) = self.objects[existing_idx].invalidate_sprite() {
+                self.sprites.push(sprite);
+            }
         }
     }
 }
