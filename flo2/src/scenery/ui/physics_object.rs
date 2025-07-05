@@ -34,6 +34,9 @@ pub struct PhysicsObject {
     /// The physics tool itself
     tool: PhysicsTool,
 
+    /// Where events for this tool should be sent
+    event_target: StreamTarget,
+
     /// The sprite that draws this tool (or None if there's no sprite ID)
     sprite: Binding<Option<SpriteId>>,
 
@@ -51,14 +54,30 @@ impl PhysicsObject {
     ///
     /// Creates a new hidden physics tool
     ///
-    pub fn new(tool: PhysicsTool) -> Self {
+    pub fn new(tool: PhysicsTool, event_target: StreamTarget) -> Self {
         Self {
             tool:               tool,
+            event_target:       event_target,
             sprite:             bind(None),
             sprite_tracker:     None,
             position_tracker:   None,
             position:           bind(ToolPosition::Hidden),
         }
+    }
+
+    ///
+    /// Retrieves the physics tool that is being managed by this object
+    ///
+    pub fn tool(&self) -> &PhysicsTool {
+        &self.tool
+    }
+
+    ///
+    /// Replaces the tool represented by this object
+    ///
+    pub fn set_tool(&mut self, new_tool: PhysicsTool, new_target: StreamTarget) {
+        self.tool = new_tool;
+        self.invalidate_sprite();
     }
 
     ///

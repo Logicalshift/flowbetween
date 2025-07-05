@@ -76,7 +76,7 @@ fn test_object() -> PhysicsObject {
     let tool = PhysicsTool::new(PhysicsToolId::new())
         .with_icon(drawing);
 
-    PhysicsObject::new(tool)
+    PhysicsObject::new(tool, StreamTarget::None)
 }
 
 ///
@@ -113,9 +113,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         // Process the events
         use PhysicsLayer::*;
         match request {
-            AddTool(new_tool, program_id) => {
-
-            }
+            AddTool(new_tool, program_id) => { state.add_tool(new_tool, program_id); positions_invalidated = true; },
 
             DockTool(tool_id) => {
 
@@ -193,7 +191,24 @@ struct PhysicsLayerState {
 }
 
 impl PhysicsLayerState {
+    ///
+    /// Adds or replaces a tool within this object
+    ///
+    pub fn add_tool(&mut self, new_tool: PhysicsTool, target_program: SubProgramId) {
+        let existing_idx = self.objects.iter().enumerate()
+            .filter(|(_, object)| object.tool().id() == new_tool.id())
+            .map(|(idx, _)| idx)
+            .next();
 
+        if let Some(existing_idx) = existing_idx {
+            // Update the tool in the existing object
+            self.objects[existing_idx].set_tool(new_tool, target_program.into());
+        } else {
+            // Create a new object
+            let object = PhysicsObject::new(new_tool, target_program.into());
+            self.objects.push(object);
+        }
+    }
 }
 
 impl Serialize for PhysicsLayer {
