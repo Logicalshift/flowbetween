@@ -172,17 +172,22 @@ impl PhysicsObject {
             // Render the backing circle
             if has_shadow {
                 drawing.new_path();
-                drawing.circle(x as f32 + 4.0, y as f32 + 4.0, (w.max(h)/2.0) as f32);
+                drawing.circle(x as f32 + 1.0, y as f32 + 3.0, (w.max(h)/2.0) as f32);
                 drawing.fill_color(color_tool_shadow());
                 drawing.fill();
             }
 
             drawing.new_path();
-            drawing.circle(x as f32, y as f32, (w.max(h)/2.0 - 1.0) as f32);
+            drawing.circle(x as f32, y as f32, (w.max(h)/2.0 - 2.0) as f32);
             drawing.fill_color(color_tool_background());
             drawing.stroke_color(color_tool_outline());
             drawing.line_width(2.0);
             drawing.fill();
+            drawing.stroke();
+
+            drawing.circle(x as f32, y as f32, (w.max(h)/2.0) as f32);
+            drawing.stroke_color(color_tool_border());
+            drawing.line_width(1.0);
             drawing.stroke();
 
             // Render the sprite to draw the actual physics object
