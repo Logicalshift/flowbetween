@@ -17,6 +17,7 @@ mod physics;
 mod physics_tool;
 mod physics_object;
 mod binding_tracker;
+mod colors;
 
 pub use namespaces::*;
 pub use control::*;
