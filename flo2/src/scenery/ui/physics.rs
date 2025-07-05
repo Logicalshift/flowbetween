@@ -86,7 +86,10 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     let mut drawing_requests = context.send::<DrawingRequest>(()).unwrap();
 
     // Drawing settings
-    let mut bounds = (1024.0, 768.0);
+    let mut state = PhysicsLayerState {
+        objects:    vec![],
+        bounds:     (1024.0, 768.0)
+    };
 
     // Objects on the layer
     let mut objects: Vec<PhysicsObject> = vec![];
@@ -94,7 +97,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     // TEST: create a test object, force an initial update
     let mut test_object = test_object();
     test_object.set_position(ToolPosition::Float(100.0, 100.0));
-    objects.push(test_object);
+    state.objects.push(test_object);
 
     // Sprite IDs that we're not using any more, 
     let mut sprites: Vec<SpriteId>  = vec![];
@@ -103,16 +106,48 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     // Run the main loop
     let mut input = input;
     while let Some(request) = input.next().await {
-        println!("Request");
-
         // What to draw for this pass through the loop
-        let mut drawing = vec![];
-        let mut positions_invalidated = false;
+        let mut drawing                 = vec![];
+        let mut positions_invalidated   = false;
 
         // Process the events
+        use PhysicsLayer::*;
+        match request {
+            AddTool(new_tool, program_id) => {
+
+            }
+
+            DockTool(tool_id) => {
+
+            }
+
+            DockProperties(tool_id) => {
+
+            }
+
+            Float(tool_id, position) => {
+
+            }
+
+            RemoveTool(tool_id) => {
+
+            }
+
+            Event(_draw_event) => {
+
+            }
+
+            UpdatePositions => {
+                positions_invalidated = true;
+            }
+
+            RedrawIcon(tool_id) => {
+
+            }
+        }
 
         // Before processing the next event, redraw the sprites for the tools
-        for object in objects.iter_mut() {
+        for object in state.objects.iter_mut() {
             if object.sprite_needs_redraw() {
                 // Assign a new sprite ID
                 let sprite_id = if let Some(sprite) = sprites.pop() { sprite } else { next_sprite_id += 1; SpriteId(next_sprite_id) };
@@ -127,12 +162,14 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
         // Draw the tools in their expected positions
         if positions_invalidated {
+            let bounds = state.bounds;
+
             drawing.push_state();
             drawing.namespace(*PHYSICS_LAYER);
             drawing.layer(LayerId(0));
             drawing.clear_layer();
 
-            drawing.extend(objects.iter_mut().flat_map(|object| object.draw(bounds, &context)));
+            drawing.extend(state.objects.iter_mut().flat_map(|object| object.draw(bounds, &context)));
 
             drawing.pop_state();
         }
@@ -142,6 +179,21 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
             drawing_requests.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
         }
     }
+}
+
+///
+/// State of the physics layer
+///
+struct PhysicsLayerState {
+    /// Objects in the physics layer
+    objects: Vec<PhysicsObject>,
+
+    /// Bounds of the drawing area
+    bounds: (f64, f64),
+}
+
+impl PhysicsLayerState {
+
 }
 
 impl Serialize for PhysicsLayer {
