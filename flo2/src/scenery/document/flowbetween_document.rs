@@ -55,6 +55,9 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
     document_scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|stream| stream.map(|msg| DocumentRequest::Draw(msg)))), program_id, StreamId::with_message_type::<DrawingRequest>()).unwrap();
 
+    // (TEST: start the physics layer)
+    context.send_message(PhysicsLayer::UpdatePositions).await.ok();
+
     // Set up the window to its initial state
     let mut idle_requests   = context.send::<IdleRequest>(()).unwrap();
     let mut window_drawing  = context.send::<DrawingRequest>(()).unwrap();

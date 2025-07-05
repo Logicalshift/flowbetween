@@ -91,6 +91,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     // Objects on the layer
     let mut objects: Vec<PhysicsObject> = vec![];
 
+    // TEST: create a test object, force an initial update
     let mut test_object = test_object();
     test_object.set_position(ToolPosition::Float(100.0, 100.0));
     objects.push(test_object);
@@ -102,6 +103,8 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     // Run the main loop
     let mut input = input;
     while let Some(request) = input.next().await {
+        println!("Request");
+
         // What to draw for this pass through the loop
         let mut drawing = vec![];
         let mut positions_invalidated = false;
