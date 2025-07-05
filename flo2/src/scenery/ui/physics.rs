@@ -88,12 +88,12 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
         // Before processing the next event, redraw the sprites for the tools
         for object in objects.iter_mut() {
-            if object.needs_redraw() {
+            if object.sprite_needs_redraw() {
                 // Assign a new sprite ID
                 let sprite_id = if let Some(sprite) = sprites.pop() { sprite } else { next_sprite_id += 1; SpriteId(next_sprite_id) };
 
                 // Add to the rendering instructions for this pass
-                drawing.extend(object.draw(sprite_id, &context));
+                drawing.extend(object.draw_sprite(sprite_id, &context));
             }
         }
 
