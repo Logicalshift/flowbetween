@@ -6,6 +6,7 @@
 //! controls overlapping.
 //!
 
+use super::namespaces::*;
 use super::physics_object::*;
 use super::physics_tool::*;
 use super::subprograms::*;
@@ -65,14 +66,34 @@ pub enum PhysicsEvent {
     Deselect(PhysicsToolId),
 }
 
+fn test_object() -> PhysicsObject {
+    let mut drawing = vec![];
+
+    drawing.fill_color(Color::Rgba(0.0, 0.0, 1.0, 1.0));
+    drawing.rect(-12.0, -12.0, 12.0, 12.0);
+    drawing.fill();
+
+    let tool = PhysicsTool::new(PhysicsToolId::new())
+        .with_icon(drawing);
+
+    PhysicsObject::new(tool)
+}
+
 ///
 /// Runs the physics layer subprogram
 ///
 pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneContext) {
     let mut drawing_requests = context.send::<DrawingRequest>(()).unwrap();
 
+    // Drawing settings
+    let mut bounds = (1024.0, 768.0);
+
     // Objects on the layer
     let mut objects: Vec<PhysicsObject> = vec![];
+
+    let mut test_object = test_object();
+    test_object.set_position(ToolPosition::Float(100.0, 100.0));
+    objects.push(test_object);
 
     // Sprite IDs that we're not using any more, 
     let mut sprites: Vec<SpriteId>  = vec![];
@@ -83,6 +104,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     while let Some(request) = input.next().await {
         // What to draw for this pass through the loop
         let mut drawing = vec![];
+        let mut positions_invalidated = false;
 
         // Process the events
 
@@ -94,7 +116,22 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
                 // Add to the rendering instructions for this pass
                 drawing.extend(object.draw_sprite(sprite_id, &context));
+
+                // Positions will need to be updated at this point
+                positions_invalidated = true;
             }
+        }
+
+        // Draw the tools in their expected positions
+        if positions_invalidated {
+            drawing.push_state();
+            drawing.namespace(*PHYSICS_LAYER);
+            drawing.layer(LayerId(0));
+            drawing.clear_layer();
+
+            drawing.extend(objects.iter_mut().flat_map(|object| object.draw(bounds, &context)));
+
+            drawing.pop_state();
         }
 
         // Send any waiting drawing instructions

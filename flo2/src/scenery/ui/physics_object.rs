@@ -87,8 +87,14 @@ impl PhysicsObject {
     /// Returns the instructions for drawing the sprite for this tool
     ///
     pub fn draw_sprite(&mut self, sprite: SpriteId, context: &SceneContext) -> Vec<Draw> {
+        // Avoid sending any sprite updates that predate this update
         if let Some(mut sprite_tracker) = self.sprite_tracker.take() {
             sprite_tracker.done();
+        }
+
+        // Assume we'll update the position too
+        if let Some(mut position_tracker) = self.position_tracker.take() {
+            position_tracker.done();
         }
 
         // Track any changes to the sprite
@@ -115,6 +121,13 @@ impl PhysicsObject {
         self.sprite.set(Some(sprite));
 
         drawing
+    }
+
+    ///
+    /// Sets the position of this object
+    ///
+    pub fn set_position(&mut self, new_position: ToolPosition) {
+        self.position.set(new_position);
     }
 
     ///
