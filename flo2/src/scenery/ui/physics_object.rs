@@ -167,20 +167,21 @@ impl PhysicsObject {
             let sprite  = self.sprite.get();
             let sprite  = if let Some(sprite) = sprite { sprite } else { return drawing; };
             let (x, y)  = pos;
+            let (w, h)  = self.tool.size();
 
             // Render the backing circle
             if has_shadow {
                 drawing.new_path();
-                drawing.circle(x as f32 + 4.0, y as f32 + 4.0, 32.0);
+                drawing.circle(x as f32 + 4.0, y as f32 + 4.0, (w.max(h)/2.0) as f32);
                 drawing.fill_color(color_tool_shadow());
                 drawing.fill();
             }
 
             drawing.new_path();
-            drawing.circle(x as f32, y as f32, 30.0);
+            drawing.circle(x as f32, y as f32, (w.max(h)/2.0 - 1.0) as f32);
             drawing.fill_color(color_tool_background());
             drawing.stroke_color(color_tool_outline());
-            drawing.line_width(4.0);
+            drawing.line_width(2.0);
             drawing.fill();
             drawing.stroke();
 

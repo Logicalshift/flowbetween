@@ -41,6 +41,9 @@ pub struct PhysicsTool {
     /// Unique identifier for this tool
     id: PhysicsToolId,
 
+    /// Size of this tool when rendered
+    size: BindRef<(f64, f64)>,
+
     /// The used to display this tool in the UI
     icon: BindRef<Vec<Draw>>,
 
@@ -61,6 +64,7 @@ impl PhysicsTool {
     pub fn new(id: PhysicsToolId) -> PhysicsTool {
         PhysicsTool {
             id:                 id,
+            size:               BindRef::from(&Binding::new((48.0, 48.0))),
             icon:               BindRef::from(&Binding::new(vec![])),
             name:               BindRef::from(&Binding::new(String::default())),
             selection_group:    Binding::new(ToolGroupId::new()),
@@ -132,6 +136,13 @@ impl PhysicsTool {
     ///
     pub fn id(&self) -> PhysicsToolId {
         self.id
+    }
+
+    ///
+    /// The intended size of this tool
+    ///
+    pub fn size(&self) -> (f64, f64) {
+        self.size.get()
     }
 
     ///
