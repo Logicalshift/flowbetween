@@ -242,7 +242,15 @@ impl SubProgramRegion {
         // Note that PathContour doesn't support negative values for x
 
         let intercepts = self.region.intercepts_on_line(y);
-        intercepts.into_iter().any(|intercept| intercept.contains(&x))
+        if intercepts.into_iter().any(|intercept| intercept.contains(&x)) {
+            // Intercept in the region for this program
+            true
+        } else {
+            // Could be an intercept on any of the controls in this region
+            self.controls.iter()
+                .filter(|control| UiPoint(x, y).in_bounds(&control.bounds))
+                .any(|control| control.point_is_inside(x, y))
+        }
     }
 }
 
