@@ -11,12 +11,14 @@ use super::namespaces::*;
 use super::physics_object::*;
 use super::physics_tool::*;
 use super::subprograms::*;
+use super::ui_path::*;
 
 use flo_binding::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
 use flo_scene::*;
+use flo_curves::arc::*;
 
 use futures::prelude::*;
 
@@ -90,6 +92,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
     // Drawing settings
     let mut state = PhysicsLayerState {
+        our_program_id: our_program_id,
         objects:        vec![],
         bounds:         (1024.0, 768.0),
         sprites:        vec![],
@@ -119,12 +122,12 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
             use PhysicsLayer::*;
             match request {
                 // Tool requests
-                AddTool(new_tool, program_id)   => { state.add_tool(new_tool, program_id); positions_invalidated = true; },
-                DockTool(tool_id)               => { state.dock_tool(tool_id); positions_invalidated = true; }
-                DockProperties(tool_id)         => { state.dock_properties(tool_id); positions_invalidated = true; }
-                Float(tool_id, position)        => { state.float(tool_id, position); positions_invalidated = true; }
+                AddTool(new_tool, program_id)   => { let tool_id = new_tool.id(); state.add_tool(new_tool, program_id); positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; },
+                DockTool(tool_id)               => { state.dock_tool(tool_id); positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; }
+                DockProperties(tool_id)         => { state.dock_properties(tool_id); positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; }
+                Float(tool_id, position)        => { state.float(tool_id, position); positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; }
                 RemoveTool(tool_id)             => { state.remove_tool(tool_id); positions_invalidated = true; }
-                UpdatePosition(_)               => { positions_invalidated = true; }
+                UpdatePosition(tool_id)         => { state.update_tool_focus(tool_id, &mut focus_requests).await; positions_invalidated = true; }
                 RedrawIcon(tool_id)             => { state.invalidate_sprite(tool_id); }
 
                 // Event handling
@@ -175,6 +178,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 /// State of the physics layer
 ///
 struct PhysicsLayerState {
+    // Program ID of the phyics layer program
+    our_program_id: SubProgramId,
+
     /// Objects in the physics layer
     objects: Vec<PhysicsObject>,
 
@@ -278,6 +284,39 @@ impl PhysicsLayerState {
     ///
     pub fn set_bounds(&mut self, width: f64, height: f64) {
         self.bounds = (width, height);
+    }
+
+    ///
+    /// Updates the focus program on the location of a tool
+    ///
+    pub async fn update_tool_focus(&mut self, tool_id: PhysicsToolId, focus_events: &mut OutputSink<Focus>) {
+        // Find the existing tool
+        let existing_idx = self.objects.iter().enumerate()
+            .filter(|(_, object)| object.tool().id() == tool_id)
+            .map(|(idx, _)| idx)
+            .next();
+
+        if let Some(existing_idx) = existing_idx {
+            // Each object has a control ID
+            let control_id = self.objects[existing_idx].control_id();
+
+            if let Some((x, y)) = self.objects[existing_idx].position(self.bounds) {
+                let (w, h)    = self.objects[existing_idx].tool().size();
+                let tool_size = w.max(h);
+                let tool_path = Circle::new(UiPoint(x, y), tool_size).to_path();
+
+                // Create a focus region for the tool
+                focus_events.send(Focus::ClaimControlRegion {
+                    program:    self.our_program_id,
+                    region:     vec![tool_path],
+                    control:    control_id,
+                    z_index:    existing_idx,
+                }).await.ok();
+            } else {
+                // Tool is hidden or otherwise not present
+                focus_events.send(Focus::RemoveControlClaim(self.our_program_id, control_id)).await.ok();
+            }
+        }
     }
 }
 

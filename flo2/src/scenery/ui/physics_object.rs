@@ -1,5 +1,7 @@
 use super::binding_tracker::*;
 use super::colors::*;
+use super::control_id::*;
+use super::focus::*;
 use super::namespaces::*;
 use super::physics::*;
 use super::physics_tool::*;
@@ -48,6 +50,9 @@ pub struct PhysicsObject {
 
     /// Location of the tool 
     position: Binding<ToolPosition>,
+
+    /// The control ID of this tool
+    control_id: ControlId,
 }
 
 impl PhysicsObject {
@@ -62,6 +67,7 @@ impl PhysicsObject {
             sprite_tracker:     None,
             position_tracker:   None,
             position:           bind(ToolPosition::Hidden),
+            control_id:         ControlId::new(),
         }
     }
 
@@ -70,6 +76,13 @@ impl PhysicsObject {
     ///
     pub fn tool(&self) -> &PhysicsTool {
         &self.tool
+    }
+
+    ///
+    /// The control ID that represents this object on the canvas
+    ///
+    pub fn control_id(&self) -> ControlId {
+        self.control_id
     }
 
     ///
