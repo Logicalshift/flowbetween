@@ -295,6 +295,25 @@ impl FocusProgram {
     }
 
     ///
+    /// Sends greeting messages to a newly added subprogram
+    ///
+    async fn greet_new_subprogram(&mut self, subprogram_id: SubProgramId, context: &SceneContext) {
+        let mut subprogram = context.send(subprogram_id).ok();
+
+        if let Some(mut subprogram) = subprogram {
+            // Send the scale if it's been stored
+            if let Some(scale) = self.scale {
+                subprogram.send(FocusEvent::Event(None, DrawEvent::Scale(scale))).await.ok();
+            }
+
+            // Send the bounds if they've been stored
+            if let Some((w, h)) = self.bounds {
+                subprogram.send(FocusEvent::Event(None, DrawEvent::Resize(w, h))).await.ok();
+            }
+        }
+    }
+
+    ///
     /// Sets keyboard focus to a specific program/control
     ///
     async fn set_keyboard_focus(&mut self, program_id: SubProgramId, control_id: ControlId, context: &SceneContext) {
