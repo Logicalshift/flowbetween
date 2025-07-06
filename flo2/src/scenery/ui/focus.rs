@@ -16,71 +16,6 @@ use serde::*;
 use std::collections::{HashMap, HashSet};
 
 ///
-/// Runs the UI focus subprogram
-///
-pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
-    let program_id  = context.current_program_id().unwrap();
-    let mut input   = input;
-
-    // Request updates from the scene (which we'll use to remove subprograms that aren't running any more)
-    context.send_message(SceneControl::Subscribe(program_id.into())).await.ok();
-
-    // Create the state
-    let mut focus = FocusProgram {
-        canvas_program:             None,
-        subprogram_space:           None,
-        subprogram_data:            HashMap::new(),
-        subprogram_order:           vec![],
-        pointer_target:             None,
-        pointer_target_program:     None,
-        pointer_target_control:     None,
-        pointer_target_lock_count:  0,
-        focused_subprogram:         None,
-        focused_control:            None,
-        focused_event_target:       None,
-        tab_ordering:               HashMap::new(),
-    };
-
-    while let Some(request) = input.next().await {
-        use Focus::*;
-
-        match request {
-            Event(DrawEvent::Redraw)                => { },
-            Event(DrawEvent::NewFrame)              => { },
-            Event(DrawEvent::Scale(scale))          => { focus.send_to_all(DrawEvent::Scale(scale), &context).await; },
-            Event(DrawEvent::Resize(w, h))          => { focus.send_to_all(DrawEvent::Resize(w, h), &context).await; },
-            Event(DrawEvent::CanvasTransform(_))    => { },
-            Event(DrawEvent::Closed)                => { focus.send_to_all(DrawEvent::Closed, &context).await; }
-
-            Event(DrawEvent::Pointer(PointerAction::Enter, _, _))                           => { },
-            Event(DrawEvent::Pointer(PointerAction::Leave, _, _))                           => { },
-            Event(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => { focus.set_pointer_target(&pointer_state, &context).await; focus.pointer_target_lock_count += 1; focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)).await; },
-            Event(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state))   => { focus.pointer_target_lock_count -= 1; focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)).await; },
-            Event(DrawEvent::Pointer(other_action, pointer_id, pointer_state))              => { focus.set_pointer_target(&pointer_state, &context).await; focus.send_to_pointer_target(DrawEvent::Pointer(other_action, pointer_id, pointer_state)).await; },
-            Event(DrawEvent::KeyDown(scancode, key))                                        => { focus.send_to_focus(DrawEvent::KeyDown(scancode, key)).await; },
-            Event(DrawEvent::KeyUp(scancode, key))                                          => { focus.send_to_focus(DrawEvent::KeyUp(scancode, key)).await; },
-
-            Update(SceneUpdate::Stopped(program_id))    => { focus.remove_program_claims(program_id).await; focus.remove_program_focus(program_id).await; },
-            Update(_)                                   => { }
-
-            // Keyboard handling
-            SetKeyboardFocus(program_id, control_id)                        => focus.set_keyboard_focus(program_id, control_id, &context).await,
-            SetFollowingControl(program_id, control_id, next_control_id)    => focus.set_following_control(program_id, control_id, next_control_id).await,
-            SetFollowingSubProgram(program_id, next_program_id)             => focus.set_following_subprogram(program_id, next_program_id).await,
-            FocusNext                                                       => focus.focus_next(&context).await,
-            FocusPrevious                                                   => focus.focus_previous(&context).await,
-
-            // Control handling
-            RemoveClaim(program_id)                                     => focus.remove_program_claims(program_id).await,
-            RemoveControlClaim(program_id, control_id)                  => focus.remove_control_claims(program_id, control_id).await,
-            SetCanvas(canvas_program_id)                                => focus.set_canvas(canvas_program_id).await,
-            ClaimRegion { program, region, z_index }                    => focus.claim_region(program, region, None, z_index).await,
-            ClaimControlRegion { program, region, control, z_index }    => focus.claim_region(program, region, Some(control), z_index).await,
-        }
-    }
-}
-
-///
 /// Requests to the focus subprogram.
 ///
 /// The focus subprogram deals with mapping mouse clicks on a document window to the subprogram responsible for
@@ -143,6 +78,71 @@ pub enum FocusEvent {
 
     /// The specified control ID has lost keyboard focus (when focus moves, we unfocus first)
     Unfocused(ControlId),
+}
+
+///
+/// Runs the UI focus subprogram
+///
+pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
+    let program_id  = context.current_program_id().unwrap();
+    let mut input   = input;
+
+    // Request updates from the scene (which we'll use to remove subprograms that aren't running any more)
+    context.send_message(SceneControl::Subscribe(program_id.into())).await.ok();
+
+    // Create the state
+    let mut focus = FocusProgram {
+        canvas_program:             None,
+        subprogram_space:           None,
+        subprogram_data:            HashMap::new(),
+        subprogram_order:           vec![],
+        pointer_target:             None,
+        pointer_target_program:     None,
+        pointer_target_control:     None,
+        pointer_target_lock_count:  0,
+        focused_subprogram:         None,
+        focused_control:            None,
+        focused_event_target:       None,
+        tab_ordering:               HashMap::new(),
+    };
+
+    while let Some(request) = input.next().await {
+        use Focus::*;
+
+        match request {
+            Event(DrawEvent::Redraw)                => { },
+            Event(DrawEvent::NewFrame)              => { },
+            Event(DrawEvent::Scale(scale))          => { focus.send_to_all(DrawEvent::Scale(scale), &context).await; },
+            Event(DrawEvent::Resize(w, h))          => { focus.send_to_all(DrawEvent::Resize(w, h), &context).await; },
+            Event(DrawEvent::CanvasTransform(_))    => { },
+            Event(DrawEvent::Closed)                => { focus.send_to_all(DrawEvent::Closed, &context).await; }
+
+            Event(DrawEvent::Pointer(PointerAction::Enter, _, _))                           => { },
+            Event(DrawEvent::Pointer(PointerAction::Leave, _, _))                           => { },
+            Event(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => { focus.set_pointer_target(&pointer_state, &context).await; focus.pointer_target_lock_count += 1; focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)).await; },
+            Event(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state))   => { focus.pointer_target_lock_count -= 1; focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)).await; },
+            Event(DrawEvent::Pointer(other_action, pointer_id, pointer_state))              => { focus.set_pointer_target(&pointer_state, &context).await; focus.send_to_pointer_target(DrawEvent::Pointer(other_action, pointer_id, pointer_state)).await; },
+            Event(DrawEvent::KeyDown(scancode, key))                                        => { focus.send_to_focus(DrawEvent::KeyDown(scancode, key)).await; },
+            Event(DrawEvent::KeyUp(scancode, key))                                          => { focus.send_to_focus(DrawEvent::KeyUp(scancode, key)).await; },
+
+            Update(SceneUpdate::Stopped(program_id))    => { focus.remove_program_claims(program_id).await; focus.remove_program_focus(program_id).await; },
+            Update(_)                                   => { }
+
+            // Keyboard handling
+            SetKeyboardFocus(program_id, control_id)                        => focus.set_keyboard_focus(program_id, control_id, &context).await,
+            SetFollowingControl(program_id, control_id, next_control_id)    => focus.set_following_control(program_id, control_id, next_control_id).await,
+            SetFollowingSubProgram(program_id, next_program_id)             => focus.set_following_subprogram(program_id, next_program_id).await,
+            FocusNext                                                       => focus.focus_next(&context).await,
+            FocusPrevious                                                   => focus.focus_previous(&context).await,
+
+            // Control handling
+            RemoveClaim(program_id)                                     => focus.remove_program_claims(program_id).await,
+            RemoveControlClaim(program_id, control_id)                  => focus.remove_control_claims(program_id, control_id).await,
+            SetCanvas(canvas_program_id)                                => focus.set_canvas(canvas_program_id).await,
+            ClaimRegion { program, region, z_index }                    => focus.claim_region(program, region, None, z_index).await,
+            ClaimControlRegion { program, region, control, z_index }    => focus.claim_region(program, region, Some(control), z_index).await,
+        }
+    }
 }
 
 impl SceneMessage for Focus {
