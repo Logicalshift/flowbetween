@@ -887,6 +887,36 @@ mod test {
     }
 
     ///
+    /// Checks that evt is an enter event for a subprogram and not a control
+    ///
+    fn expect_enter_program(evt: FocusEvent) -> Result<(), String> {
+        if let FocusEvent::Event(control_id, DrawEvent::Pointer(PointerAction::Enter, _, _)) = evt {
+            if control_id.is_none() {
+                Ok(())
+            } else {
+                Err(format!("Expected PointerAction::Enter with a 'None' control ID, got {:?}", evt))
+            }
+        } else {
+            Err(format!("Expected PointerAction::Enter, got {:?}", evt))
+        }
+    }
+
+    ///
+    /// Checks that evt is an enter event for a control
+    ///
+    fn expect_enter_control(evt: FocusEvent, control_id: ControlId) -> Result<(), String> {
+        if let FocusEvent::Event(actual_control_id, DrawEvent::Pointer(PointerAction::Enter, _, _)) = evt {
+            if actual_control_id == Some(control_id) {
+                Ok(())
+            } else {
+                Err(format!("Expected PointerAction::Enter with a '{:?}' control ID, got {:?}", control_id, evt))
+            }
+        } else {
+            Err(format!("Expected PointerAction::Enter, got {:?}", evt))
+        }
+    }
+
+    ///
     /// Checks that evt is an enter event
     ///
     fn expect_enter(evt: FocusEvent) -> Result<(), String> {
@@ -1047,6 +1077,9 @@ mod test {
         let program2 = SubProgramId::called("Subprogram2");
         let canvas   = SubProgramId::called("CanvasProgram");
 
+        let control1 = ControlId::new();
+        let control2 = ControlId::new();
+
         // Add test programs that relay the messages
         scene.add_subprogram(program1, |mut input, context| async move { while let Some(msg) = input.next().await { println!("Program1: {:?}", msg); context.send_message(SubProgram1(msg)).await.unwrap(); } }, 10);
         scene.add_subprogram(program2, |mut input, context| async move { while let Some(msg) = input.next().await { println!("Program2: {:?}", msg); context.send_message(SubProgram2(msg)).await.unwrap(); } }, 10);
@@ -1062,13 +1095,14 @@ mod test {
         on_canvas.location_in_canvas        = Some((500.0, 500.0));
 
         TestBuilder::new()
-            .send_message(Focus::ClaimControlRegion { program: program1, control: ControlId::new(), region: vec![program1_path], z_index: 0 })
-            .send_message(Focus::ClaimControlRegion { program: program2, control: ControlId::new(), region: vec![program2_path], z_index: 1 })
+            .send_message(Focus::ClaimControlRegion { program: program1, control: control1, region: vec![program1_path], z_index: 0 })
+            .send_message(Focus::ClaimControlRegion { program: program1, control: control2, region: vec![program2_path], z_index: 1 })
             .send_message(Focus::SetCanvas(canvas))
 
             // Should keep tracking the mouse after the button goes down as staying in program 1
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::ButtonDown, PointerId(0), in_program1_path.clone())))
-            .expect_message(move |SubProgram1(evt): SubProgram1| expect_enter(evt))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_enter_program(evt))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_enter_control(evt, control1))
             .expect_message(move |SubProgram1(evt): SubProgram1| expect_buttondown(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program2_path.clone())))
             .expect_message(move |SubProgram1(evt): SubProgram1| expect_move(evt))
@@ -1078,18 +1112,19 @@ mod test {
             // Moves should get sent to whichever program they're over
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program2_path.clone())))
             .expect_message(move |SubProgram1(evt): SubProgram1| expect_leave(evt))
-            .expect_message(move |SubProgram2(evt): SubProgram2| expect_enter(evt))
-            .expect_message(move |SubProgram2(evt): SubProgram2| expect_move(evt))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_enter_control(evt, control2))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_move(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program2_path.clone())))
-            .expect_message(move |SubProgram2(evt): SubProgram2| expect_move(evt))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_move(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program1_path.clone())))
-            .expect_message(move |SubProgram2(evt): SubProgram2| expect_leave(evt))
-            .expect_message(move |SubProgram1(evt): SubProgram1| expect_enter(evt))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_leave(evt))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_enter_control(evt, control1))
             .expect_message(move |SubProgram1(evt): SubProgram1| expect_move(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program1_path.clone())))
             .expect_message(move |SubProgram1(evt): SubProgram1| expect_move(evt))
 
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), on_canvas.clone())))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_leave(evt))
             .expect_message(move |SubProgram1(evt): SubProgram1| expect_leave(evt))
             .expect_message(move |CanvasProgram(evt): CanvasProgram| expect_enter(evt))
             .expect_message(move |CanvasProgram(evt): CanvasProgram| expect_move(evt))
