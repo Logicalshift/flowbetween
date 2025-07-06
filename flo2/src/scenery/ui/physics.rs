@@ -118,6 +118,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         for request in request_chunk.into_iter() {
             use PhysicsLayer::*;
             match request {
+                // Tool requests
                 AddTool(new_tool, program_id)   => { state.add_tool(new_tool, program_id); positions_invalidated = true; },
                 DockTool(tool_id)               => { state.dock_tool(tool_id); positions_invalidated = true; }
                 DockProperties(tool_id)         => { state.dock_properties(tool_id); positions_invalidated = true; }
@@ -125,6 +126,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
                 RemoveTool(tool_id)             => { state.remove_tool(tool_id); positions_invalidated = true; }
                 UpdatePosition(_)               => { positions_invalidated = true; }
                 RedrawIcon(tool_id)             => { state.invalidate_sprite(tool_id); }
+
+                // Event handling
+                Event(FocusEvent::Event(_, DrawEvent::Resize(w, h)))   => { state.set_bounds(w, h); positions_invalidated = true; }
 
                 Event(_draw_event) => {
 
@@ -267,6 +271,13 @@ impl PhysicsLayerState {
                 self.sprites.push(sprite);
             }
         }
+    }
+
+    ///
+    /// Updates the bounds of the window that the tools are contained within
+    ///
+    pub fn set_bounds(&mut self, width: f64, height: f64) {
+        self.bounds = (width, height);
     }
 }
 
