@@ -104,6 +104,8 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
         focused_control:            None,
         focused_event_target:       None,
         tab_ordering:               HashMap::new(),
+        scale:                      None,
+        bounds:                     None,
     };
 
     while let Some(request) = input.next().await {
@@ -113,8 +115,8 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             // General untargeted draw events
             Event(DrawEvent::Redraw)                => { },
             Event(DrawEvent::NewFrame)              => { },
-            Event(DrawEvent::Scale(scale))          => { focus.send_to_all(DrawEvent::Scale(scale), &context).await; },
-            Event(DrawEvent::Resize(w, h))          => { focus.send_to_all(DrawEvent::Resize(w, h), &context).await; },
+            Event(DrawEvent::Scale(scale))          => { focus.set_scale(scale, &context).await; },
+            Event(DrawEvent::Resize(w, h))          => { focus.set_bounds(w, h, &context).await; },
             Event(DrawEvent::CanvasTransform(_))    => { },
             Event(DrawEvent::Closed)                => { focus.send_to_all(DrawEvent::Closed, &context).await; }
 
@@ -235,6 +237,12 @@ struct FocusProgram {
 
     /// The focus order for the subprograms
     subprogram_order: Vec<SubProgramId>,
+
+    /// The bounding box of the window (None if this has not been sent to us)
+    bounds: Option<(f64, f64)>,
+
+    /// The scale of the window (None if this has not been sent to us)
+    scale: Option<f64>,
 }
 
 impl SubProgramRegion {
@@ -270,6 +278,22 @@ impl SubProgramControl {
 }
 
 impl FocusProgram {
+    ///
+    /// Sets the scale of the window
+    ///
+    async fn set_scale(&mut self, scale: f64, context: &SceneContext) {
+        self.scale = Some(scale);
+        self.send_to_all(DrawEvent::Scale(scale), &context).await;
+    }
+
+    ///
+    /// Sets the bounds of the window
+    ///
+    async fn set_bounds(&mut self, width: f64, height: f64, context: &SceneContext) {
+        self.bounds = Some((width, height));
+        self.send_to_all(DrawEvent::Resize(width, height), &context).await;
+    }
+
     ///
     /// Sets keyboard focus to a specific program/control
     ///
