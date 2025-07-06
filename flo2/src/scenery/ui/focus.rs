@@ -1010,7 +1010,7 @@ mod test {
 
         in_program1_path.location_in_canvas = Some((300.0, 500.0));
         in_program2_path.location_in_canvas = Some((700.0, 500.0));
-        on_canvas.location_in_canvas        = Some((500.0, 500.0));
+        on_canvas.location_in_canvas        = Some((390.0, 590.0));
 
         TestBuilder::new()
             .send_message(Focus::ClaimRegion { program: program1, region: vec![program1_path], z_index: 0 })
@@ -1092,7 +1092,7 @@ mod test {
 
         in_program1_path.location_in_canvas = Some((300.0, 500.0));
         in_program2_path.location_in_canvas = Some((700.0, 500.0));
-        on_canvas.location_in_canvas        = Some((500.0, 500.0));
+        on_canvas.location_in_canvas        = Some((390.0, 590.0));
 
         TestBuilder::new()
             .send_message(Focus::ClaimControlRegion { program: program1, control: control1, region: vec![program1_path], z_index: 0 })
