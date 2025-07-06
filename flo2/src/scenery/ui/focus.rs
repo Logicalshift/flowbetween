@@ -467,10 +467,10 @@ impl FocusProgram {
         let program_data = self.subprogram_data.entry(program)
             .or_insert_with(|| {
                 SubProgramRegion {
-                    region:     region.clone(),
+                    region:     PathContour::from_path::<UiPath>(vec![], contour_size),
                     bounds:     bounds.clone(),
                     controls:   vec![],
-                    z_index:    z_index,
+                    z_index:    0,
                 }
             });
 
@@ -1124,9 +1124,9 @@ mod test {
             .expect_message(move |SubProgram1(evt): SubProgram1| expect_move(evt))
 
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), on_canvas.clone())))
-            .expect_message(move |SubProgram1(evt): SubProgram1| expect_leave(evt))
-            .expect_message(move |SubProgram1(evt): SubProgram1| expect_leave(evt))
-            .expect_message(move |CanvasProgram(evt): CanvasProgram| expect_enter(evt))
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_leave(evt)) // Leave control
+            .expect_message(move |SubProgram1(evt): SubProgram1| expect_leave(evt)) // Leave program
+            .expect_message(move |CanvasProgram(evt): CanvasProgram| expect_enter(evt)) // Enter canvas
             .expect_message(move |CanvasProgram(evt): CanvasProgram| expect_move(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), on_canvas.clone())))
             .expect_message(move |CanvasProgram(evt): CanvasProgram| expect_move(evt))
