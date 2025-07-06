@@ -475,6 +475,9 @@ impl FocusProgram {
             });
 
         if let Some(control) = control {
+            // Make sure the bounds includes the region
+            program_data.bounds = program_data.bounds.union_bounds(bounds);
+
             // Add a new control
             program_data.controls.push(SubProgramControl {
                 id:         control,
