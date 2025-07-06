@@ -48,8 +48,8 @@ pub enum PhysicsLayer {
     /// Event to process
     Event(FocusEvent),
 
-    /// Redraw the positions of the tools
-    UpdatePositions,
+    /// Redraw the positions of a particular tool
+    UpdatePosition(PhysicsToolId),
 
     /// Redraw the sprite attached to a tool
     RedrawIcon(PhysicsToolId),
@@ -123,7 +123,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
                 DockProperties(tool_id)         => { state.dock_properties(tool_id); positions_invalidated = true; }
                 Float(tool_id, position)        => { state.float(tool_id, position); positions_invalidated = true; }
                 RemoveTool(tool_id)             => { state.remove_tool(tool_id); positions_invalidated = true; }
-                UpdatePositions                 => { positions_invalidated = true; }
+                UpdatePosition(_)               => { positions_invalidated = true; }
                 RedrawIcon(tool_id)             => { state.invalidate_sprite(tool_id); }
 
                 Event(_draw_event) => {

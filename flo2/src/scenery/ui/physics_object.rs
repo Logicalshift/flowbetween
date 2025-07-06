@@ -218,7 +218,7 @@ impl PhysicsObject {
         });
 
         // Notify when the position changes
-        self.position_tracker = Some(deps.when_changed(NotifySubprogram::send(PhysicsLayer::UpdatePositions, context, ())));
+        self.position_tracker = Some(deps.when_changed(NotifySubprogram::send(PhysicsLayer::UpdatePosition(self.tool.id()), context, ())));
 
         drawing
     }
