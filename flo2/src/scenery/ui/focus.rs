@@ -110,6 +110,7 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
         use Focus::*;
 
         match request {
+            // General untargeted draw events
             Event(DrawEvent::Redraw)                => { },
             Event(DrawEvent::NewFrame)              => { },
             Event(DrawEvent::Scale(scale))          => { focus.send_to_all(DrawEvent::Scale(scale), &context).await; },
@@ -117,6 +118,7 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             Event(DrawEvent::CanvasTransform(_))    => { },
             Event(DrawEvent::Closed)                => { focus.send_to_all(DrawEvent::Closed, &context).await; }
 
+            // Pointer and key events
             Event(DrawEvent::Pointer(PointerAction::Enter, _, _))                           => { },
             Event(DrawEvent::Pointer(PointerAction::Leave, _, _))                           => { },
             Event(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => { focus.set_pointer_target(&pointer_state, &context).await; focus.pointer_target_lock_count += 1; focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)).await; },
@@ -125,6 +127,7 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             Event(DrawEvent::KeyDown(scancode, key))                                        => { focus.send_to_focus(DrawEvent::KeyDown(scancode, key)).await; },
             Event(DrawEvent::KeyUp(scancode, key))                                          => { focus.send_to_focus(DrawEvent::KeyUp(scancode, key)).await; },
 
+            // Updates from the scene in general
             Update(SceneUpdate::Stopped(program_id))    => { focus.remove_program_claims(program_id).await; focus.remove_program_focus(program_id).await; },
             Update(_)                                   => { }
 
