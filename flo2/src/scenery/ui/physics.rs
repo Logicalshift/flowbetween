@@ -6,6 +6,7 @@
 //! controls overlapping.
 //!
 
+use super::focus::*;
 use super::namespaces::*;
 use super::physics_object::*;
 use super::physics_tool::*;
@@ -45,7 +46,7 @@ pub enum PhysicsLayer {
     RemoveTool(PhysicsToolId),
 
     /// Event to process
-    Event(DrawEvent),
+    Event(FocusEvent),
 
     /// Redraw the positions of the tools
     UpdatePositions,
@@ -83,7 +84,9 @@ fn test_object() -> PhysicsObject {
 /// Runs the physics layer subprogram
 ///
 pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneContext) {
-    let mut drawing_requests = context.send::<DrawingRequest>(()).unwrap();
+    let our_program_id          = context.current_program_id().unwrap();
+    let mut drawing_requests    = context.send::<DrawingRequest>(()).unwrap();
+    let mut focus_requests      = context.send::<Focus>(()).unwrap();
 
     // Drawing settings
     let mut state = PhysicsLayerState {
@@ -101,9 +104,8 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     test_object.set_position(ToolPosition::Float(100.0, 100.0));
     state.objects.push(test_object);
 
-    // Sprite IDs that we're not using any more, 
-    let mut sprites: Vec<SpriteId>  = vec![];
-    let mut next_sprite_id          = 0;
+    // We're a focus program with only controls, underneath pretty much anything else (so we claim z-index 0)
+    focus_requests.send(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 });
 
     // Run the main loop
     let mut input = input.ready_chunks(100);
@@ -293,6 +295,7 @@ impl SceneMessage for PhysicsLayer {
         init_context.add_subprogram(subprogram_physics_layer(), physics_layer, 20);
 
         init_context.connect_programs((), subprogram_physics_layer(), StreamId::with_message_type::<PhysicsLayer>()).ok();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|focus_events| focus_events.map(|event| PhysicsLayer::Event(event)))), (), StreamId::with_message_type::<FocusEvent>()).ok();
     }
 }
 
