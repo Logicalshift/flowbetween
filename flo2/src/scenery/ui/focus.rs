@@ -144,8 +144,8 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             RemoveClaim(program_id)                                     => focus.remove_program_claims(program_id).await,
             RemoveControlClaim(program_id, control_id)                  => focus.remove_control_claims(program_id, control_id).await,
             SetCanvas(canvas_program_id)                                => focus.set_canvas(canvas_program_id).await,
-            ClaimRegion { program, region, z_index }                    => focus.claim_region(program, region, None, z_index).await,
-            ClaimControlRegion { program, region, control, z_index }    => focus.claim_region(program, region, Some(control), z_index).await,
+            ClaimRegion { program, region, z_index }                    => focus.claim_region(program, region, None, z_index, &context).await,
+            ClaimControlRegion { program, region, control, z_index }    => focus.claim_region(program, region, Some(control), z_index, &context).await,
         }
     }
 }
@@ -506,7 +506,7 @@ impl FocusProgram {
     ///
     /// Marks a region as belonging to a certain control
     ///
-    async fn claim_region(&mut self, program: SubProgramId, region: Vec<UiPath>, control: Option<ControlId>, z_index: usize) {
+    async fn claim_region(&mut self, program: SubProgramId, region: Vec<UiPath>, control: Option<ControlId>, z_index: usize, context: &SceneContext) {
         // Get the bounds of the region
         let bounds = region.iter()
             .map(|path| path.bounding_box::<Bounds<_>>())
@@ -518,15 +518,25 @@ impl FocusProgram {
         let region          = PathContour::from_path(region, contour_size);
 
         // Look up or create the subprogram data
-        let program_data = self.subprogram_data.entry(program)
-            .or_insert_with(|| {
-                SubProgramRegion {
-                    region:     PathContour::from_path::<UiPath>(vec![], contour_size),
-                    bounds:     bounds.clone(),
-                    controls:   vec![],
-                    z_index:    0,
-                }
-            });
+        let program_data = self.subprogram_data.get_mut(&program);
+        let program_data = if let Some(program_data) = program_data {
+            program_data
+        } else {
+            // Add a new region
+            let new_region = SubProgramRegion {
+                region:     PathContour::from_path::<UiPath>(vec![], contour_size),
+                bounds:     bounds.clone(),
+                controls:   vec![],
+                z_index:    0,
+            };
+            self.subprogram_data.insert(program, new_region);
+
+            // Send the greeting to the subprogram
+            self.greet_new_subprogram(program, context).await;
+
+            // Fetch the program we just added
+            self.subprogram_data.get_mut(&program).unwrap()
+        };
 
         if let Some(control) = control {
             // Make sure the bounds includes the region
