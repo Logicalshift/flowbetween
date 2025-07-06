@@ -105,7 +105,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     state.objects.push(test_object);
 
     // We're a focus program with only controls, underneath pretty much anything else (so we claim z-index 0)
-    focus_requests.send(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 });
+    focus_requests.send(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 }).await.ok();
 
     // Run the main loop
     let mut input = input.ready_chunks(100);
