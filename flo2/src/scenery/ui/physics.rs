@@ -104,8 +104,10 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
     // TEST: create a test object, force an initial update
     let mut test_object = test_object();
+    let test_object_id = test_object.tool().id();
     test_object.set_position(ToolPosition::Float(100.0, 100.0));
     state.objects.push(test_object);
+    state.update_tool_focus(test_object_id, &mut focus_requests).await;
 
     // We're a focus program with only controls, underneath pretty much anything else (so we claim z-index 0)
     focus_requests.send(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 }).await.ok();
