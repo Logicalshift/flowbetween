@@ -303,7 +303,7 @@ impl PhysicsLayerState {
             if let Some((x, y)) = self.objects[existing_idx].position(self.bounds) {
                 let (w, h)    = self.objects[existing_idx].tool().size();
                 let tool_size = w.max(h);
-                let tool_path = Circle::new(UiPoint(x, y), tool_size).to_path();
+                let tool_path = Circle::new(UiPoint(x, y), tool_size/2.0).to_path();
 
                 // Create a focus region for the tool
                 focus_events.send(Focus::ClaimControlRegion {
