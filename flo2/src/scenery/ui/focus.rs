@@ -551,8 +551,11 @@ impl FocusProgram {
             })
         } else {
             // Not setting the region for a control: update the region set for the subprogram
+            let combined_bounds = program_data.controls.iter()
+                .fold(bounds, |a, b| a.union_bounds(b.bounds));
+
             program_data.region   = region;
-            program_data.bounds   = bounds;
+            program_data.bounds   = combined_bounds;
             program_data.z_index  = z_index;
         }
 
