@@ -22,6 +22,9 @@ pub struct PhysicsObject {
     /// The physics tool itself
     tool: PhysicsTool,
 
+    /// The subprogram ID of the program that manages the events for this control
+    subprogram_id: SubProgramId,
+
     /// Where events for this tool should be sent
     event_target: StreamTarget,
 
@@ -37,8 +40,11 @@ pub struct PhysicsObject {
     /// Location of the tool 
     position: Binding<ToolPosition>,
 
-    /// The subprogram ID of the program that manages the events for this control
-    subprogram_id: SubProgramId,
+    /// The drag anchor specified by the last 'start drag' operation
+    drag_anchor: (f64, f64),
+
+    /// The drag position of this object (as opposed to the 'real' position that it assumes when the drag has finished)
+    drag_position: Binding<Option<(f64, f64)>>,
 }
 
 ///
@@ -87,12 +93,14 @@ impl PhysicsObject {
     pub fn new(tool: PhysicsTool, event_target: StreamTarget) -> Self {
         Self {
             tool:               tool,
+            subprogram_id:      SubProgramId::new(),
             event_target:       event_target,
             sprite:             bind(None),
             sprite_tracker:     None,
             position_tracker:   None,
             position:           bind(ToolPosition::Hidden),
-            subprogram_id:      SubProgramId::new(),
+            drag_anchor:        (0.0, 0.0),
+            drag_position:      bind(None),
         }
     }
 
@@ -200,6 +208,42 @@ impl PhysicsObject {
     }
 
     ///
+    /// Starts a drag operation on this object
+    ///
+    pub fn start_drag(&mut self, x: f64, y: f64, bounds: (f64, f64)) {
+        self.drag_anchor = (x, y);
+        self.drag_position.set(self.position(bounds));
+    }
+
+    ///
+    /// Starts a drag operation on this object
+    ///
+    pub fn drag(&mut self, x: f64, y: f64) {
+        if let Some((x_pos, y_pos)) = self.drag_position.get() {
+            // Calculate the offset from the existing drag anchor
+            let offset_x = x - self.drag_anchor.0;
+            let offset_y = y - self.drag_anchor.1;
+
+            // Move the drag position by the offset
+            self.drag_position.set(Some((x_pos + offset_x, y_pos + offset_y)));
+
+            // Update the anchor
+            self.drag_anchor.0 += offset_x;
+            self.drag_anchor.1 += offset_y;
+        }
+    }
+
+    ///
+    /// Finishes a drag operation on this object
+    ///
+    pub fn end_drag(&mut self, x: f64, y: f64) {
+        if let Some((new_x, new_y)) = self.drag_position.get() {
+            self.set_position(ToolPosition::Float(new_x, new_y));
+            self.drag_position.set(None);
+        }
+    }
+
+    ///
     /// Returns the instructions to draw this physics object
     ///
     pub fn draw(&mut self, bounds: (f64, f64), context: &SceneContext) -> Vec<Draw> {
@@ -221,6 +265,7 @@ impl PhysicsObject {
             };
 
             let pos     = if let Some(pos) = pos { pos } else { return drawing; };
+            let pos     = if let Some(drag_position) = self.drag_position.get() { drag_position } else { pos };
             let sprite  = self.sprite.get();
             let sprite  = if let Some(sprite) = sprite { sprite } else { return drawing; };
             let (x, y)  = pos;

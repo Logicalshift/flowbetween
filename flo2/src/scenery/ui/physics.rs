@@ -143,9 +143,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
                 ObjectAction(PhysicsObjectAction::Activate(tool_id))        => { }
                 ObjectAction(PhysicsObjectAction::Expand(tool_id))          => { }
-                ObjectAction(PhysicsObjectAction::StartDrag(tool_id, x, y)) => { }
-                ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))      => { }
-                ObjectAction(PhysicsObjectAction::EndDrag(tool_id, x, y))   => { }
+                ObjectAction(PhysicsObjectAction::StartDrag(tool_id, x, y)) => { let bounds = state.bounds; state.object_action(tool_id, |object| object.start_drag(x, y, bounds)); }
+                ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))      => { state.object_action(tool_id, |object| object.drag(x, y)); }
+                ObjectAction(PhysicsObjectAction::EndDrag(tool_id, x, y))   => { state.object_action(tool_id, |object| object.end_drag(x, y)); }
             }
         }
 
