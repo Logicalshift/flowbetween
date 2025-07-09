@@ -1,33 +1,19 @@
 use super::binding_tracker::*;
 use super::colors::*;
-use super::control_id::*;
 use super::focus::*;
 use super::namespaces::*;
 use super::physics::*;
 use super::physics_tool::*;
 
+use futures::prelude::*;
+
 use flo_binding::*;
 use flo_binding::binding_context::*;
+use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_scene::*;
 
-///
-/// Location of a tool on the canvas
-///
-#[derive(Clone, Debug, PartialEq)]
-pub enum ToolPosition {
-    // Not displayed
-    Hidden,
-
-    /// Docked to the tool bar (at the specified position)
-    DockTool(usize),
-
-    /// Docked to the properties bar (at the specified position)
-    DockProperties(usize),
-
-    /// Floating, centered at a position
-    Float(f64, f64),
-}
+use ::serde::*;
 
 ///
 /// Object on the physics layer
@@ -51,8 +37,47 @@ pub struct PhysicsObject {
     /// Location of the tool 
     position: Binding<ToolPosition>,
 
-    /// The control ID of this tool
-    control_id: ControlId,
+    /// The subprogram ID of the program that manages the events for this control
+    subprogram_id: SubProgramId,
+}
+
+///
+/// Represents an action performed on a physics tool
+///
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum PhysicsObjectAction {
+    /// Pick this tool as the active tool
+    Activate(PhysicsToolId),
+
+    /// Expand the settings for this tool
+    Expand(PhysicsToolId),
+
+    /// Physics tool is being dragged
+    StartDrag(PhysicsToolId, f64, f64),
+
+    /// Move the tool by the specified offset from the StartDrag
+    Drag(PhysicsToolId, f64, f64),
+
+    /// Finishes a drag
+    EndDrag(PhysicsToolId, f64, f64),
+}
+
+///
+/// Location of a tool on the canvas
+///
+#[derive(Clone, Debug, PartialEq)]
+pub enum ToolPosition {
+    // Not displayed
+    Hidden,
+
+    /// Docked to the tool bar (at the specified position)
+    DockTool(usize),
+
+    /// Docked to the properties bar (at the specified position)
+    DockProperties(usize),
+
+    /// Floating, centered at a position
+    Float(f64, f64),
 }
 
 impl PhysicsObject {
@@ -67,7 +92,7 @@ impl PhysicsObject {
             sprite_tracker:     None,
             position_tracker:   None,
             position:           bind(ToolPosition::Hidden),
-            control_id:         ControlId::new(),
+            subprogram_id:      SubProgramId::new(),
         }
     }
 
@@ -81,8 +106,8 @@ impl PhysicsObject {
     ///
     /// The control ID that represents this object on the canvas
     ///
-    pub fn control_id(&self) -> ControlId {
-        self.control_id
+    pub fn subprogram_id(&self) -> SubProgramId {
+        self.subprogram_id
     }
 
     ///
@@ -234,5 +259,18 @@ impl PhysicsObject {
         self.position_tracker = Some(deps.when_changed(NotifySubprogram::send(PhysicsLayer::UpdatePosition(self.tool.id()), context, ())));
 
         drawing
+    }
+}
+
+///
+/// Subprogram that manages events for a PhysicsObject
+///
+/// This will generate PhysicsLayerEvents, and expects to receive DrawEvents from the focus subprogram (it relies on the focus subprogram
+/// to )
+///
+pub async fn physics_object_program(input: InputStream<FocusEvent>, context: SceneContext, tool_id: PhysicsToolId) {
+    let mut input = input;
+
+    while let Some(evt) = input.next().await {
     }
 }

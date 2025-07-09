@@ -18,6 +18,7 @@ use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
 use flo_scene::*;
+use flo_scene::programs::*;
 use flo_curves::arc::*;
 
 use futures::prelude::*;
@@ -55,6 +56,9 @@ pub enum PhysicsLayer {
 
     /// Redraw the sprite attached to a tool
     RedrawIcon(PhysicsToolId),
+
+    /// Action message for a physics object
+    ObjectAction(PhysicsObjectAction),
 }
 
 ///
@@ -69,7 +73,7 @@ pub enum PhysicsEvent {
     Deselect(PhysicsToolId),
 }
 
-fn test_object() -> PhysicsObject {
+fn test_object() -> PhysicsTool {
     let mut drawing = vec![];
 
     drawing.fill_color(Color::Rgba(0.0, 0.0, 1.0, 1.0));
@@ -79,7 +83,7 @@ fn test_object() -> PhysicsObject {
     let tool = PhysicsTool::new(PhysicsToolId::new())
         .with_icon(drawing);
 
-    PhysicsObject::new(tool, StreamTarget::None)
+    tool
 }
 
 ///
@@ -104,9 +108,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
     // TEST: create a test object, force an initial update
     let mut test_object = test_object();
-    let test_object_id = test_object.tool().id();
-    test_object.set_position(ToolPosition::Float(100.0, 100.0));
-    state.objects.push(test_object);
+    let test_object_id = test_object.id();
+    state.add_tool(test_object, StreamTarget::None, &context).await;
+    state.float(test_object_id, (100.0, 100.0));
     state.update_tool_focus(test_object_id, &mut focus_requests).await;
 
     // We're a focus program with only controls, underneath pretty much anything else (so we claim z-index 0)
@@ -124,7 +128,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
             use PhysicsLayer::*;
             match request {
                 // Tool requests
-                AddTool(new_tool, program_id)   => { let tool_id = new_tool.id(); state.add_tool(new_tool, program_id); positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; },
+                AddTool(new_tool, program_id)   => { let tool_id = new_tool.id(); state.add_tool(new_tool, program_id.into(), &context).await; positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; },
                 DockTool(tool_id)               => { state.dock_tool(tool_id); positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; }
                 DockProperties(tool_id)         => { state.dock_properties(tool_id); positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; }
                 Float(tool_id, position)        => { state.float(tool_id, position); positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; }
@@ -135,9 +139,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
                 // Event handling
                 Event(FocusEvent::Event(_, DrawEvent::Resize(w, h)))   => { state.set_bounds(w, h); positions_invalidated = true; }
 
-                Event(_draw_event) => {
+                Event(_draw_event) => { }
 
-                }
+                ObjectAction(_action) => { }
             }
         }
 
@@ -200,7 +204,7 @@ impl PhysicsLayerState {
     ///
     /// Adds or replaces a tool within this object
     ///
-    pub fn add_tool(&mut self, new_tool: PhysicsTool, target_program: SubProgramId) {
+    pub async fn add_tool(&mut self, new_tool: PhysicsTool, target_program: StreamTarget, context: &SceneContext) {
         let existing_idx = self.objects.iter().enumerate()
             .filter(|(_, object)| object.tool().id() == new_tool.id())
             .map(|(idx, _)| idx)
@@ -212,6 +216,14 @@ impl PhysicsLayerState {
         } else {
             // Create a new object
             let object = PhysicsObject::new(new_tool, target_program.into());
+
+            // Start a subprogram to manage this tool
+            let tool_id = object.tool().id();
+            context.send_message(SceneControl::start_program(object.subprogram_id(),
+                move |input, context| physics_object_program(input, context, tool_id),
+                0
+            )).await.ok();
+
             self.objects.push(object);
         }
     }
@@ -300,7 +312,7 @@ impl PhysicsLayerState {
 
         if let Some(existing_idx) = existing_idx {
             // Each object has a control ID
-            let control_id = self.objects[existing_idx].control_id();
+            let program_id = self.objects[existing_idx].subprogram_id();
 
             if let Some((x, y)) = self.objects[existing_idx].position(self.bounds) {
                 let (w, h)    = self.objects[existing_idx].tool().size();
@@ -308,15 +320,14 @@ impl PhysicsLayerState {
                 let tool_path = Circle::new(UiPoint(x, y), tool_size/2.0).to_path();
 
                 // Create a focus region for the tool
-                focus_events.send(Focus::ClaimControlRegion {
-                    program:    self.our_program_id,
+                focus_events.send(Focus::ClaimRegion {
+                    program:    program_id,
                     region:     vec![tool_path],
-                    control:    control_id,
                     z_index:    existing_idx,
                 }).await.ok();
             } else {
                 // Tool is hidden or otherwise not present
-                focus_events.send(Focus::RemoveControlClaim(self.our_program_id, control_id)).await.ok();
+                focus_events.send(Focus::RemoveClaim(program_id)).await.ok();
             }
         }
     }
