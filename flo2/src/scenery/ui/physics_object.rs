@@ -308,6 +308,56 @@ impl PhysicsObject {
 }
 
 ///
+/// Runs a drag action for a physics object tool
+///
+async fn track_drag((x, y): (f64, f64), input: &mut InputStream<FocusEvent>, context: &SceneContext, tool_id: PhysicsToolId, layer_actions: &mut OutputSink<PhysicsLayer>) {
+    let mut last_x = x;
+    let mut last_y = y;
+
+    // Send the start drag action
+    layer_actions.send(PhysicsLayer::ObjectAction(PhysicsObjectAction::StartDrag(tool_id, x, y))).await.ok();
+
+    // Track the pointer as it moves during the drag, until the button is released
+    while let Some(evt) = input.next().await {
+        match evt {
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, _, pointer_state)) => {
+                if let Some((x, y)) = pointer_state.location_in_canvas {
+                    // Continue the drag
+                    layer_actions.send(PhysicsLayer::ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))).await.ok();
+
+                    last_x = x;
+                    last_y = y;
+                }
+            }
+
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Drag, _, pointer_state)) => {
+                if let Some((x, y)) = pointer_state.location_in_canvas {
+                    // Continue the drag
+                    layer_actions.send(PhysicsLayer::ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))).await.ok();
+
+                    last_x = x;
+                    last_y = y;
+                }
+            }
+
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, _, pointer_state)) => {
+                // Finish the drag
+                if let Some((x, y)) = pointer_state.location_in_canvas {
+                    layer_actions.send(PhysicsLayer::ObjectAction(PhysicsObjectAction::EndDrag(tool_id, x, y))).await.ok();
+                } else {
+                    layer_actions.send(PhysicsLayer::ObjectAction(PhysicsObjectAction::EndDrag(tool_id, last_x, last_y))).await.ok();
+                }
+
+                // Exit the drag loop
+                break;
+            }
+
+            _ => { }
+        }
+    }
+}
+
+///
 /// Subprogram that manages the basic mouse and keyboard events for a PhysicsObject
 ///
 /// This will generate PhysicsLayerEvents, and expects to receive DrawEvents from the focus subprogram (it relies on the focus subprogram
@@ -321,50 +371,8 @@ pub async fn physics_object_program(input: InputStream<FocusEvent>, context: Sce
         match evt {
             FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonDown, _, pointer_state)) => {
                 if let Some((x, y)) = pointer_state.location_in_canvas {
-                    let mut last_x = x;
-                    let mut last_y = y;
-
-                    // Start the drag event
-                    layer_actions.send(PhysicsLayer::ObjectAction(PhysicsObjectAction::StartDrag(tool_id, x, y))).await.ok();
-
-                    // Track the drag event
-                    while let Some(evt) = input.next().await {
-                        match evt {
-                            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, _, pointer_state)) => {
-                                if let Some((x, y)) = pointer_state.location_in_canvas {
-                                    // Continue the drag
-                                    layer_actions.send(PhysicsLayer::ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))).await.ok();
-
-                                    last_x = x;
-                                    last_y = y;
-                                }
-                            }
-
-                            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Drag, _, pointer_state)) => {
-                                if let Some((x, y)) = pointer_state.location_in_canvas {
-                                    // Continue the drag
-                                    layer_actions.send(PhysicsLayer::ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))).await.ok();
-
-                                    last_x = x;
-                                    last_y = y;
-                                }
-                            }
-
-                            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, _, pointer_state)) => {
-                                // Finish the drag
-                                if let Some((x, y)) = pointer_state.location_in_canvas {
-                                    layer_actions.send(PhysicsLayer::ObjectAction(PhysicsObjectAction::EndDrag(tool_id, x, y))).await.ok();
-                                } else {
-                                    layer_actions.send(PhysicsLayer::ObjectAction(PhysicsObjectAction::EndDrag(tool_id, last_x, last_y))).await.ok();
-                                }
-
-                                // Exit the drag loop
-                                break;
-                            }
-
-                            _ => { }
-                        }
-                    }
+                    // Drag the tool
+                    track_drag((x, y), &mut input, &context, tool_id, &mut layer_actions).await;
                 }
             }
 
