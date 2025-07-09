@@ -141,7 +141,11 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
                 Event(_draw_event) => { }
 
-                ObjectAction(_action) => { }
+                ObjectAction(PhysicsObjectAction::Activate(tool_id))        => { }
+                ObjectAction(PhysicsObjectAction::Expand(tool_id))          => { }
+                ObjectAction(PhysicsObjectAction::StartDrag(tool_id, x, y)) => { }
+                ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))      => { }
+                ObjectAction(PhysicsObjectAction::EndDrag(tool_id, x, y))   => { }
             }
         }
 
