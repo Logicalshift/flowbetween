@@ -233,6 +233,20 @@ impl PhysicsLayerState {
     }
 
     ///
+    /// Performs an action on the object with the specified ID
+    ///
+    pub fn object_action(&mut self, tool_id: PhysicsToolId, action: impl FnOnce(&mut PhysicsObject) -> ()) {
+        let existing_idx = self.objects.iter().enumerate()
+            .filter(|(_, object)| object.tool().id() == tool_id)
+            .map(|(idx, _)| idx)
+            .next();
+
+        if let Some(existing_idx) = existing_idx {
+            (action)(&mut self.objects[existing_idx])
+        }
+    }
+
+    ///
     /// Add a tool to the end of the tool dock
     ///
     pub fn dock_tool(&mut self, tool_id: PhysicsToolId) {
@@ -250,14 +264,7 @@ impl PhysicsLayerState {
     /// Sets the floating position of a tool
     ///
     pub fn float(&mut self, tool_id: PhysicsToolId, new_position: (f64, f64)) {
-        let existing_idx = self.objects.iter().enumerate()
-            .filter(|(_, object)| object.tool().id() == tool_id)
-            .map(|(idx, _)| idx)
-            .next();
-
-        if let Some(existing_idx) = existing_idx {
-            self.objects[existing_idx].set_position(ToolPosition::Float(new_position.0, new_position.1));
-        }
+        self.object_action(tool_id, move |object| object.set_position(ToolPosition::Float(new_position.0, new_position.1)));
     }
 
     ///
