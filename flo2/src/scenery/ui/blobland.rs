@@ -24,6 +24,9 @@ use std::ops::{Range};
 use std::sync::*;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+/// Amount to divide the canvas size by for the blob contour
+const BLOB_CONTOUR_SIZE_RATIO: f64 = 4.0;
+
 ///
 /// An ID for a blob in the blobland
 ///
@@ -57,6 +60,12 @@ pub struct BlobLand {
 
     /// The blobs, sorted into y cordinates
     y_order: Mutex<Option<Vec<BlobId>>>,
+
+    /// The blobs on each canvas line
+    blobs_on_line: Mutex<Option<Vec<Vec<BlobId>>>>,
+
+    /// The size of the canvas
+    canvas_size: ContourSize,
 }
 
 impl BlobId {
@@ -99,8 +108,10 @@ impl BlobLand {
     ///
     pub fn empty() -> BlobLand {
         BlobLand {
-            blobs:      HashMap::new(),
-            y_order:    Mutex::new(None),
+            blobs:          HashMap::new(),
+            y_order:        Mutex::new(None),
+            blobs_on_line:  Mutex::new(None),
+            canvas_size:    ContourSize(0, 0),
         }
     }
 
@@ -125,7 +136,11 @@ impl BlobLand {
     /// Updates the canvas size that the BlobLand will be rendered over
     ///
     pub fn set_canvas_size(&mut self, size: (f64, f64)) {
-        todo!()
+        // The contour is a smaller size than the canvas (this is because we use the distance field to generate a vector and don't need the full resolution)
+        let width   = (size.0/BLOB_CONTOUR_SIZE_RATIO).ceil();
+        let height  = (size.1/BLOB_CONTOUR_SIZE_RATIO).ceil();
+
+        self.canvas_size = ContourSize(width as _, height as _);
     }
 }
 
@@ -133,8 +148,9 @@ impl SampledContour for BlobLand {
     ///
     /// The size of this contour
     ///
+    #[inline]
     fn contour_size(&self) -> ContourSize {
-        todo!()
+        self.canvas_size
     }
 
     ///
@@ -155,7 +171,7 @@ impl SampledSignedDistanceField for BlobLand {
     /// The size of this distance field
     ///
     fn field_size(&self) -> ContourSize {
-        todo!()
+        self.canvas_size
     }
 
     ///
