@@ -10,9 +10,11 @@
 //! Another effect we want to generate is a 'tear off' effect when dragging out items from the dock (dragging from
 //! the dock doesn't undock or rearrange things but creates copies)
 //!
-//! Technically the items can be any shape but we prefer to use circles.
-//!
 
+use super::ui_path::*;
+
+use flo_curves::*;
+use flo_curves::geo::*;
 use flo_curves::bezier::rasterize::*;
 use flo_curves::bezier::vectorize::*;
 use flo_draw::canvas::*;
@@ -81,10 +83,10 @@ pub struct BlobLand {
 #[derive(Clone, Copy, Debug)]
 struct BlobPoint {
     /// Where this point is located
-    pos: (f64, f64),
+    pos: UiPoint,
 
     /// Velocity, in points per second
-    velocity: (f64, f64),
+    velocity: UiPoint,
 }
 
 impl BlobId {
@@ -113,11 +115,11 @@ impl Blob {
                 let angle       = (2.0*f64::consts::PI / (num_points as f64)) * (point_num as f64);
                 let x_offset    = angle.sin() * radius;
                 let y_offset    = angle.cos() * radius;
-                let point_pos   = (pos.0 + x_offset, pos.1 + y_offset);
+                let point_pos   = UiPoint(pos.0 + x_offset, pos.1 + y_offset);
 
                 BlobPoint {
                     pos:        point_pos,
-                    velocity:   (0.0, 0.0),
+                    velocity:   UiPoint(0.0, 0.0),
                 }
             }).collect();
 
@@ -338,6 +340,44 @@ impl BlobLand {
     }
 }
 
-impl BlobPoint {
+/// Length of time per simulation tick
+const TICK: f64         = 1.0 / 60.0;
 
+/// Maximum number of ticks to run in one simulation pass (if the simulation gets delayed for longer than this, the time is 'lost')
+const MAX_TICKS: f64    = 30.0;
+
+/// Friction
+const FRICTION: f64     = 0.9;
+
+/// Force used to push the 
+const RADIUS_FORCE: f64 = 2.0;
+
+impl BlobPoint {
+    ///
+    /// Runs a simulation on this point for a single tick, returning the updated point
+    ///
+    fn simulate_tick(&self, point_distance: f64, center: UiPoint, radius: f64, next_point: &BlobPoint, previous_point: &BlobPoint, attractors: Vec<UiPoint>, repulsors: Vec<UiPoint>) -> BlobPoint {
+        // Take the values from inside this 
+        let mut pos         = self.pos;
+        let mut velocity    = self.velocity;
+
+        // Friction (1 tick)
+        velocity = velocity * FRICTION;
+
+        // Push away from/towards center
+        let center_offset   = pos - center;
+        let center_distance = pos.distance_to(&center);
+        let radius_distance = center_distance - radius;
+        let radius_force    = radius_distance * RADIUS_FORCE * TICK;
+        let unit_offset     = center_offset.to_unit_vector();
+
+        velocity = velocity + (unit_offset * -radius_force);
+
+        // Push away from neighboring points
+
+        // Move the point
+        pos = pos + velocity * TICK;
+
+        BlobPoint { pos, velocity }
+    }
 }
