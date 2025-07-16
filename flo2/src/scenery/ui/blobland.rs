@@ -15,12 +15,14 @@
 
 use flo_curves::bezier::rasterize::*;
 use flo_curves::bezier::vectorize::*;
+use flo_draw::canvas::*;
 
 use smallvec::*;
 use once_cell::sync::{Lazy};
 
 use std::collections::*;
 use std::ops::{Range};
+use std::f64;
 use std::sync::*;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -49,6 +51,12 @@ pub struct Blob {
 
     /// The radius, in pixels, of the part of this blob that's above 'sea level' by default
     island_radius: f64,
+
+    /// The distance that the points in this blob prefer to be from one another
+    point_distance: f64,
+
+    /// The points that represent the outline of this blob
+    points: Vec<BlobPoint>,
 }
 
 ///
@@ -63,6 +71,20 @@ pub struct BlobLand {
 
     /// The size of the canvas
     canvas_size: ContourSize,
+}
+
+///
+/// Each blob consists of a series of points, on which various forces act to create the animations
+///
+/// Blobs are rendered by fitting these points to curves
+///
+#[derive(Clone, Copy, Debug)]
+struct BlobPoint {
+    /// Where this point is located
+    pos: (f64, f64),
+
+    /// Velocity, in points per second
+    velocity: (f64, f64),
 }
 
 impl BlobId {
@@ -83,11 +105,30 @@ impl Blob {
     /// Creates a new blob
     ///
     pub fn new(pos: (f64, f64), radius: f64, island_radius: f64) -> Blob {
+        // The points are initially around the center position
+        let num_points      = 32;
+        let circumference   = 2.0 * island_radius * f64::consts::PI;
+        let points          = (0..32).into_iter()
+            .map(|point_num| {
+                let angle       = (2.0*f64::consts::PI / (num_points as f64)) * (point_num as f64);
+                let x_offset    = angle.sin() * radius;
+                let y_offset    = angle.cos() * radius;
+                let point_pos   = (pos.0 + x_offset, pos.1 + y_offset);
+
+                BlobPoint {
+                    pos:        point_pos,
+                    velocity:   (0.0, 0.0),
+                }
+            }).collect();
+
+        // Create the blob
         Blob {
             id:             BlobId::new(),
             pos:            pos,
             radius:         radius,
             island_radius:  island_radius,
+            point_distance: circumference / (num_points as f64),
+            points:         points,
         }
     }
 
@@ -171,7 +212,65 @@ impl BlobLand {
     }
 
     ///
-    /// Fills the cache of blobs on lines
+    /// Renders the blobland to a graphics context
+    ///
+    pub fn render(&self, gc: &mut impl GraphicsContext) {
+        // Track the blobs that we've rendered (when we're dealing with interacting blobs, we render a whole system of blobs at the same time)
+        //let mut rendered = HashSet::new();
+
+        // Create the blobs, sorted by y position (we use this to discover which blobs are interacting later on)
+        let mut sorted_blobs = self.blobs.keys().copied().collect::<Vec<_>>();
+        sorted_blobs.sort_by(|a, b| {
+            let a_start = self.blobs.get(a).map(|blob| blob.pos.1 - blob.radius).unwrap_or(0.0);
+            let b_start = self.blobs.get(b).map(|blob| blob.pos.1 - blob.radius).unwrap_or(0.0);
+
+            a_start.total_cmp(&b_start)
+        });
+
+        // Sweep the blobs to discover which ones are interacting
+        let mut active_blobs = vec![];
+
+        for blob_id in sorted_blobs.into_iter() {
+            // Fetch the next blob to process and its position
+            let blob    = if let Some(blob) = self.blobs.get(&blob_id) { blob } else { continue; };
+            let min_y   = blob.pos.1 - blob.radius;
+            let max_y   = blob.pos.1 + blob.radius;
+
+            // Remove any blobs from the active list that can't be interacting with this blob
+            active_blobs.retain(|active_blob_id| {
+                if let Some(active_blob) = self.blobs.get(active_blob_id) {
+                    let active_max_y = active_blob.pos.1 + active_blob.radius;
+                    if active_max_y < min_y {
+                        // Blob finishes before the new blob starts
+                        false
+                    } else {
+                        // (assuming the blobs are properly ordered)
+                        true
+                    }
+                } else {
+                    // Blob doesn't exist in the hashset for some reason
+                    unreachable!(); // Because the hashset doesn't change
+                    false
+                }
+            });
+
+            // The blob we just picked always becomes part of the active set
+            active_blobs.push(blob_id);
+
+            // Check the new blob for any interactions (blobs whose outer radiuses overlap), and add to the interaction set if there are any
+        }
+    }
+
+    ///
+    /// Renders a set of interacting blobs
+    ///
+    fn render_interacting(&self, blobs: Vec<BlobId>) {
+        // Rather than rendering each blob as a plain circle, we instead create a set of points that are attracted to or repelled from the center 
+        // of each other blob, then add them together to create a final path
+    }
+
+    ///
+    /// Fills the cache of blobs on lines (we use this when generating the contour as a fast way to find the blobs we need to calculate for each line)
     ///
     fn fill_blobs_on_line_cache(&self) {
         // Sort the blob IDs by start y-positions
@@ -239,47 +338,6 @@ impl BlobLand {
     }
 }
 
-impl SampledContour for BlobLand {
-    ///
-    /// The size of this contour
-    ///
-    #[inline]
-    fn contour_size(&self) -> ContourSize {
-        self.canvas_size
-    }
+impl BlobPoint {
 
-    ///
-    /// Given a y coordinate returns ranges indicating the filled pixels on that line
-    ///
-    /// The ranges must be provided in ascending order, and must also not overlap.
-    ///
-    fn intercepts_on_line(&self, y: f64) -> SmallVec<[Range<f64>; 4]> {
-        todo!()
-    }
-}
-
-impl SampledSignedDistanceField for BlobLand {
-    /// A type that can represent the edge contour for this distance field (see `ContourFromDistanceField` for a basic implementation)
-    type Contour = Self;
-
-    ///
-    /// The size of this distance field
-    ///
-    fn field_size(&self) -> ContourSize {
-        self.canvas_size
-    }
-
-    ///
-    /// Returns the distance to the nearest edge of the specified point (a negative value if the point is inside the shape)
-    ///
-    fn distance_at_point(&self, pos: ContourPosition) -> f64 {
-        todo!()
-    }
-
-    ///
-    /// Returns an edge contour for this distance field
-    ///
-    fn as_contour<'a>(&'a self) -> &'a Self::Contour {
-        self
-    }
 }
