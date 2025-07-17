@@ -341,16 +341,36 @@ impl BlobLand {
 }
 
 /// Length of time per simulation tick
-const TICK: f64         = 1.0 / 60.0;
+const TICK: f64             = 1.0 / 60.0;
 
 /// Maximum number of ticks to run in one simulation pass (if the simulation gets delayed for longer than this, the time is 'lost')
-const MAX_TICKS: f64    = 30.0;
+const MAX_TICKS: f64        = 30.0;
 
 /// Friction
-const FRICTION: f64     = 0.9;
+const FRICTION: f64         = 0.9;
 
-/// Force used to push the 
-const RADIUS_FORCE: f64 = 2.0;
+/// Force used to push the points into a circular shape
+const RADIUS_FORCE: f64     = 2.0;
+
+/// Force used to push the points towards or away from their neighbors
+const NEIGHBOR_FORCE: f64   = 3.0;
+
+///
+/// Calculates the spring between point_a and point_b, with a natural length of 'length'
+///
+/// Force is in the direction a -> b
+///
+#[inline]
+fn spring_force(point_a: UiPoint, point_b: UiPoint, length: f64, force_factor: f64) -> UiPoint {
+    // This is a fairly unphysical algorithm
+    let offset      = point_a - point_b;
+    let distance    = offset.dot(&offset).sqrt();
+    let tension     = distance - length;
+    let force       = tension * force_factor;
+    let unit_offset = offset.to_unit_vector();
+
+    unit_offset * -force
+}
 
 impl BlobPoint {
     ///
@@ -365,15 +385,11 @@ impl BlobPoint {
         velocity = velocity * FRICTION;
 
         // Push away from/towards center
-        let center_offset   = pos - center;
-        let center_distance = pos.distance_to(&center);
-        let radius_distance = center_distance - radius;
-        let radius_force    = radius_distance * RADIUS_FORCE * TICK;
-        let unit_offset     = center_offset.to_unit_vector();
-
-        velocity = velocity + (unit_offset * -radius_force);
+        velocity = velocity + spring_force(pos, center, radius, RADIUS_FORCE * TICK);
 
         // Push away from neighboring points
+        velocity = velocity + spring_force(pos, next_point.pos, point_distance, NEIGHBOR_FORCE * TICK);
+        velocity = velocity + spring_force(pos, previous_point.pos, point_distance, NEIGHBOR_FORCE * TICK);
 
         // Move the point
         pos = pos + velocity * TICK;
