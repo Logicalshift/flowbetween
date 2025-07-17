@@ -46,7 +46,7 @@ pub struct Blob {
     id: BlobId,
 
     /// The position of the center of this blob
-    pos: (f64, f64),
+    pos: UiPoint,
 
     /// The radius, in pixels, of this blob
     radius: f64,
@@ -73,6 +73,9 @@ pub struct BlobLand {
 
     /// The size of the canvas
     canvas_size: ContourSize,
+
+    /// Time that wasn't accounted for in the last simulation step
+    extra_time: f64,
 }
 
 ///
@@ -106,7 +109,7 @@ impl Blob {
     ///
     /// Creates a new blob
     ///
-    pub fn new(pos: (f64, f64), radius: f64, island_radius: f64) -> Blob {
+    pub fn new(pos: UiPoint, radius: f64, island_radius: f64) -> Blob {
         // The points are initially around the center position
         let num_points      = 32;
         let circumference   = 2.0 * island_radius * f64::consts::PI;
@@ -151,6 +154,7 @@ impl BlobLand {
             blobs:          HashMap::new(),
             blobs_on_line:  Mutex::new(None),
             canvas_size:    ContourSize(0, 0),
+            extra_time:     0.0,
         }
     }
 
@@ -165,7 +169,7 @@ impl BlobLand {
     ///
     /// Sets the position of an existing blob
     ///
-    pub fn move_blob(&mut self, blob_id: BlobId, new_pos: (f64, f64)) {
+    pub fn move_blob(&mut self, blob_id: BlobId, new_pos: UiPoint) {
         if let Some(blob) = self.blobs.get_mut(&blob_id) {
             blob.pos = new_pos;
             *self.blobs_on_line.lock().unwrap() = None;
@@ -214,13 +218,16 @@ impl BlobLand {
     }
 
     ///
-    /// Renders the blobland to a graphics context
+    /// Runs the simulation for the specified time
     ///
-    pub fn render(&self, gc: &mut impl GraphicsContext) {
-        // Track the blobs that we've rendered (when we're dealing with interacting blobs, we render a whole system of blobs at the same time)
-        //let mut rendered = HashSet::new();
+    /// Returns true if the simulation should go to sleep (no more simulations needed until the blobland is disturbed by something)
+    ///
+    pub fn simulate(&mut self, delta_t: f64) -> bool {
+        // Account for the extra time, but only simulate up to MAX_TICKS total time
+        let mut delta_t = (delta_t + self.extra_time).min(MAX_TICKS);
 
         // Create the blobs, sorted by y position (we use this to discover which blobs are interacting later on)
+        // We don't move the blobs per tick so the interacting set doesn't change here
         let mut sorted_blobs = self.blobs.keys().copied().collect::<Vec<_>>();
         sorted_blobs.sort_by(|a, b| {
             let a_start = self.blobs.get(a).map(|blob| blob.pos.1 - blob.radius).unwrap_or(0.0);
@@ -261,6 +268,48 @@ impl BlobLand {
 
             // Check the new blob for any interactions (blobs whose outer radiuses overlap), and add to the interaction set if there are any
         }
+
+        // Run the simulation for each tick
+        while delta_t >= TICK {
+            for blob in self.blobs.values_mut() {
+                // Create a list of the updated points for this blob
+                let mut updated_points = Vec::with_capacity(blob.points.len());
+
+                // Simulate each point
+                for idx in 0..blob.points.len() {
+                    // Previous and next points for the simulation
+                    let prev_idx    = if idx == 0 { blob.points.len()-1 } else { idx-1 };
+                    let next_idx    = if idx >= blob.points.len()-1 { 0 } else { idx+1 };
+                    let this_point  = &blob.points[idx];
+                    let prev_point  = &blob.points[prev_idx];
+                    let next_point  = &blob.points[next_idx];
+
+                    // Run the simulation for this point
+                    let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.island_radius, next_point, prev_point, vec![], vec![]);
+                    updated_points.push(updated_point);
+                }
+
+                // Update the points in the blob
+                blob.points = updated_points;
+            }
+
+            // Move forward a tick
+            delta_t -= TICK;
+        }
+
+        // Any 'left over' time should be accounted for in the next simulation step
+        self.extra_time = delta_t;
+
+        false
+    }
+
+    ///
+    /// Renders the blobland to a graphics context
+    ///
+    pub fn render(&self, gc: &mut impl GraphicsContext) {
+        // Track the blobs that we've rendered (when we're dealing with interacting blobs, we render a whole system of blobs at the same time)
+        //let mut rendered = HashSet::new();
+
     }
 
     ///
