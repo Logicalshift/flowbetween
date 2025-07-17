@@ -328,7 +328,7 @@ impl BlobLand {
     /// Renders the blobland to a graphics context
     ///
     pub fn render(&self, gc: &mut impl GraphicsContext) {
-        for blob in self.blobs.iter() {
+        for blob in self.blobs.values() {
             // TODO: for interacting blobs, add the resulting paths
             blob.render_path(gc);
             gc.fill();
