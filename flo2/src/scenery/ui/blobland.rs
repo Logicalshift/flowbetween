@@ -15,6 +15,7 @@ use super::ui_path::*;
 
 use flo_curves::*;
 use flo_curves::geo::*;
+use flo_curves::bezier::*;
 use flo_curves::bezier::rasterize::*;
 use flo_curves::bezier::vectorize::*;
 use flo_draw::canvas::*;
@@ -142,6 +143,26 @@ impl Blob {
     ///
     pub fn id(&self) -> BlobId {
         self.id
+    }
+
+    ///
+    /// Creates a path representing this blob in the graphics context
+    ///
+    pub fn render_path(&self, gc: &mut impl GraphicsContext) {
+        // Fit against the points
+        let points      = self.points.iter().map(|point| point.pos).collect::<Vec<_>>();
+        let fit_curves  = fit_curve::<Curve<UiPoint>>(&points, 0.1);
+
+        gc.new_path();
+
+        if let Some(fit_curves) = fit_curves {
+            // Create a path from the points
+            gc.move_to(fit_curves[0].start_point().0 as _, fit_curves[0].start_point().1 as _);
+            for curve in fit_curves.into_iter() {
+                gc.bezier_curve(&curve);
+            }
+            gc.close_path();
+        }
     }
 }
 
