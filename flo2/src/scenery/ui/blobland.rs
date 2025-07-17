@@ -328,9 +328,12 @@ impl BlobLand {
     /// Renders the blobland to a graphics context
     ///
     pub fn render(&self, gc: &mut impl GraphicsContext) {
-        // Track the blobs that we've rendered (when we're dealing with interacting blobs, we render a whole system of blobs at the same time)
-        //let mut rendered = HashSet::new();
-
+        for blob in self.blobs.iter() {
+            // TODO: for interacting blobs, add the resulting paths
+            blob.render_path(gc);
+            gc.fill();
+            gc.stroke();
+        }
     }
 
     ///
