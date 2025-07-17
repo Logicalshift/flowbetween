@@ -6,6 +6,8 @@
 //! controls overlapping.
 //!
 
+use super::blobland::*;
+use super::colors::*;
 use super::focus::*;
 use super::namespaces::*;
 use super::physics_object::*;
@@ -28,6 +30,7 @@ use serde::de::{Error as DeError};
 use serde::ser::{Error as SeError};
 
 use std::sync::*;
+use std::time::{Instant, Duration};
 
 ///
 /// Instructions for the subprogram that manages the physics layer
@@ -59,6 +62,9 @@ pub enum PhysicsLayer {
 
     /// Action message for a physics object
     ObjectAction(PhysicsObjectAction),
+
+    /// Timeout indicating that we should run the simulation
+    RunSimulation,
 }
 
 ///
@@ -93,6 +99,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     let our_program_id          = context.current_program_id().unwrap();
     let mut drawing_requests    = context.send::<DrawingRequest>(()).unwrap();
     let mut focus_requests      = context.send::<Focus>(()).unwrap();
+    let mut timer_requests      = context.send(()).unwrap();
 
     // Drawing settings
     let mut state = PhysicsLayerState {
@@ -101,6 +108,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         bounds:         (1024.0, 768.0),
         sprites:        vec![],
         next_sprite_id: 0,
+        blob_land:      BlobLand::empty(),
+        blob_tick:      Instant::now(),
+        blob_awake:     false,
     };
 
     // Objects on the layer
@@ -115,6 +125,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
     // We're a focus program with only controls, underneath pretty much anything else (so we claim z-index 0)
     focus_requests.send(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 }).await.ok();
+
+    // Make sure the simulation is awake
+    state.wake_simulation(our_program_id, &mut timer_requests).await;
 
     // Run the main loop
     let mut input = input.ready_chunks(100);
@@ -135,6 +148,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
                 RemoveTool(tool_id)             => { state.remove_tool(tool_id); positions_invalidated = true; }
                 UpdatePosition(tool_id)         => { state.update_tool_focus(tool_id, &mut focus_requests).await; positions_invalidated = true; }
                 RedrawIcon(tool_id)             => { state.invalidate_sprite(tool_id); }
+                RunSimulation                   => { state.blob_awake = false; state.run_simulation(our_program_id, &mut timer_requests, &mut drawing_requests).await; }
 
                 // Event handling
                 Event(FocusEvent::Event(_, DrawEvent::Resize(w, h)))   => { state.set_bounds(w, h); positions_invalidated = true; }
@@ -143,9 +157,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
                 ObjectAction(PhysicsObjectAction::Activate(tool_id))        => { }
                 ObjectAction(PhysicsObjectAction::Expand(tool_id))          => { }
-                ObjectAction(PhysicsObjectAction::StartDrag(tool_id, x, y)) => { let bounds = state.bounds; state.object_action(tool_id, |object| object.start_drag(x, y, bounds)); }
-                ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))      => { state.object_action(tool_id, |object| object.drag(x, y)); }
-                ObjectAction(PhysicsObjectAction::EndDrag(tool_id, x, y))   => { state.object_action(tool_id, |object| object.end_drag(x, y)); }
+                ObjectAction(PhysicsObjectAction::StartDrag(tool_id, x, y)) => { let bounds = state.bounds; state.object_action(tool_id, |object, _| object.start_drag(x, y, bounds)); }
+                ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))      => { state.object_action(tool_id, |object, _| object.drag(x, y)); }
+                ObjectAction(PhysicsObjectAction::EndDrag(tool_id, x, y))   => { state.object_action(tool_id, |object, _| object.end_drag(x, y)); }
             }
         }
 
@@ -165,11 +179,14 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
         // Draw the tools in their expected positions
         if positions_invalidated {
+            // Simulation needs to run/restart if the positions are invalidated
+            state.run_simulation(our_program_id, &mut timer_requests, &mut drawing_requests).await;
+
             let bounds = state.bounds;
 
             drawing.push_state();
             drawing.namespace(*PHYSICS_LAYER);
-            drawing.layer(LayerId(0));
+            drawing.layer(LayerId(1));
             drawing.clear_layer();
 
             drawing.extend(state.objects.iter_mut().flat_map(|object| object.draw(bounds, &context)));
@@ -202,6 +219,15 @@ struct PhysicsLayerState {
 
     /// The sprite ID that will be assigned if no sprites are available in the pool
     next_sprite_id: u64,
+
+    /// The blobland simulation that causes the tools to animate when they're joined together or pulled apart
+    blob_land: BlobLand,
+
+    /// The instant when the last simulation tick was run
+    blob_tick: Instant,
+
+    /// True if the simulation is awake
+    blob_awake: bool,
 }
 
 impl PhysicsLayerState {
@@ -219,7 +245,8 @@ impl PhysicsLayerState {
             self.objects[existing_idx].set_tool(new_tool, target_program.into());
         } else {
             // Create a new object
-            let object = PhysicsObject::new(new_tool, target_program.into());
+            let mut object = PhysicsObject::new(new_tool, target_program.into());
+            object.add_blob(&mut self.blob_land, self.bounds);
 
             // Start a subprogram to manage this tool
             let tool_id = object.tool().id();
@@ -235,14 +262,17 @@ impl PhysicsLayerState {
     ///
     /// Performs an action on the object with the specified ID
     ///
-    pub fn object_action(&mut self, tool_id: PhysicsToolId, action: impl FnOnce(&mut PhysicsObject) -> ()) {
+    pub fn object_action(&mut self, tool_id: PhysicsToolId, action: impl FnOnce(&mut PhysicsObject, &mut BlobLand) -> ()) {
         let existing_idx = self.objects.iter().enumerate()
             .filter(|(_, object)| object.tool().id() == tool_id)
             .map(|(idx, _)| idx)
             .next();
 
         if let Some(existing_idx) = existing_idx {
-            (action)(&mut self.objects[existing_idx])
+            let objects     = &mut self.objects;
+            let blob_land   = &mut self.blob_land;
+
+            (action)(&mut objects[existing_idx], blob_land)
         }
     }
 
@@ -264,7 +294,11 @@ impl PhysicsLayerState {
     /// Sets the floating position of a tool
     ///
     pub fn float(&mut self, tool_id: PhysicsToolId, new_position: (f64, f64)) {
-        self.object_action(tool_id, move |object| object.set_position(ToolPosition::Float(new_position.0, new_position.1)));
+        let bounds = self.bounds;
+        self.object_action(tool_id, move |object, blob_land| {
+            object.set_position(ToolPosition::Float(new_position.0, new_position.1));
+            object.update_blob_position(blob_land, bounds);
+        });
     }
 
     ///
@@ -342,6 +376,52 @@ impl PhysicsLayerState {
             }
         }
     }
+
+    ///
+    /// Runs the blobland simulation
+    ///
+    pub async fn run_simulation(&mut self, our_program: SubProgramId, timer_requests: &mut OutputSink<TimerRequest>, drawing_requests: &mut OutputSink<DrawingRequest>) {
+        // Read the time since the last tick occurred
+        let now             = Instant::now();
+        let tick_time       = now.duration_since(self.blob_tick);
+        let tick_time_us    = tick_time.as_micros();
+        let tick_time_s     = (tick_time_us as f64) / 1_000_000.0;
+
+        // Run a frame of simulation for the blobland
+        let asleep = self.blob_land.simulate(tick_time_s);
+        self.blob_tick = now;
+
+        if !asleep {
+            self.wake_simulation(our_program, timer_requests).await;
+        }
+
+        // Render the blobland update
+        let mut drawing = vec![];
+
+        drawing.push_state();
+        drawing.namespace(*PHYSICS_LAYER);
+        drawing.layer(LayerId(0));
+        drawing.clear_layer();
+
+        drawing.fill_color(color_tool_background());
+        drawing.stroke_color(color_tool_outline());
+        drawing.line_width(2.0);
+        self.blob_land.render(&mut drawing);
+
+        drawing.pop_state();
+
+        drawing_requests.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
+    }
+
+    ///
+    /// Causes a request for the simulation to run
+    ///
+    pub async fn wake_simulation(&mut self, our_program: SubProgramId, timer_requests: &mut OutputSink<TimerRequest>) {
+        if !self.blob_awake {
+            timer_requests.send(TimerRequest::CallAfter(our_program, 0, Duration::from_micros(1_000_000 / 60))).await.ok();
+            self.blob_awake = true;
+        }
+    }
 }
 
 impl Serialize for PhysicsLayer {
@@ -370,6 +450,7 @@ impl SceneMessage for PhysicsLayer {
 
         init_context.connect_programs((), subprogram_physics_layer(), StreamId::with_message_type::<PhysicsLayer>()).ok();
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|focus_events| focus_events.map(|event| PhysicsLayer::Event(event)))), (), StreamId::with_message_type::<FocusEvent>()).ok();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|timeout_events| timeout_events.map(|_: TimeOut| PhysicsLayer::RunSimulation))), (), StreamId::with_message_type::<TimeOut>()).ok();
     }
 }
 

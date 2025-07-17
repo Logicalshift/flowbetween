@@ -1,9 +1,11 @@
 use super::binding_tracker::*;
+use super::blobland::*;
 use super::colors::*;
 use super::focus::*;
 use super::namespaces::*;
 use super::physics::*;
 use super::physics_tool::*;
+use super::ui_path::*;
 
 use futures::prelude::*;
 
@@ -45,6 +47,9 @@ pub struct PhysicsObject {
 
     /// The drag position of this object (as opposed to the 'real' position that it assumes when the drag has finished)
     drag_position: Binding<Option<(f64, f64)>>,
+
+    /// The ID of this tool in the blobland
+    blob_id: BlobId,
 }
 
 ///
@@ -101,7 +106,19 @@ impl PhysicsObject {
             position:           bind(ToolPosition::Hidden),
             drag_anchor:        (0.0, 0.0),
             drag_position:      bind(None),
+            blob_id:            BlobId::new(),
         }
+    }
+
+    ///
+    /// Adds a blob for this tool to a BlobLand
+    ///
+    pub fn add_blob(&mut self, blob_land: &mut BlobLand, bounds: (f64, f64)) {
+        let pos     = self.position(bounds).unwrap_or((0.0, 0.0));
+        let blob    = Blob::new(UiPoint(pos.0, pos.1), 48.0, 32.0);
+
+        self.blob_id = blob.id();
+        blob_land.add_blob(blob);
     }
 
     ///
@@ -196,6 +213,16 @@ impl PhysicsObject {
     }
 
     ///
+    /// Sets the position of this object
+    ///
+    pub fn update_blob_position(&mut self, blob_land: &mut BlobLand, bounds: (f64, f64)) {
+        let new_pos = self.position(bounds);
+        if let Some(new_pos) = new_pos {
+            blob_land.move_blob(self.blob_id, UiPoint(new_pos.0, new_pos.1));
+        }
+    }
+
+    ///
     /// Returns the coordinates where the center of this object should be rendered
     ///
     pub fn position(&self, bounds: (f64, f64)) -> Option<(f64, f64)> {
@@ -272,6 +299,7 @@ impl PhysicsObject {
             let (w, h)  = self.tool.size();
 
             // Render the backing circle
+            /*
             if has_shadow {
                 drawing.new_path();
                 drawing.circle(x as f32 + 1.0, y as f32 + 3.0, (w.max(h)/2.0) as f32);
@@ -291,6 +319,7 @@ impl PhysicsObject {
             drawing.stroke_color(color_tool_border());
             drawing.line_width(1.0);
             drawing.stroke();
+            */
 
             // Render the sprite to draw the actual physics object
             drawing.sprite_transform(SpriteTransform::Identity);
