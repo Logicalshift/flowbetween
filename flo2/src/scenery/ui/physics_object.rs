@@ -115,7 +115,9 @@ impl PhysicsObject {
     ///
     pub fn add_blob(&mut self, blob_land: &mut BlobLand, bounds: (f64, f64)) {
         let pos     = self.position(bounds).unwrap_or((0.0, 0.0));
-        let blob    = Blob::new(UiPoint(pos.0, pos.1), 48.0, 32.0);
+        let (w, h)  = self.tool.size();
+        let radius  = w.min(h)/2.0;
+        let blob    = Blob::new(UiPoint(pos.0, pos.1), radius * 1.5, radius);
 
         self.blob_id = blob.id();
         blob_land.add_blob(blob);
