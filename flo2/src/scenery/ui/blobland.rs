@@ -89,6 +89,9 @@ struct BlobPoint {
     /// Where this point is located
     pos: UiPoint,
 
+    /// The offset from the center of the blob to where this point prefers to be located
+    home_offset: UiPoint,
+
     /// Velocity, in points per second
     velocity: UiPoint,
 }
@@ -112,18 +115,19 @@ impl Blob {
     ///
     pub fn new(pos: UiPoint, radius: f64, island_radius: f64) -> Blob {
         // The points are initially around the center position
-        let num_points      = 32;
+        let num_points      = 16;
         let circumference   = 2.0 * island_radius * f64::consts::PI;
-        let points          = (0..32).into_iter()
+        let points          = (0..num_points).into_iter()
             .map(|point_num| {
                 let angle       = (2.0*f64::consts::PI / (num_points as f64)) * (point_num as f64);
-                let x_offset    = angle.sin() * radius;
-                let y_offset    = angle.cos() * radius;
+                let x_offset    = angle.sin() * island_radius;
+                let y_offset    = angle.cos() * island_radius;
                 let point_pos   = UiPoint(pos.0 + x_offset, pos.1 + y_offset);
 
                 BlobPoint {
-                    pos:        point_pos,
-                    velocity:   UiPoint(0.0, 0.0),
+                    pos:            point_pos,
+                    home_offset:    UiPoint(x_offset, y_offset),
+                    velocity:       UiPoint(0.0, 0.0),
                 }
             }).collect();
 
@@ -150,7 +154,7 @@ impl Blob {
     ///
     pub fn render_path(&self, gc: &mut impl GraphicsContext) {
         // Fit against the points
-        let points      = self.points.iter().map(|point| point.pos).collect::<Vec<_>>();
+        let points      = self.points.iter().map(|point| point.pos).chain(self.points.get(0).map(|point| point.pos)).collect::<Vec<_>>();
         let fit_curves  = fit_curve::<Curve<UiPoint>>(&points, 0.1);
 
         gc.new_path();
@@ -420,13 +424,10 @@ const TICK: f64             = 1.0 / 60.0;
 const MAX_TICKS: f64        = 30.0;
 
 /// Friction
-const FRICTION: f64         = 0.9;
+const FRICTION: f64         = 0.95;
 
 /// Force used to push the points into a circular shape
-const RADIUS_FORCE: f64     = 2.0;
-
-/// Force used to push the points towards or away from their neighbors
-const NEIGHBOR_FORCE: f64   = 3.0;
+const RADIUS_FORCE: f64     = 12.0;
 
 ///
 /// Calculates the spring between point_a and point_b, with a natural length of 'length'
@@ -453,20 +454,21 @@ impl BlobPoint {
         // Take the values from inside this 
         let mut pos         = self.pos;
         let mut velocity    = self.velocity;
+        let home_offset     = self.home_offset;
 
         // Friction (1 tick)
         velocity = velocity * FRICTION;
 
-        // Push away from/towards center
-        velocity = velocity + spring_force(pos, center, radius, RADIUS_FORCE * TICK);
+        // Push towards the origin point (more force the further away it is)
+        let home_pos        = center + home_offset;
+        let home_distance   = home_pos - pos;
+        let home_force      = home_distance * RADIUS_FORCE;
 
-        // Push away from neighboring points
-        velocity = velocity + spring_force(pos, next_point.pos, point_distance, NEIGHBOR_FORCE * TICK);
-        velocity = velocity + spring_force(pos, previous_point.pos, point_distance, NEIGHBOR_FORCE * TICK);
+        velocity = velocity + home_force * TICK;
 
         // Move the point
         pos = pos + velocity * TICK;
 
-        BlobPoint { pos, velocity }
+        BlobPoint { pos, home_offset, velocity }
     }
 }
