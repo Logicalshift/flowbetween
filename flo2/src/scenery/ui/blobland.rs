@@ -465,7 +465,7 @@ const MAX_TICKS: f64        = 30.0;
 const FRICTION: f64         = 0.95;
 
 /// Force used to push the points into a circular shape
-const RADIUS_FORCE: f64     = 24.0;
+const RADIUS_FORCE: f64     = 64.0;
 
 /// Force used to push the points towards or away from their neighbors
 const NEIGHBOR_FORCE: f64   = 24.0;
