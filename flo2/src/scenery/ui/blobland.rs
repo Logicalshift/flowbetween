@@ -465,16 +465,16 @@ const MAX_TICKS: f64        = 30.0;
 const FRICTION: f64         = 0.95;
 
 /// Force used to push the points into a circular shape
-const RADIUS_FORCE: f64     = 12.0;
+const RADIUS_FORCE: f64     = 24.0;
 
 /// Force used to push the points towards or away from their neighbors
-const NEIGHBOR_FORCE: f64   = 12.0;
+const NEIGHBOR_FORCE: f64   = 24.0;
 
 /// Force used to push points away from repulsors
-const REPULSOR_FORCE: f64   = 18.0;
+const REPULSOR_FORCE: f64   = 36.0;
 
 /// Force used to pull points towards attractors
-const ATTRACTOR_FORCE: f64  = 22.0;
+const ATTRACTOR_FORCE: f64  = 44.0;
 
 ///
 /// Calculates the spring between point_a and point_b, with a natural length of 'length'
