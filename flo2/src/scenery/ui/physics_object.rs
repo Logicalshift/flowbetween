@@ -218,7 +218,7 @@ impl PhysicsObject {
     /// Sets the position of this object
     ///
     pub fn update_blob_position(&mut self, blob_land: &mut BlobLand, bounds: (f64, f64)) {
-        let new_pos = self.position(bounds);
+        let new_pos = self.drag_position.get().or_else(|| self.position(bounds));
         if let Some(new_pos) = new_pos {
             blob_land.move_blob(self.blob_id, UiPoint(new_pos.0, new_pos.1));
         }
