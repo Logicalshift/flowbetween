@@ -468,13 +468,13 @@ const FRICTION: f64         = 0.95;
 const RADIUS_FORCE: f64     = 64.0;
 
 /// Force used to push the points towards or away from their neighbors
-const NEIGHBOR_FORCE: f64   = 24.0;
+const NEIGHBOR_FORCE: f64   = 64.0;
 
 /// Force used to push points away from repulsors
-const REPULSOR_FORCE: f64   = 36.0;
+const REPULSOR_FORCE: f64   = 2048.0;
 
 /// Force used to pull points towards attractors
-const ATTRACTOR_FORCE: f64  = 44.0;
+const ATTRACTOR_FORCE: f64  = 2048.0;
 
 ///
 /// Calculates the spring between point_a and point_b, with a natural length of 'length'
@@ -533,11 +533,11 @@ impl BlobPoint {
 
         // Process the attractors and repulsors
         for attractor in attractors.iter() {
-            velocity = velocity + gravity_force(pos, *attractor, radius, ATTRACTOR_FORCE);
+            velocity = velocity + gravity_force(pos, *attractor, radius, ATTRACTOR_FORCE * TICK);
         }
 
         for repulsor in repulsors.iter() {
-            velocity = velocity - gravity_force(pos, *repulsor, radius, REPULSOR_FORCE);
+            velocity = velocity - gravity_force(pos, *repulsor, radius, REPULSOR_FORCE * TICK);
         }
 
         // Move the point
