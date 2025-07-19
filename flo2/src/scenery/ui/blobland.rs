@@ -429,6 +429,9 @@ const FRICTION: f64         = 0.95;
 /// Force used to push the points into a circular shape
 const RADIUS_FORCE: f64     = 12.0;
 
+/// Force used to push the points towards or away from their neighbors
+const NEIGHBOR_FORCE: f64   = 12.0;
+
 ///
 /// Calculates the spring between point_a and point_b, with a natural length of 'length'
 ///
@@ -465,6 +468,10 @@ impl BlobPoint {
         let home_force      = home_distance * RADIUS_FORCE;
 
         velocity = velocity + home_force * TICK;
+
+        // Points are attached to each other with springs
+        velocity = velocity + spring_force(pos, next_point.pos, point_distance, NEIGHBOR_FORCE * TICK);
+        velocity = velocity + spring_force(pos, previous_point.pos, point_distance, NEIGHBOR_FORCE * TICK);
 
         // Move the point
         pos = pos + velocity * TICK;
