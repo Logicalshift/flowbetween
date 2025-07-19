@@ -464,6 +464,12 @@ const RADIUS_FORCE: f64     = 12.0;
 /// Force used to push the points towards or away from their neighbors
 const NEIGHBOR_FORCE: f64   = 12.0;
 
+/// Force used to push points away from repulsors
+const REPULSOR_FORCE: f64   = 18.0;
+
+/// Force used to pull points towards attractors
+const ATTRACTOR_FORCE: f64  = 22.0;
+
 ///
 /// Calculates the spring between point_a and point_b, with a natural length of 'length'
 ///
@@ -479,6 +485,20 @@ fn spring_force(point_a: UiPoint, point_b: UiPoint, length: f64, force_factor: f
     let unit_offset = offset.to_unit_vector();
 
     unit_offset * -force
+}
+
+///
+/// Calculates the 'gravity force' between point_a and point_b (a force that gets stronger the closer the two points are, goes to 0 at max_distance)
+///
+#[inline]
+fn gravity_force(point_a: UiPoint, point_b: UiPoint, max_distance: f64, force_factor: f64) -> UiPoint {
+    // ... not really gravity as this force varies linearly
+    let offset      = point_b - point_a;
+    let distance    = offset.dot(&offset).sqrt();
+    let force       = if distance < max_distance { force_factor * (1.0-(distance/max_distance)) } else { 0.0 };
+    let unit_offset = offset.to_unit_vector();
+
+    unit_offset * force
 }
 
 impl BlobPoint {
@@ -504,6 +524,15 @@ impl BlobPoint {
         // Points are attached to each other with springs
         velocity = velocity + spring_force(pos, next_point.pos, point_distance, NEIGHBOR_FORCE * TICK);
         velocity = velocity + spring_force(pos, previous_point.pos, point_distance, NEIGHBOR_FORCE * TICK);
+
+        // Process the attractors and repulsors
+        for attractor in attractors.iter() {
+            velocity = velocity + gravity_force(pos, *attractor, radius, ATTRACTOR_FORCE);
+        }
+
+        for repulsor in repulsors.iter() {
+            velocity = velocity - gravity_force(pos, *repulsor, radius, REPULSOR_FORCE);
+        }
 
         // Move the point
         pos = pos + velocity * TICK;
