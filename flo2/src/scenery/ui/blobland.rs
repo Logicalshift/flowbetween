@@ -209,7 +209,13 @@ impl BlobLand {
     ///
     pub fn move_blob(&mut self, blob_id: BlobId, new_pos: UiPoint) {
         if let Some(blob) = self.blobs.get_mut(&blob_id) {
+            let offset = new_pos - blob.pos;
             blob.pos = new_pos;
+
+            for point in blob.points.iter_mut() {
+                point.pos = point.pos + offset;
+            }
+
             *self.blobs_on_line.lock().unwrap() = None;
         }
     }
