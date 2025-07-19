@@ -79,7 +79,7 @@ pub enum PhysicsEvent {
     Deselect(PhysicsToolId),
 }
 
-fn test_object() -> PhysicsTool {
+fn test_tool() -> PhysicsTool {
     let mut drawing = vec![];
 
     drawing.fill_color(Color::Rgba(0.0, 0.0, 1.0, 1.0));
@@ -117,10 +117,22 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     let mut objects: Vec<PhysicsObject> = vec![];
 
     // TEST: create a test object, force an initial update
-    let mut test_object = test_object();
+    let mut test_object = test_tool();
     let test_object_id = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
     state.float(test_object_id, (100.0, 100.0));
+    state.update_tool_focus(test_object_id, &mut focus_requests).await;
+
+    let mut test_object = test_tool();
+    let test_object_id = test_object.id();
+    state.add_tool(test_object, StreamTarget::None, &context).await;
+    state.float(test_object_id, (200.0, 100.0));
+    state.update_tool_focus(test_object_id, &mut focus_requests).await;
+
+    let mut test_object = test_tool();
+    let test_object_id = test_object.id();
+    state.add_tool(test_object, StreamTarget::None, &context).await;
+    state.float(test_object_id, (300.0, 100.0));
     state.update_tool_focus(test_object_id, &mut focus_requests).await;
 
     // We're a focus program with only controls, underneath pretty much anything else (so we claim z-index 0)
