@@ -309,8 +309,8 @@ impl BlobLand {
                 let other_blob = self.blobs.get(&other_blob_id).unwrap();
 
                 if new_blob.is_interacting_with(other_blob) {
-                    interacting_blobs.insert(blob_id, other_blob_id);
-                    interacting_blobs.insert(other_blob_id, blob_id);
+                    interacting_blobs.entry(blob_id).or_insert_with(|| vec![]).push(other_blob_id);
+                    interacting_blobs.entry(other_blob_id).or_insert_with(|| vec![]).push(blob_id);
                 }
             }
 
@@ -319,10 +319,18 @@ impl BlobLand {
         }
 
         // Run the simulation for each tick
+        let blob_ids = self.blobs.keys().copied().collect::<Vec<_>>();
+
         while delta_t >= TICK {
-            for blob in self.blobs.values_mut() {
+            for blob_id in blob_ids.iter().copied() {
                 // Create a list of the updated points for this blob
-                let mut updated_points = Vec::with_capacity(blob.points.len());
+                let interacting_with    = interacting_blobs.get(&blob_id).into_iter()
+                    .flatten()
+                    .flat_map(|blob_id| self.blobs.get(blob_id))
+                    .map(|blob| blob.pos)
+                    .collect();
+                let blob                = self.blobs.get_mut(&blob_id).unwrap();
+                let mut updated_points  = Vec::with_capacity(blob.points.len());
 
                 // Simulate each point
                 for idx in 0..blob.points.len() {
@@ -334,7 +342,7 @@ impl BlobLand {
                     let next_point  = &blob.points[next_idx];
 
                     // Run the simulation for this point
-                    let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.island_radius, next_point, prev_point, vec![], vec![]);
+                    let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.island_radius, next_point, prev_point, &vec![], &interacting_with);
                     updated_points.push(updated_point);
                 }
 
@@ -477,7 +485,7 @@ impl BlobPoint {
     ///
     /// Runs a simulation on this point for a single tick, returning the updated point
     ///
-    fn simulate_tick(&self, point_distance: f64, center: UiPoint, radius: f64, next_point: &BlobPoint, previous_point: &BlobPoint, attractors: Vec<UiPoint>, repulsors: Vec<UiPoint>) -> BlobPoint {
+    fn simulate_tick(&self, point_distance: f64, center: UiPoint, radius: f64, next_point: &BlobPoint, previous_point: &BlobPoint, attractors: &Vec<UiPoint>, repulsors: &Vec<UiPoint>) -> BlobPoint {
         // Take the values from inside this 
         let mut pos         = self.pos;
         let mut velocity    = self.velocity;
