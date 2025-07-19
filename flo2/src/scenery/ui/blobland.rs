@@ -342,7 +342,7 @@ impl BlobLand {
                     let next_point  = &blob.points[next_idx];
 
                     // Run the simulation for this point
-                    let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.island_radius, next_point, prev_point, &vec![], &interacting_with);
+                    let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.radius, next_point, prev_point, &vec![], &interacting_with);
                     updated_points.push(updated_point);
                 }
 
