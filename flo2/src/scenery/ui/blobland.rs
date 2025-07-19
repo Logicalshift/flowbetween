@@ -150,6 +150,19 @@ impl Blob {
     }
 
     ///
+    /// Returns true if this blob is interacting with another one (is close enough to repel or attract it)
+    ///
+    pub fn is_interacting_with(&self, other_blob: &Blob) -> bool {
+        let distance = self.pos.distance_to(&other_blob.pos);
+
+        if distance < self.radius && distance < other_blob.radius {
+            true
+        } else {
+            false
+        }
+    }
+
+    ///
     /// Creates a path representing this blob in the graphics context
     ///
     pub fn render_path(&self, gc: &mut impl GraphicsContext) {
@@ -263,6 +276,7 @@ impl BlobLand {
 
         // Sweep the blobs to discover which ones are interacting
         let mut active_blobs = vec![];
+        let mut interacting_blobs = HashMap::new();
 
         for blob_id in sorted_blobs.into_iter() {
             // Fetch the next blob to process and its position
@@ -288,10 +302,20 @@ impl BlobLand {
                 }
             });
 
+            // Check the new blob for any interactions (blobs whose outer radiuses overlap), and add to the interaction set if there are any
+            let new_blob = self.blobs.get(&blob_id).unwrap();
+
+            for other_blob_id in active_blobs.iter().copied() {
+                let other_blob = self.blobs.get(&other_blob_id).unwrap();
+
+                if new_blob.is_interacting_with(other_blob) {
+                    interacting_blobs.insert(blob_id, other_blob_id);
+                    interacting_blobs.insert(other_blob_id, blob_id);
+                }
+            }
+
             // The blob we just picked always becomes part of the active set
             active_blobs.push(blob_id);
-
-            // Check the new blob for any interactions (blobs whose outer radiuses overlap), and add to the interaction set if there are any
         }
 
         // Run the simulation for each tick
