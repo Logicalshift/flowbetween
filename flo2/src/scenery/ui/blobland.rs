@@ -55,6 +55,9 @@ pub struct Blob {
     /// The radius, in pixels, of the part of this blob that's above 'sea level' by default
     island_radius: f64,
 
+    /// The distance that the points in this blob prefer to be from one another
+    point_distance: f64,
+
     /// The points that represent the outline of this blob
     points: Vec<BlobPoint>,
 }
@@ -113,6 +116,7 @@ impl Blob {
     pub fn new(pos: UiPoint, radius: f64, island_radius: f64) -> Blob {
         // The points are initially around the center position
         let num_points      = 16;
+        let circumference   = 2.0 * island_radius * f64::consts::PI;
         let points          = (0..num_points).into_iter()
             .map(|point_num| {
                 let angle       = (2.0*f64::consts::PI / (num_points as f64)) * (point_num as f64);
@@ -133,6 +137,7 @@ impl Blob {
             pos:            pos,
             radius:         radius,
             island_radius:  island_radius,
+            point_distance: circumference / (num_points as f64),
             points:         points,
         }
     }
@@ -298,10 +303,14 @@ impl BlobLand {
                 // Simulate each point
                 for idx in 0..blob.points.len() {
                     // Previous and next points for the simulation
+                    let prev_idx    = if idx == 0 { blob.points.len()-1 } else { idx-1 };
+                    let next_idx    = if idx >= blob.points.len()-1 { 0 } else { idx+1 };
                     let this_point  = &blob.points[idx];
+                    let prev_point  = &blob.points[prev_idx];
+                    let next_point  = &blob.points[next_idx];
 
                     // Run the simulation for this point
-                    let updated_point = this_point.simulate_tick(blob.pos, vec![], vec![]);
+                    let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.island_radius, next_point, prev_point, vec![], vec![]);
                     updated_points.push(updated_point);
                 }
 
@@ -441,7 +450,7 @@ impl BlobPoint {
     ///
     /// Runs a simulation on this point for a single tick, returning the updated point
     ///
-    fn simulate_tick(&self, center: UiPoint, attractors: Vec<UiPoint>, repulsors: Vec<UiPoint>) -> BlobPoint {
+    fn simulate_tick(&self, point_distance: f64, center: UiPoint, radius: f64, next_point: &BlobPoint, previous_point: &BlobPoint, attractors: Vec<UiPoint>, repulsors: Vec<UiPoint>) -> BlobPoint {
         // Take the values from inside this 
         let mut pos         = self.pos;
         let mut velocity    = self.velocity;
