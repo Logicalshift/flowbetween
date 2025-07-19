@@ -155,7 +155,7 @@ impl Blob {
     pub fn is_interacting_with(&self, other_blob: &Blob) -> bool {
         let distance = self.pos.distance_to(&other_blob.pos);
 
-        if distance < self.radius && distance < other_blob.radius {
+        if distance < self.radius*2.0 && distance < other_blob.radius*2.0 {
             true
         } else {
             false
