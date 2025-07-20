@@ -104,7 +104,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     // Drawing settings
     let mut state = PhysicsLayerState {
         our_program_id: our_program_id,
-        objects:                vec![],
+        objects:                HashMap::new(),
         bounds:                 (1024.0, 768.0),
         tool_id_for_blob_id:    HashMap::new(),
         sprites:                vec![],
@@ -113,9 +113,6 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         blob_tick:              Instant::now(),
         blob_awake:             false,
     };
-
-    // Objects on the layer
-    let mut objects: Vec<PhysicsObject> = vec![];
 
     // TEST: create a test object, force an initial update
     let mut test_object = test_tool();
@@ -177,7 +174,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         }
 
         // Before processing the next event, redraw the sprites for the tools
-        for object in state.objects.iter_mut() {
+        for object in state.objects.values_mut() {
             if object.sprite_needs_redraw() {
                 // Assign a new sprite ID
                 let sprite_id = if let Some(sprite) = state.sprites.pop() { sprite } else { state.next_sprite_id += 1; SpriteId(state.next_sprite_id) };
@@ -202,7 +199,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
             drawing.layer(LayerId(1));
             drawing.clear_layer();
 
-            drawing.extend(state.objects.iter_mut().flat_map(|object| object.draw(bounds, &context)));
+            drawing.extend(state.objects.values_mut().flat_map(|object| object.draw(bounds, &context)));
 
             drawing.pop_state();
         }
@@ -222,7 +219,7 @@ struct PhysicsLayerState {
     our_program_id: SubProgramId,
 
     /// Objects in the physics layer
-    objects: Vec<PhysicsObject>,
+    objects: HashMap<PhysicsToolId, PhysicsObject>,
 
     /// The tool ID associated with a blob ID from the blobland
     tool_id_for_blob_id: HashMap<BlobId, PhysicsToolId>,
@@ -251,14 +248,9 @@ impl PhysicsLayerState {
     /// Adds or replaces a tool within this object
     ///
     pub async fn add_tool(&mut self, new_tool: PhysicsTool, target_program: StreamTarget, context: &SceneContext) {
-        let existing_idx = self.objects.iter().enumerate()
-            .filter(|(_, object)| object.tool().id() == new_tool.id())
-            .map(|(idx, _)| idx)
-            .next();
-
-        if let Some(existing_idx) = existing_idx {
+        if let Some(existing_object) = self.objects.get_mut(&new_tool.id()) {
             // Update the tool in the existing object
-            self.objects[existing_idx].set_tool(new_tool, target_program.into());
+            existing_object.set_tool(new_tool, target_program.into());
         } else {
             // Create a new object
             let tool_id     = new_tool.id();
@@ -274,7 +266,7 @@ impl PhysicsLayerState {
                 0
             )).await.ok();
 
-            self.objects.push(object);
+            self.objects.insert(tool_id, object);
         }
     }
 
@@ -282,16 +274,13 @@ impl PhysicsLayerState {
     /// Performs an action on the object with the specified ID
     ///
     pub fn object_action(&mut self, tool_id: PhysicsToolId, action: impl FnOnce(&mut PhysicsObject, &mut BlobLand) -> ()) {
-        let existing_idx = self.objects.iter().enumerate()
-            .filter(|(_, object)| object.tool().id() == tool_id)
-            .map(|(idx, _)| idx)
-            .next();
+        let objects      = &mut self.objects;
+        let blob_land    = &mut self.blob_land;
 
-        if let Some(existing_idx) = existing_idx {
-            let objects     = &mut self.objects;
-            let blob_land   = &mut self.blob_land;
+        let maybe_object = objects.get_mut(&tool_id);
 
-            (action)(&mut objects[existing_idx], blob_land)
+        if let Some(object) = maybe_object {
+            (action)(object, blob_land)
         }
     }
 
@@ -324,19 +313,11 @@ impl PhysicsLayerState {
     /// Removes a tool entirely from the state
     ///
     pub fn remove_tool(&mut self, tool_id: PhysicsToolId) {
-        let existing_idx = self.objects.iter().enumerate()
-            .filter(|(_, object)| object.tool().id() == tool_id)
-            .map(|(idx, _)| idx)
-            .next();
-
-        if let Some(existing_idx) = existing_idx {
+        if let Some(mut removed_object) = self.objects.remove(&tool_id) {
             // Invalidate the sprite and return it to the pool
-            if let Some(sprite) = self.objects[existing_idx].invalidate_sprite() {
+            if let Some(sprite) = removed_object.invalidate_sprite() {
                 self.sprites.push(sprite);
             }
-
-            // Remove from the list of objects
-            self.objects.remove(existing_idx);
         }
     }
 
@@ -344,14 +325,9 @@ impl PhysicsLayerState {
     /// Invalidates the sprite for a tool, prompting it to be redrawn
     ///
     pub fn invalidate_sprite(&mut self, tool_id: PhysicsToolId) {
-        let existing_idx = self.objects.iter().enumerate()
-            .filter(|(_, object)| object.tool().id() == tool_id)
-            .map(|(idx, _)| idx)
-            .next();
-
-        if let Some(existing_idx) = existing_idx {
+        if let Some(object) = self.objects.get_mut(&tool_id) {
             // Invalidate the sprite and return it to the pool
-            if let Some(sprite) = self.objects[existing_idx].invalidate_sprite() {
+            if let Some(sprite) = object.invalidate_sprite() {
                 self.sprites.push(sprite);
             }
         }
@@ -368,18 +344,12 @@ impl PhysicsLayerState {
     /// Updates the focus program on the location of a tool
     ///
     pub async fn update_tool_focus(&mut self, tool_id: PhysicsToolId, focus_events: &mut OutputSink<Focus>) {
-        // Find the existing tool
-        let existing_idx = self.objects.iter().enumerate()
-            .filter(|(_, object)| object.tool().id() == tool_id)
-            .map(|(idx, _)| idx)
-            .next();
-
-        if let Some(existing_idx) = existing_idx {
+        if let Some(object) = self.objects.get_mut(&tool_id) {
             // Each object has a control ID
-            let program_id = self.objects[existing_idx].subprogram_id();
+            let program_id = object.subprogram_id();
 
-            if let Some((x, y)) = self.objects[existing_idx].position(self.bounds) {
-                let (w, h)    = self.objects[existing_idx].tool().size();
+            if let Some((x, y)) = object.position(self.bounds) {
+                let (w, h)    = object.tool().size();
                 let tool_size = w.max(h);
                 let tool_path = Circle::new(UiPoint(x, y), tool_size/2.0).to_path();
 
@@ -387,7 +357,7 @@ impl PhysicsLayerState {
                 focus_events.send(Focus::ClaimRegion {
                     program:    program_id,
                     region:     vec![tool_path],
-                    z_index:    existing_idx,
+                    z_index:    1,
                 }).await.ok();
             } else {
                 // Tool is hidden or otherwise not present
