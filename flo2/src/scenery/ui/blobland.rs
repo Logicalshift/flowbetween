@@ -55,7 +55,7 @@ pub struct BlobId(usize);
 ///
 /// A circular 'Blob' that lives in the blobland (not a Binary Large OBject: an actual blob)
 ///
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Blob {
     /// An identifier for this blob
     id: BlobId,
