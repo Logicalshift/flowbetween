@@ -14,24 +14,18 @@
 use crate::scenery::ui::ui_path::*;
 
 use flo_curves::*;
-use flo_curves::geo::*;
 use flo_curves::bezier::*;
 use flo_curves::bezier::path::*;
 use flo_curves::bezier::rasterize::*;
 use flo_curves::bezier::vectorize::*;
 use flo_draw::canvas::*;
 
-use smallvec::*;
 use once_cell::sync::{Lazy};
 
 use std::collections::*;
-use std::ops::{Range};
 use std::f64;
 use std::sync::*;
 use std::sync::atomic::{AtomicUsize, Ordering};
-
-/// Amount to divide the canvas size by for the blob contour
-const BLOB_CONTOUR_SIZE_RATIO: f64 = 4.0;
 
 ///
 /// Ways that two blobs can interact with each other
@@ -86,9 +80,6 @@ pub struct Blob {
 pub struct BlobLand {
     /// The blobs in this land
     blobs: HashMap<BlobId, Blob>,
-
-    /// The size of the canvas
-    canvas_size: ContourSize,
 
     /// Time that wasn't accounted for in the last simulation step
     extra_time: f64,
@@ -230,7 +221,6 @@ impl BlobLand {
     pub fn empty() -> BlobLand {
         BlobLand {
             blobs:              HashMap::new(),
-            canvas_size:        ContourSize(0, 0),
             extra_time:         0.0,
             interacting_blobs:  HashMap::new(),
         }
@@ -255,17 +245,6 @@ impl BlobLand {
                 point.pos = point.pos + offset;
             }
         }
-    }
-
-    ///
-    /// Updates the canvas size that the BlobLand will be rendered over
-    ///
-    pub fn set_canvas_size(&mut self, size: (f64, f64)) {
-        // The contour is a smaller size than the canvas (this is because we use the distance field to generate a vector and don't need the full resolution)
-        let width   = (size.0/BLOB_CONTOUR_SIZE_RATIO).ceil();
-        let height  = (size.1/BLOB_CONTOUR_SIZE_RATIO).ceil();
-
-        self.canvas_size = ContourSize(width as _, height as _);
     }
 
     ///
@@ -298,7 +277,6 @@ impl BlobLand {
             // Fetch the next blob to process and its position
             let blob    = if let Some(blob) = self.blobs.get(&blob_id) { blob } else { continue; };
             let min_y   = blob.pos.1 - blob.radius;
-            let max_y   = blob.pos.1 + blob.radius;
 
             // Remove any blobs from the active list that can't be interacting with this blob
             active_blobs.retain(|active_blob_id| {
@@ -453,9 +431,9 @@ impl BlobLand {
                 // Add this blob to the path
                 rendered.insert(interact_blob_id);
 
-                let interact_blob     = blobs.get(&interact_blob_id).unwrap();
-                let interact_path     = if let Some(curves) = interact_blob.outline() { curves } else { continue; };
-                let mut interact_path = vec![UiPath::from_curves(&interact_path)];
+                let interact_blob = blobs.get(&interact_blob_id).unwrap();
+                let interact_path = if let Some(curves) = interact_blob.outline() { curves } else { continue; };
+                let interact_path = vec![UiPath::from_curves(&interact_path)];
 
                 path = path_add(&path, &interact_path, 0.1);
 

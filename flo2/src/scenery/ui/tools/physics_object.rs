@@ -2,7 +2,6 @@ use super::blobland::*;
 use super::physics::*;
 use super::physics_tool::*;
 use crate::scenery::ui::binding_tracker::*;
-use crate::scenery::ui::colors::*;
 use crate::scenery::ui::focus::*;
 use crate::scenery::ui::namespaces::*;
 use crate::scenery::ui::ui_path::*;
@@ -141,7 +140,8 @@ impl PhysicsObject {
     /// Replaces the tool represented by this object
     ///
     pub fn set_tool(&mut self, new_tool: PhysicsTool, new_target: StreamTarget) {
-        self.tool = new_tool;
+        self.tool           = new_tool;
+        self.event_target   = new_target;
         self.invalidate_sprite();
     }
 
@@ -285,43 +285,12 @@ impl PhysicsObject {
             let mut drawing = vec![];
 
             // Determine the position of this control
-            let pos         = self.position(bounds);
-            let has_shadow  = match self.position.get() {
-                ToolPosition::Hidden            |
-                ToolPosition::DockTool(_)       |
-                ToolPosition::DockProperties(_) => false,
-                ToolPosition::Float(_, _)       => true,
-            };
-
+            let pos     = self.position(bounds);
             let pos     = if let Some(pos) = pos { pos } else { return drawing; };
             let pos     = if let Some(drag_position) = self.drag_position.get() { drag_position } else { pos };
             let sprite  = self.sprite.get();
             let sprite  = if let Some(sprite) = sprite { sprite } else { return drawing; };
             let (x, y)  = pos;
-            let (w, h)  = self.tool.size();
-
-            // Render the backing circle
-            /*
-            if has_shadow {
-                drawing.new_path();
-                drawing.circle(x as f32 + 1.0, y as f32 + 3.0, (w.max(h)/2.0) as f32);
-                drawing.fill_color(color_tool_shadow());
-                drawing.fill();
-            }
-
-            drawing.new_path();
-            drawing.circle(x as f32, y as f32, (w.max(h)/2.0 - 2.0) as f32);
-            drawing.fill_color(color_tool_background());
-            drawing.stroke_color(color_tool_outline());
-            drawing.line_width(2.0);
-            drawing.fill();
-            drawing.stroke();
-
-            drawing.circle(x as f32, y as f32, (w.max(h)/2.0) as f32);
-            drawing.stroke_color(color_tool_border());
-            drawing.line_width(1.0);
-            drawing.stroke();
-            */
 
             // Render the sprite to draw the actual physics object
             drawing.sprite_transform(SpriteTransform::Identity);

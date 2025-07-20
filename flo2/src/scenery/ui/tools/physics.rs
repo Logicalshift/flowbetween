@@ -15,7 +15,6 @@ use crate::scenery::ui::namespaces::*;
 use crate::scenery::ui::subprograms::*;
 use crate::scenery::ui::ui_path::*;
 
-use flo_binding::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
@@ -139,7 +138,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     focus_requests.send(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 }).await.ok();
 
     // Make sure the simulation is awake
-    state.wake_simulation(our_program_id, &mut timer_requests).await;
+    state.wake_simulation(&mut timer_requests).await;
 
     // Run the main loop
     let mut input = input.ready_chunks(100);
@@ -160,7 +159,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
                 RemoveTool(tool_id)             => { state.remove_tool(tool_id); positions_invalidated = true; }
                 UpdatePosition(tool_id)         => { state.update_tool_focus(tool_id, &mut focus_requests).await; positions_invalidated = true; }
                 RedrawIcon(tool_id)             => { state.invalidate_sprite(tool_id); }
-                RunSimulation                   => { state.blob_awake = false; state.run_simulation(our_program_id, &mut timer_requests, &mut drawing_requests).await; }
+                RunSimulation                   => { state.blob_awake = false; state.run_simulation(&mut timer_requests, &mut drawing_requests).await; }
 
                 // Event handling
                 Event(FocusEvent::Event(_, DrawEvent::Resize(w, h)))   => { state.set_bounds(w, h); positions_invalidated = true; }
@@ -192,7 +191,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         // Draw the tools in their expected positions
         if positions_invalidated {
             // Simulation needs to run/restart if the positions are invalidated
-            state.run_simulation(our_program_id, &mut timer_requests, &mut drawing_requests).await;
+            state.run_simulation(&mut timer_requests, &mut drawing_requests).await;
 
             let bounds = state.bounds;
 
@@ -392,7 +391,7 @@ impl PhysicsLayerState {
     ///
     /// Runs the blobland simulation
     ///
-    pub async fn run_simulation(&mut self, our_program: SubProgramId, timer_requests: &mut OutputSink<TimerRequest>, drawing_requests: &mut OutputSink<DrawingRequest>) {
+    pub async fn run_simulation(&mut self, timer_requests: &mut OutputSink<TimerRequest>, drawing_requests: &mut OutputSink<DrawingRequest>) {
         // Read the time since the last tick occurred
         let now             = Instant::now();
         let tick_time       = now.duration_since(self.blob_tick);
@@ -404,7 +403,7 @@ impl PhysicsLayerState {
         self.blob_tick = now;
 
         if !asleep {
-            self.wake_simulation(our_program, timer_requests).await;
+            self.wake_simulation(timer_requests).await;
         }
 
         // Render the blobland update
@@ -428,9 +427,9 @@ impl PhysicsLayerState {
     ///
     /// Causes a request for the simulation to run
     ///
-    pub async fn wake_simulation(&mut self, our_program: SubProgramId, timer_requests: &mut OutputSink<TimerRequest>) {
+    pub async fn wake_simulation(&mut self, timer_requests: &mut OutputSink<TimerRequest>) {
         if !self.blob_awake {
-            timer_requests.send(TimerRequest::CallAfter(our_program, 0, Duration::from_micros(1_000_000 / 60))).await.ok();
+            timer_requests.send(TimerRequest::CallAfter(self.our_program_id, 0, Duration::from_micros(1_000_000 / 60))).await.ok();
             self.blob_awake = true;
         }
     }
