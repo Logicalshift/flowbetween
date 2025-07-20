@@ -291,7 +291,6 @@ impl BlobLand {
                 } else {
                     // Blob doesn't exist in the hashset for some reason
                     unreachable!(); // Because the hashset doesn't change
-                    false
                 }
             });
 
