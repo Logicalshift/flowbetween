@@ -263,7 +263,7 @@ impl PhysicsLayerState {
             // Create a new object
             let tool_id     = new_tool.id();
             let mut object  = PhysicsObject::new(new_tool, target_program.into());
-            let blob_id     = object.add_blob(&mut self.blob_land, self.bounds);
+            let blob_id     = object.add_blob(&mut self.blob_land, self.bounds, |_| BlobInteraction::Repel);
 
             self.tool_id_for_blob_id.insert(blob_id, tool_id);
 

@@ -159,7 +159,7 @@ impl Blob {
     /// Applies an interaction function to a blob which determines how this blob will interact with other blobs when they approach within the radius
     ///
     #[inline]
-    pub fn with_interation(mut self, interaction: impl 'static + Send + Fn(BlobId) -> BlobInteraction) -> Blob {
+    pub fn with_interaction(mut self, interaction: impl 'static + Send + Fn(BlobId) -> BlobInteraction) -> Blob {
         self.interaction = Box::new(interaction);
         self
     }
