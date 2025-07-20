@@ -86,9 +86,6 @@ pub struct BlobLand {
     /// The blobs in this land
     blobs: HashMap<BlobId, Blob>,
 
-    /// The blobs on each canvas line
-    blobs_on_line: Mutex<Option<Vec<Vec<BlobId>>>>,
-
     /// The size of the canvas
     canvas_size: ContourSize,
 
@@ -223,7 +220,6 @@ impl BlobLand {
     pub fn empty() -> BlobLand {
         BlobLand {
             blobs:              HashMap::new(),
-            blobs_on_line:      Mutex::new(None),
             canvas_size:        ContourSize(0, 0),
             extra_time:         0.0,
             interacting_blobs:  HashMap::new(),
@@ -235,7 +231,6 @@ impl BlobLand {
     ///
     pub fn add_blob(&mut self, blob: Blob) {
         self.blobs.insert(blob.id(), blob);
-        *self.blobs_on_line.lock().unwrap() = None;
     }
 
     ///
@@ -249,8 +244,6 @@ impl BlobLand {
             for point in blob.points.iter_mut() {
                 point.pos = point.pos + offset;
             }
-
-            *self.blobs_on_line.lock().unwrap() = None;
         }
     }
 
@@ -271,28 +264,6 @@ impl BlobLand {
     #[inline]
     pub fn blob(&self, blob_id: BlobId) -> Option<&Blob> {
         self.blobs.get(&blob_id)
-    }
-
-    ///
-    /// Returns the IDs of the blobs that are at a particular y-position
-    ///
-    #[inline]
-    pub fn blobs_on_line(&self, ypos: usize) -> Vec<BlobId> {
-        if let Some(blobs) = &*self.blobs_on_line.lock().unwrap() {
-            // Just retrieve from the cache
-            blobs.get(ypos)
-                .cloned()
-                .unwrap_or_else(|| vec![])
-        } else {
-            // Fill the blob cache and try again
-            self.fill_blobs_on_line_cache();
-
-            // Retry the fetch with the filled cache
-            self.blobs_on_line.lock().unwrap().as_ref()
-                .and_then(|blobs_on_line| blobs_on_line.get(ypos))
-                .cloned()
-                .unwrap_or_else(|| vec![])
-        }
     }
 
     ///
@@ -435,82 +406,6 @@ impl BlobLand {
             gc.fill();
             gc.stroke();
         }
-    }
-
-    ///
-    /// Renders a set of interacting blobs
-    ///
-    fn render_interacting(&self, blobs: Vec<BlobId>) {
-        // Rather than rendering each blob as a plain circle, we instead create a set of points that are attracted to or repelled from the center 
-        // of each other blob, then add them together to create a final path
-    }
-
-    ///
-    /// Fills the cache of blobs on lines (we use this when generating the contour as a fast way to find the blobs we need to calculate for each line)
-    ///
-    fn fill_blobs_on_line_cache(&self) {
-        // Sort the blob IDs by start y-positions
-        let mut sorted_blobs = self.blobs.keys().copied().collect::<Vec<_>>();
-        sorted_blobs.sort_by(|a, b| {
-            let a_start = self.blobs.get(a).map(|blob| blob.pos.1 - blob.radius).unwrap_or(0.0);
-            let b_start = self.blobs.get(b).map(|blob| blob.pos.1 - blob.radius).unwrap_or(0.0);
-
-            a_start.total_cmp(&b_start)
-        });
-
-        // Sweep the sorted blobs to generate the blobs on each line
-        let mut sorted_blobs_iter   = sorted_blobs.into_iter();
-        let mut next_blob           = sorted_blobs_iter.next();
-        let mut active_blobs        = vec![];
-        let mut blobs_on_line       = Vec::with_capacity(self.canvas_size.1);
-
-        for y_pos in 0..(self.canvas_size.1) {
-            let y_start = y_pos as f64;
-            let y_end   = (y_pos as f64) + 1.0;
-
-            // Remove any blobs that end before this y position (ie, which are no longer being covered by this range)
-            active_blobs.retain(|blob_id| {
-                let blob = self.blobs.get(blob_id);
-                if let Some(blob) = blob {
-                    if blob.pos.1 + blob.radius < y_end {
-                        false
-                    } else {
-                        true
-                    }
-                } else {
-                    unreachable!();     // because the hashset hasn't changed
-                    false
-                }
-            });
-
-            // Add any new blobs to the active set
-            while let Some(maybe_new_blob) = next_blob {
-                if let Some(blob) = self.blobs.get(&maybe_new_blob) {
-                    if blob.pos.1 - blob.radius <= y_start {
-                        // This blob is included in the active set (starts before the current y position)
-                        active_blobs.push(maybe_new_blob);
-
-                        // Keep trying to add more blobs after this one
-                        next_blob = sorted_blobs_iter.next();
-                    } else {
-                        // This blob is not yet active
-                        next_blob = Some(maybe_new_blob);
-                        break;
-                    }
-                } else {
-                    unreachable!();     // because the hashset hasn't changed
-
-                    // Just move to the next blob if it's somehow disappeared (should be unreachable)
-                    next_blob = sorted_blobs_iter.next();
-                }
-            }
-
-            // Store the active set in the blobs on line list
-            blobs_on_line.push(active_blobs.clone());
-        }
-
-        // Store the new set of blobs on
-        *self.blobs_on_line.lock().unwrap() = Some(blobs_on_line);
     }
 }
 
