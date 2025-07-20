@@ -245,6 +245,41 @@ struct PhysicsLayerState {
 
 impl PhysicsLayerState {
     ///
+    /// Creates the blob interaction function for a new blob
+    ///
+    fn blob_interaction_fn<'a>(our_tool_id: PhysicsToolId, objects: &'a Arc<Mutex<HashMap<PhysicsToolId, PhysicsObject>>>, tool_id_for_blob_id: &'a Arc<Mutex<HashMap<BlobId, PhysicsToolId>>>) -> impl 'static + Send + Fn(BlobId) -> BlobInteraction {
+        let objects             = objects.clone();
+        let tool_id_for_blob_id = tool_id_for_blob_id.clone();
+
+        // Blobs attract each other if they can be combined
+        move |blob_id| {
+            let other_tool_id = tool_id_for_blob_id.lock().unwrap().get(&blob_id).copied();
+
+            if let Some(other_tool_id) = other_tool_id {
+                let objects = objects.lock().unwrap();
+
+                if let (Some(our_tool), Some(other_tool)) = (objects.get(&our_tool_id), objects.get(&other_tool_id)) {
+                    // The tools attract if they are in groups that can attract
+                    // TODO: docked tools aren't attractive
+                    let other_tool_group = other_tool.tool().selection_group();
+
+                    if our_tool.tool().will_bind_with(other_tool_group) {
+                        BlobInteraction::Attract
+                    } else {
+                        BlobInteraction::Repel
+                    }
+                } else {
+                    // No interaction if the tools are missing
+                    BlobInteraction::None
+                }
+            } else {
+                // No interaction if the tool can't be looked up
+                BlobInteraction::None
+            }
+        }
+    }
+
+    ///
     /// Adds or replaces a tool within this object
     ///
     pub async fn add_tool(&mut self, new_tool: PhysicsTool, target_program: StreamTarget, context: &SceneContext) {
@@ -255,31 +290,7 @@ impl PhysicsLayerState {
             // Create a new object
             let tool_id     = new_tool.id();
             let mut object  = PhysicsObject::new(new_tool, target_program.into());
-            let blob_id     = object.add_blob(&mut self.blob_land, self.bounds, |blob_id| {
-                /*
-                let other_tool_id = tool_id_for_blob_id.get(&blob_id);
-
-                if let Some(other_tool_id) = other_tool_id {
-                    if let (Some(our_tool), Some(other_tool)) = (objects.get(&tool_id), objects.get(&other_tool_id)) {
-                        // The tools attract if they're in similar groups
-                        let other_tool_group = other_tool.tool().selection_group();
-
-                        if our_tool.tool().will_bind_with(other_tool_group) {
-                            BlobInteraction::Attract
-                        } else {
-                            BlobInteraction::Repel
-                        }
-                    } else {
-                        // No interaction if the tools are missing
-                        BlobInteraction::None
-                    }
-                } else {
-                    // No interaction if the tool can't be looked up
-                    BlobInteraction::None
-                }
-                */
-                BlobInteraction::None
-            });
+            let blob_id     = object.add_blob(&mut self.blob_land, self.bounds, Self::blob_interaction_fn(tool_id, &self.objects, &self.tool_id_for_blob_id));
 
             self.tool_id_for_blob_id.lock().unwrap().insert(blob_id, tool_id);
 
