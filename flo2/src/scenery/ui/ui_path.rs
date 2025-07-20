@@ -1,4 +1,5 @@
 use flo_curves::geo::*;
+use flo_curves::bezier::*;
 use flo_curves::bezier::path::*;
 
 use serde::*;
@@ -158,6 +159,26 @@ impl From<Coord2> for UiPoint {
 impl<'a> From<&'a Coord2> for UiPoint {
     fn from(coord2: &'a Coord2) -> UiPoint {
         UiPoint(coord2.x(), coord2.y())
+    }
+}
+
+impl UiPath {
+    ///
+    /// Creates a UiPath from a set of curves
+    ///
+    pub fn from_curves(curves: &Vec<Curve<UiPoint>>) -> Self {
+        let start_point = curves[0].start_point();
+        let mut points  = vec![];
+
+        for c in curves.iter() {
+            let (_, (cp1, cp2), ep) = c.all_points();
+
+            points.push((cp1, cp2, ep));
+        }
+
+        Self {
+            points: (start_point, points)
+        }
     }
 }
 

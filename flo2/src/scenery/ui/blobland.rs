@@ -16,6 +16,7 @@ use super::ui_path::*;
 use flo_curves::*;
 use flo_curves::geo::*;
 use flo_curves::bezier::*;
+use flo_curves::bezier::path::*;
 use flo_curves::bezier::rasterize::*;
 use flo_curves::bezier::vectorize::*;
 use flo_draw::canvas::*;
@@ -159,7 +160,7 @@ impl Blob {
             island_radius:  island_radius,
             point_distance: circumference / (num_points as f64),
             points:         points,
-            interaction:    Box::new(|_| BlobInteraction::Repel),
+            interaction:    Box::new(|_| BlobInteraction::Attract),
         }
     }
 
@@ -193,13 +194,22 @@ impl Blob {
     }
 
     ///
+    /// Retrieves the path that represents the outline of this blob
+    ///
+    pub fn outline(&self) -> Option<Vec<Curve<UiPoint>>> {
+        let points = self.points.iter().map(|point| point.pos).chain(self.points.get(0).map(|point| point.pos)).collect::<Vec<_>>();
+        
+        fit_curve(&points, 0.1)
+    }
+
+    ///
     /// Creates a path representing this blob in the graphics context
     ///
     pub fn render_path(&self, gc: &mut impl GraphicsContext) {
         // Fit against the points
-        let points      = self.points.iter().map(|point| point.pos).chain(self.points.get(0).map(|point| point.pos)).collect::<Vec<_>>();
-        let fit_curves  = fit_curve::<Curve<UiPoint>>(&points, 0.1);
+        let fit_curves = self.outline();
 
+        // Render the path to the graphics context
         gc.new_path();
 
         if let Some(fit_curves) = fit_curves {
@@ -400,8 +410,56 @@ impl BlobLand {
     /// Renders the blobland to a graphics context
     ///
     pub fn render(&self, gc: &mut impl GraphicsContext) {
-        for blob in self.blobs.values() {
-            // TODO: for interacting blobs, add the resulting paths
+        // Fetch out the structures from the blobland
+        let blobs               = &self.blobs;
+        let interacting_blobs   = &self.interacting_blobs;
+
+        // Need to track the rendered objects, as we render certain interacting objects by adding their paths together
+        let mut rendered        = HashSet::new();
+
+        // Render blobs that are interacting
+        // We use two passes as in an interaction, only one side might use an interaction that requires special treatment
+        for blob_id in blobs.keys().copied() {
+            // Ignore blobs that might have been processed already
+            if rendered.contains(&blob_id) { continue; }
+
+            // Get the interactions for this blob, if it's interacting with anything
+            let interactions = if let Some(interactions) = interacting_blobs.get(&blob_id) { interactions } else { continue; };
+            if interactions.is_empty() { continue; }
+
+            // Blobs that are attracting are added together
+            rendered.insert(blob_id);
+
+            let blob     = blobs.get(&blob_id).unwrap();
+            let path     = if let Some(curves) = blob.outline() { curves } else { continue; };
+            let mut path = vec![UiPath::from_curves(&path)];
+
+            for (interact_blob_id, interaction) in interactions.iter() {
+                // Only attracting blobs alter the path
+                if interaction != &BlobInteraction::Attract { continue; }
+
+                // Add this blob to the path
+                rendered.insert(*interact_blob_id);
+
+                let interact_blob     = blobs.get(&interact_blob_id).unwrap();
+                let interact_path     = if let Some(curves) = interact_blob.outline() { curves } else { continue; };
+                let mut interact_path = vec![UiPath::from_curves(&interact_path)];
+
+                path = path_add(&path, &interact_path, 0.1);
+            }
+
+            // Render the combined blob
+            gc.new_path();
+            path.iter().for_each(|path| gc.bezier_path(path));
+            gc.fill();
+            gc.stroke();
+        }
+
+        // Render blobs that are not interacting
+        for blob in blobs.values() {
+            // Ignore interacting blobs
+            if rendered.contains(&blob.id()) { continue; }
+
             blob.render_path(gc);
             gc.fill();
             gc.stroke();
