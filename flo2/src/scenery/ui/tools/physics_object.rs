@@ -1,11 +1,11 @@
-use super::binding_tracker::*;
 use super::blobland::*;
-use super::colors::*;
-use super::focus::*;
-use super::namespaces::*;
 use super::physics::*;
 use super::physics_tool::*;
-use super::ui_path::*;
+use crate::scenery::ui::binding_tracker::*;
+use crate::scenery::ui::colors::*;
+use crate::scenery::ui::focus::*;
+use crate::scenery::ui::namespaces::*;
+use crate::scenery::ui::ui_path::*;
 
 use futures::prelude::*;
 

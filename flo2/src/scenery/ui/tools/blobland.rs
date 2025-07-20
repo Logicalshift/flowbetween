@@ -11,7 +11,7 @@
 //! the dock doesn't undock or rearrange things but creates copies)
 //!
 
-use super::ui_path::*;
+use crate::scenery::ui::ui_path::*;
 
 use flo_curves::*;
 use flo_curves::geo::*;

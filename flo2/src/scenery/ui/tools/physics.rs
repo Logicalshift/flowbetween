@@ -7,13 +7,13 @@
 //!
 
 use super::blobland::*;
-use super::colors::*;
-use super::focus::*;
-use super::namespaces::*;
 use super::physics_object::*;
 use super::physics_tool::*;
-use super::subprograms::*;
-use super::ui_path::*;
+use crate::scenery::ui::colors::*;
+use crate::scenery::ui::focus::*;
+use crate::scenery::ui::namespaces::*;
+use crate::scenery::ui::subprograms::*;
+use crate::scenery::ui::ui_path::*;
 
 use flo_binding::*;
 use flo_draw::*;
