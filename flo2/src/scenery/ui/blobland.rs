@@ -35,6 +35,7 @@ const BLOB_CONTOUR_SIZE_RATIO: f64 = 4.0;
 ///
 /// Ways that two blobs can interact with each other
 ///
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum BlobInteraction {
     /// Blobs have no effect on each other
     None,
@@ -55,7 +56,6 @@ pub struct BlobId(usize);
 ///
 /// A circular 'Blob' that lives in the blobland (not a Binary Large OBject: an actual blob)
 ///
-#[derive(Debug)]
 pub struct Blob {
     /// An identifier for this blob
     id: BlobId,
@@ -74,6 +74,9 @@ pub struct Blob {
 
     /// The points that represent the outline of this blob
     points: Vec<BlobPoint>,
+
+    /// Returns the interaction that this blob has with another blob
+    interaction: Box<dyn Send + Fn(BlobId) -> BlobInteraction>,
 }
 
 ///
@@ -93,7 +96,7 @@ pub struct BlobLand {
     extra_time: f64,
 
     /// Blobs that are close enough to interact
-    interacting_blobs: HashMap<BlobId, Vec<BlobId>>,
+    interacting_blobs: HashMap<BlobId, Vec<(BlobId, BlobInteraction)>>,
 }
 
 ///
@@ -130,6 +133,9 @@ impl Blob {
     ///
     /// Creates a new blob
     ///
+    /// The radius is the 'interaction radius', inside which other blobs will interact with this one. The 'island radius' is where the
+    /// actual blob is drawn when rendering the scene.
+    ///
     pub fn new(pos: UiPoint, radius: f64, island_radius: f64) -> Blob {
         // The points are initially around the center position
         let num_points      = 16;
@@ -156,7 +162,17 @@ impl Blob {
             island_radius:  island_radius,
             point_distance: circumference / (num_points as f64),
             points:         points,
+            interaction:    Box::new(|_| BlobInteraction::Repel),
         }
+    }
+
+    ///
+    /// Applies an interaction function to a blob which determines how this blob will interact with other blobs when they approach within the radius
+    ///
+    #[inline]
+    pub fn with_interation(mut self, interaction: impl 'static + Send + Fn(BlobId) -> BlobInteraction) -> Blob {
+        self.interaction = Box::new(interaction);
+        self
     }
 
     ///
@@ -280,15 +296,10 @@ impl BlobLand {
     }
 
     ///
-    /// Runs the simulation for the specified time
+    /// Runs a sweep on the blobs that are in this blobland and returns a hashmap indicating which blobs are interacting (and how)
     ///
-    /// Returns true if the simulation should go to sleep (no more simulations needed until the blobland is disturbed by something)
-    ///
-    pub fn simulate(&mut self, delta_t: f64) -> bool {
-        // Account for the extra time, but only simulate up to MAX_TICKS total time
-        let mut delta_t = (delta_t + self.extra_time).min(MAX_TICKS);
-
-        // Create the blobs, sorted by y position (we use this to discover which blobs are interacting later on)
+    pub fn sweep_for_interacting_blobs(&self) -> HashMap<BlobId, Vec<(BlobId, BlobInteraction)>> {
+        // Sort the blobs by y position (we use this to discover which blobs are interacting later on)
         // We don't move the blobs per tick so the interacting set doesn't change here
         let mut sorted_blobs = self.blobs.keys().copied().collect::<Vec<_>>();
         sorted_blobs.sort_by(|a, b| {
@@ -299,8 +310,8 @@ impl BlobLand {
         });
 
         // Sweep the blobs to discover which ones are interacting
-        let mut active_blobs = vec![];
-        let mut interacting_blobs = HashMap::new();
+        let mut active_blobs        = vec![];
+        let mut interacting_blobs   = HashMap::new();
 
         for blob_id in sorted_blobs.into_iter() {
             // Fetch the next blob to process and its position
@@ -333,14 +344,32 @@ impl BlobLand {
                 let other_blob = self.blobs.get(&other_blob_id).unwrap();
 
                 if new_blob.is_interacting_with(other_blob) {
-                    interacting_blobs.entry(blob_id).or_insert_with(|| vec![]).push(other_blob_id);
-                    interacting_blobs.entry(other_blob_id).or_insert_with(|| vec![]).push(blob_id);
+                    let new_interaction     = (new_blob.interaction)(other_blob_id);
+                    let other_interaction   = (other_blob.interaction)(blob_id);
+
+                    interacting_blobs.entry(blob_id).or_insert_with(|| vec![]).push((other_blob_id, new_interaction));
+                    interacting_blobs.entry(other_blob_id).or_insert_with(|| vec![]).push((blob_id, other_interaction));
                 }
             }
 
             // The blob we just picked always becomes part of the active set
             active_blobs.push(blob_id);
         }
+
+        interacting_blobs
+    }
+
+    ///
+    /// Runs the simulation for the specified time
+    ///
+    /// Returns true if the simulation should go to sleep (no more simulations needed until the blobland is disturbed by something)
+    ///
+    pub fn simulate(&mut self, delta_t: f64) -> bool {
+        // Account for the extra time, but only simulate up to MAX_TICKS total time
+        let mut delta_t = (delta_t + self.extra_time).min(MAX_TICKS);
+
+        // Sweep the blobland to find which blobs might be interacting with each other (which may have changed since the last simulation)
+        let interacting_blobs = self.sweep_for_interacting_blobs();
 
         // Run the simulation for each tick
         let blob_ids = self.blobs.keys().copied().collect::<Vec<_>>();
@@ -350,11 +379,20 @@ impl BlobLand {
                 // Create a list of the updated points for this blob
                 let interacting_with    = interacting_blobs.get(&blob_id).into_iter()
                     .flatten()
-                    .flat_map(|blob_id| self.blobs.get(blob_id))
-                    .map(|blob| blob.pos)
-                    .collect();
+                    .flat_map(|(blob_id, interaction)| self.blobs.get(blob_id).map(|blob| (blob, interaction)))
+                    .map(|(blob, interaction)| (blob.pos, interaction))
+                    .collect::<Vec<_>>();
                 let blob                = self.blobs.get_mut(&blob_id).unwrap();
                 let mut updated_points  = Vec::with_capacity(blob.points.len());
+
+                let attracting          = interacting_with.iter()
+                    .filter(|(_, interaction)| *interaction == &BlobInteraction::Attract)
+                    .map(|(pos, _)| *pos)
+                    .collect();
+                let repelling           = interacting_with.iter()
+                    .filter(|(_, interaction)| *interaction == &BlobInteraction::Repel)
+                    .map(|(pos, _)| *pos)
+                    .collect();
 
                 // Simulate each point
                 for idx in 0..blob.points.len() {
@@ -366,8 +404,7 @@ impl BlobLand {
                     let next_point  = &blob.points[next_idx];
 
                     // Run the simulation for this point
-                    let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.radius, next_point, prev_point, &interacting_with, &vec![]);
-                    //let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.radius, next_point, prev_point, &vec![], &interacting_with);
+                    let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.radius, next_point, prev_point, &attracting, &repelling);
                     updated_points.push(updated_point);
                 }
 
