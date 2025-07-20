@@ -341,6 +341,14 @@ impl BlobLand {
     }
 
     ///
+    /// Retrieves the list of interacting blobs from the last run of the simulation (to save doing additional sweeps if the simulation has been run)
+    ///
+    #[inline]
+    pub fn interacting_from_simulation(&self) -> &HashMap<BlobId, Vec<(BlobId, BlobInteraction)>> {
+        &self.interacting_blobs
+    }
+
+    ///
     /// Runs the simulation for the specified time
     ///
     /// Returns true if the simulation should go to sleep (no more simulations needed until the blobland is disturbed by something)
