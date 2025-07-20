@@ -112,7 +112,7 @@ impl PhysicsObject {
     ///
     /// Adds a blob for this tool to a BlobLand
     ///
-    pub fn add_blob(&mut self, blob_land: &mut BlobLand, bounds: (f64, f64)) {
+    pub fn add_blob(&mut self, blob_land: &mut BlobLand, bounds: (f64, f64)) -> BlobId {
         let pos     = self.position(bounds).unwrap_or((0.0, 0.0));
         let (w, h)  = self.tool.size();
         let radius  = w.min(h)/2.0;
@@ -120,6 +120,8 @@ impl PhysicsObject {
 
         self.blob_id = blob.id();
         blob_land.add_blob(blob);
+
+        self.blob_id
     }
 
     ///

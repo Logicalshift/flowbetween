@@ -28,6 +28,7 @@ use ::serde::*;
 use serde::de::{Error as DeError};
 use serde::ser::{Error as SeError};
 
+use std::collections::{HashMap};
 use std::sync::*;
 use std::time::{Instant, Duration};
 
@@ -103,13 +104,14 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     // Drawing settings
     let mut state = PhysicsLayerState {
         our_program_id: our_program_id,
-        objects:        vec![],
-        bounds:         (1024.0, 768.0),
-        sprites:        vec![],
-        next_sprite_id: 0,
-        blob_land:      BlobLand::empty(),
-        blob_tick:      Instant::now(),
-        blob_awake:     false,
+        objects:                vec![],
+        bounds:                 (1024.0, 768.0),
+        tool_id_for_blob_id:    HashMap::new(),
+        sprites:                vec![],
+        next_sprite_id:         0,
+        blob_land:              BlobLand::empty(),
+        blob_tick:              Instant::now(),
+        blob_awake:             false,
     };
 
     // Objects on the layer
@@ -222,6 +224,9 @@ struct PhysicsLayerState {
     /// Objects in the physics layer
     objects: Vec<PhysicsObject>,
 
+    /// The tool ID associated with a blob ID from the blobland
+    tool_id_for_blob_id: HashMap<BlobId, PhysicsToolId>,
+
     /// Bounds of the drawing area
     bounds: (f64, f64),
 
@@ -256,8 +261,11 @@ impl PhysicsLayerState {
             self.objects[existing_idx].set_tool(new_tool, target_program.into());
         } else {
             // Create a new object
-            let mut object = PhysicsObject::new(new_tool, target_program.into());
-            object.add_blob(&mut self.blob_land, self.bounds);
+            let tool_id     = new_tool.id();
+            let mut object  = PhysicsObject::new(new_tool, target_program.into());
+            let blob_id     = object.add_blob(&mut self.blob_land, self.bounds);
+
+            self.tool_id_for_blob_id.insert(blob_id, tool_id);
 
             // Start a subprogram to manage this tool
             let tool_id = object.tool().id();
