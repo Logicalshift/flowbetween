@@ -125,6 +125,14 @@ impl PhysicsObject {
     }
 
     ///
+    /// Returns the blob ID assigned to this physics object
+    ///
+    #[inline]
+    pub fn blob_id(&self) -> BlobId {
+        self.blob_id
+    }
+
+    ///
     /// Retrieves the physics tool that is being managed by this object
     ///
     pub fn tool(&self) -> &PhysicsTool {

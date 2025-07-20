@@ -172,4 +172,11 @@ impl PhysicsTool {
     pub fn bind_with(&self) -> Vec<ToolGroupId> {
         self.bind_with.get()
     }
+
+    ///
+    /// True if this tool can bind with tools of the specified type
+    ///
+    pub fn will_bind_with(&self, other_group: ToolGroupId) -> bool {
+        self.bind_with().iter().any(|bind_with_group| bind_with_group == &other_group)
+    }
 }

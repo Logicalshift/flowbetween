@@ -104,9 +104,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     // Drawing settings
     let mut state = PhysicsLayerState {
         our_program_id: our_program_id,
-        objects:                HashMap::new(),
+        objects:                Arc::new(Mutex::new(HashMap::new())),
         bounds:                 (1024.0, 768.0),
-        tool_id_for_blob_id:    HashMap::new(),
+        tool_id_for_blob_id:    Arc::new(Mutex::new(HashMap::new())),
         sprites:                vec![],
         next_sprite_id:         0,
         blob_land:              BlobLand::empty(),
@@ -174,7 +174,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         }
 
         // Before processing the next event, redraw the sprites for the tools
-        for object in state.objects.values_mut() {
+        for object in state.objects.lock().unwrap().values_mut() {
             if object.sprite_needs_redraw() {
                 // Assign a new sprite ID
                 let sprite_id = if let Some(sprite) = state.sprites.pop() { sprite } else { state.next_sprite_id += 1; SpriteId(state.next_sprite_id) };
@@ -199,7 +199,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
             drawing.layer(LayerId(1));
             drawing.clear_layer();
 
-            drawing.extend(state.objects.values_mut().flat_map(|object| object.draw(bounds, &context)));
+            drawing.extend(state.objects.lock().unwrap().values_mut().flat_map(|object| object.draw(bounds, &context)));
 
             drawing.pop_state();
         }
@@ -219,10 +219,10 @@ struct PhysicsLayerState {
     our_program_id: SubProgramId,
 
     /// Objects in the physics layer
-    objects: HashMap<PhysicsToolId, PhysicsObject>,
+    objects: Arc<Mutex<HashMap<PhysicsToolId, PhysicsObject>>>,
 
     /// The tool ID associated with a blob ID from the blobland
-    tool_id_for_blob_id: HashMap<BlobId, PhysicsToolId>,
+    tool_id_for_blob_id: Arc<Mutex<HashMap<BlobId, PhysicsToolId>>>,
 
     /// Bounds of the drawing area
     bounds: (f64, f64),
@@ -248,16 +248,40 @@ impl PhysicsLayerState {
     /// Adds or replaces a tool within this object
     ///
     pub async fn add_tool(&mut self, new_tool: PhysicsTool, target_program: StreamTarget, context: &SceneContext) {
-        if let Some(existing_object) = self.objects.get_mut(&new_tool.id()) {
+        if let Some(existing_object) = self.objects.lock().unwrap().get_mut(&new_tool.id()) {
             // Update the tool in the existing object
             existing_object.set_tool(new_tool, target_program.into());
         } else {
             // Create a new object
             let tool_id     = new_tool.id();
             let mut object  = PhysicsObject::new(new_tool, target_program.into());
-            let blob_id     = object.add_blob(&mut self.blob_land, self.bounds, |_| BlobInteraction::Repel);
+            let blob_id     = object.add_blob(&mut self.blob_land, self.bounds, |blob_id| {
+                /*
+                let other_tool_id = tool_id_for_blob_id.get(&blob_id);
 
-            self.tool_id_for_blob_id.insert(blob_id, tool_id);
+                if let Some(other_tool_id) = other_tool_id {
+                    if let (Some(our_tool), Some(other_tool)) = (objects.get(&tool_id), objects.get(&other_tool_id)) {
+                        // The tools attract if they're in similar groups
+                        let other_tool_group = other_tool.tool().selection_group();
+
+                        if our_tool.tool().will_bind_with(other_tool_group) {
+                            BlobInteraction::Attract
+                        } else {
+                            BlobInteraction::Repel
+                        }
+                    } else {
+                        // No interaction if the tools are missing
+                        BlobInteraction::None
+                    }
+                } else {
+                    // No interaction if the tool can't be looked up
+                    BlobInteraction::None
+                }
+                */
+                BlobInteraction::None
+            });
+
+            self.tool_id_for_blob_id.lock().unwrap().insert(blob_id, tool_id);
 
             // Start a subprogram to manage this tool
             let tool_id = object.tool().id();
@@ -266,7 +290,7 @@ impl PhysicsLayerState {
                 0
             )).await.ok();
 
-            self.objects.insert(tool_id, object);
+            self.objects.lock().unwrap().insert(tool_id, object);
         }
     }
 
@@ -274,8 +298,9 @@ impl PhysicsLayerState {
     /// Performs an action on the object with the specified ID
     ///
     pub fn object_action(&mut self, tool_id: PhysicsToolId, action: impl FnOnce(&mut PhysicsObject, &mut BlobLand) -> ()) {
-        let objects      = &mut self.objects;
+        let objects      = &self.objects;
         let blob_land    = &mut self.blob_land;
+        let mut objects  = objects.lock().unwrap();
 
         let maybe_object = objects.get_mut(&tool_id);
 
@@ -313,11 +338,14 @@ impl PhysicsLayerState {
     /// Removes a tool entirely from the state
     ///
     pub fn remove_tool(&mut self, tool_id: PhysicsToolId) {
-        if let Some(mut removed_object) = self.objects.remove(&tool_id) {
+        if let Some(mut removed_object) = self.objects.lock().unwrap().remove(&tool_id) {
             // Invalidate the sprite and return it to the pool
             if let Some(sprite) = removed_object.invalidate_sprite() {
                 self.sprites.push(sprite);
             }
+
+            let blob_id = removed_object.blob_id();
+            self.tool_id_for_blob_id.lock().unwrap().remove(&blob_id);
         }
     }
 
@@ -325,7 +353,7 @@ impl PhysicsLayerState {
     /// Invalidates the sprite for a tool, prompting it to be redrawn
     ///
     pub fn invalidate_sprite(&mut self, tool_id: PhysicsToolId) {
-        if let Some(object) = self.objects.get_mut(&tool_id) {
+        if let Some(object) = self.objects.lock().unwrap().get_mut(&tool_id) {
             // Invalidate the sprite and return it to the pool
             if let Some(sprite) = object.invalidate_sprite() {
                 self.sprites.push(sprite);
@@ -344,25 +372,35 @@ impl PhysicsLayerState {
     /// Updates the focus program on the location of a tool
     ///
     pub async fn update_tool_focus(&mut self, tool_id: PhysicsToolId, focus_events: &mut OutputSink<Focus>) {
-        if let Some(object) = self.objects.get_mut(&tool_id) {
-            // Each object has a control ID
-            let program_id = object.subprogram_id();
+        let maybe_focus_event = {
+            let mut objects = self.objects.lock().unwrap();
 
-            if let Some((x, y)) = object.position(self.bounds) {
-                let (w, h)    = object.tool().size();
-                let tool_size = w.max(h);
-                let tool_path = Circle::new(UiPoint(x, y), tool_size/2.0).to_path();
+            if let Some(object) = objects.get_mut(&tool_id) {
+                // Each object has a control ID
+                let program_id = object.subprogram_id();
 
-                // Create a focus region for the tool
-                focus_events.send(Focus::ClaimRegion {
-                    program:    program_id,
-                    region:     vec![tool_path],
-                    z_index:    1,
-                }).await.ok();
+                if let Some((x, y)) = object.position(self.bounds) {
+                    let (w, h)    = object.tool().size();
+                    let tool_size = w.max(h);
+                    let tool_path = Circle::new(UiPoint(x, y), tool_size/2.0).to_path();
+
+                    // Create a focus region for the tool
+                    Some(Focus::ClaimRegion {
+                        program:    program_id,
+                        region:     vec![tool_path],
+                        z_index:    1,
+                    })
+                } else {
+                    // Tool is hidden or otherwise not present
+                    Some(Focus::RemoveClaim(program_id))
+                }
             } else {
-                // Tool is hidden or otherwise not present
-                focus_events.send(Focus::RemoveClaim(program_id)).await.ok();
+                None
             }
+        };
+
+        if let Some(focus_event) = maybe_focus_event {
+            focus_events.send(focus_event).await.ok();
         }
     }
 
