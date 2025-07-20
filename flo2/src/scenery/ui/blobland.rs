@@ -33,6 +33,20 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 const BLOB_CONTOUR_SIZE_RATIO: f64 = 4.0;
 
 ///
+/// Ways that two blobs can interact with each other
+///
+pub enum BlobInteraction {
+    /// Blobs have no effect on each other
+    None,
+
+    /// This blob is attracted to the other blob
+    Attract,
+
+    /// This blob is repelled from the other blob
+    Repel,
+}
+
+///
 /// An ID for a blob in the blobland
 ///
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -77,6 +91,9 @@ pub struct BlobLand {
 
     /// Time that wasn't accounted for in the last simulation step
     extra_time: f64,
+
+    /// Blobs that are close enough to interact
+    interacting_blobs: HashMap<BlobId, Vec<BlobId>>,
 }
 
 ///
@@ -189,10 +206,11 @@ impl BlobLand {
     ///
     pub fn empty() -> BlobLand {
         BlobLand {
-            blobs:          HashMap::new(),
-            blobs_on_line:  Mutex::new(None),
-            canvas_size:    ContourSize(0, 0),
-            extra_time:     0.0,
+            blobs:              HashMap::new(),
+            blobs_on_line:      Mutex::new(None),
+            canvas_size:        ContourSize(0, 0),
+            extra_time:         0.0,
+            interacting_blobs:  HashMap::new(),
         }
     }
 
@@ -348,7 +366,8 @@ impl BlobLand {
                     let next_point  = &blob.points[next_idx];
 
                     // Run the simulation for this point
-                    let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.radius, next_point, prev_point, &vec![], &interacting_with);
+                    let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.radius, next_point, prev_point, &interacting_with, &vec![]);
+                    //let updated_point = this_point.simulate_tick(blob.point_distance, blob.pos, blob.radius, next_point, prev_point, &vec![], &interacting_with);
                     updated_points.push(updated_point);
                 }
 
@@ -362,6 +381,9 @@ impl BlobLand {
 
         // Any 'left over' time should be accounted for in the next simulation step
         self.extra_time = delta_t;
+
+        // Store what we've found as the interacting blobs
+        self.interacting_blobs = interacting_blobs;
 
         false
     }
