@@ -427,6 +427,9 @@ impl BlobLand {
             let interactions = if let Some(interactions) = interacting_blobs.get(&blob_id) { interactions } else { continue; };
             if interactions.is_empty() { continue; }
 
+            // In case there's an interaction chain, we need to be able to add the interactions from other shapes
+            let mut interactions = interactions.clone();
+
             // Blobs that are attracting are added together
             rendered.insert(blob_id);
 
@@ -434,18 +437,24 @@ impl BlobLand {
             let path     = if let Some(curves) = blob.outline() { curves } else { continue; };
             let mut path = vec![UiPath::from_curves(&path)];
 
-            for (interact_blob_id, interaction) in interactions.iter() {
+            while let Some((interact_blob_id, interaction)) = interactions.pop() {
                 // Only attracting blobs alter the path
-                if interaction != &BlobInteraction::Attract { continue; }
+                if rendered.contains(&interact_blob_id) { continue; }
+                if interaction != BlobInteraction::Attract { continue; }
 
                 // Add this blob to the path
-                rendered.insert(*interact_blob_id);
+                rendered.insert(interact_blob_id);
 
                 let interact_blob     = blobs.get(&interact_blob_id).unwrap();
                 let interact_path     = if let Some(curves) = interact_blob.outline() { curves } else { continue; };
                 let mut interact_path = vec![UiPath::from_curves(&interact_path)];
 
                 path = path_add(&path, &interact_path, 0.1);
+
+                // Also process any interactions that come from this blob
+                if let Some(more_interactions) = interacting_blobs.get(&interact_blob_id) {
+                    interactions.extend(more_interactions.iter().cloned());
+                }
             }
 
             // Render the combined blob
