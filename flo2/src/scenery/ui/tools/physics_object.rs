@@ -291,6 +291,14 @@ impl PhysicsObject {
     ///
     pub fn end_drag(&mut self, x: f64, y: f64) {
         if let Some(UiPoint(new_x, new_y)) = self.drag_position.get() {
+            // Calculate the offset from the existing drag anchor
+            let offset_x = x - self.drag_anchor.0;
+            let offset_y = y - self.drag_anchor.1;
+
+            let new_x = new_x + offset_x;
+            let new_y = new_y + offset_y;
+
+            // Set this as the final position of the tool
             self.set_position(ToolPosition::Float(new_x, new_y));
             self.drag_position.set(None);
             self.being_dragged = false;
