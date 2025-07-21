@@ -343,7 +343,7 @@ impl PhysicsObject {
 ///
 /// Runs a drag action for a physics object tool
 ///
-async fn track_drag((x, y): (f64, f64), input: &mut InputStream<FocusEvent>, context: &SceneContext, tool_id: PhysicsToolId, layer_actions: &mut OutputSink<PhysicsLayer>) {
+async fn track_drag((x, y): (f64, f64), input: &mut InputStream<FocusEvent>, tool_id: PhysicsToolId, layer_actions: &mut OutputSink<PhysicsLayer>) {
     let mut last_x = x;
     let mut last_y = y;
 
@@ -405,7 +405,7 @@ pub async fn physics_object_program(input: InputStream<FocusEvent>, context: Sce
             FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonDown, _, pointer_state)) => {
                 if let Some((x, y)) = pointer_state.location_in_canvas {
                     // Drag the tool
-                    track_drag((x, y), &mut input, &context, tool_id, &mut layer_actions).await;
+                    track_drag((x, y), &mut input, tool_id, &mut layer_actions).await;
                 }
             }
 
