@@ -390,7 +390,7 @@ impl PhysicsLayerState {
                 // Each object has a control ID
                 let program_id = object.subprogram_id();
 
-                if let Some((x, y)) = object.position(self.bounds) {
+                if let Some(UiPoint(x, y)) = object.position(self.bounds) {
                     let (w, h)    = object.tool().size();
                     let tool_size = w.max(h);
                     let tool_path = Circle::new(UiPoint(x, y), tool_size/2.0).to_path();

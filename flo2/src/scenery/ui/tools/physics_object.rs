@@ -41,11 +41,17 @@ pub struct PhysicsObject {
     /// Location of the tool 
     position: Binding<ToolPosition>,
 
+    /// The offset from the position that this was last dragged to
+    position_offset: Binding<UiPoint>,
+
+    /// True if this tool is being dragged
+    being_dragged: bool,
+
     /// The drag anchor specified by the last 'start drag' operation
-    drag_anchor: (f64, f64),
+    drag_anchor: UiPoint,
 
     /// The drag position of this object (as opposed to the 'real' position that it assumes when the drag has finished)
-    drag_position: Binding<Option<(f64, f64)>>,
+    drag_position: Binding<Option<UiPoint>>,
 
     /// The ID of this tool in the blobland
     blob_id: BlobId,
@@ -103,7 +109,9 @@ impl PhysicsObject {
             sprite_tracker:     None,
             position_tracker:   None,
             position:           bind(ToolPosition::Hidden),
-            drag_anchor:        (0.0, 0.0),
+            position_offset:    bind(UiPoint(0.0, 0.0)),
+            being_dragged:      false,
+            drag_anchor:        UiPoint(0.0, 0.0),
             drag_position:      bind(None),
             blob_id:            BlobId::new(),
         }
@@ -113,7 +121,7 @@ impl PhysicsObject {
     /// Adds a blob for this tool to a BlobLand
     ///
     pub fn add_blob(&mut self, blob_land: &mut BlobLand, bounds: (f64, f64), interaction: impl 'static + Send + Fn(BlobId) -> BlobInteraction) -> BlobId {
-        let pos     = self.position(bounds).unwrap_or((0.0, 0.0));
+        let pos     = self.position(bounds).unwrap_or(UiPoint(0.0, 0.0));
         let (w, h)  = self.tool.size();
         let radius  = w.min(h)/2.0;
         let blob    = Blob::new(UiPoint(pos.0, pos.1), radius * 1.5, radius).with_interaction(interaction);
@@ -237,12 +245,12 @@ impl PhysicsObject {
     ///
     /// Returns the coordinates where the center of this object should be rendered
     ///
-    pub fn position(&self, bounds: (f64, f64)) -> Option<(f64, f64)> {
+    pub fn position(&self, bounds: (f64, f64)) -> Option<UiPoint> {
         match self.position.get() {
             ToolPosition::Hidden                => None,
-            ToolPosition::DockTool(idx)         => Some((20.0, 20.0 + (idx as f64 * 40.0))),
-            ToolPosition::DockProperties(idx)   => Some((bounds.0 - 20.0, 20.0 + (idx as f64 * 40.0))),
-            ToolPosition::Float(x, y)           => Some((x, y)),
+            ToolPosition::DockTool(idx)         => Some(UiPoint(20.0, 20.0 + (idx as f64 * 40.0))),
+            ToolPosition::DockProperties(idx)   => Some(UiPoint(bounds.0 - 20.0, 20.0 + (idx as f64 * 40.0))),
+            ToolPosition::Float(x, y)           => Some(UiPoint(x, y) + self.position_offset.get()),
         }
     }
 
@@ -250,21 +258,27 @@ impl PhysicsObject {
     /// Starts a drag operation on this object
     ///
     pub fn start_drag(&mut self, x: f64, y: f64, bounds: (f64, f64)) {
-        self.drag_anchor = (x, y);
+        self.being_dragged = true;
+
+        // Anchor at the position the tool was in originally
+        self.drag_anchor = UiPoint(x, y);
         self.drag_position.set(self.position(bounds));
+
+        // Remove the offset
+        self.position_offset.set(UiPoint(0.0, 0.0));
     }
 
     ///
     /// Starts a drag operation on this object
     ///
     pub fn drag(&mut self, x: f64, y: f64) {
-        if let Some((x_pos, y_pos)) = self.drag_position.get() {
+        if let Some(UiPoint(x_pos, y_pos)) = self.drag_position.get() {
             // Calculate the offset from the existing drag anchor
             let offset_x = x - self.drag_anchor.0;
             let offset_y = y - self.drag_anchor.1;
 
             // Move the drag position by the offset
-            self.drag_position.set(Some((x_pos + offset_x, y_pos + offset_y)));
+            self.drag_position.set(Some(UiPoint(x_pos + offset_x, y_pos + offset_y)));
 
             // Update the anchor
             self.drag_anchor.0 += offset_x;
@@ -276,9 +290,10 @@ impl PhysicsObject {
     /// Finishes a drag operation on this object
     ///
     pub fn end_drag(&mut self, x: f64, y: f64) {
-        if let Some((new_x, new_y)) = self.drag_position.get() {
+        if let Some(UiPoint(new_x, new_y)) = self.drag_position.get() {
             self.set_position(ToolPosition::Float(new_x, new_y));
             self.drag_position.set(None);
+            self.being_dragged = false;
         }
     }
 
@@ -295,12 +310,12 @@ impl PhysicsObject {
             let mut drawing = vec![];
 
             // Determine the position of this control
-            let pos     = self.position(bounds);
-            let pos     = if let Some(pos) = pos { pos } else { return drawing; };
-            let pos     = if let Some(drag_position) = self.drag_position.get() { drag_position } else { pos };
-            let sprite  = self.sprite.get();
-            let sprite  = if let Some(sprite) = sprite { sprite } else { return drawing; };
-            let (x, y)  = pos;
+            let pos             = self.position(bounds);
+            let pos             = if let Some(pos) = pos { pos } else { return drawing; };
+            let pos             = if let Some(drag_position) = self.drag_position.get() { drag_position } else { pos };
+            let sprite          = self.sprite.get();
+            let sprite          = if let Some(sprite) = sprite { sprite } else { return drawing; };
+            let UiPoint(x, y)   = pos;
 
             // Render the sprite to draw the actual physics object
             drawing.sprite_transform(SpriteTransform::Identity);
