@@ -16,6 +16,7 @@ mod dialog;
 mod egui;
 mod tools;
 mod colors;
+mod render_binding;
 
 pub use namespaces::*;
 pub use control::*;
@@ -29,3 +30,4 @@ pub use egui::*;
 pub use tools::physics::*;
 pub use tools::physics_tool::*;
 pub use binding_tracker::*;
+pub use render_binding::*;
