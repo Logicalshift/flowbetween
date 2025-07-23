@@ -11,14 +11,20 @@ use crate::scenery::ui::ui_path::*;
 use flo_binding::*;
 use flo_scene::*;
 
+use rapier2d::prelude::*;
 use uuid::*;
 use ::serde::*;
 use ::serde::de::{Error as DeError};
 use ::serde::ser::{Error as SeError};
-use rapier2d::*;
 use futures::prelude::*;
 
 use std::time::{Duration};
+
+/// Time per tick/physics step
+const TICK_DURATION_S: f64 = 1.0/60.0;
+
+/// Maximum number of ticks to process in one iteration (if the scene gets stalled or time otherwise passes in a non-linear fashion)
+const MAX_TICKS: usize = 30;
 
 ///
 /// Identifier used to specify a physics tool within the flowbetween app
@@ -56,8 +62,11 @@ pub enum PhysicsSimulation {
     /// Sets the angular velocity of a simulation object ID
     SetAngularVelocity(SimulationObjectId, f64),
 
-    /// Sets the shape of a simulation object
+    /// Sets the collision shape of a simulation object
     SetShape(SimulationObjectId, SimulationShape),
+
+    /// Sets the type of an object
+    SetType(SimulationObjectId, SimulationObjectType),
 
     /// Specifies a binding that will update when a simulated object moves
     BindPosition(SimulationObjectId, Binding<UiPoint>),
@@ -82,6 +91,21 @@ pub enum SimulationShape {
 }
 
 ///
+/// Shapes permitted by a simulation object
+///
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SimulationObjectType {
+    /// Object that does not move
+    Static,
+
+    /// Object that moves using the simulation (when MoveTo is called, we move this object by applying a force to it rather than teleporting it)
+    Dynamic,
+
+    /// Object that can have its coordiantes set immediately
+    Kinetic,
+}
+
+///
 /// Physics simualations can generate a few events
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,23 +114,98 @@ pub enum PhysicsSimulationEvent {
     Sleep,
 }
 
+///
+/// Runs a physics simulation using rapier2d
+///
+/// Use the bindings to decide where the positions of the objects are
+///
 pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, context: SceneContext) {
     let mut input = input;
+
+    // Create the rapier2d state
+    let gravity                 = vector![0.0, -9.81];
+    let mut rigid_body_set      = RigidBodySet::new();
+    let mut collider_set        = ColliderSet::new();
+    let integration_parameters  = IntegrationParameters::default();
+    let mut physics_pipeline    = PhysicsPipeline::new();
+    let mut island_manager      = IslandManager::new();
+    let mut broad_phase         = DefaultBroadPhase::new();
+    let mut narrow_phase        = NarrowPhase::new();
+    let mut impulse_joint_set   = ImpulseJointSet::new();
+    let mut multibody_joint_set = MultibodyJointSet::new();
+    let mut ccd_solver          = CCDSolver::new();
+    let mut query_pipeline      = QueryPipeline::new();
+    let physics_hooks           = ();
+    let event_handler           = ();
+
+    // We track time from 0. Time doesn't pass while we're asleep
+    let mut last_step_time  = Duration::default();
+    let mut is_asleep       = true;
 
     while let Some(event) = input.next().await {
         use PhysicsSimulation::*;
 
         match event {
-            Tick(_time)                                 => { },
             CreateRigidBody(_object_id)                 => { },
             MoveTo(_object_id, _pos)                    => { },
             SetVelocity(_object_id, _velocity)          => { },
             SetAngularVelocity(_object_id, _velocity)   => { },
             SetShape(_object_id, _shape)                => { },
+            SetType(_object_id, _type)                  => { },
             BindPosition(_object_id, _binding)          => { },
             BindAngle(_object_id, _binding)             => { },
             BindVelocity(_object_id, _binding)          => { },
             BindAngularVelocity(_object_id, _binding)   => { },
+
+            Tick(time) => {
+                if is_asleep {
+                    // Wake up if we're asleep (don't run a bunch of steps if we've been asleep for a while')
+                    is_asleep       = false;
+                    last_step_time  = time;
+                }
+
+                if time < last_step_time {
+                    // Something is wrong with the timer, and it's moved backwards
+                    last_step_time = time;
+                }
+
+                // Run up to MAX_TICKS steps
+                let mut num_steps   = 0;
+                let tick            = Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _);
+                loop {
+                    if num_steps >= MAX_TICKS {
+                        // Just make up the remaining time and stop
+                        last_step_time = time;
+                        break;
+                    }
+
+                    if last_step_time + tick > time {
+                        // Stop when we can't run a full tick in the time we've got left
+                        break;
+                    }
+
+                    // Add in the tick time
+                    last_step_time  += tick;
+                    num_steps       += 1;
+
+                    // Run the step
+                    physics_pipeline.step(
+                        &gravity,
+                        &integration_parameters,
+                        &mut island_manager,
+                        &mut broad_phase,
+                        &mut narrow_phase,
+                        &mut rigid_body_set,
+                        &mut collider_set,
+                        &mut impulse_joint_set,
+                        &mut multibody_joint_set,
+                        &mut ccd_solver,
+                        Some(&mut query_pipeline),
+                        &physics_hooks,
+                        &event_handler,
+                    );
+                }
+            },
         }
     }
 }
