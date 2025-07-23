@@ -416,7 +416,7 @@ impl PhysicsLayerState {
     }
 
     ///
-    /// Runs the blobland simulation
+    /// Runs the blobland simulation and renders the result
     ///
     pub async fn run_simulation(&mut self, timer_requests: &mut OutputSink<TimerRequest>, drawing_requests: &mut OutputSink<DrawingRequest>) {
         // Read the time since the last tick occurred

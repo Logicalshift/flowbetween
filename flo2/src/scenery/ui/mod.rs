@@ -29,5 +29,6 @@ pub use dialog::*;
 pub use egui::*;
 pub use tools::physics::*;
 pub use tools::physics_tool::*;
+pub use tools::physics_simulation::*;
 pub use binding_tracker::*;
 pub use render_binding::*;
