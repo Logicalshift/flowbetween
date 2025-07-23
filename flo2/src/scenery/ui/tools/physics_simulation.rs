@@ -10,6 +10,7 @@ use crate::scenery::ui::ui_path::*;
 
 use flo_binding::*;
 use flo_scene::*;
+use flo_curves::*;
 
 use rapier2d::prelude::*;
 use uuid::*;
@@ -18,6 +19,7 @@ use ::serde::de::{Error as DeError};
 use ::serde::ser::{Error as SeError};
 use futures::prelude::*;
 
+use std::collections::{HashMap};
 use std::time::{Duration};
 
 /// Time per tick/physics step
@@ -86,6 +88,9 @@ pub enum PhysicsSimulation {
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SimulationShape {
+    /// The object has no collision
+    None,
+
     /// A circle of the specified radius
     Circle(f64),
 }
@@ -102,7 +107,7 @@ pub enum SimulationObjectType {
     Dynamic,
 
     /// Object that can have its coordiantes set immediately
-    Kinetic,
+    Kinematic,
 }
 
 ///
@@ -121,6 +126,11 @@ pub enum PhysicsSimulationEvent {
 ///
 pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, context: SceneContext) {
     let mut input = input;
+
+    // Our own state
+    let mut object_id_for_rigid_body_id = HashMap::new();
+    let mut rigid_body_id_for_object_id = HashMap::new();
+    let mut rigid_body_type             = HashMap::new();
 
     // Create the rapier2d state
     let gravity                 = vector![0.0, -9.81];
@@ -146,8 +156,27 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
         use PhysicsSimulation::*;
 
         match event {
-            CreateRigidBody(_object_id)                 => { },
-            MoveTo(_object_id, _pos)                    => { },
+            CreateRigidBody(object_id) => {
+                // Create a kinematic body with no properties (everything is kinematic by default so the position can be set easily)
+                let rigid_body  = RigidBodyBuilder::kinematic_position_based().build();
+                let handle      = rigid_body_set.insert(rigid_body);
+
+                // Store the handle and type for this object
+                object_id_for_rigid_body_id.insert(handle, object_id);
+                rigid_body_id_for_object_id.insert(object_id, handle);
+                rigid_body_type.insert(object_id, SimulationObjectType::Kinematic);
+            },
+
+            MoveTo(object_id, pos) => { 
+                if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
+                    // Fetch the body
+                    let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
+
+                    // TODO: set the position based on the type of object (we're assuming kinematic here)
+                    rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0));
+                }
+            },
+
             SetVelocity(_object_id, _velocity)          => { },
             SetAngularVelocity(_object_id, _velocity)   => { },
             SetShape(_object_id, _shape)                => { },
