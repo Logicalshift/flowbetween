@@ -250,7 +250,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                                         None                                    |
                                         Some(SimulationObjectType::Static)      => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
                                         Some(SimulationObjectType::Dynamic)     => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
-                                        Some(SimulationObjectType::Kinematic)   => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); }
+                                        Some(SimulationObjectType::Kinematic)   => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); rigid_body.wake_up(false); }
                                     }
                                 }
                             }
@@ -316,7 +316,22 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                     );
                 }
 
-                // TODO: update the bindings
+                // Update the bindings
+                for (object_id, position) in position_bindings.iter() {
+                    // Fetch the rigid body for this object
+                    let handle  = rigid_body_id_for_object_id.get(&object_id);
+                    let handle  = if let Some(handle) = handle { handle } else { continue; };
+                    let body    = rigid_body_set.get(*handle).unwrap();
+
+                    // Update the position if it's not asleep
+                    // TODO: maybe check for 'sleep' before running the steps instead of this (as we can run multiple steps, the body could go to sleep after moving)
+                    if !body.is_sleeping() {
+                        let pos = body.position().translation;
+                        position.set(UiPoint(pos.vector[0] as _, pos.vector[1] as _))
+                    }
+                }
+
+                // TODO: angle, velocity
             },
         }
     }
