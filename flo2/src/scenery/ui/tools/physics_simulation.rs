@@ -133,6 +133,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     // Our own state
     let mut object_id_for_rigid_body_id = HashMap::new();
     let mut rigid_body_id_for_object_id = HashMap::new();
+    let mut collider_id_for_object_id   = HashMap::new();
     let mut rigid_body_type             = HashMap::new();
     let mut new_objects                 = HashSet::new();
 
@@ -184,6 +185,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
 
                     object_id_for_rigid_body_id.remove(handle);
                     rigid_body_id_for_object_id.remove(&object_id);
+                    collider_id_for_object_id.remove(&object_id);
                     rigid_body_type.remove(&object_id);
 
                     position_bindings.remove(&object_id);
@@ -197,11 +199,11 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
             Set(object_id, properties) => {
                 // Fetch the object that the property is for
                 if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
-                    let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
-
                     // Set this property
                     use PhysicsRigidBodyProperty::*;
                     for property in properties.into_iter() {
+                        let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
+
                         match property {
                             Velocity(velocity)                      => { rigid_body.set_linvel(vector![velocity.x() as _, velocity.y() as _], true); }
                             AngularVelocity(velocity)               => { rigid_body.set_angvel(velocity as _, true); }
@@ -209,7 +211,33 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                             Type(SimulationObjectType::Dynamic)     => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); rigid_body_type.insert(object_id, SimulationObjectType::Dynamic); }
                             Type(SimulationObjectType::Kinematic)   => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); rigid_body_type.insert(object_id, SimulationObjectType::Kinematic); }
 
-                            Shape(_shape)                           => { /* TODO */ },
+                            Shape(SimulationShape::None)            => {
+                                if let Some(collider_id) = collider_id_for_object_id.get(&object_id) {
+                                    collider_set.remove(*collider_id, &mut island_manager, &mut rigid_body_set, true);
+                                }
+
+                                collider_id_for_object_id.remove(&object_id);
+                            },
+
+                            Shape(SimulationShape::Circle(radius)) => {
+                                // Remove any existing colliders
+                                if let Some(collider_id) = collider_id_for_object_id.get(&object_id) {
+                                    collider_set.remove(*collider_id, &mut island_manager, &mut rigid_body_set, true);
+                                }
+
+                                if let Some(rigid_body_handle) = rigid_body_id_for_object_id.get(&object_id) {
+                                    let rigid_body  = rigid_body_set.get(*rigid_body_handle).unwrap();
+                                    let position    = rigid_body.position().translation;
+
+                                    // Create a ball collider
+                                    let collider = ColliderBuilder::ball(radius as _)
+                                        .translation(position.vector)
+                                        .build();
+
+                                    let collider_id = collider_set.insert_with_parent(collider, *rigid_body_handle, &mut rigid_body_set);
+                                    collider_id_for_object_id.insert(object_id, collider_id);
+                                }
+                            }
 
                             Position(pos) => {
                                 if new_objects.contains(&object_id) {
