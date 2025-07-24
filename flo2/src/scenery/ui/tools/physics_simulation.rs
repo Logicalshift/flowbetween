@@ -19,7 +19,7 @@ use ::serde::de::{Error as DeError};
 use ::serde::ser::{Error as SeError};
 use futures::prelude::*;
 
-use std::collections::{HashMap};
+use std::collections::{HashMap, HashSet};
 use std::time::{Duration};
 
 /// Time per tick/physics step
@@ -134,6 +134,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     let mut object_id_for_rigid_body_id = HashMap::new();
     let mut rigid_body_id_for_object_id = HashMap::new();
     let mut rigid_body_type             = HashMap::new();
+    let mut new_objects                 = HashSet::new();
 
     // Create the rapier2d state
     let gravity                 = vector![0.0, -9.81];
@@ -174,6 +175,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 object_id_for_rigid_body_id.insert(handle, object_id);
                 rigid_body_id_for_object_id.insert(object_id, handle);
                 rigid_body_type.insert(object_id, SimulationObjectType::Kinematic);
+                new_objects.insert(object_id);
             },
 
             RemoveRigidBody(object_id) => {
@@ -188,6 +190,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                     angle_bindings.remove(&object_id);
                     velocity_bindings.remove(&object_id);
                     angular_velocity_bindings.remove(&object_id);
+                    new_objects.remove(&object_id);
                 }
             }
 
@@ -205,8 +208,23 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                         Type(SimulationObjectType::Dynamic)     => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); rigid_body_type.insert(object_id, SimulationObjectType::Dynamic); }
                         Type(SimulationObjectType::Kinematic)   => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); rigid_body_type.insert(object_id, SimulationObjectType::Kinematic); }
 
-                        Position(pos)                           => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); } // TODO: set the position based on the type of object (we're assuming kinematic here)
                         Shape(_shape)                           => { /* TODO */ },
+
+                        Position(pos) => {
+                            if new_objects.contains(&object_id) {
+                                // Set the position immediately if the body is new
+                                rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true);
+                            } else {
+                                // Action for setting the position depends on the type of the object
+                                // TODO: dynamic objects need to be 'pushed' into their intended position
+                                match rigid_body_type.get(&object_id) {
+                                    None                                    |
+                                    Some(SimulationObjectType::Static)      => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
+                                    Some(SimulationObjectType::Dynamic)     => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
+                                    Some(SimulationObjectType::Kinematic)   => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -227,6 +245,9 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                     // Something is wrong with the timer, and it's moved backwards
                     last_step_time = time;
                 }
+
+                // There are no more new objects
+                new_objects.clear();
 
                 // Run up to MAX_TICKS steps
                 let mut num_steps   = 0;
