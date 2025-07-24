@@ -151,6 +151,12 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     let physics_hooks           = ();
     let event_handler           = ();
 
+    // Bindings for the objects
+    let mut position_bindings           = HashMap::new();
+    let mut angle_bindings              = HashMap::new();
+    let mut velocity_bindings           = HashMap::new();
+    let mut angular_velocity_bindings   = HashMap::new();
+
     // We track time from 0. Time doesn't pass while we're asleep
     let mut last_step_time  = Duration::default();
     let mut is_asleep       = true;
@@ -173,6 +179,15 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
             RemoveRigidBody(object_id) => {
                 if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
                     rigid_body_set.remove(*handle, &mut island_manager, &mut collider_set, &mut impulse_joint_set, &mut multibody_joint_set, true);
+
+                    object_id_for_rigid_body_id.remove(handle);
+                    rigid_body_id_for_object_id.remove(&object_id);
+                    rigid_body_type.remove(&object_id);
+
+                    position_bindings.remove(&object_id);
+                    angle_bindings.remove(&object_id);
+                    velocity_bindings.remove(&object_id);
+                    angular_velocity_bindings.remove(&object_id);
                 }
             }
 
@@ -231,10 +246,10 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
 
             SetShape(_object_id, _shape)                => { },
 
-            BindPosition(_object_id, _binding)          => { },
-            BindAngle(_object_id, _binding)             => { },
-            BindVelocity(_object_id, _binding)          => { },
-            BindAngularVelocity(_object_id, _binding)   => { },
+            BindPosition(object_id, binding)        => { if rigid_body_id_for_object_id.contains_key(&object_id) { position_bindings.insert(object_id, binding); } },
+            BindAngle(object_id, binding)           => { if rigid_body_id_for_object_id.contains_key(&object_id) { angle_bindings.insert(object_id, binding); } },
+            BindVelocity(object_id, binding)        => { if rigid_body_id_for_object_id.contains_key(&object_id) { velocity_bindings.insert(object_id, binding); } },
+            BindAngularVelocity(object_id, binding) => { if rigid_body_id_for_object_id.contains_key(&object_id) { angular_velocity_bindings.insert(object_id, binding); } },
 
             Tick(time) => {
                 if is_asleep {
