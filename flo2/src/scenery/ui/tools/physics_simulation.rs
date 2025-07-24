@@ -59,7 +59,7 @@ pub enum PhysicsSimulation {
     RemoveRigidBody(SimulationObjectId),
 
     /// Sets a property associated with a rigit body
-    Set(SimulationObjectId, PhysicsRigidBodyProperty),
+    Set(SimulationObjectId, Vec<PhysicsRigidBodyProperty>),
 
     /// Specifies a binding that will update when a simulated object moves
     BindPosition(SimulationObjectId, Binding<UiPoint>),
@@ -194,34 +194,36 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 }
             }
 
-            Set(object_id, property) => {
+            Set(object_id, properties) => {
                 // Fetch the object that the property is for
                 if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
                     let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
 
                     // Set this property
                     use PhysicsRigidBodyProperty::*;
-                    match property {
-                        Velocity(velocity)                      => { rigid_body.set_linvel(vector![velocity.x() as _, velocity.y() as _], true); }
-                        AngularVelocity(velocity)               => { rigid_body.set_angvel(velocity as _, true); }
-                        Type(SimulationObjectType::Static)      => { rigid_body.set_body_type(RigidBodyType::Fixed, true); rigid_body_type.insert(object_id, SimulationObjectType::Static); }
-                        Type(SimulationObjectType::Dynamic)     => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); rigid_body_type.insert(object_id, SimulationObjectType::Dynamic); }
-                        Type(SimulationObjectType::Kinematic)   => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); rigid_body_type.insert(object_id, SimulationObjectType::Kinematic); }
+                    for property in properties.into_iter() {
+                        match property {
+                            Velocity(velocity)                      => { rigid_body.set_linvel(vector![velocity.x() as _, velocity.y() as _], true); }
+                            AngularVelocity(velocity)               => { rigid_body.set_angvel(velocity as _, true); }
+                            Type(SimulationObjectType::Static)      => { rigid_body.set_body_type(RigidBodyType::Fixed, true); rigid_body_type.insert(object_id, SimulationObjectType::Static); }
+                            Type(SimulationObjectType::Dynamic)     => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); rigid_body_type.insert(object_id, SimulationObjectType::Dynamic); }
+                            Type(SimulationObjectType::Kinematic)   => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); rigid_body_type.insert(object_id, SimulationObjectType::Kinematic); }
 
-                        Shape(_shape)                           => { /* TODO */ },
+                            Shape(_shape)                           => { /* TODO */ },
 
-                        Position(pos) => {
-                            if new_objects.contains(&object_id) {
-                                // Set the position immediately if the body is new
-                                rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true);
-                            } else {
-                                // Action for setting the position depends on the type of the object
-                                // TODO: dynamic objects need to be 'pushed' into their intended position
-                                match rigid_body_type.get(&object_id) {
-                                    None                                    |
-                                    Some(SimulationObjectType::Static)      => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
-                                    Some(SimulationObjectType::Dynamic)     => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
-                                    Some(SimulationObjectType::Kinematic)   => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); }
+                            Position(pos) => {
+                                if new_objects.contains(&object_id) {
+                                    // Set the position immediately if the body is new
+                                    rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true);
+                                } else {
+                                    // Action for setting the position depends on the type of the object
+                                    // TODO: dynamic objects need to be 'pushed' into their intended position
+                                    match rigid_body_type.get(&object_id) {
+                                        None                                    |
+                                        Some(SimulationObjectType::Static)      => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
+                                        Some(SimulationObjectType::Dynamic)     => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
+                                        Some(SimulationObjectType::Kinematic)   => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); }
+                                    }
                                 }
                             }
                         }
