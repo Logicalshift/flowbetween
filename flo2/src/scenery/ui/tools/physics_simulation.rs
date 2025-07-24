@@ -58,20 +58,8 @@ pub enum PhysicsSimulation {
     /// Removes a rigit body from this simulation
     RemoveRigidBody(SimulationObjectId),
 
-    /// Sets the position of a simulation object ID
-    MoveTo(SimulationObjectId, UiPoint),
-
-    /// Sets the velocity of a simulation object ID
-    SetVelocity(SimulationObjectId, UiPoint),
-
-    /// Sets the angular velocity of a simulation object ID
-    SetAngularVelocity(SimulationObjectId, f64),
-
-    /// Sets the collision shape of a simulation object
-    SetShape(SimulationObjectId, SimulationShape),
-
-    /// Sets the type of an object
-    SetType(SimulationObjectId, SimulationObjectType),
+    /// Sets a property associated with a rigit body
+    Set(SimulationObjectId, PhysicsRigidBodyProperty),
 
     /// Specifies a binding that will update when a simulated object moves
     BindPosition(SimulationObjectId, Binding<UiPoint>),
@@ -84,6 +72,18 @@ pub enum PhysicsSimulation {
 
     /// Specifies a binding that will update when the angular velocity of an object changes
     BindAngularVelocity(SimulationObjectId, Binding<UiPoint>),
+}
+
+///
+/// The properties that can be assigned to a rigit body
+///
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum PhysicsRigidBodyProperty {
+    Position(UiPoint),
+    Velocity(UiPoint),
+    AngularVelocity(f64),
+    Shape(SimulationShape),
+    Type(SimulationObjectType),
 }
 
 ///
@@ -191,60 +191,25 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 }
             }
 
-            MoveTo(object_id, pos) => { 
-                // Move the object, either using the kinematic method, or by applying a force to it to move it to a particular position
+            Set(object_id, property) => {
+                // Fetch the object that the property is for
                 if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
                     let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
 
-                    // TODO: set the position based on the type of object (we're assuming kinematic here)
-                    rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0));
+                    // Set this property
+                    use PhysicsRigidBodyProperty::*;
+                    match property {
+                        Velocity(velocity)                      => { rigid_body.set_linvel(vector![velocity.x() as _, velocity.y() as _], true); }
+                        AngularVelocity(velocity)               => { rigid_body.set_angvel(velocity as _, true); }
+                        Type(SimulationObjectType::Static)      => { rigid_body.set_body_type(RigidBodyType::Fixed, true); rigid_body_type.insert(object_id, SimulationObjectType::Static); }
+                        Type(SimulationObjectType::Dynamic)     => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); rigid_body_type.insert(object_id, SimulationObjectType::Dynamic); }
+                        Type(SimulationObjectType::Kinematic)   => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); rigid_body_type.insert(object_id, SimulationObjectType::Kinematic); }
+
+                        Position(pos)                           => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); } // TODO: set the position based on the type of object (we're assuming kinematic here)
+                        Shape(_shape)                           => { /* TODO */ },
+                    }
                 }
-            },
-
-            SetVelocity(object_id, velocity) => { 
-                // Set the velocity immediately
-                if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
-                    let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
-                    rigid_body.set_linvel(vector![velocity.x() as _, velocity.y() as _], true);
-                }
-            },
-
-            SetAngularVelocity(object_id, velocity) => {
-                // Set the angular velocity immediately
-                if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
-                    let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
-                    rigid_body.set_angvel(velocity as _, true);
-                }
-            },
-
-            SetType(object_id, SimulationObjectType::Static) => { 
-                if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
-                    let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
-                    rigid_body.set_body_type(RigidBodyType::Fixed, true);
-
-                    rigid_body_type.insert(object_id, SimulationObjectType::Static);
-                }
-            },
-
-            SetType(object_id, SimulationObjectType::Dynamic) => { 
-                if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
-                    let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
-                    rigid_body.set_body_type(RigidBodyType::Dynamic, true);
-
-                    rigid_body_type.insert(object_id, SimulationObjectType::Dynamic);
-                }
-            },
-
-            SetType(object_id, SimulationObjectType::Kinematic) => { 
-                if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
-                    let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
-                    rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true);
-
-                    rigid_body_type.insert(object_id, SimulationObjectType::Kinematic);
-                }
-            },
-
-            SetShape(_object_id, _shape)                => { },
+            }
 
             BindPosition(object_id, binding)        => { if rigid_body_id_for_object_id.contains_key(&object_id) { position_bindings.insert(object_id, binding); } },
             BindAngle(object_id, binding)           => { if rigid_body_id_for_object_id.contains_key(&object_id) { angle_bindings.insert(object_id, binding); } },
@@ -299,6 +264,8 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                         &event_handler,
                     );
                 }
+
+                // TODO: update the bindings
             },
         }
     }
