@@ -121,6 +121,9 @@ pub enum SimulationObjectType {
 pub enum PhysicsSimulationEvent {
     /// The simulation has reached a steady state and doesn't need to be woken again
     Sleep,
+
+    /// One or more steps have been simulated
+    Step,
 }
 
 ///
@@ -363,6 +366,9 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 }
 
                 // TODO: angle, velocity
+
+                // Send the 'step' event
+                physics_events.send(PhysicsSimulationEvent::Step).await.ok();
             },
         }
     }
