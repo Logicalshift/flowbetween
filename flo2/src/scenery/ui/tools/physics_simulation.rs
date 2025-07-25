@@ -10,6 +10,7 @@ use crate::scenery::ui::ui_path::*;
 
 use flo_binding::*;
 use flo_scene::*;
+use flo_scene::programs::*;
 use flo_curves::*;
 
 use rapier2d::prelude::*;
@@ -125,10 +126,30 @@ pub enum PhysicsSimulationEvent {
 ///
 /// Runs a physics simulation using rapier2d
 ///
-/// Use the bindings to decide where the positions of the objects are
+/// The bindings can be used to receive updates (eg, `PhysicsSimulation::BindPosition()`) can be used to track where
+/// the objects are.
 ///
-pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, context: SceneContext) {
-    let mut input = input;
+/// If `manage_timer` is set to true, this program will request timer events from the standard flo_scene timer program.
+/// If it's false, then the simulation will only advance when the `Tick()` event is generated manually (which can be
+/// useful for tests)
+///
+pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, context: SceneContext, manage_timer: bool) {
+    let our_program_id  = context.current_program_id().unwrap();
+    let mut input       = input;
+
+    // Connect messages
+    let mut timer_awake     = false;
+    let mut timer_program   = if manage_timer { context.send::<TimerRequest>(()).ok() } else { None };
+    let mut physics_events  = context.send::<PhysicsSimulationEvent>(()).unwrap();
+
+    // If we're managing our own timer, then request ticks from the timer program
+    if manage_timer {
+        timer_program.as_mut().unwrap()
+            .send(TimerRequest::CallEvery(our_program_id, 0, Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _)))
+            .await
+            .unwrap();
+        timer_awake = true;
+    }
 
     // Our own state
     let mut object_id_for_rigid_body_id = HashMap::new();
@@ -257,6 +278,15 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                         }
                     }
                 }
+
+                // Wake up the timer again whenever any property is set
+                if manage_timer && !timer_awake {
+                    timer_program.as_mut().unwrap()
+                        .send(TimerRequest::CallEvery(our_program_id, 0, Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _)))
+                        .await
+                        .unwrap();
+                    timer_awake = true;
+                }
             }
 
             BindPosition(object_id, binding)        => { if rigid_body_id_for_object_id.contains_key(&object_id) { position_bindings.insert(object_id, binding); } },
@@ -265,15 +295,17 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
             BindAngularVelocity(object_id, binding) => { if rigid_body_id_for_object_id.contains_key(&object_id) { angular_velocity_bindings.insert(object_id, binding); } },
 
             Tick(time) => {
+                let tick = Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _);
+
                 if is_asleep {
-                    // Wake up if we're asleep (don't run a bunch of steps if we've been asleep for a while')
+                    // Wake up if we're asleep (don't run a bunch of steps if we've been asleep for a while)
                     is_asleep       = false;
-                    last_step_time  = time;
+                    last_step_time  = if time >= tick { time - tick } else { time };
                 }
 
                 if time < last_step_time {
-                    // Something is wrong with the timer, and it's moved backwards
-                    last_step_time = time;
+                    // Something is wrong with the timer, and it's moved backwards (might happen if we went to sleep and woke up again)
+                    last_step_time = if time >= tick { time - tick } else { time };
                 }
 
                 // There are no more new objects
@@ -281,7 +313,6 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
 
                 // Run up to MAX_TICKS steps
                 let mut num_steps   = 0;
-                let tick            = Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _);
                 loop {
                     if num_steps >= MAX_TICKS {
                         // Just make up the remaining time and stop
