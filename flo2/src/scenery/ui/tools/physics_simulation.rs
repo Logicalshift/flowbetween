@@ -408,12 +408,16 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
 impl SceneMessage for PhysicsSimulation {
     #[inline]
     fn serializable() -> bool { false }
+
+    fn initialise(init_context: &impl SceneInitialisationContext) {
+        init_context.connect_programs((), StreamTarget::None, StreamId::with_message_type::<PhysicsSimulationEvent>()).unwrap();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|timeout_events| timeout_events.map(|timeout: TimeOut| PhysicsSimulation::Tick(timeout.1)))), (), StreamId::with_message_type::<TimeOut>()).unwrap();
+    }
 }
 
 impl SceneMessage for PhysicsSimulationEvent {
 
 }
-
 
 impl Serialize for PhysicsSimulation {
     fn serialize<S>(&self, _: S) -> Result<S::Ok, S::Error>
