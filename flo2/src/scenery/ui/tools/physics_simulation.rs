@@ -72,7 +72,7 @@ pub enum PhysicsSimulation {
     BindVelocity(SimulationObjectId, Binding<UiPoint>),
 
     /// Specifies a binding that will update when the angular velocity of an object changes
-    BindAngularVelocity(SimulationObjectId, Binding<UiPoint>),
+    BindAngularVelocity(SimulationObjectId, Binding<f64>),
 }
 
 ///
@@ -351,24 +351,55 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 }
 
                 // Update the bindings
-                for (object_id, position) in position_bindings.iter() {
-                    // Fetch the rigid body for this object
-                    let handle  = rigid_body_id_for_object_id.get(&object_id);
-                    let handle  = if let Some(handle) = handle { handle } else { continue; };
-                    let body    = rigid_body_set.get(*handle).unwrap();
+                let mut some_awake = false;
 
-                    // Update the position if it's not asleep
-                    // TODO: maybe check for 'sleep' before running the steps instead of this (as we can run multiple steps, the body could go to sleep after moving)
+                for (handle, body) in rigid_body_set.iter() {
+                    let object_id = if let Some(object_id) = object_id_for_rigid_body_id.get(&handle) { object_id } else { continue; };
+
+                    // If any rigid bodies are awake, then the simulation should also be kept awake
                     if !body.is_sleeping() {
-                        let pos = body.position().translation;
-                        position.set(UiPoint(pos.vector[0] as _, pos.vector[1] as _))
+                        some_awake = true;
+                    }
+
+                    // Set any bindings relating to this object
+                    if let Some(position) = position_bindings.get(object_id) { 
+                        let body_pos = body.position().translation;
+                        position.set(UiPoint(body_pos.vector[0] as _, body_pos.vector[1] as _))
+                    }
+
+                    if let Some(angle) = angle_bindings.get(object_id) {
+                        let body_angle = body.rotation().angle();
+                        angle.set(body_angle as _);
+                    }
+
+                    if let Some(velocity) = velocity_bindings.get(object_id) {
+                        let body_velocity = body.vels();
+                        velocity.set(UiPoint(body_velocity.linvel[0] as _, body_velocity.linvel[1] as _));
+                    }
+
+                    if let Some(angular_velocity) = angular_velocity_bindings.get(object_id) {
+                        let body_angular_velocity = body.vels().angvel;
+                        angular_velocity.set(body_angular_velocity as _);
                     }
                 }
 
-                // TODO: angle, velocity
-
                 // Send the 'step' event
                 physics_events.send(PhysicsSimulationEvent::Step).await.ok();
+
+                // Go to sleep if no rigid bodies are awake
+                if !some_awake {
+                    // Indicate that everything is asleep (can stop generating physics events)
+                    physics_events.send(PhysicsSimulationEvent::Sleep).await.ok();
+
+                    // If we're managing our own timer, then put that to sleep (note that there can be extra ticks waiting to be delivered if we're behind)
+                    if manage_timer && timer_awake {
+                        timer_program.as_mut().unwrap()
+                            .send(TimerRequest::Cancel(our_program_id, 0))
+                            .await
+                            .unwrap();
+                        timer_awake = false;
+                    }
+                }
             },
         }
     }
