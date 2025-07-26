@@ -9,6 +9,7 @@
 use super::blobland::*;
 use super::physics_object::*;
 use super::physics_tool::*;
+use super::physics_simulation::*;
 use crate::scenery::ui::colors::*;
 use crate::scenery::ui::focus::*;
 use crate::scenery::ui::namespaces::*;
@@ -100,6 +101,13 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     let mut drawing_requests    = context.send::<DrawingRequest>(()).unwrap();
     let mut focus_requests      = context.send::<Focus>(()).unwrap();
     let mut timer_requests      = context.send(()).unwrap();
+
+    // Start a physics subprogram for this layer
+    let physics_program_id      = SubProgramId::new();
+    context.send_message(SceneControl::start_program(physics_program_id,
+        move |input, context| physics_simulation_program(input, context, true),
+        100
+    )).await.unwrap();
 
     // Drawing settings
     let mut state = PhysicsLayerState {
@@ -209,6 +217,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
             drawing_requests.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
         }
     }
+
+    // Stop the physics program when we're finished
+    context.send_message(SceneControl::Close(physics_program_id)).await.ok();
 }
 
 ///
