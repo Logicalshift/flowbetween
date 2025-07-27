@@ -323,7 +323,7 @@ impl PhysicsLayerState {
         context.send_message(SceneControl::start_program(SubProgramId::new(), move |input, context| {
             render_binding_program(input, context, (*PHYSICS_LAYER, LayerId(0)), Some(our_program_id), computed(move || {
                 vec![]
-            }))
+            }).into())
         }, 1)).await.ok();
     }
 
