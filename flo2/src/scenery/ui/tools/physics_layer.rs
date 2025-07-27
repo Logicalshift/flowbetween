@@ -13,6 +13,7 @@ use super::physics_simulation::*;
 use crate::scenery::ui::colors::*;
 use crate::scenery::ui::focus::*;
 use crate::scenery::ui::namespaces::*;
+use crate::scenery::ui::render_binding::*;
 use crate::scenery::ui::subprograms::*;
 use crate::scenery::ui::ui_path::*;
 
@@ -126,6 +127,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         sprites:                vec![],
         next_sprite_id:         0,
     };
+
+    // Create rendering program
+    state.start_rendering_program(context).await;
 
     // TEST: create a test object, force an initial update
     let mut test_object = test_tool();
@@ -305,6 +309,20 @@ impl PhysicsLayerState {
                 BlobInteraction::None
             }
         }
+    }
+
+    ///
+    /// Creates a rendering program to display this state
+    ///
+    async fn start_rendering_program(&self, context: &SceneContext) {
+        let render_state    = self.render_state.clone();
+        let our_program_id  = self.our_program_id;
+
+        context.send_message(SceneControl::start_program(SubProgramId::new(), move |input, context| {
+            render_binding_program(input, context, (*PHYSICS_LAYER, LayerId(0)), Some(our_program_id), computed(move || {
+                vec![]
+            }))
+        }, 1)).await.ok();
     }
 
     ///
