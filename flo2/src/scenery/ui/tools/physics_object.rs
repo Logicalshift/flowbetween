@@ -8,6 +8,7 @@ use crate::scenery::ui::namespaces::*;
 use crate::scenery::ui::ui_path::*;
 
 use futures::prelude::*;
+use futures::future::{BoxFuture};
 
 use flo_binding::*;
 use flo_binding::binding_context::*;
@@ -336,7 +337,7 @@ impl PhysicsObject {
     ///
     /// Updates the position of this object in a simulation
     ///
-    pub fn update_in_simulation(&self, bounds: (f64, f64), requests: &mut OutputSink<PhysicsSimulation>) -> impl Send + Future<Output=()> {
+    pub fn update_in_simulation<'a>(&self, bounds: (f64, f64), requests: &'a mut OutputSink<PhysicsSimulation>) -> BoxFuture<'a, ()> {
         let physics_id      = self.physics_id;
         let position        = self.position(bounds);
         let tool_size       = self.tool.size();
@@ -350,7 +351,7 @@ impl PhysicsObject {
                 PhysicsRigidBodyProperty::Position(position.unwrap_or(UiPoint(0.0, 0.0))),
                 PhysicsRigidBodyProperty::Shape(SimulationShape::Circle(tool_size.0))
             ])).await.ok();
-        }
+        }.boxed()
     }
 
     ///
