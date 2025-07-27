@@ -381,47 +381,51 @@ impl PhysicsLayerState {
     }
 
     ///
-    /// Starts dragging a tool
+    /// Causes a tool to be updated 
     ///
-    pub fn start_drag(&mut self, tool_id: PhysicsToolId, x: f64, y: f64) -> impl Send + Future<Output=()> {
+    pub fn update_tool_in_simulation(&mut self, tool_id: PhysicsToolId) -> impl Send + Future<Output=()> {
         let simulation_requests = &mut self.simulation_requests;
-        let mut objects         = self.objects.lock().unwrap();
+        let objects             = self.objects.lock().unwrap();
         let bounds              = self.bounds;
 
-        async move {
-            let object = if let Some(object) = objects.get_mut(&tool_id) { object } else { return; };
+        let update_request      = if let Some(object) = objects.get(&tool_id) {
+            let future = object.update_in_simulation(bounds, simulation_requests);
 
-            object.start_drag(x, y, bounds);
-            object.update_in_simulation(bounds, simulation_requests).await;
+            Some(future)
+        } else {
+            None
+        };
+
+        async move {
+            if let Some(update_request) = update_request {
+                update_request.await;
+            }
         }
+    }
+
+    ///
+    /// Starts dragging a tool
+    ///
+    pub async fn start_drag(&mut self, tool_id: PhysicsToolId, x: f64, y: f64) {
+        let bounds = self.bounds;
+        self.object_action(tool_id, move |object, _| object.start_drag(x, y, bounds));
+        self.update_tool_in_simulation(tool_id).await;
     }
 
     ///
     /// Continues a drag operation on a tool for which 'start_drag' has been called
     ///
     pub async fn drag(&mut self, tool_id: PhysicsToolId, x: f64, y: f64) {
-        let simulation_requests = &mut self.simulation_requests;
-        let mut objects         = self.objects.lock().unwrap();
-        let bounds              = self.bounds;
-
-        let object = if let Some(object) = objects.get_mut(&tool_id) { object } else { return; };
-
-        object.drag(x, y);
-        object.update_in_simulation(bounds, simulation_requests).await;
+        self.object_action(tool_id, move |object, _| object.drag(x, y));
+        self.update_tool_in_simulation(tool_id).await;
     }
 
     ///
     /// Finishes a drag operation on a tool for which 'start_drag' has been called
     ///
     pub async fn end_drag(&mut self, tool_id: PhysicsToolId, x: f64, y: f64) {
-        let simulation_requests = &mut self.simulation_requests;
-        let mut objects         = self.objects.lock().unwrap();
-        let bounds              = self.bounds;
-
-        let object = if let Some(object) = objects.get_mut(&tool_id) { object } else { return; };
-
-        object.end_drag(x, y);
-        object.update_in_simulation(bounds, simulation_requests).await;
+        self.object_action(tool_id, move |object, _| object.end_drag(x, y));
+        self.update_tool_in_simulation(tool_id).await;
     }
 
     ///
