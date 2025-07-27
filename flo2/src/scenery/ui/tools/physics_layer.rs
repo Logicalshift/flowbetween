@@ -157,23 +157,22 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     while let Some(request_chunk) = input.next().await {
         // What to draw for this pass through the loop
         let mut drawing                 = vec![];
-        let mut positions_invalidated   = false;
 
         // Process the events
         for request in request_chunk.into_iter() {
             use PhysicsLayer::*;
             match request {
                 // Tool requests
-                AddTool(new_tool, program_id)   => { let tool_id = new_tool.id(); state.add_tool(new_tool, program_id.into(), &context).await; positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; },
-                DockTool(tool_id)               => { state.dock_tool(tool_id); positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; }
-                DockProperties(tool_id)         => { state.dock_properties(tool_id); positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; }
-                Float(tool_id, position)        => { state.float(tool_id, position); positions_invalidated = true; state.update_tool_focus(tool_id, &mut focus_requests).await; }
-                RemoveTool(tool_id)             => { state.remove_tool(tool_id); positions_invalidated = true; }
-                UpdatePosition(tool_id)         => { state.update_tool_focus(tool_id, &mut focus_requests).await; positions_invalidated = true; }
+                AddTool(new_tool, program_id)   => { let tool_id = new_tool.id(); state.add_tool(new_tool, program_id.into(), &context).await; state.update_tool_focus(tool_id, &mut focus_requests).await; },
+                DockTool(tool_id)               => { state.dock_tool(tool_id); state.update_tool_focus(tool_id, &mut focus_requests).await; }
+                DockProperties(tool_id)         => { state.dock_properties(tool_id); state.update_tool_focus(tool_id, &mut focus_requests).await; }
+                Float(tool_id, position)        => { state.float(tool_id, position); state.update_tool_focus(tool_id, &mut focus_requests).await; }
+                RemoveTool(tool_id)             => { state.remove_tool(tool_id); }
+                UpdatePosition(tool_id)         => { state.update_tool_focus(tool_id, &mut focus_requests).await; }
                 RedrawIcon(tool_id)             => { state.invalidate_sprite(tool_id); }
 
                 // Event handling
-                Event(FocusEvent::Event(_, DrawEvent::Resize(w, h)))   => { state.set_bounds(w, h); positions_invalidated = true; }
+                Event(FocusEvent::Event(_, DrawEvent::Resize(w, h)))   => { state.set_bounds(w, h); }
 
                 Event(_draw_event) => { }
 
@@ -193,9 +192,6 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
                 // Add to the rendering instructions for this pass
                 drawing.extend(object.draw_sprite(sprite_id, &context));
-
-                // Positions will need to be updated at this point
-                positions_invalidated = true;
             }
         }
     }
