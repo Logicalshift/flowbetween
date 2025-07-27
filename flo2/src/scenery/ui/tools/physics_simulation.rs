@@ -21,7 +21,7 @@ use ::serde::ser::{Error as SeError};
 use futures::prelude::*;
 
 use std::collections::{HashMap, HashSet};
-use std::time::{Duration};
+use std::time::{Instant, Duration};
 
 /// Time per tick/physics step
 const TICK_DURATION_S: f64 = 1.0/60.0;
@@ -186,7 +186,6 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     // We track time from 0. Time doesn't pass while we're asleep
     let mut last_step_time  = Duration::default();
     let mut is_asleep       = true;
-    let mut time            = Duration::default();
 
     while let Some(event) = input.next().await {
         use PhysicsSimulation::*;
@@ -298,8 +297,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
             BindVelocity(object_id, binding)        => { if rigid_body_id_for_object_id.contains_key(&object_id) { velocity_bindings.insert(object_id, binding); } },
             BindAngularVelocity(object_id, binding) => { if rigid_body_id_for_object_id.contains_key(&object_id) { angular_velocity_bindings.insert(object_id, binding); } },
 
-            Tick(time_delta) => {
-                time += time_delta;
+            Tick(time) => {
                 let tick = Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _);
 
                 if is_asleep {
@@ -413,7 +411,14 @@ impl SceneMessage for PhysicsSimulation {
 
     fn initialise(init_context: &impl SceneInitialisationContext) {
         init_context.connect_programs((), StreamTarget::None, StreamId::with_message_type::<PhysicsSimulationEvent>()).unwrap();
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|timeout_events| timeout_events.map(|timeout: TimeOut| PhysicsSimulation::Tick(timeout.1)))), (), StreamId::with_message_type::<TimeOut>()).unwrap();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|timeout_events| {
+            let start_time = Instant::now();
+
+            timeout_events.map(move |_timeout: TimeOut| {
+                let elapsed_time = Instant::now().duration_since(start_time);
+                PhysicsSimulation::Tick(elapsed_time)
+            })
+        })), (), StreamId::with_message_type::<TimeOut>()).unwrap();
     }
 }
 
