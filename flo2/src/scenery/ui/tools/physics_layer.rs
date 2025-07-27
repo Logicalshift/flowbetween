@@ -119,6 +119,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
     let mut state = PhysicsLayerState {
         our_program_id:         our_program_id,
+        simulation_requests:    physics_requests,
         objects:                Arc::new(Mutex::new(HashMap::new())),
         render_state:           Arc::new(Mutex::new(render_state)),
         bounds:                 (1024.0, 768.0),
@@ -238,6 +239,9 @@ struct PhysicsLayerState {
 
     /// The sprite ID that will be assigned if no sprites are available in the pool
     next_sprite_id: u64,
+
+    /// The stream used to send physics simulation requests
+    simulation_requests: OutputSink<PhysicsSimulation>,
 }
 
 impl PhysicsLayerState {
@@ -345,6 +349,8 @@ impl PhysicsLayerState {
 
                 self.tool_id_for_blob_id.lock().unwrap().insert(blob_id, tool_id);
             }
+
+            object.create_in_simulation(self.bounds, &mut self.simulation_requests).await;
 
             // Start a subprogram to manage this tool
             let tool_id             = object.tool().id();

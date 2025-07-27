@@ -311,19 +311,26 @@ impl PhysicsObject {
     ///
     /// Creates this object in the physics simulation
     ///
-    pub async fn create_in_simulation(&self, bounds: (f64, f64), requests: &mut OutputSink<PhysicsSimulation>) {
-        // Create the body
-        requests.send(PhysicsSimulation::CreateRigidBody(self.physics_id)).await.ok();
+    pub fn create_in_simulation(&self, bounds: (f64, f64), requests: &mut OutputSink<PhysicsSimulation>) -> impl Send + Future<Output=()> {
+        let physics_id          = self.physics_id;
+        let position            = self.position(bounds);
+        let tool_size           = self.tool.size();
+        let position_binding    = self.properties.position.clone();
 
-        // Set up the position binding (will connect to the renderer)
-        requests.send(PhysicsSimulation::BindPosition(self.physics_id, self.properties.position.clone())).await.ok();
+        async move {
+            // Create the body
+            requests.send(PhysicsSimulation::CreateRigidBody(physics_id)).await.ok();
 
-        // Set the initial position and shape of the object
-        requests.send(PhysicsSimulation::Set(self.physics_id, vec![
-            PhysicsRigidBodyProperty::Position(self.position(bounds).unwrap_or(UiPoint(0.0, 0.0))),
-            PhysicsRigidBodyProperty::Type(SimulationObjectType::Dynamic),
-            PhysicsRigidBodyProperty::Shape(SimulationShape::Circle(self.tool.size().0))
-        ])).await.ok();
+            // Set up the position binding (will connect to the renderer)
+            requests.send(PhysicsSimulation::BindPosition(physics_id, position_binding)).await.ok();
+
+            // Set the initial position and shape of the object
+            requests.send(PhysicsSimulation::Set(physics_id, vec![
+                PhysicsRigidBodyProperty::Position(position.unwrap_or(UiPoint(0.0, 0.0))),
+                PhysicsRigidBodyProperty::Type(SimulationObjectType::Dynamic),
+                PhysicsRigidBodyProperty::Shape(SimulationShape::Circle(tool_size.0))
+            ])).await.ok();
+        }
     }
 
     ///
