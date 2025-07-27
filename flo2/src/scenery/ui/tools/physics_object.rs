@@ -337,14 +337,17 @@ impl PhysicsObject {
     /// Updates the position of this object in a simulation
     ///
     pub fn update_in_simulation(&self, bounds: (f64, f64), requests: &mut OutputSink<PhysicsSimulation>) -> impl Send + Future<Output=()> {
-        let physics_id  = self.physics_id;
-        let position    = self.position(bounds);
-        let tool_size   = self.tool.size();
+        let physics_id      = self.physics_id;
+        let position        = self.position(bounds);
+        let tool_size       = self.tool.size();
+        let being_dragged   = self.being_dragged;
 
         async move {
+            let object_type = if being_dragged { SimulationObjectType::Kinematic } else { SimulationObjectType::Dynamic };
+
             requests.send(PhysicsSimulation::Set(physics_id, vec![
+                PhysicsRigidBodyProperty::Type(object_type),
                 PhysicsRigidBodyProperty::Position(position.unwrap_or(UiPoint(0.0, 0.0))),
-                PhysicsRigidBodyProperty::Type(SimulationObjectType::Dynamic),
                 PhysicsRigidBodyProperty::Shape(SimulationShape::Circle(tool_size.0))
             ])).await.ok();
         }
