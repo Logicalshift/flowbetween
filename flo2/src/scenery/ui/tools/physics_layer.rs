@@ -95,8 +95,6 @@ fn test_tool() -> PhysicsTool {
 ///
 pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneContext) {
     let our_program_id          = context.current_program_id().unwrap();
-    let mut drawing_requests    = context.send::<DrawingRequest>(()).unwrap();
-    let mut focus_requests      = context.send::<Focus>(()).unwrap();
 
     // Start a physics subprogram for this layer
     let physics_program_id      = SubProgramId::new();
@@ -104,6 +102,11 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         move |input, context| physics_simulation_program(input, context, true),
         100
     )).await.unwrap();
+
+    // Connect to the events
+    let mut drawing_requests    = context.send::<DrawingRequest>(()).unwrap();
+    let mut focus_requests      = context.send::<Focus>(()).unwrap();
+    let mut physics_requests    = context.send::<PhysicsSimulation>(physics_program_id).unwrap();
 
     // Drawing settings
     let mut state = PhysicsLayerState {
