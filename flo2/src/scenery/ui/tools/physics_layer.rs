@@ -63,9 +63,6 @@ pub enum PhysicsLayer {
 
     /// Action message for a physics object
     ObjectAction(PhysicsObjectAction),
-
-    /// Timeout indicating that we should run the simulation
-    RunSimulation,
 }
 
 ///
@@ -100,7 +97,6 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     let our_program_id          = context.current_program_id().unwrap();
     let mut drawing_requests    = context.send::<DrawingRequest>(()).unwrap();
     let mut focus_requests      = context.send::<Focus>(()).unwrap();
-    let mut timer_requests      = context.send(()).unwrap();
 
     // Start a physics subprogram for this layer
     let physics_program_id      = SubProgramId::new();
@@ -144,9 +140,6 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     // We're a focus program with only controls, underneath pretty much anything else (so we claim z-index 0)
     focus_requests.send(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 }).await.ok();
 
-    // Make sure the simulation is awake
-    state.wake_simulation(&mut timer_requests).await;
-
     // Run the main loop
     let mut input = input.ready_chunks(100);
     while let Some(request_chunk) = input.next().await {
@@ -166,7 +159,6 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
                 RemoveTool(tool_id)             => { state.remove_tool(tool_id); positions_invalidated = true; }
                 UpdatePosition(tool_id)         => { state.update_tool_focus(tool_id, &mut focus_requests).await; positions_invalidated = true; }
                 RedrawIcon(tool_id)             => { state.invalidate_sprite(tool_id); }
-                RunSimulation                   => { state.blob_awake = false; state.run_simulation(&mut timer_requests, &mut drawing_requests).await; }
 
                 // Event handling
                 Event(FocusEvent::Event(_, DrawEvent::Resize(w, h)))   => { state.set_bounds(w, h); positions_invalidated = true; }
@@ -198,7 +190,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         // Draw the tools in their expected positions
         if positions_invalidated {
             // Simulation needs to run/restart if the positions are invalidated
-            state.run_simulation(&mut timer_requests, &mut drawing_requests).await;
+            state.run_simulation(&mut drawing_requests).await;
 
             drawing.push_state();
             drawing.namespace(*PHYSICS_LAYER);
@@ -432,7 +424,7 @@ impl PhysicsLayerState {
     ///
     /// Runs the blobland simulation and renders the result
     ///
-    pub async fn run_simulation(&mut self, timer_requests: &mut OutputSink<TimerRequest>, drawing_requests: &mut OutputSink<DrawingRequest>) {
+    pub async fn run_simulation(&mut self, drawing_requests: &mut OutputSink<DrawingRequest>) {
         // Read the time since the last tick occurred
         let now             = Instant::now();
         let tick_time       = now.duration_since(self.blob_tick);
@@ -440,12 +432,8 @@ impl PhysicsLayerState {
         let tick_time_s     = (tick_time_us as f64) / 1_000_000.0;
 
         // Run a frame of simulation for the blobland
-        let asleep = self.blob_land.simulate(tick_time_s);
+        self.blob_land.simulate(tick_time_s);
         self.blob_tick = now;
-
-        if !asleep {
-            self.wake_simulation(timer_requests).await;
-        }
 
         // Render the blobland update
         let mut drawing = vec![];
@@ -463,16 +451,6 @@ impl PhysicsLayerState {
         drawing.pop_state();
 
         drawing_requests.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
-    }
-
-    ///
-    /// Causes a request for the simulation to run
-    ///
-    pub async fn wake_simulation(&mut self, timer_requests: &mut OutputSink<TimerRequest>) {
-        if !self.blob_awake {
-            timer_requests.send(TimerRequest::CallAfter(self.our_program_id, 0, Duration::from_micros(1_000_000 / 60))).await.ok();
-            self.blob_awake = true;
-        }
     }
 }
 
@@ -502,7 +480,6 @@ impl SceneMessage for PhysicsLayer {
 
         init_context.connect_programs((), subprogram_physics_layer(), StreamId::with_message_type::<PhysicsLayer>()).ok();
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|focus_events| focus_events.map(|event| PhysicsLayer::Event(event)))), (), StreamId::with_message_type::<FocusEvent>()).ok();
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|timeout_events| timeout_events.map(|_: TimeOut| PhysicsLayer::RunSimulation))), (), StreamId::with_message_type::<TimeOut>()).ok();
     }
 }
 
