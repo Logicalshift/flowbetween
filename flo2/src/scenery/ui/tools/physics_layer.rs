@@ -167,7 +167,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
                 AddTool(new_tool, program_id)   => { let tool_id = new_tool.id(); state.add_tool(new_tool, program_id.into(), &context).await; state.update_tool_focus(tool_id, &mut focus_requests).await; },
                 DockTool(tool_id)               => { state.dock_tool(tool_id); state.update_tool_focus(tool_id, &mut focus_requests).await; }
                 DockProperties(tool_id)         => { state.dock_properties(tool_id); state.update_tool_focus(tool_id, &mut focus_requests).await; }
-                Float(tool_id, position)        => { state.float(tool_id, position); state.update_tool_focus(tool_id, &mut focus_requests).await; }
+                Float(tool_id, position)        => { state.float(tool_id, position).await; state.update_tool_focus(tool_id, &mut focus_requests).await; }
                 RemoveTool(tool_id)             => { state.remove_tool(tool_id); }
                 UpdatePosition(tool_id)         => { state.update_tool_focus(tool_id, &mut focus_requests).await; }
                 RedrawIcon(tool_id)             => { state.invalidate_sprite(tool_id); }
@@ -445,10 +445,11 @@ impl PhysicsLayerState {
     ///
     /// Sets the floating position of a tool
     ///
-    pub fn float(&mut self, tool_id: PhysicsToolId, new_position: (f64, f64)) {
+    pub async fn float(&mut self, tool_id: PhysicsToolId, new_position: (f64, f64)) {
         self.object_action(tool_id, move |object, _| {
             object.set_position(ToolPosition::Float(new_position.0, new_position.1));
         });
+        self.update_tool_in_simulation(tool_id).await;
     }
 
     ///
