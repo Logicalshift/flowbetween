@@ -129,7 +129,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     };
 
     // Create rendering program
-    state.start_rendering_program(context).await;
+    state.start_rendering_program(&context).await;
 
     // TEST: create a test object, force an initial update
     let mut test_object = test_tool();
@@ -322,7 +322,38 @@ impl PhysicsLayerState {
 
         context.send_message(SceneControl::start_program(SubProgramId::new(), move |input, context| {
             render_binding_program(input, context, (*PHYSICS_LAYER, LayerId(0)), Some(our_program_id), computed(move || {
-                vec![]
+                let mut render_state    = render_state.lock().unwrap();
+                let mut rendering       = vec![];
+
+                // Render the decals
+                let object_properties = render_state.object_properties.get();
+
+                for obj in object_properties.iter() {
+                    obj.draw(&mut rendering, &mut render_state.blob_land);
+                }
+
+                // The borders are rendered using the 'BlobLand', which deals with the animations that join related tools together
+                let now             = Instant::now();
+                let tick_time       = now.duration_since(render_state.blob_tick);
+                let tick_time_us    = tick_time.as_micros();
+                let tick_time_s     = (tick_time_us as f64) / 1_000_000.0;
+
+                // Run a frame of simulation for the blobland
+                render_state.blob_land.simulate(tick_time_s);
+                render_state.blob_tick = now;
+
+                // Draw the blobs
+                let mut blob_drawing = vec![];
+
+                blob_drawing.fill_color(color_tool_background());
+                blob_drawing.stroke_color(color_tool_outline());
+                blob_drawing.line_width(2.0);
+                render_state.blob_land.render(&mut blob_drawing);
+
+                // Add to the start of the drawing
+                rendering.splice(0..0, blob_drawing);
+
+                rendering
             }).into())
         }, 1)).await.ok();
     }
