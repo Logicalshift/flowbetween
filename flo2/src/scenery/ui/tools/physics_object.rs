@@ -1,5 +1,6 @@
 use super::blobland::*;
 use super::physics_layer::*;
+use super::physics_simulation::*;
 use super::physics_tool::*;
 use crate::scenery::ui::binding_tracker::*;
 use crate::scenery::ui::focus::*;
@@ -30,6 +31,9 @@ pub struct PhysicsObject {
 
     /// The subprogram ID of the program that manages the events for this control
     subprogram_id: SubProgramId,
+
+    /// The ID of this object within the physics simulation
+    physics_id: SimulationObjectId,
 
     /// Where events for this tool should be sent
     event_target: StreamTarget,
@@ -164,6 +168,7 @@ impl PhysicsObject {
             tool:               tool,
             properties:         Arc::new(PhysicsObjectProperties::new()),
             subprogram_id:      SubProgramId::new(),
+            physics_id:         SimulationObjectId::new(),
             event_target:       event_target,
             sprite_tracker:     None,
             position:           bind(ToolPosition::Hidden),
@@ -300,6 +305,35 @@ impl PhysicsObject {
             ToolPosition::DockProperties(idx)   => Some(UiPoint(bounds.0 - 20.0, 20.0 + (idx as f64 * 40.0))),
             ToolPosition::Float(x, y)           => Some(UiPoint(x, y)),
         }
+    }
+
+    ///
+    /// Creates this object in the physics simulation
+    ///
+    pub async fn create_in_simulation(&self, bounds: (f64, f64), requests: &mut OutputSink<PhysicsSimulation>) {
+        // Create the body
+        requests.send(PhysicsSimulation::CreateRigidBody(self.physics_id)).await.ok();
+
+        // Set up the position binding (will connect to the renderer)
+        requests.send(PhysicsSimulation::BindPosition(self.physics_id, self.properties.position.clone())).await.ok();
+
+        // Set the initial position and shape of the object
+        requests.send(PhysicsSimulation::Set(self.physics_id, vec![
+            PhysicsRigidBodyProperty::Position(self.position(bounds).unwrap_or(UiPoint(0.0, 0.0))),
+            PhysicsRigidBodyProperty::Type(SimulationObjectType::Dynamic),
+            PhysicsRigidBodyProperty::Shape(SimulationShape::Circle(self.tool.size().0))
+        ])).await.ok();
+    }
+
+    ///
+    /// Updates the position of this object in a simulation
+    ///
+    pub async fn update_in_simulation(&self, bounds: (f64, f64), requests: &mut OutputSink<PhysicsSimulation>) {
+        requests.send(PhysicsSimulation::Set(self.physics_id, vec![
+            PhysicsRigidBodyProperty::Position(self.position(bounds).unwrap_or(UiPoint(0.0, 0.0))),
+            PhysicsRigidBodyProperty::Type(SimulationObjectType::Dynamic),
+            PhysicsRigidBodyProperty::Shape(SimulationShape::Circle(self.tool.size().0))
+        ])).await.ok();
     }
 
     ///
