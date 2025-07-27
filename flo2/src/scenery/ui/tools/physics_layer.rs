@@ -176,8 +176,8 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
                 ObjectAction(PhysicsObjectAction::Activate(tool_id))        => { }
                 ObjectAction(PhysicsObjectAction::Expand(tool_id))          => { }
                 ObjectAction(PhysicsObjectAction::StartDrag(tool_id, x, y)) => { let bounds = state.bounds; state.object_action(tool_id, |object, _| object.start_drag(x, y, bounds)); }
-                ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))      => { let bounds = state.bounds; state.object_action(tool_id, |object, blob_land| { object.drag(x, y); object.update_blob_position(blob_land, bounds); }); }
-                ObjectAction(PhysicsObjectAction::EndDrag(tool_id, x, y))   => { let bounds = state.bounds; state.object_action(tool_id, |object, blob_land| { object.end_drag(x, y); object.update_blob_position(blob_land, bounds); }); }
+                ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))      => { state.object_action(tool_id, |object, _| { object.drag(x, y); }); }
+                ObjectAction(PhysicsObjectAction::EndDrag(tool_id, x, y))   => { state.object_action(tool_id, |object, _| { object.end_drag(x, y); }); }
             }
         }
 
@@ -354,10 +354,8 @@ impl PhysicsLayerState {
     /// Sets the floating position of a tool
     ///
     pub fn float(&mut self, tool_id: PhysicsToolId, new_position: (f64, f64)) {
-        let bounds = self.bounds;
-        self.object_action(tool_id, move |object, blob_land| {
+        self.object_action(tool_id, move |object, _| {
             object.set_position(ToolPosition::Float(new_position.0, new_position.1));
-            object.update_blob_position(blob_land, bounds);
         });
     }
 
