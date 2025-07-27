@@ -179,9 +179,9 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
                 ObjectAction(PhysicsObjectAction::Activate(tool_id))        => { }
                 ObjectAction(PhysicsObjectAction::Expand(tool_id))          => { }
-                ObjectAction(PhysicsObjectAction::StartDrag(tool_id, x, y)) => { let bounds = state.bounds; state.object_action(tool_id, |object, _| object.start_drag(x, y, bounds)); }
-                ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))      => { state.object_action(tool_id, |object, _| { object.drag(x, y); }); }
-                ObjectAction(PhysicsObjectAction::EndDrag(tool_id, x, y))   => { state.object_action(tool_id, |object, _| { object.end_drag(x, y); }); }
+                ObjectAction(PhysicsObjectAction::StartDrag(tool_id, x, y)) => { state.start_drag(tool_id, x, y).await; }
+                ObjectAction(PhysicsObjectAction::Drag(tool_id, x, y))      => { state.drag(tool_id, x, y).await; }
+                ObjectAction(PhysicsObjectAction::EndDrag(tool_id, x, y))   => { state.end_drag(tool_id, x, y).await; }
             }
         }
 
@@ -377,6 +377,54 @@ impl PhysicsLayerState {
 
         if let Some(object) = maybe_object {
             (action)(object, blob_land)
+        }
+    }
+
+    ///
+    /// Starts dragging a tool
+    ///
+    pub async fn start_drag(&mut self, tool_id: PhysicsToolId, x: f64, y: f64) {
+        let simulation_requests = &mut self.simulation_requests;
+        let mut objects         = self.objects.lock().unwrap();
+        let bounds              = self.bounds;
+
+        let maybe_object = objects.get_mut(&tool_id);
+
+        if let Some(object) = maybe_object {
+            object.start_drag(x, y, bounds);
+            object.update_in_simulation(bounds, simulation_requests).await;
+        }
+    }
+
+    ///
+    /// Continues a drag operation on a tool for which 'start_drag' has been called
+    ///
+    pub async fn drag(&mut self, tool_id: PhysicsToolId, x: f64, y: f64) {
+        let simulation_requests = &mut self.simulation_requests;
+        let mut objects         = self.objects.lock().unwrap();
+        let bounds              = self.bounds;
+
+        let maybe_object = objects.get_mut(&tool_id);
+
+        if let Some(object) = maybe_object {
+            object.drag(x, y);
+            object.update_in_simulation(bounds, simulation_requests).await;
+        }
+    }
+
+    ///
+    /// Finishes a drag operation on a tool for which 'start_drag' has been called
+    ///
+    pub async fn end_drag(&mut self, tool_id: PhysicsToolId, x: f64, y: f64) {
+        let simulation_requests = &mut self.simulation_requests;
+        let mut objects         = self.objects.lock().unwrap();
+        let bounds              = self.bounds;
+
+        let maybe_object = objects.get_mut(&tool_id);
+
+        if let Some(object) = maybe_object {
+            object.end_drag(x, y);
+            object.update_in_simulation(bounds, simulation_requests).await;
         }
     }
 
