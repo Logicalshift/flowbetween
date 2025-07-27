@@ -58,6 +58,74 @@ pub struct PhysicsObject {
 }
 
 ///
+/// Describes the shared properties for a physics object
+///
+/// This is a set of bindings, as the rendering is updated by a render binding program (and also so this can be wrapped in an 'Arc' so we can send the properties
+/// all in one go, without a large amount of cloning)
+///
+pub struct PhysicsObjectProperties {
+    /// Whether or not the object is hidden
+    hidden: Binding<bool>,
+
+    /// The position of the object (managed by the physics program)
+    position: Binding<UiPoint>,
+
+    /// The position that the user has dragged this object to
+    drag_position: Binding<Option<UiPoint>>,
+
+    /// The sprite ID of the icon for this physics object
+    sprite: Binding<Option<SpriteId>>,
+
+    /// Set to true when this object is being dragged
+    being_dragged: Binding<bool>,
+
+    /// The ID of the blob that should be rendered from the blobland
+    blob_id: Binding<BlobId>,
+}
+
+impl PhysicsObjectProperties {
+    ///
+    /// Creates a new physics object properties structure
+    ///
+    pub fn new() -> Self {
+        Self {
+            hidden:         bind(true),
+            position:       bind(UiPoint(0.0, 0.0)),
+            drag_position:  bind(None),
+            sprite:         bind(None),
+            being_dragged:  bind(false),
+            blob_id:        bind(BlobId::new()),
+        }
+    }
+
+    ///
+    /// Draws the object with these properties at the specified position
+    ///
+    pub fn draw(&self, drawing: &mut impl GraphicsContext, blob_land: &mut BlobLand) {
+        // Fetch the property values
+        let position        = self.position.get();
+        let drag_position   = self.drag_position.get();
+        let blob_id         = self.blob_id.get();
+        let sprite          = self.sprite.get();
+
+        // The drag position overrides the position
+        let position        = if let Some(drag_position) = drag_position { drag_position } else { position };
+
+        // Update the blob land with the actual position of this object (blob land needs to be rendered as a whole, which we assume we do later on)
+        blob_land.move_blob(blob_id, position);
+
+        if let Some(sprite) = sprite {
+            // Render the sprite to draw the actual physics object
+            let UiPoint(x, y)   = position;
+
+            drawing.sprite_transform(SpriteTransform::Identity);
+            drawing.sprite_transform(SpriteTransform::Translate(x as f32, y as f32));
+            drawing.draw_sprite(sprite);
+        }
+    }
+}
+
+///
 /// Represents an action performed on a physics tool
 ///
 #[derive(Serialize, Deserialize, Clone, Debug)]
