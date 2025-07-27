@@ -186,6 +186,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     // We track time from 0. Time doesn't pass while we're asleep
     let mut last_step_time  = Duration::default();
     let mut is_asleep       = true;
+    let mut time            = Duration::default();
 
     while let Some(event) = input.next().await {
         use PhysicsSimulation::*;
@@ -297,7 +298,8 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
             BindVelocity(object_id, binding)        => { if rigid_body_id_for_object_id.contains_key(&object_id) { velocity_bindings.insert(object_id, binding); } },
             BindAngularVelocity(object_id, binding) => { if rigid_body_id_for_object_id.contains_key(&object_id) { angular_velocity_bindings.insert(object_id, binding); } },
 
-            Tick(time) => {
+            Tick(time_delta) => {
+                time += time_delta;
                 let tick = Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _);
 
                 if is_asleep {
