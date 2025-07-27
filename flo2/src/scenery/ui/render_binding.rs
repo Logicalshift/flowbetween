@@ -55,6 +55,7 @@ pub fn render_binding_program(input: InputStream<RenderBinding>, context: SceneC
             Draw::PushState,
             Draw::Namespace(render_layer.0),
             Draw::Layer(render_layer.1),
+            Draw::ClearLayer,
         ]);
         initial_drawing.push(Draw::PopState);
 
@@ -94,6 +95,7 @@ pub fn render_binding_program(input: InputStream<RenderBinding>, context: SceneC
                         Draw::PushState,
                         Draw::Namespace(render_layer.0),
                         Draw::Layer(render_layer.1),
+                        Draw::ClearLayer,
                     ]);
                     drawing.push(Draw::PopState);
 
