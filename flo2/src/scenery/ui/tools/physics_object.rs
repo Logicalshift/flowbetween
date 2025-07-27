@@ -16,6 +16,8 @@ use flo_scene::*;
 
 use ::serde::*;
 
+use std::sync::*;
+
 ///
 /// Object on the physics layer
 ///
@@ -23,38 +25,26 @@ pub struct PhysicsObject {
     /// The physics tool itself
     tool: PhysicsTool,
 
+    /// The rendering properties for this object
+    properties: Arc<PhysicsObjectProperties>,
+
     /// The subprogram ID of the program that manages the events for this control
     subprogram_id: SubProgramId,
 
     /// Where events for this tool should be sent
     event_target: StreamTarget,
 
-    /// The sprite that draws this tool (or None if there's no sprite ID)
-    sprite: Binding<Option<SpriteId>>,
-
     /// Tracker that notifies when this object's sprite needs to be redrawn
     sprite_tracker: Option<Box<dyn Releasable>>,
 
-    /// Tracker that notifies when the position of this object has changed and the sprite/backing needs to be redrawn
-    position_tracker: Option<Box<dyn Releasable>>,
-
     /// Location of the tool (ideal, before the physics engine)
     position: Binding<ToolPosition>,
-
-    /// The offset from the position that this was last dragged to
-    position_offset: Binding<UiPoint>,
 
     /// True if this tool is being dragged
     being_dragged: bool,
 
     /// The drag anchor specified by the last 'start drag' operation
     drag_anchor: UiPoint,
-
-    /// The drag position of this object (as opposed to the 'real' position that it assumes when the drag has finished)
-    drag_position: Binding<Option<UiPoint>>,
-
-    /// The ID of this tool in the blobland
-    blob_id: BlobId,
 }
 
 ///
@@ -76,9 +66,6 @@ pub struct PhysicsObjectProperties {
     /// The sprite ID of the icon for this physics object
     sprite: Binding<Option<SpriteId>>,
 
-    /// Set to true when this object is being dragged
-    being_dragged: Binding<bool>,
-
     /// The ID of the blob that should be rendered from the blobland
     blob_id: Binding<BlobId>,
 }
@@ -89,11 +76,10 @@ impl PhysicsObjectProperties {
     ///
     pub fn new() -> Self {
         Self {
-            hidden:         bind(true),
+            hidden:         bind(false),
             position:       bind(UiPoint(0.0, 0.0)),
             drag_position:  bind(None),
             sprite:         bind(None),
-            being_dragged:  bind(false),
             blob_id:        bind(BlobId::new()),
         }
     }
@@ -102,6 +88,11 @@ impl PhysicsObjectProperties {
     /// Draws the object with these properties at the specified position
     ///
     pub fn draw(&self, drawing: &mut impl GraphicsContext, blob_land: &mut BlobLand) {
+        // Nothing to draw if this object is hidden
+        if self.hidden.get() {
+            return;
+        }
+
         // Fetch the property values
         let position        = self.position.get();
         let drag_position   = self.drag_position.get();
@@ -171,17 +162,13 @@ impl PhysicsObject {
     pub fn new(tool: PhysicsTool, event_target: StreamTarget) -> Self {
         Self {
             tool:               tool,
+            properties:         Arc::new(PhysicsObjectProperties::new()),
             subprogram_id:      SubProgramId::new(),
             event_target:       event_target,
-            sprite:             bind(None),
             sprite_tracker:     None,
-            position_tracker:   None,
             position:           bind(ToolPosition::Hidden),
-            position_offset:    bind(UiPoint(0.0, 0.0)),
             being_dragged:      false,
             drag_anchor:        UiPoint(0.0, 0.0),
-            drag_position:      bind(None),
-            blob_id:            BlobId::new(),
         }
     }
 
@@ -194,10 +181,18 @@ impl PhysicsObject {
         let radius  = w.min(h)/2.0;
         let blob    = Blob::new(UiPoint(pos.0, pos.1), radius * 1.5, radius).with_interaction(interaction);
 
-        self.blob_id = blob.id();
+        self.properties.blob_id.set(blob.id());
         blob_land.add_blob(blob);
 
-        self.blob_id
+        self.properties.blob_id.get()
+    }
+
+    ///
+    /// Returns the render properties for this object
+    ///
+    #[inline]
+    pub fn render_properties(&self) -> &Arc<PhysicsObjectProperties> {
+        &self.properties
     }
 
     ///
@@ -205,7 +200,7 @@ impl PhysicsObject {
     ///
     #[inline]
     pub fn blob_id(&self) -> BlobId {
-        self.blob_id
+        self.properties.blob_id.get()
     }
 
     ///
@@ -235,7 +230,7 @@ impl PhysicsObject {
     /// Returns true if this object needs to be redrawn
     ///
     pub fn sprite_needs_redraw(&self) -> bool {
-        self.sprite.get().is_none()
+        self.properties.sprite.get().is_none()
     }
 
     ///
@@ -248,8 +243,8 @@ impl PhysicsObject {
         }
 
         // Remove the sprite
-        let sprite = self.sprite.get();
-        self.sprite.set(None);
+        let sprite = self.properties.sprite.get();
+        self.properties.sprite.set(None);
         sprite
     }
 
@@ -260,11 +255,6 @@ impl PhysicsObject {
         // Avoid sending any sprite updates that predate this update
         if let Some(mut sprite_tracker) = self.sprite_tracker.take() {
             sprite_tracker.done();
-        }
-
-        // Assume we'll update the position too
-        if let Some(mut position_tracker) = self.position_tracker.take() {
-            position_tracker.done();
         }
 
         // Track any changes to the sprite
@@ -288,7 +278,7 @@ impl PhysicsObject {
 
         // Notify when the sprite changes
         self.sprite_tracker = Some(deps.when_changed(NotifySubprogram::send(PhysicsLayer::RedrawIcon(self.tool.id()), context, ())));
-        self.sprite.set(Some(sprite));
+        self.properties.sprite.set(Some(sprite));
 
         drawing
     }
@@ -304,9 +294,9 @@ impl PhysicsObject {
     /// Sets the position of this object
     ///
     pub fn update_blob_position(&mut self, blob_land: &mut BlobLand, bounds: (f64, f64)) {
-        let new_pos = self.drag_position.get().or_else(|| self.position(bounds));
+        let new_pos = self.properties.drag_position.get().or_else(|| self.position(bounds));
         if let Some(new_pos) = new_pos {
-            blob_land.move_blob(self.blob_id, UiPoint(new_pos.0, new_pos.1));
+            blob_land.move_blob(self.properties.blob_id.get(), UiPoint(new_pos.0, new_pos.1));
         }
     }
 
@@ -318,7 +308,7 @@ impl PhysicsObject {
             ToolPosition::Hidden                => None,
             ToolPosition::DockTool(idx)         => Some(UiPoint(20.0, 20.0 + (idx as f64 * 40.0))),
             ToolPosition::DockProperties(idx)   => Some(UiPoint(bounds.0 - 20.0, 20.0 + (idx as f64 * 40.0))),
-            ToolPosition::Float(x, y)           => Some(UiPoint(x, y) + self.position_offset.get()),
+            ToolPosition::Float(x, y)           => Some(UiPoint(x, y)),
         }
     }
 
@@ -330,23 +320,20 @@ impl PhysicsObject {
 
         // Anchor at the position the tool was in originally
         self.drag_anchor = UiPoint(x, y);
-        self.drag_position.set(self.position(bounds));
-
-        // Remove the offset
-        self.position_offset.set(UiPoint(0.0, 0.0));
+        self.properties.drag_position.set(self.position(bounds));
     }
 
     ///
     /// Starts a drag operation on this object
     ///
     pub fn drag(&mut self, x: f64, y: f64) {
-        if let Some(UiPoint(x_pos, y_pos)) = self.drag_position.get() {
+        if let Some(UiPoint(x_pos, y_pos)) = self.properties.drag_position.get() {
             // Calculate the offset from the existing drag anchor
             let offset_x = x - self.drag_anchor.0;
             let offset_y = y - self.drag_anchor.1;
 
             // Move the drag position by the offset
-            self.drag_position.set(Some(UiPoint(x_pos + offset_x, y_pos + offset_y)));
+            self.properties.drag_position.set(Some(UiPoint(x_pos + offset_x, y_pos + offset_y)));
 
             // Update the anchor
             self.drag_anchor.0 += offset_x;
@@ -358,7 +345,7 @@ impl PhysicsObject {
     /// Finishes a drag operation on this object
     ///
     pub fn end_drag(&mut self, x: f64, y: f64) {
-        if let Some(UiPoint(new_x, new_y)) = self.drag_position.get() {
+        if let Some(UiPoint(new_x, new_y)) = self.properties.drag_position.get() {
             // Calculate the offset from the existing drag anchor
             let offset_x = x - self.drag_anchor.0;
             let offset_y = y - self.drag_anchor.1;
@@ -368,43 +355,9 @@ impl PhysicsObject {
 
             // Set this as the final position of the tool
             self.set_position(ToolPosition::Float(new_x, new_y));
-            self.drag_position.set(None);
+            self.properties.drag_position.set(None);
             self.being_dragged = false;
         }
-    }
-
-    ///
-    /// Returns the instructions to draw this physics object
-    ///
-    pub fn draw(&mut self, bounds: (f64, f64), context: &SceneContext) -> Vec<Draw> {
-        if let Some(mut position_tracker) = self.position_tracker.take() {
-            position_tracker.done();
-        }
-
-        // Changes to the position get tracked
-        let (drawing, deps) = BindingContext::bind(|| {
-            let mut drawing = vec![];
-
-            // Determine the position of this control
-            let pos             = self.position(bounds);
-            let pos             = if let Some(pos) = pos { pos } else { return drawing; };
-            let pos             = if let Some(drag_position) = self.drag_position.get() { drag_position } else { pos };
-            let sprite          = self.sprite.get();
-            let sprite          = if let Some(sprite) = sprite { sprite } else { return drawing; };
-            let UiPoint(x, y)   = pos;
-
-            // Render the sprite to draw the actual physics object
-            drawing.sprite_transform(SpriteTransform::Identity);
-            drawing.sprite_transform(SpriteTransform::Translate(x as f32, y as f32));
-            drawing.draw_sprite(sprite);
-
-            drawing
-        });
-
-        // Notify when the position changes
-        self.position_tracker = Some(deps.when_changed(NotifySubprogram::send(PhysicsLayer::UpdatePosition(self.tool.id()), context, ())));
-
-        drawing
     }
 }
 

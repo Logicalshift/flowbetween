@@ -200,14 +200,19 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
             // Simulation needs to run/restart if the positions are invalidated
             state.run_simulation(&mut timer_requests, &mut drawing_requests).await;
 
-            let bounds = state.bounds;
-
             drawing.push_state();
             drawing.namespace(*PHYSICS_LAYER);
             drawing.layer(LayerId(1));
             drawing.clear_layer();
 
-            drawing.extend(state.objects.lock().unwrap().values_mut().flat_map(|object| object.draw(bounds, &context)));
+            let objects     = &mut state.objects;
+            let blob_land   = &mut state.blob_land;
+
+            objects.lock().unwrap()
+                .values_mut()
+                .for_each(|object| {
+                    object.render_properties().draw(&mut drawing, blob_land);
+                });
 
             drawing.pop_state();
         }
