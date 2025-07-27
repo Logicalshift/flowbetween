@@ -135,19 +135,19 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     let mut test_object = test_tool();
     let test_object_id = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
-    state.float(test_object_id, (100.0, 100.0));
+    state.float(test_object_id, (100.0, 100.0)).await;
     state.update_tool_focus(test_object_id, &mut focus_requests).await;
 
     let mut test_object = test_tool();
     let test_object_id = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
-    state.float(test_object_id, (200.0, 100.0));
+    state.float(test_object_id, (200.0, 100.0)).await;
     state.update_tool_focus(test_object_id, &mut focus_requests).await;
 
     let mut test_object = test_tool();
     let test_object_id = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
-    state.float(test_object_id, (300.0, 100.0));
+    state.float(test_object_id, (300.0, 100.0)).await;
     state.update_tool_focus(test_object_id, &mut focus_requests).await;
 
     // We're a focus program with only controls, underneath pretty much anything else (so we claim z-index 0)
