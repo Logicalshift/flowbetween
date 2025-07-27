@@ -38,7 +38,7 @@ pub struct PhysicsObject {
     /// Tracker that notifies when the position of this object has changed and the sprite/backing needs to be redrawn
     position_tracker: Option<Box<dyn Releasable>>,
 
-    /// Location of the tool 
+    /// Location of the tool (ideal, before the physics engine)
     position: Binding<ToolPosition>,
 
     /// The offset from the position that this was last dragged to
