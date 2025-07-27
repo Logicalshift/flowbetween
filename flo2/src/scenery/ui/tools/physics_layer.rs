@@ -369,20 +369,24 @@ impl PhysicsLayerState {
             // Create a new object
             let tool_id             = new_tool.id();
             let mut object          = PhysicsObject::new(new_tool, target_program.into());
-            let mut render_state    = self.render_state.lock().unwrap();
-            let blob_id             = object.add_blob(&mut render_state.blob_land, self.bounds, Self::blob_interaction_fn(tool_id, &self.objects, &self.tool_id_for_blob_id));
 
-            // Add the render properties for this object (sends it to our render program)
-            let property_list       = render_state.object_properties.get();
-            let mut property_list   = (*property_list).clone();
-            property_list.push(object.render_properties().clone());
-            render_state.object_properties.set(Arc::new(property_list));
+            {
+                let mut render_state    = self.render_state.lock().unwrap();
+                let blob_id             = object.add_blob(&mut render_state.blob_land, self.bounds, Self::blob_interaction_fn(tool_id, &self.objects, &self.tool_id_for_blob_id));
 
-            self.tool_id_for_blob_id.lock().unwrap().insert(blob_id, tool_id);
+                // Add the render properties for this object (sends it to our render program)
+                let property_list       = render_state.object_properties.get();
+                let mut property_list   = (*property_list).clone();
+                property_list.push(object.render_properties().clone());
+                render_state.object_properties.set(Arc::new(property_list));
+
+                self.tool_id_for_blob_id.lock().unwrap().insert(blob_id, tool_id);
+            }
 
             // Start a subprogram to manage this tool
-            let tool_id = object.tool().id();
-            context.send_message(SceneControl::start_program(object.subprogram_id(),
+            let tool_id             = object.tool().id();
+            let object_subprogram   = object.subprogram_id();
+            context.send_message(SceneControl::start_program(object_subprogram,
                 move |input, context| physics_object_program(input, context, tool_id),
                 0
             )).await.ok();
