@@ -16,6 +16,7 @@ use crate::scenery::ui::namespaces::*;
 use crate::scenery::ui::subprograms::*;
 use crate::scenery::ui::ui_path::*;
 
+use flo_binding::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
@@ -109,16 +110,21 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     let mut physics_requests    = context.send::<PhysicsSimulation>(physics_program_id).unwrap();
 
     // Drawing settings
+    let render_state = PhysicsLayerRenderState {
+        blob_land:          BlobLand::empty(),
+        blob_tick:          Instant::now(),
+        blob_awake:         false,
+        object_properties:  bind(Arc::new(vec![])),
+    };
+
     let mut state = PhysicsLayerState {
-        our_program_id: our_program_id,
+        our_program_id:         our_program_id,
         objects:                Arc::new(Mutex::new(HashMap::new())),
+        render_state:           Arc::new(Mutex::new(render_state)),
         bounds:                 (1024.0, 768.0),
         tool_id_for_blob_id:    Arc::new(Mutex::new(HashMap::new())),
         sprites:                vec![],
         next_sprite_id:         0,
-        blob_land:              BlobLand::empty(),
-        blob_tick:              Instant::now(),
-        blob_awake:             false,
     };
 
     // TEST: create a test object, force an initial update
@@ -223,6 +229,23 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 }
 
 ///
+/// The render state of the physics layer is used to communicate with the rendering subprogram
+///
+struct PhysicsLayerRenderState {
+    /// The blobland simulation that causes the tools to animate when they're joined together or pulled apart
+    blob_land: BlobLand,
+
+    /// The instant when the last simulation tick was run
+    blob_tick: Instant,
+
+    /// True if the simulation is awake
+    blob_awake: bool,
+
+    /// The properties of the objects that are on the physics layer
+    object_properties: Binding<Arc<Vec<Arc<PhysicsObjectProperties>>>>,
+}
+
+///
 /// State of the physics layer
 ///
 struct PhysicsLayerState {
@@ -231,6 +254,9 @@ struct PhysicsLayerState {
 
     /// Objects in the physics layer
     objects: Arc<Mutex<HashMap<PhysicsToolId, PhysicsObject>>>,
+
+    /// Describes how the layer should be rendered
+    render_state: Arc<Mutex<PhysicsLayerRenderState>>,
 
     /// The tool ID associated with a blob ID from the blobland
     tool_id_for_blob_id: Arc<Mutex<HashMap<BlobId, PhysicsToolId>>>,
@@ -243,15 +269,6 @@ struct PhysicsLayerState {
 
     /// The sprite ID that will be assigned if no sprites are available in the pool
     next_sprite_id: u64,
-
-    /// The blobland simulation that causes the tools to animate when they're joined together or pulled apart
-    blob_land: BlobLand,
-
-    /// The instant when the last simulation tick was run
-    blob_tick: Instant,
-
-    /// True if the simulation is awake
-    blob_awake: bool,
 }
 
 impl PhysicsLayerState {
@@ -299,9 +316,16 @@ impl PhysicsLayerState {
             existing_object.set_tool(new_tool, target_program.into());
         } else {
             // Create a new object
-            let tool_id     = new_tool.id();
-            let mut object  = PhysicsObject::new(new_tool, target_program.into());
-            let blob_id     = object.add_blob(&mut self.blob_land, self.bounds, Self::blob_interaction_fn(tool_id, &self.objects, &self.tool_id_for_blob_id));
+            let tool_id             = new_tool.id();
+            let mut object          = PhysicsObject::new(new_tool, target_program.into());
+            let mut render_state    = self.render_state.lock().unwrap();
+            let blob_id             = object.add_blob(&mut render_state.blob_land, self.bounds, Self::blob_interaction_fn(tool_id, &self.objects, &self.tool_id_for_blob_id));
+
+            // Add the render properties for this object (sends it to our render program)
+            let property_list       = render_state.object_properties.get();
+            let mut property_list   = (*property_list).clone();
+            property_list.push(object.render_properties().clone());
+            render_state.object_properties.set(Arc::new(property_list));
 
             self.tool_id_for_blob_id.lock().unwrap().insert(blob_id, tool_id);
 
@@ -320,9 +344,10 @@ impl PhysicsLayerState {
     /// Performs an action on the object with the specified ID
     ///
     pub fn object_action(&mut self, tool_id: PhysicsToolId, action: impl FnOnce(&mut PhysicsObject, &mut BlobLand) -> ()) {
-        let objects      = &self.objects;
-        let blob_land    = &mut self.blob_land;
-        let mut objects  = objects.lock().unwrap();
+        let objects             = &self.objects;
+        let mut render_state    = self.render_state.lock().unwrap();
+        let blob_land           = &mut render_state.blob_land;
+        let mut objects         = objects.lock().unwrap();
 
         let maybe_object = objects.get_mut(&tool_id);
 
@@ -424,6 +449,7 @@ impl PhysicsLayerState {
         }
     }
 
+    /*
     ///
     /// Runs the blobland simulation and renders the result
     ///
@@ -455,6 +481,7 @@ impl PhysicsLayerState {
 
         drawing_requests.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
     }
+    */
 }
 
 impl Serialize for PhysicsLayer {

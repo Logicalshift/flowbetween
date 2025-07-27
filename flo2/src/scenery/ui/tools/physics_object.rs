@@ -57,6 +57,7 @@ pub struct PhysicsObject {
 /// This is a set of bindings, as the rendering is updated by a render binding program (and also so this can be wrapped in an 'Arc' so we can send the properties
 /// all in one go, without a large amount of cloning)
 ///
+#[derive(Clone, PartialEq)]
 pub struct PhysicsObjectProperties {
     /// Whether or not the object is hidden
     hidden: Binding<bool>,
