@@ -201,6 +201,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         }
 
         // Draw the tools in their expected positions
+        /*
         if positions_invalidated {
             // Simulation needs to run/restart if the positions are invalidated
             state.run_simulation(&mut drawing_requests).await;
@@ -226,6 +227,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         if !drawing.is_empty() {
             drawing_requests.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
         }
+        */
     }
 
     // Stop the physics program when we're finished
