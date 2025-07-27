@@ -383,15 +383,17 @@ impl PhysicsLayerState {
     ///
     /// Starts dragging a tool
     ///
-    pub async fn start_drag(&mut self, tool_id: PhysicsToolId, x: f64, y: f64) {
+    pub fn start_drag(&mut self, tool_id: PhysicsToolId, x: f64, y: f64) -> impl Send + Future<Output=()> {
         let simulation_requests = &mut self.simulation_requests;
         let mut objects         = self.objects.lock().unwrap();
         let bounds              = self.bounds;
 
-        let object = if let Some(object) = objects.get_mut(&tool_id) { object } else { return; };
+        async move {
+            let object = if let Some(object) = objects.get_mut(&tool_id) { object } else { return; };
 
-        object.start_drag(x, y, bounds);
-        object.update_in_simulation(bounds, simulation_requests).await;
+            object.start_drag(x, y, bounds);
+            object.update_in_simulation(bounds, simulation_requests).await;
+        }
     }
 
     ///
