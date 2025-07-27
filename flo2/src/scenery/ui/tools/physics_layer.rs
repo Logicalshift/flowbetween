@@ -388,12 +388,10 @@ impl PhysicsLayerState {
         let mut objects         = self.objects.lock().unwrap();
         let bounds              = self.bounds;
 
-        let maybe_object = objects.get_mut(&tool_id);
+        let object = if let Some(object) = objects.get_mut(&tool_id) { object } else { return; };
 
-        if let Some(object) = maybe_object {
-            object.start_drag(x, y, bounds);
-            object.update_in_simulation(bounds, simulation_requests).await;
-        }
+        object.start_drag(x, y, bounds);
+        object.update_in_simulation(bounds, simulation_requests).await;
     }
 
     ///
@@ -404,12 +402,10 @@ impl PhysicsLayerState {
         let mut objects         = self.objects.lock().unwrap();
         let bounds              = self.bounds;
 
-        let maybe_object = objects.get_mut(&tool_id);
+        let object = if let Some(object) = objects.get_mut(&tool_id) { object } else { return; };
 
-        if let Some(object) = maybe_object {
-            object.drag(x, y);
-            object.update_in_simulation(bounds, simulation_requests).await;
-        }
+        object.drag(x, y);
+        object.update_in_simulation(bounds, simulation_requests).await;
     }
 
     ///
@@ -420,12 +416,10 @@ impl PhysicsLayerState {
         let mut objects         = self.objects.lock().unwrap();
         let bounds              = self.bounds;
 
-        let maybe_object = objects.get_mut(&tool_id);
+        let object = if let Some(object) = objects.get_mut(&tool_id) { object } else { return; };
 
-        if let Some(object) = maybe_object {
-            object.end_drag(x, y);
-            object.update_in_simulation(bounds, simulation_requests).await;
-        }
+        object.end_drag(x, y);
+        object.update_in_simulation(bounds, simulation_requests).await;
     }
 
     ///
