@@ -114,7 +114,6 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     let render_state = PhysicsLayerRenderState {
         blob_land:          BlobLand::empty(),
         blob_tick:          Instant::now(),
-        blob_awake:         false,
         object_properties:  bind(Arc::new(vec![])),
     };
 
@@ -199,35 +198,6 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
                 positions_invalidated = true;
             }
         }
-
-        // Draw the tools in their expected positions
-        /*
-        if positions_invalidated {
-            // Simulation needs to run/restart if the positions are invalidated
-            state.run_simulation(&mut drawing_requests).await;
-
-            drawing.push_state();
-            drawing.namespace(*PHYSICS_LAYER);
-            drawing.layer(LayerId(1));
-            drawing.clear_layer();
-
-            let objects     = &mut state.objects;
-            let blob_land   = &mut state.blob_land;
-
-            objects.lock().unwrap()
-                .values_mut()
-                .for_each(|object| {
-                    object.render_properties().draw(&mut drawing, blob_land);
-                });
-
-            drawing.pop_state();
-        }
-
-        // Send any waiting drawing instructions
-        if !drawing.is_empty() {
-            drawing_requests.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
-        }
-        */
     }
 
     // Stop the physics program when we're finished
@@ -243,9 +213,6 @@ struct PhysicsLayerRenderState {
 
     /// The instant when the last simulation tick was run
     blob_tick: Instant,
-
-    /// True if the simulation is awake
-    blob_awake: bool,
 
     /// The properties of the objects that are on the physics layer
     object_properties: Binding<Arc<Vec<Arc<PhysicsObjectProperties>>>>,
@@ -503,40 +470,6 @@ impl PhysicsLayerState {
             focus_events.send(focus_event).await.ok();
         }
     }
-
-    /*
-    ///
-    /// Runs the blobland simulation and renders the result
-    ///
-    pub async fn run_simulation(&mut self, drawing_requests: &mut OutputSink<DrawingRequest>) {
-        // Read the time since the last tick occurred
-        let now             = Instant::now();
-        let tick_time       = now.duration_since(self.blob_tick);
-        let tick_time_us    = tick_time.as_micros();
-        let tick_time_s     = (tick_time_us as f64) / 1_000_000.0;
-
-        // Run a frame of simulation for the blobland
-        self.blob_land.simulate(tick_time_s);
-        self.blob_tick = now;
-
-        // Render the blobland update
-        let mut drawing = vec![];
-
-        drawing.push_state();
-        drawing.namespace(*PHYSICS_LAYER);
-        drawing.layer(LayerId(0));
-        drawing.clear_layer();
-
-        drawing.fill_color(color_tool_background());
-        drawing.stroke_color(color_tool_outline());
-        drawing.line_width(2.0);
-        self.blob_land.render(&mut drawing);
-
-        drawing.pop_state();
-
-        drawing_requests.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
-    }
-    */
 }
 
 impl Serialize for PhysicsLayer {
