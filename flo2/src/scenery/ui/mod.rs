@@ -16,6 +16,7 @@ mod dialog;
 mod egui;
 mod tools;
 mod colors;
+mod binding_program;
 mod render_binding;
 
 pub use namespaces::*;
@@ -31,4 +32,5 @@ pub use tools::physics_layer::*;
 pub use tools::physics_tool::*;
 pub use tools::physics_simulation::*;
 pub use binding_tracker::*;
+pub use binding_program::*;
 pub use render_binding::*;
