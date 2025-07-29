@@ -321,7 +321,7 @@ impl PhysicsLayerState {
                 rendering.splice(0..0, blob_drawing);
 
                 rendering
-            }).into())
+            }))
         }, 1)).await.ok();
     }
 
