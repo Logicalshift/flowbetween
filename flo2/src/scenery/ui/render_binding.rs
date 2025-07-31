@@ -47,16 +47,18 @@ pub fn render_binding_program(input: InputStream<BindingProgram>, context: Scene
             action = action.with_parent_program(parent_program);
         }
 
+        // When the parent program stops, clear the layer that we were rendering
+        action = action.with_stop_action(move |context| async move {
+            context.send_message(DrawingRequest::Draw(Arc::new(vec![
+                Draw::PushState,
+                Draw::Namespace(render_layer.0),
+                Draw::Layer(render_layer.1),
+                Draw::ClearLayer,
+                Draw::PopState,
+            ]))).await.ok();
+        }.boxed());
+
         // Run as a binding program
         binding_program(input, context.clone(), rendering, action).await;
-
-        // When the parent program stops, clear the layer that we were rendering
-        context.send_message(DrawingRequest::Draw(Arc::new(vec![
-            Draw::PushState,
-            Draw::Namespace(render_layer.0),
-            Draw::Layer(render_layer.1),
-            Draw::ClearLayer,
-            Draw::PopState,
-        ]))).await.ok();
     }
 }
