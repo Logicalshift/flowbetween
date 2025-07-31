@@ -5,6 +5,7 @@ use flo_scene::*;
 use flo_scene::programs::*;
 
 use futures::prelude::*;
+use futures::future::{BoxFuture};
 use ::serde::*;
 
 use std::marker::{PhantomData};
@@ -27,6 +28,9 @@ pub enum BindingTrigger {
 pub struct BindingAction<TValue, TFn, TFuture> {
     /// The action to take when the binding is changed
     action: TFn,
+
+    /// The action to perform when the program is closed down
+    on_stop: Option<Box<dyn 'static + Send + FnOnce(&SceneContext) -> BoxFuture<'static, ()>>>,
 
     /// We'll stop tracking the binding whenever this program finishes
     parent_program: Option<SubProgramId>,
@@ -110,6 +114,11 @@ where
             BindingProgram::Update(_) => { /* Other updates are ignored */ }
         }
     }
+
+    // Perform any shutdown actions when the program ends
+    if let Some(on_stop) = action.on_stop.take() {
+        (on_stop)(&context).await;
+    }
 }
 
 impl<TValue, TFn, TFuture> BindingAction<TValue, TFn, TFuture>
@@ -123,6 +132,7 @@ where
     pub fn new(action: TFn) -> Self {
         BindingAction {
             action:         action,
+            on_stop:        None,
             parent_program: None,
             trigger:        BindingTrigger::WaitForIdle,
             phantom:        PhantomData,
@@ -145,6 +155,17 @@ where
     ///
     pub fn with_parent_program(mut self, parent_program: SubProgramId) -> Self {
         self.parent_program = Some(parent_program);
+        self
+    }
+
+    ///
+    /// Sets the action to perform when the binding program stops
+    ///
+    pub fn with_stop_action<TStopFuture>(mut self, on_stop: impl 'static + Send + FnOnce(&SceneContext) -> TStopFuture) -> Self
+    where
+        TStopFuture: 'static + Send + Future<Output=()>,
+    {
+        self.on_stop = Some(Box::new(move |context| on_stop(context).boxed()));
         self
     }
 }
