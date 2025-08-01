@@ -2,6 +2,7 @@ use super::blobland::*;
 use super::physics_layer::*;
 use super::physics_simulation::*;
 use super::physics_tool::*;
+use crate::scenery::ui::binding_program::*;
 use crate::scenery::ui::binding_tracker::*;
 use crate::scenery::ui::focus::*;
 use crate::scenery::ui::namespaces::*;
@@ -10,6 +11,7 @@ use crate::scenery::ui::ui_path::*;
 use futures::prelude::*;
 use futures::future::{BoxFuture};
 
+use flo_curves::arc::*;
 use flo_binding::*;
 use flo_binding::binding_context::*;
 use flo_draw::*;
@@ -475,4 +477,39 @@ pub async fn physics_object_mouse_program(input: InputStream<FocusEvent>, contex
             _ => { }
         }
     }
+}
+
+///
+/// Subprogram that causes the 'focus' to follow the mouse
+///
+pub async fn physics_object_focus_program(input: InputStream<BindingProgram>, context: SceneContext, mouse_program: SubProgramId, position: impl Into<BindRef<(f64, f64)>>, size: impl Into<BindRef<(f64, f64)>>) {
+    // Create a binding for the position and the size
+    let position        = position.into();
+    let size            = size.into();
+    let position_size   = computed(move || (position.get(), size.get()));
+
+    // Run a binding program to send focus updates whenever the position changes
+    let action = BindingAction::<((f64, f64), (f64, f64)), _, _>::new(move |((pos_x, pos_y), (size_w, size_h)), context| {
+            let context = context.clone();
+
+            async move {
+                // Set up the path for the tool
+                let tool_size   = size_w.max(size_h);
+                let tool_path   = Circle::new(UiPoint(pos_x, pos_y), tool_size/2.0).to_path();
+
+                // Update the region that the tool is occupying
+                context.send_message(Focus::ClaimRegion {
+                    program:    SubProgramId::new(),
+                    region:     vec![tool_path],
+                    z_index:    1,
+                }).await.ok();
+            }
+        })
+        .with_parent_program(mouse_program)
+        .with_stop_action(move |context| async move {
+            // Remove the focus claim when this program stops (which is also when the mouse program stops)
+            context.send_message(Focus::RemoveClaim(mouse_program)).await.ok();
+        }.boxed());
+
+    binding_program(input, context, position_size, action).await;
 }
