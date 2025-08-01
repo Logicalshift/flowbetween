@@ -146,6 +146,13 @@ impl PhysicsTool {
     }
 
     ///
+    /// The size binding for this tool
+    ///
+    pub fn size_binding(&self) -> BindRef<(f64, f64)> {
+        self.size.clone()
+    }
+
+    ///
     /// The icon to display to represent this tool
     ///
     pub fn icon(&self) -> Vec<Draw> {

@@ -93,6 +93,14 @@ impl PhysicsObjectProperties {
     }
 
     ///
+    /// The position of this physics object
+    ///
+    #[inline]
+    pub fn position(&self) -> UiPoint {
+        self.position.get()
+    }
+
+    ///
     /// Draws the object with these properties at the specified position
     ///
     pub fn draw(&self, drawing: &mut impl GraphicsContext, blob_land: &mut BlobLand) {
@@ -482,20 +490,20 @@ pub async fn physics_object_mouse_program(input: InputStream<FocusEvent>, contex
 ///
 /// Subprogram that causes the 'focus' to follow the mouse
 ///
-pub async fn physics_object_focus_program(input: InputStream<BindingProgram>, context: SceneContext, mouse_program: SubProgramId, position: impl Into<BindRef<(f64, f64)>>, size: impl Into<BindRef<(f64, f64)>>) {
+pub async fn physics_object_focus_program(input: InputStream<BindingProgram>, context: SceneContext, mouse_program: SubProgramId, position: impl Into<BindRef<UiPoint>>, size: impl Into<BindRef<(f64, f64)>>) {
     // Create a binding for the position and the size
     let position        = position.into();
     let size            = size.into();
     let position_size   = computed(move || (position.get(), size.get()));
 
     // Run a binding program to send focus updates whenever the position changes
-    let action = BindingAction::<((f64, f64), (f64, f64)), _, _>::new(move |((pos_x, pos_y), (size_w, size_h)), context| {
+    let action = BindingAction::<(UiPoint, (f64, f64)), _, _>::new(move |(position, (size_w, size_h)), context| {
             let context = context.clone();
 
             async move {
                 // Set up the path for the tool
                 let tool_size   = size_w.max(size_h);
-                let tool_path   = Circle::new(UiPoint(pos_x, pos_y), tool_size/2.0).to_path();
+                let tool_path   = Circle::new(position, tool_size/2.0).to_path();
 
                 // Update the region that the tool is occupying
                 context.send_message(Focus::ClaimRegion {

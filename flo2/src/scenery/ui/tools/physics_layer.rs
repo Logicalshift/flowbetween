@@ -136,19 +136,16 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     let test_object_id = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
     state.float(test_object_id, (100.0, 100.0)).await;
-    state.update_tool_focus(test_object_id, &mut focus_requests).await;
 
     let mut test_object = test_tool();
     let test_object_id = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
     state.float(test_object_id, (200.0, 100.0)).await;
-    state.update_tool_focus(test_object_id, &mut focus_requests).await;
 
     let mut test_object = test_tool();
     let test_object_id = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
     state.float(test_object_id, (300.0, 100.0)).await;
-    state.update_tool_focus(test_object_id, &mut focus_requests).await;
 
     // We're a focus program with only controls, underneath pretty much anything else (so we claim z-index 0)
     focus_requests.send(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 }).await.ok();
@@ -164,12 +161,12 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
             use PhysicsLayer::*;
             match request {
                 // Tool requests
-                AddTool(new_tool, program_id)   => { let tool_id = new_tool.id(); state.add_tool(new_tool, program_id.into(), &context).await; state.update_tool_focus(tool_id, &mut focus_requests).await; },
-                DockTool(tool_id)               => { state.dock_tool(tool_id); state.update_tool_focus(tool_id, &mut focus_requests).await; }
-                DockProperties(tool_id)         => { state.dock_properties(tool_id); state.update_tool_focus(tool_id, &mut focus_requests).await; }
-                Float(tool_id, position)        => { state.float(tool_id, position).await; state.update_tool_focus(tool_id, &mut focus_requests).await; }
+                AddTool(new_tool, program_id)   => { let tool_id = new_tool.id(); state.add_tool(new_tool, program_id.into(), &context).await; },
+                DockTool(tool_id)               => { state.dock_tool(tool_id); }
+                DockProperties(tool_id)         => { state.dock_properties(tool_id); }
+                Float(tool_id, position)        => { state.float(tool_id, position).await; }
                 RemoveTool(tool_id)             => { state.remove_tool(tool_id); }
-                UpdatePosition(tool_id)         => { state.update_tool_focus(tool_id, &mut focus_requests).await; }
+                UpdatePosition(_tool_id)        => { }
                 RedrawIcon(tool_id)             => { state.invalidate_sprite(tool_id); }
 
                 // Event handling
@@ -355,8 +352,17 @@ impl PhysicsLayerState {
             // Start a subprogram to manage this tool
             let tool_id             = object.tool().id();
             let object_subprogram   = object.subprogram_id();
+            let focus_subprogram    = SubProgramId::new();
             context.send_message(SceneControl::start_program(object_subprogram,
                 move |input, context| physics_object_mouse_program(input, context, tool_id),
+                0
+            )).await.ok();
+
+            let properties  = object.render_properties().clone();
+            let position    = computed(move || properties.position());
+            let size        = object.tool().size_binding();
+            context.send_message(SceneControl::start_program(focus_subprogram,
+                move |input, context| physics_object_focus_program(input, context, object_subprogram, position, size),
                 0
             )).await.ok();
 
@@ -484,42 +490,6 @@ impl PhysicsLayerState {
     ///
     pub fn set_bounds(&mut self, width: f64, height: f64) {
         self.bounds = (width, height);
-    }
-
-    ///
-    /// Updates the focus program on the location of a tool
-    ///
-    pub async fn update_tool_focus(&mut self, tool_id: PhysicsToolId, focus_events: &mut OutputSink<Focus>) {
-        let maybe_focus_event = {
-            let mut objects = self.objects.lock().unwrap();
-
-            if let Some(object) = objects.get_mut(&tool_id) {
-                // Each object has a control ID
-                let program_id = object.subprogram_id();
-
-                if let Some(UiPoint(x, y)) = object.position(self.bounds) {
-                    let (w, h)    = object.tool().size();
-                    let tool_size = w.max(h);
-                    let tool_path = Circle::new(UiPoint(x, y), tool_size/2.0).to_path();
-
-                    // Create a focus region for the tool
-                    Some(Focus::ClaimRegion {
-                        program:    program_id,
-                        region:     vec![tool_path],
-                        z_index:    1,
-                    })
-                } else {
-                    // Tool is hidden or otherwise not present
-                    Some(Focus::RemoveClaim(program_id))
-                }
-            } else {
-                None
-            }
-        };
-
-        if let Some(focus_event) = maybe_focus_event {
-            focus_events.send(focus_event).await.ok();
-        }
     }
 }
 
