@@ -459,7 +459,7 @@ async fn track_drag((x, y): (f64, f64), input: &mut InputStream<FocusEvent>, too
 /// This will generate PhysicsLayerEvents, and expects to receive DrawEvents from the focus subprogram (it relies on the focus subprogram
 /// to route events to it)
 ///
-pub async fn physics_object_program(input: InputStream<FocusEvent>, context: SceneContext, tool_id: PhysicsToolId) {
+pub async fn physics_object_mouse_program(input: InputStream<FocusEvent>, context: SceneContext, tool_id: PhysicsToolId) {
     let mut layer_actions   = context.send(()).unwrap();
     let mut input           = input;
 

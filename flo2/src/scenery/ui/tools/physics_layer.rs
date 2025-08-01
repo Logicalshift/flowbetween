@@ -356,7 +356,7 @@ impl PhysicsLayerState {
             let tool_id             = object.tool().id();
             let object_subprogram   = object.subprogram_id();
             context.send_message(SceneControl::start_program(object_subprogram,
-                move |input, context| physics_object_program(input, context, tool_id),
+                move |input, context| physics_object_mouse_program(input, context, tool_id),
                 0
             )).await.ok();
 
