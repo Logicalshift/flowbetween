@@ -12,8 +12,8 @@ flo_draw            = { version = "0.4", features = [ "render-wgpu" ], default-f
 flo_curves          = "0.8"
 
 flo_binding         = "3.0"
-flo_scene           = "0.2"
-flo_scene_guest     = "0.2"
+flo_scene           = "0.3"
+flo_scene_guest     = "0.3"
 
 futures             = "0.3"
 serde               = { version = "1.0", features = [ "derive" ] }
@@ -27,8 +27,8 @@ smallvec            = { version = "1.10", features = ["const_generics"] }
 flo_curves              = { git = "https://github.com/Logicalshift/flo_curves", branch = "v0.8" }
 
 flo_binding             = { git = "https://github.com/Logicalshift/flo_binding", branch = "v3.0" }
-flo_scene               = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.2" }
-flo_scene_guest         = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.2" }
+flo_scene               = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.3" }
+flo_scene_guest         = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.3" }
 
 desync                  = { git = "https://github.com/Logicalshift/desync", branch = "v0.9" }
 
