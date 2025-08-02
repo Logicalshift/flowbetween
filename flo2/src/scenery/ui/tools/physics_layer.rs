@@ -280,46 +280,48 @@ impl PhysicsLayerState {
     ///
     /// Creates a rendering program to display this state
     ///
-    async fn start_rendering_program(&self, context: &SceneContext) {
+    fn start_rendering_program<'a>(&'a self, context: &'a SceneContext) -> impl 'a + Send + Future<Output=()> {
         let render_state    = self.render_state.clone();
         let our_program_id  = self.our_program_id;
 
-        context.send_message(SceneControl::start_program(SubProgramId::new(), move |input, context| {
-            render_binding_program(input, context, (*PHYSICS_LAYER, LayerId(0)), Some(our_program_id), computed(move || {
-                let mut render_state    = render_state.lock().unwrap();
-                let mut rendering       = vec![];
+        async move {
+            context.send_message(SceneControl::start_program(SubProgramId::new(), move |input, context| {
+                render_binding_program(input, context, (*PHYSICS_LAYER, LayerId(0)), Some(our_program_id), computed(move || {
+                    let mut render_state    = render_state.lock().unwrap();
+                    let mut rendering       = vec![];
 
-                // Render the decals
-                let object_properties = render_state.object_properties.get();
+                    // Render the decals
+                    let object_properties = render_state.object_properties.get();
 
-                for obj in object_properties.iter() {
-                    obj.draw(&mut rendering, &mut render_state.blob_land);
-                }
+                    for obj in object_properties.iter() {
+                        obj.draw(&mut rendering, &mut render_state.blob_land);
+                    }
 
-                // The borders are rendered using the 'BlobLand', which deals with the animations that join related tools together
-                let now             = Instant::now();
-                let tick_time       = now.duration_since(render_state.blob_tick);
-                let tick_time_us    = tick_time.as_micros();
-                let tick_time_s     = (tick_time_us as f64) / 1_000_000.0;
+                    // The borders are rendered using the 'BlobLand', which deals with the animations that join related tools together
+                    let now             = Instant::now();
+                    let tick_time       = now.duration_since(render_state.blob_tick);
+                    let tick_time_us    = tick_time.as_micros();
+                    let tick_time_s     = (tick_time_us as f64) / 1_000_000.0;
 
-                // Run a frame of simulation for the blobland
-                render_state.blob_land.simulate(tick_time_s);
-                render_state.blob_tick = now;
+                    // Run a frame of simulation for the blobland
+                    render_state.blob_land.simulate(tick_time_s);
+                    render_state.blob_tick = now;
 
-                // Draw the blobs
-                let mut blob_drawing = vec![];
+                    // Draw the blobs
+                    let mut blob_drawing = vec![];
 
-                blob_drawing.fill_color(color_tool_background());
-                blob_drawing.stroke_color(color_tool_outline());
-                blob_drawing.line_width(2.0);
-                render_state.blob_land.render(&mut blob_drawing);
+                    blob_drawing.fill_color(color_tool_background());
+                    blob_drawing.stroke_color(color_tool_outline());
+                    blob_drawing.line_width(2.0);
+                    render_state.blob_land.render(&mut blob_drawing);
 
-                // Add to the start of the drawing
-                rendering.splice(0..0, blob_drawing);
+                    // Add to the start of the drawing
+                    rendering.splice(0..0, blob_drawing);
 
-                rendering
-            }))
-        }, 1)).await.ok();
+                    rendering
+                }))
+            }, 1)).await.ok();
+        }
     }
 
     ///
