@@ -507,16 +507,16 @@ pub async fn physics_object_focus_program(input: InputStream<BindingProgram>, co
 
                 // Update the region that the tool is occupying
                 context.send_message(Focus::ClaimRegion {
-                    program:    SubProgramId::new(),
+                    program:    mouse_program,
                     region:     vec![tool_path],
                     z_index:    1,
-                }).await.ok();
+                }).await.unwrap();
             }
         })
         .with_parent_program(mouse_program)
         .with_stop_action(move |context| async move {
             // Remove the focus claim when this program stops (which is also when the mouse program stops)
-            context.send_message(Focus::RemoveClaim(mouse_program)).await.ok();
+            context.send_message(Focus::RemoveClaim(mouse_program)).await.unwrap();
         }.boxed());
 
     binding_program(input, context, position_size, action).await;
