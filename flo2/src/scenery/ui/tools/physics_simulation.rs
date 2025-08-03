@@ -282,7 +282,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                                     // Action for setting the position depends on the type of the object
                                     // TODO: dynamic objects need to be 'pushed' into their intended position
                                     match rigid_body_type.get(&object_id) {
-                                        None                                    |
+                                        None                             |
                                         Some(SimObjectType::Static)      => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
                                         Some(SimObjectType::Dynamic)     => { }
                                         Some(SimObjectType::Kinematic)   => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); rigid_body.wake_up(false); }
