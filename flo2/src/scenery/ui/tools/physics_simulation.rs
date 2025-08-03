@@ -62,6 +62,9 @@ pub enum PhysicsSimulation {
     /// Sets a property associated with a rigit body
     Set(SimulationObjectId, Vec<PhysicsRigidBodyProperty>),
 
+    /// Sets one or more global properties for the simulation
+    SetGlobal(Vec<SimulationGlobalProperty>),
+
     /// Specifies a binding that will update when a simulated object moves
     BindPosition(SimulationObjectId, Binding<UiPoint>),
 
@@ -85,6 +88,14 @@ pub enum PhysicsRigidBodyProperty {
     AngularVelocity(f64),
     Shape(SimulationShape),
     Type(SimulationObjectType),
+}
+
+///
+/// The properties that apply to the simulation as a whole
+///
+pub enum SimulationGlobalProperty {
+    /// Sets the simulation gravity
+    Gravity(UiPoint),
 }
 
 ///
@@ -162,7 +173,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     let mut new_objects                 = HashSet::new();
 
     // Create the rapier2d state
-    let gravity                 = vector![0.0, -9.81];
+    let mut gravity             = vector![0.0, 9.81];
     let mut rigid_body_set      = RigidBodySet::new();
     let mut collider_set        = ColliderSet::new();
     let integration_parameters  = IntegrationParameters::default();
@@ -289,6 +300,16 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                         .await
                         .unwrap();
                     timer_awake = true;
+                }
+            }
+
+            SetGlobal(properties) => {
+                for property in properties {
+                    match property {
+                        SimulationGlobalProperty::Gravity(UiPoint(x, y)) => {
+                            gravity = vector![x as _, y as _];
+                        }
+                    }
                 }
             }
 

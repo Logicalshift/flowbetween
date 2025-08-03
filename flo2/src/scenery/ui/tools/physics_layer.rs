@@ -110,6 +110,11 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     let mut focus_requests      = context.send::<Focus>(()).unwrap();
     let mut physics_requests    = context.send::<PhysicsSimulation>(physics_program_id).unwrap();
 
+    // Set up the simulation
+    physics_requests.send(PhysicsSimulation::SetGlobal(vec![
+        SimulationGlobalProperty::Gravity(UiPoint(0.0, 0.0)),
+    ])).await.ok();
+
     // Drawing settings
     let render_state = PhysicsLayerRenderState {
         blob_land:          BlobLand::empty(),
