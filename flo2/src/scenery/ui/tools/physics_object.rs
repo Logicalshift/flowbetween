@@ -101,6 +101,14 @@ impl PhysicsObjectProperties {
     }
 
     ///
+    /// If the object is being dragged, the position that it's currently dragged to
+    ///
+    #[inline]
+    pub fn drag_position(&self) -> Option<UiPoint> {
+        self.drag_position.get()
+    }
+
+    ///
     /// Draws the object with these properties at the specified position
     ///
     pub fn draw(&self, drawing: &mut impl GraphicsContext, blob_land: &mut BlobLand) {
@@ -349,7 +357,7 @@ impl PhysicsObject {
     ///
     pub fn update_in_simulation<'a>(&self, bounds: (f64, f64), requests: &'a mut OutputSink<PhysicsSimulation>) -> BoxFuture<'a, ()> {
         let physics_id      = self.physics_id;
-        let position        = self.position(bounds);
+        let position        = if let Some(drag_position) = self.properties.drag_position() { Some(drag_position) } else { self.position(bounds) };
         let tool_size       = self.tool.size();
         let being_dragged   = self.being_dragged;
 
