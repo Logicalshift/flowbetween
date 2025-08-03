@@ -265,12 +265,8 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                                 }
 
                                 if let Some(rigid_body_handle) = rigid_body_id_for_object_id.get(&object_id) {
-                                    let rigid_body  = rigid_body_set.get(*rigid_body_handle).unwrap();
-                                    let position    = rigid_body.position().translation;
-
                                     // Create a ball collider
                                     let collider = ColliderBuilder::ball(radius as _)
-                                        .translation(position.vector)
                                         .build();
 
                                     let collider_id = collider_set.insert_with_parent(collider, *rigid_body_handle, &mut rigid_body_set);
