@@ -415,8 +415,7 @@ impl PhysicsLayerState {
     /// Starts dragging a tool
     ///
     pub async fn start_drag(&mut self, tool_id: PhysicsToolId, x: f64, y: f64) {
-        let bounds = self.bounds;
-        self.object_action(tool_id, move |object, _| object.start_drag(x, y, bounds));
+        self.object_action(tool_id, move |object, _| object.start_drag(x, y));
         self.update_tool_in_simulation(tool_id).await;
     }
 

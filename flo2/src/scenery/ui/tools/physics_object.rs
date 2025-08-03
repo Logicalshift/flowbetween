@@ -367,7 +367,7 @@ impl PhysicsObject {
     ///
     /// Starts a drag operation on this object
     ///
-    pub fn start_drag(&mut self, x: f64, y: f64, bounds: (f64, f64)) {
+    pub fn start_drag(&mut self, x: f64, y: f64) {
         self.being_dragged = true;
 
         // Anchor at the position the tool was in originally
