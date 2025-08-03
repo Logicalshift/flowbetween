@@ -173,6 +173,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     let mut collider_id_for_object_id   = HashMap::new();
     let mut rigid_body_type             = HashMap::new();
     let mut new_objects                 = HashSet::new();
+    let mut spring_joints               = HashMap::new();
 
     // Create the rapier2d state
     let mut gravity             = vector![0.0, 9.81];
@@ -284,9 +285,24 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                                     match rigid_body_type.get(&object_id) {
                                         None                             |
                                         Some(SimObjectType::Static)      => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
-                                        Some(SimObjectType::Dynamic)     => { }
                                         Some(SimObjectType::Kinematic)   => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); rigid_body.wake_up(false); }
+
+                                        Some(SimObjectType::Dynamic)     => { }
                                     }
+                                }
+
+                                // Create an anchor for this point
+                                let anchor          = RigidBodyBuilder::fixed().position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)).build();
+                                let anchor_handle   = rigid_body_set.insert(anchor);
+
+                                // Create a spring to attach to the anchor
+                                let spring          = SpringJointBuilder::new(0.0, 100.0, 10.0).spring_model(MotorModel::AccelerationBased).contacts_enabled(false).build();
+                                let spring_handle   = impulse_joint_set.insert(anchor_handle, *handle, spring, true);
+
+                                // Store in the joints hashmap
+                                if let Some((old_anchor, old_spring)) = spring_joints.insert(object_id, (anchor_handle, spring_handle)) {
+                                    impulse_joint_set.remove(old_spring, true);
+                                    rigid_body_set.remove(old_anchor, &mut island_manager, &mut collider_set, &mut impulse_joint_set, &mut multibody_joint_set, true);
                                 }
                             }
                         }
