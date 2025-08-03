@@ -372,7 +372,7 @@ impl PhysicsObject {
 
         // Anchor at the position the tool was in originally
         self.drag_anchor = UiPoint(x, y);
-        self.properties.drag_position.set(self.position(bounds));
+        self.properties.drag_position.set(Some(self.properties.position()));
     }
 
     ///
