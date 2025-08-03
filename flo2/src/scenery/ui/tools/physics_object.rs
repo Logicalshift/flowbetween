@@ -36,7 +36,7 @@ pub struct PhysicsObject {
     subprogram_id: SubProgramId,
 
     /// The ID of this object within the physics simulation
-    physics_id: SimulationObjectId,
+    physics_id: SimObjectId,
 
     /// Where events for this tool should be sent
     event_target: StreamTarget,
@@ -188,7 +188,7 @@ impl PhysicsObject {
             tool:               tool,
             properties:         Arc::new(PhysicsObjectProperties::new()),
             subprogram_id:      SubProgramId::new(),
-            physics_id:         SimulationObjectId::new(),
+            physics_id:         SimObjectId::new(),
             event_target:       event_target,
             sprite_tracker:     None,
             position:           bind(ToolPosition::Hidden),
@@ -345,9 +345,9 @@ impl PhysicsObject {
 
             // Set the initial position and shape of the object
             requests.send(PhysicsSimulation::Set(physics_id, vec![
-                PhysicsRigidBodyProperty::Position(position.unwrap_or(UiPoint(0.0, 0.0))),
-                PhysicsRigidBodyProperty::Type(SimulationObjectType::Dynamic),
-                PhysicsRigidBodyProperty::Shape(SimulationShape::Circle(tool_size.0))
+                SimBodyProperty::Position(position.unwrap_or(UiPoint(0.0, 0.0))),
+                SimBodyProperty::Type(SimObjectType::Dynamic),
+                SimBodyProperty::Shape(SimShape::Circle(tool_size.0))
             ])).await.ok();
         }
     }
@@ -362,12 +362,12 @@ impl PhysicsObject {
         let being_dragged   = self.being_dragged;
 
         async move {
-            let object_type = if being_dragged { SimulationObjectType::Kinematic } else { SimulationObjectType::Dynamic };
+            let object_type = if being_dragged { SimObjectType::Kinematic } else { SimObjectType::Dynamic };
 
             requests.send(PhysicsSimulation::Set(physics_id, vec![
-                PhysicsRigidBodyProperty::Type(object_type),
-                PhysicsRigidBodyProperty::Position(position.unwrap_or(UiPoint(0.0, 0.0))),
-                PhysicsRigidBodyProperty::Shape(SimulationShape::Circle(tool_size.0))
+                SimBodyProperty::Type(object_type),
+                SimBodyProperty::Position(position.unwrap_or(UiPoint(0.0, 0.0))),
+                SimBodyProperty::Shape(SimShape::Circle(tool_size.0))
             ])).await.ok();
         }.boxed()
     }

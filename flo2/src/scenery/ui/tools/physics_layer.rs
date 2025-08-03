@@ -112,7 +112,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
 
     // Set up the simulation
     physics_requests.send(PhysicsSimulation::SetGlobal(vec![
-        SimulationGlobalProperty::Gravity(UiPoint(0.0, 0.0)),
+        SimGlobalProperty::Gravity(UiPoint(0.0, 0.0)),
     ])).await.ok();
 
     // Drawing settings

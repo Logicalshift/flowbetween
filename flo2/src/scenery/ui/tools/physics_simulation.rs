@@ -33,14 +33,14 @@ const MAX_TICKS: usize = 30;
 /// Identifier used to specify a physics tool within the flowbetween app
 ///
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct SimulationObjectId(Uuid);
+pub struct SimObjectId(Uuid);
 
-impl SimulationObjectId {
+impl SimObjectId {
     ///
     /// Creates a unique new physics tool ID
     ///
     pub fn new() -> Self {
-        SimulationObjectId(Uuid::new_v4())
+        SimObjectId(Uuid::new_v4())
     }
 }
 
@@ -54,46 +54,46 @@ pub enum PhysicsSimulation {
     Tick(Duration),
 
     /// Creates a new rigid body in this simulation
-    CreateRigidBody(SimulationObjectId),
+    CreateRigidBody(SimObjectId),
 
-    /// Removes a rigit body from this simulation
-    RemoveRigidBody(SimulationObjectId),
+    /// Removes a rigid body from this simulation
+    RemoveRigidBody(SimObjectId),
 
-    /// Sets a property associated with a rigit body
-    Set(SimulationObjectId, Vec<PhysicsRigidBodyProperty>),
+    /// Sets a property associated with a rigid body
+    Set(SimObjectId, Vec<SimBodyProperty>),
 
     /// Sets one or more global properties for the simulation
-    SetGlobal(Vec<SimulationGlobalProperty>),
+    SetGlobal(Vec<SimGlobalProperty>),
 
     /// Specifies a binding that will update when a simulated object moves
-    BindPosition(SimulationObjectId, Binding<UiPoint>),
+    BindPosition(SimObjectId, Binding<UiPoint>),
 
     /// Specifies a binding that will be updated when the angle of an object changes
-    BindAngle(SimulationObjectId, Binding<f64>),
+    BindAngle(SimObjectId, Binding<f64>),
 
     /// Specifies a binding that will update when the velocity of an object changes
-    BindVelocity(SimulationObjectId, Binding<UiPoint>),
+    BindVelocity(SimObjectId, Binding<UiPoint>),
 
     /// Specifies a binding that will update when the angular velocity of an object changes
-    BindAngularVelocity(SimulationObjectId, Binding<f64>),
+    BindAngularVelocity(SimObjectId, Binding<f64>),
 }
 
 ///
-/// The properties that can be assigned to a rigit body
+/// The properties that can be assigned to a rigid body
 ///
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum PhysicsRigidBodyProperty {
+pub enum SimBodyProperty {
     Position(UiPoint),
     Velocity(UiPoint),
     AngularVelocity(f64),
-    Shape(SimulationShape),
-    Type(SimulationObjectType),
+    Shape(SimShape),
+    Type(SimObjectType),
 }
 
 ///
 /// The properties that apply to the simulation as a whole
 ///
-pub enum SimulationGlobalProperty {
+pub enum SimGlobalProperty {
     /// Sets the simulation gravity
     Gravity(UiPoint),
 }
@@ -102,7 +102,7 @@ pub enum SimulationGlobalProperty {
 /// Shapes permitted by a simulation object
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SimulationShape {
+pub enum SimShape {
     /// The object has no collision
     None,
 
@@ -114,7 +114,7 @@ pub enum SimulationShape {
 /// Shapes permitted by a simulation object
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SimulationObjectType {
+pub enum SimObjectType {
     /// Object that does not move
     Static,
 
@@ -129,7 +129,7 @@ pub enum SimulationObjectType {
 /// Physics simualations can generate a few events
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum PhysicsSimulationEvent {
+pub enum PhysicsSimEvent {
     /// The simulation has reached a steady state and doesn't need to be woken again
     Sleep,
 
@@ -154,7 +154,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     // Connect messages
     let mut timer_awake     = false;
     let mut timer_program   = if manage_timer { context.send::<TimerRequest>(()).ok() } else { None };
-    let mut physics_events  = context.send::<PhysicsSimulationEvent>(()).unwrap();
+    let mut physics_events  = context.send::<PhysicsSimEvent>(()).unwrap();
 
     // If we're managing our own timer, then request ticks from the timer program
     if manage_timer {
@@ -210,7 +210,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 // Store the handle and type for this object
                 object_id_for_rigid_body_id.insert(handle, object_id);
                 rigid_body_id_for_object_id.insert(object_id, handle);
-                rigid_body_type.insert(object_id, SimulationObjectType::Kinematic);
+                rigid_body_type.insert(object_id, SimObjectType::Kinematic);
                 new_objects.insert(object_id);
             },
 
@@ -235,18 +235,18 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 // Fetch the object that the property is for
                 if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
                     // Set this property
-                    use PhysicsRigidBodyProperty::*;
+                    use SimBodyProperty::*;
                     for property in properties.into_iter() {
                         let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
 
                         match property {
                             Velocity(velocity)                      => { rigid_body.set_linvel(vector![velocity.x() as _, velocity.y() as _], true); }
                             AngularVelocity(velocity)               => { rigid_body.set_angvel(velocity as _, true); }
-                            Type(SimulationObjectType::Static)      => { rigid_body.set_body_type(RigidBodyType::Fixed, true); rigid_body_type.insert(object_id, SimulationObjectType::Static); }
-                            Type(SimulationObjectType::Dynamic)     => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); rigid_body_type.insert(object_id, SimulationObjectType::Dynamic); }
-                            Type(SimulationObjectType::Kinematic)   => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); rigid_body_type.insert(object_id, SimulationObjectType::Kinematic); }
+                            Type(SimObjectType::Static)      => { rigid_body.set_body_type(RigidBodyType::Fixed, true); rigid_body_type.insert(object_id, SimObjectType::Static); }
+                            Type(SimObjectType::Dynamic)     => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); rigid_body_type.insert(object_id, SimObjectType::Dynamic); }
+                            Type(SimObjectType::Kinematic)   => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); rigid_body_type.insert(object_id, SimObjectType::Kinematic); }
 
-                            Shape(SimulationShape::None)            => {
+                            Shape(SimShape::None)            => {
                                 if let Some(collider_id) = collider_id_for_object_id.get(&object_id) {
                                     collider_set.remove(*collider_id, &mut island_manager, &mut rigid_body_set, true);
                                 }
@@ -254,7 +254,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                                 collider_id_for_object_id.remove(&object_id);
                             },
 
-                            Shape(SimulationShape::Circle(radius)) => {
+                            Shape(SimShape::Circle(radius)) => {
                                 // Remove any existing colliders
                                 if let Some(collider_id) = collider_id_for_object_id.get(&object_id) {
                                     collider_set.remove(*collider_id, &mut island_manager, &mut rigid_body_set, true);
@@ -283,9 +283,9 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                                     // TODO: dynamic objects need to be 'pushed' into their intended position
                                     match rigid_body_type.get(&object_id) {
                                         None                                    |
-                                        Some(SimulationObjectType::Static)      => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
-                                        Some(SimulationObjectType::Dynamic)     => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
-                                        Some(SimulationObjectType::Kinematic)   => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); rigid_body.wake_up(false); }
+                                        Some(SimObjectType::Static)      => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
+                                        Some(SimObjectType::Dynamic)     => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
+                                        Some(SimObjectType::Kinematic)   => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); rigid_body.wake_up(false); }
                                     }
                                 }
                             }
@@ -306,7 +306,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
             SetGlobal(properties) => {
                 for property in properties {
                     match property {
-                        SimulationGlobalProperty::Gravity(UiPoint(x, y)) => {
+                        SimGlobalProperty::Gravity(UiPoint(x, y)) => {
                             gravity = vector![x as _, y as _];
                         }
                     }
@@ -405,12 +405,12 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 }
 
                 // Send the 'step' event
-                physics_events.send(PhysicsSimulationEvent::Step).await.ok();
+                physics_events.send(PhysicsSimEvent::Step).await.ok();
 
                 // Go to sleep if no rigid bodies are awake
                 if !some_awake {
                     // Indicate that everything is asleep (can stop generating physics events)
-                    physics_events.send(PhysicsSimulationEvent::Sleep).await.ok();
+                    physics_events.send(PhysicsSimEvent::Sleep).await.ok();
 
                     // If we're managing our own timer, then put that to sleep (note that there can be extra ticks waiting to be delivered if we're behind)
                     if manage_timer && timer_awake {
@@ -431,7 +431,7 @@ impl SceneMessage for PhysicsSimulation {
     fn serializable() -> bool { false }
 
     fn initialise(init_context: &impl SceneInitialisationContext) {
-        init_context.connect_programs((), StreamTarget::None, StreamId::with_message_type::<PhysicsSimulationEvent>()).unwrap();
+        init_context.connect_programs((), StreamTarget::None, StreamId::with_message_type::<PhysicsSimEvent>()).unwrap();
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|timeout_events| {
             let start_time = Instant::now();
 
@@ -443,7 +443,7 @@ impl SceneMessage for PhysicsSimulation {
     }
 }
 
-impl SceneMessage for PhysicsSimulationEvent {
+impl SceneMessage for PhysicsSimEvent {
 
 }
 
