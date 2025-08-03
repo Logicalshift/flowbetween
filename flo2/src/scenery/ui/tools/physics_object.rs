@@ -347,6 +347,8 @@ impl PhysicsObject {
             requests.send(PhysicsSimulation::Set(physics_id, vec![
                 SimBodyProperty::Position(position.unwrap_or(UiPoint(0.0, 0.0))),
                 SimBodyProperty::Type(SimObjectType::Dynamic),
+                SimBodyProperty::LinearDamping(10.0),
+                SimBodyProperty::AngularDamping(5.0),
                 SimBodyProperty::Shape(SimShape::Circle(tool_size.0))
             ])).await.ok();
         }
@@ -367,6 +369,8 @@ impl PhysicsObject {
             requests.send(PhysicsSimulation::Set(physics_id, vec![
                 SimBodyProperty::Type(object_type),
                 SimBodyProperty::Position(position.unwrap_or(UiPoint(0.0, 0.0))),
+                SimBodyProperty::LinearDamping(10.0),
+                SimBodyProperty::AngularDamping(5.0),
                 SimBodyProperty::Shape(SimShape::Circle(tool_size.0))
             ])).await.ok();
         }.boxed()

@@ -86,6 +86,8 @@ pub enum SimBodyProperty {
     Position(UiPoint),
     Velocity(UiPoint),
     AngularVelocity(f64),
+    LinearDamping(f64),
+    AngularDamping(f64),
     Shape(SimShape),
     Type(SimObjectType),
 }
@@ -240,13 +242,15 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                         let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
 
                         match property {
-                            Velocity(velocity)                      => { rigid_body.set_linvel(vector![velocity.x() as _, velocity.y() as _], true); }
-                            AngularVelocity(velocity)               => { rigid_body.set_angvel(velocity as _, true); }
-                            Type(SimObjectType::Static)      => { rigid_body.set_body_type(RigidBodyType::Fixed, true); rigid_body_type.insert(object_id, SimObjectType::Static); }
-                            Type(SimObjectType::Dynamic)     => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); rigid_body_type.insert(object_id, SimObjectType::Dynamic); }
-                            Type(SimObjectType::Kinematic)   => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); rigid_body_type.insert(object_id, SimObjectType::Kinematic); }
+                            Velocity(velocity)              => { rigid_body.set_linvel(vector![velocity.x() as _, velocity.y() as _], true); }
+                            AngularVelocity(velocity)       => { rigid_body.set_angvel(velocity as _, true); }
+                            LinearDamping(damping)          => { rigid_body.set_linear_damping(damping as _); }
+                            AngularDamping(damping)         => { rigid_body.set_angular_damping(damping as _); }
+                            Type(SimObjectType::Static)     => { rigid_body.set_body_type(RigidBodyType::Fixed, true); rigid_body_type.insert(object_id, SimObjectType::Static); }
+                            Type(SimObjectType::Dynamic)    => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); rigid_body_type.insert(object_id, SimObjectType::Dynamic); }
+                            Type(SimObjectType::Kinematic)  => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); rigid_body_type.insert(object_id, SimObjectType::Kinematic); }
 
-                            Shape(SimShape::None)            => {
+                            Shape(SimShape::None) => {
                                 if let Some(collider_id) = collider_id_for_object_id.get(&object_id) {
                                     collider_set.remove(*collider_id, &mut island_manager, &mut rigid_body_set, true);
                                 }
