@@ -106,6 +106,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     )).await.unwrap();
 
     // Connect to the events
+    let mut drawing_requests    = context.send::<DrawingRequest>(()).unwrap();
     let mut focus_requests      = context.send::<Focus>(()).unwrap();
     let mut physics_requests    = context.send::<PhysicsSimulation>(physics_program_id).unwrap();
 
@@ -195,6 +196,10 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
                 // Add to the rendering instructions for this pass
                 drawing.extend(object.draw_sprite(sprite_id, &context));
             }
+        }
+
+        if !drawing.is_empty() {
+            drawing_requests.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
         }
     }
 
