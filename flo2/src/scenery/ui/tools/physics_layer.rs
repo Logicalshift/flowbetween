@@ -165,7 +165,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
             use PhysicsLayer::*;
             match request {
                 // Tool requests
-                AddTool(new_tool, program_id)   => { let tool_id = new_tool.id(); state.add_tool(new_tool, program_id.into(), &context).await; },
+                AddTool(new_tool, program_id)   => { state.add_tool(new_tool, program_id.into(), &context).await; },
                 DockTool(tool_id)               => { state.dock_tool(tool_id); }
                 DockProperties(tool_id)         => { state.dock_properties(tool_id); }
                 Float(tool_id, position)        => { state.float(tool_id, position).await; }
