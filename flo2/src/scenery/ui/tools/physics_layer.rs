@@ -106,7 +106,6 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     )).await.unwrap();
 
     // Connect to the events
-    let mut drawing_requests    = context.send::<DrawingRequest>(()).unwrap();
     let mut focus_requests      = context.send::<Focus>(()).unwrap();
     let mut physics_requests    = context.send::<PhysicsSimulation>(physics_program_id).unwrap();
 
