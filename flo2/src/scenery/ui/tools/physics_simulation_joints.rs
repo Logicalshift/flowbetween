@@ -1,5 +1,6 @@
 use crate::scenery::ui::ui_path::*;
 
+use rapier2d::prelude::*;
 use uuid::*;
 use ::serde::*;
 
@@ -55,4 +56,17 @@ pub enum SimJointProperty {
 
     /// Offset from the center where the joint connects with the object
     LocalAnchor(SimJointSide, UiPoint),
+}
+
+impl SimJoint {
+    ///
+    /// Creates this joint
+    ///
+    pub fn create(&self) -> GenericJoint {
+        match self {
+            SimJoint::FixedJoint                                        => FixedJoint::new().into(),
+            SimJoint::SpringJoint { rest_length, stiffness, damping }   => SpringJointBuilder::new(*rest_length as _, *stiffness as _, *damping as _).spring_model(MotorModel::AccelerationBased).build().into(),
+            SimJoint::RopeJoint { max_dist }                            => RopeJointBuilder::new(*max_dist as _).motor_model(MotorModel::AccelerationBased).build().into()
+        }
+    }
 }

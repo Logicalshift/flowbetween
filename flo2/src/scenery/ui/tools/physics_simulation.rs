@@ -6,6 +6,7 @@
 //! like a rendering algorithm to show where the objects are)
 //!
 
+use super::physics_simulation_joints::*;
 use crate::scenery::ui::ui_path::*;
 
 use flo_binding::*;
@@ -76,6 +77,15 @@ pub enum PhysicsSimulation {
 
     /// Specifies a binding that will update when the angular velocity of an object changes
     BindAngularVelocity(SimObjectId, Binding<f64>),
+
+    /// Adds a new joint connecting two objects
+    AddJoint(SimJointId, SimObjectId, SimObjectId, SimJoint),
+
+    /// Updates the properties of a joint
+    SetJoint(SimJointId, Vec<SimJointProperty>),
+
+    /// Removes a joint (joints are also removed if either of the objects they connect are removed)
+    RemoveJoint(SimJointId),
 }
 
 ///
@@ -174,6 +184,8 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     let mut rigid_body_type             = HashMap::new();
     let mut new_objects                 = HashSet::new();
     let mut spring_joints               = HashMap::new();
+    let mut joints                      = HashMap::new();
+    let mut object_joints               = HashMap::new();
 
     // Create the rapier2d state
     let mut gravity             = vector![0.0, 9.81];
@@ -327,6 +339,56 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                         }
                     }
                 }
+            }
+
+            AddJoint(joint_id, object_1, object_2, joint) => {
+                if let (Some(object_1), Some(object_2)) = (rigid_body_id_for_object_id.get(&object_1).cloned(), rigid_body_id_for_object_id.get(&object_2).cloned()) {
+                    // Create the joint
+                    let joint = joint.create();
+
+                    // Add to the set of joints
+                    let joint_handle = impulse_joint_set.insert(object_1, object_2, joint, true);
+                    joints.insert(joint_id, joint_handle);
+
+                    // Also associate with the object, so we can remove it later on if the object is removed
+                    object_joints.entry(object_1).or_insert_with(|| vec![]).push(joint_id);
+                    object_joints.entry(object_2).or_insert_with(|| vec![]).push(joint_id);
+                }
+
+                // Wake up the timer again whenever a joint is added
+                if manage_timer && !timer_awake {
+                    timer_program.as_mut().unwrap()
+                        .send(TimerRequest::CallEvery(our_program_id, 0, Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _)))
+                        .await
+                        .unwrap();
+                    timer_awake = true;
+                }
+            }
+
+            SetJoint(joint_id, joint_properties) => { 
+                if let Some(joint_handle) = joints.get(&joint_id).copied() {
+                    let joint = impulse_joint_set.get_mut(joint_handle, true).unwrap();
+
+                    for property in joint_properties {
+                        match property {
+                            SimJointProperty::ContactsEnabled(val)                      => { joint.data.contacts_enabled = val; }
+                            SimJointProperty::LocalAnchor(SimJointSide::First, offset)  => { joint.data.local_frame1 = Isometry::translation(offset.x() as _, offset.y() as _)}
+                            SimJointProperty::LocalAnchor(SimJointSide::Second, offset) => { joint.data.local_frame2 = Isometry::translation(offset.x() as _, offset.y() as _)}
+                        }
+                    }
+                }
+
+                // Wake up the timer again whenever a joint's properties are changed
+                if manage_timer && !timer_awake {
+                    timer_program.as_mut().unwrap()
+                        .send(TimerRequest::CallEvery(our_program_id, 0, Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _)))
+                        .await
+                        .unwrap();
+                    timer_awake = true;
+                }
+            }
+
+            RemoveJoint(joint_id) => {
             }
 
             BindPosition(object_id, binding)        => { if rigid_body_id_for_object_id.contains_key(&object_id) { position_bindings.insert(object_id, binding); } },
