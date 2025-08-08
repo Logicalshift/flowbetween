@@ -229,23 +229,6 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 new_objects.insert(object_id);
             },
 
-            RemoveRigidBody(object_id) => {
-                if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
-                    rigid_body_set.remove(*handle, &mut island_manager, &mut collider_set, &mut impulse_joint_set, &mut multibody_joint_set, true);
-
-                    object_id_for_rigid_body_id.remove(handle);
-                    rigid_body_id_for_object_id.remove(&object_id);
-                    collider_id_for_object_id.remove(&object_id);
-                    rigid_body_type.remove(&object_id);
-
-                    position_bindings.remove(&object_id);
-                    angle_bindings.remove(&object_id);
-                    velocity_bindings.remove(&object_id);
-                    angular_velocity_bindings.remove(&object_id);
-                    new_objects.remove(&object_id);
-                }
-            }
-
             Set(object_id, properties) => {
                 // Fetch the object that the property is for
                 if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
@@ -411,6 +394,48 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                         .await
                         .unwrap();
                     timer_awake = true;
+                }
+            }
+
+            RemoveRigidBody(object_id) => {
+                if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
+                    // Remove from the simulation
+                    rigid_body_set.remove(*handle, &mut island_manager, &mut collider_set, &mut impulse_joint_set, &mut multibody_joint_set, true);
+
+                    // Remove the joints attached to this object
+                    if let Some(joints_for_object) = object_joints.get(handle).cloned() {
+                        for joint_id in joints_for_object.iter().copied() {
+                            if let Some(joint_handle) = joints.get(&joint_id).copied() {
+                                let joint = impulse_joint_set.get(joint_handle).unwrap();
+
+                                // Remove the structures
+                                let object_1_joints = object_joints.get_mut(&joint.body1);
+                                if let Some(object_1_joints) = object_1_joints { object_1_joints.retain(|candidate| candidate != &joint_id); }
+
+                                let object_2_joints = object_joints.get_mut(&joint.body2);
+                                if let Some(object_2_joints) = object_2_joints { object_2_joints.retain(|candidate| candidate != &joint_id); }
+
+                                // Finished with the joint
+                                joints.remove(&joint_id);
+                                impulse_joint_set.remove(joint_handle, true);
+                            }
+                        }
+                    }
+
+                    // TODO: Remove the spring binding this object to its position
+
+                    // Remove the IDs and references to this object
+                    object_id_for_rigid_body_id.remove(handle);
+                    rigid_body_id_for_object_id.remove(&object_id);
+                    collider_id_for_object_id.remove(&object_id);
+                    rigid_body_type.remove(&object_id);
+                    new_objects.remove(&object_id);
+
+                    // Remove the bindings
+                    position_bindings.remove(&object_id);
+                    angle_bindings.remove(&object_id);
+                    velocity_bindings.remove(&object_id);
+                    angular_velocity_bindings.remove(&object_id);
                 }
             }
 
