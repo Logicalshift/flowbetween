@@ -389,6 +389,29 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
             }
 
             RemoveJoint(joint_id) => {
+                if let Some(joint_handle) = joints.get(&joint_id).copied() {
+                    let joint = impulse_joint_set.get(joint_handle).unwrap();
+
+                    // Remove the structures
+                    let object_1_joints = object_joints.get_mut(&joint.body1);
+                    if let Some(object_1_joints) = object_1_joints { object_1_joints.retain(|candidate| candidate != &joint_id); }
+
+                    let object_2_joints = object_joints.get_mut(&joint.body2);
+                    if let Some(object_2_joints) = object_2_joints { object_2_joints.retain(|candidate| candidate != &joint_id); }
+
+                    // Finished with the joint
+                    joints.remove(&joint_id);
+                    impulse_joint_set.remove(joint_handle, true);
+                }
+
+                // Wake up the timer again whenever a joint is deleted
+                if manage_timer && !timer_awake {
+                    timer_program.as_mut().unwrap()
+                        .send(TimerRequest::CallEvery(our_program_id, 0, Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _)))
+                        .await
+                        .unwrap();
+                    timer_awake = true;
+                }
             }
 
             BindPosition(object_id, binding)        => { if rigid_body_id_for_object_id.contains_key(&object_id) { position_bindings.insert(object_id, binding); } },
