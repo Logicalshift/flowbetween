@@ -349,6 +349,7 @@ impl PhysicsObject {
                 SimBodyProperty::Type(SimObjectType::Dynamic),
                 SimBodyProperty::LinearDamping(10.0),
                 SimBodyProperty::AngularDamping(5.0),
+                SimBodyProperty::LockRotation(true),
                 SimBodyProperty::Shape(SimShape::Circle(tool_size.0))
             ])).await.ok();
         }
