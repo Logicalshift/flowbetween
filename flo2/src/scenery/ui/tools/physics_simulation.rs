@@ -98,6 +98,7 @@ pub enum SimBodyProperty {
     AngularVelocity(f64),
     LinearDamping(f64),
     AngularDamping(f64),
+    LockRotation(bool),
     Shape(SimShape),
     Type(SimObjectType),
 }
@@ -242,6 +243,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                             AngularVelocity(velocity)       => { rigid_body.set_angvel(velocity as _, true); }
                             LinearDamping(damping)          => { rigid_body.set_linear_damping(damping as _); }
                             AngularDamping(damping)         => { rigid_body.set_angular_damping(damping as _); }
+                            LockRotation(is_locked)         => { rigid_body.lock_rotations(is_locked, true); }
                             Type(SimObjectType::Static)     => { rigid_body.set_body_type(RigidBodyType::Fixed, true); rigid_body_type.insert(object_id, SimObjectType::Static); }
                             Type(SimObjectType::Dynamic)    => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); rigid_body_type.insert(object_id, SimObjectType::Dynamic); }
                             Type(SimObjectType::Kinematic)  => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); rigid_body_type.insert(object_id, SimObjectType::Kinematic); }
