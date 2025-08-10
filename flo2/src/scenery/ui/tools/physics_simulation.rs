@@ -459,9 +459,13 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                     }
 
                     if let Some(impulse) = object.impulse.as_ref().map(|impulse| impulse.get()) {
-                        let Some(body) = rigid_body_set.get_mut(object.rigid_body_handle) else { continue; };
-                        body.add_force(vector![impulse.x() as _, impulse.y() as _], true);
+                        let body = rigid_body_set.get_mut(object.rigid_body_handle);
+                        if let Some(body) = body {
+                            body.add_force(vector![impulse.x() as _, impulse.y() as _], true);
+                        }
                     }
+
+                    object.when_changed(NotifySubprogram::send(UpdateObject(changed_object_id), &context, our_program_id));
                 }
 
                 // There are no more new objects
