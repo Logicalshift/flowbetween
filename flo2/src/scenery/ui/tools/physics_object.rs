@@ -346,8 +346,8 @@ impl PhysicsObject {
 
             // Set the initial position and shape of the object
             requests.send(PhysicsSimulation::Set(physics_id, vec![
-                SimBodyProperty::Type(SimObjectType::Dynamic),
                 SimBodyProperty::Position(Some(bind(position.unwrap_or(UiPoint(0.0, 0.0))).into())),
+                SimBodyProperty::Type(SimObjectType::Dynamic),
                 SimBodyProperty::LinearDamping(10.0),
                 SimBodyProperty::AngularDamping(5.0),
                 SimBodyProperty::LockRotation(true),
