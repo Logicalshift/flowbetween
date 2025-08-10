@@ -191,12 +191,6 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     let physics_hooks           = ();
     let event_handler           = ();
 
-    // Bindings for the objects (set based on the results of the simulation)
-    let mut position_bindings           = HashMap::new();
-    let mut angle_bindings              = HashMap::new();
-    let mut velocity_bindings           = HashMap::new();
-    let mut angular_velocity_bindings   = HashMap::new();
-
     // We track time from 0. Time doesn't pass while we're asleep
     let mut last_step_time  = Duration::default();
     let mut is_asleep       = true;
@@ -425,12 +419,6 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                     object_id_for_rigid_body_id.remove(&object.rigid_body_handle);
                     rigid_bodies.remove(&object_id);
 
-                    // Remove the bindings
-                    position_bindings.remove(&object_id);
-                    angle_bindings.remove(&object_id);
-                    velocity_bindings.remove(&object_id);
-                    angular_velocity_bindings.remove(&object_id);
-
                     // Tidy up the other side of the joints
                     for (rigid_body_handle, joint_id) in joints_to_remove {
                         let Some(object) = object_id_for_rigid_body_id.get(&rigid_body_handle).and_then(|object_id| rigid_bodies.get_mut(object_id)) else { continue; };
@@ -439,10 +427,10 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 }
             }
 
-            BindPosition(object_id, binding)        => { if rigid_bodies.contains_key(&object_id) { position_bindings.insert(object_id, binding); } },
-            BindAngle(object_id, binding)           => { if rigid_bodies.contains_key(&object_id) { angle_bindings.insert(object_id, binding); } },
-            BindVelocity(object_id, binding)        => { if rigid_bodies.contains_key(&object_id) { velocity_bindings.insert(object_id, binding); } },
-            BindAngularVelocity(object_id, binding) => { if rigid_bodies.contains_key(&object_id) { angular_velocity_bindings.insert(object_id, binding); } },
+            BindPosition(object_id, binding)        => { if let Some(object) = rigid_bodies.get_mut(&object_id) { object.state_bindings.position         = Some(binding); } },
+            BindAngle(object_id, binding)           => { if let Some(object) = rigid_bodies.get_mut(&object_id) { object.state_bindings.angle            = Some(binding); } },
+            BindVelocity(object_id, binding)        => { if let Some(object) = rigid_bodies.get_mut(&object_id) { object.state_bindings.velocity         = Some(binding); } },
+            BindAngularVelocity(object_id, binding) => { if let Some(object) = rigid_bodies.get_mut(&object_id) { object.state_bindings.angular_velocity = Some(binding); } },
 
             Tick(time) => {
                 let tick = Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _);
@@ -501,7 +489,8 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 let mut some_awake = false;
 
                 for (handle, body) in rigid_body_set.iter() {
-                    let object_id = if let Some(object_id) = object_id_for_rigid_body_id.get(&handle) { object_id } else { continue; };
+                    let Some(object_id) = object_id_for_rigid_body_id.get(&handle) else { continue; };
+                    let Some(object)    = rigid_bodies.get_mut(object_id) else { continue; };
 
                     // If any rigid bodies are awake, then the simulation should also be kept awake
                     if !body.is_sleeping() {
@@ -509,22 +498,22 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                     }
 
                     // Set any bindings relating to this object
-                    if let Some(position) = position_bindings.get(object_id) { 
+                    if let Some(position) = &object.state_bindings.position { 
                         let body_pos = body.position().translation;
                         position.set(UiPoint(body_pos.vector[0] as _, body_pos.vector[1] as _))
                     }
 
-                    if let Some(angle) = angle_bindings.get(object_id) {
+                    if let Some(angle) = &object.state_bindings.angle {
                         let body_angle = body.rotation().angle();
                         angle.set(body_angle as _);
                     }
 
-                    if let Some(velocity) = velocity_bindings.get(object_id) {
+                    if let Some(velocity) = &object.state_bindings.velocity {
                         let body_velocity = body.vels();
                         velocity.set(UiPoint(body_velocity.linvel[0] as _, body_velocity.linvel[1] as _));
                     }
 
-                    if let Some(angular_velocity) = angular_velocity_bindings.get(object_id) {
+                    if let Some(angular_velocity) = &object.state_bindings.angular_velocity {
                         let body_angular_velocity = body.vels().angvel;
                         angular_velocity.set(body_angular_velocity as _);
                     }
