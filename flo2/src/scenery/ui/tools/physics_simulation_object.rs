@@ -39,6 +39,19 @@ pub enum SimObjectType {
 }
 
 ///
+/// Bindings for a SimObject that specify its actual state within the simulation
+///
+/// Not to be confused with the bindings that are set externally and specify the object's desired state. These bindings
+/// are updated when the simulation runs to set the state of the object
+///
+pub (super) struct SimObjectStateBindings {
+    pub (super) position:         Option<Binding<UiPoint>>,
+    pub (super) angle:            Option<Binding<f64>>,
+    pub (super) velocity:         Option<Binding<UiPoint>>,
+    pub (super) angular_velocity: Option<Binding<f64>>,
+}
+
+///
 /// Data stored within the physics simulation for an object
 ///
 pub (super) struct SimObject {
@@ -65,6 +78,9 @@ pub (super) struct SimObject {
 
     /// The objects that this object will not collide with
     pub (super) collision_exclusions: Option<BindRef<Vec<SimObjectId>>>,
+
+    /// The state of this object within the simulation
+    pub (super) state_bindings: SimObjectStateBindings,
 }
 
 impl SimObject {
@@ -72,6 +88,13 @@ impl SimObject {
     /// Creates the standard kinematic position based object
     ///
     pub fn kinematic_position_based(object_id: SimObjectId, rigid_body_handle: RigidBodyHandle) -> Self {
+        let state_bindings = SimObjectStateBindings { 
+            position:           None, 
+            angle:              None, 
+            velocity:           None, 
+            angular_velocity:   None,
+        };
+
         Self {
             _object_id:             object_id,
             rigid_body_handle:      rigid_body_handle,
@@ -81,6 +104,7 @@ impl SimObject {
             joints:                 smallvec![],
             impulse:                None,
             collision_exclusions:   None,
+            state_bindings:         state_bindings,
         }
     }
 
