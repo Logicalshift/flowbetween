@@ -91,16 +91,37 @@ pub enum PhysicsSimulation {
 ///
 /// The properties that can be assigned to a rigid body
 ///
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone)]
 pub enum SimBodyProperty {
+    /// The position of the object. Kinematic objects can have their position set instantaneously, dynamic objects use a spring to bind them to this position, static object teleport
     Position(UiPoint),
+
+    /// The velocity of this object
     Velocity(UiPoint),
+
+    /// The angular velocity of this object
     AngularVelocity(f64),
+
+    /// How the linear velocity of this object is damped
     LinearDamping(f64),
+
+    /// How the angular damping of this object is damped
     AngularDamping(f64),
+
+    /// If true, the object is not permitted to rotate
     LockRotation(bool),
+
+    /// The shape of this object
     Shape(SimShape),
+
+    /// The type of this object (how it interacts with the world)
     Type(SimObjectType),
+
+    /// The impulse that is applied to this object (calculated every frame, wakes the simulation if updated)
+    Impulse(BindRef<UiPoint>),
+
+    /// The objects that this object will not collide with
+    IgnoreCollisions(BindRef<Vec<SimObjectId>>),
 }
 
 ///
@@ -301,6 +322,14 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                                     impulse_joint_set.remove(old_spring, true);
                                     rigid_body_set.remove(old_anchor, &mut island_manager, &mut collider_set, &mut impulse_joint_set, &mut multibody_joint_set, true);
                                 }
+                            }
+
+                            Impulse(impulse_binding) => {
+
+                            }
+
+                            IgnoreCollisions(collision_binding) => {
+                                
                             }
                         }
                     }
