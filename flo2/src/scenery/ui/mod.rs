@@ -31,6 +31,7 @@ pub use egui::*;
 pub use tools::physics_layer::*;
 pub use tools::physics_tool::*;
 pub use tools::physics_simulation::*;
+pub use tools::physics_simulation_object::*;
 pub use tools::physics_simulation_joints::*;
 pub use binding_tracker::*;
 pub use binding_program::*;

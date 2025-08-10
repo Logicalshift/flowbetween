@@ -41,7 +41,7 @@ pub enum SimObjectType {
 ///
 /// Data stored within the physics simulation for an object
 ///
-pub struct PhysicsSimulationObject {
+pub (super) struct SimObject {
     /// The object ID used to refer to this object outside of the simulation
     pub (super) object_id: SimObjectId,
 
@@ -52,7 +52,7 @@ pub struct PhysicsSimulationObject {
     pub (super) collider_handle: Option<ColliderHandle>,
 
     /// The type of rigid body that this object is being simulated as
-    pub (super) body_type: Option<SimObjectType>,    
+    pub (super) body_type: SimObjectType,
 
     /// The spring joint used to anchor this object to its preferred position
     pub (super) anchor_joint: Option<(RigidBodyHandle, ImpulseJointHandle)>,
@@ -67,6 +67,28 @@ pub struct PhysicsSimulationObject {
     pub (super) collision_exclusions: Option<BindRef<Vec<SimObjectId>>>,
 }
 
-impl PhysicsSimulationObject {
+impl SimObject {
+    ///
+    /// Creates the standard kinematic position based object
+    ///
+    pub fn kinematic_position_based(object_id: SimObjectId, rigid_body_handle: RigidBodyHandle) -> Self {
+        Self {
+            object_id:              object_id,
+            rigid_body_handle:      rigid_body_handle,
+            collider_handle:        None,
+            body_type:              SimObjectType::Kinematic,
+            anchor_joint:           None,
+            joints:                 smallvec![],
+            impulse:                None,
+            collision_exclusions:   None,
+        }
+    }
 
+    ///
+    /// Updates the body type of this object
+    ///
+    #[inline]
+    pub fn set_body_type(&mut self, new_type: SimObjectType) {
+        self.body_type = new_type;
+    }
 }

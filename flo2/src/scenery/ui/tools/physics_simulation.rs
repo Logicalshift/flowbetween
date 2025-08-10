@@ -170,14 +170,10 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     }
 
     // Our own state
+    let mut rigid_bodies                = HashMap::new();
     let mut object_id_for_rigid_body_id = HashMap::new();
-    let mut rigid_body_id_for_object_id = HashMap::new();
-    let mut collider_id_for_object_id   = HashMap::new();
-    let mut rigid_body_type             = HashMap::new();
     let mut new_objects                 = HashSet::new();
-    let mut spring_joints               = HashMap::new();
     let mut joints                      = HashMap::new();
-    let mut object_joints               = HashMap::new();
 
     // Create the rapier2d state
     let mut gravity             = vector![0.0, 9.81];
@@ -213,21 +209,21 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 // Create a kinematic body with no properties (everything is kinematic by default so the position can be set easily)
                 let rigid_body  = RigidBodyBuilder::kinematic_position_based().build();
                 let handle      = rigid_body_set.insert(rigid_body);
+                let object      = SimObject::kinematic_position_based(object_id, handle);
 
                 // Store the handle and type for this object
                 object_id_for_rigid_body_id.insert(handle, object_id);
-                rigid_body_id_for_object_id.insert(object_id, handle);
-                rigid_body_type.insert(object_id, SimObjectType::Kinematic);
+                rigid_bodies.insert(object_id, object);
                 new_objects.insert(object_id);
             },
 
             Set(object_id, properties) => {
                 // Fetch the object that the property is for
-                if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
+                if let Some(object) = rigid_bodies.get_mut(&object_id) {
                     // Set this property
                     use SimBodyProperty::*;
                     for property in properties.into_iter() {
-                        let rigid_body = rigid_body_set.get_mut(*handle).unwrap();
+                        let rigid_body = rigid_body_set.get_mut(object.rigid_body_handle).unwrap();
 
                         match property {
                             Velocity(velocity)              => { rigid_body.set_linvel(vector![velocity.x() as _, velocity.y() as _], true); }
@@ -235,32 +231,31 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                             LinearDamping(damping)          => { rigid_body.set_linear_damping(damping as _); }
                             AngularDamping(damping)         => { rigid_body.set_angular_damping(damping as _); }
                             LockRotation(is_locked)         => { rigid_body.lock_rotations(is_locked, true); }
-                            Type(SimObjectType::Static)     => { rigid_body.set_body_type(RigidBodyType::Fixed, true); rigid_body_type.insert(object_id, SimObjectType::Static); }
-                            Type(SimObjectType::Dynamic)    => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); rigid_body_type.insert(object_id, SimObjectType::Dynamic); }
-                            Type(SimObjectType::Kinematic)  => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); rigid_body_type.insert(object_id, SimObjectType::Kinematic); }
+                            Type(SimObjectType::Static)     => { rigid_body.set_body_type(RigidBodyType::Fixed, true); object.set_body_type(SimObjectType::Static); }
+                            Type(SimObjectType::Dynamic)    => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); object.set_body_type(SimObjectType::Dynamic); }
+                            Type(SimObjectType::Kinematic)  => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); object.set_body_type(SimObjectType::Kinematic); }
 
                             Shape(SimShape::None) => {
-                                if let Some(collider_id) = collider_id_for_object_id.get(&object_id) {
-                                    collider_set.remove(*collider_id, &mut island_manager, &mut rigid_body_set, true);
+                                if let Some(collider_id) = object.collider_handle {
+                                    collider_set.remove(collider_id, &mut island_manager, &mut rigid_body_set, true);
                                 }
 
-                                collider_id_for_object_id.remove(&object_id);
+                                object.collider_handle = None;
                             },
 
                             Shape(SimShape::Circle(radius)) => {
                                 // Remove any existing colliders
-                                if let Some(collider_id) = collider_id_for_object_id.get(&object_id) {
-                                    collider_set.remove(*collider_id, &mut island_manager, &mut rigid_body_set, true);
+                                if let Some(collider_id) = object.collider_handle {
+                                    collider_set.remove(collider_id, &mut island_manager, &mut rigid_body_set, true);
+                                    object.collider_handle = None;
                                 }
 
-                                if let Some(rigid_body_handle) = rigid_body_id_for_object_id.get(&object_id) {
-                                    // Create a ball collider
-                                    let collider = ColliderBuilder::ball(radius as _)
-                                        .build();
+                                // Create a ball collider
+                                let collider = ColliderBuilder::ball(radius as _)
+                                    .build();
 
-                                    let collider_id = collider_set.insert_with_parent(collider, *rigid_body_handle, &mut rigid_body_set);
-                                    collider_id_for_object_id.insert(object_id, collider_id);
-                                }
+                                let collider_id = collider_set.insert_with_parent(collider, object.rigid_body_handle, &mut rigid_body_set);
+                                object.collider_handle = Some(collider_id);
                             }
 
                             Position(pos) => {
@@ -269,13 +264,10 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                                     rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true);
                                 } else {
                                     // Action for setting the position depends on the type of the object
-                                    // TODO: dynamic objects need to be 'pushed' into their intended position
-                                    match rigid_body_type.get(&object_id) {
-                                        None                             |
-                                        Some(SimObjectType::Static)      => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
-                                        Some(SimObjectType::Kinematic)   => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); rigid_body.wake_up(false); }
-
-                                        Some(SimObjectType::Dynamic)     => { }
+                                    match object.body_type {
+                                        SimObjectType::Static       => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
+                                        SimObjectType::Kinematic    => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); rigid_body.wake_up(false); }
+                                        SimObjectType::Dynamic      => { /* We set up a spring to pull the object into position */ }
                                     }
                                 }
 
@@ -285,13 +277,14 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
 
                                 // Create a spring to attach to the anchor
                                 let spring          = SpringJointBuilder::new(0.0, 100.0, 10.0).spring_model(MotorModel::AccelerationBased).contacts_enabled(false).build();
-                                let spring_handle   = impulse_joint_set.insert(anchor_handle, *handle, spring, true);
+                                let spring_handle   = impulse_joint_set.insert(anchor_handle, object.rigid_body_handle, spring, true);
 
-                                // Store in the joints hashmap
-                                if let Some((old_anchor, old_spring)) = spring_joints.insert(object_id, (anchor_handle, spring_handle)) {
+                                // Update the joint
+                                if let Some((old_anchor, old_spring)) = object.anchor_joint.take() {
                                     impulse_joint_set.remove(old_spring, true);
                                     rigid_body_set.remove(old_anchor, &mut island_manager, &mut collider_set, &mut impulse_joint_set, &mut multibody_joint_set, true);
                                 }
+                                object.anchor_joint = Some((anchor_handle, spring_handle));
                             }
 
                             Impulse(impulse_binding) => {
@@ -325,18 +318,18 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 }
             }
 
-            AddJoint(joint_id, object_1, object_2, joint) => {
-                if let (Some(object_1), Some(object_2)) = (rigid_body_id_for_object_id.get(&object_1).cloned(), rigid_body_id_for_object_id.get(&object_2).cloned()) {
+            AddJoint(joint_id, object_1_id, object_2_id, joint) => {
+                if let (Some(object_1), Some(object_2)) = (rigid_bodies.get(&object_1_id), rigid_bodies.get(&object_2_id)) {
                     // Create the joint
                     let joint = joint.create();
 
                     // Add to the set of joints
-                    let joint_handle = impulse_joint_set.insert(object_1, object_2, joint, true);
+                    let joint_handle = impulse_joint_set.insert(object_1.rigid_body_handle, object_2.rigid_body_handle, joint, true);
                     joints.insert(joint_id, joint_handle);
 
                     // Also associate with the object, so we can remove it later on if the object is removed
-                    object_joints.entry(object_1).or_insert_with(|| vec![]).push(joint_id);
-                    object_joints.entry(object_2).or_insert_with(|| vec![]).push(joint_id);
+                    rigid_bodies.get_mut(&object_1_id).unwrap().joints.push(joint_id);
+                    rigid_bodies.get_mut(&object_2_id).unwrap().joints.push(joint_id);
                 }
 
                 // Wake up the timer again whenever a joint is added
@@ -377,11 +370,11 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                     let joint = impulse_joint_set.get(joint_handle).unwrap();
 
                     // Remove the structures
-                    let object_1_joints = object_joints.get_mut(&joint.body1);
-                    if let Some(object_1_joints) = object_1_joints { object_1_joints.retain(|candidate| candidate != &joint_id); }
+                    let object_1 = object_id_for_rigid_body_id.get(&joint.body1).and_then(|object_id| rigid_bodies.get_mut(&object_id));
+                    if let Some(object_1) = object_1 { object_1.joints.retain(|candidate| candidate != &joint_id); }
 
-                    let object_2_joints = object_joints.get_mut(&joint.body2);
-                    if let Some(object_2_joints) = object_2_joints { object_2_joints.retain(|candidate| candidate != &joint_id); }
+                    let object_2 = object_id_for_rigid_body_id.get(&joint.body2).and_then(|object_id| rigid_bodies.get_mut(&object_id));
+                    if let Some(object_2) = object_2 { object_2.joints.retain(|candidate| candidate != &joint_id); }
 
                     // Finished with the joint
                     joints.remove(&joint_id);
@@ -399,55 +392,57 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
             }
 
             RemoveRigidBody(object_id) => {
-                if let Some(handle) = rigid_body_id_for_object_id.get(&object_id) {
+                if let Some(object) = rigid_bodies.get(&object_id) {
                     // Remove from the simulation
-                    rigid_body_set.remove(*handle, &mut island_manager, &mut collider_set, &mut impulse_joint_set, &mut multibody_joint_set, true);
+                    rigid_body_set.remove(object.rigid_body_handle, &mut island_manager, &mut collider_set, &mut impulse_joint_set, &mut multibody_joint_set, true);
 
                     // Remove the joints attached to this object
-                    if let Some(joints_for_object) = object_joints.get(handle).cloned() {
-                        for joint_id in joints_for_object.iter().copied() {
-                            if let Some(joint_handle) = joints.get(&joint_id).copied() {
-                                let joint = impulse_joint_set.get(joint_handle).unwrap();
+                    let mut joints_to_remove = vec![];
+                    for joint_id in object.joints.iter().copied() {
+                        if let Some(joint_handle) = joints.get(&joint_id).copied() {
+                            let joint = impulse_joint_set.get(joint_handle).unwrap();
 
-                                // Remove the structures
-                                let object_1_joints = object_joints.get_mut(&joint.body1);
-                                if let Some(object_1_joints) = object_1_joints { object_1_joints.retain(|candidate| candidate != &joint_id); }
-
-                                let object_2_joints = object_joints.get_mut(&joint.body2);
-                                if let Some(object_2_joints) = object_2_joints { object_2_joints.retain(|candidate| candidate != &joint_id); }
-
-                                // Finished with the joint
-                                joints.remove(&joint_id);
-                                impulse_joint_set.remove(joint_handle, true);
+                            // Remove the structures
+                            if joint.body1 != object.rigid_body_handle {
+                                joints_to_remove.push((joint.body1, joint_id));
+                            } else {
+                                joints_to_remove.push((joint.body2, joint_id));
                             }
+
+                            // Finished with the joint
+                            joints.remove(&joint_id);
+                            impulse_joint_set.remove(joint_handle, true);
                         }
                     }
 
                     // Remove the spring binding this object to its position
-                    if let Some((old_anchor, old_spring)) = spring_joints.remove(&object_id) {
+                    if let Some((old_anchor, old_spring)) = object.anchor_joint {
                         impulse_joint_set.remove(old_spring, true);
                         rigid_body_set.remove(old_anchor, &mut island_manager, &mut collider_set, &mut impulse_joint_set, &mut multibody_joint_set, true);
                     }
 
                     // Remove the IDs and references to this object
-                    object_id_for_rigid_body_id.remove(handle);
-                    rigid_body_id_for_object_id.remove(&object_id);
-                    collider_id_for_object_id.remove(&object_id);
-                    rigid_body_type.remove(&object_id);
-                    new_objects.remove(&object_id);
+                    object_id_for_rigid_body_id.remove(&object.rigid_body_handle);
+                    rigid_bodies.remove(&object_id);
 
                     // Remove the bindings
                     position_bindings.remove(&object_id);
                     angle_bindings.remove(&object_id);
                     velocity_bindings.remove(&object_id);
                     angular_velocity_bindings.remove(&object_id);
+
+                    // Tidy up the other side of the joints
+                    for (rigid_body_handle, joint_id) in joints_to_remove {
+                        let Some(object) = object_id_for_rigid_body_id.get(&rigid_body_handle).and_then(|object_id| rigid_bodies.get_mut(object_id)) else { continue; };
+                        object.joints.retain(|candidate| candidate != &joint_id);
+                    }
                 }
             }
 
-            BindPosition(object_id, binding)        => { if rigid_body_id_for_object_id.contains_key(&object_id) { position_bindings.insert(object_id, binding); } },
-            BindAngle(object_id, binding)           => { if rigid_body_id_for_object_id.contains_key(&object_id) { angle_bindings.insert(object_id, binding); } },
-            BindVelocity(object_id, binding)        => { if rigid_body_id_for_object_id.contains_key(&object_id) { velocity_bindings.insert(object_id, binding); } },
-            BindAngularVelocity(object_id, binding) => { if rigid_body_id_for_object_id.contains_key(&object_id) { angular_velocity_bindings.insert(object_id, binding); } },
+            BindPosition(object_id, binding)        => { if rigid_bodies.contains_key(&object_id) { position_bindings.insert(object_id, binding); } },
+            BindAngle(object_id, binding)           => { if rigid_bodies.contains_key(&object_id) { angle_bindings.insert(object_id, binding); } },
+            BindVelocity(object_id, binding)        => { if rigid_bodies.contains_key(&object_id) { velocity_bindings.insert(object_id, binding); } },
+            BindAngularVelocity(object_id, binding) => { if rigid_bodies.contains_key(&object_id) { angular_velocity_bindings.insert(object_id, binding); } },
 
             Tick(time) => {
                 let tick = Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _);
