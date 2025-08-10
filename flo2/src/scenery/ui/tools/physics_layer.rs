@@ -23,7 +23,6 @@ use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
 use flo_scene::*;
 use flo_scene::programs::*;
-use flo_curves::arc::*;
 
 use futures::prelude::*;
 
@@ -33,7 +32,7 @@ use serde::ser::{Error as SeError};
 
 use std::collections::{HashMap};
 use std::sync::*;
-use std::time::{Instant, Duration};
+use std::time::{Instant};
 
 ///
 /// Instructions for the subprogram that manages the physics layer
