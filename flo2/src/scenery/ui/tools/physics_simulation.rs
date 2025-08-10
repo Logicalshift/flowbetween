@@ -231,9 +231,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                             LinearDamping(damping)          => { rigid_body.set_linear_damping(damping as _); }
                             AngularDamping(damping)         => { rigid_body.set_angular_damping(damping as _); }
                             LockRotation(is_locked)         => { rigid_body.lock_rotations(is_locked, true); }
-                            Type(SimObjectType::Static)     => { rigid_body.set_body_type(RigidBodyType::Fixed, true); object.set_body_type(SimObjectType::Static); }
-                            Type(SimObjectType::Dynamic)    => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); object.set_body_type(SimObjectType::Dynamic); }
-                            Type(SimObjectType::Kinematic)  => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); object.set_body_type(SimObjectType::Kinematic); }
+                            Type(object_type)               => { object.set_body_type(object_type, &mut rigid_body_set); }
 
                             Shape(SimShape::None) => {
                                 if let Some(collider_id) = object.collider_handle {

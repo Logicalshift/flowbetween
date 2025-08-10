@@ -244,6 +244,13 @@ impl PhysicsObject {
     }
 
     ///
+    /// ID of this object in the simulation
+    ///
+    pub fn physics_id(&self) -> SimObjectId {
+        self.physics_id
+    }
+
+    ///
     /// Replaces the tool represented by this object
     ///
     pub fn set_tool(&mut self, new_tool: PhysicsTool, new_target: StreamTarget) {
@@ -381,6 +388,18 @@ impl PhysicsObject {
                 SimBodyProperty::Type(object_type),
                 SimBodyProperty::Shape(SimShape::Circle(tool_size.0/2.0))
             ])).await.ok();
+        }.boxed()
+    }
+
+    ///
+    /// Sets the properties of this object to something custom
+    ///
+    pub fn set_simulation_properties<'a>(&self, properties: impl Send + Into<Vec<SimBodyProperty>>, requests: &'a mut OutputSink<PhysicsSimulation>) -> BoxFuture<'a, ()> {
+        let physics_id = self.physics_id;
+        let properties = properties.into();
+
+        async move {
+            requests.send(PhysicsSimulation::Set(physics_id, properties)).await.ok();
         }.boxed()
     }
 

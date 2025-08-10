@@ -10,6 +10,7 @@ use super::blobland::*;
 use super::physics_object::*;
 use super::physics_tool::*;
 use super::physics_simulation::*;
+use super::physics_simulation_object::*;
 use crate::scenery::ui::colors::*;
 use crate::scenery::ui::focus::*;
 use crate::scenery::ui::namespaces::*;
@@ -136,20 +137,23 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     state.start_rendering_program(&context).await;
 
     // TEST: create a test object, force an initial update
-    let mut test_object = test_tool();
-    let test_object_id = test_object.id();
+    let test_object = test_tool();
+    let test_object_id_1 = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
-    state.float(test_object_id, (100.0, 100.0)).await;
+    state.float(test_object_id_1, (100.0, 100.0)).await;
 
-    let mut test_object = test_tool();
-    let test_object_id = test_object.id();
+    let test_object = test_tool();
+    let test_object_id_2 = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
-    state.float(test_object_id, (200.0, 100.0)).await;
+    state.float(test_object_id_2, (200.0, 100.0)).await;
 
-    let mut test_object = test_tool();
-    let test_object_id = test_object.id();
+    let test_object = test_tool();
+    let test_object_id_3 = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
-    state.float(test_object_id, (300.0, 100.0)).await;
+    state.float(test_object_id_3, (300.0, 100.0)).await;
+
+    let test_object_2_physics = state.physics_id(test_object_id_2).unwrap();
+    state.object_physics_properties(test_object_id_1, [SimBodyProperty::IgnoreCollisions(bind(vec![test_object_2_physics]).into())]).await;
 
     // We're a focus program with only controls, underneath pretty much anything else (so we claim z-index 0)
     focus_requests.send(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 }).await.ok();
@@ -409,6 +413,39 @@ impl PhysicsLayerState {
             Some(future)
         } else {
             None
+        };
+
+        async move {
+            if let Some(update_request) = update_request {
+                update_request.await;
+            }
+        }
+    }
+
+    ///
+    /// Returns the physics ID for a tool
+    ///
+    pub fn physics_id(&self, tool_id: PhysicsToolId) -> Option<SimObjectId> {
+        let objects = self.objects.lock().unwrap();
+        let object  = objects.get(&tool_id)?;
+
+        Some(object.physics_id())
+    }
+
+    ///
+    /// Manually set the physics property of a tool
+    ///
+    pub fn object_physics_properties(&mut self, tool_id: PhysicsToolId, properties: impl Send + Into<Vec<SimBodyProperty>>) -> impl Send + Future<Output=()> {
+        let simulation_requests = &mut self.simulation_requests;
+        let update_request      = {
+            let objects = self.objects.lock().unwrap();
+            if let Some(object) = objects.get(&tool_id) {
+                let future = object.set_simulation_properties(properties, simulation_requests);
+
+                Some(future)
+            } else {
+                None
+            }
         };
 
         async move {

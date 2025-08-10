@@ -31,7 +31,7 @@ impl SimObjectId {
 ///
 /// Shapes permitted by a simulation object
 ///
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum SimObjectType {
     /// Object that does not move
     Static,
@@ -139,9 +139,15 @@ impl SimObject {
     ///
     /// Updates the body type of this object
     ///
-    #[inline]
-    pub fn set_body_type(&mut self, new_type: SimObjectType) {
+    pub fn set_body_type(&mut self, new_type: SimObjectType, rigid_body_set: &mut RigidBodySet) {
         self.body_type = new_type;
+
+        let Some(rigid_body) = rigid_body_set.get_mut(self.rigid_body_handle) else { return; };
+        match new_type {
+            SimObjectType::Static    => { rigid_body.set_body_type(RigidBodyType::Fixed, true); }
+            SimObjectType::Dynamic   => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); }
+            SimObjectType::Kinematic => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); }
+        }
     }
 
     ///
