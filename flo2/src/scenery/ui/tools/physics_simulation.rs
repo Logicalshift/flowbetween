@@ -78,8 +78,12 @@ pub enum PhysicsSimulation {
 ///
 #[derive(Clone)]
 pub enum SimBodyProperty {
-    /// The position of the object. Kinematic objects can have their position set instantaneously, dynamic objects use a spring to bind them to this position, static object teleport
-    Position(UiPoint),
+    /// The position of the object. Kinematic objects can have their position set instantaneously, dynamic 
+    /// objects use a spring to bind them to this position, static object teleport.
+    ///
+    /// The position here is set as a binding, so the desired position of the object can be updated by
+    /// setting the bound value instead of sending property update events.
+    Position(Option<BindRef<UiPoint>>),
 
     /// The velocity of this object
     Velocity(UiPoint),
@@ -103,7 +107,7 @@ pub enum SimBodyProperty {
     Type(SimObjectType),
 
     /// The impulse that is applied to this object (calculated every frame, wakes the simulation if updated)
-    Impulse(BindRef<UiPoint>),
+    BindImpulse(Option<BindRef<UiPoint>>),
 
     /// The objects that this object will not collide with
     IgnoreCollisions(BindRef<Vec<SimObjectId>>),
@@ -253,6 +257,8 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                             }
 
                             Position(pos) => {
+                                let pos = if let Some(pos) = pos { pos.get() } else { todo!() };
+
                                 if new_objects.contains(&object_id) {
                                     // Set the position immediately if the body is new
                                     rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true);
@@ -281,7 +287,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                                 object.anchor_joint = Some((anchor_handle, spring_handle));
                             }
 
-                            Impulse(impulse_binding) => {
+                            BindImpulse(impulse_binding) => {
 
                             }
 
