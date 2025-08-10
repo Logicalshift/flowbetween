@@ -196,7 +196,6 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     let mut multibody_joint_set = MultibodyJointSet::new();
     let mut ccd_solver          = CCDSolver::new();
     let mut query_pipeline      = QueryPipeline::new();
-    let physics_hooks           = ();
     let event_handler           = ();
 
     // We track time from 0. Time doesn't pass while we're asleep
@@ -502,7 +501,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                         &mut multibody_joint_set,
                         &mut ccd_solver,
                         Some(&mut query_pipeline),
-                        &physics_hooks,
+                        &rigid_bodies,
                         &event_handler,
                     );
                 }
