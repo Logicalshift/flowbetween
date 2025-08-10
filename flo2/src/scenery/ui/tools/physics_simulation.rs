@@ -424,7 +424,11 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                         }
                     }
 
-                    // TODO: Remove the spring binding this object to its position
+                    // Remove the spring binding this object to its position
+                    if let Some((old_anchor, old_spring)) = spring_joints.remove(&object_id) {
+                        impulse_joint_set.remove(old_spring, true);
+                        rigid_body_set.remove(old_anchor, &mut island_manager, &mut collider_set, &mut impulse_joint_set, &mut multibody_joint_set, true);
+                    }
 
                     // Remove the IDs and references to this object
                     object_id_for_rigid_body_id.remove(handle);
