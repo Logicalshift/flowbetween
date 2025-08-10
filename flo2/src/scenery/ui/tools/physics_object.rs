@@ -339,7 +339,13 @@ impl PhysicsObject {
         let tool_position       = self.position.clone();
         let bounds              = bounds.clone();
         let drag_position       = self.properties.drag_position.clone();
-        let position            = computed(move || if let Some(drag_position) = drag_position.get() { drag_position } else { Self::position(&tool_position, &bounds).unwrap_or(UiPoint(0.0, 0.0)) });
+        let position            = computed(move || {
+            if let Some(drag_position) = drag_position.get() { 
+                drag_position 
+            } else {
+                Self::position(&tool_position, &bounds).unwrap_or(UiPoint(0.0, 0.0)) 
+            }
+        });
 
         async move {
             // Create the body
