@@ -201,8 +201,8 @@ impl PhysicsObject {
     ///
     /// Adds a blob for this tool to a BlobLand
     ///
-    pub fn add_blob(&mut self, blob_land: &mut BlobLand, bounds: (f64, f64), interaction: impl 'static + Send + Fn(BlobId) -> BlobInteraction) -> BlobId {
-        let pos     = self.position(bounds).unwrap_or(UiPoint(0.0, 0.0));
+    pub fn add_blob(&mut self, blob_land: &mut BlobLand, bounds: &Binding<UiPoint>, interaction: impl 'static + Send + Fn(BlobId) -> BlobInteraction) -> BlobId {
+        let pos     = Self::position(&self.position, bounds).unwrap_or(UiPoint(0.0, 0.0));
         let (w, h)  = self.tool.size();
         let radius  = w.min(h)/2.0;
         let blob    = Blob::new(UiPoint(pos.0, pos.1), radius * 1.5, radius).with_interaction(interaction);
@@ -319,11 +319,11 @@ impl PhysicsObject {
     ///
     /// Returns the coordinates where the center of this object should be rendered
     ///
-    pub fn position(&self, bounds: (f64, f64)) -> Option<UiPoint> {
-        match self.position.get() {
+    pub fn position(position: &Binding<ToolPosition>, bounds: &Binding<UiPoint>) -> Option<UiPoint> {
+        match position.get() {
             ToolPosition::Hidden                => None,
             ToolPosition::DockTool(idx)         => Some(UiPoint(20.0, 20.0 + (idx as f64 * 40.0))),
-            ToolPosition::DockProperties(idx)   => Some(UiPoint(bounds.0 - 20.0, 20.0 + (idx as f64 * 40.0))),
+            ToolPosition::DockProperties(idx)   => Some(UiPoint(bounds.get().0 - 20.0, 20.0 + (idx as f64 * 40.0))),
             ToolPosition::Float(x, y)           => Some(UiPoint(x, y)),
         }
     }
@@ -331,9 +331,9 @@ impl PhysicsObject {
     ///
     /// Creates this object in the physics simulation
     ///
-    pub fn create_in_simulation(&self, bounds: (f64, f64), requests: &mut OutputSink<PhysicsSimulation>) -> impl Send + Future<Output=()> {
+    pub fn create_in_simulation(&self, bounds: &Binding<UiPoint>, requests: &mut OutputSink<PhysicsSimulation>) -> impl Send + Future<Output=()> {
         let physics_id          = self.physics_id;
-        let position            = self.position(bounds);
+        let position            = Self::position(&self.position, bounds);
         let tool_size           = self.tool.size();
         let position_binding    = self.properties.position.clone();
 
@@ -359,9 +359,9 @@ impl PhysicsObject {
     ///
     /// Updates the position of this object in a simulation
     ///
-    pub fn update_in_simulation<'a>(&self, bounds: (f64, f64), requests: &'a mut OutputSink<PhysicsSimulation>) -> BoxFuture<'a, ()> {
+    pub fn update_in_simulation<'a>(&self, bounds: &Binding<UiPoint>, requests: &'a mut OutputSink<PhysicsSimulation>) -> BoxFuture<'a, ()> {
         let physics_id      = self.physics_id;
-        let position        = if let Some(drag_position) = self.properties.drag_position() { Some(drag_position) } else { self.position(bounds) };
+        let position        = if let Some(drag_position) = self.properties.drag_position() { Some(drag_position) } else { Self::position(&self.position, bounds) };
         let tool_size       = self.tool.size();
         let being_dragged   = self.being_dragged;
 

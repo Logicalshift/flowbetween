@@ -127,7 +127,7 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
         simulation_requests:    physics_requests,
         objects:                Arc::new(Mutex::new(HashMap::new())),
         render_state:           Arc::new(Mutex::new(render_state)),
-        bounds:                 (1024.0, 768.0),
+        bounds:                 bind(UiPoint(1024.0, 768.0)),
         tool_id_for_blob_id:    Arc::new(Mutex::new(HashMap::new())),
         sprites:                vec![],
         next_sprite_id:         0,
@@ -238,7 +238,7 @@ struct PhysicsLayerState {
     tool_id_for_blob_id: Arc<Mutex<HashMap<BlobId, PhysicsToolId>>>,
 
     /// Bounds of the drawing area
-    bounds: (f64, f64),
+    bounds: Binding<UiPoint>,
 
     /// The pool of sprite IDs that have been used by the tools but are now available for other uses
     sprites: Vec<SpriteId>,
@@ -347,7 +347,7 @@ impl PhysicsLayerState {
 
             {
                 let mut render_state    = self.render_state.lock().unwrap();
-                let blob_id             = object.add_blob(&mut render_state.blob_land, self.bounds, Self::blob_interaction_fn(tool_id, &self.objects, &self.tool_id_for_blob_id));
+                let blob_id             = object.add_blob(&mut render_state.blob_land, &self.bounds, Self::blob_interaction_fn(tool_id, &self.objects, &self.tool_id_for_blob_id));
 
                 // Add the render properties for this object (sends it to our render program)
                 let property_list       = render_state.object_properties.get();
@@ -358,7 +358,7 @@ impl PhysicsLayerState {
                 self.tool_id_for_blob_id.lock().unwrap().insert(blob_id, tool_id);
             }
 
-            object.create_in_simulation(self.bounds, &mut self.simulation_requests).await;
+            object.create_in_simulation(&self.bounds, &mut self.simulation_requests).await;
 
             // Start a subprogram to manage this tool
             let tool_id             = object.tool().id();
@@ -403,7 +403,7 @@ impl PhysicsLayerState {
     pub fn update_tool_in_simulation(&mut self, tool_id: PhysicsToolId) -> impl Send + Future<Output=()> {
         let simulation_requests = &mut self.simulation_requests;
         let objects             = self.objects.lock().unwrap();
-        let bounds              = self.bounds;
+        let bounds              = &self.bounds;
 
         let update_request      = if let Some(object) = objects.get(&tool_id) {
             let future = object.update_in_simulation(bounds, simulation_requests);
@@ -499,7 +499,7 @@ impl PhysicsLayerState {
     /// Updates the bounds of the window that the tools are contained within
     ///
     pub fn set_bounds(&mut self, width: f64, height: f64) {
-        self.bounds = (width, height);
+        self.bounds.set(UiPoint(width, height));
     }
 }
 
