@@ -93,7 +93,7 @@ pub (super) struct SimObject {
     pub (super) joints: SmallVec<[SimJointId; 1]>,
 
     /// If we're tracking when the bindings of this object are changed, this is the releasable that represents that lifetime
-    pub (super) bindings_changed: Option<Box<dyn Send + Releasable>>,
+    pub (super) bindings_changed: Option<Mutex<Box<dyn Send + Releasable>>>,
 
     /// The binding of the position of this object
     pub (super) position: Option<BindRef<UiPoint>>,
@@ -190,8 +190,8 @@ impl SimObject {
     ///
     pub fn when_changed(&mut self, notify: Arc<dyn Notifiable>) {
         // Stop any existing notification
-        if let Some(mut bindings_changed) = self.bindings_changed.take() {
-            bindings_changed.done();
+        if let Some(bindings_changed) = self.bindings_changed.take() {
+            bindings_changed.lock().unwrap().done();
         }
 
         // Create a new notification, if there are any dependencies
@@ -210,7 +210,7 @@ impl SimObject {
 
         // If there are any dependencies, set up the notifications
         if num_dependencies > 0 {
-            self.bindings_changed = Some(dependencies.when_changed(notify));
+            self.bindings_changed = Some(Mutex::new(dependencies.when_changed(notify)));
         }
     }
 }
@@ -285,7 +285,6 @@ impl SimObjectCollection {
     }
 }
 
-/*
 impl PhysicsHooks for SimObjectCollection {
     fn filter_contact_pair(&self, _context: &PairFilterContext) -> Option<SolverFlags> {
         Some(SolverFlags::COMPUTE_IMPULSES)
@@ -310,4 +309,3 @@ impl PhysicsHooks for SimObjectCollection {
     fn modify_solver_contacts(&self, _context: &mut ContactModificationContext) {
     }
 }
-*/
