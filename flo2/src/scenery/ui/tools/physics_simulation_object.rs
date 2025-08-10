@@ -10,6 +10,7 @@ use uuid::*;
 use ::serde::*;
 use smallvec::*;
 
+use std::collections::{HashMap};
 use std::sync::*;
 
 ///
@@ -40,6 +41,17 @@ pub enum SimObjectType {
 
     /// Object that can have its coordiantes set immediately
     Kinematic,
+}
+
+///
+/// Represents a collection of objects
+///
+pub (super) struct SimObjectCollection {
+    /// The objects in this collection
+    bodies: HashMap<SimObjectId, SimObject>,
+
+    /// The object ID for each handle
+    id_for_handle: HashMap<RigidBodyHandle, SimObjectId>,
 }
 
 ///
@@ -200,5 +212,75 @@ impl SimObject {
         if num_dependencies > 0 {
             self.bindings_changed = Some(dependencies.when_changed(notify));
         }
+    }
+}
+
+impl SimObjectCollection {
+    ///
+    /// Creates an empty collection
+    ///
+    pub fn new() -> Self {
+        SimObjectCollection { 
+            bodies:         HashMap::new(),
+            id_for_handle:  HashMap::new(),
+        }
+    }
+
+    ///
+    /// Adds an object to this collection
+    ///
+    #[inline]
+    pub fn insert(&mut self, object_id: SimObjectId, object: SimObject) {
+        let handle = object.rigid_body_handle;
+        self.bodies.insert(object_id, object);
+        self.id_for_handle.insert(handle, object_id);
+    }
+
+    ///
+    /// Retrieves the object with the specified ID
+    ///
+    #[inline]
+    pub fn get(&self, object_id: &SimObjectId) -> Option<&SimObject> {
+        self.bodies.get(object_id)
+    }
+
+    ///
+    /// Retrievs the object with the specified ID
+    ///
+    #[inline]
+    pub fn get_mut(&mut self, object_id: &SimObjectId) -> Option<&mut SimObject> {
+        self.bodies.get_mut(object_id)
+    }
+
+    ///
+    /// Removes an object from this collection
+    ///
+    #[inline]
+    pub fn remove(&mut self, object_id: &SimObjectId) -> Option<SimObject> {
+        // Remove the object
+        let removed_object = self.bodies.remove(object_id)?;
+
+        // Remove the handle
+        self.id_for_handle.remove(&removed_object.rigid_body_handle);
+
+        Some(removed_object)
+    }
+
+    ///
+    /// Retrieves an object by handle
+    ///
+    #[inline]
+    pub fn get_by_handle(&self, handle: RigidBodyHandle) -> Option<&SimObject> {
+        self.id_for_handle.get(&handle)
+            .and_then(|object_id| self.bodies.get(object_id))
+    }
+
+    ///
+    /// Retrieves an object by handle
+    ///
+    #[inline]
+    pub fn get_mut_by_handle(&mut self, handle: RigidBodyHandle) -> Option<&mut SimObject> {
+        self.id_for_handle.get(&handle)
+            .and_then(|object_id| self.bodies.get_mut(object_id))
     }
 }

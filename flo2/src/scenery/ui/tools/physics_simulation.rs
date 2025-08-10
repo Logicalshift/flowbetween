@@ -178,11 +178,10 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     }
 
     // Our own state
-    let mut rigid_bodies                = HashMap::new();
-    let mut object_id_for_rigid_body_id = HashMap::new();
-    let mut new_objects                 = HashSet::new();
-    let mut joints                      = HashMap::new();
-    let mut recently_changed            = HashSet::new();
+    let mut rigid_bodies        = SimObjectCollection::new();
+    let mut new_objects         = HashSet::new();
+    let mut joints              = HashMap::new();
+    let mut recently_changed    = HashSet::new();
 
     // Create the rapier2d state
     let mut gravity             = vector![0.0, 9.81];
@@ -215,7 +214,6 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 let object      = SimObject::kinematic_position_based(object_id, handle);
 
                 // Store the handle and type for this object
-                object_id_for_rigid_body_id.insert(handle, object_id);
                 rigid_bodies.insert(object_id, object);
                 new_objects.insert(object_id);
             },
@@ -368,10 +366,10 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                     let joint = impulse_joint_set.get(joint_handle).unwrap();
 
                     // Remove the structures
-                    let object_1 = object_id_for_rigid_body_id.get(&joint.body1).and_then(|object_id| rigid_bodies.get_mut(&object_id));
+                    let object_1 = rigid_bodies.get_mut_by_handle(joint.body1);
                     if let Some(object_1) = object_1 { object_1.joints.retain(|candidate| candidate != &joint_id); }
 
-                    let object_2 = object_id_for_rigid_body_id.get(&joint.body2).and_then(|object_id| rigid_bodies.get_mut(&object_id));
+                    let object_2 = rigid_bodies.get_mut_by_handle(joint.body2);
                     if let Some(object_2) = object_2 { object_2.joints.retain(|candidate| candidate != &joint_id); }
 
                     // Finished with the joint
@@ -420,12 +418,11 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                     }
 
                     // Remove the IDs and references to this object
-                    object_id_for_rigid_body_id.remove(&object.rigid_body_handle);
                     rigid_bodies.remove(&object_id);
 
                     // Tidy up the other side of the joints
                     for (rigid_body_handle, joint_id) in joints_to_remove {
-                        let Some(object) = object_id_for_rigid_body_id.get(&rigid_body_handle).and_then(|object_id| rigid_bodies.get_mut(object_id)) else { continue; };
+                        let Some(object) = rigid_bodies.get_mut_by_handle(rigid_body_handle) else { continue; };
                         object.joints.retain(|candidate| candidate != &joint_id);
                     }
                 }
@@ -514,8 +511,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 let mut some_awake = false;
 
                 for (handle, body) in rigid_body_set.iter() {
-                    let Some(object_id) = object_id_for_rigid_body_id.get(&handle) else { continue; };
-                    let Some(object)    = rigid_bodies.get_mut(object_id) else { continue; };
+                    let Some(object) = rigid_bodies.get_mut_by_handle(handle) else { continue; };
 
                     // If any rigid bodies are awake, then the simulation should also be kept awake
                     if !body.is_sleeping() {
