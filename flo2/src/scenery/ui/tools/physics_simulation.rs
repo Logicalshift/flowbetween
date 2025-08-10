@@ -7,6 +7,7 @@
 //!
 
 use super::physics_simulation_joints::*;
+use super::physics_simulation_object::*;
 use crate::scenery::ui::ui_path::*;
 
 use flo_binding::*;
@@ -15,7 +16,6 @@ use flo_scene::programs::*;
 use flo_curves::*;
 
 use rapier2d::prelude::*;
-use uuid::*;
 use ::serde::*;
 use ::serde::de::{Error as DeError};
 use ::serde::ser::{Error as SeError};
@@ -29,21 +29,6 @@ const TICK_DURATION_S: f64 = 1.0/60.0;
 
 /// Maximum number of ticks to process in one iteration (if the scene gets stalled or time otherwise passes in a non-linear fashion)
 const MAX_TICKS: usize = 30;
-
-///
-/// Identifier of an object in a physics simulation
-///
-#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct SimObjectId(Uuid);
-
-impl SimObjectId {
-    ///
-    /// Creates a unique new simulation object ID
-    ///
-    pub fn new() -> Self {
-        SimObjectId(Uuid::new_v4())
-    }
-}
 
 ///
 /// Message that can be used to control a physics simulation
@@ -145,21 +130,6 @@ pub enum SimShape {
 }
 
 ///
-/// Shapes permitted by a simulation object
-///
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SimObjectType {
-    /// Object that does not move
-    Static,
-
-    /// Object that moves using the simulation (when MoveTo is called, we move this object by applying a force to it rather than teleporting it)
-    Dynamic,
-
-    /// Object that can have its coordiantes set immediately
-    Kinematic,
-}
-
-///
 /// Physics simualations can generate a few events
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -225,7 +195,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     let physics_hooks           = ();
     let event_handler           = ();
 
-    // Bindings for the objects
+    // Bindings for the objects (set based on the results of the simulation)
     let mut position_bindings           = HashMap::new();
     let mut angle_bindings              = HashMap::new();
     let mut velocity_bindings           = HashMap::new();
@@ -329,7 +299,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                             }
 
                             IgnoreCollisions(collision_binding) => {
-                                
+
                             }
                         }
                     }
