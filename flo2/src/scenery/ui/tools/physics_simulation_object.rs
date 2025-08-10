@@ -139,7 +139,7 @@ impl SimObject {
     ///
     /// Updates the body type of this object
     ///
-    pub fn set_body_type(&mut self, new_type: SimObjectType, rigid_body_set: &mut RigidBodySet) {
+    pub fn set_body_type(&mut self, new_type: SimObjectType, rigid_body_set: &mut RigidBodySet, collider_set: &mut ColliderSet) {
         self.body_type = new_type;
 
         let Some(rigid_body) = rigid_body_set.get_mut(self.rigid_body_handle) else { return; };
@@ -147,6 +147,14 @@ impl SimObject {
             SimObjectType::Static    => { rigid_body.set_body_type(RigidBodyType::Fixed, true); }
             SimObjectType::Dynamic   => { rigid_body.set_body_type(RigidBodyType::Dynamic, true); }
             SimObjectType::Kinematic => { rigid_body.set_body_type(RigidBodyType::KinematicPositionBased, true); }
+        }
+
+        if let Some(collider) = self.collider_handle.and_then(|handle| collider_set.get_mut(handle)) {
+            match new_type {
+                SimObjectType::Static    => { collider.set_active_hooks(ActiveHooks::default()); }
+                SimObjectType::Dynamic   => { collider.set_active_hooks(ActiveHooks::default().union(ActiveHooks::FILTER_INTERSECTION_PAIR)); }
+                SimObjectType::Kinematic => { collider.set_active_hooks(ActiveHooks::default().union(ActiveHooks::FILTER_INTERSECTION_PAIR)); }
+            }
         }
     }
 
