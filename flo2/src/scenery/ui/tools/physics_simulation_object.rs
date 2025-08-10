@@ -152,8 +152,8 @@ impl SimObject {
         if let Some(collider) = self.collider_handle.and_then(|handle| collider_set.get_mut(handle)) {
             match new_type {
                 SimObjectType::Static    => { collider.set_active_hooks(ActiveHooks::default()); }
-                SimObjectType::Dynamic   => { collider.set_active_hooks(ActiveHooks::default().union(ActiveHooks::FILTER_INTERSECTION_PAIR)); }
-                SimObjectType::Kinematic => { collider.set_active_hooks(ActiveHooks::default().union(ActiveHooks::FILTER_INTERSECTION_PAIR)); }
+                SimObjectType::Dynamic   => { collider.set_active_hooks(ActiveHooks::default() | ActiveHooks::FILTER_INTERSECTION_PAIR | ActiveHooks::FILTER_CONTACT_PAIRS); }
+                SimObjectType::Kinematic => { collider.set_active_hooks(ActiveHooks::default() | ActiveHooks::FILTER_INTERSECTION_PAIR | ActiveHooks::FILTER_CONTACT_PAIRS); }
             }
         }
     }
@@ -171,8 +171,8 @@ impl SimObject {
         if let Some(collider) = self.collider_handle.and_then(|handle| collider_set.get_mut(handle)) {
             match self.body_type {
                 SimObjectType::Static    => { collider.set_active_hooks(ActiveHooks::default()); }
-                SimObjectType::Dynamic   => { collider.set_active_hooks(ActiveHooks::default().union(ActiveHooks::FILTER_INTERSECTION_PAIR)); }
-                SimObjectType::Kinematic => { collider.set_active_hooks(ActiveHooks::default().union(ActiveHooks::FILTER_INTERSECTION_PAIR)); }
+                SimObjectType::Dynamic   => { collider.set_active_hooks(ActiveHooks::default() | ActiveHooks::FILTER_INTERSECTION_PAIR | ActiveHooks::FILTER_CONTACT_PAIRS); }
+                SimObjectType::Kinematic => { collider.set_active_hooks(ActiveHooks::default() | ActiveHooks::FILTER_INTERSECTION_PAIR | ActiveHooks::FILTER_CONTACT_PAIRS); }
             }
         }
     }
@@ -319,7 +319,19 @@ impl SimObjectCollection {
 }
 
 impl PhysicsHooks for SimObjectCollection {
-    fn filter_contact_pair(&self, _context: &PairFilterContext) -> Option<SolverFlags> {
+    fn filter_contact_pair(&self, context: &PairFilterContext) -> Option<SolverFlags> {
+        // Retrieve the objects that are colliding
+        let Some(object1) = context.rigid_body1.and_then(|handle| self.get_by_handle(handle)) else { return Some(SolverFlags::COMPUTE_IMPULSES); };
+        let Some(object2) = context.rigid_body2.and_then(|handle| self.get_by_handle(handle)) else { return Some(SolverFlags::COMPUTE_IMPULSES); };
+
+        // If the other object appears in either set of exclusions then these objects don't collide
+        if let Some(exclusions) = object1.collision_exclusions.as_ref().map(|exclusions| exclusions.get()) {
+            if exclusions.contains(&object2.object_id) { return None; }
+        }
+        if let Some(exclusions) = object2.collision_exclusions.as_ref().map(|exclusions| exclusions.get()) {
+            if exclusions.contains(&object1.object_id) { return None; }
+        }
+
         Some(SolverFlags::COMPUTE_IMPULSES)
     }
 
