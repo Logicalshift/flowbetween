@@ -77,6 +77,9 @@ pub (super) struct SimObject {
     /// The other joints that are attached to this object
     pub (super) joints: SmallVec<[SimJointId; 1]>,
 
+    /// The binding of the position of this object
+    pub (super) position: Option<BindRef<UiPoint>>,
+
     /// The impulse binding for this object
     pub (super) impulse: Option<BindRef<UiPoint>>,
 
@@ -107,6 +110,7 @@ impl SimObject {
             body_type:              SimObjectType::Kinematic,
             anchor_joint:           None,
             joints:                 smallvec![],
+            position:               None,
             impulse:                None,
             collision_exclusions:   None,
             state_bindings:         state_bindings,
