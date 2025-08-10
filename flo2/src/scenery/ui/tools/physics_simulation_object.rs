@@ -43,7 +43,7 @@ pub enum SimObjectType {
 ///
 pub (super) struct SimObject {
     /// The object ID used to refer to this object outside of the simulation
-    pub (super) object_id: SimObjectId,
+    pub (super) _object_id: SimObjectId,
 
     /// Handle of the rigid body attached to this object
     pub (super) rigid_body_handle: RigidBodyHandle,
@@ -73,7 +73,7 @@ impl SimObject {
     ///
     pub fn kinematic_position_based(object_id: SimObjectId, rigid_body_handle: RigidBodyHandle) -> Self {
         Self {
-            object_id:              object_id,
+            _object_id:             object_id,
             rigid_body_handle:      rigid_body_handle,
             collider_handle:        None,
             body_type:              SimObjectType::Kinematic,
