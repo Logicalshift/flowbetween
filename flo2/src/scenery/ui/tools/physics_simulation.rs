@@ -242,18 +242,12 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                             },
 
                             Shape(SimShape::Circle(radius)) => {
-                                // Remove any existing colliders
-                                if let Some(collider_id) = object.collider_handle {
-                                    collider_set.remove(collider_id, &mut island_manager, &mut rigid_body_set, true);
-                                    object.collider_handle = None;
-                                }
-
                                 // Create a ball collider
                                 let collider = ColliderBuilder::ball(radius as _)
                                     .build();
 
                                 let collider_id = collider_set.insert_with_parent(collider, object.rigid_body_handle, &mut rigid_body_set);
-                                object.collider_handle = Some(collider_id);
+                                object.set_collider_handle(collider_id, &mut collider_set, &mut island_manager, &mut rigid_body_set);
                             }
 
                             Position(pos) => {

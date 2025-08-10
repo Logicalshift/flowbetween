@@ -159,6 +159,25 @@ impl SimObject {
     }
 
     ///
+    /// Updates the collider handle for this object
+    ///
+    pub fn set_collider_handle(&mut self, collider_id: ColliderHandle, collider_set: &mut ColliderSet, islands: &mut IslandManager, rigid_bodies: &mut RigidBodySet) {
+        if let Some(old_collider) = self.collider_handle.take() {
+            collider_set.remove(old_collider, islands, rigid_bodies, true);
+        }
+
+        self.collider_handle = Some(collider_id);
+
+        if let Some(collider) = self.collider_handle.and_then(|handle| collider_set.get_mut(handle)) {
+            match self.body_type {
+                SimObjectType::Static    => { collider.set_active_hooks(ActiveHooks::default()); }
+                SimObjectType::Dynamic   => { collider.set_active_hooks(ActiveHooks::default().union(ActiveHooks::FILTER_INTERSECTION_PAIR)); }
+                SimObjectType::Kinematic => { collider.set_active_hooks(ActiveHooks::default().union(ActiveHooks::FILTER_INTERSECTION_PAIR)); }
+            }
+        }
+    }
+
+    ///
     /// Updates this object's position within the simulation to the specified value
     ///
     pub fn update_position(&mut self, new_position: UiPoint, rigid_body_set: &mut RigidBodySet, impulse_joint_set: &mut ImpulseJointSet) {
