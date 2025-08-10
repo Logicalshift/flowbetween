@@ -72,7 +72,7 @@ pub (super) struct SimObjectStateBindings {
 ///
 pub (super) struct SimObject {
     /// The object ID used to refer to this object outside of the simulation
-    pub (super) _object_id: SimObjectId,
+    pub (super) object_id: SimObjectId,
 
     /// Handle of the rigid body attached to this object
     pub (super) rigid_body_handle: RigidBodyHandle,
@@ -93,7 +93,7 @@ pub (super) struct SimObject {
     pub (super) joints: SmallVec<[SimJointId; 1]>,
 
     /// If we're tracking when the bindings of this object are changed, this is the releasable that represents that lifetime
-    pub (super) bindings_changed: Option<Box<dyn Releasable>>,
+    pub (super) bindings_changed: Option<Box<dyn Send + Releasable>>,
 
     /// The binding of the position of this object
     pub (super) position: Option<BindRef<UiPoint>>,
@@ -121,7 +121,7 @@ impl SimObject {
         };
 
         Self {
-            _object_id:             object_id,
+            object_id:              object_id,
             rigid_body_handle:      rigid_body_handle,
             collider_handle:        None,
             is_new:                 true,
@@ -284,3 +284,30 @@ impl SimObjectCollection {
             .and_then(|object_id| self.bodies.get_mut(object_id))
     }
 }
+
+/*
+impl PhysicsHooks for SimObjectCollection {
+    fn filter_contact_pair(&self, _context: &PairFilterContext) -> Option<SolverFlags> {
+        Some(SolverFlags::COMPUTE_IMPULSES)
+    }
+
+    fn filter_intersection_pair(&self, context: &PairFilterContext) -> bool {
+        // Retrieve the objects that are colliding
+        let Some(object1) = context.rigid_body1.and_then(|handle| self.get_by_handle(handle)) else { return true; };
+        let Some(object2) = context.rigid_body2.and_then(|handle| self.get_by_handle(handle)) else { return true; };
+
+        // If the other object appears in either set of exclusions then these objects don't collide
+        if let Some(exclusions) = object1.collision_exclusions.as_ref().map(|exclusions| exclusions.get()) {
+            if exclusions.contains(&object2.object_id) { return false; }
+        }
+        if let Some(exclusions) = object2.collision_exclusions.as_ref().map(|exclusions| exclusions.get()) {
+            if exclusions.contains(&object1.object_id) { return false; }
+        }
+
+        true
+    }
+
+    fn modify_solver_contacts(&self, _context: &mut ContactModificationContext) {
+    }
+}
+*/
