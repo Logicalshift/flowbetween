@@ -259,32 +259,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                             Position(pos) => {
                                 let pos = if let Some(pos) = pos { pos.get() } else { todo!() };
 
-                                if new_objects.contains(&object_id) {
-                                    // Set the position immediately if the body is new
-                                    rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true);
-                                } else {
-                                    // Action for setting the position depends on the type of the object
-                                    match object.body_type {
-                                        SimObjectType::Static       => { rigid_body.set_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0), true); }
-                                        SimObjectType::Kinematic    => { rigid_body.set_next_kinematic_position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)); rigid_body.wake_up(false); }
-                                        SimObjectType::Dynamic      => { /* We set up a spring to pull the object into position */ }
-                                    }
-                                }
-
-                                // Create an anchor for this point
-                                let anchor          = RigidBodyBuilder::fixed().position(Isometry::new(vector![pos.x() as _, pos.y() as _], 0.0)).build();
-                                let anchor_handle   = rigid_body_set.insert(anchor);
-
-                                // Create a spring to attach to the anchor
-                                let spring          = SpringJointBuilder::new(0.0, 100.0, 10.0).spring_model(MotorModel::AccelerationBased).contacts_enabled(false).build();
-                                let spring_handle   = impulse_joint_set.insert(anchor_handle, object.rigid_body_handle, spring, true);
-
-                                // Update the joint
-                                if let Some((old_anchor, old_spring)) = object.anchor_joint.take() {
-                                    impulse_joint_set.remove(old_spring, true);
-                                    rigid_body_set.remove(old_anchor, &mut island_manager, &mut collider_set, &mut impulse_joint_set, &mut multibody_joint_set, true);
-                                }
-                                object.anchor_joint = Some((anchor_handle, spring_handle));
+                                object.update_position(pos, &mut rigid_body_set, &mut impulse_joint_set);
                             }
 
                             BindImpulse(impulse_binding) => {
@@ -453,7 +428,10 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 }
 
                 // There are no more new objects
-                new_objects.clear();
+                for new_object in new_objects.drain() {
+                    let Some(object) = rigid_bodies.get_mut(&new_object) else { continue; };
+                    object.is_new = false;
+                }
 
                 // Run up to MAX_TICKS steps
                 let mut num_steps   = 0;

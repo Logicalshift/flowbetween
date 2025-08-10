@@ -2,6 +2,7 @@ use super::physics_simulation_joints::*;
 use crate::scenery::ui::ui_path::*;
 
 use flo_binding::*;
+use flo_curves::*;
 use rapier2d::prelude::*;
 
 use uuid::*;
@@ -64,6 +65,9 @@ pub (super) struct SimObject {
     /// The collider that is associated with this object
     pub (super) collider_handle: Option<ColliderHandle>,
 
+    /// True if this object is new (hasn't been run through the simulation yet)
+    pub (super) is_new: bool,
+
     /// The type of rigid body that this object is being simulated as
     pub (super) body_type: SimObjectType,
 
@@ -99,6 +103,7 @@ impl SimObject {
             _object_id:             object_id,
             rigid_body_handle:      rigid_body_handle,
             collider_handle:        None,
+            is_new:                 true,
             body_type:              SimObjectType::Kinematic,
             anchor_joint:           None,
             joints:                 smallvec![],
@@ -114,5 +119,46 @@ impl SimObject {
     #[inline]
     pub fn set_body_type(&mut self, new_type: SimObjectType) {
         self.body_type = new_type;
+    }
+
+    ///
+    /// Updates this object's position within the simulation to the specified value
+    ///
+    pub fn update_position(&mut self, new_position: UiPoint, rigid_body_set: &mut RigidBodySet, impulse_joint_set: &mut ImpulseJointSet) {
+        let Some(rigid_body) = rigid_body_set.get_mut(self.rigid_body_handle) else { return; };
+
+        if self.is_new {
+            // Set the position immediately if the body is new
+            rigid_body.set_position(Isometry::new(vector![new_position.x() as _, new_position.y() as _], 0.0), true);
+        } else {
+            // Action for setting the position depends on the type of the object
+            match self.body_type {
+                SimObjectType::Static       => { rigid_body.set_position(Isometry::new(vector![new_position.x() as _, new_position.y() as _], 0.0), true); }
+                SimObjectType::Kinematic    => { rigid_body.set_next_kinematic_position(Isometry::new(vector![new_position.x() as _, new_position.y() as _], 0.0)); rigid_body.wake_up(false); }
+                SimObjectType::Dynamic      => { /* We set up a spring to pull the object into position */ }
+            }
+        }
+
+        let anchor_handle = if let Some((anchor_handle, _)) = self.anchor_joint {
+            // Use the existing anchor
+            anchor_handle
+        } else {
+            // Create an anchor for this point
+            let anchor          = RigidBodyBuilder::fixed().position(Isometry::new(vector![new_position.x() as _, new_position.y() as _], 0.0)).build();
+            let anchor_handle   = rigid_body_set.insert(anchor);
+
+            // Create a spring to attach to the anchor
+            let spring          = SpringJointBuilder::new(0.0, 100.0, 10.0).spring_model(MotorModel::AccelerationBased).contacts_enabled(false).build();
+            let spring_handle   = impulse_joint_set.insert(anchor_handle, self.rigid_body_handle, spring, true);
+
+            self.anchor_joint   = Some((anchor_handle, spring_handle));
+
+            anchor_handle
+        };
+
+        // Set the position of the anchor (where the spring will draw this object to, when it's dynamic)
+        if let Some(anchor) = rigid_body_set.get_mut(anchor_handle) {
+            anchor.set_position(Isometry::new(vector![new_position.x() as _, new_position.y() as _], 0.0), true);
+        }
     }
 }
