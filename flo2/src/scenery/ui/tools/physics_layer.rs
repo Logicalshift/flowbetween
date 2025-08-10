@@ -403,10 +403,9 @@ impl PhysicsLayerState {
     pub fn update_tool_in_simulation(&mut self, tool_id: PhysicsToolId) -> impl Send + Future<Output=()> {
         let simulation_requests = &mut self.simulation_requests;
         let objects             = self.objects.lock().unwrap();
-        let bounds              = &self.bounds;
 
         let update_request      = if let Some(object) = objects.get(&tool_id) {
-            let future = object.update_in_simulation(bounds, simulation_requests);
+            let future = object.update_in_simulation(simulation_requests);
 
             Some(future)
         } else {
@@ -433,7 +432,6 @@ impl PhysicsLayerState {
     ///
     pub async fn drag(&mut self, tool_id: PhysicsToolId, x: f64, y: f64) {
         self.object_action(tool_id, move |object, _| object.drag(x, y));
-        self.update_tool_in_simulation(tool_id).await;
     }
 
     ///

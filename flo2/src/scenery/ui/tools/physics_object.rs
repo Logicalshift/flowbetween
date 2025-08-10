@@ -333,9 +333,13 @@ impl PhysicsObject {
     ///
     pub fn create_in_simulation(&self, bounds: &Binding<UiPoint>, requests: &mut OutputSink<PhysicsSimulation>) -> impl Send + Future<Output=()> {
         let physics_id          = self.physics_id;
-        let position            = Self::position(&self.position, bounds);
         let tool_size           = self.tool.size();
         let position_binding    = self.properties.position.clone();
+
+        let tool_position       = self.position.clone();
+        let bounds              = bounds.clone();
+        let drag_position       = self.properties.drag_position.clone();
+        let position            = computed(move || if let Some(drag_position) = drag_position.get() { drag_position } else { Self::position(&tool_position, &bounds).unwrap_or(UiPoint(0.0, 0.0)) });
 
         async move {
             // Create the body
@@ -346,22 +350,21 @@ impl PhysicsObject {
 
             // Set the initial position and shape of the object
             requests.send(PhysicsSimulation::Set(physics_id, vec![
-                SimBodyProperty::Position(Some(bind(position.unwrap_or(UiPoint(0.0, 0.0))).into())),
+                SimBodyProperty::Position(Some(position.into())),
                 SimBodyProperty::Type(SimObjectType::Dynamic),
                 SimBodyProperty::LinearDamping(10.0),
                 SimBodyProperty::AngularDamping(5.0),
                 SimBodyProperty::LockRotation(true),
-                SimBodyProperty::Shape(SimShape::Circle(tool_size.0))
+                SimBodyProperty::Shape(SimShape::Circle(tool_size.0/2.0))
             ])).await.ok();
         }
     }
 
     ///
-    /// Updates the position of this object in a simulation
+    /// Updates the properties of the object in the physics simulation
     ///
-    pub fn update_in_simulation<'a>(&self, bounds: &Binding<UiPoint>, requests: &'a mut OutputSink<PhysicsSimulation>) -> BoxFuture<'a, ()> {
+    pub fn update_in_simulation<'a>(&self, requests: &'a mut OutputSink<PhysicsSimulation>) -> BoxFuture<'a, ()> {
         let physics_id      = self.physics_id;
-        let position        = if let Some(drag_position) = self.properties.drag_position() { Some(drag_position) } else { Self::position(&self.position, bounds) };
         let tool_size       = self.tool.size();
         let being_dragged   = self.being_dragged;
 
@@ -370,9 +373,6 @@ impl PhysicsObject {
 
             requests.send(PhysicsSimulation::Set(physics_id, vec![
                 SimBodyProperty::Type(object_type),
-                SimBodyProperty::Position(Some(bind(position.unwrap_or(UiPoint(0.0, 0.0))).into())),
-                SimBodyProperty::LinearDamping(10.0),
-                SimBodyProperty::AngularDamping(5.0),
                 SimBodyProperty::Shape(SimShape::Circle(tool_size.0/2.0))
             ])).await.ok();
         }.boxed()
