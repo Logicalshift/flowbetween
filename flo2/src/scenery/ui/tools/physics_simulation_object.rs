@@ -2,12 +2,15 @@ use super::physics_simulation_joints::*;
 use crate::scenery::ui::ui_path::*;
 
 use flo_binding::*;
+use flo_binding::binding_context::*;
 use flo_curves::*;
 use rapier2d::prelude::*;
 
 use uuid::*;
 use ::serde::*;
 use smallvec::*;
+
+use std::sync::*;
 
 ///
 /// Identifier of an object in a physics simulation
@@ -77,6 +80,9 @@ pub (super) struct SimObject {
     /// The other joints that are attached to this object
     pub (super) joints: SmallVec<[SimJointId; 1]>,
 
+    /// If we're tracking when the bindings of this object are changed, this is the releasable that represents that lifetime
+    pub (super) bindings_changed: Option<Box<dyn Releasable>>,
+
     /// The binding of the position of this object
     pub (super) position: Option<BindRef<UiPoint>>,
 
@@ -110,6 +116,7 @@ impl SimObject {
             body_type:              SimObjectType::Kinematic,
             anchor_joint:           None,
             joints:                 smallvec![],
+            bindings_changed:       None,
             position:               None,
             impulse:                None,
             collision_exclusions:   None,
@@ -163,6 +170,35 @@ impl SimObject {
         // Set the position of the anchor (where the spring will draw this object to, when it's dynamic)
         if let Some(anchor) = rigid_body_set.get_mut(anchor_handle) {
             anchor.set_position(Isometry::new(vector![new_position.x() as _, new_position.y() as _], 0.0), true);
+        }
+    }
+
+    ///
+    /// Performs an action when the bindings of this object change
+    ///
+    pub fn when_changed(&mut self, notify: Arc<dyn Notifiable>) {
+        // Stop any existing notification
+        if let Some(mut bindings_changed) = self.bindings_changed.take() {
+            bindings_changed.done();
+        }
+
+        // Create a new notification, if there are any dependencies
+        let mut dependencies     = BindingDependencies::new();
+        let mut num_dependencies = 0;
+
+        if let Some(position) = &mut self.position {
+            dependencies.add_dependency(position.clone());
+            num_dependencies += 1;
+        }
+
+        if let Some(impulse) = &mut self.impulse {
+            dependencies.add_dependency(impulse.clone());
+            num_dependencies += 1;
+        }
+
+        // If there are any dependencies, set up the notifications
+        if num_dependencies > 0 {
+            self.bindings_changed = Some(dependencies.when_changed(notify));
         }
     }
 }

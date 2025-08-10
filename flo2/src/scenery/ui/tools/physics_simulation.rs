@@ -9,6 +9,7 @@
 use super::physics_simulation_joints::*;
 use super::physics_simulation_object::*;
 use crate::scenery::ui::ui_path::*;
+use crate::scenery::ui::binding_tracker::*;
 
 use flo_binding::*;
 use flo_scene::*;
@@ -38,6 +39,9 @@ pub enum PhysicsSimulation {
     ///
     /// Physics simulations have clocks that run externally (this allows them to be used for realtime and non-realtime tasks)
     Tick(Duration),
+
+    /// Indicates that the properties of an object have been updated (this is triggered automatically when any of the binding change)
+    UpdateObject(SimObjectId),
 
     /// Creates a new rigid body in this simulation
     CreateRigidBody(SimObjectId),
@@ -178,6 +182,7 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
     let mut object_id_for_rigid_body_id = HashMap::new();
     let mut new_objects                 = HashSet::new();
     let mut joints                      = HashMap::new();
+    let mut recently_changed            = HashSet::new();
 
     // Create the rapier2d state
     let mut gravity             = vector![0.0, 9.81];
@@ -257,17 +262,21 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                             }
 
                             Position(pos) => {
-                                let pos = if let Some(pos) = pos { pos.get() } else { todo!() };
-
-                                object.update_position(pos, &mut rigid_body_set, &mut impulse_joint_set);
+                                object.position = pos;
+                                object.when_changed(NotifySubprogram::send(PhysicsSimulation::UpdateObject(object_id), &context, our_program_id));
+                                recently_changed.insert(object_id);
                             }
 
                             BindImpulse(impulse_binding) => {
-
+                                object.impulse = impulse_binding;
+                                object.when_changed(NotifySubprogram::send(PhysicsSimulation::UpdateObject(object_id), &context, our_program_id));
+                                recently_changed.insert(object_id);
                             }
 
                             IgnoreCollisions(collision_binding) => {
-
+                                object.collision_exclusions = Some(collision_binding);
+                                object.when_changed(NotifySubprogram::send(PhysicsSimulation::UpdateObject(object_id), &context, our_program_id));
+                                recently_changed.insert(object_id);
                             }
                         }
                     }
@@ -290,6 +299,20 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                             gravity = vector![x as _, y as _];
                         }
                     }
+                }
+            }
+
+            UpdateObject(object_id) => {
+                // Add to the recently changed list
+                recently_changed.insert(object_id);
+
+                // Make sure the simulation is awake
+                if manage_timer && !timer_awake {
+                    timer_program.as_mut().unwrap()
+                        .send(TimerRequest::CallEvery(our_program_id, 0, Duration::from_micros((TICK_DURATION_S * 1_000_000.0) as _)))
+                        .await
+                        .unwrap();
+                    timer_awake = true;
                 }
             }
 
@@ -425,6 +448,20 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 if time < last_step_time {
                     // Something is wrong with the timer, and it's moved backwards (might happen if we went to sleep and woke up again)
                     last_step_time = if time >= tick { time - tick } else { time };
+                }
+
+                // Update the status of any object in the 'recently changed' list
+                for changed_object_id in recently_changed.drain() {
+                    let Some(object) = rigid_bodies.get_mut(&changed_object_id) else { continue; };
+
+                    if let Some(position) = object.position.as_ref().map(|pos| pos.get()) {
+                        object.update_position(position, &mut rigid_body_set, &mut impulse_joint_set);
+                    }
+
+                    if let Some(impulse) = object.impulse.as_ref().map(|impulse| impulse.get()) {
+                        let Some(body) = rigid_body_set.get_mut(object.rigid_body_handle) else { continue; };
+                        body.add_force(vector![impulse.x() as _, impulse.y() as _], true);
+                    }
                 }
 
                 // There are no more new objects
