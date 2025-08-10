@@ -137,12 +137,14 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     state.start_rendering_program(&context).await;
 
     // TEST: create a test object, force an initial update
-    let test_object = test_tool();
+    let group_1 = ToolGroupId::new();
+    let group_2 = ToolGroupId::new();
+    let test_object = test_tool().with_selection_group(group_1).with_bind_with(vec![group_2]);
     let test_object_id_1 = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
     state.float(test_object_id_1, (100.0, 100.0)).await;
 
-    let test_object = test_tool();
+    let test_object = test_tool().with_selection_group(group_2).with_bind_with(vec![group_1]);
     let test_object_id_2 = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
     state.float(test_object_id_2, (200.0, 100.0)).await;
