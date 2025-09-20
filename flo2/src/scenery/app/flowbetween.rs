@@ -132,7 +132,7 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
     let drawing_window_program_id  = SubProgramId::new();
     let event_relay_program_id     = SubProgramId::new();
 
-    create_render_window_sub_program(&scene, render_window_program_id, properties.size().get()).unwrap();
+    create_render_window_sub_program(&scene, render_window_program_id, properties.requested_size().get()).unwrap();
     create_drawing_window_program(&scene, drawing_window_program_id, render_window_program_id).unwrap();
 
     // Each document runs in its own isolated scene (which lets us run subprograms in the scene with their own IDs + shut everything down cleanly when we're done)
