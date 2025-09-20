@@ -125,13 +125,19 @@ async fn drawing_relay_program(drawing_requests: OutputSink<DrawingWindowRequest
 /// Creates an empty document in the context
 ///
 async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgramId, context: &SceneContext) {
-    let properties = WindowProperties::from(&());
+    let window_properties   = WindowProperties::from(&());
+    let actual_size         = window_properties.actual_size().unwrap();
+    let window_properties   = window_properties.with_viewport_bounds(computed(move || {
+        let actual_size = actual_size.get();
+
+        ViewportBounds::FitExact((0.0, 0.0), actual_size)
+    }));
 
     // Create a window for this document
     let drawing_window_program_id  = SubProgramId::new();
     let event_relay_program_id     = SubProgramId::new();
 
-    create_render_window_sub_program(&scene, drawing_window_program_id, properties.requested_size().get()).unwrap();
+    create_render_window_sub_program(&scene, drawing_window_program_id, window_properties.requested_size().get()).unwrap();
 
     // Each document runs in its own isolated scene (which lets us run subprograms in the scene with their own IDs + shut everything down cleanly when we're done)
     let document_scene = Arc::new(Scene::default());
