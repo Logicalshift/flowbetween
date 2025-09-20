@@ -55,7 +55,7 @@ impl SceneMessage for FlowBetween {
 ///
 /// Program that relays events originating from the window in the app scene to the main document in the document scene
 ///
-async fn event_relay_program(drawing_events: impl Unpin + Send + Sink<DocumentRequest>, document_program_id: SubProgramId, input: InputStream<DrawEvent>, context: SceneContext) {
+async fn event_relay_program(drawing_events: impl Unpin + Send + Sink<DocumentRequest>, window_properties: WindowProperties, document_program_id: SubProgramId, input: InputStream<DrawEvent>, context: SceneContext) {
     let mut input           = input;
     let mut drawing_events  = drawing_events;
     let mut scale           = 1.0;
@@ -65,6 +65,11 @@ async fn event_relay_program(drawing_events: impl Unpin + Send + Sink<DocumentRe
         // Interpret some special events
         match &event {
             DrawEvent::Resize(w, h) => {
+                if let Some(actual_size) = window_properties.actual_size() {
+                    // Because we manually create the window, the window properties aren't tracked by flo_draw so we update the scale here
+                    actual_size.set((*w as _, *h as _));
+                }
+
                 // Send a resize request for the resize event
                 drawing_events.send(DocumentRequest::Resize((w/scale) as _, (h/scale) as _)).await.ok();
                 size = (*w, *h);
@@ -73,6 +78,11 @@ async fn event_relay_program(drawing_events: impl Unpin + Send + Sink<DocumentRe
             DrawEvent::Scale(new_scale) => {
                 // Send a resize event when the scale changes
                 if *new_scale != 0.0 && *new_scale != scale {
+                    if let Some(actual_scale) = window_properties.actual_scale() {
+                        // Because we manually create the window, the window properties aren't tracked by flo_draw so we update the scale here
+                        actual_scale.set(*new_scale as _);
+                    }
+
                     let (w, h) = size;
                     scale = *new_scale;
 
@@ -168,8 +178,9 @@ async fn create_empty_document(scene: Arc<Scene>, document_program_id: SubProgra
     }, 20);
 
     // Add a subprogram to the app scene that relays events from the window to the document scene
-    let drawing_events = document_scene.send_to_scene(()).unwrap();
-    scene.add_subprogram(event_relay_program_id, move |input, context| event_relay_program(drawing_events, document_program_id, input, context), 20);
+    let drawing_events      = document_scene.send_to_scene(()).unwrap();
+    let drawing_properties  = window_properties.clone();
+    scene.add_subprogram(event_relay_program_id, move |input, context| event_relay_program(drawing_events, drawing_properties, document_program_id, input, context), 20);
 
     context.send(drawing_window_program_id).unwrap()
         .send(DrawingWindowRequest::SendEvents(event_relay_program_id)).await.ok();
