@@ -87,6 +87,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     let document_canvas = Canvas::new();
     document_canvas.write([
         Draw::ClearCanvas(Color::Rgba(0.8, 0.8, 0.8, 1.0)),
+        Draw::CanvasHeight(1024.0),
 
         Draw::Namespace(NamespaceId::default()),
         Draw::Layer(LayerId(0)),
@@ -176,6 +177,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                         // Update the size of the canvas
                         new_size = (width, height);
 
+                        /*
                         // Reset the pending drawing to the canvas contents
                         pending_drawing = document_canvas.get_drawing();
 
@@ -189,6 +191,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                                 Draw::CenterRegion((0.0, 0.0), (width as _, height as _)),
                             ]);
                         }
+                        */
                     }
                 }
 
