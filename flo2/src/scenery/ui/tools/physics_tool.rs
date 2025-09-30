@@ -1,3 +1,5 @@
+use super::tool_state::*;
+
 use uuid::*;
 use ::serde::*;
 
@@ -16,21 +18,6 @@ impl PhysicsToolId {
     ///
     pub fn new() -> Self {
         PhysicsToolId(Uuid::new_v4())
-    }
-}
-
-///
-/// Identifier used to specify a tool group within the flowbetween app
-///
-#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ToolGroupId(Uuid);
-
-impl ToolGroupId {
-    ///
-    /// Creates a unique new tool group ID
-    ///
-    pub fn new() -> Self {
-        ToolGroupId(Uuid::new_v4())
     }
 }
 
@@ -132,7 +119,7 @@ impl PhysicsTool {
     }
 
     ///
-    /// Retrieves the ID of this tol
+    /// Retrieves the ID of this tool
     ///
     pub fn id(&self) -> PhysicsToolId {
         self.id
