@@ -4,12 +4,16 @@
 //! in the application
 //!
 
+use crate::scenery::ui::subprograms::*;
+
 use flo_scene::*;
 use flo_draw::canvas::*;
 
+use futures::prelude::*;
 use ::serde::*;
 use uuid::*;
 
+use std::collections::*;
 use std::sync::*;
 
 ///
@@ -107,4 +111,160 @@ pub enum Tool {
 
     /// Close any open dialogs
     CloseDialogs,
+}
+
+impl SceneMessage for Tool {
+    fn default_target() -> StreamTarget {
+        subprogram_tool_state().into()
+    }
+
+    fn initialise(init_context: &impl SceneInitialisationContext) {
+        // Run the tool state subprogram
+        init_context.connect_programs((), subprogram_tool_state(), StreamId::with_message_type::<Tool>()).unwrap();
+        init_context.add_subprogram(subprogram_tool_state(), tool_state_program, 20);
+    }
+
+}
+
+///
+/// Messages sent to the subprogram that is the location of a tool
+///
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum ToolLocation {
+
+}
+
+impl SceneMessage for ToolLocation {
+    fn default_target() -> StreamTarget {
+        StreamTarget::None
+    }
+}
+
+///
+/// Messages sent to the subprogram that is set as the owner of a type of tool
+///
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum ToolOwner {
+
+}
+
+impl SceneMessage for ToolOwner {
+    fn default_target() -> StreamTarget {
+        StreamTarget::None
+    }
+}
+
+///
+/// Messages sent to anything that queries or subscribes to the state of the tools in FlowBetween
+///
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum ToolState {
+
+}
+
+impl SceneMessage for ToolState {
+    fn default_target() -> StreamTarget {
+        StreamTarget::None
+    }
+}
+
+///
+/// The default subprogram that manages tool state (which tools are selected, where their icons are drawn) in a flowbetween document
+///
+pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext) {
+    // The values that make up the known state of the tools in FlowBetween
+    let mut tools_for_groups    = HashMap::new();
+    let mut group_for_tool      = HashMap::new();
+    let mut type_for_tool       = HashMap::new();
+    let mut tools               = HashSet::new();
+
+    let mut tool_locations      = HashMap::new();
+    let mut tool_type_owners    = HashMap::new();
+    let mut tool_names          = HashMap::new();
+    let mut tool_icons          = HashMap::new();
+
+    // Run the main loop
+    let mut input = input;
+    while let Some(tool_request) = input.next().await {
+        use Tool::*;
+
+        match tool_request {
+            Subscribe(subscribe_target) => {
+                todo!();
+            }
+
+            Query(query_target) => {
+                todo!();
+            }
+
+            SetToolOwner(tool_type_id, tool_owner_target) => {
+                if let Some(owner) = tool_type_owners.get_mut(&tool_type_id) {
+                    *owner = context.send::<ToolOwner>(tool_owner_target).ok();
+                }
+            }
+
+            SetToolLocation(tool_id, location_target, location) => {
+                if let Some(location) = tool_locations.get_mut(&tool_id) {
+                    *location = context.send::<ToolLocation>(location_target).ok();
+                }
+            }
+
+            SetToolDialogLocation(location) => {
+                todo!();
+            }
+
+            SetToolName(tool_id, new_name) => {
+                if let Some(name) = tool_names.get_mut(&tool_id) {
+                    *name = new_name;
+                }
+            }
+
+            SetToolIcon(tool_id, new_drawing) => {
+                if let Some(icon) = tool_icons.get_mut(&tool_id) {
+                    *icon = new_drawing;
+                }
+            }
+
+            CreateTool(group_id, type_id, tool_id) => {
+                // Add this tool to the group
+                tools_for_groups.entry(group_id)
+                    .or_insert_with(|| HashSet::new())
+                    .insert(tool_id);
+                group_for_tool.insert(tool_id, group_id);
+                type_for_tool.insert(tool_id, type_id);
+                tools.insert(tool_id);
+
+                // Set up the default properties
+                tool_locations.insert(tool_id, None);
+                tool_names.insert(tool_id, String::new());
+                tool_type_owners.entry(type_id).or_insert(None);
+                tool_icons.insert(tool_id, Arc::new(vec![]));
+            }
+
+            RemoveTool(tool_id) => {
+                todo!();
+            }
+
+            DuplicateTool(old_tool_id, new_tool_id) => {
+                todo!();
+            }
+
+            SetDefaultForGroup(tool_group_id, default_tool_id) => {
+                todo!();
+            }
+
+            Select(tool_id) => {
+                todo!();
+            }
+
+            OpenDialog(tool_id) => {
+                todo!();
+            }
+
+            CloseDialogs => {
+                todo!();
+            }
+
+        }
+    }
 }
