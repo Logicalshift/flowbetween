@@ -159,7 +159,11 @@ impl SceneMessage for ToolOwner {
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum ToolState {
+    /// The specified tool has become selected
+    Select(ToolId),
 
+    /// The specified tool has become deselected
+    Deselect(ToolId),
 }
 
 impl SceneMessage for ToolState {
@@ -183,6 +187,28 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
     let mut tool_names          = HashMap::new();
     let mut tool_icons          = HashMap::new();
 
+    let mut group_selection     = HashMap::new();
+
+    let mut subscribers         = vec![];
+
+    // Sends a message to all the Subscribers
+    async fn send_to_subscribers(subscribers: &mut Vec<Option<OutputSink<ToolState>>>, message: ToolState) {
+        // Send the message to each subscriber in turn
+        for maybe_subscriber in subscribers.iter_mut() {
+            if let Some(subscriber) = maybe_subscriber {
+                let status = subscriber.send(message.clone()).await;
+
+                if let Err(_) = status {
+                    // Remove this subscriber
+                    *maybe_subscriber = None;
+                }
+            }
+        }
+
+        // Free up any
+        subscribers.retain(|val| val.is_some());
+    }
+
     // Run the main loop
     let mut input = input;
     while let Some(tool_request) = input.next().await {
@@ -190,10 +216,17 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
 
         match tool_request {
             Subscribe(subscribe_target) => {
-                todo!();
+                if let Ok(mut subscription_target) = context.send::<ToolState>(subscribe_target) {
+                    // Send the current state
+                    for selected_tool in group_selection.values().copied() { subscription_target.send(ToolState::Select(selected_tool)).await.ok(); }
+                    
+                    // Add to the subscription list
+                    subscribers.push(Some(subscription_target))
+                }
             }
 
             Query(query_target) => {
+                // TODO: send the current state as a query response
                 todo!();
             }
 
@@ -254,7 +287,24 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             }
 
             Select(tool_id) => {
-                todo!();
+                if let Some(tool_group) = group_for_tool.get(&tool_id) {
+                    if let Some(old_tool) = group_selection.get(tool_group) {
+                        // Deselect the old tool in the state
+                        send_to_subscribers(&mut subscribers, ToolState::Deselect(*old_tool)).await;
+
+                        // TODO: deselect in the location of the tool
+                        // TODO: deselect in the owner of the tool
+                    }
+
+                    // Select the new tool
+                    group_selection.insert(*tool_group, tool_id);
+
+                    // Send to subscribers the new tool
+                    send_to_subscribers(&mut subscribers, ToolState::Select(tool_id)).await;
+
+                    // TODO: send to the tool's location that it's now selected
+                    // TODO: send to the tool's owner that it's now selected
+                }
             }
 
             OpenDialog(tool_id) => {
