@@ -127,42 +127,6 @@ impl SceneMessage for Tool {
 }
 
 ///
-/// Messages sent to the subprogram that is the location of a tool
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub enum ToolLocation {
-    /// The specified tool has become selected
-    Select(ToolId),
-
-    /// The specified tool has become deselected
-    Deselect(ToolId),
-}
-
-impl SceneMessage for ToolLocation {
-    fn default_target() -> StreamTarget {
-        StreamTarget::None
-    }
-}
-
-///
-/// Messages sent to the subprogram that is set as the owner of a type of tool
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub enum ToolOwner {
-    /// The specified tool has become selected
-    Select(ToolId),
-
-    /// The specified tool has become deselected
-    Deselect(ToolId),
-}
-
-impl SceneMessage for ToolOwner {
-    fn default_target() -> StreamTarget {
-        StreamTarget::None
-    }
-}
-
-///
 /// Messages sent to anything that queries or subscribes to the state of the tools in FlowBetween
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -240,13 +204,13 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
 
             SetToolOwner(tool_type_id, tool_owner_target) => {
                 if let Some(owner) = tool_type_owners.get_mut(&tool_type_id) {
-                    *owner = context.send::<ToolOwner>(tool_owner_target).ok();
+                    *owner = context.send::<ToolState>(tool_owner_target).ok();
                 }
             }
 
             SetToolLocation(tool_id, location_target, location) => {
                 if let Some(location) = tool_locations.get_mut(&tool_id) {
-                    *location = context.send::<ToolLocation>(location_target).ok();
+                    *location = context.send::<ToolState>(location_target).ok();
                 }
             }
 
