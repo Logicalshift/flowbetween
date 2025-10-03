@@ -6,6 +6,7 @@
 
 use crate::scenery::ui::subprograms::*;
 
+use flo_scene::programs::Subscribe;
 use flo_scene::*;
 use flo_draw::canvas::*;
 
@@ -164,21 +165,23 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
     let mut subscribers         = vec![];
 
     // Sends a message to all the Subscribers
-    async fn send_to_subscribers(subscribers: &mut Vec<Option<OutputSink<ToolState>>>, message: ToolState) {
-        // Send the message to each subscriber in turn
-        for maybe_subscriber in subscribers.iter_mut() {
-            if let Some(subscriber) = maybe_subscriber {
-                let status = subscriber.send(message.clone()).await;
+    async fn send_to_subscribers(subscribers: Option<&mut Vec<Option<OutputSink<ToolState>>>>, message: ToolState) {
+        if let Some(subscribers) = subscribers {
+            // Send the message to each subscriber in turn
+            for maybe_subscriber in subscribers.iter_mut() {
+                if let Some(subscriber) = maybe_subscriber {
+                    let status = subscriber.send(message.clone()).await;
 
-                if let Err(_) = status {
-                    // Remove this subscriber
-                    *maybe_subscriber = None;
+                    if let Err(_) = status {
+                        // Remove this subscriber
+                        *maybe_subscriber = None;
+                    }
                 }
             }
-        }
 
-        // Free up any
-        subscribers.retain(|val| val.is_some());
+            // Free up any
+            subscribers.retain(|val| val.is_some());
+        }
     }
 
     // Run the main loop
@@ -204,13 +207,13 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
 
             SetToolOwner(tool_type_id, tool_owner_target) => {
                 if let Some(owner) = tool_type_owners.get_mut(&tool_type_id) {
-                    *owner = context.send::<ToolState>(tool_owner_target).ok();
+                    *owner = vec![context.send::<ToolState>(tool_owner_target).ok()];
                 }
             }
 
             SetToolLocation(tool_id, location_target, location) => {
                 if let Some(location) = tool_locations.get_mut(&tool_id) {
-                    *location = context.send::<ToolState>(location_target).ok();
+                    *location = vec![context.send::<ToolState>(location_target).ok()];
                 }
             }
 
@@ -240,9 +243,9 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 tools.insert(tool_id);
 
                 // Set up the default properties
-                tool_locations.insert(tool_id, None);
+                tool_locations.insert(tool_id, vec![]);
                 tool_names.insert(tool_id, String::new());
-                tool_type_owners.entry(type_id).or_insert(None);
+                tool_type_owners.entry(type_id).or_insert(vec![]);
                 tool_icons.insert(tool_id, Arc::new(vec![]));
             }
 
@@ -261,21 +264,19 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             Select(tool_id) => {
                 if let Some(tool_group) = group_for_tool.get(&tool_id) {
                     if let Some(old_tool) = group_selection.get(tool_group) {
-                        // Deselect the old tool in the state
-                        send_to_subscribers(&mut subscribers, ToolState::Deselect(*old_tool)).await;
-
-                        // TODO: deselect in the location of the tool
-                        // TODO: deselect in the owner of the tool
+                        // Deselect the old tool in the state, location and owners
+                        send_to_subscribers(Some(&mut subscribers), ToolState::Deselect(*old_tool)).await;
+                        send_to_subscribers(tool_locations.get_mut(old_tool), ToolState::Deselect(*old_tool)).await;
+                        send_to_subscribers(type_for_tool.get(old_tool).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::Deselect(*old_tool)).await;
                     }
 
                     // Select the new tool
                     group_selection.insert(*tool_group, tool_id);
 
                     // Send to subscribers the new tool
-                    send_to_subscribers(&mut subscribers, ToolState::Select(tool_id)).await;
-
-                    // TODO: send to the tool's location that it's now selected
-                    // TODO: send to the tool's owner that it's now selected
+                    send_to_subscribers(Some(&mut subscribers), ToolState::Select(tool_id)).await;
+                    send_to_subscribers(tool_locations.get_mut(&tool_id), ToolState::Select(tool_id)).await;
+                    send_to_subscribers(type_for_tool.get(&tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::Select(tool_id)).await;
                 }
             }
 
