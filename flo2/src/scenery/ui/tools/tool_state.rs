@@ -131,7 +131,11 @@ impl SceneMessage for Tool {
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum ToolLocation {
+    /// The specified tool has become selected
+    Select(ToolId),
 
+    /// The specified tool has become deselected
+    Deselect(ToolId),
 }
 
 impl SceneMessage for ToolLocation {
@@ -145,7 +149,11 @@ impl SceneMessage for ToolLocation {
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum ToolOwner {
+    /// The specified tool has become selected
+    Select(ToolId),
 
+    /// The specified tool has become deselected
+    Deselect(ToolId),
 }
 
 impl SceneMessage for ToolOwner {
