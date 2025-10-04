@@ -129,11 +129,20 @@ impl SceneMessage for Tool {
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum ToolState {
+    /// A new tool has been created
+    AddTool(ToolId),
+
+    /// A tool has been removed
+    RemoveTool(ToolId),
+
     /// The specified tool has become selected
     Select(ToolId),
 
     /// The specified tool has become deselected
     Deselect(ToolId),
+
+    /// Sets the location of a tool
+    LocateTool(ToolId, (f64, f64)),
 }
 
 impl SceneMessage for ToolState {
@@ -147,19 +156,20 @@ impl SceneMessage for ToolState {
 ///
 pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext) {
     // The values that make up the known state of the tools in FlowBetween
-    let mut tools_for_groups    = HashMap::new();
-    let mut group_for_tool      = HashMap::new();
-    let mut type_for_tool       = HashMap::new();
-    let mut tools               = HashSet::new();
+    let mut tools_for_groups        = HashMap::new();
+    let mut group_for_tool          = HashMap::new();
+    let mut type_for_tool           = HashMap::new();
+    let mut tools                   = HashSet::new();
 
-    let mut tool_locations      = HashMap::new();
-    let mut tool_type_owners    = HashMap::new();
-    let mut tool_names          = HashMap::new();
-    let mut tool_icons          = HashMap::new();
+    let mut tool_locations          = HashMap::new();
+    let mut tool_location_targets   = HashMap::new();
+    let mut tool_type_owners        = HashMap::new();
+    let mut tool_names              = HashMap::new();
+    let mut tool_icons              = HashMap::new();
 
-    let mut group_selection     = HashMap::new();
+    let mut group_selection         = HashMap::new();
 
-    let mut subscribers         = vec![];
+    let mut subscribers             = vec![];
 
     // Sends a message to all the Subscribers
     async fn send_to_subscribers(subscribers: Option<&mut Vec<Option<OutputSink<ToolState>>>>, message: ToolState) {
@@ -203,9 +213,30 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 }
             }
 
-            SetToolLocation(tool_id, location_target, location) => {
+            SetToolLocation(tool_id, location_target, position) => {
                 if let Some(location) = tool_locations.get_mut(&tool_id) {
-                    *location = vec![context.send::<ToolState>(location_target).ok()];
+                    // If the location target has changed, remove the tool from the original
+                    let mut target_changed = false;
+                    if let Some(old_target) = tool_location_targets.get(&tool_id) {
+                        if old_target != &location_target {
+                            target_changed = true;
+                            send_to_subscribers(Some(location), ToolState::RemoveTool(tool_id)).await;
+                        }
+                    } else {
+                        target_changed = true;
+                    }
+
+                    // Update the location
+                    *location = vec![context.send::<ToolState>(location_target.clone()).ok()];
+                    tool_location_targets.insert(tool_id, location_target);
+
+                    // Add the tool in its new location
+                    if target_changed {
+                        send_to_subscribers(Some(location), ToolState::AddTool(tool_id)).await;
+                    }
+
+                    // Set the location of the tool
+                    send_to_subscribers(Some(location), ToolState::LocateTool(tool_id, position)).await;
                 }
             }
 
