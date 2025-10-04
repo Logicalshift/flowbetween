@@ -70,9 +70,6 @@ pub enum Tool {
     /// Adds a subscriber to the general tool status events
     Subscribe(StreamTarget),
 
-    /// Queries the general tools status
-    Query(StreamTarget),
-
     /// Creates a new tool (which is initially not positioned anywhere)
     CreateTool(ToolGroupId, ToolTypeId, ToolId),
 
@@ -198,11 +195,6 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                     // Add to the subscription list
                     subscribers.push(Some(subscription_target))
                 }
-            }
-
-            Query(query_target) => {
-                // TODO: send the current state as a query response
-                todo!();
             }
 
             SetToolOwner(tool_type_id, tool_owner_target) => {
