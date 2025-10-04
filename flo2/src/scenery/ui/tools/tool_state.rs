@@ -157,6 +157,7 @@ impl SceneMessage for ToolState {
 pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext) {
     // The values that make up the known state of the tools in FlowBetween
     let mut tools_for_groups        = HashMap::new();
+    let mut tools_for_type          = HashMap::new();
     let mut group_for_tool          = HashMap::new();
     let mut type_for_tool           = HashMap::new();
     let mut tools                   = HashSet::new();
@@ -259,6 +260,9 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             CreateTool(group_id, type_id, tool_id) => {
                 // Add this tool to the group
                 tools_for_groups.entry(group_id)
+                    .or_insert_with(|| HashSet::new())
+                    .insert(tool_id);
+                tools_for_type.entry(type_id)
                     .or_insert_with(|| HashSet::new())
                     .insert(tool_id);
                 group_for_tool.insert(tool_id, group_id);
