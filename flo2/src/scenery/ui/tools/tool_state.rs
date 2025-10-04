@@ -134,6 +134,9 @@ pub enum ToolState {
     /// A new tool has been created
     AddTool(ToolId),
 
+    /// Copies a tool to another tool
+    DuplicateTool(ToolId, ToolId),
+
     /// A tool has been removed
     RemoveTool(ToolId),
 
@@ -306,7 +309,43 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             }
 
             DuplicateTool(old_tool_id, new_tool_id) => {
-                todo!();
+                // Get the properties for the new tool
+                let tool_type   = type_for_tool.get(&old_tool_id).copied();
+                let tool_group  = group_for_tool.get(&old_tool_id).copied();
+                let tool_name   = tool_names.get(&old_tool_id).cloned();
+                let tool_icon   = tool_icons.get(&old_tool_id).cloned();
+
+                if let (Some(tool_type), Some(tool_group), Some(tool_name), Some(tool_icon)) = (tool_type, tool_group, tool_name, tool_icon) {
+                    // Store the new tool
+                    tools_for_groups.entry(tool_group).or_insert_with(|| HashSet::new()).insert(new_tool_id);
+                    tools_for_type.entry(tool_type).or_insert_with(|| HashSet::new()).insert(new_tool_id);
+                    group_for_tool.insert(new_tool_id, tool_group);
+                    type_for_tool.insert(new_tool_id, tool_type);
+                    tools.insert(new_tool_id);
+
+                    tool_locations.insert(new_tool_id, vec![]);
+                    tool_names.insert(new_tool_id, tool_name.clone());
+                    tool_type_owners.entry(tool_type).or_insert(vec![]);
+                    tool_icons.insert(new_tool_id, tool_icon.clone());
+
+                    // Duplicate for the owners
+                    send_to_subscribers(tool_type_owners.get_mut(&tool_type), ToolState::DuplicateTool(old_tool_id, new_tool_id)).await;
+
+                    // Add for the location
+                    if let Some(location_target) = tool_location_targets.get_mut(&old_tool_id) {
+                        if let Some(location) = context.send(location_target.clone()).ok() {
+                            let mut location = vec![Some(location)];
+
+                            send_to_subscribers(Some(&mut location), ToolState::DuplicateTool(old_tool_id, new_tool_id)).await;
+                            send_to_subscribers(Some(&mut location), ToolState::SetIcon(new_tool_id, tool_icon.clone())).await;
+
+                            tool_locations.insert(new_tool_id, location);
+                        }
+                    }
+
+                    // Indicate that the tool is added to the subscribers
+                    send_to_subscribers(Some(&mut subscribers), ToolState::AddTool(new_tool_id)).await;
+                }
             }
 
             SetDefaultForGroup(tool_group_id, default_tool_id) => {
