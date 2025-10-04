@@ -89,8 +89,10 @@ pub enum Tool {
     /// but a 'floating' program might allow tools to be placed anywhere.
     SetToolLocation(ToolId, StreamTarget, (f64, f64)),
 
-    /// Sets the location where the tool's configuration dialog should be displayed if opened
-    SetToolDialogLocation((f64, f64)),
+    /// Sets the location where a tool's configuration dialog should be displayed if opened
+    ///
+    /// This is sent as feedback from the tool's location program, to indicate where the tool's dialog should be displayed when it's opened
+    SetToolDialogLocation(ToolId, (f64, f64)),
 
     /// Sets the name of a tool
     SetToolName(ToolId, String),
@@ -251,7 +253,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 }
             }
 
-            SetToolDialogLocation(location) => {
+            SetToolDialogLocation(tool_id, location) => {
                 todo!();
             }
 
