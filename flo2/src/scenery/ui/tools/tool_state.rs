@@ -157,7 +157,7 @@ impl SceneMessage for ToolState {
 pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext) {
     // The values that make up the known state of the tools in FlowBetween
     let mut tools_for_groups        = HashMap::new();
-    let mut tools_for_type          = HashMap::new();
+    let mut tools_for_type          = HashMap::<_, HashSet<_>>::new();
     let mut group_for_tool          = HashMap::new();
     let mut type_for_tool           = HashMap::new();
     let mut tools                   = HashSet::new();
@@ -209,8 +209,18 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             }
 
             SetToolOwner(tool_type_id, tool_owner_target) => {
-                if let Some(owner) = tool_type_owners.get_mut(&tool_type_id) {
-                    *owner = vec![context.send::<ToolState>(tool_owner_target).ok()];
+                // Get or create the list of owners for this tool type
+                let owner = tool_type_owners.entry(tool_type_id)
+                    .or_insert_with(|| vec![]);
+
+                // Update the owner
+                *owner = vec![context.send::<ToolState>(tool_owner_target).ok()];
+
+                // Add all of the tools of this type
+                if let Some(tools) = tools_for_type.get(&tool_type_id) {
+                    for tool_id in tools {
+                        send_to_subscribers(Some(owner), ToolState::AddTool(*tool_id)).await;
+                    }
                 }
             }
 
@@ -274,6 +284,10 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 tool_names.insert(tool_id, String::new());
                 tool_type_owners.entry(type_id).or_insert(vec![]);
                 tool_icons.insert(tool_id, Arc::new(vec![]));
+
+                // Indicate that this tool has been added to the subscribers and the type owner
+                send_to_subscribers(Some(&mut subscribers), ToolState::AddTool(tool_id)).await;
+                send_to_subscribers(tool_type_owners.get_mut(&type_id), ToolState::AddTool(tool_id)).await;
             }
 
             RemoveTool(tool_id) => {
