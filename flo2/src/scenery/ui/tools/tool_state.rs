@@ -184,6 +184,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
     let mut group_for_tool          = HashMap::new();
     let mut type_for_tool           = HashMap::new();
     let mut tools                   = HashSet::new();
+    let mut dialog_location         = HashMap::new();
 
     let mut tool_locations          = HashMap::new();
     let mut tool_location_targets   = HashMap::new();
@@ -245,6 +246,10 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 if let Some(tools) = tools_for_type.get(&tool_type_id) {
                     for tool_id in tools {
                         send_to_subscribers(Some(owner), ToolState::AddTool(*tool_id)).await;
+
+                        if let Some(location) = dialog_location.get(tool_id) {
+                            send_to_subscribers(Some(owner), ToolState::SetDialogLocation(*tool_id, *location)).await;
+                        }
                     }
                 }
             }
@@ -291,6 +296,8 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             SetToolDialogLocation(tool_id, location) => {
                 // Dialog location is for the tool owner (which is assumed to handle the tool's configuration dialog)
                 send_to_subscribers(type_for_tool.get(&tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::SetDialogLocation(tool_id, location)).await;
+
+                dialog_location.insert(tool_id, location);
             }
 
             SetToolName(tool_id, new_name) => {
@@ -333,6 +340,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 tool_names.remove(&tool_id);
                 tool_icons.remove(&tool_id);
                 tools.remove(&tool_id);
+                tool_locations.remove(&tool_id);
 
                 // Remove from the groups and types
                 if let Some(tool_group) = tool_group.and_then(|group| tools_for_groups.get_mut(&group)) { tool_group.remove(&tool_id); }
