@@ -6,7 +6,6 @@
 
 use crate::scenery::ui::subprograms::*;
 
-use flo_scene::programs::Subscribe;
 use flo_scene::*;
 use flo_draw::canvas::*;
 
@@ -180,6 +179,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
     let mut tool_icons              = HashMap::new();
 
     let mut group_selection         = HashMap::new();
+    let mut default_for_group       = HashMap::new();
 
     let mut subscribers             = vec![];
 
@@ -323,8 +323,15 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 if let Some(tool_group) = tool_group.and_then(|group| tools_for_groups.get_mut(&group)) { tool_group.remove(&tool_id); }
                 if let Some(tool_type) = tool_type.and_then(|tool_type| tools_for_type.get_mut(&tool_type)) { tool_type.remove(&tool_id); }
 
+                // Remove from the default if this is the default tool
+                if tool_group.and_then(|tool_group| default_for_group.get(&tool_group)) == Some(&tool_id) {
+                    if let Some(tool_group) = tool_group { default_for_group.remove(&tool_group); }
+                }
+
                 // Tell the location that the tool is removed
-                if let Some(mut old_location) = tool_locations.remove(&tool_id) { send_to_subscribers(Some(&mut old_location), ToolState::RemoveTool(tool_id)).await; }
+                let mut old_location = tool_locations.remove(&tool_id);
+
+                send_to_subscribers(old_location.as_mut(), ToolState::RemoveTool(tool_id)).await;
                 tool_location_targets.remove(&tool_id);
 
                 // Tell the owner that the tool is removed
@@ -332,6 +339,21 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
 
                 // Tell the other subscribers that the tool is removed
                 send_to_subscribers(Some(&mut subscribers), ToolState::RemoveTool(tool_id)).await;
+
+                // If this tool is selected for the group, then reselect the default tool
+                if let (Some(tool_group), Some(selection)) = (tool_group, tool_group.and_then(|tool_group| group_selection.get(&tool_group))) {
+                    if selection == &tool_id {
+                        // Remove the tool from the group
+                        group_selection.remove(&tool_group);
+
+                        // Select the default tool if there is one (we say that removing the tool is the same as deselecting it so we only need to send the select message)
+                        if let Some(default_tool) = default_for_group.get(&tool_group) {
+                            send_to_subscribers(Some(&mut subscribers), ToolState::Select(*default_tool)).await;
+                            send_to_subscribers(old_location.as_mut(), ToolState::Select(*default_tool)).await;
+                            send_to_subscribers(tool_type.and_then(|tool_type| tool_type_owners.get_mut(&tool_type)), ToolState::Select(*default_tool)).await;
+                        }
+                    }
+                }
             }
 
             DuplicateTool(old_tool_id, new_tool_id) => {
@@ -375,7 +397,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             }
 
             SetDefaultForGroup(tool_group_id, default_tool_id) => {
-                todo!();
+                default_for_group.insert(tool_group_id, default_tool_id);
             }
 
             Select(tool_id) => {
