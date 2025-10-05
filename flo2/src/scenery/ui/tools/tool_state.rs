@@ -289,7 +289,8 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             }
 
             SetToolDialogLocation(tool_id, location) => {
-                todo!();
+                // Dialog location is for the tool owner (which is assumed to handle the tool's configuration dialog)
+                send_to_subscribers(type_for_tool.get(&tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::SetDialogLocation(tool_id, location)).await;
             }
 
             SetToolName(tool_id, new_name) => {
