@@ -149,6 +149,9 @@ pub enum ToolState {
     /// Sets the location of a tool
     LocateTool(ToolId, (f64, f64)),
 
+    /// Sets the name for a tool
+    SetName(ToolId, String),
+
     /// Sets the icon for a tool
     SetIcon(ToolId, Arc<Vec<Draw>>)
 }
@@ -277,7 +280,11 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
 
             SetToolName(tool_id, new_name) => {
                 if let Some(name) = tool_names.get_mut(&tool_id) {
-                    *name = new_name;
+                    *name = new_name.clone();
+
+                    send_to_subscribers(tool_locations.get_mut(&tool_id), ToolState::SetName(tool_id, new_name.clone())).await;
+                    send_to_subscribers(type_for_tool.get(&tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::SetName(tool_id, new_name.clone())).await;
+                    send_to_subscribers(Some(&mut subscribers), ToolState::SetName(tool_id, new_name.clone())).await;
                 }
             }
 
