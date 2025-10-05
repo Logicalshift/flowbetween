@@ -305,7 +305,26 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             }
 
             RemoveTool(tool_id) => {
-                todo!();
+                // Remove from the basic types
+                let tool_type   = type_for_tool.remove(&tool_id);
+                let tool_group  = group_for_tool.remove(&tool_id);
+                tool_names.remove(&tool_id);
+                tool_icons.remove(&tool_id);
+                tools.remove(&tool_id);
+
+                // Remove from the groups and types
+                if let Some(tool_group) = tool_group.and_then(|group| tools_for_groups.get_mut(&group)) { tool_group.remove(&tool_id); }
+                if let Some(tool_type) = tool_type.and_then(|tool_type| tools_for_type.get_mut(&tool_type)) { tool_type.remove(&tool_id); }
+
+                // Tell the location that the tool is removed
+                if let Some(mut old_location) = tool_locations.remove(&tool_id) { send_to_subscribers(Some(&mut old_location), ToolState::RemoveTool(tool_id)).await; }
+                tool_location_targets.remove(&tool_id);
+
+                // Tell the owner that the tool is removed
+                send_to_subscribers(tool_type.and_then(|tool_type| tool_type_owners.get_mut(&tool_type)), ToolState::RemoveTool(tool_id)).await;
+
+                // Tell the other subscribers that the tool is removed
+                send_to_subscribers(Some(&mut subscribers), ToolState::RemoveTool(tool_id)).await;
             }
 
             DuplicateTool(old_tool_id, new_tool_id) => {
