@@ -108,8 +108,11 @@ pub enum Tool {
     /// Opens the configuration dialog for a tool ID
     OpenDialog(ToolId),
 
+    /// Closes the configuration dialog for a tool ID
+    CloseDialog(ToolId),
+
     /// Close any open dialogs
-    CloseDialogs,
+    CloseAllDialogs,
 }
 
 impl SceneMessage for Tool {
@@ -152,7 +155,17 @@ pub enum ToolState {
     SetName(ToolId, String),
 
     /// Sets the icon for a tool
-    SetIcon(ToolId, Arc<Vec<Draw>>)
+    SetIcon(ToolId, Arc<Vec<Draw>>),
+
+    /// Sets the location on the canvas where the tool dialog should be opened around
+    /// (This is the center of the tool, so the dialog should be created in a way that aligns with this location)
+    SetDialogLocation(ToolId, (f64, f64)),
+
+    /// Opens the dialog for configuring the specified tool
+    OpenDialog(ToolId),
+
+    /// Closes the dialog for configuring the specified tool
+    CloseDialog(ToolId),
 }
 
 impl SceneMessage for ToolState {
@@ -182,6 +195,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
     let mut default_for_group       = HashMap::new();
 
     let mut subscribers             = vec![];
+    let mut open_dialogs            = HashSet::new();
 
     // Sends a message to all the Subscribers
     async fn send_to_subscribers(subscribers: Option<&mut Vec<Option<OutputSink<ToolState>>>>, message: ToolState) {
@@ -354,6 +368,9 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                         }
                     }
                 }
+
+                // Dialog will no longer be open for removed tools
+                open_dialogs.remove(&tool_id);
             }
 
             DuplicateTool(old_tool_id, new_tool_id) => {
@@ -420,13 +437,40 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             }
 
             OpenDialog(tool_id) => {
-                todo!();
+                if tools.contains(&tool_id) {
+                    if !open_dialogs.contains(&tool_id) {
+                        // Mark the dialog as open
+                        open_dialogs.insert(tool_id);
+
+                        // Send to the owner that the dialog is open
+                        send_to_subscribers(Some(&mut subscribers), ToolState::OpenDialog(tool_id)).await;
+                        send_to_subscribers(tool_locations.get_mut(&tool_id), ToolState::OpenDialog(tool_id)).await;
+                        send_to_subscribers(type_for_tool.get_mut(&tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::OpenDialog(tool_id)).await;
+                    }
+                }
             }
 
-            CloseDialogs => {
-                todo!();
+            CloseDialog(tool_id) => {
+                if tools.contains(&tool_id) {
+                    if open_dialogs.contains(&tool_id) {
+                        // Mark the dialog as closed
+                        open_dialogs.remove(&tool_id);
+
+                        // Send to the owner that the dialog is open
+                        send_to_subscribers(Some(&mut subscribers), ToolState::CloseDialog(tool_id)).await;
+                        send_to_subscribers(tool_locations.get_mut(&tool_id), ToolState::CloseDialog(tool_id)).await;
+                        send_to_subscribers(type_for_tool.get_mut(&tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::CloseDialog(tool_id)).await;
+                    }
+                }
             }
 
+            CloseAllDialogs => {
+                for closed_dialog in open_dialogs.drain() {
+                    send_to_subscribers(Some(&mut subscribers), ToolState::CloseDialog(closed_dialog)).await;
+                    send_to_subscribers(tool_locations.get_mut(&closed_dialog), ToolState::CloseDialog(closed_dialog)).await;
+                    send_to_subscribers(type_for_tool.get_mut(&closed_dialog).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::CloseDialog(closed_dialog)).await;
+                }
+            }
         }
     }
 }
