@@ -24,3 +24,5 @@ pub (crate) mod physics_simulation;
 pub (crate) mod physics_simulation_joints;
 
 pub (crate) mod physics_simulation_object;
+
+#[cfg(test)] mod test;
