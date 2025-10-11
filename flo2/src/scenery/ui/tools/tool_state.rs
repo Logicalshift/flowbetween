@@ -428,20 +428,24 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
 
             Select(tool_id) => {
                 if let Some(tool_group) = group_for_tool.get(&tool_id) {
-                    if let Some(old_tool) = group_selection.get(tool_group) {
-                        // Deselect the old tool in the state, location and owners
-                        send_to_subscribers(Some(&mut subscribers), ToolState::Deselect(*old_tool)).await;
-                        send_to_subscribers(tool_locations.get_mut(old_tool), ToolState::Deselect(*old_tool)).await;
-                        send_to_subscribers(type_for_tool.get(old_tool).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::Deselect(*old_tool)).await;
+                    let maybe_old_tool = group_selection.get(tool_group);
+
+                    if maybe_old_tool != Some(&tool_id) {
+                        if let Some(old_tool) = group_selection.get(tool_group) {
+                            // Deselect the old tool in the state, location and owners
+                            send_to_subscribers(Some(&mut subscribers), ToolState::Deselect(*old_tool)).await;
+                            send_to_subscribers(tool_locations.get_mut(old_tool), ToolState::Deselect(*old_tool)).await;
+                            send_to_subscribers(type_for_tool.get(old_tool).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::Deselect(*old_tool)).await;
+                        }
+
+                        // Select the new tool
+                        group_selection.insert(*tool_group, tool_id);
+
+                        // Send to subscribers the new tool
+                        send_to_subscribers(Some(&mut subscribers), ToolState::Select(tool_id)).await;
+                        send_to_subscribers(tool_locations.get_mut(&tool_id), ToolState::Select(tool_id)).await;
+                        send_to_subscribers(type_for_tool.get(&tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::Select(tool_id)).await;
                     }
-
-                    // Select the new tool
-                    group_selection.insert(*tool_group, tool_id);
-
-                    // Send to subscribers the new tool
-                    send_to_subscribers(Some(&mut subscribers), ToolState::Select(tool_id)).await;
-                    send_to_subscribers(tool_locations.get_mut(&tool_id), ToolState::Select(tool_id)).await;
-                    send_to_subscribers(type_for_tool.get(&tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::Select(tool_id)).await;
                 }
             }
 
