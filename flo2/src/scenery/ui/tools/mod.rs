@@ -25,4 +25,6 @@ pub (crate) mod physics_simulation_joints;
 
 pub (crate) mod physics_simulation_object;
 
+pub use tool_state::*;
+
 #[cfg(test)] mod test;
