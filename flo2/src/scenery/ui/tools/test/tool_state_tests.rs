@@ -113,3 +113,43 @@ pub fn select_tool_owner() {
         .expect_message(expect_toolstate(ToolState::Select(tool_id_1)))
         .run_in_scene(&scene, test_program_id);
 }
+
+#[test]
+pub fn select_tools_in_groups_owner() {
+    let scene = Scene::default();
+
+    let tool_group_1        = ToolGroupId::new();
+    let tool_group_2        = ToolGroupId::new();
+    let tool_type           = ToolTypeId::new();
+    let tool_id_1_group1    = ToolId::new();
+    let tool_id_2_group1    = ToolId::new();
+    let tool_id_1_group2    = ToolId::new();
+    let tool_id_2_group2    = ToolId::new();
+
+    let test_program_id = SubProgramId::new();
+
+    TestBuilder::new()
+        .send_message(Tool::SetToolOwner(tool_type, test_program_id.into()))
+        .send_message(Tool::CreateTool(tool_group_1, tool_type, tool_id_1_group1))
+        .send_message(Tool::CreateTool(tool_group_1, tool_type, tool_id_2_group1))
+        .send_message(Tool::CreateTool(tool_group_2, tool_type, tool_id_1_group2))
+        .send_message(Tool::CreateTool(tool_group_2, tool_type, tool_id_2_group2))
+        .expect_message(expect_toolstate(ToolState::AddTool(tool_id_1_group1)))
+        .expect_message(expect_toolstate(ToolState::AddTool(tool_id_2_group1)))
+        .expect_message(expect_toolstate(ToolState::AddTool(tool_id_1_group2)))
+        .expect_message(expect_toolstate(ToolState::AddTool(tool_id_2_group2)))
+        .send_message(Tool::Select(tool_id_1_group1))
+        .send_message(Tool::Select(tool_id_1_group2))
+        .expect_message(expect_toolstate(ToolState::Select(tool_id_1_group1)))
+        .expect_message(expect_toolstate(ToolState::Select(tool_id_1_group2)))
+        .send_message(Tool::Select(tool_id_2_group1))
+        .expect_message(expect_toolstate(ToolState::Deselect(tool_id_1_group1)))
+        .expect_message(expect_toolstate(ToolState::Select(tool_id_2_group1)))
+        .send_message(Tool::Select(tool_id_2_group2))
+        .expect_message(expect_toolstate(ToolState::Deselect(tool_id_1_group2)))
+        .expect_message(expect_toolstate(ToolState::Select(tool_id_2_group2)))
+        .send_message(Tool::Select(tool_id_1_group1))
+        .expect_message(expect_toolstate(ToolState::Deselect(tool_id_2_group1)))
+        .expect_message(expect_toolstate(ToolState::Select(tool_id_1_group1)))
+        .run_in_scene(&scene, test_program_id);
+}
