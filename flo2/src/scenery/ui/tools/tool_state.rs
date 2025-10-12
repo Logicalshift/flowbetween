@@ -211,7 +211,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
     let mut tools                   = HashSet::new();                   // List of valid tool IDs
     let mut dialog_location         = HashMap::new();                   // The location coordinates set for each tool
 
-    let mut joined_tools            = HashMap::<_, HashSet<_>>::new();  // Tools that should be selected alongside another tool
+    let mut joined_tools            = HashMap::<_, Vec<_>>::new();      // Tools that should be selected alongside another tool
     let mut join_parent_tool        = HashMap::new();                   // The 'parent' tool that each tool is joined to
 
     let mut tool_locations          = HashMap::new();                   // Stream for sending messages to the tool's current location
@@ -372,7 +372,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
 
                 if let Some(parent_tool) = join_parent_tool.remove(&tool_id) {
                     if let Some(joined_with) = joined_tools.get_mut(&parent_tool) {
-                        joined_with.remove(&tool_id);
+                        joined_with.retain(|old_tool_id| old_tool_id != &tool_id);
 
                         if joined_with.is_empty() {
                             joined_tools.remove(&parent_tool);
@@ -470,7 +470,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                     // If the joined tool was already joined somewhere, remove that join
                     if let Some(previously_joined) = join_parent_tool.remove(&joined_tool) {
                         if let Some(joined_with) = joined_tools.get_mut(&previously_joined) {
-                            joined_with.remove(&joined_tool);
+                            joined_with.retain(|old_tool_id| old_tool_id != &joined_tool);
 
                             if joined_with.is_empty() {
                                 joined_tools.remove(&previously_joined);
@@ -480,8 +480,8 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
 
                     // Add as a joined tool
                     joined_tools.entry(main_tool)
-                        .or_insert_with(|| HashSet::new())
-                        .insert(joined_tool);
+                        .or_insert_with(|| vec![])
+                        .push(joined_tool);
                     join_parent_tool.insert(joined_tool, main_tool);
                 }
             }
@@ -490,7 +490,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 // If the joined tool was already joined somewhere, remove that join
                 if let Some(previously_joined) = join_parent_tool.remove(&tool_id) {
                     if let Some(joined_with) = joined_tools.get_mut(&previously_joined) {
-                        joined_with.remove(&tool_id);
+                        joined_with.retain(|old_tool_id| old_tool_id != &tool_id);
 
                         if joined_with.is_empty() {
                             joined_tools.remove(&previously_joined);
