@@ -455,6 +455,10 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                     if let Some(previously_joined) = join_parent_tool.remove(&joined_tool) {
                         if let Some(joined_with) = joined_tools.get_mut(&previously_joined) {
                             joined_with.retain(|old_tool| old_tool != &joined_tool);
+
+                            if joined_with.is_empty() {
+                                joined_tools.remove(&previously_joined);
+                            }
                         }
                     }
 
@@ -471,6 +475,10 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 if let Some(previously_joined) = join_parent_tool.remove(&tool_id) {
                     if let Some(joined_with) = joined_tools.get_mut(&previously_joined) {
                         joined_with.retain(|old_tool| old_tool != &tool_id);
+
+                        if joined_with.is_empty() {
+                            joined_tools.remove(&previously_joined);
+                        }
                     }
                 }
 
