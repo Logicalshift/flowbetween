@@ -182,3 +182,87 @@ pub fn select_tools_in_groups_owner() {
         .expect_message(expect_toolstate(ToolState::Select(tool_id_1_group1)))
         .run_in_scene(&scene, test_program_id);
 }
+
+#[test]
+pub fn select_tools_as_group_when_joined() {
+    let scene = Scene::default();
+
+    // All of these tools will be of the same 'type' (it's pretty rare that tools of a common type will be in different groups in reality, but convenient for this test)
+    let tool_type = ToolTypeId::new();
+
+    // Three tool groups (we'll put our selections in all of them)
+    let tool_group_1 = ToolGroupId::new();
+    let tool_group_2 = ToolGroupId::new();
+    let tool_group_3 = ToolGroupId::new();
+
+    // One tool per group that's 'independent'
+    let independent_1 = ToolId::new();
+    let independent_2 = ToolId::new();
+    let independent_3 = ToolId::new();
+
+    // One tool per group that's joined
+    let joined_1 = ToolId::new();
+    let joined_2 = ToolId::new();
+    let joined_3 = ToolId::new();
+
+    // The test progrm ID acts as the tool's owner
+    let test_program_id = SubProgramId::new();
+
+    TestBuilder::new()
+        .send_message(Tool::SetToolOwnerType(tool_type, test_program_id.into()))
+
+        // Create our six tools
+        .send_message(Tool::CreateTool(tool_group_1, tool_type, independent_1))
+        .send_message(Tool::CreateTool(tool_group_2, tool_type, independent_2))
+        .send_message(Tool::CreateTool(tool_group_3, tool_type, independent_3))
+        .send_message(Tool::CreateTool(tool_group_1, tool_type, joined_1))
+        .send_message(Tool::CreateTool(tool_group_2, tool_type, joined_2))
+        .send_message(Tool::CreateTool(tool_group_3, tool_type, joined_3))
+
+        .expect_message(expect_toolstate(ToolState::AddTool(independent_1)))
+        .expect_message(expect_toolstate(ToolState::AddTool(independent_2)))
+        .expect_message(expect_toolstate(ToolState::AddTool(independent_3)))
+        .expect_message(expect_toolstate(ToolState::AddTool(joined_1)))
+        .expect_message(expect_toolstate(ToolState::AddTool(joined_2)))
+        .expect_message(expect_toolstate(ToolState::AddTool(joined_3)))
+
+        // Select the independent tools
+        .send_message(Tool::Select(independent_1))
+        .send_message(Tool::Select(independent_2))
+        .send_message(Tool::Select(independent_3))
+
+        .expect_message(expect_toolstate(ToolState::Select(independent_1)))
+        .expect_message(expect_toolstate(ToolState::Select(independent_2)))
+        .expect_message(expect_toolstate(ToolState::Select(independent_3)))
+
+        // Join up the joined tools
+        .send_message(Tool::JoinTools(joined_1, joined_2))
+        .send_message(Tool::JoinTools(joined_1, joined_3))
+
+        // Selecting the joined tool should select the other two tools
+        .send_message(Tool::Select(joined_1))
+
+        .expect_message(expect_toolstate(ToolState::Deselect(independent_1)))
+        .expect_message(expect_toolstate(ToolState::Deselect(independent_2)))
+        .expect_message(expect_toolstate(ToolState::Deselect(independent_3)))
+        .expect_message(expect_toolstate(ToolState::Select(joined_1)))
+        .expect_message(expect_toolstate(ToolState::Select(joined_2)))
+        .expect_message(expect_toolstate(ToolState::Select(joined_3)))
+
+        .run_in_scene(&scene, test_program_id);
+}
+
+#[test]
+pub fn secondary_tool_selection_restores_after_joined_tool_deselected() {
+
+}
+
+#[test]
+pub fn change_secondary_tool_selection_after_group_select() {
+
+}
+
+#[test]
+pub fn changed_secondary_tool_not_restored_after_group_deselected() {
+
+}
