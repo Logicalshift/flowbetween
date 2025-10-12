@@ -210,6 +210,9 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
     let mut tools                   = HashSet::new();                   // List of valid tool IDs
     let mut dialog_location         = HashMap::new();                   // The location coordinates set for each tool
 
+    let mut joined_tools            = HashMap::<_, HashSet<_>>::new();  // Tools that should be selected alongside another tool
+    let mut join_parent_tool        = HashMap::new();                   // The 'parent' tool that each tool is joined to
+
     let mut tool_locations          = HashMap::new();                   // Stream for sending messages to the tool's current location
     let mut tool_location_targets   = HashMap::new();                   // StreamTarget corresponding to each tool_location
     let mut tool_type_owners        = HashMap::new();                   // The streams where messages for the owner of each tool type should be sent
@@ -447,11 +450,35 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             }
 
             JoinTools(main_tool, joined_tool) => {
+                if tools.contains(&main_tool) && tools.contains(&joined_tool) {
+                    // If the joined tool was already joined somewhere, remove that join
+                    if let Some(previously_joined) = join_parent_tool.remove(&joined_tool) {
+                        if let Some(joined_with) = joined_tools.get_mut(&previously_joined) {
+                            joined_with.retain(|old_tool| old_tool != &joined_tool);
+                        }
+                    }
 
+                    // Add as a joined tool
+                    joined_tools.entry(main_tool)
+                        .or_insert_with(|| HashSet::new())
+                        .insert(joined_tool);
+                    join_parent_tool.insert(joined_tool, main_tool);
+                }
             }
 
             DisconnectTool(tool_id) => {
+                // If the joined tool was already joined somewhere, remove that join
+                if let Some(previously_joined) = join_parent_tool.remove(&tool_id) {
+                    if let Some(joined_with) = joined_tools.get_mut(&previously_joined) {
+                        joined_with.retain(|old_tool| old_tool != &tool_id);
+                    }
+                }
 
+                // If this is a parent tool, then stop being a parent tool
+                if let Some(joined_with) = joined_tools.remove(&tool_id) {
+                    joined_with.into_iter()
+                        .for_each(|old_tool| { join_parent_tool.remove(&old_tool); });
+                }
             }
 
             SetDefaultForGroup(tool_group_id, default_tool_id) => {
