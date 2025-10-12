@@ -369,6 +369,21 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 tools.remove(&tool_id);
                 tool_locations.remove(&tool_id);
 
+                if let Some(parent_tool) = join_parent_tool.remove(&tool_id) {
+                    if let Some(joined_with) = joined_tools.get_mut(&parent_tool) {
+                        joined_with.remove(&tool_id);
+
+                        if joined_with.is_empty() {
+                            joined_tools.remove(&parent_tool);
+                        }
+                    }
+                }
+
+                if let Some(joined_with) = joined_tools.remove(&tool_id) {
+                    joined_with.into_iter()
+                        .for_each(|join_tool_id| { join_parent_tool.remove(&join_tool_id); });
+                }
+
                 // Remove from the groups and types
                 if let Some(tool_group) = tool_group.and_then(|group| tools_for_groups.get_mut(&group)) { tool_group.remove(&tool_id); }
                 if let Some(tool_type) = tool_type.and_then(|tool_type| tools_for_type.get_mut(&tool_type)) { tool_type.remove(&tool_id); }
@@ -454,7 +469,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                     // If the joined tool was already joined somewhere, remove that join
                     if let Some(previously_joined) = join_parent_tool.remove(&joined_tool) {
                         if let Some(joined_with) = joined_tools.get_mut(&previously_joined) {
-                            joined_with.retain(|old_tool| old_tool != &joined_tool);
+                            joined_with.remove(&joined_tool);
 
                             if joined_with.is_empty() {
                                 joined_tools.remove(&previously_joined);
@@ -474,7 +489,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 // If the joined tool was already joined somewhere, remove that join
                 if let Some(previously_joined) = join_parent_tool.remove(&tool_id) {
                     if let Some(joined_with) = joined_tools.get_mut(&previously_joined) {
-                        joined_with.retain(|old_tool| old_tool != &tool_id);
+                        joined_with.remove(&tool_id);
 
                         if joined_with.is_empty() {
                             joined_tools.remove(&previously_joined);
