@@ -558,7 +558,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
 
                         // If any 'unjoined' tool we're restoring is actually in a group we're selecting as part of the new group, then remove it from the collection
                         unjoined_to_select.into_iter()
-                            .filter(|tool_id| groups_to_select.contains(&group_for_tool.get(tool_id).copied()))
+                            .filter(|tool_id| !groups_to_select.contains(&group_for_tool.get(tool_id).copied()))
                             .collect()
                     };
 
