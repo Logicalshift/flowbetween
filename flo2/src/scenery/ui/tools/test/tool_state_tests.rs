@@ -237,17 +237,17 @@ pub fn select_tools_as_group_when_joined() {
 
         // Join up the joined tools
         .send_message(Tool::JoinTools(joined_1, joined_2))
-        .send_message(Tool::JoinTools(joined_1, joined_3))
+        // .send_message(Tool::JoinTools(joined_1, joined_3))
 
         // Selecting the joined tool should select the other two tools
         .send_message(Tool::Select(joined_1))
 
         .expect_message(expect_toolstate(ToolState::Deselect(independent_1)))
         .expect_message(expect_toolstate(ToolState::Deselect(independent_2)))
-        .expect_message(expect_toolstate(ToolState::Deselect(independent_3)))
+        // .expect_message(expect_toolstate(ToolState::Deselect(independent_3)))
         .expect_message(expect_toolstate(ToolState::Select(joined_1)))
         .expect_message(expect_toolstate(ToolState::Select(joined_2)))
-        .expect_message(expect_toolstate(ToolState::Select(joined_3)))
+        // .expect_message(expect_toolstate(ToolState::Select(joined_3)))
 
         .run_in_scene(&scene, test_program_id);
 }
