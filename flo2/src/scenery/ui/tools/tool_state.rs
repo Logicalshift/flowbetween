@@ -80,7 +80,7 @@ pub enum Tool {
     DuplicateTool(ToolId, ToolId),
 
     /// Sets the 'owner' subprogram for a type of tool (this is responsible for displaying dialogs and managing settings for the tool and also dealing with what happens when a tool is selected)
-    SetToolOwner(ToolTypeId, StreamTarget),
+    SetToolOwnerType(ToolTypeId, StreamTarget),
 
     /// Sets the subprogram that represents the 'location' of the tool. This program is responsible for rendering it and sending events when the tool is selected.
     ///
@@ -234,7 +234,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 }
             }
 
-            SetToolOwner(tool_type_id, tool_owner_target) => {
+            SetToolOwnerType(tool_type_id, tool_owner_target) => {
                 // Get or create the list of owners for this tool type
                 let owner = tool_type_owners.entry(tool_type_id)
                     .or_insert_with(|| vec![]);
