@@ -150,7 +150,6 @@ impl SceneMessage for Tool {
         init_context.connect_programs((), subprogram_tool_state(), StreamId::with_message_type::<Tool>()).unwrap();
         init_context.add_subprogram(subprogram_tool_state(), tool_state_program, 20);
     }
-
 }
 
 ///
@@ -204,24 +203,24 @@ impl SceneMessage for ToolState {
 ///
 pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext) {
     // The values that make up the known state of the tools in FlowBetween
-    let mut tools_for_groups        = HashMap::new();
-    let mut tools_for_type          = HashMap::<_, HashSet<_>>::new();
-    let mut group_for_tool          = HashMap::new();
-    let mut type_for_tool           = HashMap::new();
-    let mut tools                   = HashSet::new();
-    let mut dialog_location         = HashMap::new();
+    let mut tools_for_groups        = HashMap::new();                   // List of tools in each group
+    let mut tools_for_type          = HashMap::<_, HashSet<_>>::new();  // List of tools for each tool type
+    let mut group_for_tool          = HashMap::new();                   // Maps tool IDs to their group (only one tool can be selected per group)
+    let mut type_for_tool           = HashMap::new();                   // Maps tool IDs to their type (tool types determine which subprogram owns the tool)
+    let mut tools                   = HashSet::new();                   // List of valid tool IDs
+    let mut dialog_location         = HashMap::new();                   // The location coordinates set for each tool
 
-    let mut tool_locations          = HashMap::new();
-    let mut tool_location_targets   = HashMap::new();
-    let mut tool_type_owners        = HashMap::new();
-    let mut tool_names              = HashMap::new();
-    let mut tool_icons              = HashMap::new();
+    let mut tool_locations          = HashMap::new();                   // Stream for sending messages to the tool's current location
+    let mut tool_location_targets   = HashMap::new();                   // StreamTarget corresponding to each tool_location
+    let mut tool_type_owners        = HashMap::new();                   // The streams where messages for the owner of each tool type should be sent
+    let mut tool_names              = HashMap::new();                   // The names set for each tool
+    let mut tool_icons              = HashMap::new();                   // The drawing instructions to create the icons for each tool
 
-    let mut group_selection         = HashMap::new();
-    let mut default_for_group       = HashMap::new();
+    let mut group_selection         = HashMap::new();                   // The selected tool for each group
+    let mut default_for_group       = HashMap::new();                   // The default selection for each group (used when a selected tool is deleted)
 
-    let mut subscribers             = vec![];
-    let mut open_dialogs            = HashSet::new();
+    let mut subscribers             = vec![];                           // Subscribers for general messages
+    let mut open_dialogs            = HashSet::new();                   // Tools with open configuration dialogs
 
     // Sends a message to all the Subscribers
     async fn send_to_subscribers(subscribers: Option<&mut Vec<Option<OutputSink<ToolState>>>>, message: ToolState) {
@@ -452,7 +451,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             }
 
             DisconnectTool(tool_id) => {
-                
+
             }
 
             SetDefaultForGroup(tool_group_id, default_tool_id) => {
