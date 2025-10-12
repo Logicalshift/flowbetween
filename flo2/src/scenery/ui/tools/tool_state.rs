@@ -447,6 +447,14 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 }
             }
 
+            JoinTools(main_tool, joined_tool) => {
+
+            }
+
+            DisconnectTool(tool_id) => {
+                
+            }
+
             SetDefaultForGroup(tool_group_id, default_tool_id) => {
                 default_for_group.insert(tool_group_id, default_tool_id);
             }
