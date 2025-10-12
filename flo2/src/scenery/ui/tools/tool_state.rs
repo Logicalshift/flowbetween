@@ -14,6 +14,7 @@ use ::serde::*;
 use uuid::*;
 
 use std::collections::*;
+use std::iter;
 use std::sync::*;
 
 ///
@@ -509,24 +510,39 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             }
 
             Select(tool_id) => {
-                if let Some(tool_group) = group_for_tool.get(&tool_id) {
-                    let maybe_old_tool = group_selection.get(tool_group);
+                if let Some(_) = group_for_tool.get(&tool_id) {
+                    // If the tool is joined to a set of other tools, we need to also select the tools in that group
+                    let joined_tools    = joined_tools.get(&tool_id);
+                    let tools_to_select = iter::once(tool_id).chain(joined_tools.into_iter().flatten().copied()).collect::<Vec<_>>();
 
-                    if maybe_old_tool != Some(&tool_id) {
-                        if let Some(old_tool) = group_selection.get(tool_group) {
-                            // Deselect the old tool in the state, location and owners
-                            send_to_subscribers(Some(&mut subscribers), ToolState::Deselect(*old_tool)).await;
-                            send_to_subscribers(tool_locations.get_mut(old_tool), ToolState::Deselect(*old_tool)).await;
-                            send_to_subscribers(type_for_tool.get(old_tool).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::Deselect(*old_tool)).await;
-                        }
+                    // Deselect the tools in the list that aren't going to be immediately reselected
+                    let tools_to_deselect = tools_to_select.iter()
+                        .flat_map(|tool_id| group_for_tool.get(&tool_id).map(|group_id| (group_id, tool_id)))                               // Group for each tool
+                        .flat_map(|(group_id, tool_id)| group_selection.get(group_id).map(|selected_tool_id| (selected_tool_id, tool_id)))  // Active selection for each group
+                        .filter(|(selected_tool_id, new_tool_id)| selected_tool_id != new_tool_id)                                          // Remove tools that would just be immediately re-selected
+                        .map(|(selected_tool_id, _)| selected_tool_id);                                                                     // Just the tools that need to be deselected
 
+                    for deselect_tool_id in tools_to_deselect {
+                        // Deselect the old tool in the state, location and owners
+                        send_to_subscribers(Some(&mut subscribers), ToolState::Deselect(*deselect_tool_id)).await;
+                        send_to_subscribers(tool_locations.get_mut(deselect_tool_id), ToolState::Deselect(*deselect_tool_id)).await;
+                        send_to_subscribers(type_for_tool.get(deselect_tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::Deselect(*deselect_tool_id)).await;
+                    }
+
+                    // Select any tool that's in a group where the selection will change
+                    let tools_to_select = tools_to_select.into_iter()
+                        .flat_map(|tool_id| group_for_tool.get(&tool_id).map(|group_id| (*group_id, tool_id)))                              // Group for each tool
+                        .filter(|(group_id, tool_id)| group_selection.get(group_id) != Some(tool_id))                                       // Filter to groups where the selected tool is changing
+                        .collect::<Vec<_>>();
+
+                    for (group_id, select_tool_id) in tools_to_select {
                         // Select the new tool
-                        group_selection.insert(*tool_group, tool_id);
+                        group_selection.insert(group_id, select_tool_id);
 
                         // Send to subscribers the new tool
-                        send_to_subscribers(Some(&mut subscribers), ToolState::Select(tool_id)).await;
-                        send_to_subscribers(tool_locations.get_mut(&tool_id), ToolState::Select(tool_id)).await;
-                        send_to_subscribers(type_for_tool.get(&tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::Select(tool_id)).await;
+                        send_to_subscribers(Some(&mut subscribers), ToolState::Select(select_tool_id)).await;
+                        send_to_subscribers(tool_locations.get_mut(&select_tool_id), ToolState::Select(select_tool_id)).await;
+                        send_to_subscribers(type_for_tool.get(&select_tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::Select(select_tool_id)).await;
                     }
                 }
             }
