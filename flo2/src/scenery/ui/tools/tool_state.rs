@@ -213,6 +213,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
 
     let mut joined_tools            = HashMap::<_, Vec<_>>::new();      // Tools that should be selected alongside another tool
     let mut join_parent_tool        = HashMap::new();                   // The 'parent' tool that each tool is joined to
+    let mut unjoined_selection      = HashMap::new();                   // The last selections made for a group that were not part of a joined collection
 
     let mut tool_locations          = HashMap::new();                   // Stream for sending messages to the tool's current location
     let mut tool_location_targets   = HashMap::new();                   // StreamTarget corresponding to each tool_location
@@ -510,7 +511,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
             }
 
             Select(tool_id) => {
-                if let Some(_) = group_for_tool.get(&tool_id) {
+                if let Some(selected_tool_group) = group_for_tool.get(&tool_id).copied() {
                     // If the tool is joined to a set of other tools, we need to also select the tools in that group
                     let joined_tools    = joined_tools.get(&tool_id);
                     let tools_to_select = iter::once(tool_id).chain(joined_tools.into_iter().flatten().copied()).collect::<Vec<_>>();
@@ -527,6 +528,11 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                         send_to_subscribers(Some(&mut subscribers), ToolState::Deselect(*deselect_tool_id)).await;
                         send_to_subscribers(tool_locations.get_mut(deselect_tool_id), ToolState::Deselect(*deselect_tool_id)).await;
                         send_to_subscribers(type_for_tool.get(deselect_tool_id).and_then(|tool_type| tool_type_owners.get_mut(tool_type)), ToolState::Deselect(*deselect_tool_id)).await;
+                    }
+
+                    // If this isn't a joined tool, then add to the 'unjoined' selection
+                    if joined_tools.is_none() {
+                        unjoined_selection.insert(selected_tool_group, tool_id);
                     }
 
                     // Select any tool that's in a group where the selection will change
