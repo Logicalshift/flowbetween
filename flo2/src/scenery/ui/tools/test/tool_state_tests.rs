@@ -30,7 +30,7 @@ pub fn add_tool_owner() {
     let test_program_id = SubProgramId::new();
 
     TestBuilder::new()
-        .send_message(Tool::SetToolOwnerType(tool_type, test_program_id.into()))
+        .send_message(Tool::SetToolTypeOwner(tool_type, test_program_id.into()))
         .send_message(Tool::CreateTool(tool_group, tool_type, tool_id_1))
         .send_message(Tool::CreateTool(tool_group, tool_type, tool_id_2))
         .expect_message(expect_toolstate(ToolState::AddTool(tool_id_1)))
@@ -98,7 +98,7 @@ pub fn select_tool_owner() {
     let test_program_id = SubProgramId::new();
 
     TestBuilder::new()
-        .send_message(Tool::SetToolOwnerType(tool_type, test_program_id.into()))
+        .send_message(Tool::SetToolTypeOwner(tool_type, test_program_id.into()))
         .send_message(Tool::CreateTool(tool_group, tool_type, tool_id_1))
         .send_message(Tool::CreateTool(tool_group, tool_type, tool_id_2))
         .expect_message(expect_toolstate(ToolState::AddTool(tool_id_1)))
@@ -129,7 +129,7 @@ pub fn does_not_reselect_same_tool() {
     println!("ToolID2 = {:?}", tool_id_2);
 
     TestBuilder::new()
-        .send_message(Tool::SetToolOwnerType(tool_type, test_program_id.into()))
+        .send_message(Tool::SetToolTypeOwner(tool_type, test_program_id.into()))
         .send_message(Tool::CreateTool(tool_group, tool_type, tool_id_1))
         .send_message(Tool::CreateTool(tool_group, tool_type, tool_id_2))
         .expect_message(expect_toolstate(ToolState::AddTool(tool_id_1)))
@@ -158,7 +158,7 @@ pub fn select_tools_in_groups_owner() {
     let test_program_id = SubProgramId::new();
 
     TestBuilder::new()
-        .send_message(Tool::SetToolOwnerType(tool_type, test_program_id.into()))
+        .send_message(Tool::SetToolTypeOwner(tool_type, test_program_id.into()))
         .send_message(Tool::CreateTool(tool_group_1, tool_type, tool_id_1_group1))
         .send_message(Tool::CreateTool(tool_group_1, tool_type, tool_id_2_group1))
         .send_message(Tool::CreateTool(tool_group_2, tool_type, tool_id_1_group2))
@@ -209,7 +209,7 @@ pub fn select_tools_as_group_when_joined() {
     let test_program_id = SubProgramId::new();
 
     TestBuilder::new()
-        .send_message(Tool::SetToolOwnerType(tool_type, test_program_id.into()))
+        .send_message(Tool::SetToolTypeOwner(tool_type, test_program_id.into()))
 
         // Create our six tools
         .send_message(Tool::CreateTool(tool_group_1, tool_type, independent_1))
