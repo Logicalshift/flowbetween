@@ -510,11 +510,66 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                 default_for_group.insert(tool_group_id, default_tool_id);
             }
 
-            Select(tool_id) => {
-                if let Some(selected_tool_group) = group_for_tool.get(&tool_id).copied() {
+            Select(new_tool_id) => {
+                // This is pretty long, because selections have fairly complex behaviour as tools can be joined to other tools. What's happening here:
+                //     * We perform no action if a tool is already selected
+                //     * For any tool that's selected, we unselect the tool that was previously selected in the same group
+                //     * If the tool is joined to other tools, we also select those tools
+                //     * If the tool that is being deselected is joined, we reselect the previously 'unjoined' tools in the groups it was joined to
+                //     * ... except if the tool we're selecting is also joined, the joined tools override those groups
+
+                if let Some(selected_tool_group) = group_for_tool.get(&new_tool_id).copied() {
+                    // Figure out if the tool group has changed
+                    let previous_tool       = group_selection.get(&selected_tool_group).copied();
+                    let was_joined          = previous_tool.map(|previous_tool| joined_tools.contains_key(&previous_tool)).unwrap_or(false);
+                    let has_changed         = previous_tool != Some(new_tool_id);
+
+                    let unjoined_to_select  = if has_changed && was_joined {
+                        if let Some(previous_tool) = previous_tool {
+                            // Use the joined set for the previous tool to decide what to deselect
+                            joined_tools.get(&previous_tool).into_iter()
+                                .flatten()
+                                .flat_map(|joined_tool_id| group_for_tool.get(joined_tool_id).map(|group_id| (*group_id, *joined_tool_id))) // Groups for the joined tool IDs
+                                .filter(|(group_id, joined_tool_id)| group_selection.get(group_id) == Some(joined_tool_id))                 // Groups/tools that are still selected
+                                .flat_map(|(group_id, _)| unjoined_selection.get(&group_id).copied())                                       // Previously selected 'unjoined' tools
+                                .collect::<Vec<_>>()
+                        } else {
+                            // Shouldn't get here (no previous tool, so it cannot have been joined)
+                            vec![]
+                        }
+                    } else {
+                        // Don't change the selection if we're reselecting the same tool or the previous selection wasn't joined
+                        vec![]
+                    };
+
                     // If the tool is joined to a set of other tools, we need to also select the tools in that group
-                    let joined_tools    = joined_tools.get(&tool_id);
-                    let tools_to_select = iter::once(tool_id).chain(joined_tools.into_iter().flatten().copied()).collect::<Vec<_>>();
+                    let joined_tools        = joined_tools.get(&new_tool_id);
+                    let tools_to_select     = iter::once(new_tool_id).chain(joined_tools.into_iter().flatten().copied()).collect::<Vec<_>>();
+
+                    // If there are unjoined tools, remove any that are in groups that are also in tools_to_select
+                    let unjoined_to_select = if unjoined_to_select.is_empty() {
+                        unjoined_to_select
+                    } else {
+                        // Get the groups that will be selected
+                        let groups_to_select = tools_to_select.iter()
+                            .flat_map(|tool_id| group_for_tool.get(tool_id))
+                            .map(|group_id| Some(*group_id))
+                            .collect::<HashSet<_>>();
+
+                        // If any 'unjoined' tool we're restoring is actually in a group we're selecting as part of the new group, then remove it from the collection
+                        unjoined_to_select.into_iter()
+                            .filter(|tool_id| groups_to_select.contains(&group_for_tool.get(tool_id).copied()))
+                            .collect()
+                    };
+
+                    // If there are any unjoined tools to remaining to select, we add them in to the list of tools to select
+                    let tools_to_select = if unjoined_to_select.is_empty() {
+                        tools_to_select
+                    } else {
+                        tools_to_select.into_iter()
+                            .chain(unjoined_to_select.into_iter())
+                            .collect()
+                    };
 
                     // Deselect the tools in the list that aren't going to be immediately reselected
                     let tools_to_deselect = tools_to_select.iter()
@@ -532,7 +587,7 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
 
                     // If this isn't a joined tool, then add to the 'unjoined' selection
                     if joined_tools.is_none() {
-                        unjoined_selection.insert(selected_tool_group, tool_id);
+                        unjoined_selection.insert(selected_tool_group, new_tool_id);
                     }
 
                     // Select any tool that's in a group where the selection will change
