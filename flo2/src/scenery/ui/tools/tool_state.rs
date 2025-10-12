@@ -79,6 +79,31 @@ pub enum Tool {
     /// The subprogram that runs the tool is expected to 
     DuplicateTool(ToolId, ToolId),
 
+    ///
+    /// Joins two tools such that they both become selected at the same time. Both tools should be in different tool
+    /// groups, or this will have no effect.
+    ///
+    /// Both tools are commonly in the same location. The two tools have slightly different behaviour. The first tool
+    /// is considered the 'main' tool. When the main tool is selected, all the other tools in the group are also selected.
+    /// When it's deselected all of the other tools in the group are reverted to their values before the group was 
+    /// selected. The second tool can be selected and deselected independently, leaving the group partially selected.
+    ///
+    /// If any of the secondary tools are deselected and the main tool is reselected, all of the secondary tools are
+    /// reselected.
+    ///
+    /// In general, JoinTools should be called such that there's only one 'main' tool in any collections.
+    ///
+    /// This is intended to be used with a UI element that lets you select, say, a brush and its colour and/or layer
+    /// all in a single action, using the 'DuplicateTool' functionality to create extra tools.
+    ///
+    JoinTools(ToolId, ToolId),
+
+    ///
+    /// If the specified tool is part of a group created by 'JoinTools', this will disconnect it from the group, so that
+    /// it's selected indepedently again.
+    ///
+    DisconnectTool(ToolId),
+
     /// Sets the 'owner' subprogram for a type of tool (this is responsible for displaying dialogs and managing settings for the tool and also dealing with what happens when a tool is selected)
     SetToolOwnerType(ToolTypeId, StreamTarget),
 
