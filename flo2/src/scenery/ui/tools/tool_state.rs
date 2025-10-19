@@ -202,6 +202,13 @@ impl SceneMessage for ToolState {
 ///
 /// The default subprogram that manages tool state (which tools are selected, where their icons are drawn) in a flowbetween document
 ///
+/// There are three things that might listen for tool events. A 'location' is something that handles drawing the tools that are assigned to
+/// it. For example, this might be a toolbar. The 'owner' manages all tools of a type. It deals with displaying the configuration dialog
+/// for the tool, and performs the actions associated with a tool when that tool is selected.
+///
+/// The final thing that might listen is a subscriber: this receives all tool events. Subscribers have no particular role to play as far
+/// as the tool state is concerned.
+///
 pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext) {
     // The values that make up the known state of the tools in FlowBetween
     let mut tools_for_groups        = HashMap::new();                   // List of tools in each group
