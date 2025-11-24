@@ -75,7 +75,10 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
     window_drawing.send(DrawingRequest::Draw(Arc::new(window_setup))).await.ok();
 
-    let mut size = (1000, 1000);
+    let mut size            = (1000, 1000);
+    let mut draw_size       = (1000.0, 1000.0);
+    let mut draw_scale      = 1.0;
+    let mut draw_transform  = Transform2D::identity();
 
     // Vague testing of the dialog system
     let dialog1 = DialogId::new();
@@ -214,6 +217,10 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                             }
                         }
 
+                        DrawEvent::Scale(new_scale)     => { draw_scale = *new_scale; }
+                        DrawEvent::Resize(w, h)         => { draw_size = (*w, *h); }
+                        DrawEvent::CanvasTransform(t)   => { draw_transform = *t; }
+
                         _ => { }
                     }
 
@@ -245,7 +252,15 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                 }
 
                 DocumentRequest::SubscribeDrawEvents(target) => {
-                    draw_event_subscribers.subscribe(&context, target);
+                    if let Ok(mut draw_events) = context.send(target.clone()) {
+                        // Indicate the current size of the drawing region
+                        draw_events.send(DrawEvent::Resize(draw_size.0, draw_size.1)).await.ok();
+                        draw_events.send(DrawEvent::Scale(draw_scale)).await.ok();
+                        draw_events.send(DrawEvent::CanvasTransform(draw_transform)).await.ok();
+
+                        // Subscribe to the draw events
+                        draw_event_subscribers.subscribe(&context, target);
+                    }
                 }
             }
         }
