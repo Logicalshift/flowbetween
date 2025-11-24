@@ -32,6 +32,9 @@ pub enum DocumentRequest {
 
     /// Indicates that this document is being closed
     Close,
+
+    /// Request to subscribe to draw events for this document
+    SubscribeDrawEvents(StreamTarget),
 }
 
 impl SceneMessage for DocumentRequest {
@@ -109,6 +112,9 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     let mut pending_drawing         = Vec::with_capacity(128);
     let mut waiting_for_new_frame   = false;
     let mut waiting_for_idle        = false;
+
+    // Subscribers to events
+    let mut draw_event_subscribers  = EventSubscribers::new();
 
     // TODO: start the other document subprograms
 
@@ -212,7 +218,8 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                     }
 
                     // Send to the focus program
-                    focus.send(Focus::Event(event)).await.ok();
+                    focus.send(Focus::Event(event.clone())).await.ok();
+                    draw_event_subscribers.send(event).await;
                 }
 
                 DocumentRequest::Idle => {
@@ -235,6 +242,10 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
                 DocumentRequest::Close => {
                     // When the document is closed, we stop the whole scene
                     context.send_message(SceneControl::StopScene).await.ok();
+                }
+
+                DocumentRequest::SubscribeDrawEvents(target) => {
+                    draw_event_subscribers.subscribe(&context, target);
                 }
             }
         }
