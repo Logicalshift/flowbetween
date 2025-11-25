@@ -13,6 +13,7 @@ use flo_draw::canvas::scenery::*;
 use futures::prelude::*;
 use serde::*;
 
+use std::collections::*;
 use std::sync::*;
 
 ///
@@ -45,17 +46,36 @@ pub enum DockPosition {
 }
 
 ///
+/// Data attached to a tool in the dock
+///
+struct ToolData {
+    position:   (f64, f64),
+    icon:       Arc<Vec<Draw>>,
+    sprite:     Option<SpriteId>,
+    selected:   bool,
+}
+
+///
 /// Data storage for the tool dock
 ///
 struct ToolDock {
     /// Where in the window to draw the dock
-    position:   DockPosition,
+    position:       DockPosition,
 
     /// The layer that the dock is drawn on
-    layer:      LayerId,
+    layer:          LayerId,
 
     /// The namespace that the dock is drawn in
-    namespace:  NamespaceId,
+    namespace:      NamespaceId,
+
+    /// The tools that are stored in this dock
+    tools:          HashMap<ToolId, ToolData>,
+
+    /// Sprite IDs that were used by tools but are no longer in use
+    unused_sprites: Vec<SpriteId>,
+
+    /// Next sprite ID to use if there are no sprites in the unused pool
+    next_sprite:    SpriteId,
 }
 
 impl ToolDock {
@@ -83,9 +103,12 @@ impl ToolDock {
 pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: SceneContext, position: DockPosition, layer: LayerId) {
     // Tool dock data
     let mut tool_dock = ToolDock {
-        position:   position,
-        layer:      layer,
-        namespace:  *DOCK_LAYER,
+        position:       position,
+        layer:          layer,
+        namespace:      *DOCK_LAYER,
+        tools:          HashMap::new(),
+        unused_sprites: vec![],
+        next_sprite:    SpriteId(0),
     };
 
     // Size of the viewport
@@ -114,6 +137,71 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     w = (w * scale) / new_scale;
                     h = (h * scale) / new_scale;
                     scale = new_scale;
+
+                    needs_redraw = true;
+                }
+
+                ToolDockMessage::ToolState(ToolState::AddTool(tool_id)) => { 
+                    // Add (or replace) the tool with this ID
+                    tool_dock.tools.insert(tool_id, ToolData {
+                        position:   (0.0, 0.0),
+                        icon:       Arc::new(vec![]),
+                        sprite:     None,
+                        selected:   false,
+                    });
+
+                    // Draw with the new tool
+                    needs_redraw = true;
+                }
+
+                ToolDockMessage::ToolState(ToolState::SetIcon(tool_id, icon)) => {
+                    // Update the icon
+                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
+                        tool.icon = icon;
+
+                        if let Some(old_sprite) = tool.sprite.take() {
+                            // Remove the sprite to force the tool to redraw its icon
+                            tool_dock.unused_sprites.push(old_sprite);
+                        }
+                    }
+
+                    needs_redraw = true;
+                }
+
+                ToolDockMessage::ToolState(ToolState::LocateTool(tool_id, position)) => {
+                    // Change the position (we use the y position to set the ordering in the dock)0
+                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
+                        tool.position = position;
+                    }
+
+                    needs_redraw = true;
+                }
+
+                ToolDockMessage::ToolState(ToolState::RemoveTool(tool_id)) => {
+                    // Remove the tool from this dock
+                    if let Some(mut old_tool) = tool_dock.tools.remove(&tool_id) {
+                        if let Some(old_sprite) = old_tool.sprite.take() {
+                            tool_dock.unused_sprites.push(old_sprite);
+                        }
+                    }
+
+                    needs_redraw = true;
+                }
+
+                ToolDockMessage::ToolState(ToolState::Select(tool_id)) => {
+                    // Mark this tool as selected
+                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
+                        tool.selected = true;
+                    }
+
+                    needs_redraw = true;
+                }
+
+                ToolDockMessage::ToolState(ToolState::Deselect(tool_id)) => {
+                    // Mark this tool as unselected
+                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
+                        tool.selected = false;
+                    }
 
                     needs_redraw = true;
                 }
