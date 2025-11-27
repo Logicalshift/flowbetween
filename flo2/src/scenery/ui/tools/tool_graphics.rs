@@ -59,8 +59,8 @@ where
         self.fill();
 
         self.new_path();
-        self.rounded_rect((pos.0+4.0, pos.1+4.0), (size.0-8.0, size.1-8.0), 12.0);
-        self.line_width(2.0);
+        self.rounded_rect((pos.0+2.0, pos.1+2.0), (size.0-4.0, size.1-4.0), 10.0);
+        self.line_width(1.0);
         self.stroke_color(color_tool_dock_outline());
         self.stroke();
 
