@@ -32,14 +32,14 @@ pub enum ToolDockMessage {
     ToolState(ToolState),
 
     /// Drawing event for the window this dock is in
-    DrawEvent(DrawEvent),
+    FocusEvent(FocusEvent),
 }
 
 impl SceneMessage for ToolDockMessage {
     fn initialise(init_context: &impl SceneInitialisationContext) {
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|tool_state_msgs| tool_state_msgs.map(|msg| ToolDockMessage::ToolState(msg)))), (), StreamId::with_message_type::<ToolState>())
             .unwrap();
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|draw_event_msgs| draw_event_msgs.map(|msg| ToolDockMessage::DrawEvent(msg)))), (), StreamId::with_message_type::<DrawEvent>())
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|draw_event_msgs| draw_event_msgs.map(|msg| ToolDockMessage::FocusEvent(msg)))), (), StreamId::with_message_type::<DrawEvent>())
             .unwrap();
     }
 }
@@ -176,7 +176,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
         // Process the messages that are waiting
         for msg in msgs {
             match msg {
-                ToolDockMessage::DrawEvent(DrawEvent::Resize(new_w, new_h)) => {
+                ToolDockMessage::FocusEvent(FocusEvent::Event(_, DrawEvent::Resize(new_w, new_h))) => {
                     // Update the width and height
                     w = new_w / scale;
                     h = new_h / scale;
@@ -185,7 +185,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     size_changed = true;
                 }
 
-                ToolDockMessage::DrawEvent(DrawEvent::Scale(new_scale)) => {
+                ToolDockMessage::FocusEvent(FocusEvent::Event(_, DrawEvent::Scale(new_scale))) => {
                     // Update the scale, adjust the width and height accordingly
                     w = (w * scale) / new_scale;
                     h = (h * scale) / new_scale;
@@ -260,8 +260,8 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     needs_redraw = true;
                 }
 
-                ToolDockMessage::ToolState(_) => { /* Other toolstate messages are ignored */ }
-                ToolDockMessage::DrawEvent(_) => { /* Other drawing events are ignored */ }
+                ToolDockMessage::ToolState(_)  => { /* Other toolstate messages are ignored */ }
+                ToolDockMessage::FocusEvent(_) => { /* Other focus events are ignored */ }
             }
         }
 
