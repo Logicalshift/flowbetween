@@ -4,6 +4,7 @@
 
 use crate::scenery::ui::*;
 use super::tool_state::*;
+use super::tool_graphics::*;
 
 use flo_curves::bezier::path::*;
 use flo_scene::*;
@@ -94,6 +95,10 @@ impl ToolDock {
         gc.namespace(self.namespace);
         gc.layer(self.layer);
         gc.clear_layer();
+
+        // Draw the dock background
+        let (topleft, bottomright) = self.region(window_size.0, window_size.1);
+        gc.tool_dock((topleft.0 as _, topleft.1 as _), ((bottomright.0-topleft.0) as _, (bottomright.1-topleft.1) as _));
 
         // Finish up by clearing the state
         gc.pop_state();
