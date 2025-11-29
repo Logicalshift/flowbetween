@@ -39,7 +39,7 @@ impl SceneMessage for ToolDockMessage {
     fn initialise(init_context: &impl SceneInitialisationContext) {
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|tool_state_msgs| tool_state_msgs.map(|msg| ToolDockMessage::ToolState(msg)))), (), StreamId::with_message_type::<ToolState>())
             .unwrap();
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|draw_event_msgs| draw_event_msgs.map(|msg| ToolDockMessage::FocusEvent(msg)))), (), StreamId::with_message_type::<DrawEvent>())
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|draw_event_msgs| draw_event_msgs.map(|msg| ToolDockMessage::FocusEvent(msg)))), (), StreamId::with_message_type::<FocusEvent>())
             .unwrap();
     }
 }
