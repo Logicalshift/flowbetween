@@ -118,7 +118,7 @@ impl ToolDock {
 
         // Center point of the topmost tool
         let x = (topleft.0 + bottomright.0) / 2.0;
-        let y = topleft.1 + DOCK_TOOL_GAP*2.0 + DOCK_TOOL_WIDTH / 2.0;
+        let y = topleft.1 + DOCK_TOOL_GAP*3.0 + DOCK_TOOL_WIDTH / 2.0;
 
         // Order the tools by y-pos
         let mut ordered_tools = self.tools.values().collect::<Vec<_>>();
