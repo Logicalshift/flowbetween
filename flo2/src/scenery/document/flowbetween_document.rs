@@ -123,6 +123,14 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     document_scene.add_subprogram(subprogram_tool_dock_left(),  |input, context| tool_dock_program(input, context, DockPosition::Left, LayerId(0)), 20);
     document_scene.add_subprogram(subprogram_tool_dock_right(), |input, context| tool_dock_program(input, context, DockPosition::Right, LayerId(1)), 20);
 
+    let test_tool   = ToolId::new();
+    let test_group  = ToolGroupId::new();
+    let test_type   = ToolTypeId::new();
+    context.send_message(Tool::CreateTool(test_group, test_type, test_tool)).await.unwrap();
+    context.send_message(Tool::SetToolIcon(test_tool, Arc::new(vec![]))).await.unwrap();
+    context.send_message(Tool::SetToolLocation(test_tool, subprogram_tool_dock_left().into(), (0.0, 0.0))).await.unwrap();
+    context.send_message(Tool::Select(test_tool)).await.unwrap();
+
     // TODO: start the other document subprograms
 
     document_scene.add_subprogram(SubProgramId::new(), |input: InputStream<TimeOut>, context| async move {
