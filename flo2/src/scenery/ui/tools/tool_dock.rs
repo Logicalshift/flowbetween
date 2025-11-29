@@ -19,8 +19,8 @@ use std::collections::*;
 use std::sync::*;
 
 const DOCK_WIDTH: f64       = 48.0;
-const DOCK_TOOL_WIDTH: f64  = 32.0;
-const DOCK_TOOL_GAP: f64    = 4.0;
+const DOCK_TOOL_WIDTH: f64  = 38.0;
+const DOCK_TOOL_GAP: f64    = 2.0;
 const DOCK_TOP_MARGIN: f64  = 100.0;
 const DOCK_SIDE_MARGIN: f64 = 16.0;
 const DOCK_Z_INDEX: usize   = 1000;
@@ -102,6 +102,9 @@ impl ToolDock {
         // Draw the dock background
         let (topleft, bottomright) = self.region(window_size.0, window_size.1);
         gc.tool_dock((topleft.0 as _, topleft.1 as _), ((bottomright.0-topleft.0) as _, (bottomright.1-topleft.1) as _));
+
+        // Draw the tools themselves
+        self.draw_tools(gc, window_size);
 
         // Finish up by clearing the state
         gc.pop_state();
