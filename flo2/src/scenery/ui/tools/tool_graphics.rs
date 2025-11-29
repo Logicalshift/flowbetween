@@ -7,6 +7,15 @@ use flo_curves::arc::*;
 use std::f64;
 
 ///
+/// Possible states of a tool 'plinth' (the background we draw under a tool)
+///
+pub enum ToolPlinthState {
+    Unselected,
+    Highlighted,
+    Selected,
+}
+
+///
 /// Extra primitives for rendering tools
 ///
 pub trait ToolGraphicsPrimitives {
@@ -19,6 +28,11 @@ pub trait ToolGraphicsPrimitives {
     /// Draws a tool dock
     ///
     fn tool_dock(&mut self, pos: (f32, f32), size: (f32, f32));
+
+    ///
+    /// Draws a tool 'plinth' (the background rendered until the icon for a tool)
+    ///
+    fn tool_plinth(&mut self, pos: (f32, f32), size: (f32, f32), state: ToolPlinthState);
 }
 
 impl<T> ToolGraphicsPrimitives for T
@@ -63,6 +77,36 @@ where
         self.line_width(1.0);
         self.stroke_color(color_tool_dock_outline());
         self.stroke();
+
+        self.pop_state();
+    }
+
+    fn tool_plinth(&mut self, pos: (f32, f32), size: (f32, f32), state: ToolPlinthState) {
+        self.push_state();
+
+        match state {
+            ToolPlinthState::Unselected => { }
+
+            ToolPlinthState::Highlighted => {
+                self.new_path();
+                self.rounded_rect(pos, size, 8.0);
+                self.fill_color(color_tool_dock_highlight());
+                self.fill();
+            }
+
+            ToolPlinthState::Selected => {
+                self.new_path();
+                self.rounded_rect(pos, size, 8.0);
+                self.fill_color(color_tool_dock_selected());
+                self.fill();
+
+                self.new_path();
+                self.rounded_rect((pos.0+1.0, pos.1+1.0), (size.0-2.0, size.1-2.0), 7.0);
+                self.stroke_color(color_tool_dock_outline());
+                self.line_width(1.0);
+                self.stroke();
+            }
+        }
 
         self.pop_state();
     }
