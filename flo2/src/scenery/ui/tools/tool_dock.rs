@@ -19,6 +19,8 @@ use std::collections::*;
 use std::sync::*;
 
 const DOCK_WIDTH: f64       = 48.0;
+const DOCK_TOOL_WIDTH: f64  = 32.0;
+const DOCK_TOOL_GAP: f64    = 4.0;
 const DOCK_TOP_MARGIN: f64  = 100.0;
 const DOCK_SIDE_MARGIN: f64 = 16.0;
 const DOCK_Z_INDEX: usize   = 1000;
@@ -56,10 +58,11 @@ pub enum DockPosition {
 /// Data attached to a tool in the dock
 ///
 struct ToolData {
-    position:   (f64, f64),
-    icon:       Arc<Vec<Draw>>,
-    sprite:     Option<SpriteId>,
-    selected:   bool,
+    position:       (f64, f64),
+    icon:           Arc<Vec<Draw>>,
+    sprite:         Option<SpriteId>,
+    highlighted:    bool,
+    selected:       bool,
 }
 
 ///
@@ -105,6 +108,29 @@ impl ToolDock {
     }
 
     ///
+    /// Draws the tools in this dock
+    ///
+    pub fn draw_tools(&self, gc: &mut impl GraphicsContext, window_size: (f64, f64)) {
+        let (topleft, bottomright) = self.region(window_size.0, window_size.1);
+
+        // Center point of the topmost tool
+        let x = (topleft.0 + bottomright.0) / 2.0;
+        let y = topleft.1 + DOCK_TOOL_GAP*2.0 + DOCK_TOOL_WIDTH / 2.0;
+
+        // Order the tools by y-pos
+        let mut ordered_tools = self.tools.values().collect::<Vec<_>>();
+        ordered_tools.sort_by(|a, b| a.position.1.total_cmp(&b.position.1));
+
+        // Draw the tools in order
+        let mut y = y;
+        for tool in ordered_tools {
+            tool.draw(gc, (x, y));
+
+            y += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
+        }
+    }
+
+    ///
     /// Calculates the corners of the region for this tool dock in a window of the specified size
     ///
     pub fn region(&self, w: f64, h: f64) -> (UiPoint, UiPoint) {
@@ -137,6 +163,31 @@ impl ToolDock {
             .line_to(UiPoint(bottomright.x(), topleft.y()))
             .line_to(topleft)
             .build()
+    }
+}
+
+impl ToolData {
+    ///
+    /// Draws this tool at the specified position
+    ///
+    pub fn draw(&self, gc: &mut impl GraphicsContext, center_pos: (f64, f64)) {
+        // Draw the 'plinth' for this tool
+        let state = if self.selected {
+            ToolPlinthState::Selected
+        } else if self.highlighted {
+            ToolPlinthState::Highlighted
+        } else {
+            ToolPlinthState::Unselected
+        };
+        gc.tool_plinth(((center_pos.0 - DOCK_TOOL_WIDTH/2.0) as _, (center_pos.1 - DOCK_TOOL_WIDTH/2.0) as _), (DOCK_TOOL_WIDTH as _, DOCK_TOOL_WIDTH as _), state);
+
+        // Draw the sprite for this tool
+        if let Some(sprite_id) = self.sprite {
+            gc.push_state();
+            gc.sprite_transform(SpriteTransform::Translate(center_pos.0 as _, center_pos.1 as _));
+            gc.draw_sprite(sprite_id);
+            gc.pop_state();
+        }
     }
 }
 
@@ -198,10 +249,11 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                 ToolDockMessage::ToolState(ToolState::AddTool(tool_id)) => { 
                     // Add (or replace) the tool with this ID
                     tool_dock.tools.insert(tool_id, ToolData {
-                        position:   (0.0, 0.0),
-                        icon:       Arc::new(vec![]),
-                        sprite:     None,
-                        selected:   false,
+                        position:       (0.0, 0.0),
+                        icon:           Arc::new(vec![]),
+                        sprite:         None,
+                        selected:       false,
+                        highlighted:    false,
                     });
 
                     // Draw with the new tool
@@ -273,6 +325,39 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
         // Redraw the dock if necessary
         if needs_redraw {
             let mut drawing = vec![];
+
+            // Write out the sprites for the tools
+            let tools           = &mut tool_dock.tools;
+            let next_sprite     = &mut tool_dock.next_sprite;
+            let unused_sprites  = &mut tool_dock.unused_sprites;
+
+            for (_, tool_data) in tools.iter_mut() {
+                if tool_data.sprite.is_none() {
+                    // Assign a sprite ID (either re-use one we've used before or assign a new one)
+                    let sprite_id = if let Some(sprite_id) = unused_sprites.pop() {
+                        sprite_id
+                    } else {
+                        let sprite_id = *next_sprite;
+                        *next_sprite = SpriteId(next_sprite.0+1);
+
+                        sprite_id
+                    };
+
+                    tool_data.sprite = Some(sprite_id);
+
+                    // Draw the tool to create the sprite
+                    drawing.push_state();
+                    drawing.namespace(tool_dock.namespace);
+                    drawing.sprite(sprite_id);
+                    drawing.clear_sprite();
+
+                    drawing.extend(tool_data.icon.iter().cloned());
+
+                    drawing.pop_state();
+                }
+            }
+
+            // Draw the tool dock
             tool_dock.draw(&mut drawing, (w, h));
 
             context.send_message(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
