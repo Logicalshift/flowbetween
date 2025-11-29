@@ -123,12 +123,23 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     document_scene.add_subprogram(subprogram_tool_dock_left(),  |input, context| tool_dock_program(input, context, DockPosition::Left, LayerId(0)), 20);
     document_scene.add_subprogram(subprogram_tool_dock_right(), |input, context| tool_dock_program(input, context, DockPosition::Right, LayerId(1)), 20);
 
-    let test_tool   = ToolId::new();
-    let test_group  = ToolGroupId::new();
-    let test_type   = ToolTypeId::new();
+    let test_tool       = ToolId::new();
+    let test_tool2      = ToolId::new();
+    let test_group      = ToolGroupId::new();
+    let test_type       = ToolTypeId::new();
+    let mut tool_icon   = vec![];
+
+    tool_icon.new_path();
+    tool_icon.rect(-14.0, -14.0, 14.0, 14.0);
+    tool_icon.fill_color(Color::Rgba(0.3, 0.7, 0.0, 1.0));
+    tool_icon.fill();
+
     context.send_message(Tool::CreateTool(test_group, test_type, test_tool)).await.unwrap();
-    context.send_message(Tool::SetToolIcon(test_tool, Arc::new(vec![]))).await.unwrap();
+    context.send_message(Tool::CreateTool(test_group, test_type, test_tool2)).await.unwrap();
+    context.send_message(Tool::SetToolIcon(test_tool, Arc::new(tool_icon.clone()))).await.unwrap();
+    context.send_message(Tool::SetToolIcon(test_tool2, Arc::new(tool_icon.clone()))).await.unwrap();
     context.send_message(Tool::SetToolLocation(test_tool, subprogram_tool_dock_left().into(), (0.0, 0.0))).await.unwrap();
+    context.send_message(Tool::SetToolLocation(test_tool2, subprogram_tool_dock_left().into(), (0.0, 0.1))).await.unwrap();
     context.send_message(Tool::Select(test_tool)).await.unwrap();
 
     // TODO: start the other document subprograms
