@@ -37,3 +37,5 @@ pub use tools::physics_simulation_joints::*;
 pub use binding_tracker::*;
 pub use binding_program::*;
 pub use render_binding::*;
+
+pub use tools::tool_dock::*;
