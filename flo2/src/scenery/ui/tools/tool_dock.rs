@@ -5,6 +5,7 @@
 use crate::scenery::ui::*;
 use super::tool_state::*;
 
+use flo_curves::bezier::path::*;
 use flo_scene::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
@@ -15,6 +16,11 @@ use serde::*;
 
 use std::collections::*;
 use std::sync::*;
+
+const DOCK_WIDTH: f64       = 48.0;
+const DOCK_TOP_MARGIN: f64  = 100.0;
+const DOCK_SIDE_MARGIN: f64 = 16.0;
+const DOCK_Z_INDEX: usize   = 1000;
 
 ///
 /// Message sent to a tool dock
@@ -92,15 +98,52 @@ impl ToolDock {
         // Finish up by clearing the state
         gc.pop_state();
     }
+
+    ///
+    /// Calculates the corners of the region for this tool dock in a window of the specified size
+    ///
+    pub fn region(&self, w: f64, h: f64) -> (UiPoint, UiPoint) {
+        match self.position {
+            DockPosition::Left => { 
+                let topleft     = UiPoint(DOCK_SIDE_MARGIN, DOCK_TOP_MARGIN);
+                let bottomright = UiPoint(DOCK_SIDE_MARGIN + DOCK_WIDTH, h - DOCK_TOP_MARGIN);
+
+                (topleft, bottomright)
+            }
+
+            DockPosition::Right => {
+                let topleft     = UiPoint(w - DOCK_SIDE_MARGIN - DOCK_WIDTH, DOCK_TOP_MARGIN);
+                let bottomright = UiPoint(w - DOCK_SIDE_MARGIN, h - DOCK_TOP_MARGIN);
+
+                (topleft, bottomright)
+            }
+        }
+    }
+
+    ///
+    /// Creates the dock region as a UiPath
+    ///
+    pub fn region_as_path(&self, w: f64, h: f64) -> UiPath {
+        let (topleft, bottomright) = self.region(w, h);
+
+        BezierPathBuilder::start(topleft)
+            .line_to(UiPoint(topleft.x(), bottomright.y()))
+            .line_to(bottomright)
+            .line_to(UiPoint(bottomright.x(), topleft.y()))
+            .line_to(topleft)
+            .build()
+    }
 }
 
 ///
 /// Runs a tool dock subprogram. This is a location, which can be used with the `Tool::SetToolLocation` message to specify which tools are found in this dock.
-/// 
-/// In order to draw the tool dock at the correct size, this requires `DrawEvent` messages (this does not subscribe to these itself, but
-/// this can be set up by sending `DocumentRequest::SubscribeDrawEvents` for example)
 ///
 pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: SceneContext, position: DockPosition, layer: LayerId) {
+    let our_program_id = context.current_program_id().unwrap();
+
+    // The focus subprogram is used to send events to the dock
+    let mut focus = context.send(()).unwrap();
+
     // Tool dock data
     let mut tool_dock = ToolDock {
         position:       position,
@@ -111,15 +154,19 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
         next_sprite:    SpriteId(0),
     };
 
-    // Size of the viewport
+    // Size of the viewport (we don't know the actual size yet)
     let mut scale   = 1.0;
-    let mut w       = 0.0;
-    let mut h       = 0.0;
+    let mut w       = 1000.0;
+    let mut h       = 1000.0;
+
+    // Claim an initial region (this is so the focus subprogram sends us a greeting)
+    focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
 
     // Run the program
     let mut input = input.ready_chunks(50);
     while let Some(msgs) = input.next().await {
         let mut needs_redraw = false;
+        let mut size_changed = false;
 
         // Process the messages that are waiting
         for msg in msgs {
@@ -130,6 +177,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     h = new_h / scale;
 
                     needs_redraw = true;
+                    size_changed = true;
                 }
 
                 ToolDockMessage::DrawEvent(DrawEvent::Scale(new_scale)) => {
@@ -139,6 +187,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     scale = new_scale;
 
                     needs_redraw = true;
+                    size_changed = true;
                 }
 
                 ToolDockMessage::ToolState(ToolState::AddTool(tool_id)) => { 
@@ -209,6 +258,11 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                 ToolDockMessage::ToolState(_) => { /* Other toolstate messages are ignored */ }
                 ToolDockMessage::DrawEvent(_) => { /* Other drawing events are ignored */ }
             }
+        }
+
+        // Update the dock and control regions if the window size changes
+        if size_changed {
+            focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
         }
 
         // Redraw the dock if necessary
