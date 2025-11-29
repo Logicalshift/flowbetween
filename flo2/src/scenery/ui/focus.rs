@@ -298,7 +298,7 @@ impl FocusProgram {
     /// Sends greeting messages to a newly added subprogram
     ///
     async fn greet_new_subprogram(&mut self, subprogram_id: SubProgramId, context: &SceneContext) {
-        let mut subprogram = context.send(subprogram_id).ok();
+        let subprogram = context.send(subprogram_id).ok();
 
         if let Some(mut subprogram) = subprogram {
             // Send the scale if it's been stored
