@@ -22,7 +22,7 @@ const DOCK_WIDTH: f64       = 48.0;
 const DOCK_TOOL_WIDTH: f64  = 38.0;
 const DOCK_TOOL_GAP: f64    = 2.0;
 const DOCK_TOP_MARGIN: f64  = 100.0;
-const DOCK_SIDE_MARGIN: f64 = 16.0;
+const DOCK_SIDE_MARGIN: f64 = 4.0;
 const DOCK_Z_INDEX: usize   = 1000;
 
 ///
