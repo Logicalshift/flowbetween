@@ -354,7 +354,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
             let mut z = 0;
             for tool in tool_dock.tools.values() {
                 let region = tool.outline_region(x, y);
-                focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![region], z_index: z }).await.ok();
+                focus.send(Focus::ClaimControlRegion { program: our_program_id, control: tool.control_id, region: vec![region], z_index: z }).await.ok();
 
                 y += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
                 z += 1;
