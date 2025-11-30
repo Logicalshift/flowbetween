@@ -262,6 +262,30 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     size_changed = true;
                 }
 
+                ToolDockMessage::FocusEvent(FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Enter, _, _))) => {
+                    tool_dock.tools.values_mut()
+                        .for_each(|tool| {
+                            if tool.control_id == control_id {
+                                tool.highlighted    = true;
+                                needs_redraw        = true;
+                            }
+                        });
+                }
+
+                ToolDockMessage::FocusEvent(FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Leave, _, _))) => {
+                    tool_dock.tools.values_mut()
+                        .for_each(|tool| {
+                            if tool.control_id == control_id {
+                                tool.highlighted    = false;
+                                needs_redraw        = true;
+                            }
+                        });
+                }
+
+                ToolDockMessage::FocusEvent(FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, _, _))) => {
+
+                }
+
                 ToolDockMessage::ToolState(ToolState::AddTool(tool_id)) => { 
                     // Add (or replace) the tool with this ID
                     tool_dock.tools.insert(tool_id, ToolData {
