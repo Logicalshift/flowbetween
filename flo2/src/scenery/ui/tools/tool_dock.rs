@@ -65,6 +65,7 @@ struct ToolData {
     highlighted:    bool,
     focused:        bool,
     selected:       bool,
+    dialog_open:    bool,
 }
 
 ///
@@ -326,6 +327,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         selected:       false,
                         highlighted:    false,
                         focused:        false,
+                        dialog_open:    false,
                     });
 
                     // Draw with the new tool
@@ -386,6 +388,18 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     }
 
                     needs_redraw = true;
+                }
+
+                ToolDockMessage::ToolState(ToolState::OpenDialog(tool_id)) => {
+                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
+                        tool.dialog_open = true;
+                    }
+                }
+
+                ToolDockMessage::ToolState(ToolState::CloseDialog(tool_id)) => {
+                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
+                        tool.dialog_open = false;
+                    }
                 }
 
                 ToolDockMessage::ToolState(_)  => { /* Other toolstate messages are ignored */ }
