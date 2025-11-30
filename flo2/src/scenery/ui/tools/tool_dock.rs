@@ -61,6 +61,7 @@ struct ToolData {
     position:       (f64, f64),
     icon:           Arc<Vec<Draw>>,
     sprite:         Option<SpriteId>,
+    control_id:     ControlId,
     highlighted:    bool,
     selected:       bool,
 }
@@ -192,6 +193,18 @@ impl ToolData {
             gc.pop_state();
         }
     }
+
+    ///
+    /// The selection path for this tool when centered at the specified x and y positions
+    ///
+    pub fn outline_region(&self, x: f64, y: f64) -> UiPath {
+        BezierPathBuilder::start(UiPoint(x - DOCK_TOOL_WIDTH/2.0, y - DOCK_TOOL_WIDTH/2.0))
+            .line_to(UiPoint(x + DOCK_TOOL_WIDTH/2.0, y - DOCK_TOOL_WIDTH/2.0))
+            .line_to(UiPoint(x + DOCK_TOOL_WIDTH/2.0, y + DOCK_TOOL_WIDTH/2.0))
+            .line_to(UiPoint(x - DOCK_TOOL_WIDTH/2.0, y + DOCK_TOOL_WIDTH/2.0))
+            .line_to(UiPoint(x - DOCK_TOOL_WIDTH/2.0, y - DOCK_TOOL_WIDTH/2.0))
+            .build()
+    }
 }
 
 ///
@@ -255,6 +268,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         position:       (0.0, 0.0),
                         icon:           Arc::new(vec![]),
                         sprite:         None,
+                        control_id:     ControlId::new(),
                         selected:       false,
                         highlighted:    false,
                     });
@@ -284,6 +298,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     }
 
                     needs_redraw = true;
+                    size_changed = true;
                 }
 
                 ToolDockMessage::ToolState(ToolState::RemoveTool(tool_id)) => {
@@ -292,9 +307,12 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         if let Some(old_sprite) = old_tool.sprite.take() {
                             tool_dock.unused_sprites.push(old_sprite);
                         }
+
+                        focus.send(Focus::RemoveControlClaim(our_program_id, old_tool.control_id)).await.ok();
                     }
 
                     needs_redraw = true;
+                    size_changed = true;
                 }
 
                 ToolDockMessage::ToolState(ToolState::Select(tool_id)) => {
@@ -322,7 +340,25 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
         // Update the dock and control regions if the window size changes
         if size_changed {
+            // Claim the overall region
             focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
+
+            // Claim the position of each tool
+            let (topleft, bottomright) = tool_dock.region(w, h);
+
+            // Center point of the topmost tool
+            let x = (topleft.0 + bottomright.0) / 2.0;
+            let y = topleft.1 + DOCK_TOOL_GAP*3.0 + DOCK_TOOL_WIDTH / 2.0;
+
+            let mut y = y;
+            let mut z = 0;
+            for tool in tool_dock.tools.values() {
+                let region = tool.outline_region(x, y);
+                focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![region], z_index: z }).await.ok();
+
+                y += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
+                z += 1;
+            }
         }
 
         // Redraw the dock if necessary
