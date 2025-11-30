@@ -63,6 +63,7 @@ struct ToolData {
     sprite:         Option<SpriteId>,
     control_id:     ControlId,
     highlighted:    bool,
+    focused:        bool,
     selected:       bool,
 }
 
@@ -178,7 +179,7 @@ impl ToolData {
         // Draw the 'plinth' for this tool
         let state = if self.selected {
             ToolPlinthState::Selected
-        } else if self.highlighted {
+        } else if self.highlighted || self.focused {
             ToolPlinthState::Highlighted
         } else {
             ToolPlinthState::Unselected
@@ -265,6 +266,26 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     size_changed = true;
                 }
 
+                ToolDockMessage::FocusEvent(FocusEvent::Focused(control_id)) => {
+                    tool_dock.tools.values_mut()
+                        .for_each(|tool| {
+                            if tool.control_id == control_id {
+                                tool.focused    = true;
+                                needs_redraw    = true;
+                            }
+                        });
+                }
+
+                ToolDockMessage::FocusEvent(FocusEvent::Unfocused(control_id)) => {
+                    tool_dock.tools.values_mut()
+                        .for_each(|tool| {
+                            if tool.control_id == control_id {
+                                tool.focused    = false;
+                                needs_redraw    = true;
+                            }
+                        });
+                }
+
                 ToolDockMessage::FocusEvent(FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Enter, _, _))) => {
                     tool_dock.tools.values_mut()
                         .for_each(|tool| {
@@ -304,6 +325,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         control_id:     ControlId::new(),
                         selected:       false,
                         highlighted:    false,
+                        focused:        false,
                     });
 
                     // Draw with the new tool
