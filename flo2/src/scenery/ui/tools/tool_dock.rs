@@ -137,6 +137,31 @@ impl ToolDock {
     }
 
     ///
+    /// Sets/updates the dialog position for a tool
+    ///
+    pub async fn set_dialog_position(&self, tool_state: &mut OutputSink<Tool>, tool_to_set: ToolId, w: f64, h: f64) {
+        let (topleft, bottomright) = self.region(w, h);
+
+        // Center point of the topmost tool
+        let x = (topleft.0 + bottomright.0) / 2.0;
+        let y = topleft.1 + DOCK_TOOL_GAP*3.0 + DOCK_TOOL_WIDTH / 2.0;
+
+        // Order the tools by y-pos
+        let mut ordered_tools = self.tools.iter().collect::<Vec<_>>();
+        ordered_tools.sort_by(|a, b| a.1.position.1.total_cmp(&b.1.position.1));
+
+        // Draw the tools in order
+        let mut y = y;
+        for (tool_id, _) in ordered_tools {
+            if tool_id == &tool_to_set {
+                tool_state.send(Tool::SetToolDialogLocation(tool_to_set, (x, y))).await.ok();
+            }
+
+            y += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
+        }
+    }
+
+    ///
     /// Calculates the corners of the region for this tool dock in a window of the specified size
     ///
     pub fn region(&self, w: f64, h: f64) -> (UiPoint, UiPoint) {
@@ -268,6 +293,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                 }
 
                 ToolDockMessage::FocusEvent(FocusEvent::Focused(control_id)) => {
+                    // Keyboard focus is on a tool
                     tool_dock.tools.values_mut()
                         .for_each(|tool| {
                             if tool.control_id == control_id {
@@ -278,6 +304,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                 }
 
                 ToolDockMessage::FocusEvent(FocusEvent::Unfocused(control_id)) => {
+                    // Keyboard focus has left a tool
                     tool_dock.tools.values_mut()
                         .for_each(|tool| {
                             if tool.control_id == control_id {
@@ -288,6 +315,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                 }
 
                 ToolDockMessage::FocusEvent(FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Enter, _, _))) => {
+                    // Pointer has entered a tool
                     tool_dock.tools.values_mut()
                         .for_each(|tool| {
                             if tool.control_id == control_id {
@@ -298,6 +326,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                 }
 
                 ToolDockMessage::FocusEvent(FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Leave, _, _))) => {
+                    // Pointer has left a tool
                     tool_dock.tools.values_mut()
                         .for_each(|tool| {
                             if tool.control_id == control_id {
@@ -318,8 +347,10 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                         // Toggle the tool's dialog if the user clicks the tool that's already selected
                         if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
-                            if tool.selected && !tool.dialog_open{
+                            if tool.selected && !tool.dialog_open {
                                 tool.dialog_open = true;
+
+                                tool_dock.set_dialog_position(&mut tool_state, tool_id, w, h).await;
                                 tool_state.send(Tool::OpenDialog(tool_id)).await.ok();
                             } else {
                                 tool.dialog_open = false;
