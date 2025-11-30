@@ -308,12 +308,27 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                 }
 
                 ToolDockMessage::FocusEvent(FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, _, _))) => {
+                    // User has clicked on a tool
                     let selected_tool = tool_dock.tools.iter()
                         .filter(|(_, tool)| tool.control_id == control_id)
                         .next();
 
                     if let Some((tool_id, _)) = selected_tool {
-                        tool_state.send(Tool::Select(*tool_id)).await.ok();
+                        let tool_id = *tool_id;
+
+                        // Toggle the tool's dialog if the user clicks the tool that's already selected
+                        if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
+                            if tool.selected && !tool.dialog_open{
+                                tool.dialog_open = true;
+                                tool_state.send(Tool::OpenDialog(tool_id)).await.ok();
+                            } else {
+                                tool.dialog_open = false;
+                                tool_state.send(Tool::CloseDialog(tool_id)).await.ok();
+                            }
+                        }
+
+                        // Select this tool
+                        tool_state.send(Tool::Select(tool_id)).await.ok();
                     }
                 }
 
