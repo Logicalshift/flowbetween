@@ -216,6 +216,9 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
     // The focus subprogram is used to send events to the dock
     let mut focus = context.send(()).unwrap();
 
+    // The tool state subprogram manages which tools are selected at any given type
+    let mut tool_state = context.send(()).unwrap();
+
     // Tool dock data
     let mut tool_dock = ToolDock {
         position:       position,
@@ -283,7 +286,13 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                 }
 
                 ToolDockMessage::FocusEvent(FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, _, _))) => {
+                    let selected_tool = tool_dock.tools.iter()
+                        .filter(|(_, tool)| tool.control_id == control_id)
+                        .next();
 
+                    if let Some((tool_id, _)) = selected_tool {
+                        tool_state.send(Tool::Select(*tool_id)).await.ok();
+                    }
                 }
 
                 ToolDockMessage::ToolState(ToolState::AddTool(tool_id)) => { 
