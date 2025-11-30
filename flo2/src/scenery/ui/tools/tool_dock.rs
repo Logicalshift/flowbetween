@@ -123,17 +123,23 @@ impl ToolDock {
         let x = (topleft.0 + bottomright.0) / 2.0;
         let y = topleft.1 + DOCK_TOOL_GAP*3.0 + DOCK_TOOL_WIDTH / 2.0;
 
-        // Order the tools by y-pos
-        let mut ordered_tools = self.tools.values().collect::<Vec<_>>();
-        ordered_tools.sort_by(|a, b| a.position.1.total_cmp(&b.position.1));
-
         // Draw the tools in order
         let mut y = y;
-        for tool in ordered_tools {
+        for (_, tool) in self.ordered_tools() {
             tool.draw(gc, (x, y));
 
             y += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
         }
+    }
+
+    ///
+    /// Returns the tools in order
+    ///
+    pub fn ordered_tools<'a>(&'a self) -> impl 'a + Iterator<Item=(&'a ToolId, &'a ToolData)> {
+        let mut ordered_tools = self.tools.iter().collect::<Vec<_>>();
+        ordered_tools.sort_by(|(_, a), (_, b)| a.position.1.total_cmp(&b.position.1));
+
+        ordered_tools.into_iter()
     }
 
     ///
@@ -147,8 +153,7 @@ impl ToolDock {
         let y = topleft.1 + DOCK_TOOL_GAP*3.0 + DOCK_TOOL_WIDTH / 2.0;
 
         // Order the tools by y-pos
-        let mut ordered_tools = self.tools.iter().collect::<Vec<_>>();
-        ordered_tools.sort_by(|a, b| a.1.position.1.total_cmp(&b.1.position.1));
+        let ordered_tools = self.ordered_tools();
 
         // Draw the tools in order
         let mut y = y;
