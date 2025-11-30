@@ -28,7 +28,7 @@ const DOCK_Z_INDEX: usize   = 1000;
 ///
 /// Message sent to a tool dock
 ///
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ToolDockMessage {
     /// Updating the tool state for this dock
     ToolState(ToolState),
