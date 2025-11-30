@@ -472,7 +472,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
             let mut y = y;
             let mut z = 0;
-            for tool in tool_dock.tools.values() {
+            for (_, tool) in tool_dock.ordered_tools() {
                 let region = tool.outline_region(x, y);
                 focus.send(Focus::ClaimControlRegion { program: our_program_id, control: tool.control_id, region: vec![region], z_index: z }).await.ok();
 
