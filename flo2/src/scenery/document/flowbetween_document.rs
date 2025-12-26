@@ -127,12 +127,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     let test_tool2      = ToolId::new();
     let test_group      = ToolGroupId::new();
     let test_type       = ToolTypeId::new();
-    let mut tool_icon   = vec![];
-
-    tool_icon.new_path();
-    tool_icon.rect(-14.0, -14.0, 14.0, 14.0);
-    tool_icon.fill_color(Color::Rgba(0.3, 0.7, 0.0, 1.0));
-    tool_icon.fill();
+    let tool_icon       = svg(include_bytes!("../../../../flo/svg/tools/pencil.svg"));
 
     context.send_message(Tool::CreateTool(test_group, test_type, test_tool)).await.unwrap();
     context.send_message(Tool::CreateTool(test_group, test_type, test_tool2)).await.unwrap();
