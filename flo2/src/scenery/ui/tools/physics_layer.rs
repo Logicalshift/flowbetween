@@ -17,6 +17,7 @@ use crate::scenery::ui::focus::*;
 use crate::scenery::ui::namespaces::*;
 use crate::scenery::ui::render_binding::*;
 use crate::scenery::ui::subprograms::*;
+use crate::scenery::ui::svg::*;
 use crate::scenery::ui::ui_path::*;
 
 use flo_binding::*;
@@ -80,12 +81,13 @@ pub enum PhysicsEvent {
     Deselect(PhysicsToolId),
 }
 
-fn test_tool() -> PhysicsTool {
-    let mut drawing = vec![];
-
-    drawing.fill_color(Color::Rgba(0.0, 0.0, 1.0, 1.0));
-    drawing.rect(-12.0, -12.0, 12.0, 12.0);
-    drawing.fill();
+fn test_tool(num: usize) -> PhysicsTool {
+    let drawing = match num {
+        0 => svg_with_width(include_bytes!("../../../../../flo/svg/tools/eraser.svg"), 28.0),
+        1 => svg_with_width(include_bytes!("../../../../../flo/svg/tools/shape_rectangle.svg"), 28.0),
+        2 => svg_with_width(include_bytes!("../../../../../flo/svg/tools/select.svg"), 28.0),
+        _ => svg_with_width(include_bytes!("../../../../../flo/svg/tools/floodfill.svg"), 28.0),
+    };
 
     let tool = PhysicsTool::new(PhysicsToolId::new())
         .with_icon(drawing);
@@ -140,17 +142,17 @@ pub async fn physics_layer(input: InputStream<PhysicsLayer>, context: SceneConte
     // TEST: create a test object, force an initial update
     let group_1 = ToolGroupId::new();
     let group_2 = ToolGroupId::new();
-    let test_object = test_tool().with_selection_group(group_1).with_bind_with(vec![group_2]);
+    let test_object = test_tool(0).with_selection_group(group_1).with_bind_with(vec![group_2]);
     let test_object_id_1 = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
     state.float(test_object_id_1, (100.0, 100.0)).await;
 
-    let test_object = test_tool().with_selection_group(group_2).with_bind_with(vec![group_1]);
+    let test_object = test_tool(1).with_selection_group(group_2).with_bind_with(vec![group_1]);
     let test_object_id_2 = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
     state.float(test_object_id_2, (200.0, 100.0)).await;
 
-    let test_object = test_tool();
+    let test_object = test_tool(2);
     let test_object_id_3 = test_object.id();
     state.add_tool(test_object, StreamTarget::None, &context).await;
     state.float(test_object_id_3, (300.0, 100.0)).await;
