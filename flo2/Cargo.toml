@@ -50,3 +50,4 @@ flo_svg                 = { git = "https://github.com/Logicalshift/flo_svg", bra
 # flo_render_canvas       = { path = "../../flo_draw/render_canvas"}
 # flo_render_gl_offscreen = { path = "../../flo_draw/render_gl_offscreen"}
 # flo_render_software     = { path = "../../flo_draw/render_software"}
+# flo_svg                 = { path = "../../flo_svg/svg" }
