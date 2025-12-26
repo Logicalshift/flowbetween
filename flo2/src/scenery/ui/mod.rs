@@ -18,6 +18,7 @@ mod tools;
 mod colors;
 mod binding_program;
 mod render_binding;
+mod svg;
 
 pub use namespaces::*;
 pub use control::*;
@@ -37,5 +38,6 @@ pub use tools::physics_simulation_joints::*;
 pub use binding_tracker::*;
 pub use binding_program::*;
 pub use render_binding::*;
+pub use svg::*;
 
 pub use tools::tool_dock::*;
