@@ -9,6 +9,7 @@ description = "Vector animation editor"
 
 [dependencies]
 flo_draw            = { version = "0.4", features = [ "render-wgpu" ], default-features = false }
+flo_svg             = "0.1"
 flo_curves          = "0.8"
 
 flo_binding         = "3.0"
@@ -39,6 +40,8 @@ flo_render              = { git = "https://github.com/Logicalshift/flo_draw", br
 flo_render_canvas       = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
 flo_render_gl_offscreen = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
 flo_render_software     = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+
+flo_svg                 = { git = "https://github.com/Logicalshift/flo_svg", branch = "v0.1" }
 
 # flo_draw                = { path = "../../flo_draw/draw"}
 # flo_canvas              = { path = "../../flo_draw/canvas"}
