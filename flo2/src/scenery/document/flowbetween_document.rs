@@ -127,12 +127,13 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     let test_tool2      = ToolId::new();
     let test_group      = ToolGroupId::new();
     let test_type       = ToolTypeId::new();
-    let tool_icon       = svg_with_width(include_bytes!("../../../../flo/svg/tools/pencil.svg"), 32.0);
+    let tool_icon_1     = svg_with_width(include_bytes!("../../../../flo/svg/tools/pencil.svg"), 32.0);
+    let tool_icon_2     = svg_with_width(include_bytes!("../../../../flo/svg/tools/ink.svg"), 32.0);
 
     context.send_message(Tool::CreateTool(test_group, test_type, test_tool)).await.unwrap();
     context.send_message(Tool::CreateTool(test_group, test_type, test_tool2)).await.unwrap();
-    context.send_message(Tool::SetToolIcon(test_tool, Arc::new(tool_icon.clone()))).await.unwrap();
-    context.send_message(Tool::SetToolIcon(test_tool2, Arc::new(tool_icon.clone()))).await.unwrap();
+    context.send_message(Tool::SetToolIcon(test_tool, Arc::new(tool_icon_1.clone()))).await.unwrap();
+    context.send_message(Tool::SetToolIcon(test_tool2, Arc::new(tool_icon_2.clone()))).await.unwrap();
     context.send_message(Tool::SetToolLocation(test_tool, subprogram_tool_dock_left().into(), (0.0, 0.0))).await.unwrap();
     context.send_message(Tool::SetToolLocation(test_tool2, subprogram_tool_dock_left().into(), (0.0, 0.1))).await.unwrap();
     context.send_message(Tool::Select(test_tool)).await.unwrap();
