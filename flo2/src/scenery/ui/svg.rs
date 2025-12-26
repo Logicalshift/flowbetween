@@ -48,7 +48,7 @@ pub fn svg_with_width(svg: &[u8], width: f64) -> Vec<Draw> {
 
         drawing.splice(0..0, vec![
             Draw::PushState,
-            Draw::MultiplyTransform(translation * scale),
+            Draw::MultiplyTransform(scale * translation),
         ]);
 
         drawing.push(Draw::PopState);
