@@ -14,7 +14,7 @@ pub fn svg(svg: &[u8]) -> Vec<Draw> {
 
     if let Some(((min_x, min_y), (max_x, max_y))) = document.viewbox() {
         // Translate the center of the viewbox to the 0,0 position
-        let center_pos  = ((min_x+max_x)/2.0, (min_y+max_y/2.0));
+        let center_pos  = ((min_x+max_x)/2.0, ((min_y+max_y)/2.0));
         let translation = Transform2D::translate(-center_pos.0, -center_pos.1);
 
         drawing.splice(0..0, vec![
