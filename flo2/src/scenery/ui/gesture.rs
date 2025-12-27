@@ -34,7 +34,8 @@ pub async fn run_gesture_program(context: SceneContext) {
 /// Create the subprogram when the mouse down event is detected, then forward any focus events here
 ///
 pub async fn gesture_program(input: InputStream<FocusEvent>, context: SceneContext) {
-    // 
+    // We'll forward unhandled focus events back to the main program
+    // TODO: think this ends up sending them back to us...
     let mut forward_focus = context.send(()).unwrap();
 
     // Run the main event loop
