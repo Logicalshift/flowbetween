@@ -15,7 +15,7 @@ pub async fn run_gesture_program(context: SceneContext) {
     let mut scene_control = context.send(()).unwrap();
     
     // Run the gesture program
-    scene_control.send(SceneControl::start_program(gesture_program_id, move |input, context| {
+    scene_control.send(SceneControl::start_child_program(gesture_program_id, active_program_id, move |input, context| {
         gesture_program(input, context)
     }, 1)).await.ok();
 
