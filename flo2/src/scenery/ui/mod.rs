@@ -19,6 +19,7 @@ mod colors;
 mod binding_program;
 mod render_binding;
 mod svg;
+mod gesture;
 
 pub use namespaces::*;
 pub use control::*;
@@ -39,5 +40,6 @@ pub use binding_tracker::*;
 pub use binding_program::*;
 pub use render_binding::*;
 pub use svg::*;
+pub use gesture::*;
 
 pub use tools::tool_dock::*;
