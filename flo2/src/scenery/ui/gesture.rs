@@ -29,6 +29,7 @@ pub async fn run_gesture_program(context: &SceneContext) {
 
     // Send messages from the gesture program back to the original program
     scene_control.send(SceneControl::connect(gesture_program_id, active_program_id, StreamId::with_message_type::<FocusEvent>())).await.ok();
+    scene_control.send(SceneControl::connect(gesture_program_id, active_program_id, StreamId::with_message_type::<Gesture>())).await.ok();
 
     // Redirect messages intended for the source program to the gesture program
     scene_control.send(SceneControl::connect((), gesture_program_id, StreamId::with_message_type::<FocusEvent>().for_target(active_program_id))).await.ok();
