@@ -68,7 +68,7 @@ pub enum Focus {
 ///
 /// Messages that the focus subprogram can send to focused subprograms
 ///
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum FocusEvent {
     /// An event has occurred for the specified control
     Event(Option<ControlId>, DrawEvent),
