@@ -167,4 +167,85 @@ mod test {
             .expect_message_matching(Gesture::Focus(FocusEvent::Event(None, DrawEvent::NewFrame)), "Unexpected Gesture")
             .run_in_scene_with_threads(&scene, test_program, 5);
     }
+
+    #[test]
+    pub fn forward_without_gesture_program_with_filter() {
+        // As for `forward_unknown_focus_event_with_filter` but without the actual gesture program (to make sure that direct messages will work with that test)
+        #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+        enum TestMessage {
+            Focus(FocusEvent),
+            Gesture(Gesture)
+        }
+
+        impl SceneMessage for TestMessage { }
+
+        let scene           = Scene::default();
+        let parent_program  = SubProgramId::new();
+        let test_program    = SubProgramId::new();
+
+        // Turn focus and gesture messages into test messages
+        scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|evts| evts.map(|evt| TestMessage::Focus(evt)))), (), StreamId::with_message_type::<FocusEvent>()).unwrap();
+        scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|evts| evts.map(|evt| TestMessage::Gesture(evt)))), (), StreamId::with_message_type::<Gesture>()).unwrap();
+
+        // Add a subprogram that sends focus events to the test program
+        scene.add_subprogram(parent_program, move |input, context| async move {
+            let mut test_program = context.send(test_program).unwrap();
+
+            // Relay focus events to the test program
+            let mut input = input;
+            while let Some(test_message) = input.next().await {
+                let test_message: TestMessage = test_message;
+                test_program.send(test_message).await.unwrap();
+            }
+        }, 20);
+
+        // Test is to send the message to the parent program and expect it to get relayed back to the test program
+        TestBuilder::new()
+            .send_message_to_target(parent_program, FocusEvent::Event(None, DrawEvent::NewFrame))
+            .send_message_to_target(parent_program, Gesture::Focus(FocusEvent::Event(None, DrawEvent::NewFrame)))
+            .expect_message_matching(TestMessage::Focus(FocusEvent::Event(None, DrawEvent::NewFrame)), "Unexpected FocusEvent")
+            .expect_message_matching(TestMessage::Gesture(Gesture::Focus(FocusEvent::Event(None, DrawEvent::NewFrame))), "Unexpected Gesture")
+            .run_in_scene_with_threads(&scene, test_program, 5);
+    }
+
+    #[test]
+    pub fn forward_unknown_focus_event_with_filter() {
+        #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+        enum TestMessage {
+            Focus(FocusEvent),
+            Gesture(Gesture)
+        }
+
+        impl SceneMessage for TestMessage { }
+
+        let scene           = Scene::default();
+        let parent_program  = SubProgramId::new();
+        let test_program    = SubProgramId::new();
+
+        // Turn focus and gesture messages into test messages
+        scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|evts| evts.map(|evt| TestMessage::Focus(evt)))), (), StreamId::with_message_type::<FocusEvent>()).unwrap();
+        scene.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|evts| evts.map(|evt| TestMessage::Gesture(evt)))), (), StreamId::with_message_type::<Gesture>()).unwrap();
+
+        // Add a subprogram that sends focus events to the test program
+        scene.add_subprogram(parent_program, move |input, context| async move {
+            // The gesture program intercepts focus events destined for this program
+            run_gesture_program(&context).await;
+
+            let mut test_program = context.send(test_program).unwrap();
+
+            // Relay focus events to the test program
+            let mut input = input;
+            while let Some(test_message) = input.next().await {
+                let test_message: TestMessage = test_message;
+                test_program.send(test_message).await.unwrap();
+            }
+        }, 20);
+
+        // Test is to send the message to the parent program and expect it to get relayed back to the test program
+        TestBuilder::new()
+            .send_message_to_target(parent_program, FocusEvent::Event(None, DrawEvent::NewFrame))
+            .expect_message_matching(TestMessage::Focus(FocusEvent::Event(None, DrawEvent::NewFrame)), "Unexpected FocusEvent")
+            .expect_message_matching(TestMessage::Gesture(Gesture::Focus(FocusEvent::Event(None, DrawEvent::NewFrame))), "Unexpected Gesture")
+            .run_in_scene_with_threads(&scene, test_program, 5);
+    }
 }
