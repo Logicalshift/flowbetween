@@ -8,6 +8,7 @@ use super::tool_graphics::*;
 
 use flo_curves::bezier::path::*;
 use flo_scene::*;
+use flo_binding::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
@@ -57,15 +58,16 @@ pub enum DockPosition {
 ///
 /// Data attached to a tool in the dock
 ///
+#[derive(Clone, PartialEq)]
 struct ToolData {
-    position:       (f64, f64),
-    icon:           Arc<Vec<Draw>>,
-    sprite:         Option<SpriteId>,
-    control_id:     ControlId,
-    highlighted:    bool,
-    focused:        bool,
-    selected:       bool,
-    dialog_open:    bool,
+    position:       Binding<(f64, f64)>,
+    icon:           Binding<Arc<Vec<Draw>>>,
+    sprite:         Binding<Option<SpriteId>>,
+    control_id:     Binding<ControlId>,
+    highlighted:    Binding<bool>,
+    focused:        Binding<bool>,
+    selected:       Binding<bool>,
+    dialog_open:    Binding<bool>,
 }
 
 ///
@@ -82,7 +84,7 @@ struct ToolDock {
     namespace:      NamespaceId,
 
     /// The tools that are stored in this dock
-    tools:          HashMap<ToolId, ToolData>,
+    tools:          Binding<Arc<HashMap<ToolId, ToolData>>>,
 
     /// Sprite IDs that were used by tools but are no longer in use
     unused_sprites: Vec<SpriteId>,
@@ -135,9 +137,9 @@ impl ToolDock {
     ///
     /// Returns the tools in order
     ///
-    pub fn ordered_tools<'a>(&'a self) -> impl 'a + Iterator<Item=(&'a ToolId, &'a ToolData)> {
-        let mut ordered_tools = self.tools.iter().collect::<Vec<_>>();
-        ordered_tools.sort_by(|(_, a), (_, b)| a.position.1.total_cmp(&b.position.1));
+    pub fn ordered_tools<'a>(&'a self) -> impl 'a + Iterator<Item=(ToolId, ToolData)> {
+        let mut ordered_tools = self.tools.get().iter().map(|(a, b)| (a.clone(), b.clone())).collect::<Vec<_>>();
+        ordered_tools.sort_by(|(_, a), (_, b)| a.position.get().1.total_cmp(&b.position.get().1));
 
         ordered_tools.into_iter()
     }
@@ -158,7 +160,7 @@ impl ToolDock {
         // Draw the tools in order
         let mut y = y;
         for (tool_id, _) in ordered_tools {
-            if tool_id == &tool_to_set {
+            if tool_id == tool_to_set {
                 tool_state.send(Tool::SetToolDialogLocation(tool_to_set, (x, y))).await.ok();
             }
 
@@ -208,9 +210,9 @@ impl ToolData {
     ///
     pub fn draw(&self, gc: &mut impl GraphicsContext, center_pos: (f64, f64)) {
         // Draw the 'plinth' for this tool
-        let state = if self.selected {
+        let state = if self.selected.get() {
             ToolPlinthState::Selected
-        } else if self.highlighted || self.focused {
+        } else if self.highlighted.get() || self.focused.get() {
             ToolPlinthState::Highlighted
         } else {
             ToolPlinthState::Unselected
@@ -218,7 +220,7 @@ impl ToolData {
         gc.tool_plinth(((center_pos.0 - DOCK_TOOL_WIDTH/2.0) as _, (center_pos.1 - DOCK_TOOL_WIDTH/2.0) as _), (DOCK_TOOL_WIDTH as _, DOCK_TOOL_WIDTH as _), state);
 
         // Draw the sprite for this tool
-        if let Some(sprite_id) = self.sprite {
+        if let Some(sprite_id) = self.sprite.get() {
             gc.push_state();
             gc.sprite_transform(SpriteTransform::Translate(center_pos.0 as _, center_pos.1 as _));
             gc.draw_sprite(sprite_id);
@@ -256,7 +258,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
         position:       position,
         layer:          layer,
         namespace:      *DOCK_LAYER,
-        tools:          HashMap::new(),
+        tools:          bind(Arc::new(HashMap::new())),
         unused_sprites: vec![],
         next_sprite:    SpriteId(0),
     };
@@ -299,66 +301,68 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                 ToolDockMessage::FocusEvent(FocusEvent::Focused(control_id)) => {
                     // Keyboard focus is on a tool
-                    tool_dock.tools.values_mut()
+                    tool_dock.tools.get().values()
                         .for_each(|tool| {
-                            if tool.control_id == control_id {
-                                tool.focused    = true;
-                                needs_redraw    = true;
+                            if tool.control_id.get() == control_id {
+                                tool.focused.set(true);
+                                needs_redraw = true;
                             }
                         });
                 }
 
                 ToolDockMessage::FocusEvent(FocusEvent::Unfocused(control_id)) => {
                     // Keyboard focus has left a tool
-                    tool_dock.tools.values_mut()
+                    tool_dock.tools.get().values()
                         .for_each(|tool| {
-                            if tool.control_id == control_id {
-                                tool.focused    = false;
-                                needs_redraw    = true;
+                            if tool.control_id.get() == control_id {
+                                tool.focused.set(false);
+                                needs_redraw = true;
                             }
                         });
                 }
 
                 ToolDockMessage::FocusEvent(FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Enter, _, _))) => {
                     // Pointer has entered a tool
-                    tool_dock.tools.values_mut()
+                    tool_dock.tools.get().values()
                         .for_each(|tool| {
-                            if tool.control_id == control_id {
-                                tool.highlighted    = true;
-                                needs_redraw        = true;
+                            if tool.control_id.get() == control_id {
+                                tool.highlighted.set(true);
+                                needs_redraw = true;
                             }
                         });
                 }
 
                 ToolDockMessage::FocusEvent(FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Leave, _, _))) => {
                     // Pointer has left a tool
-                    tool_dock.tools.values_mut()
+                    tool_dock.tools.get().values()
                         .for_each(|tool| {
-                            if tool.control_id == control_id {
-                                tool.highlighted    = false;
+                            if tool.control_id.get() == control_id {
+                                tool.highlighted.set(false);
                                 needs_redraw        = true;
                             }
                         });
                 }
 
                 ToolDockMessage::FocusEvent(FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, _, _))) => {
+                    let tools = tool_dock.tools.get();
+
                     // User has clicked on a tool
-                    let selected_tool = tool_dock.tools.iter()
-                        .filter(|(_, tool)| tool.control_id == control_id)
+                    let selected_tool = tools.iter()
+                        .filter(|(_, tool)| tool.control_id.get() == control_id)
                         .next();
 
                     if let Some((tool_id, _)) = selected_tool {
                         let tool_id = *tool_id;
 
                         // Toggle the tool's dialog if the user clicks the tool that's already selected
-                        if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
-                            if tool.selected && !tool.dialog_open {
-                                tool.dialog_open = true;
+                        if let Some(tool) = tools.get(&tool_id) {
+                            if tool.selected.get() && !tool.dialog_open.get() {
+                                tool.dialog_open.set(true);
 
                                 tool_dock.set_dialog_position(&mut tool_state, tool_id, w, h).await;
                                 tool_state.send(Tool::OpenDialog(tool_id)).await.ok();
                             } else {
-                                tool.dialog_open = false;
+                                tool.dialog_open.set(false);
                                 tool_state.send(Tool::CloseDialog(tool_id)).await.ok();
                             }
                         }
@@ -370,16 +374,20 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                 ToolDockMessage::ToolState(ToolState::AddTool(tool_id)) => { 
                     // Add (or replace) the tool with this ID
-                    tool_dock.tools.insert(tool_id, ToolData {
-                        position:       (0.0, 0.0),
-                        icon:           Arc::new(vec![]),
-                        sprite:         None,
-                        control_id:     ControlId::new(),
-                        selected:       false,
-                        highlighted:    false,
-                        focused:        false,
-                        dialog_open:    false,
+                    let mut new_tools = (*tool_dock.tools.get()).clone();
+
+                    new_tools.insert(tool_id, ToolData {
+                        position:       bind((0.0, 0.0)),
+                        icon:           bind(Arc::new(vec![])),
+                        sprite:         bind(None),
+                        control_id:     bind(ControlId::new()),
+                        selected:       bind(false),
+                        highlighted:    bind(false),
+                        focused:        bind(false),
+                        dialog_open:    bind(false),
                     });
+
+                    tool_dock.tools.set(Arc::new(new_tools));
 
                     // Draw with the new tool
                     needs_redraw = true;
@@ -387,10 +395,12 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                 ToolDockMessage::ToolState(ToolState::SetIcon(tool_id, icon)) => {
                     // Update the icon
-                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
-                        tool.icon = icon;
+                    if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
+                        tool.icon.set(icon);
 
-                        if let Some(old_sprite) = tool.sprite.take() {
+                        if let Some(old_sprite) = tool.sprite.get() {
+                            tool.sprite.set(None);
+
                             // Remove the sprite to force the tool to redraw its icon
                             tool_dock.unused_sprites.push(old_sprite);
                         }
@@ -401,8 +411,8 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                 ToolDockMessage::ToolState(ToolState::LocateTool(tool_id, position)) => {
                     // Change the position (we use the y position to set the ordering in the dock)0
-                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
-                        tool.position = position;
+                    if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
+                        tool.position.set(position);
                     }
 
                     needs_redraw = true;
@@ -411,12 +421,15 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                 ToolDockMessage::ToolState(ToolState::RemoveTool(tool_id)) => {
                     // Remove the tool from this dock
-                    if let Some(mut old_tool) = tool_dock.tools.remove(&tool_id) {
-                        if let Some(old_sprite) = old_tool.sprite.take() {
+                    let mut new_tools = (*tool_dock.tools.get()).clone();
+
+                    if let Some(old_tool) = new_tools.remove(&tool_id) {
+                        if let Some(old_sprite) = old_tool.sprite.get() {
+                            old_tool.sprite.set(None);
                             tool_dock.unused_sprites.push(old_sprite);
                         }
 
-                        focus.send(Focus::RemoveControlClaim(our_program_id, old_tool.control_id)).await.ok();
+                        focus.send(Focus::RemoveControlClaim(our_program_id, old_tool.control_id.get())).await.ok();
                     }
 
                     needs_redraw = true;
@@ -425,8 +438,8 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                 ToolDockMessage::ToolState(ToolState::Select(tool_id)) => {
                     // Mark this tool as selected
-                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
-                        tool.selected = true;
+                    if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
+                        tool.selected.set(true);
                     }
 
                     needs_redraw = true;
@@ -434,22 +447,22 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                 ToolDockMessage::ToolState(ToolState::Deselect(tool_id)) => {
                     // Mark this tool as unselected
-                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
-                        tool.selected = false;
+                    if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
+                        tool.selected.set(false);
                     }
 
                     needs_redraw = true;
                 }
 
                 ToolDockMessage::ToolState(ToolState::OpenDialog(tool_id)) => {
-                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
-                        tool.dialog_open = true;
+                    if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
+                        tool.dialog_open.set(true);
                     }
                 }
 
                 ToolDockMessage::ToolState(ToolState::CloseDialog(tool_id)) => {
-                    if let Some(tool) = tool_dock.tools.get_mut(&tool_id) {
-                        tool.dialog_open = false;
+                    if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
+                        tool.dialog_open.set(false);
                     }
                 }
 
@@ -474,7 +487,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
             let mut z = 0;
             for (_, tool) in tool_dock.ordered_tools() {
                 let region = tool.outline_region(x, y);
-                focus.send(Focus::ClaimControlRegion { program: our_program_id, control: tool.control_id, region: vec![region], z_index: z }).await.ok();
+                focus.send(Focus::ClaimControlRegion { program: our_program_id, control: tool.control_id.get(), region: vec![region], z_index: z }).await.ok();
 
                 y += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
                 z += 1;
@@ -486,12 +499,12 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
             let mut drawing = vec![];
 
             // Write out the sprites for the tools
-            let tools           = &mut tool_dock.tools;
+            let tools           = tool_dock.tools.get();
             let next_sprite     = &mut tool_dock.next_sprite;
             let unused_sprites  = &mut tool_dock.unused_sprites;
 
-            for (_, tool_data) in tools.iter_mut() {
-                if tool_data.sprite.is_none() {
+            for (_, tool_data) in tools.iter() {
+                if tool_data.sprite.get().is_none() {
                     // Assign a sprite ID (either re-use one we've used before or assign a new one)
                     let sprite_id = if let Some(sprite_id) = unused_sprites.pop() {
                         sprite_id
@@ -502,7 +515,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         sprite_id
                     };
 
-                    tool_data.sprite = Some(sprite_id);
+                    tool_data.sprite.set(Some(sprite_id));
 
                     // Draw the tool to create the sprite
                     drawing.push_state();
@@ -510,7 +523,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     drawing.sprite(sprite_id);
                     drawing.clear_sprite();
 
-                    drawing.extend(tool_data.icon.iter().cloned());
+                    drawing.extend(tool_data.icon.get().iter().cloned());
 
                     drawing.pop_state();
                 }
