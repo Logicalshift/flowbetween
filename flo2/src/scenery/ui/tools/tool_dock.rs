@@ -85,12 +85,6 @@ struct ToolDock {
 
     /// The tools that are stored in this dock
     tools:          Binding<Arc<HashMap<ToolId, ToolData>>>,
-
-    /// Sprite IDs that were used by tools but are no longer in use
-    unused_sprites: Vec<SpriteId>,
-
-    /// Next sprite ID to use if there are no sprites in the unused pool
-    next_sprite:    SpriteId,
 }
 
 impl ToolDock {
@@ -251,17 +245,17 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
     let mut focus = context.send(()).unwrap();
 
     // The tool state subprogram manages which tools are selected at any given type
-    let mut tool_state = context.send(()).unwrap();
+    let mut tool_state      = context.send(()).unwrap();
+    let mut unused_sprites  = vec![];
+    let mut next_sprite     = SpriteId(0);
 
     // Tool dock data
-    let mut tool_dock = ToolDock {
-        position:       position,
-        layer:          layer,
-        namespace:      *DOCK_LAYER,
-        tools:          bind(Arc::new(HashMap::new())),
-        unused_sprites: vec![],
-        next_sprite:    SpriteId(0),
-    };
+    let tool_dock = Arc::new(ToolDock {
+        position:   position,
+        layer:      layer,
+        namespace:  *DOCK_LAYER,
+        tools:      bind(Arc::new(HashMap::new())),
+    });
 
     // Size of the viewport (we don't know the actual size yet)
     let mut scale   = 1.0;
@@ -402,7 +396,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                             tool.sprite.set(None);
 
                             // Remove the sprite to force the tool to redraw its icon
-                            tool_dock.unused_sprites.push(old_sprite);
+                            unused_sprites.push(old_sprite);
                         }
                     }
 
@@ -426,7 +420,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     if let Some(old_tool) = new_tools.remove(&tool_id) {
                         if let Some(old_sprite) = old_tool.sprite.get() {
                             old_tool.sprite.set(None);
-                            tool_dock.unused_sprites.push(old_sprite);
+                            unused_sprites.push(old_sprite);
                         }
 
                         focus.send(Focus::RemoveControlClaim(our_program_id, old_tool.control_id.get())).await.ok();
@@ -500,8 +494,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
             // Write out the sprites for the tools
             let tools           = tool_dock.tools.get();
-            let next_sprite     = &mut tool_dock.next_sprite;
-            let unused_sprites  = &mut tool_dock.unused_sprites;
 
             for (_, tool_data) in tools.iter() {
                 if tool_data.sprite.get().is_none() {
@@ -509,8 +501,8 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     let sprite_id = if let Some(sprite_id) = unused_sprites.pop() {
                         sprite_id
                     } else {
-                        let sprite_id = *next_sprite;
-                        *next_sprite = SpriteId(next_sprite.0+1);
+                        let sprite_id = next_sprite;
+                        next_sprite = SpriteId(next_sprite.0+1);
 
                         sprite_id
                     };
