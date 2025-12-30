@@ -437,6 +437,66 @@ async fn tool_dock_drawing_program(input: InputStream<BindingProgram>, context: 
     binding_program(input, context, drawing_binding, drawing_action).await;
 }
 
+///
+/// A child subprogram that deals with resizing the tool dock and repositioning any tools that it contains
+///
+async fn tool_dock_resizing_program(input: InputStream<BindingProgram>, context: SceneContext, tool_dock: Arc<ToolDock>, events_subprogram: SubProgramId) {
+    #[derive(Clone, PartialEq)]
+    struct BindingData {
+        window_size:    (f64, f64),
+        ordered_tools:  Vec<(ToolId, ToolData)>,
+        region:         (UiPoint, UiPoint),
+        region_as_path: UiPath,
+    }
+
+    // Binding is the values we need to perform the resizing
+    let size_binding = computed(move || {
+        let (w, h)          = tool_dock.window_size.get();
+        let ordered_tools   = tool_dock.ordered_tools().collect::<Vec<_>>();
+        let region          = tool_dock.region(w, h);
+        let region_as_path  = tool_dock.region_as_path(w, h);
+
+        BindingData {
+            window_size:    (w, h),
+            ordered_tools:  ordered_tools,
+            region:         region,
+            region_as_path: region_as_path
+        }
+    });
+
+    // Action is to reposition the tools
+    let resize_action = BindingAction::new(move |data: BindingData, context| async move {
+        let mut focus = context.send(()).unwrap();
+
+        let ordered_tools   = data.ordered_tools;
+        let region_as_path  = data.region_as_path;
+        let region          = data.region;
+
+        // Claim the overall region
+        focus.send(Focus::ClaimRegion { program: events_subprogram, region: vec![region_as_path], z_index: DOCK_Z_INDEX }).await.ok();
+
+        // Claim the position of each tool
+        let (topleft, bottomright) = region;
+
+        // Center point of the topmost tool
+        let x = (topleft.0 + bottomright.0) / 2.0;
+        let y = topleft.1 + DOCK_TOOL_GAP*3.0 + DOCK_TOOL_WIDTH / 2.0;
+
+        let mut y = y;
+        let mut z = 0;
+        for (_, tool) in ordered_tools {
+            let region = tool.outline_region(x, y);
+            focus.send(Focus::ClaimControlRegion { program: events_subprogram, control: tool.control_id.get(), region: vec![region], z_index: z }).await.ok();
+
+            y += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
+            z += 1;
+        }
+    });
+
+    // Start a binding program
+    binding_program(input, context, size_binding, resize_action).await;
+}
+
 impl ToolDock {
     ///
     /// Performs processing for the 'common' focus events 
