@@ -157,8 +157,84 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
 
                             let Ok(_) = gestures.send(Gesture::Pull(control_id, pointer_state, (offset_x * offset_ratio, offset_y * offset_ratio))).await else { break; };
                         } else {
-                            // TODO: Drag the control
+                            // Drag the control
+                            track_drag(input, context, control_id, pointer_id, initial_state, gestures).await;
+                            break;
                         }
+                    }
+
+                    DrawEvent::Pointer(PointerAction::Cancel, cancel_pointer_id, _) => {
+                        // If the action is cancelled then specify that as the gesture
+                        if cancel_pointer_id != pointer_id { continue; }
+                        gestures.send(Gesture::CancelAction(control_id, initial_state.clone())).await.ok();
+                        break;
+                    }
+
+                    other => {
+                        // Pass on other draw events for the control
+                        let Ok(_) = gestures.send(Gesture::Focus(FocusEvent::Event(event_control, other))).await else { break; };
+                    }
+                }
+            }
+
+            other => {
+                // Other types of events are just forwarded immediately
+                let Ok(_) = gestures.send(Gesture::Focus(other)).await else { break; };
+            }
+        }
+    }
+}
+
+///
+/// The user has pressed down the mouse button and dragged it away
+///
+async fn track_drag(input: &mut InputStream<FocusEvent>, context: &SceneContext, control_id: Option<ControlId>, pointer_id: PointerId, initial_state: PointerState, gestures: &mut OutputSink<Gesture>) {
+    // When the mouse is first pressed, we send the 'preselect' event
+    let Ok(_)               = gestures.send(Gesture::Preselect(control_id, initial_state.clone())).await else { return; };
+    let Some(initial_pos)   = initial_state.location_in_canvas else { return; };
+
+    // Process input while the user is dragging the mouse
+    while let Some(evt) = input.next().await {
+        match evt {
+            FocusEvent::Event(_, DrawEvent::KeyDown(_, Some(Key::KeyEscape))) => {
+                // The escape key cancels the drag
+                gestures.send(Gesture::CancelAction(control_id, initial_state.clone())).await.ok();
+                break;
+            }
+
+            FocusEvent::Event(event_control, draw_event) => {
+                if event_control != control_id {
+                    // Events not sent to our target control are just ignored
+                    let Ok(_) = gestures.send(Gesture::Focus(FocusEvent::Event(event_control, draw_event))).await else { break; };
+                    continue;
+                }
+
+                match draw_event {
+                    // Certain events have no effect
+                    DrawEvent::Pointer(PointerAction::Enter, _, _) => { continue; }
+                    DrawEvent::Pointer(PointerAction::Leave, _, _) => { continue; }
+                    DrawEvent::Pointer(PointerAction::ButtonDown, _, _) => { continue; }
+
+                    // Releasing the button while in this state finishes selecting the control
+                    DrawEvent::Pointer(PointerAction::ButtonUp, up_pointer_id, pointer_state) => {
+                        if up_pointer_id != pointer_id { continue; }
+
+                        let Some(drag_pos)          = pointer_state.location_in_canvas else { continue; };
+                        let (offset_x, offset_y)    = (drag_pos.0 - initial_pos.0, drag_pos.1 - initial_pos.1);
+
+                        gestures.send(Gesture::Drop(control_id, pointer_state, (offset_x, offset_y))).await.ok();
+                        break;
+                    }
+
+                    // Dragging or movign the mouse while the button is down 'pulls' the control until a certain distance is reached
+                    DrawEvent::Pointer(PointerAction::Drag, drag_pointer_id, pointer_state) |
+                    DrawEvent::Pointer(PointerAction::Move, drag_pointer_id, pointer_state) => {
+                        if drag_pointer_id != pointer_id { continue; }
+
+                        let Some(drag_pos)          = pointer_state.location_in_canvas else { continue; };
+                        let (offset_x, offset_y)    = (drag_pos.0 - initial_pos.0, drag_pos.1 - initial_pos.1);
+
+                        gestures.send(Gesture::Drag(control_id, pointer_state, (offset_x, offset_y))).await.ok();
                     }
 
                     DrawEvent::Pointer(PointerAction::Cancel, cancel_pointer_id, _) => {
