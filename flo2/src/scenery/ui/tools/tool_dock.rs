@@ -666,8 +666,8 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                 let distance                = ((offset_x*offset_x) + (offset_y*offset_y)).sqrt();
 
                 if distance <= PULL_DISTANCE {
-                    // Pull the control (increasing force pulling it back as it's dragged away)
-                    let offset_ratio        = (2.0 - (distance / PULL_DISTANCE).powi(2))/2.0;
+                    // Pull the control (increasing force pulling it back the closer it is to its home position)
+                    let offset_ratio        = 1.0 - ((PULL_DISTANCE - distance) / PULL_DISTANCE);
                     let (pull_x, pull_y)    = (offset_x * offset_ratio, offset_y * offset_ratio);
                     let (cx, cy)            = clicked_tool.center.get();
 
