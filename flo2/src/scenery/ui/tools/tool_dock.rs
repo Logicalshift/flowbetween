@@ -20,6 +20,9 @@ use futures::prelude::*;
 use std::collections::*;
 use std::sync::*;
 
+/// Distance that a control is 'pulled' before it starts being dragged
+const PULL_DISTANCE: f64    = 32.0;
+
 const DOCK_WIDTH: f64       = 48.0;
 const DOCK_TOOL_WIDTH: f64  = 38.0;
 const DOCK_TOOL_GAP: f64    = 2.0;
@@ -40,15 +43,22 @@ pub enum DockPosition {
 ///
 #[derive(Clone, PartialEq)]
 struct ToolData {
+    tool_id:        ToolId,
     position:       Binding<(f64, f64)>,
     icon:           Binding<Arc<Vec<Draw>>>,
     sprite:         Binding<Option<SpriteId>>,
     sprite_update:  Binding<usize>,
     control_id:     Binding<ControlId>,
     highlighted:    Binding<bool>,
+    pressed:        Binding<bool>,
     focused:        Binding<bool>,
     selected:       Binding<bool>,
     dialog_open:    Binding<bool>,
+
+    center:         Binding<(f64, f64)>,
+
+    drag_fade:      Binding<f64>,
+    drag_position:  Binding<Option<(f64, f64)>>,
 }
 
 ///
@@ -277,6 +287,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                     let mut new_tools = (*tool_dock.tools.get()).clone();
 
                     new_tools.insert(tool_id, ToolData {
+                        tool_id:        tool_id,
                         position:       bind((0.0, 0.0)),
                         icon:           bind(Arc::new(vec![])),
                         sprite:         bind(None),
@@ -284,8 +295,14 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                         control_id:     bind(ControlId::new()),
                         selected:       bind(false),
                         highlighted:    bind(false),
+                        pressed:        bind(false),
                         focused:        bind(false),
                         dialog_open:    bind(false),
+
+                        center:         bind((0.0, 0.0)),
+
+                        drag_fade:      bind(0.0),
+                        drag_position:  bind(None),
                     });
 
                     tool_dock.tools.set(Arc::new(new_tools));
@@ -467,6 +484,8 @@ async fn tool_dock_resizing_program(input: InputStream<BindingProgram>, context:
             let region = tool.outline_region(x, y);
             focus.send(Focus::ClaimControlRegion { program: events_subprogram, control: tool.control_id.get(), region: vec![region], z_index: z }).await.ok();
 
+            tool.center.set((x, y));
+
             y += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
             z += 1;
         }
@@ -478,7 +497,7 @@ async fn tool_dock_resizing_program(input: InputStream<BindingProgram>, context:
 
 impl ToolDock {
     ///
-    /// Performs processing for the 'common' focus events 
+    /// Performs processing for the 'common' focus events which don't have any 'contextual' behaviour (as happens with drags, etc)
     ///
     fn process_focus_event(&self, evt: &FocusEvent) {
         match evt {
@@ -566,47 +585,103 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
     }
 
     // Process as many events as possible each iteration
-    let mut input = input.ready_chunks(50);
+    let mut input = input;
 
-    while let Some(msgs) = input.next().await {
-        for msg in msgs {
-            // Standard event processing
-            tool_dock.process_focus_event(&msg);
+    while let Some(msg) = input.next().await {
+        // Standard event processing
+        tool_dock.process_focus_event(&msg);
 
-            // Pointer action event processing
-            match msg {
-                FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, _, _)) => {
-                    let tools   = tool_dock.tools.get();
-                    let (w, h)  = tool_dock.window_size.get();
+        // Pointer action event processing
+        match msg {
+            FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => {
+                let tools   = tool_dock.tools.get();
+                let (w, h)  = tool_dock.window_size.get();
 
-                    // User has clicked on a tool
-                    let selected_tool = tools.iter()
-                        .filter(|(_, tool)| tool.control_id.get() == control_id)
-                        .next();
+                // User has clicked on a tool
+                let selected_tool = tools.iter()
+                    .filter(|(_, tool)| tool.control_id.get() == control_id)
+                    .next();
 
-                    if let Some((tool_id, _)) = selected_tool {
-                        let tool_id = *tool_id;
+                if let Some((tool_id, _)) = selected_tool {
+                    let tool_id = *tool_id;
 
-                        // Toggle the tool's dialog if the user clicks the tool that's already selected
-                        if let Some(tool) = tools.get(&tool_id) {
-                            if tool.selected.get() && !tool.dialog_open.get() {
-                                tool.dialog_open.set(true);
+                    // Toggle the tool's dialog if the user clicks the tool that's already selected
+                    if let Some(tool) = tools.get(&tool_id) {
+                        if tool.selected.get() && !tool.dialog_open.get() {
+                            tool.dialog_open.set(true);
 
-                                tool_dock.set_dialog_position(&mut tool_state, tool_id, w, h).await;
-                                tool_state.send(Tool::OpenDialog(tool_id)).await.ok();
-                            } else {
-                                tool.dialog_open.set(false);
-                                tool_state.send(Tool::CloseDialog(tool_id)).await.ok();
-                            }
+                            tool_dock.set_dialog_position(&mut tool_state, tool_id, w, h).await;
+                            tool_state.send(Tool::OpenDialog(tool_id)).await.ok();
+                        } else {
+                            tool.dialog_open.set(false);
+                            tool_state.send(Tool::CloseDialog(tool_id)).await.ok();
                         }
 
-                        // Select this tool
-                        tool_state.send(Tool::Select(tool_id)).await.ok();
+                        // Track this tool
+                        track_button_down(&mut input, &context, pointer_state, &tool_dock, tool.clone(), pointer_id).await;
                     }
                 }
-
-                _ => { }
             }
+
+            _ => { }
         }
     }
+}
+
+///
+/// The user has pressed a button over a tool: track as they move with the button pressed
+///
+async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId) {
+    let Some(initial_pos) = initial_state.location_in_canvas else { return; };
+
+    // Set the tool as pressed
+    clicked_tool.pressed.set(true);
+
+    // Track events until the user releases the button
+    while let Some(msg) = input.next().await {
+        // Default processing happens as normal
+        tool_dock.process_focus_event(&msg);
+
+        // Track until the user releases the mouse button
+        match msg {
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, evt_pointer_id, pointer_state)) => {
+                // Ignore events from other pointers
+                if evt_pointer_id != pointer_id { continue; }
+
+                // 'Pull' this item (or start dragging it)
+                let Some(drag_pos)          = pointer_state.location_in_canvas else { continue; };
+                let (offset_x, offset_y)    = (drag_pos.0 - initial_pos.0, drag_pos.1 - initial_pos.1);
+                let distance                = ((offset_x*offset_x) + (offset_y*offset_y)).sqrt();
+
+                if distance < PULL_DISTANCE {
+                    // Pull the control (increasing force pulling it back as it's dragged away)
+                    let offset_ratio        = (2.0 - (distance / PULL_DISTANCE).powi(2))/2.0;
+                    let (pull_x, pull_y)    = (offset_x * offset_ratio, offset_y * offset_ratio);
+                    let (cx, cy)            = clicked_tool.center.get();
+
+                    clicked_tool.drag_fade.set(1.0);
+                    clicked_tool.drag_position.set(Some((cx + pull_x, cy + pull_y)));
+                } else {
+                    // TODO: Drag the control
+                }
+            }
+
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, evt_pointer_id, _)) => {
+                // Ignore events from other pointers
+                if evt_pointer_id != pointer_id { continue; }
+
+                // Select this tool when the mouse is released
+                context.send(()).unwrap().send(Tool::Select(clicked_tool.tool_id)).await.ok();
+
+                // Finished
+                break;
+            }
+
+            _ => { }
+        }
+    }
+
+    // Clear the pressed status
+    clicked_tool.pressed.set(false);
+    clicked_tool.drag_position.set(None);
 }
