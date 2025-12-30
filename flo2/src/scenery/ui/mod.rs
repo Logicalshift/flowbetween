@@ -4,7 +4,6 @@
 //! This defines subprograms that can run parts of the UI for FlowBetween. These subprograms are likely re-usable in other projects.
 //!
 
-mod binding_tracker;
 mod namespaces;
 mod control;
 mod control_id;
@@ -16,7 +15,6 @@ mod dialog;
 mod egui;
 mod tools;
 mod colors;
-mod binding_program;
 mod render_binding;
 mod svg;
 mod gesture;
@@ -36,8 +34,6 @@ pub use tools::physics_tool::*;
 pub use tools::physics_simulation::*;
 pub use tools::physics_simulation_object::*;
 pub use tools::physics_simulation_joints::*;
-pub use binding_tracker::*;
-pub use binding_program::*;
 pub use render_binding::*;
 pub use svg::*;
 pub use gesture::*;

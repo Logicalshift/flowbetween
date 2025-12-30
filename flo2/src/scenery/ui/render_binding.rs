@@ -1,9 +1,8 @@
-use super::binding_program::*;
-
 use flo_binding::*;
 use flo_draw::canvas::scenery::*;
 use flo_draw::canvas::*;
 use flo_scene::*;
+use flo_scene_binding::*;
 
 use futures::prelude::*;
 

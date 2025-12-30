@@ -9,11 +9,11 @@
 use super::physics_simulation_joints::*;
 use super::physics_simulation_object::*;
 use crate::scenery::ui::ui_path::*;
-use crate::scenery::ui::binding_tracker::*;
 
 use flo_binding::*;
 use flo_scene::*;
 use flo_scene::programs::*;
+use flo_scene_binding::*;
 use flo_curves::*;
 
 use rapier2d::prelude::*;

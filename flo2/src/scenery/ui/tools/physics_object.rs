@@ -3,8 +3,6 @@ use super::physics_layer::*;
 use super::physics_simulation::*;
 use super::physics_simulation_object::*;
 use super::physics_tool::*;
-use crate::scenery::ui::binding_program::*;
-use crate::scenery::ui::binding_tracker::*;
 use crate::scenery::ui::focus::*;
 use crate::scenery::ui::namespaces::*;
 use crate::scenery::ui::ui_path::*;
@@ -18,6 +16,7 @@ use flo_binding::binding_context::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_scene::*;
+use flo_scene_binding::*;
 
 use ::serde::*;
 
