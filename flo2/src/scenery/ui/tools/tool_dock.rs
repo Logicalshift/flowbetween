@@ -437,6 +437,77 @@ async fn tool_dock_drawing_program(input: InputStream<BindingProgram>, context: 
     binding_program(input, context, drawing_binding, drawing_action).await;
 }
 
+impl ToolDock {
+    ///
+    /// Performs processing for the 'common' focus events 
+    ///
+    fn process_event(&self, evt: &FocusEvent) {
+        match evt {
+            FocusEvent::Event(_, DrawEvent::Resize(new_w, new_h)) => {
+                // Update the width and height
+                let scale   = self.scale.get();
+                let w       = new_w / scale;
+                let h       = new_h / scale;
+
+                self.window_size.set((w, h));
+            }
+
+            FocusEvent::Event(_, DrawEvent::Scale(new_scale)) => {
+                // Update the scale, adjust the width and height accordingly
+                let (w, h)  = self.window_size.get();
+                let scale   = self.scale.get();
+                let w       = (w * scale) / new_scale;
+                let h       = (h * scale) / new_scale;
+                
+                self.scale.set(*new_scale);
+                self.window_size.set((w, h));
+            }
+
+            FocusEvent::Focused(control_id) => {
+                // Keyboard focus is on a tool
+                self.tools.get().values()
+                    .for_each(|tool| {
+                        if tool.control_id.get() == *control_id {
+                            tool.focused.set(true);
+                        }
+                    });
+            }
+
+            FocusEvent::Unfocused(control_id) => {
+                // Keyboard focus has left a tool
+                self.tools.get().values()
+                    .for_each(|tool| {
+                        if tool.control_id.get() == *control_id {
+                            tool.focused.set(false);
+                        }
+                    });
+            }
+
+            FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Enter, _, _)) => {
+                // Pointer has entered a tool
+                self.tools.get().values()
+                    .for_each(|tool| {
+                        if tool.control_id.get() == *control_id {
+                            tool.highlighted.set(true);
+                        }
+                    });
+            }
+
+            FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Leave, _, _)) => {
+                // Pointer has left a tool
+                self.tools.get().values()
+                    .for_each(|tool| {
+                        if tool.control_id.get() == *control_id {
+                            tool.highlighted.set(false);
+                        }
+                    });
+            }
+
+            _ => { }
+        }
+    }
+}
+
 ///
 /// A child subprogram that handles events for the tool dock
 ///
