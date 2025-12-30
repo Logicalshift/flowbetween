@@ -14,6 +14,7 @@ flo_curves          = "0.8"
 
 flo_binding         = "3.0"
 flo_scene           = "0.3"
+flo_scene_binding   = "0.3"
 flo_scene_guest     = "0.3"
 
 futures             = "0.3"
@@ -29,6 +30,7 @@ flo_curves              = { git = "https://github.com/Logicalshift/flo_curves", 
 
 flo_binding             = { git = "https://github.com/Logicalshift/flo_binding", branch = "v3.0" }
 flo_scene               = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.3" }
+flo_scene_binding       = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.3" }
 flo_scene_guest         = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.3" }
 
 desync                  = { git = "https://github.com/Logicalshift/desync", branch = "v0.9" }
