@@ -111,16 +111,21 @@ where
             ToolPlinthState::StartDrag(ratio) => {
                 let width       = size.0;
                 let rounding    = ((width / 2.0) - 8.0) * (ratio as f32) + 8.0;
-                let fill_color  = color_tool_dock_highlight().with_alpha(ratio as _);
+
+                self.new_path();
+                self.rounded_rect((pos.0, pos.1 + 3.0), size, rounding);
+
+                self.fill_color(color_tool_shadow().with_alpha((ratio*0.4) as _));
+                self.fill();
 
                 self.new_path();
                 self.rounded_rect(pos, size, rounding);
 
-                self.fill_color(fill_color);
+                self.fill_color(color_tool_background().with_alpha(ratio as _));
                 self.fill();
 
-                self.stroke_color(color_tool_dock_outline());
-                self.line_width(1.0);
+                self.stroke_color(color_tool_border().with_alpha(ratio as _));
+                self.line_width(1.0 + (ratio as f32));
                 self.stroke();
             }
         }
