@@ -16,7 +16,6 @@ use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
 
 use futures::prelude::*;
-use serde::*;
 
 use std::collections::*;
 use std::sync::*;
@@ -27,27 +26,6 @@ const DOCK_TOOL_GAP: f64    = 2.0;
 const DOCK_TOP_MARGIN: f64  = 100.0;
 const DOCK_SIDE_MARGIN: f64 = 4.0;
 const DOCK_Z_INDEX: usize   = 1000;
-
-///
-/// Message sent to a tool dock
-///
-#[derive(Serialize, Deserialize, Debug)]
-pub enum ToolDockMessage {
-    /// Updating the tool state for this dock
-    ToolState(ToolState),
-
-    /// Drawing event for the window this dock is in
-    FocusEvent(FocusEvent),
-}
-
-impl SceneMessage for ToolDockMessage {
-    fn initialise(init_context: &impl SceneInitialisationContext) {
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|tool_state_msgs| tool_state_msgs.map(|msg| ToolDockMessage::ToolState(msg)))), (), StreamId::with_message_type::<ToolState>())
-            .unwrap();
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|draw_event_msgs| draw_event_msgs.map(|msg| ToolDockMessage::FocusEvent(msg)))), (), StreamId::with_message_type::<FocusEvent>())
-            .unwrap();
-    }
-}
 
 ///
 /// Where the dock should appear in the window
