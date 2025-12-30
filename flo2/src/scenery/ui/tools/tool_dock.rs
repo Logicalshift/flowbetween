@@ -244,7 +244,7 @@ impl ToolData {
 ///
 /// Runs a tool dock subprogram. This is a location, which can be used with the `Tool::SetToolLocation` message to specify which tools are found in this dock.
 ///
-pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: SceneContext, position: DockPosition, layer: LayerId) {
+pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneContext, position: DockPosition, layer: LayerId) {
     let our_program_id = context.current_program_id().unwrap();
 
     // The focus subprogram is used to send events to the dock
@@ -287,7 +287,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
         // Process the messages that are waiting
         for msg in msgs {
             match msg {
-                ToolDockMessage::ToolState(ToolState::AddTool(tool_id)) => { 
+                ToolState::AddTool(tool_id) => { 
                     // Add (or replace) the tool with this ID
                     let mut new_tools = (*tool_dock.tools.get()).clone();
 
@@ -305,8 +305,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                     tool_dock.tools.set(Arc::new(new_tools));
                 }
-
-                ToolDockMessage::ToolState(ToolState::SetIcon(tool_id, icon)) => {
+                ToolState::SetIcon(tool_id, icon) => {
                     // Update the icon
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         // Set the icon value
@@ -349,8 +348,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         tool.sprite_update.set(tool.sprite_update.get() + 1);
                     }
                 }
-
-                ToolDockMessage::ToolState(ToolState::LocateTool(tool_id, position)) => {
+                ToolState::LocateTool(tool_id, position) => {
                     // Change the position (we use the y position to set the ordering in the dock)0
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.position.set(position);
@@ -358,8 +356,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                     size_changed = true;
                 }
-
-                ToolDockMessage::ToolState(ToolState::RemoveTool(tool_id)) => {
+                ToolState::RemoveTool(tool_id) => {
                     // Remove the tool from this dock
                     let mut new_tools = (*tool_dock.tools.get()).clone();
 
@@ -374,35 +371,32 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                     size_changed = true;
                 }
-
-                ToolDockMessage::ToolState(ToolState::Select(tool_id)) => {
+                ToolState::Select(tool_id) => {
                     // Mark this tool as selected
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.selected.set(true);
                     }
                 }
-
-                ToolDockMessage::ToolState(ToolState::Deselect(tool_id)) => {
+                ToolState::Deselect(tool_id) => {
                     // Mark this tool as unselected
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.selected.set(false);
                     }
                 }
-
-                ToolDockMessage::ToolState(ToolState::OpenDialog(tool_id)) => {
+                ToolState::OpenDialog(tool_id) => {
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.dialog_open.set(true);
                     }
                 }
-
-                ToolDockMessage::ToolState(ToolState::CloseDialog(tool_id)) => {
+                ToolState::CloseDialog(tool_id) => {
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.dialog_open.set(false);
                     }
                 }
 
-                ToolDockMessage::ToolState(_)  => { /* Other toolstate messages are ignored */ }
-                ToolDockMessage::FocusEvent(_) => { /* Other focus events are ignored */ }
+                ToolState::DuplicateTool(_, _)      => { },
+                ToolState::SetName(_, _)            => { },
+                ToolState::SetDialogLocation(_, _)  => { },
             }
         }
 
