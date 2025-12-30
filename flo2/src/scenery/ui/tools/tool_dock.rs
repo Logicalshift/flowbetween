@@ -65,6 +65,7 @@ struct ToolData {
     position:       Binding<(f64, f64)>,
     icon:           Binding<Arc<Vec<Draw>>>,
     sprite:         Binding<Option<SpriteId>>,
+    sprite_update:  Binding<usize>,
     control_id:     Binding<ControlId>,
     highlighted:    Binding<bool>,
     focused:        Binding<bool>,
@@ -205,6 +206,9 @@ impl ToolData {
     /// Draws this tool at the specified position
     ///
     pub fn draw(&self, gc: &mut impl GraphicsContext, center_pos: (f64, f64)) {
+        // When we're binding, we want to redraw this tool if the sprite update count changes
+        self.sprite_update.get();
+
         // Draw the 'plinth' for this tool
         let state = if self.selected.get() {
             ToolPlinthState::Selected
@@ -377,6 +381,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         position:       bind((0.0, 0.0)),
                         icon:           bind(Arc::new(vec![])),
                         sprite:         bind(None),
+                        sprite_update:  bind(0),
                         control_id:     bind(ControlId::new()),
                         selected:       bind(false),
                         highlighted:    bind(false),
@@ -390,14 +395,44 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                 ToolDockMessage::ToolState(ToolState::SetIcon(tool_id, icon)) => {
                     // Update the icon
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
+                        // Set the icon value
                         tool.icon.set(icon);
 
-                        if let Some(old_sprite) = tool.sprite.get() {
-                            tool.sprite.set(None);
+                        // Update the sprite for this tool
+                        let sprite_id = if let Some(sprite_id) = tool.sprite.get() {
+                            sprite_id
+                        } else {
+                            // Assign a sprite ID (either re-use one we've used before or assign a new one)
+                            let sprite_id = if let Some(sprite_id) = unused_sprites.pop() {
+                                sprite_id
+                            } else {
+                                let sprite_id = next_sprite;
+                                next_sprite = SpriteId(next_sprite.0+1);
 
-                            // Remove the sprite to force the tool to redraw its icon
-                            unused_sprites.push(old_sprite);
-                        }
+                                sprite_id
+                            };
+
+                            tool.sprite.set(Some(sprite_id));
+
+                            sprite_id
+                        };
+
+                        // Draw the tool to create the sprite
+                        let mut drawing = vec![];
+
+                        drawing.push_state();
+                        drawing.namespace(tool_dock.namespace);
+                        drawing.sprite(sprite_id);
+                        drawing.clear_sprite();
+
+                        drawing.extend(tool.icon.get().iter().cloned());
+
+                        drawing.pop_state();
+
+                        context.send_message(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
+
+                        // Cause a redraw by updating the sprite update count
+                        tool.sprite_update.set(tool.sprite_update.get() + 1);
                     }
                 }
 
@@ -478,43 +513,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                 y += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
                 z += 1;
             }
-        }
-
-        // Draw any sprites that need drawing
-        let mut drawing = vec![];
-
-        // Write out the sprites for the tools
-        let tools           = tool_dock.tools.get();
-
-        for (_, tool_data) in tools.iter() {
-            if tool_data.sprite.get().is_none() {
-                // Assign a sprite ID (either re-use one we've used before or assign a new one)
-                let sprite_id = if let Some(sprite_id) = unused_sprites.pop() {
-                    sprite_id
-                } else {
-                    let sprite_id = next_sprite;
-                    next_sprite = SpriteId(next_sprite.0+1);
-
-                    sprite_id
-                };
-
-                tool_data.sprite.set(Some(sprite_id));
-
-                // Draw the tool to create the sprite
-                drawing.push_state();
-                drawing.namespace(tool_dock.namespace);
-                drawing.sprite(sprite_id);
-                drawing.clear_sprite();
-
-                drawing.extend(tool_data.icon.get().iter().cloned());
-
-                drawing.pop_state();
-            }
-        }
-
-        // Draw the extra sprites
-        if !drawing.is_empty() {
-            context.send_message(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
         }
     }
 }
