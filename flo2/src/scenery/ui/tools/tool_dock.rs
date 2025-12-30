@@ -66,6 +66,12 @@ struct ToolDock {
 
     /// The tools that are stored in this dock
     tools:          Binding<Arc<HashMap<ToolId, ToolData>>>,
+
+    /// Size of the window (incorporating the scale)
+    window_size:    Binding<(f64, f64)>,
+
+    /// Scale of the window
+    scale:          Binding<f64>,
 }
 
 impl ToolDock {
@@ -234,28 +240,25 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
 
     // Tool dock data
     let tool_dock = Arc::new(ToolDock {
-        position:   position,
-        layer:      layer,
-        namespace:  *DOCK_LAYER,
-        tools:      bind(Arc::new(HashMap::new())),
+        position:       position,
+        layer:          layer,
+        namespace:      *DOCK_LAYER,
+        tools:          bind(Arc::new(HashMap::new())),
+        window_size:    bind((1000.0, 1000.0)),
+        scale:          bind(1.0),
     });
-
-    // Size of the viewport (we don't know the actual size yet)
-    let window_size = bind((1000.0, 1000.0));
 
     // Run the child program that handles redrawing the tool dock
     let drawing_subprogram  = SubProgramId::new();
     let tool_dock_copy      = tool_dock.clone();
-    let window_size_copy    = window_size.clone();
 
-    context.send_message(SceneControl::start_child_program(drawing_subprogram, our_program_id, move |input, context| tool_dock_drawing_program(input, context, tool_dock_copy, window_size_copy.into()), 10)).await.ok();
+    context.send_message(SceneControl::start_child_program(drawing_subprogram, our_program_id, move |input, context| tool_dock_drawing_program(input, context, tool_dock_copy), 10)).await.ok();
 
     // Run the child program that handles events for this
     let events_subprogram   = SubProgramId::new();
     let tool_dock_copy      = tool_dock.clone();
-    let window_size_copy    = window_size.clone();
 
-    context.send_message(SceneControl::start_child_program(events_subprogram, our_program_id, move |input, context| tool_dock_focus_events_program(input, context, tool_dock_copy, window_size_copy), 10)).await.ok();
+    context.send_message(SceneControl::start_child_program(events_subprogram, our_program_id, move |input, context| tool_dock_focus_events_program(input, context, tool_dock_copy), 10)).await.ok();
 
     // Run the program
     let mut input = input.ready_chunks(50);
@@ -381,7 +384,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
         // Update the dock and control regions if a tool is moved or removed
         if size_changed {
             // Claim the position of each tool
-            let (w, h)                  = window_size.get();
+            let (w, h)                  = tool_dock.window_size.get();
             let (topleft, bottomright)  = tool_dock.region(w, h);
 
             // Center point of the topmost tool
@@ -404,7 +407,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
 ///
 /// A child subprogram that draws the tool dock
 ///
-async fn tool_dock_drawing_program(input: InputStream<BindingProgram>, context: SceneContext, tool_dock: Arc<ToolDock>, window_size: BindRef<(f64, f64)>) {
+async fn tool_dock_drawing_program(input: InputStream<BindingProgram>, context: SceneContext, tool_dock: Arc<ToolDock>) {
     let namespace   = tool_dock.namespace;
     let layer_id    = tool_dock.layer;
 
@@ -426,7 +429,7 @@ async fn tool_dock_drawing_program(input: InputStream<BindingProgram>, context: 
     // The drawing binding converts the tool dock into a set of drawing actions
     let drawing_binding = computed(move || {
         let mut drawing = vec![];
-        tool_dock.draw(&mut drawing, window_size.get());
+        tool_dock.draw(&mut drawing, tool_dock.window_size.get());
         drawing
     });
 
@@ -437,7 +440,7 @@ async fn tool_dock_drawing_program(input: InputStream<BindingProgram>, context: 
 ///
 /// A child subprogram that handles events for the tool dock
 ///
-async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context: SceneContext, tool_dock: Arc<ToolDock>, window_size: Binding<(f64, f64)>) {
+async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context: SceneContext, tool_dock: Arc<ToolDock>) {
     let our_program_id = context.current_program_id().unwrap();
 
     // tool_state communicates with the tool state subprogram
@@ -446,12 +449,11 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
     // The focus program deals with redirecting events to us
     let mut focus = context.send(()).unwrap();
 
-    // Size of the window
-    let (mut w, mut h)  = window_size.get();
-    let mut scale       = 1.0;
-
     // Claim an initial region (this is so the focus subprogram sends us a greeting)
-    focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
+    {
+        let (w, h) = tool_dock.window_size.get();
+        focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
+    }
 
     // Process as many events as possible each iteration
     let mut input = input.ready_chunks(50);
@@ -463,21 +465,24 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
             match msg {
                 FocusEvent::Event(_, DrawEvent::Resize(new_w, new_h)) => {
                     // Update the width and height
-                    w = new_w / scale;
-                    h = new_h / scale;
+                    let scale   = tool_dock.scale.get();
+                    let w       = new_w / scale;
+                    let h       = new_h / scale;
 
-                    window_size.set((w, h));
+                    tool_dock.window_size.set((w, h));
 
                     size_changed = true;
                 }
 
                 FocusEvent::Event(_, DrawEvent::Scale(new_scale)) => {
                     // Update the scale, adjust the width and height accordingly
-                    w = (w * scale) / new_scale;
-                    h = (h * scale) / new_scale;
-                    scale = new_scale;
-
-                    window_size.set((w, h));
+                    let (w, h)  = tool_dock.window_size.get();
+                    let scale   = tool_dock.scale.get();
+                    let w       = (w * scale) / new_scale;
+                    let h       = (h * scale) / new_scale;
+                    
+                    tool_dock.scale.set(new_scale);
+                    tool_dock.window_size.set((w, h));
 
                     size_changed = true;
                 }
@@ -523,7 +528,8 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
                 }
 
                 FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, _, _)) => {
-                    let tools = tool_dock.tools.get();
+                    let tools   = tool_dock.tools.get();
+                    let (w, h)  = tool_dock.window_size.get();
 
                     // User has clicked on a tool
                     let selected_tool = tools.iter()
@@ -557,6 +563,8 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
 
         // Update the dock and control regions if the window size changes
         if size_changed {
+            let (w, h) = tool_dock.window_size.get();
+
             // Claim the overall region
             focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
 
