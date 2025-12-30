@@ -522,7 +522,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 }
 
 ///
-/// Runs a child subprogram that draws the tool dock
+/// A child subprogram that draws the tool dock
 ///
 async fn tool_dock_drawing_program(input: InputStream<BindingProgram>, context: SceneContext, tool_dock: Arc<ToolDock>, window_size: BindRef<(f64, f64)>) {
     let namespace   = tool_dock.namespace;
@@ -552,4 +552,147 @@ async fn tool_dock_drawing_program(input: InputStream<BindingProgram>, context: 
 
     // Start a binding program
     binding_program(input, context, drawing_binding, drawing_action).await;
+}
+
+///
+/// A child subprogram that handles events for the tool dock
+///
+async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context: SceneContext, tool_dock: Arc<ToolDock>, window_size: Binding<(f64, f64)>) {
+    let our_program_id = context.current_program_id().unwrap();
+
+    // tool_state communicates with the tool state subprogram
+    let mut tool_state = context.send(()).unwrap();
+
+    // The focus program deals with redirecting events to us
+    let mut focus = context.send(()).unwrap();
+
+    // Size of the window
+    let (mut w, mut h)  = window_size.get();
+    let mut scale       = 1.0;
+
+    // Process as many events as possible each iteration
+    let mut input = input.ready_chunks(50);
+
+    while let Some(msgs) = input.next().await {
+        let mut size_changed = false;
+
+        for msg in msgs {
+            match msg {
+                FocusEvent::Event(_, DrawEvent::Resize(new_w, new_h)) => {
+                    // Update the width and height
+                    w = new_w / scale;
+                    h = new_h / scale;
+
+                    window_size.set((w, h));
+
+                    size_changed = true;
+                }
+
+                FocusEvent::Event(_, DrawEvent::Scale(new_scale)) => {
+                    // Update the scale, adjust the width and height accordingly
+                    w = (w * scale) / new_scale;
+                    h = (h * scale) / new_scale;
+                    scale = new_scale;
+
+                    window_size.set((w, h));
+
+                    size_changed = true;
+                }
+
+                FocusEvent::Focused(control_id) => {
+                    // Keyboard focus is on a tool
+                    tool_dock.tools.get().values()
+                        .for_each(|tool| {
+                            if tool.control_id.get() == control_id {
+                                tool.focused.set(true);
+                            }
+                        });
+                }
+
+                FocusEvent::Unfocused(control_id) => {
+                    // Keyboard focus has left a tool
+                    tool_dock.tools.get().values()
+                        .for_each(|tool| {
+                            if tool.control_id.get() == control_id {
+                                tool.focused.set(false);
+                            }
+                        });
+                }
+
+                FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Enter, _, _)) => {
+                    // Pointer has entered a tool
+                    tool_dock.tools.get().values()
+                        .for_each(|tool| {
+                            if tool.control_id.get() == control_id {
+                                tool.highlighted.set(true);
+                            }
+                        });
+                }
+
+                FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Leave, _, _)) => {
+                    // Pointer has left a tool
+                    tool_dock.tools.get().values()
+                        .for_each(|tool| {
+                            if tool.control_id.get() == control_id {
+                                tool.highlighted.set(false);
+                            }
+                        });
+                }
+
+                FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, _, _)) => {
+                    let tools = tool_dock.tools.get();
+
+                    // User has clicked on a tool
+                    let selected_tool = tools.iter()
+                        .filter(|(_, tool)| tool.control_id.get() == control_id)
+                        .next();
+
+                    if let Some((tool_id, _)) = selected_tool {
+                        let tool_id = *tool_id;
+
+                        // Toggle the tool's dialog if the user clicks the tool that's already selected
+                        if let Some(tool) = tools.get(&tool_id) {
+                            if tool.selected.get() && !tool.dialog_open.get() {
+                                tool.dialog_open.set(true);
+
+                                tool_dock.set_dialog_position(&mut tool_state, tool_id, w, h).await;
+                                tool_state.send(Tool::OpenDialog(tool_id)).await.ok();
+                            } else {
+                                tool.dialog_open.set(false);
+                                tool_state.send(Tool::CloseDialog(tool_id)).await.ok();
+                            }
+                        }
+
+                        // Select this tool
+                        tool_state.send(Tool::Select(tool_id)).await.ok();
+                    }
+                }
+
+                _ => { }
+            }
+        }
+
+        // Update the dock and control regions if the window size changes
+        if size_changed {
+            // Claim the overall region
+            focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
+
+            // Claim the position of each tool
+            let (topleft, bottomright) = tool_dock.region(w, h);
+
+            // Center point of the topmost tool
+            let x = (topleft.0 + bottomright.0) / 2.0;
+            let y = topleft.1 + DOCK_TOOL_GAP*3.0 + DOCK_TOOL_WIDTH / 2.0;
+
+            let mut y = y;
+            let mut z = 0;
+            for (_, tool) in tool_dock.ordered_tools() {
+                let region = tool.outline_region(x, y);
+                focus.send(Focus::ClaimControlRegion { program: our_program_id, control: tool.control_id.get(), region: vec![region], z_index: z }).await.ok();
+
+                y += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
+                z += 1;
+            }
+        }
+    }
 }
