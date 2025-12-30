@@ -14,6 +14,7 @@ use flo_binding::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
+use flo_curves::*;
 
 use futures::prelude::*;
 
@@ -678,7 +679,9 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                     clicked_tool.drag_fade.set(offset_ratio);
                     clicked_tool.drag_position.set(Some((cx + pull_x, cy + pull_y)));
                 } else {
-                    // TODO: Drag the control
+                    // Drag the control
+                    track_button_drag(input, context, initial_state, tool_dock, clicked_tool.clone(), pointer_id).await;
+                    break;
                 }
             }
 
@@ -700,4 +703,61 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
     // Clear the pressed status
     clicked_tool.pressed.set(false);
     clicked_tool.drag_position.set(None);
+}
+
+///
+/// The user has pressed a button over a tool: track as they move with the button pressed
+///
+async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId) {
+    let Some(initial_pos) = initial_state.location_in_canvas else { return; };
+
+    // Track events until the user releases the button
+    while let Some(msg) = input.next().await {
+        // Default processing happens as normal
+        tool_dock.process_focus_event(&msg);
+
+        // Track until the user releases the mouse button
+        match msg {
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, evt_pointer_id, pointer_state)) => {
+                // Ignore events from other pointers
+                if evt_pointer_id != pointer_id { continue; }
+
+                let Some(drag_pos)  = pointer_state.location_in_canvas else { continue; };
+                let (x, y)          = drag_pos;
+
+                // If the tool is within the region for this dock, then it fades out
+                let (w, h) = tool_dock.window_size.get();
+                let region = tool_dock.region(w, h);
+
+                let UiPoint(x1, y1) = region.0;
+                let UiPoint(x2, y2) = region.1;
+
+                let drag_fade = if x >= x1 && x <= x2 && y >= y1 && y <= y2 {
+                    let offset_to_center = (((x1+x2)/2.0) - x).abs();
+                    (offset_to_center/(DOCK_WIDTH/2.0)).max(0.0).min(1.0)
+                } else {
+                    1.0
+                };
+
+                // 'Pull' this item (or start dragging it)
+                let (offset_x, offset_y)    = (drag_pos.0 - initial_pos.0, drag_pos.1 - initial_pos.1);
+                let (cx, cy)                = clicked_tool.center.get();
+
+                clicked_tool.drag_fade.set(drag_fade);
+                clicked_tool.drag_position.set(Some((cx + offset_x, cy + offset_y)));
+            }
+
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, evt_pointer_id, _)) => {
+                // Ignore events from other pointers
+                if evt_pointer_id != pointer_id { continue; }
+
+                // TODO: Drop this tool in its new position when the tool is released
+
+                // Finished
+                break;
+            }
+
+            _ => { }
+        }
+    }
 }
