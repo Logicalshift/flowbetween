@@ -222,10 +222,14 @@ impl ToolData {
 
             // If the tool is being dragged, draw a second copy at that position
             if let Some((drag_x, drag_y)) = self.drag_position.get() {
+                let drag_fade   = self.drag_fade.get();
+                let drag_scale  = 1.0 + (drag_fade / 2.0);
+
                 gc.push_state();
 
-                gc.tool_plinth(((drag_x - DOCK_TOOL_WIDTH/2.0) as _, (drag_y - DOCK_TOOL_WIDTH/2.0) as _), (DOCK_TOOL_WIDTH as _, DOCK_TOOL_WIDTH as _), ToolPlinthState::Highlighted);
+                gc.tool_plinth(((drag_x - DOCK_TOOL_WIDTH/2.0*drag_scale) as _, (drag_y - DOCK_TOOL_WIDTH/2.0*drag_scale) as _), ((DOCK_TOOL_WIDTH*drag_scale) as _, (DOCK_TOOL_WIDTH*drag_scale) as _), ToolPlinthState::Highlighted);
 
+                gc.sprite_transform(SpriteTransform::Scale(drag_scale as _, drag_scale as _));
                 gc.sprite_transform(SpriteTransform::Translate(drag_x as _, drag_y as _));
                 gc.draw_sprite(sprite_id);
                 gc.pop_state();
@@ -671,7 +675,7 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                     let (pull_x, pull_y)    = (offset_x * offset_ratio, offset_y * offset_ratio);
                     let (cx, cy)            = clicked_tool.center.get();
 
-                    clicked_tool.drag_fade.set(1.0);
+                    clicked_tool.drag_fade.set(offset_ratio);
                     clicked_tool.drag_position.set(Some((cx + pull_x, cy + pull_y)));
                 } else {
                     // TODO: Drag the control
