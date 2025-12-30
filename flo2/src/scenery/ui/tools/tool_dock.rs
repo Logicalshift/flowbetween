@@ -480,7 +480,7 @@ impl ToolDock {
     ///
     /// Performs processing for the 'common' focus events 
     ///
-    fn process_event(&self, evt: &FocusEvent) {
+    fn process_focus_event(&self, evt: &FocusEvent) {
         match evt {
             FocusEvent::Event(_, DrawEvent::Resize(new_w, new_h)) => {
                 // Update the width and height
@@ -570,67 +570,11 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
 
     while let Some(msgs) = input.next().await {
         for msg in msgs {
+            // Standard event processing
+            tool_dock.process_focus_event(&msg);
+
+            // Pointer action event processing
             match msg {
-                FocusEvent::Event(_, DrawEvent::Resize(new_w, new_h)) => {
-                    // Update the width and height
-                    let scale   = tool_dock.scale.get();
-                    let w       = new_w / scale;
-                    let h       = new_h / scale;
-
-                    tool_dock.window_size.set((w, h));
-                }
-
-                FocusEvent::Event(_, DrawEvent::Scale(new_scale)) => {
-                    // Update the scale, adjust the width and height accordingly
-                    let (w, h)  = tool_dock.window_size.get();
-                    let scale   = tool_dock.scale.get();
-                    let w       = (w * scale) / new_scale;
-                    let h       = (h * scale) / new_scale;
-                    
-                    tool_dock.scale.set(new_scale);
-                    tool_dock.window_size.set((w, h));
-                }
-
-                FocusEvent::Focused(control_id) => {
-                    // Keyboard focus is on a tool
-                    tool_dock.tools.get().values()
-                        .for_each(|tool| {
-                            if tool.control_id.get() == control_id {
-                                tool.focused.set(true);
-                            }
-                        });
-                }
-
-                FocusEvent::Unfocused(control_id) => {
-                    // Keyboard focus has left a tool
-                    tool_dock.tools.get().values()
-                        .for_each(|tool| {
-                            if tool.control_id.get() == control_id {
-                                tool.focused.set(false);
-                            }
-                        });
-                }
-
-                FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Enter, _, _)) => {
-                    // Pointer has entered a tool
-                    tool_dock.tools.get().values()
-                        .for_each(|tool| {
-                            if tool.control_id.get() == control_id {
-                                tool.highlighted.set(true);
-                            }
-                        });
-                }
-
-                FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Leave, _, _)) => {
-                    // Pointer has left a tool
-                    tool_dock.tools.get().values()
-                        .for_each(|tool| {
-                            if tool.control_id.get() == control_id {
-                                tool.highlighted.set(false);
-                            }
-                        });
-                }
-
                 FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, _, _)) => {
                     let tools   = tool_dock.tools.get();
                     let (w, h)  = tool_dock.window_size.get();
