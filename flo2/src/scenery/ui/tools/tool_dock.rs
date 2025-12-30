@@ -7,7 +7,9 @@ use super::tool_state::*;
 use super::tool_graphics::*;
 
 use flo_curves::bezier::path::*;
+use flo_scene::programs::*;
 use flo_scene::*;
+use flo_scene_binding::*;
 use flo_binding::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
@@ -261,6 +263,7 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
     let mut scale   = 1.0;
     let mut w       = 1000.0;
     let mut h       = 1000.0;
+    let window_size = bind((w, h));
 
     // Claim an initial region (this is so the focus subprogram sends us a greeting)
     focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
@@ -279,6 +282,8 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     w = new_w / scale;
                     h = new_h / scale;
 
+                    window_size.set((w, h));
+
                     needs_redraw = true;
                     size_changed = true;
                 }
@@ -288,6 +293,8 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     w = (w * scale) / new_scale;
                     h = (h * scale) / new_scale;
                     scale = new_scale;
+
+                    window_size.set((w, h));
 
                     needs_redraw = true;
                     size_changed = true;
@@ -527,4 +534,43 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
             context.send_message(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
         }
     }
+}
+
+///
+/// Runs a child subprogram that draws the tool dock
+///
+async fn run_tool_dock_drawing_program(context: &SceneContext, tool_dock: Arc<ToolDock>, window_size: BindRef<(f64, f64)>) -> SubProgramId {
+    let namespace   = tool_dock.namespace;
+    let layer_id    = tool_dock.layer;
+    let program_id  = SubProgramId::new();
+
+    // Get the ID of the parent program
+    let our_program_id = context.current_program_id().unwrap();
+
+    // Binding action just draws the layer and clears it out when the program finishes
+    let drawing_action = BindingAction::new(move |drawing_actions: Vec<Draw>, context| async move {
+        context.send_message(DrawingRequest::Draw(Arc::new(drawing_actions))).await.ok();
+    }).with_stop_action(move |context| async move {
+        context.send_message(DrawingRequest::Draw(Arc::new(vec![
+            Draw::PushState,
+
+            Draw::Namespace(namespace),
+            Draw::Layer(layer_id),
+            Draw::ClearLayer,
+
+            Draw::PopState,
+        ]))).await.ok();
+    });
+
+    // The drawing binding converts the tool dock into a set of drawing actions
+    let drawing_binding = computed(move || {
+        let mut drawing = vec![];
+        tool_dock.draw(&mut drawing, window_size.get());
+        drawing
+    });
+
+    // Start a binding program
+    context.send_message(SceneControl::start_child_program(program_id, our_program_id, move |input, context| binding_program(input, context, drawing_binding, drawing_action), 10)).await.ok();
+
+    program_id
 }
