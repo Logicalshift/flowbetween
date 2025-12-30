@@ -13,6 +13,7 @@ pub enum ToolPlinthState {
     Unselected,
     Highlighted,
     Selected,
+    StartDrag(f64),
 }
 
 ///
@@ -102,6 +103,22 @@ where
 
                 self.new_path();
                 self.rounded_rect((pos.0+1.0, pos.1+1.0), (size.0-2.0, size.1-2.0), 7.0);
+                self.stroke_color(color_tool_dock_outline());
+                self.line_width(1.0);
+                self.stroke();
+            }
+
+            ToolPlinthState::StartDrag(ratio) => {
+                let width       = size.0;
+                let rounding    = ((width / 2.0) - 8.0) * (ratio as f32) + 8.0;
+                let fill_color  = color_tool_dock_highlight().with_alpha(ratio as _);
+
+                self.new_path();
+                self.rounded_rect(pos, size, rounding);
+
+                self.fill_color(fill_color);
+                self.fill();
+
                 self.stroke_color(color_tool_dock_outline());
                 self.line_width(1.0);
                 self.stroke();
