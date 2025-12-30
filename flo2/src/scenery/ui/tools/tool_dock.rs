@@ -268,10 +268,12 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
     // Claim an initial region (this is so the focus subprogram sends us a greeting)
     focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
 
+    // Run the child program that handles redrawing the tool dock
+    run_tool_dock_drawing_program(&context, tool_dock.clone(), window_size.clone().into()).await;
+
     // Run the program
     let mut input = input.ready_chunks(50);
     while let Some(msgs) = input.next().await {
-        let mut needs_redraw = false;
         let mut size_changed = false;
 
         // Process the messages that are waiting
@@ -284,7 +286,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                     window_size.set((w, h));
 
-                    needs_redraw = true;
                     size_changed = true;
                 }
 
@@ -296,7 +297,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 
                     window_size.set((w, h));
 
-                    needs_redraw = true;
                     size_changed = true;
                 }
 
@@ -306,7 +306,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         .for_each(|tool| {
                             if tool.control_id.get() == control_id {
                                 tool.focused.set(true);
-                                needs_redraw = true;
                             }
                         });
                 }
@@ -317,7 +316,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         .for_each(|tool| {
                             if tool.control_id.get() == control_id {
                                 tool.focused.set(false);
-                                needs_redraw = true;
                             }
                         });
                 }
@@ -328,7 +326,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         .for_each(|tool| {
                             if tool.control_id.get() == control_id {
                                 tool.highlighted.set(true);
-                                needs_redraw = true;
                             }
                         });
                 }
@@ -339,7 +336,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         .for_each(|tool| {
                             if tool.control_id.get() == control_id {
                                 tool.highlighted.set(false);
-                                needs_redraw        = true;
                             }
                         });
                 }
@@ -389,9 +385,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     });
 
                     tool_dock.tools.set(Arc::new(new_tools));
-
-                    // Draw with the new tool
-                    needs_redraw = true;
                 }
 
                 ToolDockMessage::ToolState(ToolState::SetIcon(tool_id, icon)) => {
@@ -406,8 +399,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                             unused_sprites.push(old_sprite);
                         }
                     }
-
-                    needs_redraw = true;
                 }
 
                 ToolDockMessage::ToolState(ToolState::LocateTool(tool_id, position)) => {
@@ -416,7 +407,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         tool.position.set(position);
                     }
 
-                    needs_redraw = true;
                     size_changed = true;
                 }
 
@@ -433,7 +423,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                         focus.send(Focus::RemoveControlClaim(our_program_id, old_tool.control_id.get())).await.ok();
                     }
 
-                    needs_redraw = true;
                     size_changed = true;
                 }
 
@@ -442,8 +431,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.selected.set(true);
                     }
-
-                    needs_redraw = true;
                 }
 
                 ToolDockMessage::ToolState(ToolState::Deselect(tool_id)) => {
@@ -451,8 +438,6 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.selected.set(false);
                     }
-
-                    needs_redraw = true;
                 }
 
                 ToolDockMessage::ToolState(ToolState::OpenDialog(tool_id)) => {
@@ -495,42 +480,40 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
             }
         }
 
-        // Redraw the dock if necessary
-        if needs_redraw {
-            let mut drawing = vec![];
+        // Draw any sprites that need drawing
+        let mut drawing = vec![];
 
-            // Write out the sprites for the tools
-            let tools           = tool_dock.tools.get();
+        // Write out the sprites for the tools
+        let tools           = tool_dock.tools.get();
 
-            for (_, tool_data) in tools.iter() {
-                if tool_data.sprite.get().is_none() {
-                    // Assign a sprite ID (either re-use one we've used before or assign a new one)
-                    let sprite_id = if let Some(sprite_id) = unused_sprites.pop() {
-                        sprite_id
-                    } else {
-                        let sprite_id = next_sprite;
-                        next_sprite = SpriteId(next_sprite.0+1);
+        for (_, tool_data) in tools.iter() {
+            if tool_data.sprite.get().is_none() {
+                // Assign a sprite ID (either re-use one we've used before or assign a new one)
+                let sprite_id = if let Some(sprite_id) = unused_sprites.pop() {
+                    sprite_id
+                } else {
+                    let sprite_id = next_sprite;
+                    next_sprite = SpriteId(next_sprite.0+1);
 
-                        sprite_id
-                    };
+                    sprite_id
+                };
 
-                    tool_data.sprite.set(Some(sprite_id));
+                tool_data.sprite.set(Some(sprite_id));
 
-                    // Draw the tool to create the sprite
-                    drawing.push_state();
-                    drawing.namespace(tool_dock.namespace);
-                    drawing.sprite(sprite_id);
-                    drawing.clear_sprite();
+                // Draw the tool to create the sprite
+                drawing.push_state();
+                drawing.namespace(tool_dock.namespace);
+                drawing.sprite(sprite_id);
+                drawing.clear_sprite();
 
-                    drawing.extend(tool_data.icon.get().iter().cloned());
+                drawing.extend(tool_data.icon.get().iter().cloned());
 
-                    drawing.pop_state();
-                }
+                drawing.pop_state();
             }
+        }
 
-            // Draw the tool dock
-            tool_dock.draw(&mut drawing, (w, h));
-
+        // Draw the extra sprites
+        if !drawing.is_empty() {
             context.send_message(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
         }
     }
