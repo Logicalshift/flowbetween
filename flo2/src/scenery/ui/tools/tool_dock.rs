@@ -219,6 +219,17 @@ impl ToolData {
             gc.sprite_transform(SpriteTransform::Translate(center_pos.0 as _, center_pos.1 as _));
             gc.draw_sprite(sprite_id);
             gc.pop_state();
+
+            // If the tool is being dragged, draw a second copy at that position
+            if let Some((drag_x, drag_y)) = self.drag_position.get() {
+                gc.push_state();
+
+                gc.tool_plinth(((drag_x - DOCK_TOOL_WIDTH/2.0) as _, (drag_y - DOCK_TOOL_WIDTH/2.0) as _), (DOCK_TOOL_WIDTH as _, DOCK_TOOL_WIDTH as _), ToolPlinthState::Highlighted);
+
+                gc.sprite_transform(SpriteTransform::Translate(drag_x as _, drag_y as _));
+                gc.draw_sprite(sprite_id);
+                gc.pop_state();
+            }
         }
     }
 
@@ -307,6 +318,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
 
                     tool_dock.tools.set(Arc::new(new_tools));
                 }
+
                 ToolState::SetIcon(tool_id, icon) => {
                     // Update the icon
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
@@ -653,7 +665,7 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                 let (offset_x, offset_y)    = (drag_pos.0 - initial_pos.0, drag_pos.1 - initial_pos.1);
                 let distance                = ((offset_x*offset_x) + (offset_y*offset_y)).sqrt();
 
-                if distance < PULL_DISTANCE {
+                if distance <= PULL_DISTANCE {
                     // Pull the control (increasing force pulling it back as it's dragged away)
                     let offset_ratio        = (2.0 - (distance / PULL_DISTANCE).powi(2))/2.0;
                     let (pull_x, pull_y)    = (offset_x * offset_ratio, offset_y * offset_ratio);
