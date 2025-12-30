@@ -734,7 +734,7 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
 
                 let drag_fade = if x >= x1 && x <= x2 && y >= y1 && y <= y2 {
                     let offset_to_center = (((x1+x2)/2.0) - x).abs();
-                    (offset_to_center/(DOCK_WIDTH/2.0)).max(0.0).min(1.0)
+                    (offset_to_center/(DOCK_WIDTH/2.0)).max(0.0).min(1.0)*0.5 + 0.5
                 } else {
                     1.0
                 };
