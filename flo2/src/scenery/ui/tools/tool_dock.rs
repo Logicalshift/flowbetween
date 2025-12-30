@@ -273,7 +273,11 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
     focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
 
     // Run the child program that handles redrawing the tool dock
-    run_tool_dock_drawing_program(&context, tool_dock.clone(), window_size.clone().into()).await;
+    let drawing_subprogram  = SubProgramId::new();
+    let tool_dock_copy      = tool_dock.clone();
+    let window_size_copy    = window_size.clone();
+
+    context.send_message(SceneControl::start_child_program(drawing_subprogram, our_program_id, move |input, context| tool_dock_drawing_program(input, context, tool_dock_copy, window_size_copy.into()), 10)).await.ok();
 
     // Run the program
     let mut input = input.ready_chunks(50);
@@ -520,13 +524,9 @@ pub async fn tool_dock_program(input: InputStream<ToolDockMessage>, context: Sce
 ///
 /// Runs a child subprogram that draws the tool dock
 ///
-async fn run_tool_dock_drawing_program(context: &SceneContext, tool_dock: Arc<ToolDock>, window_size: BindRef<(f64, f64)>) -> SubProgramId {
+async fn tool_dock_drawing_program(input: InputStream<BindingProgram>, context: SceneContext, tool_dock: Arc<ToolDock>, window_size: BindRef<(f64, f64)>) {
     let namespace   = tool_dock.namespace;
     let layer_id    = tool_dock.layer;
-    let program_id  = SubProgramId::new();
-
-    // Get the ID of the parent program
-    let our_program_id = context.current_program_id().unwrap();
 
     // Binding action just draws the layer and clears it out when the program finishes
     let drawing_action = BindingAction::new(move |drawing_actions: Vec<Draw>, context| async move {
@@ -551,7 +551,5 @@ async fn run_tool_dock_drawing_program(context: &SceneContext, tool_dock: Arc<To
     });
 
     // Start a binding program
-    context.send_message(SceneControl::start_child_program(program_id, our_program_id, move |input, context| binding_program(input, context, drawing_binding, drawing_action), 10)).await.ok();
-
-    program_id
+    binding_program(input, context, drawing_binding, drawing_action).await;
 }
