@@ -22,7 +22,7 @@ use std::collections::*;
 use std::sync::*;
 
 /// Distance that a control is 'pulled' before it starts being dragged
-const PULL_DISTANCE: f64    = 32.0;
+const PULL_DISTANCE: f64    = 64.0;
 
 const DOCK_WIDTH: f64       = 48.0;
 const DOCK_TOOL_WIDTH: f64  = 38.0;
@@ -673,6 +673,7 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                 if distance <= PULL_DISTANCE {
                     // Pull the control (increasing force pulling it back the closer it is to its home position)
                     let offset_ratio        = 1.0 - ((PULL_DISTANCE - distance) / PULL_DISTANCE);
+                    let offset_ratio        = offset_ratio.powi(2);
                     let (pull_x, pull_y)    = (offset_x * offset_ratio, offset_y * offset_ratio);
                     let (cx, cy)            = clicked_tool.center.get();
 
