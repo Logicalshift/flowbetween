@@ -61,6 +61,7 @@ struct ToolData {
     drag_fade:      Binding<f64>,
     drag_position:  Binding<Option<(f64, f64)>>,
     drop_anim:      Binding<f64>,
+    drop_cancel:    Binding<f64>,
 }
 
 ///
@@ -249,6 +250,7 @@ impl ToolData {
                 let drag_fade       = self.drag_fade.get();
                 let mut drag_scale  = 1.0 + (drag_fade * 0.35);
                 let drop_anim       = self.drop_anim.get();
+                let drop_cancel     = self.drop_cancel.get();
 
                 if drop_anim > 0.0 {
                     let basic_scale     = 1.35 - (0.15 * drop_anim);
@@ -256,6 +258,10 @@ impl ToolData {
                     let wobble_factor   = 0.3 - (0.1 * drop_anim);
 
                     drag_scale = basic_scale + (wobble * wobble_factor);
+                }
+
+                if drop_cancel > 0.0 {
+                    drag_scale *= 1.0 - drop_cancel;
                 }
 
                 gc.push_state();
@@ -361,6 +367,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                         drag_fade:      bind(0.0),
                         drag_position:  bind(None),
                         drop_anim:      bind(0.0),
+                        drop_cancel:    bind(0.0),
                     });
 
                     tool_dock.tools.set(Arc::new(new_tools));
@@ -767,6 +774,7 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
     // Unpress the tool once it starts dragging
     clicked_tool.pressed.set(false);
     clicked_tool.drop_anim.set(0.0);
+    clicked_tool.drop_cancel.set(0.0);
 
     // Track events until the user releases the button
     while let Some(msg) = input.next().await {
@@ -804,22 +812,45 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                 clicked_tool.drag_position.set(Some((cx + offset_x, cy + offset_y)));
             }
 
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, evt_pointer_id, _)) => {
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, evt_pointer_id, pointer_state)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
 
-                // Drop this tool in its new position when the tool is released
-                let drop_anim_binding   = clicked_tool.drop_anim.clone();
-                let drop_animation      = AnimationDescription::linear(0.5)
-                    .with_when_finished(move |context| async move {
-                        // Unset the animation
-                        clicked_tool.pressed.set(false);
-                        clicked_tool.drag_position.set(None);
-                        clicked_tool.drop_anim.set(0.0);
+                // Check if the tool has been dropped back down on the dock
+                let (x, y)          = if let Some(pos) = pointer_state.location_in_canvas { pos } else { (0.0, 0.0) };
+                let (w, h) = tool_dock.window_size.get();
+                let region = tool_dock.region(w, h);
 
-                        // TODO: finish the drop by updating the tool state
-                    });
-                run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
+                let UiPoint(x1, y1) = region.0;
+                let UiPoint(x2, y2) = region.1;
+
+                if x >= x1 && x <= x2 && y >= y1 && y <= y2 {
+                    // On the dock: draw a 'failing' animation
+                    let drop_anim_binding   = clicked_tool.drop_cancel.clone();
+                    let drop_animation      = AnimationDescription::ease_in(0.15)
+                        .with_when_finished(move |context| async move {
+                            // Unset the animation
+                            clicked_tool.pressed.set(false);
+                            clicked_tool.drag_position.set(None);
+                            clicked_tool.drop_anim.set(0.0);
+                            clicked_tool.drop_cancel.set(0.0);
+                        });
+                    run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
+                } else {
+                    // Drop this tool in its new position when the tool is released
+                    let drop_anim_binding   = clicked_tool.drop_anim.clone();
+                    let drop_animation      = AnimationDescription::linear(0.4)
+                        .with_when_finished(move |context| async move {
+                            // Unset the animation
+                            clicked_tool.pressed.set(false);
+                            clicked_tool.drag_position.set(None);
+                            clicked_tool.drop_anim.set(0.0);
+                            clicked_tool.drop_cancel.set(0.0);
+
+                            // TODO: finish the drop by updating the tool state
+                        });
+                    run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
+                }
 
                 // Finished
                 return;
@@ -833,4 +864,5 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
     clicked_tool.pressed.set(false);
     clicked_tool.drag_position.set(None);
     clicked_tool.drop_anim.set(0.0);
+    clicked_tool.drop_cancel.set(0.0);
 }
