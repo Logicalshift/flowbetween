@@ -18,6 +18,7 @@ use flo_draw::canvas::scenery::*;
 use futures::prelude::*;
 
 use std::collections::*;
+use std::f64;
 use std::sync::*;
 
 /// Distance that a control is 'pulled' before it starts being dragged
@@ -59,6 +60,7 @@ struct ToolData {
 
     drag_fade:      Binding<f64>,
     drag_position:  Binding<Option<(f64, f64)>>,
+    drop_anim:      Binding<f64>,
 }
 
 ///
@@ -228,12 +230,30 @@ impl ToolData {
 
             // If the tool is being dragged, draw a second copy at that position
             if let Some((drag_x, drag_y)) = self.drag_position.get() {
-                let drag_fade   = self.drag_fade.get();
-                let drag_scale  = 1.0 + (drag_fade / 4.0);
+                let drag_fade       = self.drag_fade.get();
+                let mut drag_scale  = 1.0 + (drag_fade * 0.35);
+                let drop_anim       = self.drop_anim.get();
+
+                if drop_anim > 0.0 {
+                    let basic_scale     = 1.35 - (0.15 * drop_anim);
+                    let wobble          = -(drop_anim * 2.0 * f64::consts::PI).sin();
+                    let wobble_factor   = 0.3 - (0.1 * drop_anim);
+
+                    drag_scale = basic_scale + (wobble * wobble_factor);
+                }
 
                 gc.push_state();
 
                 gc.tool_plinth(((drag_x - DOCK_TOOL_WIDTH/2.0*drag_scale) as _, (drag_y - DOCK_TOOL_WIDTH/2.0*drag_scale) as _), ((DOCK_TOOL_WIDTH*drag_scale) as _, (DOCK_TOOL_WIDTH*drag_scale) as _), ToolPlinthState::StartDrag(drag_fade));
+
+                if drop_anim > 0.0 {
+                    let radius = (1.35*DOCK_TOOL_WIDTH/2.0) + (DOCK_TOOL_WIDTH/3.0)*drop_anim;
+                    gc.new_path();
+                    gc.circle(drag_x as _, drag_y as _, radius as _);
+                    gc.line_width(1.0);
+                    gc.stroke_color(color_tool_border().with_alpha((1.0-drop_anim) as _));
+                    gc.stroke();
+                }
 
                 gc.sprite_transform(SpriteTransform::Scale(drag_scale as _, drag_scale as _));
                 gc.sprite_transform(SpriteTransform::Translate(drag_x as _, drag_y as _));
@@ -324,6 +344,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
 
                         drag_fade:      bind(0.0),
                         drag_position:  bind(None),
+                        drop_anim:      bind(0.0),
                     });
 
                     tool_dock.tools.set(Arc::new(new_tools));
@@ -693,7 +714,7 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                 } else {
                     // Drag the control
                     track_button_drag(input, context, initial_state, tool_dock, clicked_tool.clone(), pointer_id).await;
-                    break;
+                    return;
                 }
             }
 
@@ -726,6 +747,10 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
 ///
 async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId) {
     let Some(initial_pos) = initial_state.location_in_canvas else { return; };
+
+    // Unpress the tool once it starts dragging
+    clicked_tool.pressed.set(false);
+    clicked_tool.drop_anim.set(0.0);
 
     // Track events until the user releases the button
     while let Some(msg) = input.next().await {
@@ -767,13 +792,29 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
 
-                // TODO: Drop this tool in its new position when the tool is released
+                // Drop this tool in its new position when the tool is released
+                let drop_anim_binding   = clicked_tool.drop_anim.clone();
+                let drop_animation      = AnimationDescription::linear(0.5)
+                    .with_when_finished(move |context| async move {
+                        // Unset the animation
+                        clicked_tool.pressed.set(false);
+                        clicked_tool.drag_position.set(None);
+                        clicked_tool.drop_anim.set(0.0);
+
+                        // TODO: finish the drop by updating the tool state
+                    });
+                run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
 
                 // Finished
-                break;
+                return;
             }
 
             _ => { }
         }
     }
+
+    // Unpress/drag the tool
+    clicked_tool.pressed.set(false);
+    clicked_tool.drag_position.set(None);
+    clicked_tool.drop_anim.set(0.0);
 }

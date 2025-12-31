@@ -19,6 +19,7 @@ mod render_binding;
 mod svg;
 mod gesture;
 
+pub use colors::*;
 pub use namespaces::*;
 pub use control::*;
 pub use control_id::*;
