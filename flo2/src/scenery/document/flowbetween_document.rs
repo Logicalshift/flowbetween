@@ -120,8 +120,8 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     let mut draw_event_subscribers  = EventSubscribers::new();
 
     // Toolbar programs
-    document_scene.add_subprogram(subprogram_tool_dock_left(),  |input, context| tool_dock_program(input, context, DockPosition::Left, LayerId(0)), 20);
-    document_scene.add_subprogram(subprogram_tool_dock_right(), |input, context| tool_dock_program(input, context, DockPosition::Right, LayerId(1)), 20);
+    document_scene.add_subprogram(subprogram_tool_dock_left(),  |input, context| tool_dock_program(input, context, DockPosition::Left, LayerId(0), None), 20);
+    document_scene.add_subprogram(subprogram_tool_dock_right(), |input, context| tool_dock_program(input, context, DockPosition::Right, LayerId(1), None), 20);
 
     let test_tool       = ToolId::new();
     let test_tool2      = ToolId::new();

@@ -310,7 +310,7 @@ impl ToolData {
 ///
 /// Runs a tool dock subprogram. This is a location, which can be used with the `Tool::SetToolLocation` message to specify which tools are found in this dock.
 ///
-pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneContext, position: DockPosition, layer: LayerId) {
+pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneContext, position: DockPosition, layer: LayerId, floating_tools_program: Option<SubProgramId>) {
     let our_program_id = context.current_program_id().unwrap();
 
     // The focus subprogram is used to send events to the dock
@@ -340,7 +340,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
     let events_subprogram   = SubProgramId::new();
     let tool_dock_copy      = tool_dock.clone();
 
-    context.send_message(SceneControl::start_child_program(events_subprogram, our_program_id, move |input, context| tool_dock_focus_events_program(input, context, tool_dock_copy), 10)).await.ok();
+    context.send_message(SceneControl::start_child_program(events_subprogram, our_program_id, move |input, context| tool_dock_focus_events_program(input, context, tool_dock_copy, floating_tools_program), 10)).await.ok();
 
     // Run the child program that deals with resizing the dock (placing focus areas, mainly)
     let resizing_subprogram = SubProgramId::new();
@@ -644,7 +644,7 @@ impl ToolDock {
 ///
 /// A child subprogram that handles events for the tool dock
 ///
-async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context: SceneContext, tool_dock: Arc<ToolDock>) {
+async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context: SceneContext, tool_dock: Arc<ToolDock>, floating_tools_program: Option<SubProgramId>) {
     let our_program_id = context.current_program_id().unwrap();
 
     // The focus program deals with redirecting events to us
@@ -678,7 +678,7 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
 
                     if let Some(tool) = tools.get(&tool_id) {
                         // Track this tool
-                        track_button_down(&mut input, &context, pointer_state, &tool_dock, tool.clone(), pointer_id).await;
+                        track_button_down(&mut input, &context, pointer_state, &tool_dock, tool.clone(), pointer_id, floating_tools_program).await;
                     }
                 }
             }
@@ -691,7 +691,7 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
 ///
 /// The user has pressed a button over a tool: track as they move with the button pressed
 ///
-async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId) {
+async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId, floating_tools_program: Option<SubProgramId>) {
     let Some(initial_pos) = initial_state.location_in_canvas else { return; };
 
     // Set the tool as pressed
@@ -730,7 +730,7 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                     clicked_tool.drag_position.set(Some((cx + pull_x, cy + pull_y)));
                 } else {
                     // Drag the control
-                    track_button_drag(input, context, initial_state, tool_dock, clicked_tool.clone(), pointer_id).await;
+                    track_button_drag(input, context, initial_state, tool_dock, clicked_tool.clone(), pointer_id, floating_tools_program).await;
                     return;
                 }
             }
@@ -785,7 +785,7 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
 ///
 /// The user has pressed a button over a tool: track as they move with the button pressed
 ///
-async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId) {
+async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId, floating_tools_program: Option<SubProgramId>) {
     let Some(initial_pos) = initial_state.location_in_canvas else { return; };
 
     // Unpress the tool once it starts dragging
@@ -841,7 +841,7 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                 let UiPoint(x1, y1) = region.0;
                 let UiPoint(x2, y2) = region.1;
 
-                if x >= x1 && x <= x2 && y >= y1 && y <= y2 {
+                if (x >= x1 && x <= x2 && y >= y1 && y <= y2) || floating_tools_program.is_none() {
                     // On the dock: draw a 'failing' animation
                     let drop_anim_binding   = clicked_tool.drop_cancel.clone();
                     let drop_animation      = AnimationDescription::ease_in(0.15)

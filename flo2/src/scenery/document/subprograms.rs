@@ -19,3 +19,8 @@ pub fn subprogram_tool_dock_left() -> SubProgramId { SubProgramId::called("flowb
 /// ID of the right tool dock program
 ///
 pub fn subprogram_tool_dock_right() -> SubProgramId { SubProgramId::called("flowbetween::tool_dock::right") }
+
+///
+/// ID of the 'floating' tools program
+///
+pub fn subprogram_floating_tools() -> SubProgramId { SubProgramId::called("flowbetween::tools::floating") }
