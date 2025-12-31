@@ -230,11 +230,20 @@ impl ToolData {
         // Draw the sprite for this tool
         if let Some(sprite_id) = self.sprite.get() {
             gc.push_state();
+
             if self.pressed.get() {
                 gc.sprite_transform(SpriteTransform::Translate(center_pos.0 as _, (center_pos.1+2.0) as _));
             } else {
                 gc.sprite_transform(SpriteTransform::Translate(center_pos.0 as _, center_pos.1 as _));
             }
+
+            if self.dialog_open.get() {
+                gc.new_path();
+                gc.circle((center_pos.0 + DOCK_TOOL_WIDTH/2.0 - 6.0) as _, (center_pos.1 + DOCK_TOOL_WIDTH/2.0 - 6.0) as _, 3.0);
+                gc.fill_color(color_tool_dock_outline());
+                gc.fill();
+            }
+
             gc.draw_sprite(sprite_id);
             gc.pop_state();
         }
@@ -243,7 +252,7 @@ impl ToolData {
     ///
     /// Second pass of drawing: anything that should be rendered above all the other tools
     ///
-    pub fn draw_overlay(&self, gc: &mut impl GraphicsContext, center_pos: (f64, f64)) {
+    pub fn draw_overlay(&self, gc: &mut impl GraphicsContext, _center_pos: (f64, f64)) {
         if let Some(sprite_id) = self.sprite.get() {
             // If the tool is being dragged, draw a second copy at that position
             if let Some((drag_x, drag_y)) = self.drag_position.get() {
@@ -638,9 +647,6 @@ impl ToolDock {
 async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context: SceneContext, tool_dock: Arc<ToolDock>) {
     let our_program_id = context.current_program_id().unwrap();
 
-    // tool_state communicates with the tool state subprogram
-    let mut tool_state = context.send(()).unwrap();
-
     // The focus program deals with redirecting events to us
     let mut focus = context.send(()).unwrap();
 
@@ -660,8 +666,7 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
         // Pointer action event processing
         match msg {
             FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => {
-                let tools   = tool_dock.tools.get();
-                let (w, h)  = tool_dock.window_size.get();
+                let tools = tool_dock.tools.get();
 
                 // User has clicked on a tool
                 let selected_tool = tools.iter()
@@ -671,18 +676,7 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
                 if let Some((tool_id, _)) = selected_tool {
                     let tool_id = *tool_id;
 
-                    // Toggle the tool's dialog if the user clicks the tool that's already selected
                     if let Some(tool) = tools.get(&tool_id) {
-                        if tool.selected.get() && !tool.dialog_open.get() {
-                            tool.dialog_open.set(true);
-
-                            tool_dock.set_dialog_position(&mut tool_state, tool_id, w, h).await;
-                            tool_state.send(Tool::OpenDialog(tool_id)).await.ok();
-                        } else {
-                            tool.dialog_open.set(false);
-                            tool_state.send(Tool::CloseDialog(tool_id)).await.ok();
-                        }
-
                         // Track this tool
                         track_button_down(&mut input, &context, pointer_state, &tool_dock, tool.clone(), pointer_id).await;
                     }
@@ -748,8 +742,21 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                 let Some((x, y))    = pointer_state.location_in_canvas else { break; };
                 let (cx, cy)        = clicked_tool.center.get();
                 if x >= (cx-DOCK_TOOL_WIDTH/2.0) && y >= (cy-DOCK_TOOL_WIDTH/2.0) && x <= (cx+DOCK_TOOL_WIDTH/2.0) && y <= (cy+DOCK_TOOL_WIDTH/2.0) {
-                    // Select this tool when the mouse is released and is still over it
-                    context.send(()).unwrap().send(Tool::Select(clicked_tool.tool_id)).await.ok();
+                    if clicked_tool.selected.get() {
+                        // Toggle the dialog for the tool if it's already selected
+                        if clicked_tool.dialog_open.get() {
+                            let mut tool_state  = context.send(()).unwrap();
+                            let (w, h)          = tool_dock.window_size.get();
+
+                            tool_dock.set_dialog_position(&mut tool_state, clicked_tool.tool_id, w, h).await;
+                            tool_state.send(Tool::OpenDialog(clicked_tool.tool_id)).await.ok();
+                       } else {
+                            context.send(()).unwrap().send(Tool::CloseDialog(clicked_tool.tool_id)).await.ok();
+                        }
+                    } else {
+                        // Select this tool when the mouse is released and is still over it
+                        context.send(()).unwrap().send(Tool::Select(clicked_tool.tool_id)).await.ok();
+                    }
                 }
 
                 // Finished
@@ -838,7 +845,7 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                     // On the dock: draw a 'failing' animation
                     let drop_anim_binding   = clicked_tool.drop_cancel.clone();
                     let drop_animation      = AnimationDescription::ease_in(0.15)
-                        .with_when_finished(move |context| async move {
+                        .with_when_finished(move |_| async move {
                             // Unset the animation
                             clicked_tool.pressed.set(false);
                             clicked_tool.drag_position.set(None);
@@ -870,7 +877,7 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                 // Cancel the drag if escape is pressed
                 let drop_anim_binding   = clicked_tool.drop_cancel.clone();
                 let drop_animation      = AnimationDescription::ease_in(0.15)
-                    .with_when_finished(move |context| async move {
+                    .with_when_finished(move |_| async move {
                         // Unset the animation
                         clicked_tool.pressed.set(false);
                         clicked_tool.drag_position.set(None);
@@ -889,7 +896,7 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
 
                 let drop_anim_binding   = clicked_tool.drop_cancel.clone();
                 let drop_animation      = AnimationDescription::ease_in(0.15)
-                    .with_when_finished(move |context| async move {
+                    .with_when_finished(move |_| async move {
                         // Unset the animation
                         clicked_tool.pressed.set(false);
                         clicked_tool.drag_position.set(None);
