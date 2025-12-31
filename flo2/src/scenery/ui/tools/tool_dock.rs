@@ -755,7 +755,7 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                     1.0
                 };
 
-                // 'Pull' this item (or start dragging it)
+                // Drag this item to the new position
                 let (offset_x, offset_y)    = (drag_pos.0 - initial_pos.0, drag_pos.1 - initial_pos.1);
                 let (cx, cy)                = clicked_tool.center.get();
 
