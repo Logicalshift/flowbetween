@@ -686,12 +686,16 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                 }
             }
 
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, evt_pointer_id, _)) => {
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, evt_pointer_id, pointer_state)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
 
-                // Select this tool when the mouse is released
-                context.send(()).unwrap().send(Tool::Select(clicked_tool.tool_id)).await.ok();
+                let Some((x, y))    = pointer_state.location_in_canvas else { break; };
+                let (cx, cy)        = clicked_tool.center.get();
+                if x >= (cx-DOCK_TOOL_WIDTH/2.0) && y >= (cy-DOCK_TOOL_WIDTH/2.0) && x <= (cx+DOCK_TOOL_WIDTH/2.0) && y <= (cy+DOCK_TOOL_WIDTH/2.0) {
+                    // Select this tool when the mouse is released and is still over it
+                    context.send(()).unwrap().send(Tool::Select(clicked_tool.tool_id)).await.ok();
+                }
 
                 // Finished
                 break;
