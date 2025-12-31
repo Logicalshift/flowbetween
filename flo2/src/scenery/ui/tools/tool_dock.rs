@@ -744,7 +744,7 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                 if x >= (cx-DOCK_TOOL_WIDTH/2.0) && y >= (cy-DOCK_TOOL_WIDTH/2.0) && x <= (cx+DOCK_TOOL_WIDTH/2.0) && y <= (cy+DOCK_TOOL_WIDTH/2.0) {
                     if clicked_tool.selected.get() {
                         // Toggle the dialog for the tool if it's already selected
-                        if clicked_tool.dialog_open.get() {
+                        if !clicked_tool.dialog_open.get() {
                             let mut tool_state  = context.send(()).unwrap();
                             let (w, h)          = tool_dock.window_size.get();
 
