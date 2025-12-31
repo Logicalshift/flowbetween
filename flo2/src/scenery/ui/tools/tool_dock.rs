@@ -659,6 +659,8 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
     // Set the tool as pressed
     clicked_tool.pressed.set(true);
 
+    let mut pulling = false;
+
     // Track events until the user releases the button
     while let Some(msg) = input.next().await {
         // Default processing happens as normal
@@ -675,7 +677,11 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                 let (offset_x, offset_y)    = (drag_pos.0 - initial_pos.0, drag_pos.1 - initial_pos.1);
                 let distance                = ((offset_x*offset_x) + (offset_y*offset_y)).sqrt();
 
-                if distance <= PULL_DISTANCE {
+                if !pulling && distance <= 4.0 {
+                    // Tool has to be dragged a certain distance before we start 'pulling' it
+                } else if distance <= PULL_DISTANCE {
+                    pulling = true;
+
                     // Pull the control (increasing force pulling it back the closer it is to its home position)
                     let offset_ratio        = 1.0 - ((PULL_DISTANCE - distance) / PULL_DISTANCE);
                     let offset_ratio        = offset_ratio.powi(2);
