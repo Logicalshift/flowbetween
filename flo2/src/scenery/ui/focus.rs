@@ -594,7 +594,9 @@ impl FocusProgram {
     async fn send_to_focus(&mut self, event: DrawEvent) {
         let control = self.focused_control;
 
-        if let Some(focus_target) = &mut self.focused_event_target {
+        if let Some(pointer_target) = &mut self.pointer_target {
+            pointer_target.send(FocusEvent::Event(control, event)).await.ok();
+        } else if let Some(focus_target) = &mut self.focused_event_target {
             if focus_target.send(FocusEvent::Event(control, event)).await.is_err() {
                 self.focused_event_target = None;
             }
