@@ -119,22 +119,31 @@ impl ToolDock {
         let y = topleft.1 + DOCK_TOOL_GAP*3.0 + DOCK_TOOL_WIDTH / 2.0;
 
         // Draw the tools in order
-        let mut y = y;
-        for (_, tool) in self.ordered_tools() {
-            tool.draw(gc, (x, y));
+        let mut ypos        = y;
+        let ordered_tools   = self.ordered_tools();
 
-            y += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
+        for (_, tool) in ordered_tools.iter() {
+            tool.draw(gc, (x, ypos));
+
+            ypos += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
+        }
+
+        let mut ypos = y;
+        for (_, tool) in ordered_tools.iter() {
+            tool.draw_overlay(gc, (x, ypos));
+
+            ypos += DOCK_TOOL_WIDTH + DOCK_TOOL_GAP;
         }
     }
 
     ///
     /// Returns the tools in order
     ///
-    pub fn ordered_tools<'a>(&'a self) -> impl 'a + Iterator<Item=(ToolId, ToolData)> {
+    pub fn ordered_tools(&self) -> Vec<(ToolId, ToolData)> {
         let mut ordered_tools = self.tools.get().iter().map(|(a, b)| (a.clone(), b.clone())).collect::<Vec<_>>();
         ordered_tools.sort_by(|(_, a), (_, b)| a.position.get().1.total_cmp(&b.position.get().1));
 
-        ordered_tools.into_iter()
+        ordered_tools
     }
 
     ///
@@ -227,7 +236,14 @@ impl ToolData {
             }
             gc.draw_sprite(sprite_id);
             gc.pop_state();
+        }
+    }
 
+    ///
+    /// Second pass of drawing: anything that should be rendered above all the other tools
+    ///
+    pub fn draw_overlay(&self, gc: &mut impl GraphicsContext, center_pos: (f64, f64)) {
+        if let Some(sprite_id) = self.sprite.get() {
             // If the tool is being dragged, draw a second copy at that position
             if let Some((drag_x, drag_y)) = self.drag_position.get() {
                 let drag_fade       = self.drag_fade.get();
@@ -491,7 +507,7 @@ async fn tool_dock_resizing_program(input: InputStream<BindingProgram>, context:
     // Binding is the values we need to perform the resizing
     let size_binding = computed(move || {
         let (w, h)          = tool_dock.window_size.get();
-        let ordered_tools   = tool_dock.ordered_tools().collect::<Vec<_>>();
+        let ordered_tools   = tool_dock.ordered_tools();
         let region          = tool_dock.region(w, h);
         let region_as_path  = tool_dock.region_as_path(w, h);
 
