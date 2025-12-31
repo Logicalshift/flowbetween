@@ -756,6 +756,14 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                 break;
             }
 
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Cancel, evt_pointer_id, _)) => {
+                // Ignore events from other pointers
+                if evt_pointer_id != pointer_id { continue; }
+
+                // Finished
+                break;
+            }
+
             _ => { }
         }
     }
@@ -763,6 +771,8 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
     // Clear the pressed status
     clicked_tool.pressed.set(false);
     clicked_tool.drag_position.set(None);
+    clicked_tool.drop_anim.set(0.0);
+    clicked_tool.drop_cancel.set(0.0);
 }
 
 ///
@@ -851,6 +861,25 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                         });
                     run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
                 }
+
+                // Finished
+                return;
+            }
+
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Cancel, evt_pointer_id, _)) => {
+                // Ignore events from other pointers
+                if evt_pointer_id != pointer_id { continue; }
+
+                let drop_anim_binding   = clicked_tool.drop_cancel.clone();
+                let drop_animation      = AnimationDescription::ease_in(0.15)
+                    .with_when_finished(move |context| async move {
+                        // Unset the animation
+                        clicked_tool.pressed.set(false);
+                        clicked_tool.drag_position.set(None);
+                        clicked_tool.drop_anim.set(0.0);
+                        clicked_tool.drop_cancel.set(0.0);
+                    });
+                run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
 
                 // Finished
                 return;
