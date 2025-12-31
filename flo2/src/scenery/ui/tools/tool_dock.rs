@@ -14,7 +14,6 @@ use flo_binding::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
-use flo_curves::*;
 
 use futures::prelude::*;
 
@@ -207,6 +206,8 @@ impl ToolData {
         // Draw the 'plinth' for this tool
         let state = if self.selected.get() {
             ToolPlinthState::Selected
+        } else if self.pressed.get() {
+            ToolPlinthState::Pressed
         } else if self.highlighted.get() || self.focused.get() {
             ToolPlinthState::Highlighted
         } else {
@@ -217,7 +218,11 @@ impl ToolData {
         // Draw the sprite for this tool
         if let Some(sprite_id) = self.sprite.get() {
             gc.push_state();
-            gc.sprite_transform(SpriteTransform::Translate(center_pos.0 as _, center_pos.1 as _));
+            if self.pressed.get() {
+                gc.sprite_transform(SpriteTransform::Translate(center_pos.0 as _, (center_pos.1+2.0) as _));
+            } else {
+                gc.sprite_transform(SpriteTransform::Translate(center_pos.0 as _, center_pos.1 as _));
+            }
             gc.draw_sprite(sprite_id);
             gc.pop_state();
 

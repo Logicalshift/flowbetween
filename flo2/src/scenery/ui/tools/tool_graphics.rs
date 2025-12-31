@@ -13,6 +13,7 @@ pub enum ToolPlinthState {
     Unselected,
     Highlighted,
     Selected,
+    Pressed,
     StartDrag(f64),
 }
 
@@ -106,6 +107,13 @@ where
                 self.stroke_color(color_tool_dock_outline());
                 self.line_width(1.0);
                 self.stroke();
+            }
+
+            ToolPlinthState::Pressed => {
+                self.new_path();
+                self.rounded_rect((pos.0, pos.1 + 2.0), size, 8.0);
+                self.fill_color(color_tool_dock_highlight());
+                self.fill();
             }
 
             ToolPlinthState::StartDrag(ratio) => {
