@@ -1,4 +1,5 @@
 use crate::scenery::ui::*;
+use super::sprite_manager::*;
 use super::tool_state::*;
 use super::tool_graphics::*;
 
@@ -67,6 +68,8 @@ struct FloatingToolDock {
 pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: SceneContext, layer_id: LayerId) {
     let our_program_id = context.current_program_id().unwrap();
 
+    let mut sprite_manager = context.send(()).unwrap();
+
     // Create the tool dock state
     let tool_dock = FloatingToolDock {
         tools:          bind(Arc::new(HashMap::new())),
@@ -134,7 +137,14 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
             ToolState::RemoveTool(tool_id) => {
                 // Create a copy of the tools with the tool removed
                 let mut tools = (*tools).clone();
-                tools.remove(&tool_id);
+                
+                if let Some(old_tool) = tools.remove(&tool_id) {
+                    if let Some(old_sprite) = old_tool.sprite.get() {
+                        old_tool.sprite.set(None);
+                        sprite_manager.send(SpriteManager::ReturnSprite(old_sprite)).await.ok();
+                    }
+                }
+                
                 tool_dock.tools.set(Arc::new(tools));
             },
 
