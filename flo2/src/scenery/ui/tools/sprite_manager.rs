@@ -31,11 +31,14 @@ impl SceneMessage for SpriteManager {
 
     fn initialise(init_context: &impl SceneInitialisationContext) {
         init_context.add_subprogram(SubProgramId::called("flowbetween::sprite_manager"), sprite_manager_subprogram, 20);
-        init_context.connect_programs(FilterHandle::for_filter(|stream: InputStream<Query<AssignedSprite>>| stream.map(|msg| SpriteManager::RequestSprite(msg.target()))), (), StreamId::with_message_type::<Query<AssignedSprite>>()).unwrap();
+        init_context.connect_programs(FilterHandle::for_filter(|stream: InputStream<Query<AssignedSprite>>| stream.map(|msg| SpriteManager::RequestSprite(msg.target()))), SubProgramId::called("flowbetween::sprite_manager"), StreamId::with_message_type::<Query<AssignedSprite>>()).unwrap();
     }
 }
 
 impl SceneMessage for AssignedSprite {
+    fn initialise(init_context: &impl SceneInitialisationContext) {
+        init_context.connect_programs(FilterHandle::for_filter(|stream: InputStream<Query<AssignedSprite>>| stream.map(|msg| SpriteManager::RequestSprite(msg.target()))), SubProgramId::called("flowbetween::sprite_manager"), StreamId::with_message_type::<Query<AssignedSprite>>()).unwrap();
+    }
 }
 
 ///
@@ -57,12 +60,12 @@ pub async fn sprite_manager_subprogram(input: InputStream<SpriteManager>, contex
 
                 if let Some(sprite_id) = unused_sprites.pop() {
                     // Re-use a sprite that has been returned
-                    target.send(AssignedSprite(sprite_id)).await.ok();
+                    target.send(QueryResponse::with_data(AssignedSprite(sprite_id))).await.ok();
                 } else {
                     // Assign a new sprite
                     let sprite_id = SpriteId(next_id);
                     next_id += 1;
-                    target.send(AssignedSprite(sprite_id)).await.ok();
+                    target.send(QueryResponse::with_data(AssignedSprite(sprite_id))).await.ok();
                 }
             }
 
