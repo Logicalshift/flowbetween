@@ -3,10 +3,12 @@
 //!
 
 use crate::scenery::ui::*;
+use super::sprite_manager::*;
 use super::tool_state::*;
 use super::tool_graphics::*;
 
 use flo_curves::bezier::path::*;
+use flo_scene::commands::*;
 use flo_scene::programs::*;
 use flo_scene::*;
 use flo_scene_binding::*;
@@ -314,11 +316,8 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
     let our_program_id = context.current_program_id().unwrap();
 
     // The focus subprogram is used to send events to the dock
-    let mut focus = context.send(()).unwrap();
-
-    // The tool state subprogram manages which tools are selected at any given type
-    let mut unused_sprites  = vec![];
-    let mut next_sprite     = SpriteId(0);
+    let mut focus           = context.send(()).unwrap();
+    let mut sprite_manager  = context.send(()).unwrap();
 
     // Tool dock data
     let tool_dock = Arc::new(ToolDock {
@@ -422,14 +421,8 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                             sprite_id
                         } else {
                             // Assign a sprite ID (either re-use one we've used before or assign a new one)
-                            let sprite_id = if let Some(sprite_id) = unused_sprites.pop() {
-                                sprite_id
-                            } else {
-                                let sprite_id = next_sprite;
-                                next_sprite = SpriteId(next_sprite.0+1);
-
-                                sprite_id
-                            };
+                            let mut sprite_id               = context.spawn_query(ReadCommand::default(), Query::<AssignedSprite>::with_no_target(), ()).unwrap();
+                            let AssignedSprite(sprite_id)   = sprite_id.next().await.unwrap();
 
                             tool.sprite.set(Some(sprite_id));
 
@@ -469,7 +462,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                     if let Some(old_tool) = new_tools.remove(&tool_id) {
                         if let Some(old_sprite) = old_tool.sprite.get() {
                             old_tool.sprite.set(None);
-                            unused_sprites.push(old_sprite);
+                            sprite_manager.send(SpriteManager::ReturnSprite(old_sprite)).await.ok();
                         }
 
                         focus.send(Focus::RemoveControlClaim(events_subprogram, old_tool.control_id.get())).await.ok();
