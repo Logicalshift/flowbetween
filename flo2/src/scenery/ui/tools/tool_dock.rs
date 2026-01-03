@@ -382,6 +382,35 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                     tool_dock.tools.set(Arc::new(new_tools));
                 }
 
+                ToolState::DuplicateTool(original_tool_id, duplicate_tool_id) => {
+                    // Create a duplicate of the specified tool
+                    let mut new_tools   = (*tool_dock.tools.get()).clone();
+                    let Some(old_tool)  = new_tools.get(&original_tool_id) else { continue; };
+
+                    new_tools.insert(duplicate_tool_id, ToolData {
+                        tool_id:        duplicate_tool_id,
+                        position:       bind(old_tool.position.get()),
+                        icon:           bind(old_tool.icon.get()),
+                        sprite:         bind(None),
+                        sprite_update:  bind(0),
+                        control_id:     bind(ControlId::new()),
+                        selected:       bind(false),
+                        highlighted:    bind(false),
+                        pressed:        bind(false),
+                        focused:        bind(false),
+                        dialog_open:    bind(false),
+
+                        center:         bind((0.0, 0.0)),
+
+                        drag_fade:      bind(0.0),
+                        drag_position:  bind(None),
+                        drop_anim:      bind(0.0),
+                        drop_cancel:    bind(0.0),
+                    });
+
+                    tool_dock.tools.set(Arc::new(new_tools));
+                },
+
                 ToolState::SetIcon(tool_id, icon) => {
                     // Update the icon
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
