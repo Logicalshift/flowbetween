@@ -15,6 +15,11 @@ pub enum ToolPlinthState {
     Selected,
     Pressed,
     StartDrag(f64),
+
+    FloatingUnselected,
+    FloatingHighlighted,
+    FloatingSelected,
+    FloatingPressed,
 }
 
 ///
@@ -134,6 +139,66 @@ where
 
                 self.stroke_color(color_tool_border().with_alpha(ratio as _));
                 self.line_width(1.0 + (ratio as f32));
+                self.stroke();
+            }
+
+            ToolPlinthState::FloatingUnselected => {
+                self.new_path();
+                self.circle(pos.0, pos.1, size.0);
+
+                self.fill_color(color_tool_shadow());
+                self.fill();
+
+                self.new_path();
+                self.circle(pos.0, pos.1 - 3.0, size.0);
+
+                self.fill_color(color_tool_background());
+                self.fill();
+
+                self.stroke_color(color_tool_border());
+                self.line_width(2.0);
+                self.stroke();
+            }
+
+            ToolPlinthState::FloatingHighlighted => {
+                self.new_path();
+                self.circle(pos.0, pos.1, size.0);
+
+                self.fill_color(color_tool_shadow());
+                self.fill();
+
+                self.new_path();
+                self.circle(pos.0, pos.1 - 3.0, size.0);
+
+                self.fill_color(color_tool_background_highlighted());
+                self.fill();
+
+                self.stroke_color(color_tool_border());
+                self.line_width(2.0);
+                self.stroke();
+            }
+
+            ToolPlinthState::FloatingSelected => {
+                self.new_path();
+                self.circle(pos.0, pos.1, size.0);
+
+                self.fill_color(color_tool_background_selected());
+                self.fill();
+
+                self.stroke_color(color_tool_border_selected());
+                self.line_width(3.0);
+                self.stroke();
+            }
+
+            ToolPlinthState::FloatingPressed => {
+                self.new_path();
+                self.circle(pos.0, pos.1, size.0);
+
+                self.fill_color(color_tool_background());
+                self.fill();
+
+                self.stroke_color(color_tool_border());
+                self.line_width(2.0);
                 self.stroke();
             }
         }
