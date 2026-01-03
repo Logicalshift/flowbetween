@@ -213,7 +213,7 @@ async fn drawing_program(input: InputStream<BindingProgram>, context: SceneConte
 
             // Draw the sprite, if there is one
             if let Some(sprite_id) = sprite_id {
-                drawing.sprite_transform(SpriteTransform::Scale(1.2, 1.2));
+                // drawing.sprite_transform(SpriteTransform::Scale(1.2, 1.2));
                 if tool.pressed.get() || tool.selected.get() {
                     drawing.sprite_transform(SpriteTransform::Translate(x as _, (y+3.0) as _));
                 } else {
