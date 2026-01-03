@@ -5,6 +5,7 @@ use super::tool_graphics::*;
 
 use flo_binding::*;
 use flo_scene::*;
+use flo_scene::commands::*;
 use flo_scene::programs::*;
 use flo_scene_binding::*;
 use flo_draw::canvas::*;
@@ -36,6 +37,9 @@ struct FloatingTool {
 
     /// The sprite ID for this tool
     sprite: Binding<Option<SpriteId>>,
+
+    // Update count for the sprite for this tool
+    sprite_update: Binding<usize>,
 
     /// Where the tool has been dragged to (if it's been dragged)
     drag_position: Binding<Option<(f64, f64)>>,
@@ -100,6 +104,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     anchor:         bind((0.0, 0.0)),
                     icon:           bind(Arc::new(vec![])),
                     sprite:         bind(None),
+                    sprite_update:  bind(0),
                     drag_position:  bind(None),
                     dialog_open:    bind(false),
                     selected:       bind(false),
@@ -122,7 +127,8 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     name:           bind(duplicate_from.name.get()),
                     anchor:         bind(duplicate_from.anchor.get()),
                     icon:           bind(duplicate_from.icon.get()),
-                    sprite:         bind(duplicate_from.sprite.get()),
+                    sprite:         bind(None),
+                    sprite_update:  bind(0),
                     drag_position:  bind(None),
                     dialog_open:    bind(false),
                     selected:       bind(false),
@@ -130,6 +136,8 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     pressed:        bind(false),
                 };
                 tools.insert(duplicate_to, Arc::new(new_tool));
+
+                // TODO: redraw the sprite when the tool is duplicated
 
                 tool_dock.tools.set(Arc::new(tools));
             },
@@ -170,7 +178,34 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
 
             ToolState::SetIcon(tool_id, drawing) => {
                 let Some(tool) = tools.get(&tool_id) else { continue; };
-                tool.icon.set(drawing);
+                tool.icon.set(drawing.clone());
+
+                // Assign a sprite if none is assigned to this tool
+                let sprite_id = if let Some(sprite_id) = tool.sprite.get() {
+                    sprite_id
+                } else {
+                    let mut sprite_id               = context.spawn_query(ReadCommand::default(), Query::<AssignedSprite>::with_no_target(), ()).unwrap();
+                    let AssignedSprite(sprite_id)   = sprite_id.next().await.unwrap();
+
+                    tool.sprite.set(Some(sprite_id));
+
+                    sprite_id
+                };
+
+                // Draw the sprite
+                let mut draw_sprite = vec![];
+
+                draw_sprite.push_state();
+                draw_sprite.namespace(tool_dock.namespace_id);
+                draw_sprite.sprite(sprite_id);
+                draw_sprite.clear_sprite();
+                draw_sprite.extend(drawing.iter().cloned());
+                draw_sprite.pop_state();
+
+                context.send_message(DrawingRequest::Draw(Arc::new(draw_sprite))).await.ok();
+
+                // Ensure that it's up to date in the render
+                tool.sprite_update.set(tool.sprite_update.get() + 1);
             },
 
             ToolState::SetDialogLocation(_, _) => { },
@@ -223,6 +258,8 @@ async fn drawing_program(input: InputStream<BindingProgram>, context: SceneConte
 
             // Draw the sprite, if there is one
             if let Some(sprite_id) = sprite_id {
+                tool.sprite_update.get();
+
                 // drawing.sprite_transform(SpriteTransform::Scale(1.2, 1.2));
                 if tool.pressed.get() || tool.selected.get() {
                     drawing.sprite_transform(SpriteTransform::Translate(x as _, (y+3.0) as _));
