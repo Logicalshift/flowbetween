@@ -459,12 +459,14 @@ pub async fn tool_state_program(input: InputStream<Tool>, context: SceneContext)
                     // Add for the location
                     if let Some(location_target) = tool_location_targets.get_mut(&old_tool_id) {
                         if let Some(location) = context.send(location_target.clone()).ok() {
-                            let mut location = vec![Some(location)];
+                            let mut location    = vec![Some(location)];
+                            let location_target = location_target.clone();
 
                             send_to_subscribers(Some(&mut location), ToolState::DuplicateTool(old_tool_id, new_tool_id)).await;
                             send_to_subscribers(Some(&mut location), ToolState::SetIcon(new_tool_id, tool_icon.clone())).await;
 
                             tool_locations.insert(new_tool_id, location);
+                            tool_location_targets.insert(new_tool_id, location_target);
                         }
                     }
 
