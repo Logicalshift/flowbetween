@@ -496,7 +496,6 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                     }
                 }
 
-                ToolState::DuplicateTool(_, _)      => { },
                 ToolState::SetName(_, _)            => { },
                 ToolState::SetDialogLocation(_, _)  => { },
             }
@@ -884,8 +883,9 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                     run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
                 } else {
                     // Drop this tool in its new position when the tool is released
-                    let drop_anim_binding   = clicked_tool.drop_anim.clone();
-                    let drop_animation      = AnimationDescription::linear(0.4)
+                    let floating_tools_program  = floating_tools_program.unwrap();
+                    let drop_anim_binding       = clicked_tool.drop_anim.clone();
+                    let drop_animation          = AnimationDescription::linear(0.4)
                         .with_when_finished(move |context| async move {
                             // Unset the animation
                             clicked_tool.pressed.set(false);
@@ -893,7 +893,10 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                             clicked_tool.drop_anim.set(0.0);
                             clicked_tool.drop_cancel.set(0.0);
 
-                            // TODO: finish the drop by updating the tool state
+                            // Finish the drop by updating the tool state
+                            let new_tool_id = ToolId::new();
+                            context.send_message(Tool::DuplicateTool(clicked_tool.tool_id, new_tool_id)).await.ok();
+                            context.send_message(Tool::SetToolLocation(new_tool_id, floating_tools_program.into(), (x, y))).await.ok();
                         });
                     run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
                 }
