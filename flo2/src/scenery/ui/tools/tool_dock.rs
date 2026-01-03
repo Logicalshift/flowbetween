@@ -454,12 +454,14 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                         tool.sprite_update.set(tool.sprite_update.get() + 1);
                     }
                 }
+
                 ToolState::LocateTool(tool_id, position) => {
                     // Change the position (we use the y position to set the ordering in the dock)0
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.position.set(position);
                     }
                 }
+
                 ToolState::RemoveTool(tool_id) => {
                     // Remove the tool from this dock
                     let mut new_tools = (*tool_dock.tools.get()).clone();
@@ -473,23 +475,27 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                         focus.send(Focus::RemoveControlClaim(events_subprogram, old_tool.control_id.get())).await.ok();
                     }
                 }
+
                 ToolState::Select(tool_id) => {
                     // Mark this tool as selected
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.selected.set(true);
                     }
                 }
+
                 ToolState::Deselect(tool_id) => {
                     // Mark this tool as unselected
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.selected.set(false);
                     }
                 }
+
                 ToolState::OpenDialog(tool_id) => {
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.dialog_open.set(true);
                     }
                 }
+
                 ToolState::CloseDialog(tool_id) => {
                     if let Some(tool) = tool_dock.tools.get().get(&tool_id) {
                         tool.dialog_open.set(false);
