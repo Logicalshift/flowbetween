@@ -421,8 +421,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                             sprite_id
                         } else {
                             // Assign a sprite ID (either re-use one we've used before or assign a new one)
-                            let mut sprite_id               = context.spawn_query(ReadCommand::default(), Query::<AssignedSprite>::with_no_target(), ()).unwrap();
-                            let AssignedSprite(sprite_id)   = sprite_id.next().await.unwrap();
+                            let sprite_id = assign_sprite(&context).await;
 
                             tool.sprite.set(Some(sprite_id));
 

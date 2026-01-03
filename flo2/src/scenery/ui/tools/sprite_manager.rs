@@ -1,4 +1,5 @@
 use flo_scene::*;
+use flo_scene::commands::*;
 use flo_scene::programs::*;
 use flo_draw::canvas::*;
 
@@ -77,4 +78,18 @@ pub async fn sprite_manager_subprogram(input: InputStream<SpriteManager>, contex
             }
         }
     }
+}
+
+///
+/// Requests a sprite ID from the sprite manager in the current scene
+///
+pub async fn assign_sprite(context: &SceneContext) -> SpriteId {
+    // Force the sprite manager to start if it's not already
+    context.send::<SpriteManager>(()).ok();
+
+    // Request the sprite (manager sends a response with a single sprite ID)
+    let mut sprite_id               = context.spawn_query(ReadCommand::default(), Query::<AssignedSprite>::with_no_target(), ()).unwrap();
+    let AssignedSprite(sprite_id)   = sprite_id.next().await.unwrap();
+
+    sprite_id
 }

@@ -184,8 +184,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                 let sprite_id = if let Some(sprite_id) = tool.sprite.get() {
                     sprite_id
                 } else {
-                    let mut sprite_id               = context.spawn_query(ReadCommand::default(), Query::<AssignedSprite>::with_no_target(), ()).unwrap();
-                    let AssignedSprite(sprite_id)   = sprite_id.next().await.unwrap();
+                    let sprite_id = assign_sprite(&context).await;
 
                     tool.sprite.set(Some(sprite_id));
 
