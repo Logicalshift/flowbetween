@@ -17,6 +17,7 @@ pub (crate) mod tool_state;
 pub (crate) mod tool_dock;
 pub (crate) mod floating_tool_dock;
 pub (crate) mod tool_graphics;
+pub (crate) mod sprite_manager;
 
 pub (crate) mod blobland;
 pub (crate) mod physics_layer;
