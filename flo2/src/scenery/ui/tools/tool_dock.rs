@@ -473,6 +473,8 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                         }
 
                         focus.send(Focus::RemoveControlClaim(events_subprogram, old_tool.control_id.get())).await.ok();
+
+                        tool_dock.tools.set(Arc::new(new_tools));
                     }
                 }
 
