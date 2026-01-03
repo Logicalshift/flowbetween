@@ -144,13 +144,13 @@ where
 
             ToolPlinthState::FloatingUnselected => {
                 self.new_path();
-                self.circle(pos.0, pos.1, size.0);
+                self.circle(pos.0+size.0/2.0, pos.1+size.0/2.0 + 3.0, size.0/2.0);
 
                 self.fill_color(color_tool_shadow());
                 self.fill();
 
                 self.new_path();
-                self.circle(pos.0, pos.1 - 3.0, size.0);
+                self.circle(pos.0+size.0/2.0, pos.1+size.0/2.0, size.0/2.0);
 
                 self.fill_color(color_tool_background());
                 self.fill();
@@ -162,13 +162,13 @@ where
 
             ToolPlinthState::FloatingHighlighted => {
                 self.new_path();
-                self.circle(pos.0, pos.1, size.0);
+                self.circle(pos.0+size.0/2.0, pos.1+size.0/2.0 + 3.0, size.0/2.0);
 
                 self.fill_color(color_tool_shadow());
                 self.fill();
 
                 self.new_path();
-                self.circle(pos.0, pos.1 - 3.0, size.0);
+                self.circle(pos.0+size.0/2.0, pos.1+size.0/2.0, size.0/2.0);
 
                 self.fill_color(color_tool_background_highlighted());
                 self.fill();
@@ -180,7 +180,7 @@ where
 
             ToolPlinthState::FloatingSelected => {
                 self.new_path();
-                self.circle(pos.0, pos.1, size.0);
+                self.circle(pos.0+size.0/2.0, pos.1+size.0/2.0 + 3.0, size.0/2.0);
 
                 self.fill_color(color_tool_background_selected());
                 self.fill();
@@ -192,7 +192,7 @@ where
 
             ToolPlinthState::FloatingPressed => {
                 self.new_path();
-                self.circle(pos.0, pos.1, size.0);
+                self.circle(pos.0+size.0/2.0, pos.1+size.0/2.0 + 3.0, size.0/2.0);
 
                 self.fill_color(color_tool_background());
                 self.fill();

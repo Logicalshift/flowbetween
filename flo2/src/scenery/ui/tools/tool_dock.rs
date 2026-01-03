@@ -870,12 +870,18 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                 if evt_pointer_id != pointer_id { continue; }
 
                 // Check if the tool has been dropped back down on the dock
-                let (x, y)          = if let Some(pos) = pointer_state.location_in_canvas { pos } else { (0.0, 0.0) };
+                let (x, y) = if let Some(pos) = pointer_state.location_in_canvas { pos } else { (0.0, 0.0) };
                 let (w, h) = tool_dock.window_size.get();
                 let region = tool_dock.region(w, h);
 
                 let UiPoint(x1, y1) = region.0;
                 let UiPoint(x2, y2) = region.1;
+
+                // Get the position that the tool has been dragged to
+                let (offset_x, offset_y)    = (x - initial_pos.0, y - initial_pos.1);
+                let (cx, cy)                = clicked_tool.center.get();
+
+                clicked_tool.drag_position.set(Some((cx + offset_x, cy + offset_y)));
 
                 if (x >= x1 && x <= x2 && y >= y1 && y <= y2) || floating_tools_program.is_none() {
                     // On the dock: draw a 'failing' animation
@@ -904,7 +910,7 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                             // Finish the drop by updating the tool state
                             let new_tool_id = ToolId::new();
                             context.send_message(Tool::DuplicateTool(clicked_tool.tool_id, new_tool_id)).await.ok();
-                            context.send_message(Tool::SetToolLocation(new_tool_id, floating_tools_program.into(), (x, y))).await.ok();
+                            context.send_message(Tool::SetToolLocation(new_tool_id, floating_tools_program.into(), (cx + offset_x, cy + offset_y))).await.ok();
                         });
                     run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
                 }
