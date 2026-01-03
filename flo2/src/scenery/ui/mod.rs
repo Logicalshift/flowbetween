@@ -40,3 +40,4 @@ pub use svg::*;
 pub use gesture::*;
 
 pub use tools::tool_dock::*;
+pub use tools::floating_tool_dock::*;
