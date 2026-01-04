@@ -32,6 +32,9 @@ struct FloatingTool {
     /// Where the tool is anchored (its home position)
     anchor: Binding<(f64, f64)>,
 
+    /// The position of this tool
+    position: Binding<UiPoint>,
+
     /// The instructions to draw the icon for this tool
     icon: Binding<Arc<Vec<Draw>>>,
 
@@ -102,6 +105,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     id:             tool_id,
                     name:           bind("".into()),
                     anchor:         bind((0.0, 0.0)),
+                    position:       bind(UiPoint(0.0, 0.0)),
                     icon:           bind(Arc::new(vec![])),
                     sprite:         bind(None),
                     sprite_update:  bind(0),
@@ -126,6 +130,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     id:             duplicate_to,
                     name:           bind(duplicate_from.name.get()),
                     anchor:         bind(duplicate_from.anchor.get()),
+                    position:       bind(duplicate_from.position.get()),
                     icon:           bind(duplicate_from.icon.get()),
                     sprite:         bind(None),
                     sprite_update:  bind(0),
@@ -169,6 +174,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
             ToolState::LocateTool(tool_id, position) => {
                 let Some(tool) = tools.get(&tool_id) else { continue; };
                 tool.anchor.set(position);
+                tool.position.set(UiPoint(position.0, position.1));
             },
 
             ToolState::SetName(tool_id, new_name) => {
@@ -238,8 +244,8 @@ async fn drawing_program(input: InputStream<BindingProgram>, context: SceneConte
 
         // Draw each of the tools
         for (_, tool) in floating_dock.tools.get().iter() {
-            let sprite_id   = tool.sprite.get();
-            let (x, y)      = tool.anchor.get();
+            let sprite_id       = tool.sprite.get();
+            let UiPoint(x, y)   = tool.position.get();
 
             // Draw the plinth beneath the tool
             let plinth_x    = x - (TOOL_WIDTH / 2.0);
