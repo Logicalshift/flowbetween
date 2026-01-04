@@ -734,7 +734,8 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
 
         // Track until the user releases the mouse button
         match msg {
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, evt_pointer_id, pointer_state)) => {
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, evt_pointer_id, pointer_state)) |
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Drag, evt_pointer_id, pointer_state)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
 
@@ -828,7 +829,8 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
 
         // Track until the user releases the mouse button
         match msg {
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, evt_pointer_id, pointer_state)) => {
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, evt_pointer_id, pointer_state)) |
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Drag, evt_pointer_id, pointer_state)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
 
