@@ -194,7 +194,7 @@ where
                 self.new_path();
                 self.circle(pos.0+size.0/2.0, pos.1+size.0/2.0 + 3.0, size.0/2.0);
 
-                self.fill_color(color_tool_background());
+                self.fill_color(color_tool_background_highlighted());
                 self.fill();
 
                 self.stroke_color(color_tool_border());
