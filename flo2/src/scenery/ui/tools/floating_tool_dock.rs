@@ -5,18 +5,19 @@ use super::tool_graphics::*;
 
 use flo_binding::*;
 use flo_scene::*;
-use flo_scene::commands::*;
 use flo_scene::programs::*;
 use flo_scene_binding::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
+use flo_curves::arc::*;
 
 use futures::prelude::*;
 
 use std::collections::*;
 use std::sync::*;
 
-const TOOL_WIDTH: f64 = 48.0;
+const TOOL_WIDTH: f64       = 48.0;
+const DOCK_Z_INDEX: usize   = 1000;
 
 ///
 /// Representation of a tool in the floating tool dock
@@ -25,6 +26,9 @@ const TOOL_WIDTH: f64 = 48.0;
 struct FloatingTool {
     /// ID for this tool
     id: ToolId,
+
+    /// Control ID for this tool
+    control_id: ControlId,
 
     /// The name of this tool
     name: Binding<String>,
@@ -86,10 +90,16 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
     let tool_dock = Arc::new(tool_dock);
 
     // Start the other subprograms that manage this tool dock
-    let drawing_subprogram = SubProgramId::new();
+    let drawing_subprogram_id = SubProgramId::new();
 
     let tool_dock_copy = tool_dock.clone();
-    context.send_message(SceneControl::start_child_program(drawing_subprogram, our_program_id, move |input, context| drawing_program(input, context, tool_dock_copy), 20)).await.ok();
+    context.send_message(SceneControl::start_child_program(drawing_subprogram_id, our_program_id, move |input, context| drawing_program(input, context, tool_dock_copy), 20)).await.ok();
+
+    let events_subprogram_id = SubProgramId::new();
+
+    let focus_subprogram_id = SubProgramId::new();
+    let tool_dock_copy      = tool_dock.clone();
+    context.send_message(SceneControl::start_child_program(focus_subprogram_id, our_program_id, move |input, context| focus_program(input, context, tool_dock_copy, events_subprogram_id), 20)).await.ok();
 
     // Start tracking tool state events
     let mut input = input;
@@ -103,6 +113,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                 let mut tools   = (*tools).clone();
                 let new_tool    = FloatingTool {
                     id:             tool_id,
+                    control_id:     ControlId::new(),
                     name:           bind("".into()),
                     anchor:         bind((0.0, 0.0)),
                     position:       bind(UiPoint(0.0, 0.0)),
@@ -128,6 +139,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                 let mut tools = (*tools).clone();
                 let new_tool    = FloatingTool {
                     id:             duplicate_to,
+                    control_id:     ControlId::new(),
                     name:           bind(duplicate_from.name.get()),
                     anchor:         bind(duplicate_from.anchor.get()),
                     position:       bind(duplicate_from.position.get()),
@@ -285,6 +297,60 @@ async fn drawing_program(input: InputStream<BindingProgram>, context: SceneConte
     // The action sends the drawing action to whatever subprogram is listening
     let action = BindingAction::new(|drawing: Vec<Draw>, context| async move {
         context.send_message(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
+    });
+
+    binding_program(input, context, binding, action).await;
+}
+
+///
+/// Runs the program that generates the focus requests for the tools
+///
+async fn focus_program(input: InputStream<BindingProgram>, context: SceneContext, floating_dock: Arc<FloatingToolDock>, events_subprogram: SubProgramId) {
+    // These track the positions of the tools
+    let binding = computed(move || {
+        let tools           = floating_dock.tools.get();
+        let tool_positions  = tools.iter().map(|(tool_id, tool)| (*tool_id, tool.control_id, tool.position.get()));
+
+        tool_positions.collect::<Vec<_>>()
+    });
+
+    // Action sets the positions of the various tools
+    let existing_tools = Arc::new(Mutex::new(HashSet::new()));
+    let action = BindingAction::new(move |positions: Vec<(ToolId, ControlId, UiPoint)>, context| {
+        let existing_tools = existing_tools.clone();
+
+        async move {
+            let mut focus = context.send(()).unwrap();
+
+            focus.send(Focus::ClaimRegion { program: events_subprogram, region: vec![], z_index: DOCK_Z_INDEX }).await.ok();
+
+            // Tools that exist after this pass
+            let mut still_existing_tools = HashSet::new();
+
+            for (_tool_id, control_id, UiPoint(x, y)) in positions {
+                // Claim the region for this tool
+                let region = Circle::new(UiPoint(x, y), TOOL_WIDTH/2.0);
+                let region = region.to_path::<UiPath>();
+
+                focus.send(Focus::ClaimControlRegion { program: events_subprogram, region: vec![region], control: control_id, z_index: 0 }).await.ok();
+
+                // Add the tool to the list that we know exists
+                still_existing_tools.insert(control_id);
+            }
+
+            // Remove any tools that are no longer present
+            let missing_tools = existing_tools.lock().unwrap().iter()
+                .filter(|tool_id| !still_existing_tools.contains(tool_id))
+                .copied()
+                .collect::<Vec<_>>();
+
+            for deleted_tool in missing_tools {
+                focus.send(Focus::RemoveControlClaim(events_subprogram, deleted_tool)).await.ok();
+            }
+
+            // Replace the existing tools for the next pass through
+            *(existing_tools.lock().unwrap()) = still_existing_tools;
+        }
     });
 
     binding_program(input, context, binding, action).await;
