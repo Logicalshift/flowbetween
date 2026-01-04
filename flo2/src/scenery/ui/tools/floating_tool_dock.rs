@@ -7,6 +7,7 @@ use flo_binding::*;
 use flo_scene::*;
 use flo_scene::programs::*;
 use flo_scene_binding::*;
+use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
 use flo_curves::arc::*;
@@ -59,6 +60,9 @@ struct FloatingTool {
 
     /// True if the mouse is over this tool
     highlighted: Binding<bool>,
+
+    /// True if this control has keyboard focus
+    focused: Binding<bool>,
 
     /// True if the user is pressing on this tool
     pressed: Binding<bool>,
@@ -125,6 +129,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     dialog_open:    bind(false),
                     selected:       bind(false),
                     highlighted:    bind(false),
+                    focused:        bind(false),
                     pressed:        bind(false),
                 };
                 tools.insert(tool_id, Arc::new(new_tool));
@@ -151,6 +156,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     dialog_open:    bind(false),
                     selected:       bind(false),
                     highlighted:    bind(false),
+                    focused:        bind(false),
                     pressed:        bind(false),
                 };
                 tools.insert(duplicate_to, Arc::new(new_tool));
@@ -363,6 +369,69 @@ async fn focus_program(input: InputStream<BindingProgram>, context: SceneContext
 async fn events_program(input: InputStream<FocusEvent>, context: SceneContext, floating_dock: Arc<FloatingToolDock>) {
     let mut input = input;
     while let Some(evt) = input.next().await {
-        println!("{:?}", evt);
+        // Default handling
+        floating_dock.process_focus_event(&evt);
+
+        // Looking for clicks and drags
+        match evt {
+            _ => { }
+        }
+    }
+}
+
+impl FloatingToolDock {
+    ///
+    /// Performs processing for the 'common' focus events which don't have any 'contextual' behaviour (as happens with drags, etc)
+    ///
+    fn process_focus_event(&self, evt: &FocusEvent) {
+        match evt {
+            FocusEvent::Event(_, DrawEvent::Resize(_, _)) => {
+            }
+
+            FocusEvent::Event(_, DrawEvent::Scale(_)) => {
+            }
+
+            FocusEvent::Focused(control_id) => {
+                // Keyboard focus is on a tool
+                self.tools.get().values()
+                    .for_each(|tool| {
+                        if tool.control_id == *control_id {
+                            tool.focused.set(true);
+                        }
+                    });
+            }
+
+            FocusEvent::Unfocused(control_id) => {
+                // Keyboard focus has left a tool
+                self.tools.get().values()
+                    .for_each(|tool| {
+                        if tool.control_id == *control_id {
+                            tool.focused.set(false);
+                        }
+                    });
+            }
+
+            FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Enter, _, _)) => {
+                // Pointer has entered a tool
+                self.tools.get().values()
+                    .for_each(|tool| {
+                        if tool.control_id == *control_id {
+                            tool.highlighted.set(true);
+                        }
+                    });
+            }
+
+            FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Leave, _, _)) => {
+                // Pointer has left a tool
+                self.tools.get().values()
+                    .for_each(|tool| {
+                        if tool.control_id == *control_id {
+                            tool.highlighted.set(false);
+                        }
+                    });
+            }
+
+            _ => { }
+        }
     }
 }
