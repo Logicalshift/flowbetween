@@ -90,12 +90,13 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
     let tool_dock = Arc::new(tool_dock);
 
     // Start the other subprograms that manage this tool dock
-    let drawing_subprogram_id = SubProgramId::new();
-
-    let tool_dock_copy = tool_dock.clone();
+    let drawing_subprogram_id   = SubProgramId::new();
+    let tool_dock_copy          = tool_dock.clone();
     context.send_message(SceneControl::start_child_program(drawing_subprogram_id, our_program_id, move |input, context| drawing_program(input, context, tool_dock_copy), 20)).await.ok();
 
-    let events_subprogram_id = SubProgramId::new();
+    let events_subprogram_id    = SubProgramId::new();
+    let tool_dock_copy          = tool_dock.clone();
+    context.send_message(SceneControl::start_child_program(events_subprogram_id, our_program_id, move |input, context| events_program(input, context, tool_dock_copy), 20)).await.ok();
 
     let focus_subprogram_id = SubProgramId::new();
     let tool_dock_copy      = tool_dock.clone();
@@ -354,4 +355,14 @@ async fn focus_program(input: InputStream<BindingProgram>, context: SceneContext
     });
 
     binding_program(input, context, binding, action).await;
+}
+
+///
+/// Handles focus events for the floating tool dock
+///
+async fn events_program(input: InputStream<FocusEvent>, context: SceneContext, floating_dock: Arc<FloatingToolDock>) {
+    let mut input = input;
+    while let Some(evt) = input.next().await {
+        println!("{:?}", evt);
+    }
 }
