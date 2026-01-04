@@ -66,6 +66,9 @@ struct FloatingTool {
 
     /// True if the user is pressing on this tool
     pressed: Binding<bool>,
+
+    /// True if the control is being dragged
+    dragged: Binding<bool>,
 }
 
 ///
@@ -131,6 +134,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     highlighted:    bind(false),
                     focused:        bind(false),
                     pressed:        bind(false),
+                    dragged:        bind(false),
                 };
                 tools.insert(tool_id, Arc::new(new_tool));
 
@@ -158,6 +162,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     highlighted:    bind(false),
                     focused:        bind(false),
                     pressed:        bind(false),
+                    dragged:        bind(false),
                 };
                 tools.insert(duplicate_to, Arc::new(new_tool));
 
@@ -374,9 +379,46 @@ async fn events_program(input: InputStream<FocusEvent>, context: SceneContext, f
 
         // Looking for clicks and drags
         match evt {
+            FocusEvent::Event(control_id, DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => {
+                // Fetch the tool that was clicked on#
+                let tools       = floating_dock.tools.get();
+                let Some(tool)  = tools.iter().filter(|(_, tool)| Some(tool.control_id) == control_id).next() else { continue; };
+
+                track_pointer_down(&mut input, &context, floating_dock.clone(), tool.1.clone(), pointer_id, pointer_state).await;
+            }
+
             _ => { }
         }
     }
+}
+
+///
+/// Tracks the actions performed after the user has pressed the mouse down on a tool
+///
+async fn track_pointer_down(input: &mut InputStream<FocusEvent>, context: &SceneContext, floating_dock: Arc<FloatingToolDock>, tool: Arc<FloatingTool>, initial_pointer_id: PointerId, initial_state: PointerState) {
+    tool.pressed.set(true);
+
+    while let Some(evt) = input.next().await {
+        // Standard behaviours still happen
+        floating_dock.process_focus_event(&evt);
+
+        // Track until the user releases the mouse or drags the tool
+        match evt {
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, _pointer_state)) => {
+                if pointer_id != initial_pointer_id { continue; }
+
+                // Select the tool
+                context.send_message(Tool::Select(tool.id)).await.ok();
+
+                break;
+            }
+
+            _ => { }
+        }
+    }
+
+    tool.pressed.set(false);
+    tool.dragged.set(false);
 }
 
 impl FloatingToolDock {
