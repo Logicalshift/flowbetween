@@ -17,6 +17,9 @@ use futures::prelude::*;
 use std::collections::*;
 use std::sync::*;
 
+/// Distance that a control is 'pulled' before it starts being dragged
+const PULL_DISTANCE: f64    = 48.0;
+
 const TOOL_WIDTH: f64       = 48.0;
 const DOCK_Z_INDEX: usize   = 1000;
 
@@ -39,6 +42,9 @@ struct FloatingTool {
 
     /// The position of this tool
     position: Binding<UiPoint>,
+
+    /// The offset from the tool's current position due to the user dragging the tool
+    drag_offset: Binding<Option<(f64, f64)>>,
 
     /// The instructions to draw the icon for this tool
     icon: Binding<Arc<Vec<Draw>>>,
@@ -75,6 +81,7 @@ struct FloatingTool {
 /// State of the flaot
 ///
 struct FloatingToolDock {
+    program_id:     SubProgramId,
     tools:          Binding<Arc<HashMap<ToolId, Arc<FloatingTool>>>>,
     layer_id:       LayerId,
     namespace_id:   NamespaceId,
@@ -90,6 +97,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
 
     // Create the tool dock state
     let tool_dock = FloatingToolDock {
+        program_id:     our_program_id,
         tools:          bind(Arc::new(HashMap::new())),
         layer_id:       layer_id,
         namespace_id:   *DOCK_LAYER,
@@ -125,6 +133,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     name:           bind("".into()),
                     anchor:         bind((0.0, 0.0)),
                     position:       bind(UiPoint(0.0, 0.0)),
+                    drag_offset:    bind(None),
                     icon:           bind(Arc::new(vec![])),
                     sprite:         bind(None),
                     sprite_update:  bind(0),
@@ -153,6 +162,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     name:           bind(duplicate_from.name.get()),
                     anchor:         bind(duplicate_from.anchor.get()),
                     position:       bind(duplicate_from.position.get()),
+                    drag_offset:    bind(None),
                     icon:           bind(duplicate_from.icon.get()),
                     sprite:         bind(None),
                     sprite_update:  bind(0),
@@ -271,6 +281,12 @@ async fn drawing_program(input: InputStream<BindingProgram>, context: SceneConte
             let sprite_id       = tool.sprite.get();
             let UiPoint(x, y)   = tool.position.get();
 
+            let (x, y) = if let Some((drag_x, drag_y)) = tool.drag_offset.get() {
+                (x + drag_x, y + drag_y)
+            } else {
+                (x, y)
+            };
+
             // Draw the plinth beneath the tool
             let plinth_x    = x - (TOOL_WIDTH / 2.0);
             let plinth_y    = y - (TOOL_WIDTH / 2.0);
@@ -291,7 +307,9 @@ async fn drawing_program(input: InputStream<BindingProgram>, context: SceneConte
                 tool.sprite_update.get();
 
                 drawing.sprite_transform(SpriteTransform::Scale(1.2, 1.2));
-                if tool.pressed.get() || tool.selected.get() {
+                if tool.pressed.get() && tool.selected.get() {
+                    drawing.sprite_transform(SpriteTransform::Translate(x as _, (y+6.0) as _));
+                } else if tool.pressed.get() || tool.selected.get() {
                     drawing.sprite_transform(SpriteTransform::Translate(x as _, (y+3.0) as _));
                 } else {
                     drawing.sprite_transform(SpriteTransform::Translate(x as _, y as _));
@@ -344,6 +362,7 @@ async fn focus_program(input: InputStream<BindingProgram>, context: SceneContext
                 let region = Circle::new(UiPoint(x, y), TOOL_WIDTH/2.0);
                 let region = region.to_path::<UiPath>();
 
+                focus.send(Focus::RemoveControlClaim(events_subprogram, control_id)).await.ok();
                 focus.send(Focus::ClaimControlRegion { program: events_subprogram, region: vec![region], control: control_id, z_index: 0 }).await.ok();
 
                 // Add the tool to the list that we know exists
@@ -404,6 +423,30 @@ async fn track_pointer_down(input: &mut InputStream<FocusEvent>, context: &Scene
 
         // Track until the user releases the mouse or drags the tool
         match evt {
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, pointer_id, pointer_state)) |
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Drag, pointer_id, pointer_state)) => {
+                if pointer_id != initial_pointer_id { continue; }
+
+                // Get the distance the user has dragged the cursor
+                let Some((x1, y1))          = initial_state.location_in_canvas else { continue; };
+                let Some((x2, y2))          = pointer_state.location_in_canvas else { continue; };
+                let (offset_x, offset_y)    = ((x2-x1), (y2-y1));
+                let distance                = (offset_x*offset_x + offset_y*offset_y).sqrt();
+
+                // 'Pull' the tool away from its current position before entering the main drag
+                let offset_ratio        = 1.0 - ((PULL_DISTANCE - distance) / PULL_DISTANCE);
+                let offset_ratio        = offset_ratio.powi(2).min(1.0);
+                let (pull_x, pull_y)    = (offset_x * offset_ratio, offset_y * offset_ratio);
+
+                tool.drag_offset.set(Some((pull_x, pull_y)));
+
+                if distance >= PULL_DISTANCE {
+                    // Run the actual drag
+                    track_drag(input, context, floating_dock.clone(), tool.clone(), initial_pointer_id, initial_state).await;
+                    break;
+                }
+            }
+
             FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, _pointer_state)) => {
                 if pointer_id != initial_pointer_id { continue; }
 
@@ -419,6 +462,57 @@ async fn track_pointer_down(input: &mut InputStream<FocusEvent>, context: &Scene
 
     tool.pressed.set(false);
     tool.dragged.set(false);
+    tool.drag_offset.set(None);
+}
+
+///
+/// Tracks the actions performed after the user has dragged a tool away from its current position
+///
+async fn track_drag(input: &mut InputStream<FocusEvent>, context: &SceneContext, floating_dock: Arc<FloatingToolDock>, tool: Arc<FloatingTool>, initial_pointer_id: PointerId, initial_state: PointerState) {
+    tool.pressed.set(false);
+    tool.dragged.set(true);
+
+    while let Some(evt) = input.next().await {
+        // Standard behaviours still happen
+        floating_dock.process_focus_event(&evt);
+
+        // Track until the user releases the mouse or drags the tool
+        match evt {
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, pointer_id, pointer_state)) |
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Drag, pointer_id, pointer_state)) => {
+                if pointer_id != initial_pointer_id { continue; }
+
+                // Get the distance the user has dragged the cursor
+                let Some((x1, y1))          = initial_state.location_in_canvas else { continue; };
+                let Some((x2, y2))          = pointer_state.location_in_canvas else { continue; };
+                let (offset_x, offset_y)    = ((x2-x1), (y2-y1));
+
+                tool.drag_offset.set(Some((offset_x, offset_y)));
+            }
+
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)) => {
+                if pointer_id != initial_pointer_id { continue; }
+
+                let Some((x1, y1))          = initial_state.location_in_canvas else { break; };
+                let Some((x2, y2))          = pointer_state.location_in_canvas else { break; };
+                let (offset_x, offset_y)    = ((x2-x1), (y2-y1));
+
+                let UiPoint(cx, cy)         = tool.position.get();
+                let (newx, newy)            = (cx + offset_x, cy + offset_y);
+
+                // Move the tool to the new location
+                context.send_message(Tool::SetToolLocation(tool.id, floating_dock.program_id.into(), (newx, newy))).await.ok();
+
+                break;
+            }
+
+            _ => { }
+        }
+    }
+
+    tool.pressed.set(false);
+    tool.dragged.set(false);
+    tool.drag_offset.set(None);
 }
 
 impl FloatingToolDock {
