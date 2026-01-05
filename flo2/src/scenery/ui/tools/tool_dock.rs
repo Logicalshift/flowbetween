@@ -8,7 +8,6 @@ use super::tool_state::*;
 use super::tool_graphics::*;
 
 use flo_curves::bezier::path::*;
-use flo_scene::commands::*;
 use flo_scene::programs::*;
 use flo_scene::*;
 use flo_scene_binding::*;
@@ -895,16 +894,19 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                     let drop_anim_binding       = clicked_tool.drop_anim.clone();
                     let drop_animation          = AnimationDescription::linear(0.4)
                         .with_when_finished(move |context| async move {
+                            // Finish the drop by updating the tool state
+                            let new_tool_id = ToolId::new();
+                            context.send_message(Tool::DuplicateTool(clicked_tool.tool_id, new_tool_id)).await.ok();
+                            context.send_message(Tool::SetToolLocation(new_tool_id, floating_tools_program.into(), (cx + offset_x, cy + offset_y))).await.ok();
+
+                            context.wait_for_idle(100).await;
+
                             // Unset the animation
                             clicked_tool.pressed.set(false);
                             clicked_tool.drag_position.set(None);
                             clicked_tool.drop_anim.set(0.0);
                             clicked_tool.drop_cancel.set(0.0);
 
-                            // Finish the drop by updating the tool state
-                            let new_tool_id = ToolId::new();
-                            context.send_message(Tool::DuplicateTool(clicked_tool.tool_id, new_tool_id)).await.ok();
-                            context.send_message(Tool::SetToolLocation(new_tool_id, floating_tools_program.into(), (cx + offset_x, cy + offset_y))).await.ok();
                         });
                     run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
                 }
