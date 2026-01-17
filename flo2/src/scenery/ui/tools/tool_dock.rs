@@ -61,8 +61,8 @@ struct ToolData {
 
     drag_fade:      Binding<f64>,
     drag_position:  Binding<Option<(f64, f64)>>,
-    drop_anim:      Binding<f64>,
-    drop_cancel:    Binding<f64>,
+    drop_anim:      AnimationBinding,
+    drop_cancel:    AnimationBinding,
 }
 
 ///
@@ -373,8 +373,8 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
 
                         drag_fade:      bind(0.0),
                         drag_position:  bind(None),
-                        drop_anim:      bind(0.0),
-                        drop_cancel:    bind(0.0),
+                        drop_anim:      animate_binding(AnimationDescription::default(), &context),
+                        drop_cancel:    animate_binding(AnimationDescription::default(), &context),
                     });
 
                     tool_dock.tools.set(Arc::new(new_tools));
@@ -402,8 +402,8 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
 
                         drag_fade:      bind(0.0),
                         drag_position:  bind(None),
-                        drop_anim:      bind(0.0),
-                        drop_cancel:    bind(0.0),
+                        drop_anim:      animate_binding(AnimationDescription::default(), &context),
+                        drop_cancel:    animate_binding(AnimationDescription::default(), &context),
                     });
 
                     tool_dock.tools.set(Arc::new(new_tools));
@@ -806,8 +806,8 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
     // Clear the pressed status
     clicked_tool.pressed.set(false);
     clicked_tool.drag_position.set(None);
-    clicked_tool.drop_anim.set(0.0);
-    clicked_tool.drop_cancel.set(0.0);
+    clicked_tool.drop_anim.stop();
+    clicked_tool.drop_cancel.stop();
 }
 
 ///
@@ -818,8 +818,8 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
 
     // Unpress the tool once it starts dragging
     clicked_tool.pressed.set(false);
-    clicked_tool.drop_anim.set(0.0);
-    clicked_tool.drop_cancel.set(0.0);
+    clicked_tool.drop_anim.stop();
+    clicked_tool.drop_cancel.stop();
 
     // Track events until the user releases the button
     while let Some(msg) = input.next().await {
@@ -876,23 +876,22 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
 
                 clicked_tool.drag_position.set(Some((cx + offset_x, cy + offset_y)));
 
+                let animated_tool = clicked_tool.clone();
                 if (x >= x1 && x <= x2 && y >= y1 && y <= y2) || floating_tools_program.is_none() {
                     // On the dock: draw a 'failing' animation
-                    let drop_anim_binding   = clicked_tool.drop_cancel.clone();
-                    let drop_animation      = AnimationDescription::ease_in(0.15)
+                    clicked_tool.drop_cancel.change_animation(AnimationDescription::ease_in(0.15)
                         .with_when_finished(move |_| async move {
                             // Unset the animation
-                            clicked_tool.pressed.set(false);
-                            clicked_tool.drag_position.set(None);
-                            clicked_tool.drop_anim.set(0.0);
-                            clicked_tool.drop_cancel.set(0.0);
-                        });
-                    run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
+                            animated_tool.pressed.set(false);
+                            animated_tool.drag_position.set(None);
+                            animated_tool.drop_anim.stop();
+                            animated_tool.drop_cancel.stop();
+                        }));
+                    clicked_tool.drop_cancel.start();
                 } else {
                     // Drop this tool in its new position when the tool is released
                     let floating_tools_program  = floating_tools_program.unwrap();
-                    let drop_anim_binding       = clicked_tool.drop_anim.clone();
-                    let drop_animation          = AnimationDescription::linear(0.4)
+                    clicked_tool.drop_anim.change_animation(AnimationDescription::linear(0.4)
                         .with_when_finished(move |context| async move {
                             // Finish the drop by updating the tool state
                             let new_tool_id = ToolId::new();
@@ -902,13 +901,13 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                             context.wait_for_idle(100).await;
 
                             // Unset the animation
-                            clicked_tool.pressed.set(false);
-                            clicked_tool.drag_position.set(None);
-                            clicked_tool.drop_anim.set(0.0);
-                            clicked_tool.drop_cancel.set(0.0);
+                            animated_tool.pressed.set(false);
+                            animated_tool.drag_position.set(None);
+                            animated_tool.drop_anim.stop();
+                            animated_tool.drop_cancel.stop();
 
-                        });
-                    run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
+                        }));
+                    clicked_tool.drop_anim.start();
                 }
 
                 // Finished
@@ -917,16 +916,16 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
 
             FocusEvent::Event(_, DrawEvent::KeyDown(_, Some(Key::KeyEscape))) => {
                 // Cancel the drag if escape is pressed
-                let drop_anim_binding   = clicked_tool.drop_cancel.clone();
-                let drop_animation      = AnimationDescription::ease_in(0.15)
+                let animated_tool = clicked_tool.clone();
+                clicked_tool.drop_cancel.change_animation(AnimationDescription::ease_in(0.15)
                     .with_when_finished(move |_| async move {
                         // Unset the animation
-                        clicked_tool.pressed.set(false);
-                        clicked_tool.drag_position.set(None);
-                        clicked_tool.drop_anim.set(0.0);
-                        clicked_tool.drop_cancel.set(0.0);
-                    });
-                run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
+                        animated_tool.pressed.set(false);
+                        animated_tool.drag_position.set(None);
+                        animated_tool.drop_anim.stop();
+                        animated_tool.drop_cancel.stop();
+                    }));
+                clicked_tool.drop_cancel.start();
 
                 // Finished
                 return;
@@ -936,16 +935,16 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
 
-                let drop_anim_binding   = clicked_tool.drop_cancel.clone();
-                let drop_animation      = AnimationDescription::ease_in(0.15)
+                let animated_tool = clicked_tool.clone();
+                clicked_tool.drop_cancel.change_animation(AnimationDescription::ease_in(0.15)
                     .with_when_finished(move |_| async move {
                         // Unset the animation
-                        clicked_tool.pressed.set(false);
-                        clicked_tool.drag_position.set(None);
-                        clicked_tool.drop_anim.set(0.0);
-                        clicked_tool.drop_cancel.set(0.0);
-                    });
-                run_binding_animation(&context, drop_animation, 1.0/60.0, drop_anim_binding).await;
+                        animated_tool.pressed.set(false);
+                        animated_tool.drag_position.set(None);
+                        animated_tool.drop_anim.stop();
+                        animated_tool.drop_cancel.stop();
+                    }));
+                clicked_tool.drop_cancel.start();
 
                 // Finished
                 return;
@@ -958,6 +957,6 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
     // Unpress/drag the tool
     clicked_tool.pressed.set(false);
     clicked_tool.drag_position.set(None);
-    clicked_tool.drop_anim.set(0.0);
-    clicked_tool.drop_cancel.set(0.0);
+    clicked_tool.drop_anim.stop();
+    clicked_tool.drop_cancel.stop();
 }
