@@ -2,6 +2,8 @@ use super::control_id::*;
 use super::subprograms::*;
 use super::ui_path::*;
 
+use flo_draw::canvas::*;
+use flo_draw::canvas::scenery::*;
 use flo_scene::*;
 use flo_scene::programs::*;
 use flo_draw::*;
@@ -14,6 +16,7 @@ use futures::prelude::*;
 use serde::*;
 
 use std::collections::{HashMap, HashSet};
+use std::sync::*;
 
 ///
 /// Requests to the focus subprogram.
@@ -86,6 +89,7 @@ pub enum FocusEvent {
 pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
     let program_id  = context.current_program_id().unwrap();
     let mut input   = input;
+    let namespace   = NamespaceId::new();
 
     // Request updates from the scene (which we'll use to remove subprograms that aren't running any more)
     context.send_message(SceneControl::Subscribe(program_id.into())).await.ok();
@@ -125,7 +129,27 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             Event(DrawEvent::Pointer(PointerAction::Leave, _, _))                           => { },
             Event(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => { focus.set_pointer_target(&pointer_state, &context).await; focus.pointer_target_lock_count += 1; focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)).await; },
             Event(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state))   => { focus.pointer_target_lock_count -= 1; focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)).await; },
-            Event(DrawEvent::Pointer(other_action, pointer_id, pointer_state))              => { focus.set_pointer_target(&pointer_state, &context).await; focus.send_to_pointer_target(DrawEvent::Pointer(other_action, pointer_id, pointer_state)).await; },
+            Event(DrawEvent::Pointer(other_action, pointer_id, pointer_state))              => { 
+                let mut drawing = vec![];
+
+                drawing.push_state();
+                drawing.namespace(namespace.clone());
+                drawing.layer(LayerId(0));
+                drawing.clear_layer();
+
+                if let Some(pos) = pointer_state.location_in_canvas {
+                    drawing.new_path();
+                    drawing.circle(pos.0 as _, pos.1 as _, 4.0);
+                    drawing.fill_color(Color::Rgba(0.0, 0.8, 0.0, 1.0));
+                    drawing.fill();
+                    drawing.pop_state();
+                }
+
+                context.send_message(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
+
+                focus.set_pointer_target(&pointer_state, &context).await; 
+                focus.send_to_pointer_target(DrawEvent::Pointer(other_action, pointer_id, pointer_state)).await; 
+            },
             Event(DrawEvent::KeyDown(scancode, key))                                        => { focus.send_to_focus(DrawEvent::KeyDown(scancode, key)).await; },
             Event(DrawEvent::KeyUp(scancode, key))                                          => { focus.send_to_focus(DrawEvent::KeyUp(scancode, key)).await; },
 
