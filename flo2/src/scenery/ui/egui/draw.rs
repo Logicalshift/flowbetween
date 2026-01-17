@@ -176,7 +176,6 @@ pub fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>
             let section     = glyph.section_index;
             let glyph_color = text_shape.galley.job.sections[section as usize].format.color;
             let glyph_color = if glyph_color == egui::Color32::PLACEHOLDER { fallback_color } else { canvas_color(&glyph_color) };
-            let glyph_color = canvas::Color::Rgba(0.1, 1.0, 0.1, 1.0);
 
             // Render the glyph
             drawing.new_path();
