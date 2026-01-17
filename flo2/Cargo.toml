@@ -35,6 +35,10 @@ flo_scene               = { git = "https://github.com/Logicalshift/flo_scene", b
 flo_scene_binding       = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.3" }
 flo_scene_guest         = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.3" }
 
+#flo_scene               = { path = "../../flo_scene/scene" }
+#flo_scene_binding       = { path = "../../flo_scene/binding" }
+#flo_scene_guest         = { path = "../../flo_scene/guest-nostd" }
+
 desync                  = { git = "https://github.com/Logicalshift/desync", branch = "v0.9" }
 
 flo_draw                = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
