@@ -806,8 +806,8 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
     // Clear the pressed status
     clicked_tool.pressed.set(false);
     clicked_tool.drag_position.set(None);
-    clicked_tool.drop_anim.stop();
-    clicked_tool.drop_cancel.stop();
+    clicked_tool.drop_anim.reset();
+    clicked_tool.drop_cancel.reset();
 }
 
 ///
@@ -818,8 +818,8 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
 
     // Unpress the tool once it starts dragging
     clicked_tool.pressed.set(false);
-    clicked_tool.drop_anim.stop();
-    clicked_tool.drop_cancel.stop();
+    clicked_tool.drop_anim.reset();
+    clicked_tool.drop_cancel.reset();
 
     // Track events until the user releases the button
     while let Some(msg) = input.next().await {
@@ -884,8 +884,8 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                             // Unset the animation
                             animated_tool.pressed.set(false);
                             animated_tool.drag_position.set(None);
-                            animated_tool.drop_anim.stop();
-                            animated_tool.drop_cancel.stop();
+                            animated_tool.drop_anim.reset();
+                            animated_tool.drop_cancel.reset();
                         }));
                     clicked_tool.drop_cancel.start();
                 } else {
@@ -903,8 +903,8 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                             // Unset the animation
                             animated_tool.pressed.set(false);
                             animated_tool.drag_position.set(None);
-                            animated_tool.drop_anim.stop();
-                            animated_tool.drop_cancel.stop();
+                            animated_tool.drop_anim.reset();
+                            animated_tool.drop_cancel.reset();
 
                         }));
                     clicked_tool.drop_anim.start();
@@ -922,8 +922,8 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                         // Unset the animation
                         animated_tool.pressed.set(false);
                         animated_tool.drag_position.set(None);
-                        animated_tool.drop_anim.stop();
-                        animated_tool.drop_cancel.stop();
+                        animated_tool.drop_anim.reset();
+                        animated_tool.drop_cancel.reset();
                     }));
                 clicked_tool.drop_cancel.start();
 
@@ -941,8 +941,8 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
                         // Unset the animation
                         animated_tool.pressed.set(false);
                         animated_tool.drag_position.set(None);
-                        animated_tool.drop_anim.stop();
-                        animated_tool.drop_cancel.stop();
+                        animated_tool.drop_anim.reset();
+                        animated_tool.drop_cancel.reset();
                     }));
                 clicked_tool.drop_cancel.start();
 
@@ -957,6 +957,6 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneC
     // Unpress/drag the tool
     clicked_tool.pressed.set(false);
     clicked_tool.drag_position.set(None);
-    clicked_tool.drop_anim.stop();
-    clicked_tool.drop_cancel.stop();
+    clicked_tool.drop_anim.reset();
+    clicked_tool.drop_cancel.reset();
 }
