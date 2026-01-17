@@ -146,7 +146,8 @@ pub fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>
     // flo_canvas doesn't have an ideal format for the way that egui generates glyphs, so this is probably slower than it could be
 
     let fallback_color      = canvas_color(&text_shape.fallback_color);
-    let texture_id          = canvas::TextureId(0);
+    let mut texture_id      = canvas::TextureId(0);
+    let base_texture        = canvas::TextureId(0);
     let texture_size        = (2048.0, 64.0);           // TODO: hard coding this for testing, we need to actually store this somewhere, used for converting the UVs
     let pos_x               = text_shape.pos.x;
     let pos_y               = text_shape.pos.y;
@@ -175,6 +176,7 @@ pub fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>
             let section     = glyph.section_index;
             let glyph_color = text_shape.galley.job.sections[section as usize].format.color;
             let glyph_color = if glyph_color == egui::Color32::PLACEHOLDER { fallback_color } else { canvas_color(&glyph_color) };
+            let glyph_color = canvas::Color::Rgba(0.1, 1.0, 0.1, 1.0);
 
             // Render the glyph
             drawing.new_path();
@@ -182,9 +184,11 @@ pub fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>
 
             if active_color != Some(glyph_color) {
                 // TODO: pick a better texture ID here, figure out why things hang when resizing with this in, figure out why we get mipmap errors too
-                //drawing.copy_texture(texture_id, canvas::TextureId(1));
-                //drawing.filter_texture(canvas::TextureId(1), canvas::TextureFilter::Tint(glyph_color));
-                //active_color = Some(glyph_color);
+                drawing.copy_texture(base_texture, canvas::TextureId(1));
+                drawing.filter_texture(canvas::TextureId(1), canvas::TextureFilter::Tint(glyph_color));
+                active_color = Some(glyph_color);
+
+                texture_id = canvas::TextureId(1);
             }
 
             drawing.fill_texture(texture_id, texture_min_x, texture_min_y, texture_max_x, texture_max_y);
