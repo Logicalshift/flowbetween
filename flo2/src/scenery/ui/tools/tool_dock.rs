@@ -813,7 +813,7 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
 ///
 /// The user has pressed a button over a tool: track as they move with the button pressed
 ///
-async fn track_button_drag(input: &mut InputStream<FocusEvent>, context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId, floating_tools_program: Option<SubProgramId>) {
+async fn track_button_drag(input: &mut InputStream<FocusEvent>, _context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId, floating_tools_program: Option<SubProgramId>) {
     let Some(initial_pos) = initial_state.location_in_canvas else { return; };
 
     // Unpress the tool once it starts dragging
