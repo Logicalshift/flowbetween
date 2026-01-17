@@ -80,6 +80,11 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
     let mut pending_input   = egui::RawInput::default();
     let start_time          = Instant::now();
 
+    let mut visuals             = egui::Visuals::dark();
+    visuals.dark_mode           = true;
+    visuals.override_text_color = Some(egui::Color32::from_rgb(0xf0, 0xf0, 0xf0));
+    egui_context.set_visuals(visuals);
+
     // TODO: size is where this dialog appears on screen (if we use one viewport per dialog)
     pending_input.screen_rect = Some(egui::Rect { min: egui::Pos2 { x: bounds.0.0 as _, y: bounds.0.1 as _ }, max: egui::Pos2 { x: bounds.1.0 as _, y: bounds.1.1 as _ } });
 
