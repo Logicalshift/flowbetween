@@ -399,11 +399,15 @@ async fn events_program(input: InputStream<FocusEvent>, context: SceneContext, f
         // Looking for clicks and drags
         match evt {
             FocusEvent::Event(control_id, DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => {
-                // Fetch the tool that was clicked on#
-                let tools       = floating_dock.tools.get();
-                let Some(tool)  = tools.iter().filter(|(_, tool)| Some(tool.control_id) == control_id).next() else { continue; };
+                if pointer_state.buttons.contains(&Button::Left) {
+                    // Fetch the tool that was clicked on
+                    let tools       = floating_dock.tools.get();
+                    let Some(tool)  = tools.iter().filter(|(_, tool)| Some(tool.control_id) == control_id).next() else { continue; };
 
-                track_pointer_down(&mut input, &context, floating_dock.clone(), tool.1.clone(), pointer_id, pointer_state).await;
+                    track_pointer_down(&mut input, &context, floating_dock.clone(), tool.1.clone(), pointer_id, pointer_state).await;
+                } else if pointer_state.buttons.contains(&Button::Right) {
+                    // TODO: context menu (or maybe open the dialog?)
+                }
             }
 
             _ => { }

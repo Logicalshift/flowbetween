@@ -693,20 +693,24 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
         // Pointer action event processing
         match msg {
             FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => {
-                let tools = tool_dock.tools.get();
+                if pointer_state.buttons.contains(&Button::Left) {
+                    let tools = tool_dock.tools.get();
 
-                // User has clicked on a tool
-                let selected_tool = tools.iter()
-                    .filter(|(_, tool)| tool.control_id.get() == control_id)
-                    .next();
+                    // User has clicked on a tool
+                    let selected_tool = tools.iter()
+                        .filter(|(_, tool)| tool.control_id.get() == control_id)
+                        .next();
 
-                if let Some((tool_id, _)) = selected_tool {
-                    let tool_id = *tool_id;
+                    if let Some((tool_id, _)) = selected_tool {
+                        let tool_id = *tool_id;
 
-                    if let Some(tool) = tools.get(&tool_id) {
-                        // Track this tool
-                        track_button_down(&mut input, &context, pointer_state, &tool_dock, tool.clone(), pointer_id, floating_tools_program).await;
+                        if let Some(tool) = tools.get(&tool_id) {
+                            // Track this tool
+                            track_button_down(&mut input, &context, pointer_state, &tool_dock, tool.clone(), pointer_id, floating_tools_program).await;
+                        }
                     }
+                } else if pointer_state.buttons.contains(&Button::Right) {
+                    // TODO: context menu (or open the dialog?)
                 }
             }
 
