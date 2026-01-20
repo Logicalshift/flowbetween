@@ -706,7 +706,7 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
 
                         if let Some(tool) = tools.get(&tool_id) {
                             // Track this tool
-                            track_button_down(&mut input, &context, pointer_state, &tool_dock, tool.clone(), pointer_id, floating_tools_program).await;
+                            track_left_button_down(&mut input, &context, pointer_state, &tool_dock, tool.clone(), pointer_id, floating_tools_program).await;
                         }
                     }
                 } else if pointer_state.buttons.contains(&Button::Right) {
@@ -722,7 +722,7 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
 ///
 /// The user has pressed a button over a tool: track as they move with the button pressed
 ///
-async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId, floating_tools_program: Option<SubProgramId>) {
+async fn track_left_button_down(input: &mut InputStream<FocusEvent>, context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId, floating_tools_program: Option<SubProgramId>) {
     let Some(initial_pos) = initial_state.location_in_canvas else { return; };
 
     // Set the tool as pressed
@@ -762,7 +762,7 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
                     clicked_tool.drag_position.set(Some((cx + pull_x, cy + pull_y)));
                 } else {
                     // Drag the control
-                    track_button_drag(input, context, initial_state, tool_dock, clicked_tool.clone(), pointer_id, floating_tools_program).await;
+                    track_left_button_drag(input, context, initial_state, tool_dock, clicked_tool.clone(), pointer_id, floating_tools_program).await;
                     return;
                 }
             }
@@ -770,6 +770,7 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
             FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, evt_pointer_id, pointer_state)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
+                if pointer_state.buttons.contains(&Button::Left) { continue; }
 
                 let Some((x, y))    = pointer_state.location_in_canvas else { break; };
                 let (cx, cy)        = clicked_tool.center.get();
@@ -817,7 +818,7 @@ async fn track_button_down(input: &mut InputStream<FocusEvent>, context: &SceneC
 ///
 /// The user has pressed a button over a tool: track as they move with the button pressed
 ///
-async fn track_button_drag(input: &mut InputStream<FocusEvent>, _context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId, floating_tools_program: Option<SubProgramId>) {
+async fn track_left_button_drag(input: &mut InputStream<FocusEvent>, _context: &SceneContext, initial_state: PointerState, tool_dock: &Arc<ToolDock>, clicked_tool: ToolData, pointer_id: PointerId, floating_tools_program: Option<SubProgramId>) {
     let Some(initial_pos) = initial_state.location_in_canvas else { return; };
 
     // Unpress the tool once it starts dragging
@@ -865,6 +866,7 @@ async fn track_button_drag(input: &mut InputStream<FocusEvent>, _context: &Scene
             FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, evt_pointer_id, pointer_state)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
+                if pointer_state.buttons.contains(&Button::Left) { continue; }
 
                 // Check if the tool has been dropped back down on the dock
                 let (x, y) = if let Some(pos) = pointer_state.location_in_canvas { pos } else { (0.0, 0.0) };
