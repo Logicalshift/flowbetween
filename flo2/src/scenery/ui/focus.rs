@@ -81,6 +81,40 @@ pub enum FocusEvent {
 }
 
 ///
+/// The current state of the pointer buttons
+///
+struct ButtonState {
+    /// Set of the buttons that are currently down
+    is_down: HashSet<Button>,
+}
+
+impl ButtonState {
+    ///
+    /// Creates a new button state
+    ///
+    pub fn new() -> Self {
+        ButtonState {
+            is_down: HashSet::new()
+        }
+    }
+
+    ///
+    /// Updates the buttons that are down
+    ///
+    pub fn set_buttons<'a>(&mut self, pressed_buttons: impl IntoIterator<Item=&'a Button>) {
+        self.is_down = pressed_buttons.into_iter().copied().collect();
+    }
+
+    ///
+    /// Number of buttons that are down
+    ///
+    pub fn num_buttons_down(&self) -> usize {
+        self.is_down.len()
+    }
+}
+
+
+///
 /// Runs the UI focus subprogram
 ///
 pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
@@ -99,7 +133,7 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
         pointer_target:             None,
         pointer_target_program:     None,
         pointer_target_control:     None,
-        pointer_target_lock_count:  0,
+        button_state:               ButtonState::new(),
         focused_subprogram:         None,
         focused_control:            None,
         focused_event_target:       None,
@@ -123,8 +157,8 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             // Pointer and key events
             Event(DrawEvent::Pointer(PointerAction::Enter, _, _))                           => { },
             Event(DrawEvent::Pointer(PointerAction::Leave, _, _))                           => { },
-            Event(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => { focus.set_pointer_target(&pointer_state, &context).await; focus.pointer_target_lock_count += 1; focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)).await; },
-            Event(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state))   => { focus.pointer_target_lock_count -= 1; focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)).await; },
+            Event(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => { focus.set_pointer_target(&pointer_state, &context).await; focus.button_state.set_buttons(&pointer_state.buttons); focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)).await; },
+            Event(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state))   => { focus.button_state.set_buttons(&pointer_state.buttons); focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)).await; },
             Event(DrawEvent::Pointer(other_action, pointer_id, pointer_state))              => { focus.set_pointer_target(&pointer_state, &context).await; focus.send_to_pointer_target(DrawEvent::Pointer(other_action, pointer_id, pointer_state)).await; },
             Event(DrawEvent::KeyDown(scancode, key))                                        => { focus.send_to_focus(DrawEvent::KeyDown(scancode, key)).await; },
             Event(DrawEvent::KeyUp(scancode, key))                                          => { focus.send_to_focus(DrawEvent::KeyUp(scancode, key)).await; },
@@ -220,8 +254,8 @@ struct FocusProgram {
     /// The control of the active pointer target
     pointer_target_control: Option<ControlId>,
 
-    /// >0 if the pointer target is locked (eg, due to a mouse down that hasn't yet been matched by a mouse up)
-    pointer_target_lock_count: usize,
+    /// State of the mouse buttons
+    button_state: ButtonState,
 
     /// The subprogram that currently has keyboard focus
     focused_subprogram: Option<SubProgramId>,
@@ -608,7 +642,7 @@ impl FocusProgram {
     ///
     async fn set_pointer_target(&mut self, pointer_state: &PointerState, context: &SceneContext) {
         // Do nothing if the pointer target is locked (usually by a mouse down operation)
-        if self.pointer_target_lock_count > 0 {
+        if self.button_state.num_buttons_down() > 0 {
             return;
         }
 
