@@ -404,7 +404,7 @@ async fn events_program(input: InputStream<FocusEvent>, context: SceneContext, f
                     let tools       = floating_dock.tools.get();
                     let Some(tool)  = tools.iter().filter(|(_, tool)| Some(tool.control_id) == control_id).next() else { continue; };
 
-                    track_pointer_down(&mut input, &context, floating_dock.clone(), tool.1.clone(), pointer_id, pointer_state).await;
+                    track_left_down(&mut input, &context, floating_dock.clone(), tool.1.clone(), pointer_id, pointer_state).await;
                 } else if pointer_state.buttons.contains(&Button::Right) {
                     // TODO: context menu (or maybe open the dialog?)
                 }
@@ -418,7 +418,7 @@ async fn events_program(input: InputStream<FocusEvent>, context: SceneContext, f
 ///
 /// Tracks the actions performed after the user has pressed the mouse down on a tool
 ///
-async fn track_pointer_down(input: &mut InputStream<FocusEvent>, context: &SceneContext, floating_dock: Arc<FloatingToolDock>, tool: Arc<FloatingTool>, initial_pointer_id: PointerId, initial_state: PointerState) {
+async fn track_left_down(input: &mut InputStream<FocusEvent>, context: &SceneContext, floating_dock: Arc<FloatingToolDock>, tool: Arc<FloatingTool>, initial_pointer_id: PointerId, initial_state: PointerState) {
     tool.pressed.set(true);
 
     while let Some(evt) = input.next().await {
@@ -446,13 +446,14 @@ async fn track_pointer_down(input: &mut InputStream<FocusEvent>, context: &Scene
 
                 if distance >= PULL_DISTANCE {
                     // Run the actual drag
-                    track_drag(input, context, floating_dock.clone(), tool.clone(), initial_pointer_id, initial_state).await;
+                    track_left_drag(input, context, floating_dock.clone(), tool.clone(), initial_pointer_id, initial_state).await;
                     break;
                 }
             }
 
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, _pointer_state)) => {
+            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)) => {
                 if pointer_id != initial_pointer_id { continue; }
+                if pointer_state.buttons.contains(&Button::Left) { continue; }
 
                 // Select the tool
                 context.send_message(Tool::Select(tool.id)).await.ok();
@@ -472,7 +473,7 @@ async fn track_pointer_down(input: &mut InputStream<FocusEvent>, context: &Scene
 ///
 /// Tracks the actions performed after the user has dragged a tool away from its current position
 ///
-async fn track_drag(input: &mut InputStream<FocusEvent>, context: &SceneContext, floating_dock: Arc<FloatingToolDock>, tool: Arc<FloatingTool>, initial_pointer_id: PointerId, initial_state: PointerState) {
+async fn track_left_drag(input: &mut InputStream<FocusEvent>, context: &SceneContext, floating_dock: Arc<FloatingToolDock>, tool: Arc<FloatingTool>, initial_pointer_id: PointerId, initial_state: PointerState) {
     tool.pressed.set(false);
     tool.dragged.set(true);
 
@@ -496,6 +497,7 @@ async fn track_drag(input: &mut InputStream<FocusEvent>, context: &SceneContext,
 
             FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)) => {
                 if pointer_id != initial_pointer_id { continue; }
+                if pointer_state.buttons.contains(&Button::Left) { continue; }
 
                 let Some((x1, y1))          = initial_state.location_in_canvas else { break; };
                 let Some((x2, y2))          = pointer_state.location_in_canvas else { break; };
