@@ -1115,16 +1115,24 @@ mod test {
         in_program2_path.location_in_canvas = Some((700.0, 500.0));
         on_canvas.location_in_canvas        = Some((390.0, 590.0));
 
+        let mut in_program1_path_button_down = in_program1_path.clone();
+        let mut in_program2_path_button_down = in_program1_path.clone();
+        let mut on_canvas_button_down        = in_program1_path.clone();
+
+        in_program1_path_button_down.buttons = vec![Button::Left];
+        in_program2_path_button_down.buttons = vec![Button::Left];
+        on_canvas_button_down.buttons        = vec![Button::Left];
+
         TestBuilder::new()
             .send_message(Focus::ClaimRegion { program: program1, region: vec![program1_path], z_index: 0 })
             .send_message(Focus::ClaimRegion { program: program2, region: vec![program2_path], z_index: 1 })
             .send_message(Focus::SetCanvas(canvas))
 
             // Should keep tracking the mouse after the button goes down as staying in program 1
-            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::ButtonDown, PointerId(0), in_program1_path.clone())))
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::ButtonDown, PointerId(0), in_program1_path_button_down.clone())))
             .expect_message(move |SubProgram1(evt): SubProgram1| expect_enter(evt))
             .expect_message(move |SubProgram1(evt): SubProgram1| expect_buttondown(evt))
-            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program2_path.clone())))
+            .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::Move, PointerId(0), in_program2_path_button_down.clone())))
             .expect_message(move |SubProgram1(evt): SubProgram1| expect_move(evt))
             .send_message(Focus::Event(DrawEvent::Pointer(PointerAction::ButtonUp, PointerId(0), in_program2_path.clone())))
             .expect_message(move |SubProgram1(evt): SubProgram1| expect_buttonup(evt))
