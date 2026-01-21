@@ -487,7 +487,7 @@ async fn events_program(input: InputStream<FocusEvent>, context: SceneContext, f
 ///
 /// We use physics to stop tools overlapping and to give the 
 ///
-async fn physics_program(input: InputStream<BindingProgram>,  context: SceneContext, floating_dock: Arc<FloatingToolDock>) {
+async fn physics_program(input: InputStream<BindingProgram>, context: SceneContext, floating_dock: Arc<FloatingToolDock>) {
     #[derive(Clone)]
     struct ToolState {
         anchor:             BindRef<UiPoint>,
@@ -500,6 +500,14 @@ async fn physics_program(input: InputStream<BindingProgram>,  context: SceneCont
             self.drag_offset == other.drag_offset
         }
     }
+
+    // Start a physics program
+    let our_program_id          = context.current_program_id().unwrap();
+    let physics_program_id      = SubProgramId::new();
+    context.send_message(SceneControl::start_child_program(physics_program_id, our_program_id,
+        move |input, context| physics_simulation_program(input, context, true),
+        100
+    )).await.unwrap();
 
     // The binding creates a state from the tool dock, which we use to update the physics program
     let binding = computed(move || {
@@ -525,7 +533,7 @@ async fn physics_program(input: InputStream<BindingProgram>,  context: SceneCont
         let existing_tools = existing_tools.clone();
 
         async move {
-            let mut physics_sim = context.send(()).unwrap();
+            let mut physics_sim = context.send(physics_program_id).unwrap();
 
             // Update the physics state based on the tools in new_tools
             for (id, tool) in new_tools.iter() {
