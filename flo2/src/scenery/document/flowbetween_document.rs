@@ -80,14 +80,6 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     let mut draw_scale      = 1.0;
     let mut draw_transform  = Transform2D::identity();
 
-    // Vague testing of the dialog system
-    let dialog1 = DialogId::new();
-    let dialog2 = DialogId::new();
-    dialog.send(Dialog::CreateDialog(dialog1, program_id, (UiPoint(200.0, 200.0), UiPoint(400.0, 400.0)))).await.ok();
-    dialog.send(Dialog::CreateDialog(dialog2, program_id, (UiPoint(600.0, 600.0), UiPoint(800.0, 800.0)))).await.ok();
-    dialog.send(Dialog::AddControl(dialog1, ControlId::new(), (UiPoint(10.0, 10.0), UiPoint(180.0, 50.0)), ControlType::Label(bind("Label 1".to_string()).into()), ControlValue::None)).await.ok();
-    dialog.send(Dialog::AddControl(dialog2, ControlId::new(), (UiPoint(10.0, 10.0), UiPoint(180.0, 50.0)), ControlType::Label(bind("Label 2".to_string()).into()), ControlValue::None)).await.ok();
-
     // The document canvas contains the drawing instructions to regenerate the canvas (except for the 'clear canvas' instruction that begins it)
     // We re-use this whenever the document is resized
     let document_canvas = Canvas::new();
