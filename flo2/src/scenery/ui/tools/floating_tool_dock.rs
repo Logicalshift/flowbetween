@@ -576,7 +576,14 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
                 }
             }
 
-            // TODO: remove any tools that are no longer in the existing tools
+            // Remove any tools that are no longer in the existing tools
+            let missing_ids = existing_tools.lock().unwrap().keys()
+                .filter(|key| !new_tools.contains_key(key))
+                .copied()
+                .collect::<Vec<_>>();
+            for deleted_id in missing_ids {
+                physics_sim.send(PhysicsSimulation::RemoveRigidBody(deleted_id)).await.ok();
+            }
 
             // Store the updated tools
             *(existing_tools.lock().unwrap()) = new_tools;
