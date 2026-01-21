@@ -32,15 +32,6 @@ pub async fn document(document_scene: Arc<Scene>, input: InputStream<AppDocument
     // Create stream for document requests
     let mut document_requests = document_scene.send_to_scene(()).unwrap();
 
-    use flo_draw::canvas::*;
-    use flo_draw::canvas::scenery::*;
-    let mut test_drawing = vec![];
-    test_drawing.new_path();
-    test_drawing.circle(500.0, 500.0, 250.0);
-    test_drawing.fill_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
-    test_drawing.fill();
-    document_requests.send(DocumentRequest::Draw(DrawingRequest::Draw(Arc::new(test_drawing)))).await.unwrap();
-
     // ... and also run a future listening for document requests from the main app
     future::select(
         run_scene.boxed(),
