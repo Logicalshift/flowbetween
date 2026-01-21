@@ -348,14 +348,6 @@ async fn drawing_program(input: InputStream<BindingProgram>, context: SceneConte
             let sprite_id       = tool.sprite.get();
             let UiPoint(x, y)   = tool.position.get();
 
-            /* -- taken care of by the physics
-            let (x, y) = if let Some((drag_x, drag_y)) = tool.drag_offset.get() {
-                (x + drag_x, y + drag_y)
-            } else {
-                (x, y)
-            };
-            */
-
             // Draw the plinth beneath the tool
             let plinth_x    = x - (TOOL_WIDTH / 2.0);
             let plinth_y    = y - (TOOL_WIDTH / 2.0);
