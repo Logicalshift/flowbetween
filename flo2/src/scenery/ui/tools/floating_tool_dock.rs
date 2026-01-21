@@ -184,7 +184,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
                     anchor:             anchor,
                     position:           bind(UiPoint(200.0, 200.0)),
                     current_position:   current_position.into(),
-                    drag_offset:        bind(None),
+                    drag_offset:        drag_offset,
                     icon:               bind(Arc::new(vec![])),
                     sprite:             bind(None),
                     sprite_update:      bind(0),
@@ -348,11 +348,13 @@ async fn drawing_program(input: InputStream<BindingProgram>, context: SceneConte
             let sprite_id       = tool.sprite.get();
             let UiPoint(x, y)   = tool.position.get();
 
+            /* -- taken care of by the physics
             let (x, y) = if let Some((drag_x, drag_y)) = tool.drag_offset.get() {
                 (x + drag_x, y + drag_y)
             } else {
                 (x, y)
             };
+            */
 
             // Draw the plinth beneath the tool
             let plinth_x    = x - (TOOL_WIDTH / 2.0);
@@ -673,7 +675,7 @@ async fn track_left_drag(input: &mut InputStream<FocusEvent>, context: &SceneCon
                 let Some((x2, y2))          = pointer_state.location_in_canvas else { break; };
                 let (offset_x, offset_y)    = ((x2-x1), (y2-y1));
 
-                let UiPoint(cx, cy)         = tool.position.get();
+                let UiPoint(cx, cy)         = tool.anchor.get();
                 let (newx, newy)            = (cx + offset_x, cy + offset_y);
 
                 // Move the tool to the new location
