@@ -103,6 +103,10 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
         Draw::Layer(LayerId(0)),
         Draw::ClearLayer,
 
+        Draw::Namespace(*DOCK_LAYER),
+        Draw::Layer(LayerId(0)),
+        Draw::ClearLayer,
+
         Draw::Namespace(*DIALOG_LAYER),
         Draw::Layer(LayerId(0)),
         Draw::ClearLayer,
