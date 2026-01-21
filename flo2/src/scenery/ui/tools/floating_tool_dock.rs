@@ -559,6 +559,8 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
                     }
                 } else {
                     // Creating a new tool
+                    tool.position_binding.set(tool.anchor.get());
+
                     physics_sim.send(PhysicsSimulation::CreateRigidBody(*id)).await.ok();
                     physics_sim.send(PhysicsSimulation::BindPosition(*id, tool.position_binding.clone())).await.ok();
                     physics_sim.send(PhysicsSimulation::Set(*id, vec![
