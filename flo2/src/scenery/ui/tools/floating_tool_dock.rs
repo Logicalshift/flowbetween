@@ -2,6 +2,7 @@ use crate::scenery::ui::*;
 use super::sprite_manager::*;
 use super::tool_state::*;
 use super::tool_graphics::*;
+use super::physics_simulation::*;
 
 use flo_binding::*;
 use flo_scene::*;
@@ -26,7 +27,6 @@ const DOCK_Z_INDEX: usize   = 1000;
 ///
 /// Representation of a tool in the floating tool dock
 ///
-#[derive(PartialEq)]
 struct FloatingTool {
     /// ID for this tool
     id: ToolId,
@@ -34,17 +34,23 @@ struct FloatingTool {
     /// Control ID for this tool
     control_id: ControlId,
 
+    /// The ID of this tool in the physics simulation
+    sim_id: SimObjectId,
+
     /// The name of this tool
     name: Binding<String>,
 
     /// Where the tool is anchored (its home position)
-    anchor: Binding<(f64, f64)>,
+    anchor: Binding<UiPoint>,
 
     /// The position of this tool
     position: Binding<UiPoint>,
 
     /// The offset from the tool's current position due to the user dragging the tool
     drag_offset: Binding<Option<(f64, f64)>>,
+
+    /// The current center point of the tool (a computed binding)
+    current_position: BindRef<UiPoint>,         // TODO: better name? This is based on the anchor and drag position (so it's the position for the physics sim)
 
     /// The instructions to draw the icon for this tool
     icon: Binding<Arc<Vec<Draw>>>,
@@ -75,6 +81,29 @@ struct FloatingTool {
 
     /// True if the control is being dragged
     dragged: Binding<bool>,
+}
+
+impl PartialEq for FloatingTool {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id 
+        && self.control_id == other.control_id 
+        && self.sim_id == other.sim_id 
+        && self.name == other.name 
+        && self.anchor == other.anchor 
+        && self.position == other.position 
+        && self.drag_offset == other.drag_offset 
+        && self.current_position.get() == other.current_position.get()
+        && self.icon == other.icon 
+        && self.sprite == other.sprite 
+        && self.sprite_update == other.sprite_update 
+        && self.drag_position == other.drag_position 
+        && self.dialog_open == other.dialog_open 
+        && self.selected == other.selected 
+        && self.highlighted == other.highlighted 
+        && self.focused == other.focused 
+        && self.pressed == other.pressed 
+        && self.dragged == other.dragged
+    }
 }
 
 ///
@@ -117,6 +146,10 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
     let tool_dock_copy      = tool_dock.clone();
     context.send_message(SceneControl::start_child_program(focus_subprogram_id, our_program_id, move |input, context| focus_program(input, context, tool_dock_copy, events_subprogram_id), 20)).await.ok();
 
+    let physics_subprogram_id   = SubProgramId::new();
+    let tool_dock_copy          = tool_dock.clone();
+    context.send_message(SceneControl::start_child_program(physics_subprogram_id, our_program_id, move |input, context| physics_program(input, context, tool_dock_copy), 20)).await.ok();
+
     // Start tracking tool state events
     let mut input = input;
 
@@ -127,23 +160,41 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
             ToolState::AddTool(tool_id) => {
                 // Create a new set of tools with the specified tool in it
                 let mut tools   = (*tools).clone();
+
+                // TODO: extract a function for building the floating tool
+                let anchor              = bind(UiPoint(0.0, 0.0));
+                let drag_offset         = bind::<Option<(f64, f64)>>(None);
+                let anchor_2            = anchor.clone();
+                let drag_offset_2       = drag_offset.clone();
+                let current_position    = computed(move || {
+                    let anchor = anchor_2.get();
+
+                    if let Some((drag_x, drag_y)) = drag_offset_2.get() {
+                        UiPoint(anchor.x() + drag_x, anchor.y() + drag_y)
+                    } else {
+                        anchor
+                    }
+                });
+
                 let new_tool    = FloatingTool {
-                    id:             tool_id,
-                    control_id:     ControlId::new(),
-                    name:           bind("".into()),
-                    anchor:         bind((0.0, 0.0)),
-                    position:       bind(UiPoint(0.0, 0.0)),
-                    drag_offset:    bind(None),
-                    icon:           bind(Arc::new(vec![])),
-                    sprite:         bind(None),
-                    sprite_update:  bind(0),
-                    drag_position:  bind(None),
-                    dialog_open:    bind(false),
-                    selected:       bind(false),
-                    highlighted:    bind(false),
-                    focused:        bind(false),
-                    pressed:        bind(false),
-                    dragged:        bind(false),
+                    id:                 tool_id,
+                    control_id:         ControlId::new(),
+                    sim_id:             SimObjectId::new(),
+                    name:               bind("".into()),
+                    anchor:             anchor,
+                    position:           bind(UiPoint(200.0, 200.0)),
+                    current_position:   current_position.into(),
+                    drag_offset:        bind(None),
+                    icon:               bind(Arc::new(vec![])),
+                    sprite:             bind(None),
+                    sprite_update:      bind(0),
+                    drag_position:      bind(None),
+                    dialog_open:        bind(false),
+                    selected:           bind(false),
+                    highlighted:        bind(false),
+                    focused:            bind(false),
+                    pressed:            bind(false),
+                    dragged:            bind(false),
                 };
                 tools.insert(tool_id, Arc::new(new_tool));
 
@@ -156,23 +207,40 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
 
                 // Create a duplicate of this tool (binding.clone() points to the same binding so we have to copy the bindings)
                 let mut tools = (*tools).clone();
+
+                let anchor              = bind(duplicate_from.anchor.get());
+                let drag_offset         = bind::<Option<(f64, f64)>>(None);
+                let anchor_2            = anchor.clone();
+                let drag_offset_2       = drag_offset.clone();
+                let current_position    = computed(move || {
+                    let anchor = anchor_2.get();
+
+                    if let Some((drag_x, drag_y)) = drag_offset_2.get() {
+                        UiPoint(anchor.x() + drag_x, anchor.y() + drag_y)
+                    } else {
+                        anchor
+                    }
+                });
+
                 let new_tool    = FloatingTool {
-                    id:             duplicate_to,
-                    control_id:     ControlId::new(),
-                    name:           bind(duplicate_from.name.get()),
-                    anchor:         bind(duplicate_from.anchor.get()),
-                    position:       bind(duplicate_from.position.get()),
-                    drag_offset:    bind(None),
-                    icon:           bind(duplicate_from.icon.get()),
-                    sprite:         bind(None),
-                    sprite_update:  bind(0),
-                    drag_position:  bind(None),
-                    dialog_open:    bind(false),
-                    selected:       bind(false),
-                    highlighted:    bind(false),
-                    focused:        bind(false),
-                    pressed:        bind(false),
-                    dragged:        bind(false),
+                    id:                 duplicate_to,
+                    control_id:         ControlId::new(),
+                    sim_id:             SimObjectId::new(),
+                    name:               bind(duplicate_from.name.get()),
+                    anchor:             anchor,
+                    position:           bind(duplicate_from.position.get()),
+                    current_position:   current_position.into(),
+                    drag_offset:        drag_offset,
+                    icon:               bind(duplicate_from.icon.get()),
+                    sprite:             bind(None),
+                    sprite_update:      bind(0),
+                    drag_position:      bind(None),
+                    dialog_open:        bind(false),
+                    selected:           bind(false),
+                    highlighted:        bind(false),
+                    focused:            bind(false),
+                    pressed:            bind(false),
+                    dragged:            bind(false),
                 };
                 tools.insert(duplicate_to, Arc::new(new_tool));
 
@@ -207,8 +275,7 @@ pub async fn floating_tool_dock_program(input: InputStream<ToolState>, context: 
 
             ToolState::LocateTool(tool_id, position) => {
                 let Some(tool) = tools.get(&tool_id) else { continue; };
-                tool.anchor.set(position);
-                tool.position.set(UiPoint(position.0, position.1));
+                tool.anchor.set(UiPoint(position.0, position.1));
             },
 
             ToolState::SetName(tool_id, new_name) => {
@@ -413,6 +480,99 @@ async fn events_program(input: InputStream<FocusEvent>, context: SceneContext, f
             _ => { }
         }
     }
+}
+
+///
+/// Binds tools and their properties to the physics program
+///
+/// We use physics to stop tools overlapping and to give the 
+///
+async fn physics_program(input: InputStream<BindingProgram>,  context: SceneContext, floating_dock: Arc<FloatingToolDock>) {
+    #[derive(Clone)]
+    struct ToolState {
+        anchor:             BindRef<UiPoint>,
+        position_binding:   Binding<UiPoint>,
+        drag_offset:        Option<(f64, f64)>,
+    }
+
+    impl PartialEq for ToolState {
+        fn eq(&self, other: &Self) -> bool {
+            self.drag_offset == other.drag_offset
+        }
+    }
+
+    // The binding creates a state from the tool dock, which we use to update the physics program
+    let binding = computed(move || {
+        floating_dock.tools.get()
+            .iter()
+            .map(|tool| {
+                (
+                    tool.1.sim_id,
+                    ToolState {
+                        anchor:             tool.1.current_position.clone(),
+                        position_binding:   tool.1.position.clone(),
+                        drag_offset:        tool.1.drag_offset.get(),
+                    }
+                )
+            }).collect::<HashMap<_, _>>()
+    });
+
+    // The existing tools is used to maintain the old state of the tools
+    let existing_tools = Arc::new(Mutex::new(HashMap::<SimObjectId, ToolState>::new()));
+
+    // The binding action watches for changes and updates the physics simulation as it goes
+    let action = BindingAction::new(move |new_tools: HashMap<SimObjectId, ToolState>, context| {
+        let existing_tools = existing_tools.clone();
+
+        async move {
+            let mut physics_sim = context.send(()).unwrap();
+
+            // Update the physics state based on the tools in new_tools
+            for (id, tool) in new_tools.iter() {
+                let old_tool = existing_tools.lock().unwrap().get(id).cloned();
+
+                if let Some(old_tool) = old_tool {
+                    let mut new_properties = vec![];
+
+                    // Updating a tool that's already in the simulation
+                    if old_tool.drag_offset.is_none() && tool.drag_offset.is_some() {
+                        // Tool is changing state to being dragged (set to kinematic)
+                        new_properties.push(SimBodyProperty::Type(SimObjectType::Kinematic));
+                        new_properties.push(SimBodyProperty::Shape(SimShape::Circle(TOOL_WIDTH/2.0)));
+                    } else if old_tool.drag_offset.is_some() && tool.drag_offset.is_none() {
+                        // Tool is changing state to being anchored (reset to dynamic)
+                        new_properties.push(SimBodyProperty::Type(SimObjectType::Dynamic));
+                        new_properties.push(SimBodyProperty::Shape(SimShape::Circle(TOOL_WIDTH/2.0)));
+                    }
+
+                    // Update the properties for this tool if any have changed
+                    if !new_properties.is_empty() {
+                        physics_sim.send(PhysicsSimulation::Set(*id, new_properties)).await.ok();
+                    }
+                } else {
+                    // Creating a new tool
+                    physics_sim.send(PhysicsSimulation::CreateRigidBody(*id)).await.ok();
+                    physics_sim.send(PhysicsSimulation::BindPosition(*id, tool.position_binding.clone())).await.ok();
+                    physics_sim.send(PhysicsSimulation::Set(*id, vec![
+                        SimBodyProperty::Position(Some(tool.anchor.clone())),
+                        SimBodyProperty::Type(SimObjectType::Dynamic),
+                        SimBodyProperty::LinearDamping(10.0),
+                        SimBodyProperty::AngularDamping(5.0),
+                        SimBodyProperty::LockRotation(true),
+                        SimBodyProperty::Shape(SimShape::Circle(TOOL_WIDTH/2.0))
+                    ])).await.ok();
+                }
+            }
+
+            // TODO: remove any tools that are no longer in the existing tools
+
+            // Store the updated tools
+            *(existing_tools.lock().unwrap()) = new_tools;
+        }
+    });
+
+    // Run the program
+    binding_program(input, context, binding, action).await;
 }
 
 ///
