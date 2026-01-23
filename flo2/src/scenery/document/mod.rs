@@ -9,7 +9,9 @@
 mod document_id;
 mod subprograms;
 mod flowbetween_document;
+mod tools;
 
 pub use document_id::*;
 pub use subprograms::*;
 pub use flowbetween_document::*;
+pub use tools::*;
