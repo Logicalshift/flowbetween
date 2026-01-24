@@ -154,19 +154,17 @@ pub enum CanvasEdit {
     /// Sets a shape as the topmost shape attached to a parent
     SetShapeParent(CanvasShapeId, CanvasShapeParent),
 
-    /*
-    /// Sets the fill colour of a path
-    SetFillColor(CanvasPathId, Color),
+    /// Adds properties to a layer
+    SetLayerProperties(CanvasLayerId, Vec<(CanvasPropertyId, CanvasProperty)>),
 
-    /// Sets the stroke colour of a path
-    SetStrokeColor(CanvasPathId, Color),
+    /// Adds properties to a shape
+    SetShapeProperties(CanvasShapeId, Vec<(CanvasPropertyId, CanvasProperty)>),
 
-    /// Sets the line width for the outline of a path
-    SetLineWidth(CanvasPathId, f64),
+    /// Unsets properties for a layer if they're already set
+    RemoveLayerProperties(CanvasLayerId, Vec<CanvasPropertyId>),
 
-    /// Sets the cap and join properties for a path
-    SetLineProperties(CanvasPathId, LineCap, LineJoin),
-    */
+    /// Unsets properties for a shape if they're already set
+    RemoveShapeProperties(CanvasShapeId, Vec<CanvasPropertyId>),
 }
 
 impl SceneMessage for CanvasEdit {
