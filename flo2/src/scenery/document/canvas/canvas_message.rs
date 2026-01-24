@@ -3,7 +3,7 @@ use crate::scenery::ui::*;
 use flo_draw::canvas::*;
 use flo_scene::*;
 
-use serde::*;
+use ::serde::*;
 use uuid::*;
 
 use std::sync::*;

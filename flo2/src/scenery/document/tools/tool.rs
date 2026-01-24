@@ -1,5 +1,7 @@
 use crate::scenery::ui::*;
 
+use flo_scene::*;
+use flo_draw::*;
 use futures::prelude::*;
 use futures::future::{BoxFuture};
 
@@ -16,9 +18,9 @@ pub struct ToolBehaviour<TToolData> {
 ///
 /// Creates a tool subprogram function for a tool
 ///
-pub fn tool_program<TToolData>(tool_type: ToolTypeId, group_id: ToolGroupId, behaviour: ToolBehaviour) -> impl 'static + FnOnce(InputStream<ToolState>, SceneContext) -> BoxFuture<'static, ()>
+pub fn tool_program<TToolData>(tool_type: ToolTypeId, group_id: ToolGroupId, behaviour: ToolBehaviour<TToolData>) /* -> impl 'static + FnOnce(InputStream<ToolState>, SceneContext) -> BoxFuture<'static, ()> */
 where
     TToolData: Send + Clone,
 {
-
+    todo!()
 }
