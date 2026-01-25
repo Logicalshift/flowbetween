@@ -151,7 +151,7 @@ impl ToCanvasProperties for FlatFill {
         vec![*PROP_FILL_COLOR_TYPE, *PROP_FILL_COLOR]
     }
 
-    fn from_properties<'a>(&'a self, properties: impl Iterator<Item=&'a (CanvasPropertyId, CanvasProperty)>) -> Option<Self> {
+    fn from_properties<'a>(properties: impl Iterator<Item=&'a (CanvasPropertyId, CanvasProperty)>) -> Option<Self> {
         let mut fill_color_type  = None;
         let mut fill_color_value = None;
 
@@ -181,7 +181,7 @@ impl ToCanvasProperties for Stroke {
         vec![*PROP_STROKE_COLOR_TYPE, *PROP_STROKE_COLOR, *PROP_STROKE_LINECAP, *PROP_STROKE_LINEJOIN, *PROP_STROKE_WIDTH]
     }
 
-    fn from_properties<'a>(&'a self, properties: impl Iterator<Item=&'a (CanvasPropertyId, CanvasProperty)>) -> Option<Self> {
+    fn from_properties<'a>(properties: impl Iterator<Item=&'a (CanvasPropertyId, CanvasProperty)>) -> Option<Self> {
         let mut stroke_color_type  = None;
         let mut stroke_color_value = None;
         let mut cap                = None;

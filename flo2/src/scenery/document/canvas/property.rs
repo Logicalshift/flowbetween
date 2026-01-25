@@ -22,7 +22,7 @@ pub trait ToCanvasProperties : Sized {
     fn used_properties() -> Vec<CanvasPropertyId>;
 
     /// Creates this value if possible from the properties set in the iterator
-    fn from_properties<'a>(&'a self, properties: impl Iterator<Item=&'a (CanvasPropertyId, CanvasProperty)>) -> Option<Self>;
+    fn from_properties<'a>(properties: impl Iterator<Item=&'a (CanvasPropertyId, CanvasProperty)>) -> Option<Self>;
 }
 
 ///
