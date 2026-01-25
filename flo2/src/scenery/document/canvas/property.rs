@@ -11,6 +11,20 @@ use std::sync::*;
 pub struct CanvasPropertyId(usize);
 
 ///
+/// Trait implemented by types that can be converted to a property
+///
+pub trait ToCanvasProperties : Sized {
+    /// Returns the properties that can represent this value
+    fn to_properties(&self) -> Vec<(CanvasPropertyId, CanvasProperty)>;
+
+    /// The properties that need to be set on something for it to have this value associated with it
+    fn used_properties() -> Vec<CanvasPropertyId>;
+
+    /// Creates this value if possible from the properties set in the iterator
+    fn from_properties(&self, properties: impl Iterator<Item=(CanvasPropertyId, CanvasProperty)>) -> Option<Self>;
+}
+
+///
 /// Lazy version of the canvas property ID that can be initialised statically
 ///
 pub struct LazyCanvasPropertyId {
