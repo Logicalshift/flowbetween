@@ -63,6 +63,17 @@ fn four_floats(vals: &Vec<f64>) -> Option<(f64, f64, f64, f64)> {
 }
 
 ///
+/// Retrieves a float value from a property if it matches
+///
+#[inline]
+fn float(val: &CanvasProperty) -> Option<f64> {
+    match val {
+        CanvasProperty::Float(val)  => Some(*val),
+        _                           => None
+    }
+}
+
+///
 /// Tries to create a colour from canvas properties with the type and value in them
 ///
 pub fn color_from_properties(type_property: &CanvasProperty, value_property: &CanvasProperty) -> Option<Color> {
@@ -73,6 +84,58 @@ pub fn color_from_properties(type_property: &CanvasProperty, value_property: &Ca
         (Int(1), FloatList(vals)) => { let (h, s, l, a) = four_floats(vals)?; Some(Color::Hsluv(h as _, s as _, l as _, a as _)) }
 
         _ => None,
+    }
+}
+
+///
+/// Returns the property to use for a linecap value
+///
+pub fn linecap_property(linecap: &LineCap) -> CanvasProperty {
+    match linecap {
+        LineCap::Butt   => { CanvasProperty::Int(0) },
+        LineCap::Round  => { CanvasProperty::Int(1) },
+        LineCap::Square => { CanvasProperty::Int(2) },
+    }
+}
+
+///
+/// Returns the property value to use for a linejoin value
+///
+pub fn linejoin_property(linejoin: &LineJoin) -> CanvasProperty {
+    match linejoin {
+        LineJoin::Miter => { CanvasProperty::Int(0) },
+        LineJoin::Round => { CanvasProperty::Int(1) },
+        LineJoin::Bevel => { CanvasProperty::Int(2) },
+    }
+}
+
+///
+/// Creates a linecap from a canvas property
+///
+pub fn linecap_from_property(property: &CanvasProperty) -> Option<LineCap> {
+    use CanvasProperty::*;
+
+    match property {
+        Int(0) => Some(LineCap::Butt),
+        Int(1) => Some(LineCap::Round),
+        Int(2) => Some(LineCap::Square),
+
+        _ => None
+    }
+}
+
+///
+/// Creates a linejoin from a canvas property
+///
+pub fn linejoin_from_property(property: &CanvasProperty) -> Option<LineJoin> {
+    use CanvasProperty::*;
+
+    match property {
+        Int(0) => Some(LineJoin::Miter),
+        Int(1) => Some(LineJoin::Round),
+        Int(2) => Some(LineJoin::Bevel),
+
+        _ => None
     }
 }
 
@@ -98,5 +161,41 @@ impl ToCanvasProperties for FlatFill {
         }
 
         Some(FlatFill(color_from_properties(fill_color_type?, fill_color_value?)?))
+    }
+}
+
+impl ToCanvasProperties for Stroke {
+    fn to_properties(&self) -> Vec<(CanvasPropertyId, CanvasProperty)> {
+        let Stroke(width, cap, join, color) = &self;
+
+        vec![
+            (*PROP_STROKE_COLOR_TYPE, color_type_property(color)),
+            (*PROP_STROKE_COLOR,      color_value_property(color)),
+            (*PROP_STROKE_LINECAP,    linecap_property(cap)),
+            (*PROP_STROKE_LINEJOIN,   linejoin_property(join)),
+            (*PROP_STROKE_WIDTH,      CanvasProperty::Float(width.0)),
+        ]
+    }
+
+    fn used_properties() -> Vec<CanvasPropertyId> {
+        vec![*PROP_STROKE_COLOR_TYPE, *PROP_STROKE_COLOR, *PROP_STROKE_LINECAP, *PROP_STROKE_LINEJOIN, *PROP_STROKE_WIDTH]
+    }
+
+    fn from_properties<'a>(&'a self, properties: impl Iterator<Item=&'a (CanvasPropertyId, CanvasProperty)>) -> Option<Self> {
+        let mut stroke_color_type  = None;
+        let mut stroke_color_value = None;
+        let mut cap                = None;
+        let mut join               = None;
+        let mut width              = None;
+
+        for (prop_id, prop_val) in properties {
+            if *prop_id == *PROP_STROKE_COLOR_TYPE      { stroke_color_type = Some(prop_val); }
+            else if *prop_id == *PROP_STROKE_COLOR      { stroke_color_value = Some(prop_val); }
+            else if *prop_id == *PROP_STROKE_LINECAP    { cap = Some(prop_val); }
+            else if *prop_id == *PROP_STROKE_LINEJOIN   { join = Some(prop_val); }
+            else if *prop_id == *PROP_STROKE_WIDTH      { width = Some(prop_val); }
+        }
+
+        Some(Stroke(StrokeWidth(float(width?)?), linecap_from_property(cap?)?, linejoin_from_property(join?)?, color_from_properties(stroke_color_type?, stroke_color_value?)?))
     }
 }
