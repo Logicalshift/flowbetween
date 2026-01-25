@@ -1,13 +1,14 @@
 use ::serde::*;
 
 use std::collections::*;
+use std::fmt;
 use std::ops::{Deref};
 use std::sync::*;
 
 ///
 /// Identifier for a canvas property
 ///
-#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CanvasPropertyId(usize);
 
 ///
@@ -98,6 +99,12 @@ impl CanvasPropertyId {
     pub fn name(&self) -> &'static str {
         // Look up the name associated with this property when `new()` was called
         PROPERTY_NAMES.lock().unwrap()[self.0]
+    }
+}
+
+impl fmt::Debug for CanvasPropertyId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "CanvasPropertyId::new(\"{}\")", self.name())
     }
 }
 
