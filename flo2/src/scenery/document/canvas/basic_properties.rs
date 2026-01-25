@@ -15,19 +15,19 @@ static PROP_STROKE_WIDTH: LazyCanvasPropertyId      = LazyCanvasPropertyId::new(
 ///
 /// Property applied to a shape that should have a flat fill
 ///
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct FlatFill(pub Color);
 
 ///
 /// Width of a stroke
 ///
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct StrokeWidth(pub f64);
 
 ///
 /// Property applied to a shape that should be surrounded by a line stroke
 ///
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Stroke(pub StrokeWidth, pub LineCap, pub LineJoin, pub Color);
 
 ///
@@ -197,5 +197,52 @@ impl ToCanvasProperties for Stroke {
         }
 
         Some(Stroke(StrokeWidth(float(width?)?), linecap_from_property(cap?)?, linejoin_from_property(join?)?, color_from_properties(stroke_color_type?, stroke_color_value?)?))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    pub fn round_trip_flatfill_rgba() {
+        let original_fill   = FlatFill(Color::Rgba(0.1, 0.2, 0.3, 0.4));
+        let properties      = original_fill.to_properties();
+        let fill_from_props = FlatFill::from_properties(properties.iter());
+
+        assert!(Some(original_fill) == fill_from_props, "{:?} != {:?}", Some(original_fill), fill_from_props);
+    }
+
+    #[test]
+    pub fn round_trip_flatfill_hsluv() {
+        let original_fill   = FlatFill(Color::Hsluv(0.1, 0.2, 0.3, 0.4));
+        let properties      = original_fill.to_properties();
+        let fill_from_props = FlatFill::from_properties(properties.iter());
+
+        assert!(Some(original_fill) == fill_from_props, "{:?} != {:?}", Some(original_fill), fill_from_props);
+    }
+
+    #[test]
+    pub fn round_trip_stroke() {
+        let original_stroke     = Stroke(StrokeWidth(42.0), LineCap::Round, LineJoin::Bevel, Color::Rgba(0.4, 0.3, 0.2, 0.1));
+        let properties          = original_stroke.to_properties();
+        let stroke_from_props   = Stroke::from_properties(properties.iter());
+
+        assert!(Some(original_stroke) == stroke_from_props, "{:?} != {:?}", Some(original_stroke), stroke_from_props);
+    }
+
+    #[test]
+    pub fn stroke_from_properties() {
+        let original_stroke     = Stroke(StrokeWidth(42.0), LineCap::Round, LineJoin::Bevel, Color::Rgba(0.4, 0.3, 0.2, 0.1));
+        let properties          = vec![
+            (CanvasPropertyId::new("flowbetween::stroke_color_type"),   CanvasProperty::Int(0)), 
+            (CanvasPropertyId::new("flowbetween::stroke_color"),        CanvasProperty::FloatList(vec![0.4, 0.3, 0.2, 0.1])), 
+            (CanvasPropertyId::new("flowbetween::stroke_linecap"),      CanvasProperty::Int(1)), 
+            (CanvasPropertyId::new("flowbetween::stroke_linejoin"),     CanvasProperty::Int(2)), 
+            (CanvasPropertyId::new("flowbetween::stroke_width"),        CanvasProperty::Float(42.0)),
+        ];
+        let stroke_from_props   = Stroke::from_properties(properties.iter());
+
+        assert!(Some(original_stroke) == stroke_from_props, "{:?} != {:?}", Some(original_stroke), stroke_from_props);
     }
 }
