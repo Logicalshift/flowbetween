@@ -4,13 +4,13 @@ use flo_draw::canvas::*;
 
 use ::serde::*;
 
-static PROP_FILL_COLOR_TYPE: LazyCanvasPropertyId   = LazyCanvasPropertyId::new("flowbetween::fill_color_type");
-static PROP_FILL_COLOR: LazyCanvasPropertyId        = LazyCanvasPropertyId::new("flowbetween::fill_color");
-static PROP_STROKE_COLOR_TYPE: LazyCanvasPropertyId = LazyCanvasPropertyId::new("flowbetween::stroke_color_type");
-static PROP_STROKE_COLOR: LazyCanvasPropertyId      = LazyCanvasPropertyId::new("flowbetween::stroke_color");
-static PROP_STROKE_LINECAP: LazyCanvasPropertyId    = LazyCanvasPropertyId::new("flowbetween::stroke_linecap");
-static PROP_STROKE_LINEJOIN: LazyCanvasPropertyId   = LazyCanvasPropertyId::new("flowbetween::stroke_linejoin");
-static PROP_STROKE_WIDTH: LazyCanvasPropertyId      = LazyCanvasPropertyId::new("flowbetween::stroke_width");
+pub static PROP_FILL_COLOR_TYPE: LazyCanvasPropertyId   = LazyCanvasPropertyId::new("flowbetween::fill_color_type");
+pub static PROP_FILL_COLOR: LazyCanvasPropertyId        = LazyCanvasPropertyId::new("flowbetween::fill_color");
+pub static PROP_STROKE_COLOR_TYPE: LazyCanvasPropertyId = LazyCanvasPropertyId::new("flowbetween::stroke_color_type");
+pub static PROP_STROKE_COLOR: LazyCanvasPropertyId      = LazyCanvasPropertyId::new("flowbetween::stroke_color");
+pub static PROP_STROKE_LINECAP: LazyCanvasPropertyId    = LazyCanvasPropertyId::new("flowbetween::stroke_linecap");
+pub static PROP_STROKE_LINEJOIN: LazyCanvasPropertyId   = LazyCanvasPropertyId::new("flowbetween::stroke_linejoin");
+pub static PROP_STROKE_WIDTH: LazyCanvasPropertyId      = LazyCanvasPropertyId::new("flowbetween::stroke_width");
 
 ///
 /// Property applied to a shape that should have a flat fill
