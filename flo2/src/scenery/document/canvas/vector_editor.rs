@@ -7,7 +7,7 @@ use flo_scene::*;
 use ::serde::*;
 
 ///
-/// Basic editing actions for the canvas
+/// Basic editing actions for a vector canvas
 ///
 /// At a basic level, there are a few entities that can exist on a canvas:
 ///
@@ -22,7 +22,7 @@ use ::serde::*;
 /// Properties define how a shape is drawn. Brushes form a set of properties that can be applied as a group to a shape.
 ///
 #[derive(Clone, Serialize, Deserialize)]
-pub enum CanvasEdit {
+pub enum VectorCanvas {
     /// Adds a layer (setting the 'before_layer' to None will create the topmost layer)
     AddLayer { new_layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>, },
 
@@ -57,6 +57,6 @@ pub enum CanvasEdit {
     RemoveShapeProperties(CanvasShapeId, Vec<CanvasPropertyId>),
 }
 
-impl SceneMessage for CanvasEdit {
+impl SceneMessage for VectorCanvas {
 
 }
