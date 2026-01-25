@@ -55,8 +55,30 @@ pub enum VectorCanvas {
 
     /// Unsets properties for a shape if they're already set
     RemoveShapeProperties(CanvasShapeId, Vec<CanvasPropertyId>),
+
+    /// Subscribe for any updates to this canvas (eg, to implement a rendering program)
+    Subscribe(StreamTarget),
+}
+
+///
+/// Message sent to subprograms that subscribe to vector canvas updates
+///
+/// The vector canvas provides a stream of notifications of the IDs of the things that have changed but not the
+/// actual changes themselves
+///
+#[derive(Clone, Serialize, Deserialize)]
+pub enum VectorCanvasUpdate {
+    /// Indicates that the specified layers have been changed (had shapes added or removed, properties changes or have been added or deleted)
+    LayerChanged(Vec<CanvasLayerId>),
+
+    /// Indicates that the specified shape has been changed (added or deleted, properties or attached shapes changed)
+    ShapeChanged(Vec<CanvasShapeId>),
 }
 
 impl SceneMessage for VectorCanvas {
+
+}
+
+impl SceneMessage for VectorCanvasUpdate {
 
 }
