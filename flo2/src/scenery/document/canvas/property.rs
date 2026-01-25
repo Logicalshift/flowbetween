@@ -1,6 +1,7 @@
 use ::serde::*;
 
 use std::collections::*;
+use std::ops::{Deref};
 use std::sync::*;
 
 ///
@@ -8,6 +9,17 @@ use std::sync::*;
 ///
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CanvasPropertyId(usize);
+
+///
+/// Lazy version of the canvas property ID that can be initialised statically
+///
+pub struct LazyCanvasPropertyId {
+    /// Used to store the value once we've looked it up
+    val: OnceLock<CanvasPropertyId>,
+
+    /// The property name we need to look up
+    name: &'static str,
+}
 
 ///
 /// Value of a specific property set on a shape, layer or brush
@@ -41,7 +53,6 @@ impl CanvasPropertyId {
     /// Creates a property ID with a known name
     ///
     pub fn new(property_name: &str) -> Self {
-        let property_name       = property_name.into();
         let property_for_name   = PROPERTY_FOR_NAME.lock().unwrap();
 
         // Look up the value in the list of known property IDs
@@ -54,7 +65,7 @@ impl CanvasPropertyId {
         {
             // If one doesn't exist, create an &'static str from the property name and associate it with a new unique ID, then generate the property from that
             // Note we hold both locks here, so take care to always take them in the order 'property_for_name', 'property_names'
-            let property_name           = Box::leak(property_name.into_boxed_str());
+            let property_name           = Box::leak(property_name.to_string().into_boxed_str());
 
             let mut property_for_name   = property_for_name;
             let mut property_names      = PROPERTY_NAMES.lock().unwrap();
@@ -73,5 +84,44 @@ impl CanvasPropertyId {
     pub fn name(&self) -> &'static str {
         // Look up the name associated with this property when `new()` was called
         PROPERTY_NAMES.lock().unwrap()[self.0]
+    }
+}
+
+impl LazyCanvasPropertyId {
+    ///
+    /// Creates a lazy canvas property (ID value will be generated when needed)
+    ///
+    /// This can be used with static properties - eg:
+    ///
+    /// ```
+    /// #use flo2::scenery::document::canvas::*;
+    /// static MY_PROPERTY: LazyCanvasPropertyId = LazyCanvasPropertyId::new("flo2::my_property");
+    ///
+    /// let property_id = *MY_PROPERTY;
+    /// ```
+    ///
+    pub const fn new(name: &'static str) -> Self {
+        Self {
+            val:    OnceLock::new(),
+            name:   name,
+        }
+    }
+}
+
+impl Deref for LazyCanvasPropertyId {
+    type Target = CanvasPropertyId;
+
+    fn deref(&self) -> &Self::Target {
+        self.val.get_or_init(|| CanvasPropertyId::new(self.name))
+    }
+}
+
+impl From<&str> for CanvasPropertyId {
+    ///
+    /// Creates a property ID from a 
+    ///
+    #[inline]
+    fn from(val: &str) -> Self {
+        Self::new(val)
     }
 }
