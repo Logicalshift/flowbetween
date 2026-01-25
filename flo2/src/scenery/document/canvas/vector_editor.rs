@@ -1,3 +1,4 @@
+use super::brush::*;
 use super::layer::*;
 use super::property::*;
 use super::shape::*;
@@ -38,6 +39,12 @@ pub enum VectorCanvas {
     /// Removes a shape from the canvas
     RemoveShape(CanvasShapeId),
 
+    /// Adds a brush to this canvas
+    AddBrush(CanvasBrushId),
+
+    /// Removes a brush from this canvas
+    RemoveBrush(CanvasBrushId),
+
     /// Moves a shape so that it appears after another shape (None detaches the shape from the canvas)
     ReorderShape { shape_id: CanvasShapeId, before_shape: Option<CanvasShapeId>, },
 
@@ -48,13 +55,25 @@ pub enum VectorCanvas {
     SetLayerProperties(CanvasLayerId, Vec<(CanvasPropertyId, CanvasProperty)>),
 
     /// Adds properties to a shape
-    SetShapeProperties(CanvasShapeId, Vec<(CanvasPropertyId, CanvasProperty)>),
+    AddShapeProperties(CanvasShapeId, Vec<(CanvasPropertyId, CanvasProperty)>),
+
+    /// Adds properties to a brush
+    AddBrushProperties(CanvasBrushId, Vec<(CanvasPropertyId, CanvasProperty)>),
+
+    /// Adds brushes to a shape (the shape takes on the properties of the brush)
+    AddShapeBrushes(CanvasShapeId, Vec<CanvasBrushId>),
 
     /// Unsets properties for a layer if they're already set
     RemoveLayerProperties(CanvasLayerId, Vec<CanvasPropertyId>),
 
     /// Unsets properties for a shape if they're already set
     RemoveShapeProperties(CanvasShapeId, Vec<CanvasPropertyId>),
+
+    /// Unsets properties from a brush
+    RemoveBrushProperties(CanvasBrushId, Vec<CanvasPropertyId>),
+
+    /// Removes brushes from a shape
+    RemoveShapeBrushes(CanvasShapeId, Vec<CanvasBrushId>),
 
     /// Subscribe for any updates to this canvas (eg, to implement a rendering program)
     Subscribe(StreamTarget),
