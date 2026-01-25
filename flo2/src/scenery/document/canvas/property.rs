@@ -1,5 +1,8 @@
 use ::serde::*;
 
+use std::collections::*;
+use std::sync::*;
+
 ///
 /// Identifier for a canvas property
 ///
@@ -25,4 +28,50 @@ pub enum CanvasProperty {
 
     /// Property with a value that's a series of bytes
     ByteList(Vec<u8>),
+}
+
+/// Maps property IDs to their names
+static PROPERTY_NAMES: LazyLock<Mutex<Vec<&'static str>>> = LazyLock::new(|| Mutex::new(vec![]));
+
+/// Hashmap mapping property names to IDs
+static PROPERTY_FOR_NAME: LazyLock<Mutex<HashMap<&'static str, usize>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+
+impl CanvasPropertyId {
+    ///
+    /// Creates a property ID with a known name
+    ///
+    pub fn new(property_name: &str) -> Self {
+        let property_name       = property_name.into();
+        let property_for_name   = PROPERTY_FOR_NAME.lock().unwrap();
+
+        // Look up the value in the list of known property IDs
+        if let Some(existing_id) = property_for_name.get(&property_name)
+        {
+            // Use the existing value if one exists
+            Self(*existing_id)
+        }
+        else
+        {
+            // If one doesn't exist, create an &'static str from the property name and associate it with a new unique ID, then generate the property from that
+            // Note we hold both locks here, so take care to always take them in the order 'property_for_name', 'property_names'
+            let property_name           = Box::leak(property_name.into_boxed_str());
+
+            let mut property_for_name   = property_for_name;
+            let mut property_names      = PROPERTY_NAMES.lock().unwrap();
+            let new_id                  = property_names.len();
+
+            property_names.push(property_name);
+            property_for_name.insert(property_name, new_id);
+
+            Self(new_id)
+        }
+    }
+
+    ///
+    /// Returns the name of this property
+    ///
+    pub fn name(&self) -> &'static str {
+        // Look up the name associated with this property when `new()` was called
+        PROPERTY_NAMES.lock().unwrap()[self.0]
+    }
 }
