@@ -54,9 +54,9 @@ pub fn color_value_property(color: &Color) -> CanvasProperty {
 /// Used for things like colours where there are four floats in a property list value
 ///
 #[inline]
-fn four_floats(vals: &Vec<f64>) -> Option<(f64, f64, f64, f64)> {
+fn four_floats(vals: &Vec<f32>) -> Option<(f64, f64, f64, f64)> {
     if vals.len() == 4 {
-        Some((vals[0], vals[1], vals[2], vals[3]))
+        Some((vals[0] as _, vals[1] as _, vals[2] as _, vals[3] as _))
     } else {
         None
     }
@@ -68,7 +68,7 @@ fn four_floats(vals: &Vec<f64>) -> Option<(f64, f64, f64, f64)> {
 #[inline]
 fn float(val: &CanvasProperty) -> Option<f64> {
     match val {
-        CanvasProperty::Float(val)  => Some(*val),
+        CanvasProperty::Float(val)  => Some(*val as _),
         _                           => None
     }
 }
@@ -173,7 +173,7 @@ impl ToCanvasProperties for Stroke {
             (*PROP_STROKE_COLOR,      color_value_property(color)),
             (*PROP_STROKE_LINECAP,    linecap_property(cap)),
             (*PROP_STROKE_LINEJOIN,   linejoin_property(join)),
-            (*PROP_STROKE_WIDTH,      CanvasProperty::Float(width.0)),
+            (*PROP_STROKE_WIDTH,      CanvasProperty::Float(width.0 as _)),
         ]
     }
 

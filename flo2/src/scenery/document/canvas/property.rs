@@ -42,13 +42,13 @@ pub struct LazyCanvasPropertyId {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, PartialOrd)]
 pub enum CanvasProperty {
     /// Property with a single float value
-    Float(f64),
+    Float(f32),
 
     /// Property with a single integer value
     Int(i64),
 
     /// Property with a value that's a floating point number
-    FloatList(Vec<f64>),
+    FloatList(Vec<f32>),
 
     /// Property with a value that's a list of integers
     IntList(Vec<i64>),
