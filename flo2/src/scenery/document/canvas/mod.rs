@@ -5,6 +5,7 @@ mod shape;
 mod layer;
 mod property;
 mod queries;
+mod shape_type;
 mod vector_editor;
 
 pub use basic_properties::*;
@@ -14,4 +15,5 @@ pub use shape::*;
 pub use layer::*;
 pub use property::*;
 pub use queries::*;
+pub use shape_type::*;
 pub use vector_editor::*;
