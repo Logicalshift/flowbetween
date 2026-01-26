@@ -12,7 +12,7 @@ use std::sync::*;
 ///
 /// Identifier for a canvas property
 ///
-#[derive(Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CanvasPropertyId(usize);
 
 ///
@@ -123,6 +123,37 @@ impl fmt::Debug for CanvasPropertyId {
     }
 }
 
+impl From<&str> for CanvasPropertyId {
+    ///
+    /// Creates a property ID from a 
+    ///
+    #[inline]
+    fn from(val: &str) -> Self {
+        Self::new(val)
+    }
+}
+
+impl Serialize for CanvasPropertyId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // Serialize the property name instead of the internal ID
+        serializer.serialize_str(self.name())
+    }
+}
+
+impl<'de> Deserialize<'de> for CanvasPropertyId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // Deserialize the property name and convert it to an ID
+        let name = String::deserialize(deserializer)?;
+        Ok(CanvasPropertyId::new(&name))
+    }
+}
+
 impl LazyCanvasPropertyId {
     ///
     /// Creates a lazy canvas property (ID value will be generated when needed)
@@ -149,15 +180,5 @@ impl Deref for LazyCanvasPropertyId {
 
     fn deref(&self) -> &Self::Target {
         self.val.get_or_init(|| CanvasPropertyId::new(self.name))
-    }
-}
-
-impl From<&str> for CanvasPropertyId {
-    ///
-    /// Creates a property ID from a 
-    ///
-    #[inline]
-    fn from(val: &str) -> Self {
-        Self::new(val)
     }
 }
