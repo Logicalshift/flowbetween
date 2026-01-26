@@ -51,26 +51,14 @@ pub enum VectorCanvas {
     /// Sets a shape as the topmost shape attached to a parent
     SetShapeParent(CanvasShapeId, CanvasShapeParent),
 
-    /// Adds properties to a layer
-    SetLayerProperties(CanvasLayerId, Vec<(CanvasPropertyId, CanvasProperty)>),
-
-    /// Adds properties to a shape
-    AddShapeProperties(CanvasShapeId, Vec<(CanvasPropertyId, CanvasProperty)>),
-
-    /// Adds properties to a brush
-    AddBrushProperties(CanvasBrushId, Vec<(CanvasPropertyId, CanvasProperty)>),
+    /// Adds properties to an item in this canvas
+    SetProperty(CanvasPropertyTarget, Vec<(CanvasPropertyId, CanvasProperty)>),
 
     /// Adds brushes to a shape (the shape takes on the properties of the brush)
     AddShapeBrushes(CanvasShapeId, Vec<CanvasBrushId>),
 
-    /// Unsets properties for a layer if they're already set
-    RemoveLayerProperties(CanvasLayerId, Vec<CanvasPropertyId>),
-
-    /// Unsets properties for a shape if they're already set
-    RemoveShapeProperties(CanvasShapeId, Vec<CanvasPropertyId>),
-
-    /// Unsets properties from a brush
-    RemoveBrushProperties(CanvasBrushId, Vec<CanvasPropertyId>),
+    /// Unsets properties for an item if they're already set
+    RemoveProperty(CanvasPropertyTarget, Vec<CanvasPropertyId>),
 
     /// Removes brushes from a shape
     RemoveShapeBrushes(CanvasShapeId, Vec<CanvasBrushId>),

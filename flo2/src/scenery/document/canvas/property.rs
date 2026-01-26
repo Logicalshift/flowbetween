@@ -1,3 +1,7 @@
+use super::brush::*;
+use super::layer::*;
+use super::shape::*;
+
 use ::serde::*;
 
 use std::collections::*;
@@ -55,6 +59,17 @@ pub enum CanvasProperty {
 
     /// Property with a value that's a series of bytes
     ByteList(Vec<u8>),
+}
+
+///
+/// The possible targets that a property can be attached to
+///
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, PartialOrd, Hash)]
+pub enum CanvasPropertyTarget {
+    Document,
+    Layer(CanvasLayerId),
+    Brush(CanvasBrushId),
+    Shape(CanvasShapeId),
 }
 
 /// Maps property IDs to their names
