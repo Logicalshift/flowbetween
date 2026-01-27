@@ -3,6 +3,8 @@ use super::layer::*;
 use super::property::*;
 use super::shape::*;
 
+use crate::scenery::ui::*;
+
 use flo_scene::*;
 use serde::*;
 
@@ -25,6 +27,12 @@ pub enum VectorQuery {
 
     /// Queries the properties of the specified set of brushes
     Brushes(Vec<CanvasBrushId>),
+
+    /// Queries the shapes that can be found in a particular region (in a range of layers). If 'inclusive' is true then the shapes must lie entirely in the specified region.
+    ShapesInRegion { search_layers: Vec<CanvasLayerId>, region: (UiPoint, UiPoint), inclusive: bool },
+
+    /// Queries the shapes that can be found at a particular point
+    ShapesAtPoint { search_layers: Vec<CanvasLayerId>, point: UiPoint },
 }
 
 ///
