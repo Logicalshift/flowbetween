@@ -22,7 +22,7 @@ use ::serde::*;
 ///
 /// Properties define how a shape is drawn. Brushes form a set of properties that can be applied as a group to a shape.
 ///
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum VectorCanvas {
     /// Adds a layer (setting the 'before_layer' to None will create the topmost layer)
     AddLayer { new_layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>, },

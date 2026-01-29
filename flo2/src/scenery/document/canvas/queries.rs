@@ -11,7 +11,7 @@ use serde::*;
 ///
 /// Queries that can be made on a vector document
 ///
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum VectorQuery {
     /// Queries all of the entities in the document, sending a response as a `QueryResponse<VectorResponse>`
     WholeDocument,

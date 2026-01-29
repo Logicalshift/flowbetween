@@ -6,6 +6,7 @@ mod layer;
 mod property;
 mod queries;
 mod shape_type;
+mod sqlite_canvas;
 mod vector_editor;
 
 pub use basic_properties::*;
@@ -16,4 +17,5 @@ pub use layer::*;
 pub use property::*;
 pub use queries::*;
 pub use shape_type::*;
+pub use sqlite_canvas::*;
 pub use vector_editor::*;
