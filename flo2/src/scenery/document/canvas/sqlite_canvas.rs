@@ -1,3 +1,4 @@
+use super::layer::*;
 use super::queries::*;
 use super::vector_editor::*;
 
@@ -26,14 +27,15 @@ pub enum SqliteCanvasRequest {
 /// Runs a program that edits the document stored in the Sqlite connection
 ///
 pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, context: SceneContext, canvas: SqliteCanvas) {
-    let mut input = input;
+    let mut canvas  = canvas;
+    let mut input   = input;
     while let Some(msg) = input.next().await {
         use SqliteCanvasRequest::*;
         use VectorCanvas::*;
         use VectorQuery::*;
 
         match msg {
-            Edit(AddLayer { new_layer_id, before_layer, })          => { todo!() }
+            Edit(AddLayer { new_layer_id, before_layer, })          => { canvas.add_layer(new_layer_id, before_layer); }
             Edit(RemoveLayer(layer_id))                             => { todo!() }
             Edit(ReorderLayer { layer_id, before_shape, })          => { todo!() }
             Edit(AddShape(shape_id, shape_defn))                    => { todo!() }
@@ -75,9 +77,8 @@ impl SceneMessage for SqliteCanvasRequest {
 ///
 /// Storage for the sqlite canvas
 ///
-#[derive(Clone)]
 pub struct SqliteCanvas {
-    sqlite: Arc<Connection>,
+    sqlite: Connection,
 }
 
 impl SqliteCanvas {
@@ -86,7 +87,7 @@ impl SqliteCanvas {
     ///
     pub fn with_connection(sqlite: Connection) -> Self {
         Self { 
-            sqlite: Arc::new(sqlite)
+            sqlite
         }
     }
 
@@ -109,6 +110,32 @@ impl SqliteCanvas {
 
         Ok(canvas)
     }
+
+    ///
+    /// Adds a new layer to the canvas
+    ///
+    pub fn add_layer(&mut self, new_layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>) -> Result<(), ()> {
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        let new_layer_idx = if let Some(before_layer) = before_layer {
+            // Add between the existing layers
+            let before_idx = transaction.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [before_layer.to_string()], |row| row.get(0)).map_err(|_| ())?;
+            transaction.execute("UPDATE Layers SET Idx = Idx + 1 WHERE Idx > ?", [before_idx]).map_err(|_| ())?;
+
+            before_idx
+        } else {
+            // Add the layer at the end
+            let max_idx = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(Idx) FROM Layers", [], |row| row.get(0)).map_err(|_| ())?;
+            max_idx.map(|idx| idx + 1).unwrap_or(0)
+        };
+
+        // Add the layer itself
+        transaction.execute("INSERT INTO Layers(LayerGuid, Idx) VALUES (?, ?)", params![new_layer_id.to_string(), new_layer_idx]).map_err(|_| ())?;
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -125,5 +152,28 @@ mod test {
     #[test]
     fn initialise_canvas() {
         SqliteCanvas::new_in_memory().unwrap();
+    }
+
+    #[test]
+    fn add_layer() {
+        let mut canvas = SqliteCanvas::new_in_memory().unwrap();
+        canvas.add_layer(CanvasLayerId::new(), None).unwrap();
+    }
+
+    #[test]
+    fn add_two_layers() {
+        let mut canvas = SqliteCanvas::new_in_memory().unwrap();
+        canvas.add_layer(CanvasLayerId::new(), None).unwrap();
+        canvas.add_layer(CanvasLayerId::new(), None).unwrap();
+    }
+
+    #[test]
+    fn add_layer_before() {
+        let mut canvas      = SqliteCanvas::new_in_memory().unwrap();
+        let first_layer     = CanvasLayerId::new();
+        let second_layer    = CanvasLayerId::new();
+
+        canvas.add_layer(first_layer, None).unwrap();
+        canvas.add_layer(second_layer, Some(first_layer)).unwrap();
     }
 }
