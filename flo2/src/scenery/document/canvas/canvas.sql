@@ -48,7 +48,7 @@ CREATE TABLE DocumentBlobProperties (
 CREATE TABLE Layers (
     LayerId     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     LayerGuid   TEXT    NOT NULL,
-    Idx         INTEGER NOT NULL,
+    Idx         INTEGER NOT NULL
 );
 
 /**
