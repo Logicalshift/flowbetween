@@ -95,26 +95,45 @@ CREATE TABLE LayerBlobProperties (
  *  4 - polygon
  **/
 CREATE TABLE Shapes (
-    ShapeId         INTEGER NOT NULL,
-    ShapeGuid       TEXT    NOT NULL,
-    LayerId         INTEGER NOT NULL,
-    ShapeType       INTEGER NOT NULL,
-    PreviousShapeId INTEGER NOT NULL,
-    ParentShapeId   INTEGER,
+    ShapeId     INTEGER NOT NULL,
+    ShapeGuid   TEXT    NOT NULL,
+    ShapeType   INTEGER NOT NULL,
 
     PRIMARY KEY (ShapeId)
+) WITHOUT ROWID;
+
+/**
+ * For shapes that are on a layer, this associates them with that layer
+ **/
+CREATE TABLE ShapeLayers (
+    ShapeId     INTEGER NOT NULL,
+    LayerId     INTEGER NOT NULL,
+    OrderIdx    INTEGER NOT NULL,
+
+    PRIMARY KEY (LayerId, OrderIdx, ShapeId)
+) WITHOUT ROWID;
+
+/**
+ * For shapes that are part of a group, this associates them with their parent shape
+ **/
+CREATE TABLE ShapeGroups (
+    ShapeId         INTEGER NOT NULL,
+    ParentShapeId   INTEGER NOT NULL,
+    OrderIdx        INTEGER NOT NULL,
+
+    PRIMARY KEY (ShapeId, OrderIdx, ParentShapeId)
 );
 
 /**
  * The points that make up each shape
  **/
 CREATE TABLE ShapePoints (
-    ShapeId INTEGER NOT NULL,
-    PointId INTEGER NOT NULL,
-    X       FLOAT   NOT NULL,
-    Y       FLOAT   NOT NULL,
+    ShapeId     INTEGER NOT NULL,
+    PointIdx    INTEGER NOT NULL,
+    X           FLOAT   NOT NULL,
+    Y           FLOAT   NOT NULL,
 
-    PRIMARY KEY (ShapeId, PointId)
+    PRIMARY KEY (ShapeId, PointIdx)
 );
 
 /**
