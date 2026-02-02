@@ -120,7 +120,7 @@ impl SqliteCanvas {
         let new_layer_idx = if let Some(before_layer) = before_layer {
             // Add between the existing layers
             let before_idx = transaction.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [before_layer.to_string()], |row| row.get(0)).map_err(|_| ())?;
-            transaction.execute("UPDATE Layers SET Idx = Idx + 1 WHERE Idx > ?", [before_idx]).map_err(|_| ())?;
+            transaction.execute("UPDATE Layers SET Idx = Idx + 1 WHERE Idx >= ?", [before_idx]).map_err(|_| ())?;
 
             before_idx
         } else {
