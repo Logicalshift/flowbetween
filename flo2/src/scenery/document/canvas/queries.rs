@@ -14,25 +14,25 @@ use serde::*;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum VectorQuery {
     /// Queries all of the entities in the document, sending a response as a `QueryResponse<VectorResponse>`
-    WholeDocument,
+    WholeDocument(StreamTarget),
 
     /// Queries the document and layer properties without returning any shape data
-    DocumentOutline,
+    DocumentOutline(StreamTarget),
 
     /// Queries the entities associated with the specified layer
-    Layers(Vec<CanvasLayerId>),
+    Layers(StreamTarget, Vec<CanvasLayerId>),
 
     /// Queries specific shapes
-    Shapes(Vec<CanvasShapeId>),
+    Shapes(StreamTarget, Vec<CanvasShapeId>),
 
     /// Queries the properties of the specified set of brushes
-    Brushes(Vec<CanvasBrushId>),
+    Brushes(StreamTarget, Vec<CanvasBrushId>),
 
     /// Queries the shapes that can be found in a particular region (in a range of layers). If 'inclusive' is true then the shapes must lie entirely in the specified region.
-    ShapesInRegion { search_layers: Vec<CanvasLayerId>, region: (UiPoint, UiPoint), inclusive: bool },
+    ShapesInRegion { target: StreamTarget, search_layers: Vec<CanvasLayerId>, region: (UiPoint, UiPoint), inclusive: bool },
 
     /// Queries the shapes that can be found at a particular point
-    ShapesAtPoint { search_layers: Vec<CanvasLayerId>, point: UiPoint },
+    ShapesAtPoint { target: StreamTarget, search_layers: Vec<CanvasLayerId>, point: UiPoint },
 }
 
 ///

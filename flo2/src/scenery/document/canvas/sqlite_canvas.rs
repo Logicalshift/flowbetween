@@ -50,13 +50,13 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
             Edit(RemoveShapeBrushes(shape_id, brush_list))          => { todo!() }
             Edit(Subscribe(edit_target))                            => { todo!() }
 
-            Query(WholeDocument)                                        => { todo!() },
-            Query(DocumentOutline)                                      => { todo!() },
-            Query(Layers(layer_list))                                   => { todo!() },
-            Query(Shapes(shape_list))                                   => { todo!() },
-            Query(Brushes(brush_list))                                  => { todo!() },
-            Query(ShapesInRegion { search_layers, region, inclusive, }) => { todo!() },
-            Query(ShapesAtPoint { search_layers, point, })              => { todo!() },
+            Query(WholeDocument(target))                                        => { todo!() },
+            Query(DocumentOutline(target))                                      => { todo!() },
+            Query(Layers(target, layer_list))                                   => { todo!() },
+            Query(Shapes(target, shape_list))                                   => { todo!() },
+            Query(Brushes(target, brush_list))                                  => { todo!() },
+            Query(ShapesInRegion { target, search_layers, region, inclusive, }) => { todo!() },
+            Query(ShapesAtPoint { target, search_layers, point, })              => { todo!() },
         }
     }
 }
