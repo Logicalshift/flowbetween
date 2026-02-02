@@ -136,6 +136,32 @@ impl SqliteCanvas {
 
         Ok(())
     }
+
+    ///
+    /// Queries the outline of the document
+    ///
+    pub fn query_document_outline(&mut self, outline: &mut Vec<VectorResponse>) -> Result<(), ()> {
+        // Add the document properties to start
+        outline.push(VectorResponse::Document(vec![]));
+
+        // Indicate the layers
+        let mut layer_order     = vec![];
+
+        // Layers are fetched in order
+        let mut select_layers   = self.sqlite.prepare_cached("SELECT LayerGuid FROM Layers ORDER BY Idx ASC").map_err(|_| ())?;
+        let layers              = select_layers.query_map(params![], |row| Ok(row.get::<_, String>(0)?)).map_err(|_| ())?;
+
+        for layer_row in layers {
+            let layer_guid = layer_row.map_err(|_| ())?;
+            let layer_guid = CanvasLayerId::from_string(&layer_guid);
+
+            layer_order.push(layer_guid);
+            outline.push(VectorResponse::Layer(layer_guid, vec![]));
+        }
+
+        outline.push(VectorResponse::LayerOrder(layer_order));
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -162,9 +188,21 @@ mod test {
 
     #[test]
     fn add_two_layers() {
-        let mut canvas = SqliteCanvas::new_in_memory().unwrap();
-        canvas.add_layer(CanvasLayerId::new(), None).unwrap();
-        canvas.add_layer(CanvasLayerId::new(), None).unwrap();
+        let mut canvas      = SqliteCanvas::new_in_memory().unwrap();
+        let first_layer     = CanvasLayerId::new();
+        let second_layer    = CanvasLayerId::new();
+
+        canvas.add_layer(first_layer, None).unwrap();
+        canvas.add_layer(second_layer, None).unwrap();
+
+        let mut layers = vec![];
+        canvas.query_document_outline(&mut layers).unwrap();
+        assert!(layers == vec![
+            VectorResponse::Document(vec![]),
+            VectorResponse::Layer(first_layer, vec![]), 
+            VectorResponse::Layer(second_layer, vec![]),
+            VectorResponse::LayerOrder(vec![first_layer, second_layer]), 
+        ], "{:?} ({:?} {:?})", layers, first_layer, second_layer);
     }
 
     #[test]
@@ -175,5 +213,14 @@ mod test {
 
         canvas.add_layer(first_layer, None).unwrap();
         canvas.add_layer(second_layer, Some(first_layer)).unwrap();
+
+        let mut layers = vec![];
+        canvas.query_document_outline(&mut layers).unwrap();
+        assert!(layers == vec![
+            VectorResponse::Document(vec![]),
+            VectorResponse::Layer(second_layer, vec![]), 
+            VectorResponse::Layer(first_layer, vec![]),
+            VectorResponse::LayerOrder(vec![second_layer, first_layer]), 
+        ], "{:?} ({:?} {:?})", layers, first_layer, second_layer);
     }
 }

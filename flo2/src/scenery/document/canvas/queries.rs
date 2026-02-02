@@ -11,7 +11,7 @@ use serde::*;
 ///
 /// Queries that can be made on a vector document
 ///
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum VectorQuery {
     /// Queries all of the entities in the document, sending a response as a `QueryResponse<VectorResponse>`
     WholeDocument(StreamTarget),
@@ -38,7 +38,7 @@ pub enum VectorQuery {
 ///
 /// The responses from a vector query 
 ///
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum VectorResponse {
     /// Specifies the properties for the document
     Document(Vec<(CanvasPropertyId, CanvasProperty)>),
