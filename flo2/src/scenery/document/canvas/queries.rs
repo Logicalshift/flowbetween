@@ -74,22 +74,20 @@ impl SceneMessage for VectorResponse {
 
 }
 
-///
-/// Query target for the document and shape data for a canvas
-///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct QueryDocumentOutline(pub StreamTarget);
-
-impl SceneMessage for QueryDocumentOutline {
-    fn initialise(init_context: &impl SceneInitialisationContext) {
-        init_context.connect_programs(FilterHandle::for_filter(|msgs| msgs.map(|msg: QueryDocumentOutline| VectorQuery::DocumentOutline(msg.0))), (), StreamId::with_message_type::<QueryDocumentOutline>()).unwrap();
-    }
-}
-
-impl QueryRequest for QueryDocumentOutline {
+impl QueryRequest for VectorQuery {
     type ResponseData = VectorResponse;
 
     fn with_new_target(self, new_target: StreamTarget) -> Self {
-        QueryDocumentOutline(new_target)
+        use VectorQuery::*;
+
+        match self {
+            WholeDocument(_target)                                              => WholeDocument(new_target),
+            DocumentOutline(_target)                                            => DocumentOutline(new_target),
+            Layers(_target, layers)                                             => Layers(new_target, layers),
+            Shapes(_target, shape_id)                                           => Shapes(new_target, shape_id),
+            Brushes(_target, brush_id)                                          => Brushes(new_target, brush_id),
+            ShapesInRegion { target: _, search_layers, region, inclusive }      => ShapesInRegion { target: new_target, search_layers, region, inclusive },
+            ShapesAtPoint { target: _, search_layers, point }                   => ShapesAtPoint { target: new_target, search_layers, point },
+        }
     }
 }
