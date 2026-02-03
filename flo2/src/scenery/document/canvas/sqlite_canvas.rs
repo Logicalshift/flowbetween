@@ -36,8 +36,8 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
         use VectorQuery::*;
 
         match msg {
-            Edit(AddLayer { new_layer_id, before_layer, })          => { canvas.add_layer(new_layer_id, before_layer); }
-            Edit(RemoveLayer(layer_id))                             => { todo!() }
+            Edit(AddLayer { new_layer_id, before_layer, })          => { canvas.add_layer(new_layer_id, before_layer).ok(); }
+            Edit(RemoveLayer(layer_id))                             => { canvas.remove_layer(layer_id).ok(); }
             Edit(ReorderLayer { layer_id, before_shape, })          => { todo!() }
             Edit(AddShape(shape_id, shape_defn))                    => { todo!() }
             Edit(RemoveShape(shape_id))                             => { todo!() }
@@ -49,6 +49,7 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
             Edit(AddShapeBrushes(shape_id, brush_id))               => { todo!() }
             Edit(RemoveProperty(property_target, property_list))    => { todo!() }
             Edit(RemoveShapeBrushes(shape_id, brush_list))          => { todo!() }
+
             Edit(Subscribe(edit_target))                            => { todo!() }
 
             Query(WholeDocument(target))                                        => { todo!() },
@@ -142,6 +143,22 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Queries the database for the index of the specified layer
+    ///
+    #[inline]
+    pub fn index_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, ()> {
+        self.sqlite.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
+    }
+
+    ///
+    /// Queries the database for the index of the specified layer
+    ///
+    #[inline]
+    pub fn index_for_layer_in_transaction(transaction: &Transaction<'_>, layer_id: CanvasLayerId) -> Result<i64, ()> {
+        transaction.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
+    }
+
+    ///
     /// Adds a new layer to the canvas
     ///
     pub fn add_layer(&mut self, new_layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>) -> Result<(), ()> {
@@ -149,7 +166,7 @@ impl SqliteCanvas {
 
         let new_layer_idx = if let Some(before_layer) = before_layer {
             // Add between the existing layers
-            let before_idx = transaction.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [before_layer.to_string()], |row| row.get(0)).map_err(|_| ())?;
+            let before_idx = Self::index_for_layer_in_transaction(&transaction, before_layer)?;
             transaction.execute("UPDATE Layers SET Idx = Idx + 1 WHERE Idx >= ?", [before_idx]).map_err(|_| ())?;
 
             before_idx
@@ -161,6 +178,21 @@ impl SqliteCanvas {
 
         // Add the layer itself
         transaction.execute("INSERT INTO Layers(LayerGuid, Idx) VALUES (?, ?)", params![new_layer_id.to_string(), new_layer_idx]).map_err(|_| ())?;
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
+    /// Removes an existing layer
+    ///
+    pub fn remove_layer(&mut self, old_layer_id: CanvasLayerId) -> Result<(), ()> {
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        let old_layer_idx = Self::index_for_layer_in_transaction(&transaction, old_layer_id)?;
+        transaction.execute("DELETE FROM Layers WHERE Idx = ?", params![old_layer_idx]).map_err(|_| ())?;
+        transaction.execute("UPDATE Layers SET Idx = Idx - 1 WHERE Idx >= ?", params![old_layer_idx]).map_err(|_| ())?;
 
         transaction.commit().map_err(|_| ())?;
 
