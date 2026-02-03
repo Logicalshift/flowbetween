@@ -3,6 +3,7 @@ use super::queries::*;
 use super::vector_editor::*;
 
 use flo_scene::*;
+use flo_scene::programs::*;
 
 use futures::prelude::*;
 use rusqlite::*;
@@ -51,7 +52,7 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
             Edit(Subscribe(edit_target))                            => { todo!() }
 
             Query(WholeDocument(target))                                        => { todo!() },
-            Query(DocumentOutline(target))                                      => { todo!() },
+            Query(DocumentOutline(target))                                      => { canvas.send_vec_query_response(target, &context, |canvas, response| canvas.query_document_outline(response)).await.ok(); },
             Query(Layers(target, layer_list))                                   => { todo!() },
             Query(Shapes(target, shape_list))                                   => { todo!() },
             Query(Brushes(target, brush_list))                                  => { todo!() },
@@ -109,6 +110,23 @@ impl SqliteCanvas {
         canvas.initialise()?;
 
         Ok(canvas)
+    }
+
+    ///
+    /// Sends a query response stored in a Vec<()>
+    ///
+    pub async fn send_vec_query_response(&mut self, target: StreamTarget, context: &SceneContext, generate_response: impl FnOnce(&mut SqliteCanvas, &mut Vec<VectorResponse>) -> Result<(), ()>) -> Result<(), ()> {
+        // Connect to the query response target
+        let mut target      = context.send(target).map_err(|_| ())?;
+        let mut response    = vec![];
+
+        // Generate the values to send
+        generate_response(self, &mut response)?;
+
+        // Send the query response message
+        target.send(QueryResponse::with_iterator(response)).await.map_err(|_| ())?;
+
+        Ok(())
     }
 
     ///
