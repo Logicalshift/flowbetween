@@ -6,6 +6,8 @@ use super::shape::*;
 use crate::scenery::ui::*;
 
 use flo_scene::*;
+use flo_scene::programs::*;
+use futures::prelude::*;
 use serde::*;
 
 ///
@@ -70,4 +72,24 @@ impl SceneMessage for VectorQuery {
 
 impl SceneMessage for VectorResponse {
 
+}
+
+///
+/// Query target for the document and shape data for a canvas
+///
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QueryDocumentOutline(pub StreamTarget);
+
+impl SceneMessage for QueryDocumentOutline {
+    fn initialise(init_context: &impl SceneInitialisationContext) {
+        init_context.connect_programs(FilterHandle::for_filter(|msgs| msgs.map(|msg: QueryDocumentOutline| VectorQuery::DocumentOutline(msg.0))), (), StreamId::with_message_type::<QueryDocumentOutline>()).unwrap();
+    }
+}
+
+impl QueryRequest for QueryDocumentOutline {
+    type ResponseData = VectorResponse;
+
+    fn with_new_target(self, new_target: StreamTarget) -> Self {
+        QueryDocumentOutline(new_target)
+    }
 }
