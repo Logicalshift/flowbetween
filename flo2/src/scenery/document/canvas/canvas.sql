@@ -170,6 +170,14 @@ CREATE TABLE ShapeBlobProperties (
 );
 
 /**
+  * The brushes that are defined for this document
+  **/
+ CREATE TABLE Brushes (
+     BrushId     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+     BrushGuid   TEXT    NOT NULL
+ );
+
+/**
  * Integer properties attached to a shape
  **/
 CREATE TABLE BrushIntProperties (
