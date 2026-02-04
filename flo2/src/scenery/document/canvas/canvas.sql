@@ -177,7 +177,7 @@ CREATE TABLE BrushIntProperties (
     PropertyId  INTEGER NOT NULL,
     IntValue    INTEGER NOT NULL,
 
-    PRIMARY KEY (ShapeId, PropertyId)
+    PRIMARY KEY (BrushId, PropertyId)
 );
 
 /**
@@ -188,7 +188,7 @@ CREATE TABLE BrushFloatProperties (
     PropertyId  INTEGER NOT NULL,
     FloatValue  FLOAT   NOT NULL,
 
-    PRIMARY KEY (ShapeId, PropertyId)
+    PRIMARY KEY (BrushId, PropertyId)
 );
 
 /**
@@ -199,5 +199,5 @@ CREATE TABLE BrushBlobProperties (
     PropertyId  INTEGER NOT NULL,
     BlobValue   BLOB    NOT NULL,
 
-    PRIMARY KEY (ShapeId, PropertyId)
+    PRIMARY KEY (BrushId, PropertyId)
 );
