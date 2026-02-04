@@ -21,7 +21,7 @@ impl CanvasLayerId {
     /// Creates a layer ID from a string
     ///
     pub fn from_string(string_guid: &str) -> Self {
-        CanvasLayerId(Uuid::from_str(string_guid).unwrap())
+        Self(Uuid::from_str(string_guid).unwrap())
     }
 
     ///
