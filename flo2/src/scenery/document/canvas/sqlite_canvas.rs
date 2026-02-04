@@ -236,6 +236,49 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Sets any float properties found in the specified properties array. Property values are appended to the supplied default parameters
+    ///
+    fn set_float_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
+        // Only set the float properties that are requested
+        let float_properties = properties.iter()
+            .filter_map::<(_, &dyn ToSql), _>(|(property_idx, property)| {
+                if let CanvasProperty::Float(val) = property {
+                    Some((*property_idx, val))
+                } else {
+                    None
+                }
+            });
+
+        Self::set_sql_properties(float_properties, command, other_params)?;
+
+        Ok(())
+    }
+
+    ///
+    /// Sets any blob properties found in the specified properties array. Property values are appended to the supplied default parameters
+    ///
+    fn set_blob_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
+        // Only set the blob properties that are requested
+        let blob_properties = properties.iter()
+            .filter_map(|(property_idx, property)| {
+                match property {
+                    CanvasProperty::Int(_)      | 
+                    CanvasProperty::Float(_)    => None,
+                    property                    => Some(postcard::to_allocvec(property).map(|val| (*property_idx, val)).map_err(|_| ()))
+                }
+            })
+            .collect::<Result<Vec<_>, ()>>()?;
+
+        // Need references to the blobs we've built up
+        let blob_properties = blob_properties.iter()
+            .map::<(_, &dyn ToSql), _>(|(idx, prop)| (*idx, prop));
+
+        Self::set_sql_properties(blob_properties, command, other_params)?;
+
+        Ok(())
+    }
+
+    ///
     /// Updates the properties for a document
     ///
     pub fn set_document_properties(&mut self, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
@@ -245,15 +288,22 @@ impl SqliteCanvas {
             .collect::<Result<Vec<_>, _>>()?;
 
         // Write the properties themselves
-        let sqlite              = &mut self.sqlite;
-        let property_id_cache   = &mut self.property_id_cache;
-
         let transaction = self.sqlite.transaction().map_err(|_| ())?;
 
         // Run commands to set each type of property value
         {
             let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentIntProperties (PropertyId, IntValue) VALUES (?, ?)").map_err(|_| ())?;
             Self::set_int_properties(&properties, &mut int_properties_cmd, vec![])?;
+        }
+
+        {
+            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentFloatProperties (PropertyId, FloatValue) VALUES (?, ?)").map_err(|_| ())?;
+            Self::set_float_properties(&properties, &mut float_properties_cmd, vec![])?;
+        }
+
+        {
+            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentBlobProperties (PropertyId, BlobValue) VALUES (?, ?)").map_err(|_| ())?;
+            Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![])?;
         }
 
         transaction.commit().map_err(|_| ())?;
@@ -273,9 +323,6 @@ impl SqliteCanvas {
             .collect::<Result<Vec<_>, _>>()?;
 
         // Write the properties themselves
-        let sqlite              = &mut self.sqlite;
-        let property_id_cache   = &mut self.property_id_cache;
-
         let transaction = self.sqlite.transaction().map_err(|_| ())?;
 
         // Run commands to set each type of property value
