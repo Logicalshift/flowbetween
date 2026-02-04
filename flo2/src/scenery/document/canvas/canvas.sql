@@ -27,7 +27,7 @@ CREATE TABLE DocumentIntProperties (
  **/
 CREATE TABLE DocumentFloatProperties (
     PropertyId  INTEGER NOT NULL,
-    FloatValue  FLOAT NOT NULL,
+    FloatValue  FLOAT   NOT NULL,
 
     PRIMARY KEY (PropertyId)
 );
@@ -37,7 +37,7 @@ CREATE TABLE DocumentFloatProperties (
  **/
 CREATE TABLE DocumentBlobProperties (
     PropertyId  INTEGER NOT NULL,
-    BlobValue   BLOB NOT NULL,
+    BlobValue   BLOB    NOT NULL,
 
     PRIMARY KEY (PropertyId)
 );
@@ -46,9 +46,9 @@ CREATE TABLE DocumentBlobProperties (
  * The layers that make up this document
  **/
 CREATE TABLE Layers (
-    LayerId     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    LayerGuid   TEXT    NOT NULL,
-    Idx         INTEGER NOT NULL
+    LayerId     INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
+    LayerGuid   CHAR(36)    NOT NULL,
+    Idx         INTEGER     NOT NULL
 );
 
 /**
@@ -95,9 +95,9 @@ CREATE TABLE LayerBlobProperties (
  *  4 - polygon
  **/
 CREATE TABLE Shapes (
-    ShapeId     INTEGER NOT NULL,
-    ShapeGuid   TEXT    NOT NULL,
-    ShapeType   INTEGER NOT NULL,
+    ShapeId     INTEGER     NOT NULL,
+    ShapeGuid   CHAR(36)    NOT NULL,
+    ShapeType   INTEGER     NOT NULL,
 
     PRIMARY KEY (ShapeId)
 ) WITHOUT ROWID;
@@ -173,8 +173,8 @@ CREATE TABLE ShapeBlobProperties (
   * The brushes that are defined for this document
   **/
  CREATE TABLE Brushes (
-     BrushId     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-     BrushGuid   TEXT    NOT NULL
+     BrushId     INTEGER    NOT NULL PRIMARY KEY AUTOINCREMENT,
+     BrushGuid   CHAR(36)   NOT NULL
  );
 
 /**
