@@ -168,3 +168,36 @@ CREATE TABLE ShapeBlobProperties (
 
     PRIMARY KEY (ShapeId, PropertyId)
 );
+
+/**
+ * Integer properties attached to a shape
+ **/
+CREATE TABLE BrushIntProperties (
+    BrushId     INTEGER NOT NULL,
+    PropertyId  INTEGER NOT NULL,
+    IntValue    INTEGER NOT NULL,
+
+    PRIMARY KEY (ShapeId, PropertyId)
+);
+
+/**
+ * Float properties attached to a shape
+ **/
+CREATE TABLE BrushFloatProperties (
+    BrushId     INTEGER NOT NULL,
+    PropertyId  INTEGER NOT NULL,
+    FloatValue  FLOAT   NOT NULL,
+
+    PRIMARY KEY (ShapeId, PropertyId)
+);
+
+/**
+ * Blob properties attached to a shape (postcard serialized `CanvasProperty` values)
+ **/
+CREATE TABLE BrushBlobProperties (
+    BrushId     INTEGER NOT NULL,
+    PropertyId  INTEGER NOT NULL,
+    BlobValue   BLOB    NOT NULL,
+
+    PRIMARY KEY (ShapeId, PropertyId)
+);
