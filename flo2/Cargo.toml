@@ -19,6 +19,7 @@ flo_scene_guest     = "0.3"
 
 futures             = "0.3"
 serde               = { version = "1.0", features = [ "derive" ] }
+postcard            = "1.1"
 uuid                = { version = "1.0", features = [ "v4", "serde" ] }
 egui                = { version = "0.31", default-features = false, features = [ "rayon", "default_fonts" ] }
 rapier2d            = "0.26"
