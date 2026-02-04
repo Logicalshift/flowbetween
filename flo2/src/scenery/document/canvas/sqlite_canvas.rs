@@ -241,7 +241,7 @@ impl SqliteCanvas {
     /// Updates the properties for a layer
     ///
     pub fn set_layer_properties(&mut self, layer_id: CanvasLayerId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
-        let layer_idx = self.index_for_layer(layer_id)?;
+        let layer_idx = self.order_for_layer(layer_id)?;
 
         // Map to property IDs
         let properties = properties.into_iter()
@@ -297,10 +297,10 @@ impl SqliteCanvas {
     }
 
     ///
-    /// Queries the database for the index of the specified layer
+    /// Queries the database for the ordering index of the specified layer
     ///
     #[inline]
-    pub fn index_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, ()> {
+    pub fn order_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, ()> {
         self.sqlite.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
     }
 
@@ -308,7 +308,7 @@ impl SqliteCanvas {
     /// Queries the database for the index of the specified layer
     ///
     #[inline]
-    pub fn index_for_layer_in_transaction(transaction: &Transaction<'_>, layer_id: CanvasLayerId) -> Result<i64, ()> {
+    pub fn order_for_layer_in_transaction(transaction: &Transaction<'_>, layer_id: CanvasLayerId) -> Result<i64, ()> {
         transaction.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
     }
 
@@ -320,7 +320,7 @@ impl SqliteCanvas {
 
         let new_layer_idx = if let Some(before_layer) = before_layer {
             // Add between the existing layers
-            let before_idx = Self::index_for_layer_in_transaction(&transaction, before_layer)?;
+            let before_idx = Self::order_for_layer_in_transaction(&transaction, before_layer)?;
             transaction.execute("UPDATE Layers SET Idx = Idx + 1 WHERE Idx >= ?", [before_idx]).map_err(|_| ())?;
 
             before_idx
@@ -344,7 +344,7 @@ impl SqliteCanvas {
     pub fn remove_layer(&mut self, old_layer_id: CanvasLayerId) -> Result<(), ()> {
         let transaction = self.sqlite.transaction().map_err(|_| ())?;
 
-        let old_layer_idx = Self::index_for_layer_in_transaction(&transaction, old_layer_id)?;
+        let old_layer_idx = Self::order_for_layer_in_transaction(&transaction, old_layer_id)?;
         transaction.execute("DELETE FROM Layers WHERE Idx = ?", params![old_layer_idx]).map_err(|_| ())?;
         transaction.execute("UPDATE Layers SET Idx = Idx - 1 WHERE Idx >= ?", params![old_layer_idx]).map_err(|_| ())?;
 
@@ -360,9 +360,9 @@ impl SqliteCanvas {
         let transaction = self.sqlite.transaction().map_err(|_| ())?;
 
         // Work out the layer indexes where we want to add the new layer and the 
-        let original_layer_idx  = Self::index_for_layer_in_transaction(&transaction, layer_id)?;
+        let original_layer_idx  = Self::order_for_layer_in_transaction(&transaction, layer_id)?;
         let before_layer_idx    = if let Some(before_layer) = before_layer {
-            Self::index_for_layer_in_transaction(&transaction, before_layer)?            
+            Self::order_for_layer_in_transaction(&transaction, before_layer)?            
         } else {
             let max_idx = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(Idx) FROM Layers", [], |row| row.get(0)).map_err(|_| ())?;
             max_idx.map(|idx| idx + 1).unwrap_or(0)
