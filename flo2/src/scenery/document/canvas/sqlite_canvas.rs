@@ -172,21 +172,11 @@ impl SqliteCanvas {
     }
 
     ///
-    /// Sets any int properties found in the specified properties array. Property values are appended to the supplied default parameters
+    /// Sets values in a properties table. Property values are appended to the supplied default parameters
     ///
-    fn set_int_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
-        // Only set the int properties that are requested
-        let int_properties = properties.iter()
-            .filter_map(|(property_idx, property)| {
-                if let CanvasProperty::Int(val) = property {
-                    Some((*property_idx, *val))
-                } else {
-                    None
-                }
-            });
-
-        // Set each of the int properties
-        for (property_idx, property) in int_properties {
+    #[inline]
+    fn set_sql_properties<'a>(properties: impl Iterator<Item=(i64, &'a dyn ToSql)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
+        for (property_idx, property) in properties {
             // Add the property ID and value to the parameters
             let mut params = other_params.clone();
             params.extend(params![property_idx, property]);
@@ -196,6 +186,27 @@ impl SqliteCanvas {
             // Run the query
             command.execute(params).map_err(|_| ())?;
         }
+
+        Ok(())
+    }
+
+    ///
+    /// Sets any int properties found in the specified properties array. Property values are appended to the supplied default parameters
+    ///
+    fn set_int_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
+        // Only set the int properties that are requested
+        let int_properties = properties.iter()
+            .filter_map::<(_, &dyn ToSql), _>(|(property_idx, property)| {
+                if let CanvasProperty::Int(val) = property {
+                    Some((*property_idx, val))
+                } else {
+                    None
+                }
+            });
+
+
+        // Set each of the int properties
+        Self::set_sql_properties(int_properties, command, other_params)?;
 
         Ok(())
     }
