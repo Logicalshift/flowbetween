@@ -172,6 +172,30 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Queries the database for the ordering index of the specified layer
+    ///
+    #[inline]
+    pub fn index_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, ()> {
+        self.sqlite.query_one::<i64, _, _>("SELECT LayerId FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
+    }
+
+    ///
+    /// Queries the database for the ordering index of the specified layer
+    ///
+    #[inline]
+    pub fn order_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, ()> {
+        self.sqlite.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
+    }
+
+    ///
+    /// Queries the database for the index of the specified layer
+    ///
+    #[inline]
+    pub fn order_for_layer_in_transaction(transaction: &Transaction<'_>, layer_id: CanvasLayerId) -> Result<i64, ()> {
+        transaction.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
+    }
+
+    ///
     /// Sets values in a properties table. Property values are appended to the supplied default parameters
     ///
     #[inline]
@@ -241,7 +265,7 @@ impl SqliteCanvas {
     /// Updates the properties for a layer
     ///
     pub fn set_layer_properties(&mut self, layer_id: CanvasLayerId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
-        let layer_idx = self.order_for_layer(layer_id)?;
+        let layer_idx = self.index_for_layer(layer_id)?;
 
         // Map to property IDs
         let properties = properties.into_iter()
@@ -294,22 +318,6 @@ impl SqliteCanvas {
         target.send(QueryResponse::with_iterator(response)).await.map_err(|_| ())?;
 
         Ok(())
-    }
-
-    ///
-    /// Queries the database for the ordering index of the specified layer
-    ///
-    #[inline]
-    pub fn order_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, ()> {
-        self.sqlite.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
-    }
-
-    ///
-    /// Queries the database for the index of the specified layer
-    ///
-    #[inline]
-    pub fn order_for_layer_in_transaction(transaction: &Transaction<'_>, layer_id: CanvasLayerId) -> Result<i64, ()> {
-        transaction.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
     }
 
     ///
