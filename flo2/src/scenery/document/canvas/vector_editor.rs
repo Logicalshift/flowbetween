@@ -31,7 +31,7 @@ pub enum VectorCanvas {
     RemoveLayer(CanvasLayerId),
 
     /// Moves the specified layer before another layer (None to move it to the top)
-    ReorderLayer { layer_id: CanvasLayerId, before_shape: Option<CanvasLayerId>, },
+    ReorderLayer { layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>, },
 
     /// Adds a shape with no properties (transparent fill/stroke) to the canvas. If the shape ID is already in use, this will replace the existing shape in place with the new one
     AddShape(CanvasShapeId, CanvasShape),

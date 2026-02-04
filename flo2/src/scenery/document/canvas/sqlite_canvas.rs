@@ -38,7 +38,7 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
         match msg {
             Edit(AddLayer { new_layer_id, before_layer, })          => { canvas.add_layer(new_layer_id, before_layer).ok(); }
             Edit(RemoveLayer(layer_id))                             => { canvas.remove_layer(layer_id).ok(); }
-            Edit(ReorderLayer { layer_id, before_shape, })          => { todo!() }
+            Edit(ReorderLayer { layer_id, before_layer, })          => { canvas.reorder_layer(layer_id, before_layer).ok(); }
             Edit(AddShape(shape_id, shape_defn))                    => { todo!() }
             Edit(RemoveShape(shape_id))                             => { todo!() }
             Edit(AddBrush(brush_id))                                => { todo!() }
@@ -193,6 +193,40 @@ impl SqliteCanvas {
         let old_layer_idx = Self::index_for_layer_in_transaction(&transaction, old_layer_id)?;
         transaction.execute("DELETE FROM Layers WHERE Idx = ?", params![old_layer_idx]).map_err(|_| ())?;
         transaction.execute("UPDATE Layers SET Idx = Idx - 1 WHERE Idx >= ?", params![old_layer_idx]).map_err(|_| ())?;
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
+    /// Changes the ordering of a layer
+    ///
+    pub fn reorder_layer(&mut self, layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>) -> Result<(), ()> {
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        // Work out the layer indexes where we want to add the new layer and the 
+        let original_layer_idx  = Self::index_for_layer_in_transaction(&transaction, layer_id)?;
+        let before_layer_idx    = if let Some(before_layer) = before_layer {
+            Self::index_for_layer_in_transaction(&transaction, before_layer)?            
+        } else {
+            let max_idx = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(Idx) FROM Layers", [], |row| row.get(0)).map_err(|_| ())?;
+            max_idx.map(|idx| idx + 1).unwrap_or(0)
+        };
+
+        // Move the layers after the original layer
+        transaction.execute("UPDATE Layers SET Idx = Idx - 1 WHERE Idx > ?", params![original_layer_idx]).map_err(|_| ())?;
+        let before_layer_idx = if before_layer_idx > original_layer_idx {
+            before_layer_idx-1
+        } else {
+            before_layer_idx
+        };
+
+        // Move the layers after the before layer index
+        transaction.execute("UPDATE Layers SET Idx = Idx + 1 WHERE Idx >= ?", params![before_layer_idx]).map_err(|_| ())?;
+
+        // Move the re-ordered layer to its new position
+        transaction.execute("UPDATE Layers SET Idx = ? WHERE LayerGuid = ?", params![before_layer_idx, layer_id.to_string()]).map_err(|_| ())?;
 
         transaction.commit().map_err(|_| ())?;
 
