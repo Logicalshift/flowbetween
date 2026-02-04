@@ -331,6 +331,16 @@ impl SqliteCanvas {
             Self::set_int_properties(&properties, &mut int_properties_cmd, vec![&layer_idx])?;
         }
 
+        {
+            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerFloatProperties (LayerId, PropertyId, FloatValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            Self::set_float_properties(&properties, &mut float_properties_cmd, vec![&layer_idx])?;
+        }
+
+        {
+            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerBlobProperties (LayerId, PropertyId, BlobValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![&layer_idx])?;
+        }
+
         transaction.commit().map_err(|_| ())?;
 
         Ok(())
