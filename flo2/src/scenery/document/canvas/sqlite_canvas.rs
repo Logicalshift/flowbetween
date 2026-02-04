@@ -149,7 +149,7 @@ impl SqliteCanvas {
     ///
     /// Retrieve or create a property ID in the database
     ///
-    fn property_id(&mut self, canvas_property_id: CanvasPropertyId) -> Result<i64, ()> {
+    fn index_for_property(&mut self, canvas_property_id: CanvasPropertyId) -> Result<i64, ()> {
         if let Some(cached_id) = self.property_id_cache.get(&canvas_property_id) {
             // We've encountered this property before so we know its ID
             Ok(*cached_id)
@@ -177,19 +177,19 @@ impl SqliteCanvas {
     fn set_int_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
         // Only set the int properties that are requested
         let int_properties = properties.iter()
-            .filter_map(|(property_id, property)| {
+            .filter_map(|(property_idx, property)| {
                 if let CanvasProperty::Int(val) = property {
-                    Some((*property_id, *val))
+                    Some((*property_idx, *val))
                 } else {
                     None
                 }
             });
 
         // Set each of the int properties
-        for (property_id, property) in int_properties {
+        for (property_idx, property) in int_properties {
             // Add the property ID and value to the parameters
             let mut params = other_params.clone();
-            params.extend(params![property_id, property]);
+            params.extend(params![property_idx, property]);
 
             let params: &[&dyn ToSql] = &params;
 
@@ -206,7 +206,7 @@ impl SqliteCanvas {
     pub fn set_document_properties(&mut self, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
         // Map to property IDs
         let properties = properties.into_iter()
-            .map(|(property_id, property)| self.property_id(property_id).map(move |int_id| (int_id, property)))
+            .map(|(property_id, property)| self.index_for_property(property_id).map(move |int_id| (int_id, property)))
             .collect::<Result<Vec<_>, _>>()?;
 
         // Write the properties themselves
@@ -234,7 +234,7 @@ impl SqliteCanvas {
 
         // Map to property IDs
         let properties = properties.into_iter()
-            .map(|(property_id, property)| self.property_id(property_id).map(move |int_id| (int_id, property)))
+            .map(|(property_id, property)| self.index_for_property(property_id).map(move |int_id| (int_id, property)))
             .collect::<Result<Vec<_>, _>>()?;
 
         // Write the properties themselves
@@ -514,8 +514,8 @@ mod test {
     fn set_property_ids() {
         let mut canvas = SqliteCanvas::new_in_memory().unwrap();
 
-        let property_1 = canvas.property_id(CanvasPropertyId::new("One")).unwrap();
-        let property_2 = canvas.property_id(CanvasPropertyId::new("Two")).unwrap();
+        let property_1 = canvas.index_for_property(CanvasPropertyId::new("One")).unwrap();
+        let property_2 = canvas.index_for_property(CanvasPropertyId::new("Two")).unwrap();
 
         assert!(property_1 == 1, "Property 1: {:?} != 1", property_1);
         assert!(property_2 == 2, "Property 2: {:?} != 2", property_2);
@@ -526,16 +526,16 @@ mod test {
         let mut canvas = SqliteCanvas::new_in_memory().unwrap();
 
         // Write some properties
-        canvas.property_id(CanvasPropertyId::new("One")).unwrap();
-        canvas.property_id(CanvasPropertyId::new("Two")).unwrap();
+        canvas.index_for_property(CanvasPropertyId::new("One")).unwrap();
+        canvas.index_for_property(CanvasPropertyId::new("Two")).unwrap();
 
         // Clear the cache
         canvas.property_id_cache.clear();
 
         // Re-fetch the properties
-        let property_1 = canvas.property_id(CanvasPropertyId::new("One")).unwrap();
-        let property_2 = canvas.property_id(CanvasPropertyId::new("Two")).unwrap();
-        let property_3 = canvas.property_id(CanvasPropertyId::new("Three")).unwrap();
+        let property_1 = canvas.index_for_property(CanvasPropertyId::new("One")).unwrap();
+        let property_2 = canvas.index_for_property(CanvasPropertyId::new("Two")).unwrap();
+        let property_3 = canvas.index_for_property(CanvasPropertyId::new("Three")).unwrap();
 
         assert!(property_1 == 1, "Property 1: {:?} != 1", property_1);
         assert!(property_2 == 2, "Property 2: {:?} != 2", property_2);
