@@ -698,7 +698,7 @@ mod test {
         canvas.set_document_properties(vec![
             (CanvasPropertyId::new("One"), CanvasProperty::Int(42)),
             (CanvasPropertyId::new("Two"), CanvasProperty::Float(42.0)),
-            (CanvasPropertyId::new("One"), CanvasProperty::IntList(vec![1, 2, 3])),
+            (CanvasPropertyId::new("Three"), CanvasProperty::IntList(vec![1, 2, 3])),
         ]).unwrap();
     }
 
@@ -714,7 +714,7 @@ mod test {
         canvas.set_layer_properties(layer, vec![
             (CanvasPropertyId::new("One"), CanvasProperty::Int(42)),
             (CanvasPropertyId::new("Two"), CanvasProperty::Float(42.0)),
-            (CanvasPropertyId::new("One"), CanvasProperty::IntList(vec![1, 2, 3])),
+            (CanvasPropertyId::new("Three"), CanvasProperty::IntList(vec![1, 2, 3])),
         ]).unwrap();
     }
 }
