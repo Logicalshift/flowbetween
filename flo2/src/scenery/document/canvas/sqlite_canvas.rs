@@ -363,17 +363,73 @@ impl SqliteCanvas {
     }
 
     ///
-    /// Updates the properties for a layer
+    /// Updates the properties for a shape
     ///
-    pub fn set_shape_properties(&mut self, shape: CanvasShapeId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
-        todo!()
+    pub fn set_shape_properties(&mut self, shape_id: CanvasShapeId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+        let shape_idx = self.index_for_shape(shape_id)?;
+
+        // Map to property IDs
+        let properties = properties.into_iter()
+            .map(|(property_id, property)| self.index_for_property(property_id).map(move |int_id| (int_id, property)))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // Write the properties themselves
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        // Run commands to set each type of property value
+        {
+            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO ShapeIntProperties (ShapeId, PropertyId, IntValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            Self::set_int_properties(&properties, &mut int_properties_cmd, vec![&shape_idx])?;
+        }
+
+        {
+            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO ShapeFloatProperties (ShapeId, PropertyId, FloatValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            Self::set_float_properties(&properties, &mut float_properties_cmd, vec![&shape_idx])?;
+        }
+
+        {
+            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO ShapeBlobProperties (ShapeId, PropertyId, BlobValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![&shape_idx])?;
+        }
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
     }
 
     ///
-    /// Updates the properties for a layer
+    /// Updates the properties for a brush
     ///
-    pub fn set_brush_properties(&mut self, brush: CanvasBrushId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
-        todo!()
+    pub fn set_brush_properties(&mut self, brush_id: CanvasBrushId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+        let brush_idx = self.index_for_brush(brush_id)?;
+
+        // Map to property IDs
+        let properties = properties.into_iter()
+            .map(|(property_id, property)| self.index_for_property(property_id).map(move |int_id| (int_id, property)))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // Write the properties themselves
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        // Run commands to set each type of property value
+        {
+            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushIntProperties (ShapeId, PropertyId, IntValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            Self::set_int_properties(&properties, &mut int_properties_cmd, vec![&brush_idx])?;
+        }
+
+        {
+            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushFloatProperties (ShapeId, PropertyId, FloatValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            Self::set_float_properties(&properties, &mut float_properties_cmd, vec![&brush_idx])?;
+        }
+
+        {
+            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushBlobProperties (ShapeId, PropertyId, BlobValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![&brush_idx])?;
+        }
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
     }
 
     ///
