@@ -12,6 +12,7 @@ use futures::prelude::*;
 use rusqlite::*;
 use ::serde::*;
 
+use std::collections::{HashMap};
 use std::result::{Result};
 use std::sync::*;
 
@@ -95,7 +96,11 @@ impl SceneMessage for SqliteCanvasRequest {
 /// Storage for the sqlite canvas
 ///
 pub struct SqliteCanvas {
+    /// Connection to the sqlite database
     sqlite: Connection,
+
+    /// Cache of the known property IDs
+    property_id_cache: HashMap<CanvasPropertyId, i64>,
 }
 
 impl SqliteCanvas {
@@ -104,7 +109,8 @@ impl SqliteCanvas {
     ///
     pub fn with_connection(sqlite: Connection) -> Self {
         Self { 
-            sqlite
+            sqlite:             sqlite,
+            property_id_cache:  HashMap::new(),
         }
     }
 
@@ -141,17 +147,111 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Retrieve or create a property ID in the database
+    ///
+    fn property_id(&mut self, canvas_property_id: CanvasPropertyId) -> Result<i64, ()> {
+        if let Some(cached_id) = self.property_id_cache.get(&canvas_property_id) {
+            // We've encountered this property before so we know its ID
+            Ok(*cached_id)
+        } else {
+            // Try to fetch the existing property
+            let mut query_property = self.sqlite.prepare_cached("SELECT PropertyId FROM Properties WHERE Name = ?").map_err(|_| ())?;
+            if let Ok(property_id) = query_property.query_one([canvas_property_id.name()], |row| row.get::<_, i64>(0)) {
+                // Cache it so we don't need to look it up again
+                self.property_id_cache.insert(canvas_property_id, property_id);
+
+                Ok(property_id)
+            } else {
+                // Create a new property ID
+                let new_property_id = self.sqlite.query_one("INSERT INTO Properties (Name) VALUES (?) RETURNING PropertyId", [canvas_property_id.name()], |row| row.get::<_, i64>(0)).map_err(|_| ())?;
+                self.property_id_cache.insert(canvas_property_id, new_property_id);
+
+                Ok(new_property_id)
+            }
+        }
+    }
+
+    ///
+    /// Sets any int properties found in the specified properties array. Property values are appended to the supplied default parameters
+    ///
+    fn set_int_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
+        // Only set the int properties that are requested
+        let int_properties = properties.iter()
+            .filter_map(|(property_id, property)| {
+                if let CanvasProperty::Int(val) = property {
+                    Some((*property_id, *val))
+                } else {
+                    None
+                }
+            });
+
+        // Set each of the int properties
+        for (property_id, property) in int_properties {
+            // Add the property ID and value to the parameters
+            let mut params = other_params.clone();
+            params.extend(params![property_id, property]);
+
+            let params: &[&dyn ToSql] = &params;
+
+            // Run the query
+            command.execute(params).map_err(|_| ())?;
+        }
+
+        Ok(())
+    }
+
+    ///
     /// Updates the properties for a document
     ///
     pub fn set_document_properties(&mut self, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
-        todo!()
+        // Map to property IDs
+        let properties = properties.into_iter()
+            .map(|(property_id, property)| self.property_id(property_id).map(move |int_id| (int_id, property)))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // Write the properties themselves
+        let sqlite              = &mut self.sqlite;
+        let property_id_cache   = &mut self.property_id_cache;
+
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        // Run commands to set each type of property value
+        {
+            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentIntProperties (PropertyId, IntValue) VALUES (?, ?)").map_err(|_| ())?;
+            Self::set_int_properties(&properties, &mut int_properties_cmd, vec![])?;
+        }
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
     }
 
     ///
     /// Updates the properties for a layer
     ///
-    pub fn set_layer_properties(&mut self, layer: CanvasLayerId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
-        todo!()
+    pub fn set_layer_properties(&mut self, layer_id: CanvasLayerId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+        let layer_idx = self.index_for_layer(layer_id)?;
+
+        // Map to property IDs
+        let properties = properties.into_iter()
+            .map(|(property_id, property)| self.property_id(property_id).map(move |int_id| (int_id, property)))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // Write the properties themselves
+        let sqlite              = &mut self.sqlite;
+        let property_id_cache   = &mut self.property_id_cache;
+
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        // Run commands to set each type of property value
+        {
+            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerIntProperties (LayerId, PropertyId, IntValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            Self::set_int_properties(&properties, &mut int_properties_cmd, vec![&layer_idx])?;
+        }
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
     }
 
     ///
@@ -408,5 +508,65 @@ mod test {
         TestBuilder::new()
             .expect_message_matching(TestResponse(expected), format!("Layer 1 = {:?}, layer 2 = {:?}", layer_1, layer_2))
             .run_in_scene(&scene, test_program);
+    }
+
+    #[test]
+    fn set_property_ids() {
+        let mut canvas = SqliteCanvas::new_in_memory().unwrap();
+
+        let property_1 = canvas.property_id(CanvasPropertyId::new("One")).unwrap();
+        let property_2 = canvas.property_id(CanvasPropertyId::new("Two")).unwrap();
+
+        assert!(property_1 == 1, "Property 1: {:?} != 1", property_1);
+        assert!(property_2 == 2, "Property 2: {:?} != 2", property_2);
+    }
+
+    #[test]
+    fn read_property_ids_from_cache() {
+        let mut canvas = SqliteCanvas::new_in_memory().unwrap();
+
+        // Write some properties
+        canvas.property_id(CanvasPropertyId::new("One")).unwrap();
+        canvas.property_id(CanvasPropertyId::new("Two")).unwrap();
+
+        // Clear the cache
+        canvas.property_id_cache.clear();
+
+        // Re-fetch the properties
+        let property_1 = canvas.property_id(CanvasPropertyId::new("One")).unwrap();
+        let property_2 = canvas.property_id(CanvasPropertyId::new("Two")).unwrap();
+        let property_3 = canvas.property_id(CanvasPropertyId::new("Three")).unwrap();
+
+        assert!(property_1 == 1, "Property 1: {:?} != 1", property_1);
+        assert!(property_2 == 2, "Property 2: {:?} != 2", property_2);
+        assert!(property_3 == 3, "Property 3: {:?} != 3", property_3);
+    }
+
+    #[test]
+    fn set_document_properties() {
+        let mut canvas = SqliteCanvas::new_in_memory().unwrap();
+
+        // Set some properties for the document
+        canvas.set_document_properties(vec![
+            (CanvasPropertyId::new("One"), CanvasProperty::Int(42)),
+            (CanvasPropertyId::new("Two"), CanvasProperty::Float(42.0)),
+            (CanvasPropertyId::new("One"), CanvasProperty::IntList(vec![1, 2, 3])),
+        ]).unwrap();
+    }
+
+    #[test]
+    fn set_layer_properties() {
+        let mut canvas = SqliteCanvas::new_in_memory().unwrap();
+
+        // Create a layer
+        let layer = CanvasLayerId::new();
+        canvas.add_layer(layer, None).unwrap();
+
+        // Set some properties for the layer
+        canvas.set_layer_properties(layer, vec![
+            (CanvasPropertyId::new("One"), CanvasProperty::Int(42)),
+            (CanvasPropertyId::new("Two"), CanvasProperty::Float(42.0)),
+            (CanvasPropertyId::new("One"), CanvasProperty::IntList(vec![1, 2, 3])),
+        ]).unwrap();
     }
 }
