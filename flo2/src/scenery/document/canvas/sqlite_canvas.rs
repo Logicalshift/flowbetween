@@ -1,5 +1,8 @@
+use super::brush::*;
 use super::layer::*;
+use super::property::*;
 use super::queries::*;
+use super::shape::*;
 use super::vector_editor::*;
 
 use flo_scene::*;
@@ -45,7 +48,7 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
             Edit(RemoveBrush(brush_id))                             => { todo!() }
             Edit(ReorderShape { shape_id, before_shape, })          => { todo!() }
             Edit(SetShapeParent(shape_id, parent))                  => { todo!() }
-            Edit(SetProperty(property_target, properties))          => { todo!() }
+            Edit(SetProperty(property_target, properties))          => { canvas.set_properties(property_target, properties).ok(); }
             Edit(AddShapeBrushes(shape_id, brush_id))               => { todo!() }
             Edit(RemoveProperty(property_target, property_list))    => { todo!() }
             Edit(RemoveShapeBrushes(shape_id, brush_list))          => { todo!() }
@@ -123,6 +126,46 @@ impl SqliteCanvas {
         canvas.initialise()?;
 
         Ok(canvas)
+    }
+
+    ///
+    /// Sets the properties for a property target
+    ///
+    pub fn set_properties(&mut self, target: CanvasPropertyTarget, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+        match target {
+            CanvasPropertyTarget::Document          => self.set_document_properties(properties),
+            CanvasPropertyTarget::Layer(layer_id)   => self.set_layer_properties(layer_id, properties),
+            CanvasPropertyTarget::Brush(brush_id)   => self.set_brush_properties(brush_id, properties),
+            CanvasPropertyTarget::Shape(shape_id)   => self.set_shape_properties(shape_id, properties),
+        }
+    }
+
+    ///
+    /// Updates the properties for a document
+    ///
+    pub fn set_document_properties(&mut self, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+        todo!()
+    }
+
+    ///
+    /// Updates the properties for a layer
+    ///
+    pub fn set_layer_properties(&mut self, layer: CanvasLayerId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+        todo!()
+    }
+
+    ///
+    /// Updates the properties for a layer
+    ///
+    pub fn set_shape_properties(&mut self, shape: CanvasShapeId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+        todo!()
+    }
+
+    ///
+    /// Updates the properties for a layer
+    ///
+    pub fn set_brush_properties(&mut self, brush: CanvasBrushId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+        todo!()
     }
 
     ///
