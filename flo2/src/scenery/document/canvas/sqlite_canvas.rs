@@ -183,6 +183,22 @@ impl SqliteCanvas {
     /// Queries the database for the ordering index of the specified layer
     ///
     #[inline]
+    pub fn index_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, ()> {
+        self.sqlite.query_one::<i64, _, _>("SELECT ShapeId FROM Shapes WHERE ShapeGuid = ?", [shape_id.to_string()], |row| row.get(0)).map_err(|_| ())
+    }
+
+    ///
+    /// Queries the database for the ordering index of the specified layer
+    ///
+    #[inline]
+    pub fn index_for_brush(&mut self, brush_id: CanvasBrushId) -> Result<i64, ()> {
+        self.sqlite.query_one::<i64, _, _>("SELECT BrushId FROM Brushes WHERE BrushGuid = ?", [brush_id.to_string()], |row| row.get(0)).map_err(|_| ())
+    }
+
+    ///
+    /// Queries the database for the ordering index of the specified layer
+    ///
+    #[inline]
     pub fn order_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, ()> {
         self.sqlite.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
     }
