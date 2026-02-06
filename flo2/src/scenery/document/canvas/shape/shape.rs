@@ -74,3 +74,5 @@ impl CanvasShapeId {
         self.0.to_string()
     }
 }
+
+pub const CANVAS_GROUP_V1_TYPE: i64 = 4;
