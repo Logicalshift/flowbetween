@@ -1,6 +1,8 @@
 use super::super::layer::*;
-
-use crate::scenery::ui::*;
+use super::ellipse::*;
+use super::path::*;
+use super::polygon::*;
+use super::rectangle::*;
 
 use ::serde::*;
 use uuid::*;
@@ -19,19 +21,19 @@ pub struct CanvasShapeId(Uuid);
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum CanvasShape {
     /// Arbitrary bezier path
-    Path(UiPath),
+    Path(CanvasPath),
 
     /// Group of other shapes (with no shape itself)
     Group,
 
     /// Rectangle shape
-    Rectangle { min: UiPoint, max: UiPoint },
+    Rectangle(CanvasRectangle),
 
     /// Ellipse filling a rectangle
-    Ellipse { min: UiPoint, max: UiPoint },
+    Ellipse(CanvasEllipse),
 
     /// Polygon filling a rectangle, with the specified number of points
-    Polygon { min: UiPoint, max: UiPoint, points: usize },
+    Polygon(CanvasPolygon),
 }
 
 ///
