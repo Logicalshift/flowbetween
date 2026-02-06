@@ -1,3 +1,5 @@
+use super::super::point::*;
+use super::path::*;
 use super::precision_point::*;
 
 use flo_curves::bezier::path::*;
@@ -117,11 +119,11 @@ impl CanvasPrecisionPathAction {
     /// Checks if a cubic curve is actually a straight line (control points lie on the line between endpoints).
     ///
     fn try_simplify_to_line(
-        start: CanvasPrecisionPoint,
-        cp1: CanvasPrecisionPoint,
-        cp2: CanvasPrecisionPoint,
-        end: CanvasPrecisionPoint,
-        max_error: f64,
+        start:      CanvasPrecisionPoint,
+        cp1:        CanvasPrecisionPoint,
+        cp2:        CanvasPrecisionPoint,
+        end:        CanvasPrecisionPoint,
+        max_error:  f64,
     ) -> Option<CanvasPrecisionPathAction> {
         // Calculate the distance from each control point to the line (start -> end)
         let line_vec    = end - start;
@@ -166,11 +168,11 @@ impl CanvasPrecisionPathAction {
     /// Solving for qcp from both equations should give the same point if it's truly a quadratic.
     ///
     fn try_simplify_to_quadratic(
-        start: CanvasPrecisionPoint,
-        cp1: CanvasPrecisionPoint,
-        cp2: CanvasPrecisionPoint,
-        end: CanvasPrecisionPoint,
-        max_error: f64,
+        start:      CanvasPrecisionPoint,
+        cp1:        CanvasPrecisionPoint,
+        cp2:        CanvasPrecisionPoint,
+        end:        CanvasPrecisionPoint,
+        max_error:  f64,
     ) -> Option<CanvasPrecisionPathAction> {
         // Recover the quadratic control point from cp1: qcp = start + (cp1 - start) * 3/2
         let qcp_from_cp1 = start + (cp1 - start) * 1.5;
@@ -308,5 +310,118 @@ impl CanvasPrecisionSubpath {
             current_point  = action.end_point(self.start_point);
             *action        = simplified;
         }
+    }
+
+    ///
+    /// Converts a CanvasPath (which may contain multiple subpaths via Move actions) into a
+    /// Vec of CanvasPrecisionSubpath (one per subpath).
+    ///
+    /// This splits the path at each Move action and converts coordinates from f32 to f64.
+    ///
+    pub fn from_canvas_path(path: &CanvasPath) -> Vec<CanvasPrecisionSubpath> {
+        let mut subpaths = Vec::new();
+        let mut current_start = CanvasPrecisionPoint::from(path.start_point);
+        let mut current_actions: Vec<CanvasPrecisionPathAction> = Vec::new();
+
+        for action in &path.actions {
+            match action {
+                CanvasPathV1Action::Move(point) => {
+                    // Finish the current subpath if it has any actions
+                    if !current_actions.is_empty() {
+                        subpaths.push(CanvasPrecisionSubpath {
+                            start_point: current_start,
+                            actions:     std::mem::take(&mut current_actions),
+                        });
+                    }
+                    // Start a new subpath
+                    current_start = CanvasPrecisionPoint::from(*point);
+                }
+
+                CanvasPathV1Action::Close => {
+                    current_actions.push(CanvasPrecisionPathAction::Close);
+                }
+
+                CanvasPathV1Action::Line(end) => {
+                    current_actions.push(CanvasPrecisionPathAction::Line(CanvasPrecisionPoint::from(*end)));
+                }
+
+                CanvasPathV1Action::QuadraticCurve { end, cp } => {
+                    current_actions.push(CanvasPrecisionPathAction::QuadraticCurve {
+                        end: CanvasPrecisionPoint::from(*end),
+                        cp:  CanvasPrecisionPoint::from(*cp),
+                    });
+                }
+
+                CanvasPathV1Action::CubicCurve { end, cp1, cp2 } => {
+                    current_actions.push(CanvasPrecisionPathAction::CubicCurve {
+                        end: CanvasPrecisionPoint::from(*end),
+                        cp1: CanvasPrecisionPoint::from(*cp1),
+                        cp2: CanvasPrecisionPoint::from(*cp2),
+                    });
+                }
+            }
+        }
+
+        // Add the final subpath if it has any actions
+        if !current_actions.is_empty() {
+            subpaths.push(CanvasPrecisionSubpath {
+                start_point: current_start,
+                actions:     current_actions,
+            });
+        }
+
+        subpaths
+    }
+
+    ///
+    /// Converts a Vec of CanvasPrecisionSubpath back into a single CanvasPath.
+    ///
+    /// Subpaths after the first are joined with Move actions. Coordinates are converted from f64 to f32.
+    ///
+    pub fn to_canvas_path(subpaths: &[CanvasPrecisionSubpath]) -> CanvasPath {
+        if subpaths.is_empty() {
+            return CanvasPath {
+                start_point: CanvasPoint { x: 0.0, y: 0.0 },
+                actions:     Vec::new(),
+            };
+        }
+
+        let start_point = CanvasPoint::from(subpaths[0].start_point);
+        let mut actions = Vec::new();
+
+        for (idx, subpath) in subpaths.iter().enumerate() {
+            // Add a Move action for subpaths after the first
+            if idx > 0 {
+                actions.push(CanvasPathV1Action::Move(CanvasPoint::from(subpath.start_point)));
+            }
+
+            // Convert all actions in this subpath
+            for action in &subpath.actions {
+                actions.push(match action {
+                    CanvasPrecisionPathAction::Close => CanvasPathV1Action::Close,
+
+                    CanvasPrecisionPathAction::Line(end) => {
+                        CanvasPathV1Action::Line(CanvasPoint::from(*end))
+                    }
+
+                    CanvasPrecisionPathAction::QuadraticCurve { end, cp } => {
+                        CanvasPathV1Action::QuadraticCurve {
+                            end: CanvasPoint::from(*end),
+                            cp:  CanvasPoint::from(*cp),
+                        }
+                    }
+
+                    CanvasPrecisionPathAction::CubicCurve { end, cp1, cp2 } => {
+                        CanvasPathV1Action::CubicCurve {
+                            end: CanvasPoint::from(*end),
+                            cp1: CanvasPoint::from(*cp1),
+                            cp2: CanvasPoint::from(*cp2),
+                        }
+                    }
+                });
+            }
+        }
+
+        CanvasPath { start_point, actions }
     }
 }

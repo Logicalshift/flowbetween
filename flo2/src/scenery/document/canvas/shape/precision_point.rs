@@ -1,3 +1,5 @@
+use super::super::point::*;
+
 use serde::*;
 
 use flo_curves::geo::*;
@@ -136,5 +138,14 @@ impl Coordinate for CanvasPrecisionPoint {
     #[inline]
     fn dot(&self, target: &Self) -> f64 {
         (self.x) * (target.x) + (self.y) * (target.y)
+    }
+}
+
+impl From<CanvasPoint> for CanvasPrecisionPoint {
+    fn from(point: CanvasPoint) -> Self {
+        CanvasPrecisionPoint {
+            x: point.x as f64,
+            y: point.y as f64,
+        }
     }
 }

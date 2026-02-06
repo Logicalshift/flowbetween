@@ -138,3 +138,12 @@ impl Coordinate for CanvasPoint {
         (self.x as f64) * (target.x as f64) + (self.y as f64) * (target.y as f64)
     }
 }
+
+impl From<CanvasPrecisionPoint> for CanvasPoint {
+    fn from(point: CanvasPrecisionPoint) -> Self {
+        CanvasPoint {
+            x: point.x as f32,
+            y: point.y as f32,
+        }
+    }
+}
