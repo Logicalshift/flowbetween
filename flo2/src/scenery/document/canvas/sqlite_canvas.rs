@@ -43,17 +43,17 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
             Edit(AddLayer { new_layer_id, before_layer, })          => { canvas.add_layer(new_layer_id, before_layer).ok(); }
             Edit(RemoveLayer(layer_id))                             => { canvas.remove_layer(layer_id).ok(); }
             Edit(ReorderLayer { layer_id, before_layer, })          => { canvas.reorder_layer(layer_id, before_layer).ok(); }
-            Edit(AddShape(shape_id, shape_defn))                    => { todo!() }
-            Edit(RemoveShape(shape_id))                             => { todo!() }
-            Edit(SetShapeDefinition(shape_id, shape_defn))          => { todo!() }
+            Edit(AddShape(shape_id, shape_defn))                    => { canvas.add_shape(shape_id, shape_defn).ok(); }
+            Edit(RemoveShape(shape_id))                             => { canvas.remove_shape(shape_id).ok(); }
+            Edit(SetShapeDefinition(shape_id, shape_defn))          => { canvas.set_shape_definition(shape_id, shape_defn).ok(); }
             Edit(AddBrush(brush_id))                                => { todo!() }
             Edit(RemoveBrush(brush_id))                             => { todo!() }
-            Edit(ReorderShape { shape_id, before_shape, })          => { todo!() }
-            Edit(SetShapeParent(shape_id, parent))                  => { todo!() }
+            Edit(ReorderShape { shape_id, before_shape, })          => { canvas.reorder_shape(shape_id, before_shape).ok(); }
+            Edit(SetShapeParent(shape_id, parent))                  => { canvas.set_shape_parent(shape_id, parent).ok(); }
             Edit(SetProperty(property_target, properties))          => { canvas.set_properties(property_target, properties).ok(); }
-            Edit(AddShapeBrushes(shape_id, brush_id))               => { todo!() }
+            Edit(AddShapeBrushes(shape_id, brush_ids))              => { canvas.add_shape_brushes(shape_id, brush_ids).ok(); }
             Edit(RemoveProperty(property_target, property_list))    => { todo!() }
-            Edit(RemoveShapeBrushes(shape_id, brush_list))          => { todo!() }
+            Edit(RemoveShapeBrushes(shape_id, brush_ids))           => { canvas.remove_shape_brushes(shape_id, brush_ids).ok(); }
 
             Edit(Subscribe(edit_target))                            => { todo!() }
 
@@ -519,6 +519,260 @@ impl SqliteCanvas {
 
         // Move the re-ordered layer to its new position
         transaction.execute("UPDATE Layers SET OrderIdx = ? WHERE LayerGuid = ?", params![before_layer_order, layer_id.to_string()]).map_err(|_| ())?;
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
+    /// Encodes a canvas shape as a (shape_type, shape_data) pair for database storage
+    ///
+    /// Shape types are defined by the CANVAS_*_V1_TYPE constants
+    ///
+    fn encode_shape(shape: &CanvasShape) -> Result<(i64, Vec<u8>), ()> {
+        match shape {
+            CanvasShape::Path(path)         => Ok((CANVAS_PATH_V1_TYPE, postcard::to_allocvec(path).map_err(|_| ())?)),
+            CanvasShape::Group              => Ok((CANVAS_GROUP_V1_TYPE, vec![])),
+            CanvasShape::Rectangle(rect)    => Ok((CANVAS_RECTANGLE_V1_TYPE, postcard::to_allocvec(rect).map_err(|_| ())?)),
+            CanvasShape::Ellipse(ellipse)   => Ok((CANVAS_ELLIPSE_V1_TYPE, postcard::to_allocvec(ellipse).map_err(|_| ())?)),
+            CanvasShape::Polygon(polygon)   => Ok((CANVAS_POLYGON_V1_TYPE, postcard::to_allocvec(polygon).map_err(|_| ())?)),
+        }
+    }
+
+    ///
+    /// Adds a new shape to the canvas, or replaces the definition if the shape ID is already in use
+    ///
+    pub fn add_shape(&mut self, shape_id: CanvasShapeId, shape: CanvasShape) -> Result<(), ()> {
+        let (shape_type, shape_data) = Self::encode_shape(&shape)?;
+
+        if let Ok(existing_idx) = self.index_for_shape(shape_id) {
+            // Replace the existing shape definition in place
+            self.sqlite.execute("UPDATE Shapes SET ShapeType = ?, ShapeData = ? WHERE ShapeId = ?", params![shape_type, shape_data, existing_idx]).map_err(|_| ())?;
+        } else {
+            // Insert a new shape with a generated ShapeId
+            let next_id: i64 = self.sqlite.query_one("SELECT COALESCE(MAX(ShapeId), 0) + 1 FROM Shapes", [], |row| row.get(0)).map_err(|_| ())?;
+
+            self.sqlite.execute("INSERT INTO Shapes (ShapeId, ShapeGuid, ShapeType, ShapeData) VALUES (?, ?, ?, ?)", params![next_id, shape_id.to_string(), shape_type, shape_data]).map_err(|_| ())?;
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Removes a shape and all its associations from the canvas
+    ///
+    pub fn remove_shape(&mut self, shape_id: CanvasShapeId) -> Result<(), ()> {
+        let shape_idx = self.index_for_shape(shape_id)?;
+
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        // Remove from layer parent and compact ordering
+        if let Ok((layer_id, order_idx)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+            transaction.execute("DELETE FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+            transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - 1 WHERE LayerId = ? AND OrderIdx > ?", params![layer_id, order_idx]).map_err(|_| ())?;
+        }
+
+        // Remove from group parent and compact ordering
+        if let Ok((parent_id, order_idx)) = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+            transaction.execute("DELETE FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, order_idx]).map_err(|_| ())?;
+        }
+
+        // Detach any child shapes grouped under this shape
+        transaction.execute("DELETE FROM ShapeGroups WHERE ParentShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+
+        // Remove brush associations
+        transaction.execute("DELETE FROM ShapeBrushes WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+
+        // Remove shape properties
+        transaction.execute("DELETE FROM ShapeIntProperties WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+        transaction.execute("DELETE FROM ShapeFloatProperties WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+        transaction.execute("DELETE FROM ShapeBlobProperties WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+
+        // Remove the shape itself
+        transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
+    /// Replaces the definition of an existing shape, preserving its parent, properties, and brushes
+    ///
+    pub fn set_shape_definition(&mut self, shape_id: CanvasShapeId, shape: CanvasShape) -> Result<(), ()> {
+        let shape_idx                   = self.index_for_shape(shape_id)?;
+        let (shape_type, shape_data)    = Self::encode_shape(&shape)?;
+
+        self.sqlite.execute("UPDATE Shapes SET ShapeType = ?, ShapeData = ? WHERE ShapeId = ?", params![shape_type, shape_data, shape_idx]).map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
+    /// Reorders a shape within its current parent (layer or group)
+    ///
+    pub fn reorder_shape(&mut self, shape_id: CanvasShapeId, before_shape: Option<CanvasShapeId>) -> Result<(), ()> {
+        let shape_idx           = self.index_for_shape(shape_id)?;
+        let before_shape_idx    = before_shape.map(|bs| self.index_for_shape(bs)).transpose()?;
+
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        // Check if shape is on a layer
+        if let Ok((layer_id, original_order)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+            let before_order = if let Some(before_idx) = before_shape_idx {
+                transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeLayers WHERE ShapeId = ? AND LayerId = ?", params![before_idx, layer_id], |row| row.get(0)).map_err(|_| ())?
+            } else {
+                let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeLayers WHERE LayerId = ?", params![layer_id], |row| row.get(0)).map_err(|_| ())?;
+                max_order.map(|idx| idx + 1).unwrap_or(0)
+            };
+
+            // Remove from original position
+            transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - 1 WHERE LayerId = ? AND OrderIdx > ?", params![layer_id, original_order]).map_err(|_| ())?;
+            let before_order = if before_order > original_order { before_order - 1 } else { before_order };
+
+            // Make space at the new position
+            transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx + 1 WHERE LayerId = ? AND OrderIdx >= ?", params![layer_id, before_order]).map_err(|_| ())?;
+
+            // Move to the new position
+            transaction.execute("UPDATE ShapeLayers SET OrderIdx = ? WHERE ShapeId = ? AND LayerId = ?", params![before_order, shape_idx, layer_id]).map_err(|_| ())?;
+
+            transaction.commit().map_err(|_| ())?;
+            return Ok(());
+        }
+
+        // Check if shape is in a group
+        if let Ok((parent_id, original_order)) = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+            let before_order = if let Some(before_idx) = before_shape_idx {
+                transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeGroups WHERE ShapeId = ? AND ParentShapeId = ?", params![before_idx, parent_id], |row| row.get(0)).map_err(|_| ())?
+            } else {
+                let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeGroups WHERE ParentShapeId = ?", params![parent_id], |row| row.get(0)).map_err(|_| ())?;
+                max_order.map(|idx| idx + 1).unwrap_or(0)
+            };
+
+            // Remove from original position
+            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, original_order]).map_err(|_| ())?;
+            let before_order = if before_order > original_order { before_order - 1 } else { before_order };
+
+            // Make space at the new position
+            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx + 1 WHERE ParentShapeId = ? AND OrderIdx >= ?", params![parent_id, before_order]).map_err(|_| ())?;
+
+            // Move to the new position
+            transaction.execute("UPDATE ShapeGroups SET OrderIdx = ? WHERE ShapeId = ?", params![before_order, shape_idx]).map_err(|_| ())?;
+
+            transaction.commit().map_err(|_| ())?;
+            return Ok(());
+        }
+
+        // Shape has no parent, cannot reorder
+        Err(())
+    }
+
+    ///
+    /// Sets the parent of a shape, placing it as the topmost (last) shape in the new parent
+    ///
+    pub fn set_shape_parent(&mut self, shape_id: CanvasShapeId, parent: CanvasShapeParent) -> Result<(), ()> {
+        let shape_idx = self.index_for_shape(shape_id)?;
+
+        // Look up the new parent index before starting the transaction
+        let new_layer_idx = if let CanvasShapeParent::Layer(layer_id) = &parent {
+            Some(self.index_for_layer(*layer_id)?)
+        } else {
+            None
+        };
+        let new_parent_shape_idx = if let CanvasShapeParent::Shape(parent_id) = &parent {
+            Some(self.index_for_shape(*parent_id)?)
+        } else {
+            None
+        };
+
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        // Remove from any existing layer parent
+        if let Ok((layer_id, order_idx)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+            transaction.execute("DELETE FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+            transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - 1 WHERE LayerId = ? AND OrderIdx > ?", params![layer_id, order_idx]).map_err(|_| ())?;
+        }
+
+        // Remove from any existing group parent
+        if let Ok((parent_id, order_idx)) = transaction.query_one(
+            "SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?",
+            params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
+        ) {
+            transaction.execute("DELETE FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, order_idx]).map_err(|_| ())?;
+        }
+
+        // Add to the new parent at the end
+        match parent {
+            CanvasShapeParent::None => {
+                // Shape is detached, nothing more to do
+            }
+
+            CanvasShapeParent::Layer(_) => {
+                let layer_idx  = new_layer_idx.unwrap();
+                let next_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeLayers WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).map_err(|_| ())?;
+                let next_order = next_order.map(|idx| idx + 1).unwrap_or(0);
+
+                transaction.execute("INSERT INTO ShapeLayers (ShapeId, LayerId, OrderIdx) VALUES (?, ?, ?)", params![shape_idx, layer_idx, next_order]).map_err(|_| ())?;
+            }
+
+            CanvasShapeParent::Shape(_) => {
+                let parent_shape_idx = new_parent_shape_idx.unwrap();
+                let next_order       = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeGroups WHERE ParentShapeId = ?", params![parent_shape_idx], |row| row.get(0)).map_err(|_| ())?;
+                let next_order       = next_order.map(|idx| idx + 1).unwrap_or(0);
+
+                transaction.execute("INSERT INTO ShapeGroups (ShapeId, ParentShapeId, OrderIdx) VALUES (?, ?, ?)", params![shape_idx, parent_shape_idx, next_order]).map_err(|_| ())?;
+            }
+        }
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
+    /// Adds brush associations to a shape
+    ///
+    pub fn add_shape_brushes(&mut self, shape_id: CanvasShapeId, brush_ids: Vec<CanvasBrushId>) -> Result<(), ()> {
+        let shape_idx               = self.index_for_shape(shape_id)?;
+        let brush_indices: Vec<i64> = brush_ids.iter()
+            .map(|brush_id| self.index_for_brush(*brush_id))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        let mut next_order: i64 = transaction.query_one("SELECT COALESCE(MAX(OrderIdx), -1) + 1 FROM ShapeBrushes WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).map_err(|_| ())?;
+
+        for brush_idx in brush_indices {
+            transaction.execute("INSERT INTO ShapeBrushes (ShapeId, BrushId, OrderIdx) VALUES (?, ?, ?)", params![shape_idx, brush_idx, next_order]).map_err(|_| ())?;
+            next_order += 1;
+        }
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
+    /// Removes brush associations from a shape
+    ///
+    pub fn remove_shape_brushes(&mut self, shape_id: CanvasShapeId, brush_ids: Vec<CanvasBrushId>) -> Result<(), ()> {
+        let shape_idx               = self.index_for_shape(shape_id)?;
+        let brush_indices: Vec<i64> = brush_ids.iter()
+            .map(|brush_id| self.index_for_brush(*brush_id))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        for brush_idx in brush_indices {
+            if let Ok(order_idx) = transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeBrushes WHERE ShapeId = ? AND BrushId = ?", params![shape_idx, brush_idx], |row| row.get(0),
+            ) {
+                transaction.execute("DELETE FROM ShapeBrushes WHERE ShapeId = ? AND BrushId = ?", params![shape_idx, brush_idx]).map_err(|_| ())?;
+                transaction.execute("UPDATE ShapeBrushes SET OrderIdx = OrderIdx - 1 WHERE ShapeId = ? AND OrderIdx > ?", params![shape_idx, order_idx]).map_err(|_| ())?;
+            }
+        }
 
         transaction.commit().map_err(|_| ())?;
 

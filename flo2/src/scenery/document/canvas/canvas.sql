@@ -89,10 +89,10 @@ CREATE TABLE LayerBlobProperties (
  * 
  * Shape type can be:
  *  0 - bezier path
- *  1 - group
- *  2 - rectangle
- *  3 - ellipse
- *  4 - polygon
+ *  1 - rectangle
+ *  2 - ellipse
+ *  3 - polygon
+ *  4 - group
  **/
 CREATE TABLE Shapes (
     ShapeId     INTEGER     NOT NULL,
