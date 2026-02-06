@@ -81,6 +81,116 @@ impl CanvasPrecisionPathAction {
             }
         }
     }
+
+    ///
+    /// Attempts to simplify a cubic curve to a line or quadratic curve if it fits within the given error bound.
+    /// Returns the simplified action, or the original action if no simplification is possible.
+    ///
+    /// For a cubic curve starting at `current_point`:
+    /// - Returns a Line if both control points lie on the line between start and end within `max_error`
+    /// - Returns a QuadraticCurve if the cubic can be represented as a quadratic within `max_error`
+    /// - Otherwise returns the original CubicCurve
+    ///
+    pub fn simplify(&self, current_point: CanvasPrecisionPoint, max_error: f64) -> CanvasPrecisionPathAction {
+        match self {
+            CanvasPrecisionPathAction::CubicCurve { end, cp1, cp2 } => {
+                // Try to simplify to a line first
+                if let Some(line) = Self::try_simplify_to_line(current_point, *cp1, *cp2, *end, max_error) {
+                    return line;
+                }
+
+                // Try to simplify to a quadratic
+                if let Some(quad) = Self::try_simplify_to_quadratic(current_point, *cp1, *cp2, *end, max_error) {
+                    return quad;
+                }
+
+                // No simplification possible
+                self.clone()
+            }
+
+            // Other action types are already in their simplest form
+            _ => self.clone(),
+        }
+    }
+
+    ///
+    /// Checks if a cubic curve is actually a straight line (control points lie on the line between endpoints).
+    ///
+    fn try_simplify_to_line(
+        start: CanvasPrecisionPoint,
+        cp1: CanvasPrecisionPoint,
+        cp2: CanvasPrecisionPoint,
+        end: CanvasPrecisionPoint,
+        max_error: f64,
+    ) -> Option<CanvasPrecisionPathAction> {
+        // Calculate the distance from each control point to the line (start -> end)
+        let line_vec    = end - start;
+        let line_len_sq = line_vec.x * line_vec.x + line_vec.y * line_vec.y;
+
+        // Handle degenerate case where start == end
+        if line_len_sq < max_error * max_error {
+            // Check if control points are also close to start
+            if start.is_near_to(&cp1, max_error) && start.is_near_to(&cp2, max_error) {
+                return Some(CanvasPrecisionPathAction::Line(end));
+            }
+            return None;
+        }
+
+        let line_len = line_len_sq.sqrt();
+
+        // Distance from point to line using cross product: |((p - start) x line_vec)| / |line_vec|
+        let cp1_to_start = cp1 - start;
+        let cp2_to_start = cp2 - start;
+
+        // 2D cross product gives signed area, divide by line length for distance
+        let cp1_cross    = cp1_to_start.x * line_vec.y - cp1_to_start.y * line_vec.x;
+        let cp2_cross    = cp2_to_start.x * line_vec.y - cp2_to_start.y * line_vec.x;
+
+        let cp1_distance = cp1_cross.abs() / line_len;
+        let cp2_distance = cp2_cross.abs() / line_len;
+
+        if cp1_distance <= max_error && cp2_distance <= max_error {
+            Some(CanvasPrecisionPathAction::Line(end))
+        } else {
+            None
+        }
+    }
+
+    ///
+    /// Checks if a cubic curve can be represented as a quadratic curve.
+    ///
+    /// A cubic that was elevated from a quadratic has:
+    /// - cp1 = start + 2/3 * (qcp - start)
+    /// - cp2 = end + 2/3 * (qcp - end)
+    ///
+    /// Solving for qcp from both equations should give the same point if it's truly a quadratic.
+    ///
+    fn try_simplify_to_quadratic(
+        start: CanvasPrecisionPoint,
+        cp1: CanvasPrecisionPoint,
+        cp2: CanvasPrecisionPoint,
+        end: CanvasPrecisionPoint,
+        max_error: f64,
+    ) -> Option<CanvasPrecisionPathAction> {
+        // Recover the quadratic control point from cp1: qcp = start + (cp1 - start) * 3/2
+        let qcp_from_cp1 = start + (cp1 - start) * 1.5;
+
+        // Recover the quadratic control point from cp2: qcp = end + (cp2 - end) * 3/2
+        let qcp_from_cp2 = end + (cp2 - end) * 1.5;
+
+        // Check if both recovered control points are the same (within tolerance)
+        if qcp_from_cp1.is_near_to(&qcp_from_cp2, max_error) {
+            // Use the average of the two recovered control points
+            let qcp = CanvasPrecisionPoint {
+                x: (qcp_from_cp1.x + qcp_from_cp2.x) * 0.5,
+                y: (qcp_from_cp1.y + qcp_from_cp2.y) * 0.5,
+            };
+
+            Some(CanvasPrecisionPathAction::QuadraticCurve { end, cp: qcp })
+        } else {
+            None
+        }
+    }
 }
 
 impl Geo for CanvasPrecisionSubpath {
@@ -157,5 +267,46 @@ impl BezierPathFactory for CanvasPrecisionSubpath {
             .collect();
 
         CanvasPrecisionSubpath { start_point, actions }
+    }
+}
+
+impl CanvasPrecisionSubpath {
+    ///
+    /// Simplifies all curves in this path by converting cubic curves to lines or quadratic curves
+    /// where they fit within the given error bound.
+    ///
+    /// This is useful for reducing the complexity of paths generated by operations like boolean
+    /// path operations, which typically output all curves as cubics even when simpler representations
+    /// would suffice.
+    ///
+    /// Returns a new path with simplified curves.
+    ///
+    pub fn simplify(&self, max_error: f64) -> CanvasPrecisionSubpath {
+        let mut current_point    = self.start_point;
+        let mut simplified_actions = Vec::with_capacity(self.actions.len());
+
+        for action in &self.actions {
+            let simplified   = action.simplify(current_point, max_error);
+            current_point    = action.end_point(self.start_point);
+            simplified_actions.push(simplified);
+        }
+
+        CanvasPrecisionSubpath {
+            start_point: self.start_point,
+            actions:     simplified_actions,
+        }
+    }
+
+    ///
+    /// Simplifies all curves in this path in place.
+    ///
+    pub fn simplify_in_place(&mut self, max_error: f64) {
+        let mut current_point = self.start_point;
+
+        for action in &mut self.actions {
+            let simplified = action.simplify(current_point, max_error);
+            current_point  = action.end_point(self.start_point);
+            *action        = simplified;
+        }
     }
 }
