@@ -98,6 +98,7 @@ CREATE TABLE Shapes (
     ShapeId     INTEGER     NOT NULL,
     ShapeGuid   CHAR(36)    NOT NULL,
     ShapeType   INTEGER     NOT NULL,
+    ShapeData   BLOB        NOT NULL,
 
     PRIMARY KEY (ShapeId)
 ) WITHOUT ROWID;
@@ -122,18 +123,6 @@ CREATE TABLE ShapeGroups (
     OrderIdx        INTEGER NOT NULL,
 
     PRIMARY KEY (ShapeId, OrderIdx, ParentShapeId)
-);
-
-/**
- * The points that make up each shape
- **/
-CREATE TABLE ShapePoints (
-    ShapeId     INTEGER NOT NULL,
-    PointIdx    INTEGER NOT NULL,
-    X           FLOAT   NOT NULL,
-    Y           FLOAT   NOT NULL,
-
-    PRIMARY KEY (ShapeId, PointIdx)
 );
 
 /**
