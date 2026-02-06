@@ -5,7 +5,7 @@ use flo_curves::geo::*;
 use std::ops::{Add, DivAssign, Mul, MulAssign, Sub};
 
 ///
-/// Represents a point on the canvas
+/// Represents a point on the canvas, 32-bit version used for serializing the data
 ///
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
 pub struct CanvasPoint {
