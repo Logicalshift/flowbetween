@@ -13,3 +13,6 @@ pub use precision_point::*;
 pub use polygon::*;
 pub use rectangle::*;
 pub use shape::*;
+
+#[cfg(test)]
+mod serialization_tests;
