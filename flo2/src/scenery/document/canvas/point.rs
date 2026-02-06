@@ -1,3 +1,5 @@
+use super::shape::*;
+
 use serde::*;
 
 use flo_curves::geo::*;
@@ -139,8 +141,8 @@ impl Coordinate for CanvasPoint {
     }
 }
 
-impl From<CanvasPrecisionPoint> for CanvasPoint {
-    fn from(point: CanvasPrecisionPoint) -> Self {
+impl From<WorkingPoint> for CanvasPoint {
+    fn from(point: WorkingPoint) -> Self {
         CanvasPoint {
             x: point.x as f32,
             y: point.y as f32,

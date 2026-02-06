@@ -9,13 +9,15 @@ use std::ops::{Add, DivAssign, Mul, MulAssign, Sub};
 ///
 /// Represents a point on the canvas, 64-bit version used for performing path operations that require precision (like path boolean operations)
 ///
+/// This point is used for in-memory operations that manipulate the canvas
+///
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
-pub struct CanvasPrecisionPoint {
+pub struct WorkingPoint {
     pub x: f64,
     pub y: f64,
 }
 
-impl Coordinate2D for CanvasPrecisionPoint {
+impl Coordinate2D for WorkingPoint {
     ///
     /// X component of this coordinate
     ///
@@ -33,43 +35,43 @@ impl Coordinate2D for CanvasPrecisionPoint {
     }
 }
 
-impl Add for CanvasPrecisionPoint {
-    type Output = CanvasPrecisionPoint;
+impl Add for WorkingPoint {
+    type Output = WorkingPoint;
 
     #[inline]
     fn add(self, rhs: Self) -> Self::Output {
-        CanvasPrecisionPoint {
+        WorkingPoint {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
         }
     }
 }
 
-impl Sub for CanvasPrecisionPoint {
-    type Output = CanvasPrecisionPoint;
+impl Sub for WorkingPoint {
+    type Output = WorkingPoint;
 
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
-        CanvasPrecisionPoint {
+        WorkingPoint {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
         }
     }
 }
 
-impl Mul<f64> for CanvasPrecisionPoint {
-    type Output = CanvasPrecisionPoint;
+impl Mul<f64> for WorkingPoint {
+    type Output = WorkingPoint;
 
     #[inline]
     fn mul(self, rhs: f64) -> Self::Output {
-        CanvasPrecisionPoint {
+        WorkingPoint {
             x: (self.x * rhs),
             y: (self.y  * rhs),
         }
     }
 }
 
-impl MulAssign<f64> for CanvasPrecisionPoint {
+impl MulAssign<f64> for WorkingPoint {
     #[inline]
     fn mul_assign(&mut self, rhs: f64) {
         self.x = self.x * rhs;
@@ -77,7 +79,7 @@ impl MulAssign<f64> for CanvasPrecisionPoint {
     }
 }
 
-impl DivAssign<f64> for CanvasPrecisionPoint {
+impl DivAssign<f64> for WorkingPoint {
     #[inline]
     fn div_assign(&mut self, rhs: f64) {
         self.x = self.x / rhs;
@@ -85,18 +87,18 @@ impl DivAssign<f64> for CanvasPrecisionPoint {
     }
 }
 
-impl Coordinate for CanvasPrecisionPoint {
+impl Coordinate for WorkingPoint {
     #[inline]
-    fn from_components(components: &[f64]) -> CanvasPrecisionPoint {
-        CanvasPrecisionPoint {
+    fn from_components(components: &[f64]) -> WorkingPoint {
+        WorkingPoint {
             x: components[0],
             y: components[1],
         }
     }
 
     #[inline]
-    fn origin() -> CanvasPrecisionPoint {
-        CanvasPrecisionPoint { x: 0.0, y: 0.0 }
+    fn origin() -> WorkingPoint {
+        WorkingPoint { x: 0.0, y: 0.0 }
     }
 
     #[inline]
@@ -113,22 +115,22 @@ impl Coordinate for CanvasPrecisionPoint {
         }
     }
 
-    fn from_biggest_components(p1: CanvasPrecisionPoint, p2: CanvasPrecisionPoint) -> CanvasPrecisionPoint {
-        CanvasPrecisionPoint {
+    fn from_biggest_components(p1: WorkingPoint, p2: WorkingPoint) -> WorkingPoint {
+        WorkingPoint {
             x: p1.x.max(p2.x),
             y: p1.y.max(p2.y),
         }
     }
 
-    fn from_smallest_components(p1: CanvasPrecisionPoint, p2: CanvasPrecisionPoint) -> CanvasPrecisionPoint {
-        CanvasPrecisionPoint {
+    fn from_smallest_components(p1: WorkingPoint, p2: WorkingPoint) -> WorkingPoint {
+        WorkingPoint {
             x: p1.x.min(p2.x),
             y: p1.y.min(p2.y),
         }
     }
 
     #[inline]
-    fn distance_to(&self, target: &CanvasPrecisionPoint) -> f64 {
+    fn distance_to(&self, target: &WorkingPoint) -> f64 {
         let dist_x = target.x - self.x;
         let dist_y = target.y - self.y;
 
@@ -141,9 +143,9 @@ impl Coordinate for CanvasPrecisionPoint {
     }
 }
 
-impl From<CanvasPoint> for CanvasPrecisionPoint {
+impl From<CanvasPoint> for WorkingPoint {
     fn from(point: CanvasPoint) -> Self {
-        CanvasPrecisionPoint {
+        WorkingPoint {
             x: point.x as f64,
             y: point.y as f64,
         }
