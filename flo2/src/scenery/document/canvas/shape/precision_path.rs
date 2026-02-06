@@ -17,7 +17,7 @@ pub struct CanvasPrecisionSubpath {
 }
 
 ///
-/// Action
+/// Actions that can be taken as part of a precision subpath
 ///
 pub enum CanvasPrecisionPathAction {
     /// Line to a specific point
