@@ -39,13 +39,16 @@ pub enum VectorCanvas {
     /// Removes a shape from the canvas
     RemoveShape(CanvasShapeId),
 
+    /// Replaces the definition of an existing shape, preserving its parent, properties, and brushes
+    SetShapeDefinition(CanvasShapeId, CanvasShape),
+
     /// Adds a brush to this canvas
     AddBrush(CanvasBrushId),
 
     /// Removes a brush from this canvas
     RemoveBrush(CanvasBrushId),
 
-    /// Moves a shape so that it appears after another shape (None detaches the shape from the canvas)
+    /// Moves a shape so that it appears before another shape (None moves it to the end of its parent)
     ReorderShape { shape_id: CanvasShapeId, before_shape: Option<CanvasShapeId>, },
 
     /// Sets a shape as the topmost shape attached to a parent

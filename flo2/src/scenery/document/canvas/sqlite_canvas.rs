@@ -45,6 +45,7 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
             Edit(ReorderLayer { layer_id, before_layer, })          => { canvas.reorder_layer(layer_id, before_layer).ok(); }
             Edit(AddShape(shape_id, shape_defn))                    => { todo!() }
             Edit(RemoveShape(shape_id))                             => { todo!() }
+            Edit(SetShapeDefinition(shape_id, shape_defn))          => { todo!() }
             Edit(AddBrush(brush_id))                                => { todo!() }
             Edit(RemoveBrush(brush_id))                             => { todo!() }
             Edit(ReorderShape { shape_id, before_shape, })          => { todo!() }
