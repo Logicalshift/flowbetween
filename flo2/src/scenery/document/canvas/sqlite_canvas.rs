@@ -201,7 +201,7 @@ impl SqliteCanvas {
     ///
     #[inline]
     pub fn order_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, ()> {
-        self.sqlite.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
+        self.sqlite.query_one::<i64, _, _>("SELECT OrderIdx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
     }
 
     ///
@@ -209,7 +209,7 @@ impl SqliteCanvas {
     ///
     #[inline]
     pub fn order_for_layer_in_transaction(transaction: &Transaction<'_>, layer_id: CanvasLayerId) -> Result<i64, ()> {
-        transaction.query_one::<i64, _, _>("SELECT Idx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
+        transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
     }
 
     ///
@@ -459,17 +459,17 @@ impl SqliteCanvas {
         let new_layer_order = if let Some(before_layer) = before_layer {
             // Add between the existing layers
             let before_order = Self::order_for_layer_in_transaction(&transaction, before_layer)?;
-            transaction.execute("UPDATE Layers SET Idx = Idx + 1 WHERE Idx >= ?", [before_order]).map_err(|_| ())?;
+            transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx + 1 WHERE OrderIdx >= ?", [before_order]).map_err(|_| ())?;
 
             before_order
         } else {
             // Add the layer at the end
-            let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(Idx) FROM Layers", [], |row| row.get(0)).map_err(|_| ())?;
+            let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM Layers", [], |row| row.get(0)).map_err(|_| ())?;
             max_order.map(|idx| idx + 1).unwrap_or(0)
         };
 
         // Add the layer itself
-        transaction.execute("INSERT INTO Layers(LayerGuid, Idx) VALUES (?, ?)", params![new_layer_id.to_string(), new_layer_order]).map_err(|_| ())?;
+        transaction.execute("INSERT INTO Layers(LayerGuid, OrderIdx) VALUES (?, ?)", params![new_layer_id.to_string(), new_layer_order]).map_err(|_| ())?;
 
         transaction.commit().map_err(|_| ())?;
 
@@ -483,8 +483,8 @@ impl SqliteCanvas {
         let transaction = self.sqlite.transaction().map_err(|_| ())?;
 
         let old_layer_order = Self::order_for_layer_in_transaction(&transaction, old_layer_id)?;
-        transaction.execute("DELETE FROM Layers WHERE Idx = ?", params![old_layer_order]).map_err(|_| ())?;
-        transaction.execute("UPDATE Layers SET Idx = Idx - 1 WHERE Idx >= ?", params![old_layer_order]).map_err(|_| ())?;
+        transaction.execute("DELETE FROM Layers WHERE OrderIdx = ?", params![old_layer_order]).map_err(|_| ())?;
+        transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx - 1 WHERE OrderIdx >= ?", params![old_layer_order]).map_err(|_| ())?;
 
         transaction.commit().map_err(|_| ())?;
 
@@ -502,12 +502,12 @@ impl SqliteCanvas {
         let before_layer_order    = if let Some(before_layer) = before_layer {
             Self::order_for_layer_in_transaction(&transaction, before_layer)?            
         } else {
-            let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(Idx) FROM Layers", [], |row| row.get(0)).map_err(|_| ())?;
+            let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM Layers", [], |row| row.get(0)).map_err(|_| ())?;
             max_order.map(|idx| idx + 1).unwrap_or(0)
         };
 
         // Move the layers after the original layer
-        transaction.execute("UPDATE Layers SET Idx = Idx - 1 WHERE Idx > ?", params![original_layer_order]).map_err(|_| ())?;
+        transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx - 1 WHERE OrderIdx > ?", params![original_layer_order]).map_err(|_| ())?;
         let before_layer_order = if before_layer_order > original_layer_order {
             before_layer_order-1
         } else {
@@ -515,10 +515,10 @@ impl SqliteCanvas {
         };
 
         // Move the layers after the before layer index
-        transaction.execute("UPDATE Layers SET Idx = Idx + 1 WHERE Idx >= ?", params![before_layer_order]).map_err(|_| ())?;
+        transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx + 1 WHERE OrderIdx >= ?", params![before_layer_order]).map_err(|_| ())?;
 
         // Move the re-ordered layer to its new position
-        transaction.execute("UPDATE Layers SET Idx = ? WHERE LayerGuid = ?", params![before_layer_order, layer_id.to_string()]).map_err(|_| ())?;
+        transaction.execute("UPDATE Layers SET OrderIdx = ? WHERE LayerGuid = ?", params![before_layer_order, layer_id.to_string()]).map_err(|_| ())?;
 
         transaction.commit().map_err(|_| ())?;
 
@@ -536,7 +536,7 @@ impl SqliteCanvas {
         let mut layer_order     = vec![];
 
         // Layers are fetched in order
-        let mut select_layers   = self.sqlite.prepare_cached("SELECT LayerGuid FROM Layers ORDER BY Idx ASC").map_err(|_| ())?;
+        let mut select_layers   = self.sqlite.prepare_cached("SELECT LayerGuid FROM Layers ORDER BY OrderIdx ASC").map_err(|_| ())?;
         let layers              = select_layers.query_map(params![], |row| Ok(row.get::<_, String>(0)?)).map_err(|_| ())?;
 
         for layer_row in layers {
