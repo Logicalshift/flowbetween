@@ -159,6 +159,17 @@ CREATE TABLE ShapeBlobProperties (
 );
 
 /**
+ * Associates brushes with shapes, allowing a shape to take on the properties of a brush
+ **/
+CREATE TABLE ShapeBrushes (
+    ShapeId     INTEGER NOT NULL,
+    BrushId     INTEGER NOT NULL,
+    OrderIdx    INTEGER NOT NULL,
+
+    PRIMARY KEY (ShapeId, OrderIdx)
+);
+
+/**
   * The brushes that are defined for this document
   **/
  CREATE TABLE Brushes (
