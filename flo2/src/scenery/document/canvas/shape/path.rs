@@ -25,11 +25,11 @@ pub enum CanvasPathV1Action {
     /// Draws a line to the specified point
     Line(CanvasPoint),
 
-    /// Creates a quadric bezier curve to the specified point
-    QuadricCurve { end: CanvasPoint, cp: CanvasPoint },
+    /// Creates a quadratic bezier curve to the specified point
+    QuadraticCurve { end: CanvasPoint, cp: CanvasPoint },
 
     /// Creates a cubic bezier curve to the specified point
-    BezierCurve { end: CanvasPoint, cp1: CanvasPoint, cp2: CanvasPoint },
+    CubicCurve { end: CanvasPoint, cp1: CanvasPoint, cp2: CanvasPoint },
 }
 
 pub type CanvasPath = CanvasPathV1;

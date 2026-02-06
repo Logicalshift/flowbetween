@@ -23,8 +23,11 @@ pub enum CanvasPrecisionPathAction {
     /// Line to a specific point
     Line(CanvasPrecisionPoint),
 
-    /// Bezier curve to a specific point
-    BezierCurve { end: CanvasPrecisionPoint, cp1: CanvasPrecisionPoint, cp2: CanvasPrecisionPoint },
+    /// Quadratic bezier curve to the specified point
+    QuadraticCurve { end: CanvasPrecisionPoint, cp: CanvasPrecisionPoint },
+
+    /// Cubic bezier curve to a specific point
+    CubicCurve { end: CanvasPrecisionPoint, cp1: CanvasPrecisionPoint, cp2: CanvasPrecisionPoint },
 
     /// Closes the path (generating a line to the start point)
     Close,
