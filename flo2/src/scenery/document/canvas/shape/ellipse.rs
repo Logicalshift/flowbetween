@@ -7,8 +7,9 @@ use ::serde::*;
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CanvasEllipseV1 {
-    pub min: CanvasPoint,
-    pub max: CanvasPoint,
+    pub min:        CanvasPoint,
+    pub max:        CanvasPoint,
+    pub direction:  CanvasPoint,
 }
 
 pub type CanvasEllipse = CanvasEllipseV1;
