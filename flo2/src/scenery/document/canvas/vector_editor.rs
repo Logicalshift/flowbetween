@@ -76,7 +76,7 @@ pub enum VectorCanvas {
 /// The vector canvas provides a stream of notifications of the IDs of the things that have changed but not the
 /// actual changes themselves
 ///
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum VectorCanvasUpdate {
     /// Indicates that the specified layers have been changed (had shapes added or removed, properties changes or have been added or deleted)
     LayerChanged(Vec<CanvasLayerId>),
