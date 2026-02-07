@@ -706,6 +706,36 @@ fn delete_brush_properties() {
 }
 
 #[test]
+fn shapes_with_brush() {
+    let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
+    let shape_1     = CanvasShapeId::new();
+    let shape_2     = CanvasShapeId::new();
+    let shape_3     = CanvasShapeId::new();
+    let brush       = CanvasBrushId::new();
+
+    canvas.add_shape(shape_1, test_rect()).unwrap();
+    canvas.add_shape(shape_2, test_rect()).unwrap();
+    canvas.add_shape(shape_3, test_rect()).unwrap();
+    canvas.add_brush(brush).unwrap();
+
+    // No shapes attached yet
+    assert!(canvas.shapes_with_brush(brush).unwrap().is_empty());
+
+    // Attach brush to shape_1 and shape_2
+    canvas.add_shape_brushes(shape_1, vec![brush]).unwrap();
+    canvas.add_shape_brushes(shape_2, vec![brush]).unwrap();
+
+    let mut result = canvas.shapes_with_brush(brush).unwrap();
+    result.sort();
+    let mut expected = vec![shape_1, shape_2];
+    expected.sort();
+    assert!(result == expected, "Expected shapes {:?}, got {:?}", expected, result);
+
+    // shape_3 should not appear (not attached)
+    assert!(!result.contains(&shape_3));
+}
+
+#[test]
 fn delete_layer_properties() {
     let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
     let layer       = CanvasLayerId::new();

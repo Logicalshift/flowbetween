@@ -51,6 +51,9 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
                         AddBrush(brush_id)                              => { canvas.add_brush(brush_id).ok(); }
                         RemoveBrush(brush_id)                           => { canvas.remove_brush(brush_id).ok(); }
                         ReorderShape { shape_id, before_shape, }        => { changed_shapes.insert(shape_id); canvas.reorder_shape(shape_id, before_shape).ok(); }
+                        AddShapeBrushes(shape_id, brush_ids)            => { changed_shapes.insert(shape_id); canvas.add_shape_brushes(shape_id, brush_ids).ok(); }
+                        RemoveShapeBrushes(shape_id, brush_ids)         => { changed_shapes.insert(shape_id); canvas.remove_shape_brushes(shape_id, brush_ids).ok(); }
+                        Subscribe(edit_target)                          => { if let Ok(edit_target) = context.send(edit_target) { subscribers.add_target(edit_target); } }
 
                         SetShapeParent(shape_id, parent) => {
                             changed_shapes.insert(shape_id);
@@ -66,24 +69,21 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
                             match &property_target {
                                 CanvasPropertyTarget::Layer(layer_id)    => { changed_layers.insert(*layer_id); }
                                 CanvasPropertyTarget::Shape(shape_id)    => { changed_shapes.insert(*shape_id); }
+                                CanvasPropertyTarget::Brush(brush_id)    => { changed_shapes.extend(canvas.shapes_with_brush(*brush_id).unwrap_or(vec![])); }
                                 _                                        => { }
                             }
                             canvas.set_properties(property_target, properties).ok();
                         }
 
-                        AddShapeBrushes(shape_id, brush_ids)            => { changed_shapes.insert(shape_id); canvas.add_shape_brushes(shape_id, brush_ids).ok(); }
-
                         RemoveProperty(property_target, property_list) => {
                             match &property_target {
                                 CanvasPropertyTarget::Layer(layer_id)    => { changed_layers.insert(*layer_id); }
                                 CanvasPropertyTarget::Shape(shape_id)    => { changed_shapes.insert(*shape_id); }
+                                CanvasPropertyTarget::Brush(brush_id)    => { changed_shapes.extend(canvas.shapes_with_brush(*brush_id).unwrap_or(vec![])); }
                                 _                                        => { }
                             }
                             canvas.delete_properties(property_target, property_list).ok();
                         }
-
-                        RemoveShapeBrushes(shape_id, brush_ids)         => { changed_shapes.insert(shape_id); canvas.remove_shape_brushes(shape_id, brush_ids).ok(); }
-                        Subscribe(edit_target)                          => { if let Ok(edit_target) = context.send(edit_target) { subscribers.add_target(edit_target); } }
                     }
                 }
 

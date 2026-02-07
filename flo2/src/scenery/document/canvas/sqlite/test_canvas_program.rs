@@ -123,6 +123,14 @@ fn subscribe_to_canvas_updates() {
         canvas.send(VectorCanvas::AddShapeBrushes(shape_1, vec![brush_1])).await.unwrap();
         context.wait_for_idle(100).await;
 
+        // SetProperty on brush → ShapeChanged (notifies shapes the brush is attached to)
+        canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Brush(brush_1), vec![(CanvasPropertyId::new("Size"), CanvasProperty::Int(10))])).await.unwrap();
+        context.wait_for_idle(100).await;
+
+        // RemoveProperty on brush → ShapeChanged (notifies shapes the brush is attached to)
+        canvas.send(VectorCanvas::RemoveProperty(CanvasPropertyTarget::Brush(brush_1), vec![CanvasPropertyId::new("Size")])).await.unwrap();
+        context.wait_for_idle(100).await;
+
         // RemoveShapeBrushes → ShapeChanged
         canvas.send(VectorCanvas::RemoveShapeBrushes(shape_1, vec![brush_1])).await.unwrap();
         context.wait_for_idle(100).await;
@@ -193,6 +201,10 @@ fn subscribe_to_canvas_updates() {
         // AddBrush → no update
         // AddShapeBrushes(shape_1) → ShapeChanged
         .expect_message_matching(VectorCanvasUpdate::ShapeChanged(vec![shape_1]), "AddShapeBrushes")
+        // SetProperty(Brush(brush_1)) → ShapeChanged (shape_1 has brush_1 attached)
+        .expect_message_matching(VectorCanvasUpdate::ShapeChanged(vec![shape_1]), "SetProperty on brush")
+        // RemoveProperty(Brush(brush_1)) → ShapeChanged (shape_1 has brush_1 attached)
+        .expect_message_matching(VectorCanvasUpdate::ShapeChanged(vec![shape_1]), "RemoveProperty on brush")
         // RemoveShapeBrushes(shape_1) → ShapeChanged
         .expect_message_matching(VectorCanvasUpdate::ShapeChanged(vec![shape_1]), "RemoveShapeBrushes")
         // SetProperty(Layer(layer_1)) → LayerChanged

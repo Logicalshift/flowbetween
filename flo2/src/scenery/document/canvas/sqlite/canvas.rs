@@ -799,6 +799,20 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Returns the shape IDs that have the specified brush attached
+    ///
+    pub fn shapes_with_brush(&self, brush_id: CanvasBrushId) -> Result<Vec<CanvasShapeId>, ()> {
+        let mut query_shapes = self.sqlite.prepare_cached("SELECT s.ShapeGuid FROM ShapeBrushes sb JOIN Brushes b ON sb.BrushId = b.BrushId JOIN Shapes s ON sb.ShapeId = s.ShapeId WHERE b.BrushGuid = ?").map_err(|_| ())?;
+
+        let mut shapes = vec![];
+        for row in query_shapes.query_map(params![brush_id.to_string()], |row| Ok(CanvasShapeId::from_string(&row.get::<_, String>(0)?))).map_err(|_| ())? {
+            shapes.push(row.map_err(|_| ())?);
+        }
+
+        Ok(shapes)
+    }
+
+    ///
     /// Queries the outline of the document
     ///
     pub fn query_document_outline(&mut self, outline: &mut Vec<VectorResponse>) -> Result<(), ()> {
