@@ -215,7 +215,7 @@ fn add_shape_replaces_existing() {
     assert!(idx_before == idx_after, "ShapeId should be preserved on replace");
 
     // Verify the type was updated
-    let shape_type: i64 = canvas.sqlite.query_one("SELECT ShapeType FROM Shapes WHERE ShapeId = ?", params![idx_after], |row| row.get(0)).unwrap();
+    let shape_type: i64 = canvas.sqlite.query_one("SELECT ShapeDataType FROM Shapes WHERE ShapeId = ?", params![idx_after], |row| row.get(0)).unwrap();
     assert!(shape_type == CANVAS_ELLIPSE_V1_TYPE, "Shape type should be ellipse ({}), got {}", CANVAS_ELLIPSE_V1_TYPE, shape_type);
 }
 
@@ -285,12 +285,12 @@ fn set_shape_definition() {
     let shape_idx = canvas.index_for_shape(shape).unwrap();
 
     // Check initial type
-    let shape_type: i64 = canvas.sqlite.query_one("SELECT ShapeType FROM Shapes WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
+    let shape_type: i64 = canvas.sqlite.query_one("SELECT ShapeDataType FROM Shapes WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
     assert!(shape_type == CANVAS_RECTANGLE_V1_TYPE);
 
     // Replace definition with an ellipse
     canvas.set_shape_definition(shape, test_ellipse()).unwrap();
-    let shape_type: i64 = canvas.sqlite.query_one("SELECT ShapeType FROM Shapes WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
+    let shape_type: i64 = canvas.sqlite.query_one("SELECT ShapeDataType FROM Shapes WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
     assert!(shape_type == CANVAS_ELLIPSE_V1_TYPE);
 }
 

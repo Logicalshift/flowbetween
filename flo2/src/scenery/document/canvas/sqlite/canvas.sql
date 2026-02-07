@@ -105,10 +105,10 @@ CREATE TABLE LayerBlobProperties (
  *  4 - group
  **/
 CREATE TABLE Shapes (
-    ShapeId     INTEGER     NOT NULL,
-    ShapeGuid   CHAR(36)    NOT NULL,
-    ShapeType   INTEGER     NOT NULL,
-    ShapeData   BLOB        NOT NULL,
+    ShapeId         INTEGER     NOT NULL,
+    ShapeGuid       CHAR(36)    NOT NULL,
+    ShapeDataType   INTEGER     NOT NULL,
+    ShapeData       BLOB        NOT NULL,
 
     PRIMARY KEY (ShapeId)
 ) WITHOUT ROWID;
