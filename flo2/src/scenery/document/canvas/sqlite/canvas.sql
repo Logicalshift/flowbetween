@@ -15,6 +15,14 @@ CREATE TABLE Properties (
 );
 
 /**
+ *  Maps shape type names to IDs in this document
+ **/
+CREATE TABLE ShapeTypes (
+    ShapeTypeId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    Name        TEXT    NOT NULL
+);
+
+/**
  * Properties that apply to the whole document with int values
  **/
 CREATE TABLE DocumentIntProperties (

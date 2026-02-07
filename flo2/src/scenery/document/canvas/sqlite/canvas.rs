@@ -3,6 +3,7 @@ use super::super::layer::*;
 use super::super::property::*;
 use super::super::queries::*;
 use super::super::shape::*;
+use super::super::shape_type::*;
 
 use flo_scene::*;
 use flo_scene::programs::*;
@@ -25,6 +26,9 @@ pub struct SqliteCanvas {
 
     /// Cache of the known property IDs
     pub (super) property_id_cache: HashMap<CanvasPropertyId, i64>,
+
+    /// Cache of the known shape type IDs
+    pub (super) shapetype_id_cache: HashMap<ShapeType, i64>,
 }
 
 impl SqliteCanvas {
@@ -37,6 +41,7 @@ impl SqliteCanvas {
         Ok(Self {
             sqlite:             sqlite,
             property_id_cache:  HashMap::new(),
+            shapetype_id_cache: HashMap::new(),
         })
     }
 
@@ -81,6 +86,31 @@ impl SqliteCanvas {
                 self.property_id_cache.insert(canvas_property_id, new_property_id);
 
                 Ok(new_property_id)
+            }
+        }
+    }
+
+    ///
+    /// Retrieve or create a shape type ID in the database
+    ///
+    pub (super) fn index_for_shapetype(&mut self, shape_type: ShapeType) -> Result<i64, ()> {
+        if let Some(cached_id) = self.shapetype_id_cache.get(&shape_type) {
+            // We've encountered this shape type before so we know its ID
+            Ok(*cached_id)
+        } else {
+            // Try to fetch the existing shape type
+            let mut query_shapetype = self.sqlite.prepare_cached("SELECT ShapeTypeId FROM ShapeTypes WHERE Name = ?").map_err(|_| ())?;
+            if let Ok(shapetype_id) = query_shapetype.query_one([shape_type.name()], |row| row.get::<_, i64>(0)) {
+                // Cache it so we don't need to look it up again
+                self.shapetype_id_cache.insert(shape_type, shapetype_id);
+
+                Ok(shapetype_id)
+            } else {
+                // Create a new shape type ID
+                let new_shapetype_id = self.sqlite.query_one("INSERT INTO ShapeTypes (Name) VALUES (?) RETURNING ShapeTypeId", [shape_type.name()], |row| row.get::<_, i64>(0)).map_err(|_| ())?;
+                self.shapetype_id_cache.insert(shape_type, new_shapetype_id);
+
+                Ok(new_shapetype_id)
             }
         }
     }
