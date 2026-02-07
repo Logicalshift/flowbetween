@@ -703,6 +703,24 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Adds a brush to the canvas
+    ///
+    pub fn add_brush(&mut self, brush_id: CanvasBrushId) -> Result<(), ()> {
+        self.sqlite.execute("INSERT INTO Brushes (BrushGuid) VALUES (?)", params![brush_id.to_string()]).map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
+    /// Removes a brush and all its associations from the canvas
+    ///
+    pub fn remove_brush(&mut self, brush_id: CanvasBrushId) -> Result<(), ()> {
+        self.sqlite.execute("DELETE FROM Brushes WHERE BrushGuid = ?", params![brush_id.to_string()]).map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
     /// Queries the outline of the document
     ///
     pub fn query_document_outline(&mut self, outline: &mut Vec<VectorResponse>) -> Result<(), ()> {
