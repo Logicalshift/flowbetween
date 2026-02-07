@@ -31,11 +31,13 @@ impl SqliteCanvas {
     ///
     /// Creates a storage structure with an existing connection
     ///
-    pub fn with_connection(sqlite: Connection) -> Self {
-        Self { 
+    pub fn with_connection(sqlite: Connection) -> Result<Self, ()> {
+        sqlite.execute_batch("PRAGMA foreign_keys = ON").map_err(|_| ())?;
+
+        Ok(Self {
             sqlite:             sqlite,
             property_id_cache:  HashMap::new(),
-        }
+        })
     }
 
     ///
@@ -51,8 +53,8 @@ impl SqliteCanvas {
     /// Creates a new SQLite canvas in memory
     ///
     pub fn new_in_memory() -> Result<Self, ()> {
-        let sqlite = Connection::open_in_memory().map_err(|_| ())?;
-        let canvas = Self::with_connection(sqlite);
+        let sqlite  = Connection::open_in_memory().map_err(|_| ())?;
+        let canvas  = Self::with_connection(sqlite)?;
         canvas.initialise()?;
 
         Ok(canvas)
@@ -490,31 +492,22 @@ impl SqliteCanvas {
 
         let transaction = self.sqlite.transaction().map_err(|_| ())?;
 
-        // Remove from layer parent and compact ordering
-        if let Ok((layer_id, order_idx)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
-            transaction.execute("DELETE FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+        // Query parent info for order compaction before the cascading delete
+        let layer_info = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).ok();
+        let group_info = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).ok();
+
+        // Delete the shape: CASCADE handles ShapeLayers, ShapeGroups, ShapeBrushes, and properties
+        transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+
+        // Compact ordering in the parent layer
+        if let Some((layer_id, order_idx)) = layer_info {
             transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - 1 WHERE LayerId = ? AND OrderIdx > ?", params![layer_id, order_idx]).map_err(|_| ())?;
         }
 
-        // Remove from group parent and compact ordering
-        if let Ok((parent_id, order_idx)) = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
-            transaction.execute("DELETE FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+        // Compact ordering in the parent group
+        if let Some((parent_id, order_idx)) = group_info {
             transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, order_idx]).map_err(|_| ())?;
         }
-
-        // Detach any child shapes grouped under this shape
-        transaction.execute("DELETE FROM ShapeGroups WHERE ParentShapeId = ?", params![shape_idx]).map_err(|_| ())?;
-
-        // Remove brush associations
-        transaction.execute("DELETE FROM ShapeBrushes WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
-
-        // Remove shape properties
-        transaction.execute("DELETE FROM ShapeIntProperties WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
-        transaction.execute("DELETE FROM ShapeFloatProperties WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
-        transaction.execute("DELETE FROM ShapeBlobProperties WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
-
-        // Remove the shape itself
-        transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
 
         transaction.commit().map_err(|_| ())?;
 
