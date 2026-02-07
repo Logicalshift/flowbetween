@@ -24,8 +24,6 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
     let mut input   = input;
     while let Some(msg) = input.next().await {
         use SqliteCanvasRequest::*;
-        use VectorCanvas::*;
-        use VectorQuery::*;
 
         match msg {
             Edit(edits) => {
