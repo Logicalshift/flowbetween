@@ -157,6 +157,49 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Removes the a set of property IDs from one of the property tables, using a template
+    ///
+    /// The template should be something like `DELETE FROM Shape{}Properties WHERE ShapeId = ? AND PropertyId = ?`. The property ID is appended to other_params
+    /// for each table
+    ///
+    #[inline]
+    fn delete_sql_properties(&mut self, command_template: &str, properties: impl Iterator<Item=i64>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
+        // Delete all or nothing
+        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+
+        // Prepare the three commands to delete the three different types of property
+        let delete_ints     = command_template.replace("{}", "Int");
+        let delete_floats   = command_template.replace("{}", "Float");
+        let delete_blobs    = command_template.replace("{}", "Blob");
+
+        let mut delete_ints     = transaction.prepare_cached(&delete_ints).map_err(|_| ())?;
+        let mut delete_floats   = transaction.prepare_cached(&delete_floats).map_err(|_| ())?;
+        let mut delete_blobs    = transaction.prepare_cached(&delete_blobs).map_err(|_| ())?;
+
+        // Delete the properties in the list
+        for property_idx in properties {
+            // Append the property index to the params (so it's the last parameter)
+            let mut params = other_params.clone();
+            params.extend(params![property_idx]);
+            let params: &[&dyn ToSql] = &params;
+
+            // Delete from the three properties tables
+            delete_ints.execute(params).map_err(|_| ())?;
+            delete_floats.execute(params).map_err(|_| ())?;
+            delete_blobs.execute(params).map_err(|_| ())?;
+        }
+
+        // Finish up the transaction
+        drop(delete_ints);
+        drop(delete_floats);
+        drop(delete_blobs);
+
+        transaction.commit().map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
     /// Sets any int properties found in the specified properties array. Property values are appended to the supplied default parameters
     ///
     fn set_int_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
