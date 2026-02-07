@@ -215,6 +215,34 @@ fn set_layer_properties() {
 }
 
 #[test]
+fn remove_layer_deletes_properties() {
+    let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
+    let layer       = CanvasLayerId::new();
+
+    canvas.add_layer(layer, None).unwrap();
+    canvas.set_layer_properties(layer, vec![
+        (CanvasPropertyId::new("Name"), CanvasProperty::Int(1)),
+        (CanvasPropertyId::new("Visible"), CanvasProperty::Float(1.0)),
+    ]).unwrap();
+
+    let layer_idx = canvas.index_for_layer(layer).unwrap();
+
+    // Verify properties exist
+    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerIntProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
+    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerFloatProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
+    assert!(int_count   > 0, "Layer should have int properties before removal");
+    assert!(float_count > 0, "Layer should have float properties before removal");
+
+    canvas.remove_layer(layer).unwrap();
+
+    // Properties should be gone via CASCADE
+    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerIntProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
+    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerFloatProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
+    assert!(int_count   == 0, "Layer int properties should be deleted via CASCADE");
+    assert!(float_count == 0, "Layer float properties should be deleted via CASCADE");
+}
+
+#[test]
 fn add_shape() {
     let mut canvas = SqliteCanvas::new_in_memory().unwrap();
     let shape = CanvasShapeId::new();
@@ -265,7 +293,7 @@ fn remove_shape() {
 }
 
 #[test]
-fn remove_group_detaches_children() {
+fn remove_group_deletes_children() {
     let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
     let group       = CanvasShapeId::new();
     let child       = CanvasShapeId::new();
@@ -275,15 +303,30 @@ fn remove_group_detaches_children() {
     canvas.set_shape_parent(child, CanvasShapeParent::Shape(group)).unwrap();
     assert!(shapes_in_group(&canvas, group).len() == 1);
 
-    // Removing the group should detach the child
+    // Removing the group should also remove the child
     canvas.remove_shape(group).unwrap();
-    assert!(canvas.index_for_shape(child).is_ok(), "Child should still exist");
+    assert!(canvas.index_for_shape(child).is_err(), "Child should be removed with group");
     assert!(canvas.index_for_shape(group).is_err(), "Group should be removed");
+}
 
-    // Child should no longer be in any group
-    let child_idx       = canvas.index_for_shape(child).unwrap();
-    let in_any_group    = canvas.sqlite.query_one::<i64, _, _>("SELECT COUNT(*) FROM ShapeGroups WHERE ShapeId = ?", params![child_idx], |row| row.get(0)).unwrap();
-    assert!(in_any_group == 0, "Child should not be in any group after parent is removed");
+#[test]
+fn remove_group_deletes_nested_children() {
+    let mut canvas      = SqliteCanvas::new_in_memory().unwrap();
+    let outer_group     = CanvasShapeId::new();
+    let inner_group     = CanvasShapeId::new();
+    let child           = CanvasShapeId::new();
+
+    canvas.add_shape(outer_group, CanvasShape::Group).unwrap();
+    canvas.add_shape(inner_group, CanvasShape::Group).unwrap();
+    canvas.add_shape(child, test_rect()).unwrap();
+    canvas.set_shape_parent(inner_group, CanvasShapeParent::Shape(outer_group)).unwrap();
+    canvas.set_shape_parent(child, CanvasShapeParent::Shape(inner_group)).unwrap();
+
+    // Removing the outer group should recursively remove inner group and child
+    canvas.remove_shape(outer_group).unwrap();
+    assert!(canvas.index_for_shape(outer_group).is_err(), "Outer group should be removed");
+    assert!(canvas.index_for_shape(inner_group).is_err(), "Inner group should be removed");
+    assert!(canvas.index_for_shape(child).is_err(), "Nested child should be removed");
 }
 
 #[test]
@@ -494,4 +537,60 @@ fn remove_shape_brushes() {
 
     // brush_1 and brush_3 should remain in order
     assert!(brushes_on_shape(&canvas, shape) == vec![brush_1.to_string(), brush_3.to_string()]);
+}
+
+#[test]
+fn remove_shape_deletes_properties() {
+    let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
+    let shape       = CanvasShapeId::new();
+
+    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.set_shape_properties(shape, vec![
+        (CanvasPropertyId::new("Color"), CanvasProperty::Int(255)),
+        (CanvasPropertyId::new("Width"), CanvasProperty::Float(1.5)),
+    ]).unwrap();
+
+    let shape_idx = canvas.index_for_shape(shape).unwrap();
+
+    // Verify properties exist
+    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeIntProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
+    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeFloatProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
+    assert!(int_count   > 0, "Shape should have int properties before removal");
+    assert!(float_count > 0, "Shape should have float properties before removal");
+
+    canvas.remove_shape(shape).unwrap();
+
+    // Properties should be gone via CASCADE
+    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeIntProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
+    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeFloatProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
+    assert!(int_count   == 0, "Shape int properties should be deleted via CASCADE");
+    assert!(float_count == 0, "Shape float properties should be deleted via CASCADE");
+}
+
+#[test]
+fn remove_brush_deletes_properties() {
+    let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
+    let brush       = CanvasBrushId::new();
+
+    canvas.add_brush(brush).unwrap();
+    canvas.set_brush_properties(brush, vec![
+        (CanvasPropertyId::new("Size"), CanvasProperty::Int(10)),
+        (CanvasPropertyId::new("Opacity"), CanvasProperty::Float(0.5)),
+    ]).unwrap();
+
+    let brush_idx = canvas.index_for_brush(brush).unwrap();
+
+    // Verify properties exist
+    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushIntProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
+    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushFloatProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
+    assert!(int_count   > 0, "Brush should have int properties before removal");
+    assert!(float_count > 0, "Brush should have float properties before removal");
+
+    canvas.remove_brush(brush).unwrap();
+
+    // Properties should be gone via CASCADE
+    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushIntProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
+    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushFloatProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
+    assert!(int_count   == 0, "Brush int properties should be deleted via CASCADE");
+    assert!(float_count == 0, "Brush float properties should be deleted via CASCADE");
 }
