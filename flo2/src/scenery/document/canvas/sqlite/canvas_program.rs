@@ -42,7 +42,7 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
                         SetShapeParent(shape_id, parent)                => { canvas.set_shape_parent(shape_id, parent).ok(); }
                         SetProperty(property_target, properties)        => { canvas.set_properties(property_target, properties).ok(); }
                         AddShapeBrushes(shape_id, brush_ids)            => { canvas.add_shape_brushes(shape_id, brush_ids).ok(); }
-                        RemoveProperty(property_target, property_list)  => { todo!() }
+                        RemoveProperty(property_target, property_list)  => { canvas.delete_properties(property_target, property_list).ok(); }
                         RemoveShapeBrushes(shape_id, brush_ids)         => { canvas.remove_shape_brushes(shape_id, brush_ids).ok(); }
                         Subscribe(edit_target)                          => { todo!() }
                     }

@@ -138,6 +138,26 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Deletes properties of the specified type from the canvas
+    ///
+    pub fn delete_properties(&mut self, target: CanvasPropertyTarget, properties: Vec<CanvasPropertyId>) -> Result<(), ()> {
+        // Map to property IDs
+        let properties = properties.into_iter()
+            .map(|property_id| self.index_for_property(property_id))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // Deletion operation depends on the target
+        match target {
+            CanvasPropertyTarget::Document          => { self.delete_sql_properties("DELETE FROM Document{}Properties WHERE PropertyId = ?", properties.into_iter(), vec![])?; },
+            CanvasPropertyTarget::Layer(layer_id)   => { let layer_idx = self.index_for_layer(layer_id)?; self.delete_sql_properties("DELETE FROM Layer{}Properties WHERE LayerId = ? AND PropertyId = ?", properties.into_iter(), vec![&layer_idx])?; },
+            CanvasPropertyTarget::Brush(brush_id)   => { let brush_idx = self.index_for_brush(brush_id)?; self.delete_sql_properties("DELETE FROM Brush{}Properties WHERE BrushId = ? AND PropertyId = ?", properties.into_iter(), vec![&brush_idx])?; },
+            CanvasPropertyTarget::Shape(shape_id)   => { let shape_idx = self.index_for_shape(shape_id)?; self.delete_sql_properties("DELETE FROM Shape{}Properties WHERE ShapeId = ? AND PropertyId = ?", properties.into_iter(), vec![&shape_idx])?; },
+        }
+
+        Ok(())
+    }
+
+    ///
     /// Sets values in a properties table. Property values are appended to the supplied default parameters
     ///
     #[inline]
