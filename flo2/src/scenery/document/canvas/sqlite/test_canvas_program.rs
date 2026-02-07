@@ -1,12 +1,5 @@
 use super::*;
-
-use super::super::brush::*;
-use super::super::layer::*;
-use super::super::point::*;
-use super::super::property::*;
-use super::super::queries::*;
-use super::super::shape::*;
-use super::super::vector_editor::*;
+use super::super::*;
 
 use flo_scene::*;
 use flo_scene::programs::*;
@@ -21,6 +14,10 @@ fn test_rect() -> CanvasShape {
 
 fn test_ellipse() -> CanvasShape {
     CanvasShape::Ellipse(CanvasEllipse { min: CanvasPoint { x: 0.0, y: 0.0 }, max: CanvasPoint { x: 5.0, y: 5.0 }, direction: CanvasPoint { x: 1.0, y: 0.0 } })
+}
+
+fn test_shape_type() -> ShapeType {
+    ShapeType::new("flo2::test")
 }
 
 #[test]
@@ -104,7 +101,7 @@ fn subscribe_to_canvas_updates() {
         context.wait_for_idle(100).await;
 
         // AddShape → ShapeChanged
-        canvas.send(VectorCanvas::AddShape(shape_1, test_rect())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_1, test_shape_type(), test_rect())).await.unwrap();
         context.wait_for_idle(100).await;
 
         // SetShapeParent to layer → LayerChanged + ShapeChanged
@@ -152,7 +149,7 @@ fn subscribe_to_canvas_updates() {
         context.wait_for_idle(100).await;
 
         // Set up shape_2 on layer_1 for ReorderShape
-        canvas.send(VectorCanvas::AddShape(shape_2, test_rect())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_2, test_shape_type(), test_rect())).await.unwrap();
         context.wait_for_idle(100).await;
         canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Layer(layer_1))).await.unwrap();
         context.wait_for_idle(100).await;
@@ -162,7 +159,7 @@ fn subscribe_to_canvas_updates() {
         context.wait_for_idle(100).await;
 
         // SetShapeParent to group → ShapeChanged (contains both the shape and the parent)
-        canvas.send(VectorCanvas::AddShape(group, CanvasShape::Group)).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(group, test_shape_type(), CanvasShape::Group)).await.unwrap();
         context.wait_for_idle(100).await;
         canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Shape(group))).await.unwrap();
         context.wait_for_idle(100).await;
@@ -225,7 +222,7 @@ fn subscribe_to_canvas_updates() {
         // AddShape(group) → ShapeChanged
         .expect_message_matching(VectorCanvasUpdate::ShapeChanged(vec![group]), "AddShape (group)")
         // SetShapeParent(shape_2, Shape(group)) → ShapeChanged (both shape_2 and group)
-        .expect_message_matching(VectorCanvasUpdate::ShapeChanged(group_shapes), "SetShapeParent to group")
+        .expect_message(move |update| match update { VectorCanvasUpdate::ShapeChanged(mut shapes) => { shapes.sort(); if shapes == group_shapes { Ok(()) } else { Err(format!("SetShapeParent to group: {:?} != {:?}", shapes, group_shapes)) } }, _ => Err("SetShapeParent to group, unexpected message type".into()) })
         // RemoveShape(shape_2) → ShapeChanged
         .expect_message_matching(VectorCanvasUpdate::ShapeChanged(vec![shape_2]), "RemoveShape")
         // RemoveBrush → no update

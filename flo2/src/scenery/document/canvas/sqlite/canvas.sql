@@ -107,6 +107,7 @@ CREATE TABLE LayerBlobProperties (
 CREATE TABLE Shapes (
     ShapeId         INTEGER     NOT NULL,
     ShapeGuid       CHAR(36)    NOT NULL,
+    ShapeType       INTEGER     NOT NULL REFERENCES ShapeTypes(ShapeTypeId),
     ShapeDataType   INTEGER     NOT NULL,
     ShapeData       BLOB        NOT NULL,
 

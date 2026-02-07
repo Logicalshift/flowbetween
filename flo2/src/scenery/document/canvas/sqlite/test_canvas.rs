@@ -6,6 +6,7 @@ use super::super::layer::*;
 use super::super::property::*;
 use super::super::queries::*;
 use super::super::shape::*;
+use super::super::shape_type::*;
 use rusqlite::*;
 
 /// Helper: returns the ShapeGuids for shapes on a layer, ordered by OrderIdx
@@ -35,6 +36,10 @@ fn brushes_on_shape(canvas: &SqliteCanvas, shape_id: CanvasShapeId) -> Vec<Strin
 /// Helper: directly inserts a brush into the Brushes table (since AddBrush is not yet implemented)
 fn insert_brush(canvas: &SqliteCanvas, brush_id: CanvasBrushId) {
     canvas.sqlite.execute("INSERT INTO Brushes (BrushGuid) VALUES (?)", params![brush_id.to_string()]).unwrap();
+}
+
+fn test_shape_type() -> ShapeType {
+    ShapeType::new("flowbetween::test")
 }
 
 fn test_rect() -> CanvasShape {
@@ -194,7 +199,7 @@ fn add_shape() {
     let mut canvas = SqliteCanvas::new_in_memory().unwrap();
     let shape = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
 
     // Shape should exist in the database
     assert!(canvas.index_for_shape(shape).is_ok());
@@ -205,11 +210,11 @@ fn add_shape_replaces_existing() {
     let mut canvas = SqliteCanvas::new_in_memory().unwrap();
     let shape = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     let idx_before = canvas.index_for_shape(shape).unwrap();
 
     // Adding the same shape ID again should replace in place
-    canvas.add_shape(shape, test_ellipse()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_ellipse()).unwrap();
     let idx_after = canvas.index_for_shape(shape).unwrap();
 
     assert!(idx_before == idx_after, "ShapeId should be preserved on replace");
@@ -226,7 +231,7 @@ fn remove_shape() {
     let shape       = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_parent(shape, CanvasShapeParent::Layer(layer)).unwrap();
 
     // Shape should be on the layer
@@ -245,8 +250,8 @@ fn remove_group_deletes_children() {
     let group       = CanvasShapeId::new();
     let child       = CanvasShapeId::new();
 
-    canvas.add_shape(group, CanvasShape::Group).unwrap();
-    canvas.add_shape(child, test_rect()).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_parent(child, CanvasShapeParent::Shape(group)).unwrap();
     assert!(shapes_in_group(&canvas, group).len() == 1);
 
@@ -263,9 +268,9 @@ fn remove_group_deletes_nested_children() {
     let inner_group     = CanvasShapeId::new();
     let child           = CanvasShapeId::new();
 
-    canvas.add_shape(outer_group, CanvasShape::Group).unwrap();
-    canvas.add_shape(inner_group, CanvasShape::Group).unwrap();
-    canvas.add_shape(child, test_rect()).unwrap();
+    canvas.add_shape(outer_group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(inner_group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_parent(inner_group, CanvasShapeParent::Shape(outer_group)).unwrap();
     canvas.set_shape_parent(child, CanvasShapeParent::Shape(inner_group)).unwrap();
 
@@ -281,7 +286,7 @@ fn set_shape_definition() {
     let mut canvas = SqliteCanvas::new_in_memory().unwrap();
     let shape = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     let shape_idx = canvas.index_for_shape(shape).unwrap();
 
     // Check initial type
@@ -301,7 +306,7 @@ fn set_shape_parent_to_layer() {
     let shape       = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
 
     // Initially not on any layer
     assert!(shapes_on_layer(&canvas, layer).is_empty());
@@ -318,8 +323,8 @@ fn set_shape_parent_to_group() {
     let child       = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(group, CanvasShape::Group).unwrap();
-    canvas.add_shape(child, test_rect()).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child, test_shape_type(), test_rect()).unwrap();
 
     // Put shape on a layer first, then move to group
     canvas.set_shape_parent(child, CanvasShapeParent::Layer(layer)).unwrap();
@@ -339,7 +344,7 @@ fn set_shape_parent_detach() {
     let shape       = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_parent(shape, CanvasShapeParent::Layer(layer)).unwrap();
     assert!(shapes_on_layer(&canvas, layer).len() == 1);
 
@@ -357,9 +362,9 @@ fn reorder_shape_on_layer() {
     let shape_c     = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(shape_a, test_rect()).unwrap();
-    canvas.add_shape(shape_b, test_rect()).unwrap();
-    canvas.add_shape(shape_c, test_rect()).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_c, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_parent(shape_a, CanvasShapeParent::Layer(layer)).unwrap();
     canvas.set_shape_parent(shape_b, CanvasShapeParent::Layer(layer)).unwrap();
     canvas.set_shape_parent(shape_c, CanvasShapeParent::Layer(layer)).unwrap();
@@ -383,9 +388,9 @@ fn reorder_shape_in_group() {
     let shape_a     = CanvasShapeId::new();
     let shape_b     = CanvasShapeId::new();
 
-    canvas.add_shape(group, CanvasShape::Group).unwrap();
-    canvas.add_shape(shape_a, test_rect()).unwrap();
-    canvas.add_shape(shape_b, test_rect()).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_parent(shape_a, CanvasShapeParent::Shape(group)).unwrap();
     canvas.set_shape_parent(shape_b, CanvasShapeParent::Shape(group)).unwrap();
 
@@ -407,8 +412,8 @@ fn reorder_shape_different_parent_is_error() {
 
     canvas.add_layer(layer_1, None).unwrap();
     canvas.add_layer(layer_2, None).unwrap();
-    canvas.add_shape(shape_a, test_rect()).unwrap();
-    canvas.add_shape(shape_b, test_rect()).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_parent(shape_a, CanvasShapeParent::Layer(layer_1)).unwrap();
     canvas.set_shape_parent(shape_b, CanvasShapeParent::Layer(layer_2)).unwrap();
 
@@ -426,7 +431,7 @@ fn reorder_unparented_shape_is_error() {
     let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
     let shape       = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
 
     // Shape has no parent, reorder should fail
     let result = canvas.reorder_shape(shape, None);
@@ -440,7 +445,7 @@ fn add_shape_brushes() {
     let brush_1     = CanvasBrushId::new();
     let brush_2     = CanvasBrushId::new();
 
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     insert_brush(&canvas, brush_1);
     insert_brush(&canvas, brush_2);
 
@@ -456,7 +461,7 @@ fn add_shape_brushes_appends() {
     let brush_2     = CanvasBrushId::new();
     let brush_3     = CanvasBrushId::new();
 
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     insert_brush(&canvas, brush_1);
     insert_brush(&canvas, brush_2);
     insert_brush(&canvas, brush_3);
@@ -474,7 +479,7 @@ fn remove_shape_brushes() {
     let brush_2     = CanvasBrushId::new();
     let brush_3     = CanvasBrushId::new();
 
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     insert_brush(&canvas, brush_1);
     insert_brush(&canvas, brush_2);
     insert_brush(&canvas, brush_3);
@@ -491,7 +496,7 @@ fn remove_shape_deletes_properties() {
     let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
     let shape       = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_properties(shape, vec![
         (CanvasPropertyId::new("Color"), CanvasProperty::Int(255)),
         (CanvasPropertyId::new("Width"), CanvasProperty::Float(1.5)),
@@ -607,7 +612,7 @@ fn delete_shape_properties() {
     let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
     let shape       = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_rect()).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     canvas.set_properties(CanvasPropertyTarget::Shape(shape), vec![
         (CanvasPropertyId::new("Color"), CanvasProperty::Int(255)),
         (CanvasPropertyId::new("Width"), CanvasProperty::Float(1.5)),
@@ -644,8 +649,8 @@ fn delete_shape_properties_does_not_affect_other_shapes() {
     let shape_a     = CanvasShapeId::new();
     let shape_b     = CanvasShapeId::new();
 
-    canvas.add_shape(shape_a, test_rect()).unwrap();
-    canvas.add_shape(shape_b, test_rect()).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
 
     // Set the same property on both shapes
     canvas.set_properties(CanvasPropertyTarget::Shape(shape_a), vec![
@@ -713,9 +718,9 @@ fn shapes_with_brush() {
     let shape_3     = CanvasShapeId::new();
     let brush       = CanvasBrushId::new();
 
-    canvas.add_shape(shape_1, test_rect()).unwrap();
-    canvas.add_shape(shape_2, test_rect()).unwrap();
-    canvas.add_shape(shape_3, test_rect()).unwrap();
+    canvas.add_shape(shape_1, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_2, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_3, test_shape_type(), test_rect()).unwrap();
     canvas.add_brush(brush).unwrap();
 
     // No shapes attached yet

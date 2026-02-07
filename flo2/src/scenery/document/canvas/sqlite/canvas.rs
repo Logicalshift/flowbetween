@@ -560,20 +560,21 @@ impl SqliteCanvas {
     ///
     /// Adds a new shape to the canvas, or replaces the definition if the shape ID is already in use
     ///
-    pub fn add_shape(&mut self, shape_id: CanvasShapeId, shape: CanvasShape) -> Result<(), ()> {
-        let (shape_type, shape_data) = Self::encode_shape(&shape)?;
+    pub fn add_shape(&mut self, shape_id: CanvasShapeId, shape_type: ShapeType, shape: CanvasShape) -> Result<(), ()> {
+        let shape_type_idx              = self.index_for_shapetype(shape_type)?;
+        let (shape_data_type, shape_data)   = Self::encode_shape(&shape)?;
 
         if let Ok(existing_idx) = self.index_for_shape(shape_id) {
             // Replace the existing shape definition in place
-            let mut update_existing = self.sqlite.prepare_cached("UPDATE Shapes SET ShapeDataType = ?, ShapeData = ? WHERE ShapeId = ?").map_err(|_| ())?;
-            update_existing.execute(params![shape_type, shape_data, existing_idx]).map_err(|_| ())?;
+            let mut update_existing = self.sqlite.prepare_cached("UPDATE Shapes SET ShapeType = ?, ShapeDataType = ?, ShapeData = ? WHERE ShapeId = ?").map_err(|_| ())?;
+            update_existing.execute(params![shape_type_idx, shape_data_type, shape_data, existing_idx]).map_err(|_| ())?;
         } else {
             // Insert a new shape with a generated ShapeId
-            let mut insert_new  = self.sqlite.prepare_cached("INSERT INTO Shapes (ShapeId, ShapeGuid, ShapeDataType, ShapeData) VALUES (?, ?, ?, ?)").map_err(|_| ())?;
+            let mut insert_new  = self.sqlite.prepare_cached("INSERT INTO Shapes (ShapeId, ShapeGuid, ShapeType, ShapeDataType, ShapeData) VALUES (?, ?, ?, ?, ?)").map_err(|_| ())?;
             let mut get_max_id  = self.sqlite.prepare_cached("SELECT COALESCE(MAX(ShapeId), 0) + 1 FROM Shapes").map_err(|_| ())?;
             let next_id: i64    = get_max_id.query_one([], |row| row.get(0)).map_err(|_| ())?;
 
-            insert_new.execute(params![next_id, shape_id.to_string(), shape_type, shape_data]).map_err(|_| ())?;
+            insert_new.execute(params![next_id, shape_id.to_string(), shape_type_idx, shape_data_type, shape_data]).map_err(|_| ())?;
         }
 
         Ok(())

@@ -2,6 +2,7 @@ use super::brush::*;
 use super::layer::*;
 use super::property::*;
 use super::shape::*;
+use super::shape_type::*;
 
 use flo_scene::*;
 
@@ -34,7 +35,7 @@ pub enum VectorCanvas {
     ReorderLayer { layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>, },
 
     /// Adds a shape with no properties (transparent fill/stroke) to the canvas. If the shape ID is already in use, this will replace the existing shape in place with the new one
-    AddShape(CanvasShapeId, CanvasShape),
+    AddShape(CanvasShapeId, ShapeType, CanvasShape),
 
     /// Removes a shape from the canvas
     RemoveShape(CanvasShapeId),
