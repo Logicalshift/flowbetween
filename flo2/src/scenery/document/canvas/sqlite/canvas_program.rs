@@ -12,7 +12,7 @@ use ::serde::*;
 ///
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum SqliteCanvasRequest {
-    Edit(VectorCanvas),
+    Edit(Vec<VectorCanvas>),
     Query(VectorQuery),
 }
 
@@ -28,30 +28,41 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
         use VectorQuery::*;
 
         match msg {
-            Edit(AddLayer { new_layer_id, before_layer, })          => { canvas.add_layer(new_layer_id, before_layer).ok(); }
-            Edit(RemoveLayer(layer_id))                             => { canvas.remove_layer(layer_id).ok(); }
-            Edit(ReorderLayer { layer_id, before_layer, })          => { canvas.reorder_layer(layer_id, before_layer).ok(); }
-            Edit(AddShape(shape_id, shape_defn))                    => { canvas.add_shape(shape_id, shape_defn).ok(); }
-            Edit(RemoveShape(shape_id))                             => { canvas.remove_shape(shape_id).ok(); }
-            Edit(SetShapeDefinition(shape_id, shape_defn))          => { canvas.set_shape_definition(shape_id, shape_defn).ok(); }
-            Edit(AddBrush(brush_id))                                => { canvas.add_brush(brush_id).ok(); }
-            Edit(RemoveBrush(brush_id))                             => { canvas.remove_brush(brush_id).ok(); }
-            Edit(ReorderShape { shape_id, before_shape, })          => { canvas.reorder_shape(shape_id, before_shape).ok(); }
-            Edit(SetShapeParent(shape_id, parent))                  => { canvas.set_shape_parent(shape_id, parent).ok(); }
-            Edit(SetProperty(property_target, properties))          => { canvas.set_properties(property_target, properties).ok(); }
-            Edit(AddShapeBrushes(shape_id, brush_ids))              => { canvas.add_shape_brushes(shape_id, brush_ids).ok(); }
-            Edit(RemoveProperty(property_target, property_list))    => { todo!() }
-            Edit(RemoveShapeBrushes(shape_id, brush_ids))           => { canvas.remove_shape_brushes(shape_id, brush_ids).ok(); }
+            Edit(edits) => {
+                for edit in edits {
+                    use VectorCanvas::*;
+                    match edit {
+                        AddLayer { new_layer_id, before_layer, }        => { canvas.add_layer(new_layer_id, before_layer).ok(); }
+                        RemoveLayer(layer_id)                           => { canvas.remove_layer(layer_id).ok(); }
+                        ReorderLayer { layer_id, before_layer, }        => { canvas.reorder_layer(layer_id, before_layer).ok(); }
+                        AddShape(shape_id, shape_defn)                  => { canvas.add_shape(shape_id, shape_defn).ok(); }
+                        RemoveShape(shape_id)                           => { canvas.remove_shape(shape_id).ok(); }
+                        SetShapeDefinition(shape_id, shape_defn)        => { canvas.set_shape_definition(shape_id, shape_defn).ok(); }
+                        AddBrush(brush_id)                              => { canvas.add_brush(brush_id).ok(); }
+                        RemoveBrush(brush_id)                           => { canvas.remove_brush(brush_id).ok(); }
+                        ReorderShape { shape_id, before_shape, }        => { canvas.reorder_shape(shape_id, before_shape).ok(); }
+                        SetShapeParent(shape_id, parent)                => { canvas.set_shape_parent(shape_id, parent).ok(); }
+                        SetProperty(property_target, properties)        => { canvas.set_properties(property_target, properties).ok(); }
+                        AddShapeBrushes(shape_id, brush_ids)            => { canvas.add_shape_brushes(shape_id, brush_ids).ok(); }
+                        RemoveProperty(property_target, property_list)  => { todo!() }
+                        RemoveShapeBrushes(shape_id, brush_ids)         => { canvas.remove_shape_brushes(shape_id, brush_ids).ok(); }
+                        Subscribe(edit_target)                          => { todo!() }
+                    }
+                }
+            }
 
-            Edit(Subscribe(edit_target))                            => { todo!() }
-
-            Query(WholeDocument(target))                                        => { todo!() },
-            Query(DocumentOutline(target))                                      => { canvas.send_vec_query_response(target, &context, |canvas, response| canvas.query_document_outline(response)).await.ok(); },
-            Query(Layers(target, layer_list))                                   => { todo!() },
-            Query(Shapes(target, shape_list))                                   => { todo!() },
-            Query(Brushes(target, brush_list))                                  => { todo!() },
-            Query(ShapesInRegion { target, search_layers, region, inclusive, }) => { todo!() },
-            Query(ShapesAtPoint { target, search_layers, point, })              => { todo!() },
+            Query(query) => {
+                use VectorQuery::*;
+                match query {
+                    WholeDocument(target)                                        => { todo!() },
+                    DocumentOutline(target)                                      => { canvas.send_vec_query_response(target, &context, |canvas, response| canvas.query_document_outline(response)).await.ok(); },
+                    Layers(target, layer_list)                                   => { todo!() },
+                    Shapes(target, shape_list)                                   => { todo!() },
+                    Brushes(target, brush_list)                                  => { todo!() },
+                    ShapesInRegion { target, search_layers, region, inclusive, } => { todo!() },
+                    ShapesAtPoint { target, search_layers, point, }              => { todo!() },
+                }
+            }
         }
     }
 }
@@ -73,10 +84,10 @@ impl SceneMessage for SqliteCanvasRequest {
     fn initialise(init_context: &impl SceneInitialisationContext) {
         init_context.add_subprogram(SubProgramId::called("flowbetween::sqlite_canvas"), sqlite_canvas_program_new_in_memory, 20);
 
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|msgs| msgs.map(|msg| SqliteCanvasRequest::Edit(msg)))), (), StreamId::with_message_type::<VectorCanvas>()).unwrap();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|msgs| msgs.ready_chunks(100).map(|msgs| SqliteCanvasRequest::Edit(msgs)))), (), StreamId::with_message_type::<VectorCanvas>()).unwrap();
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|msgs| msgs.map(|msg| SqliteCanvasRequest::Query(msg)))), (), StreamId::with_message_type::<VectorQuery>()).unwrap();
 
-        init_context.connect_programs((), StreamTarget::Filtered(FilterHandle::for_filter(|msgs| msgs.map(|msg| SqliteCanvasRequest::Edit(msg))), SubProgramId::called("flowbetween::sqlite_canvas")), StreamId::with_message_type::<VectorCanvas>()).unwrap();
+        init_context.connect_programs((), StreamTarget::Filtered(FilterHandle::for_filter(|msgs| msgs.ready_chunks(100).map(|msgs| SqliteCanvasRequest::Edit(msgs))), SubProgramId::called("flowbetween::sqlite_canvas")), StreamId::with_message_type::<VectorCanvas>()).unwrap();
         init_context.connect_programs((), StreamTarget::Filtered(FilterHandle::for_filter(|msgs| msgs.map(|msg| SqliteCanvasRequest::Query(msg))), SubProgramId::called("flowbetween::sqlite_canvas")), StreamId::with_message_type::<VectorQuery>()).unwrap();
     }
 }
