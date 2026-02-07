@@ -61,18 +61,6 @@ impl SqliteCanvas {
     }
 
     ///
-    /// Sets the properties for a property target
-    ///
-    pub fn set_properties(&mut self, target: CanvasPropertyTarget, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
-        match target {
-            CanvasPropertyTarget::Document          => self.set_document_properties(properties),
-            CanvasPropertyTarget::Layer(layer_id)   => self.set_layer_properties(layer_id, properties),
-            CanvasPropertyTarget::Brush(brush_id)   => self.set_brush_properties(brush_id, properties),
-            CanvasPropertyTarget::Shape(shape_id)   => self.set_shape_properties(shape_id, properties),
-        }
-    }
-
-    ///
     /// Retrieve or create a property ID in the database
     ///
     pub (super) fn index_for_property(&mut self, canvas_property_id: CanvasPropertyId) -> Result<i64, ()> {
@@ -135,6 +123,18 @@ impl SqliteCanvas {
     #[inline]
     pub fn order_for_layer_in_transaction(transaction: &Transaction<'_>, layer_id: CanvasLayerId) -> Result<i64, ()> {
         transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
+    }
+
+    ///
+    /// Sets the properties for a property target
+    ///
+    pub fn set_properties(&mut self, target: CanvasPropertyTarget, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+        match target {
+            CanvasPropertyTarget::Document          => self.set_document_properties(properties),
+            CanvasPropertyTarget::Layer(layer_id)   => self.set_layer_properties(layer_id, properties),
+            CanvasPropertyTarget::Brush(brush_id)   => self.set_brush_properties(brush_id, properties),
+            CanvasPropertyTarget::Shape(shape_id)   => self.set_shape_properties(shape_id, properties),
+        }
     }
 
     ///
