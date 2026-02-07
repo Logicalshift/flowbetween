@@ -213,7 +213,6 @@ impl SqliteCanvas {
                 }
             });
 
-
         // Set each of the int properties
         Self::set_sql_properties(int_properties, command, other_params)?;
 
