@@ -34,8 +34,8 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
             Edit(AddShape(shape_id, shape_defn))                    => { canvas.add_shape(shape_id, shape_defn).ok(); }
             Edit(RemoveShape(shape_id))                             => { canvas.remove_shape(shape_id).ok(); }
             Edit(SetShapeDefinition(shape_id, shape_defn))          => { canvas.set_shape_definition(shape_id, shape_defn).ok(); }
-            Edit(AddBrush(brush_id))                                => { todo!() }
-            Edit(RemoveBrush(brush_id))                             => { todo!() }
+            Edit(AddBrush(brush_id))                                => { canvas.add_brush(brush_id).ok(); }
+            Edit(RemoveBrush(brush_id))                             => { canvas.remove_brush(brush_id).ok(); }
             Edit(ReorderShape { shape_id, before_shape, })          => { canvas.reorder_shape(shape_id, before_shape).ok(); }
             Edit(SetShapeParent(shape_id, parent))                  => { canvas.set_shape_parent(shape_id, parent).ok(); }
             Edit(SetProperty(property_target, properties))          => { canvas.set_properties(property_target, properties).ok(); }
