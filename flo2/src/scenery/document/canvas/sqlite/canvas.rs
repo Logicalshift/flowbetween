@@ -339,17 +339,17 @@ impl SqliteCanvas {
 
         // Run commands to set each type of property value
         {
-            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushIntProperties (ShapeId, PropertyId, IntValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushIntProperties (BrushId, PropertyId, IntValue) VALUES (?, ?, ?)").map_err(|_| ())?;
             Self::set_int_properties(&properties, &mut int_properties_cmd, vec![&brush_idx])?;
         }
 
         {
-            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushFloatProperties (ShapeId, PropertyId, FloatValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushFloatProperties (BrushId, PropertyId, FloatValue) VALUES (?, ?, ?)").map_err(|_| ())?;
             Self::set_float_properties(&properties, &mut float_properties_cmd, vec![&brush_idx])?;
         }
 
         {
-            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushBlobProperties (ShapeId, PropertyId, BlobValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushBlobProperties (BrushId, PropertyId, BlobValue) VALUES (?, ?, ?)").map_err(|_| ())?;
             Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![&brush_idx])?;
         }
 
@@ -495,6 +495,27 @@ impl SqliteCanvas {
         // Query parent info for order compaction before the cascading delete
         let layer_info = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).ok();
         let group_info = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).ok();
+
+        // Recursively delete all shapes grouped under this shape (and their descendants)
+        {
+            let mut stmt = transaction.prepare_cached(
+                "WITH RECURSIVE descendants(ShapeId) AS (
+                    SELECT ShapeId FROM ShapeGroups WHERE ParentShapeId = ?1
+                    UNION ALL
+                    SELECT sg.ShapeId FROM ShapeGroups sg JOIN descendants d ON sg.ParentShapeId = d.ShapeId
+                )
+                SELECT ShapeId FROM descendants"
+            ).map_err(|_| ())?;
+            let descendant_ids: Vec<i64> = stmt.query_map(params![shape_idx], |row| row.get(0))
+                .map_err(|_| ())?
+                .filter_map(|r| r.ok())
+                .collect();
+            drop(stmt);
+
+            for desc_id in descendant_ids {
+                transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![desc_id]).map_err(|_| ())?;
+            }
+        }
 
         // Delete the shape: CASCADE handles ShapeLayers, ShapeGroups, ShapeBrushes, and properties
         transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
