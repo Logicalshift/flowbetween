@@ -3,6 +3,7 @@ use super::super::queries::*;
 use super::super::vector_editor::*;
 
 use flo_scene::*;
+use flo_scene::programs::*;
 
 use futures::prelude::*;
 use ::serde::*;
@@ -20,6 +21,8 @@ pub enum SqliteCanvasRequest {
 /// Runs a program that edits the document stored in the Sqlite connection
 ///
 pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, context: SceneContext, canvas: SqliteCanvas) {
+    let mut subscribers = EventSubscribers::new();
+
     let mut canvas  = canvas;
     let mut input   = input;
     while let Some(msg) = input.next().await {
@@ -27,8 +30,12 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
 
         match msg {
             Edit(edits) => {
+                use VectorCanvas::*;
+
+                // Series of canvas editing requests
+                let is_changed = edits.iter().any(|edit| !matches!(edit, Subscribe(_)));
+
                 for edit in edits {
-                    use VectorCanvas::*;
                     match edit {
                         AddLayer { new_layer_id, before_layer, }        => { canvas.add_layer(new_layer_id, before_layer).ok(); }
                         RemoveLayer(layer_id)                           => { canvas.remove_layer(layer_id).ok(); }
@@ -44,13 +51,20 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
                         AddShapeBrushes(shape_id, brush_ids)            => { canvas.add_shape_brushes(shape_id, brush_ids).ok(); }
                         RemoveProperty(property_target, property_list)  => { canvas.delete_properties(property_target, property_list).ok(); }
                         RemoveShapeBrushes(shape_id, brush_ids)         => { canvas.remove_shape_brushes(shape_id, brush_ids).ok(); }
-                        Subscribe(edit_target)                          => { todo!() }
+                        Subscribe(edit_target)                          => { if let Ok(edit_target) = context.send(edit_target) { subscribers.add_target(edit_target); } }
                     }
+                }
+
+                if is_changed {
+                    // Send a message to indicate what's changed
+                    subscribers.send(()).await;
                 }
             }
 
             Query(query) => {
+                // Query for the canvas
                 use VectorQuery::*;
+
                 match query {
                     WholeDocument(target)                                        => { todo!() },
                     DocumentOutline(target)                                      => { canvas.send_vec_query_response(target, &context, |canvas, response| canvas.query_document_outline(response)).await.ok(); },
