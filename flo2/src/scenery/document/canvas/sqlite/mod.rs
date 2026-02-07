@@ -5,4 +5,7 @@ pub use canvas::*;
 pub use canvas_program::*;
 
 #[cfg(test)]
-mod test;
+mod test_canvas;
+
+#[cfg(test)]
+mod test_canvas_program;
