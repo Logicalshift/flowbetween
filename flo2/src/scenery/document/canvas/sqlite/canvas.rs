@@ -473,12 +473,15 @@ impl SqliteCanvas {
 
         if let Ok(existing_idx) = self.index_for_shape(shape_id) {
             // Replace the existing shape definition in place
-            self.sqlite.execute("UPDATE Shapes SET ShapeType = ?, ShapeData = ? WHERE ShapeId = ?", params![shape_type, shape_data, existing_idx]).map_err(|_| ())?;
+            let mut update_existing = self.sqlite.prepare_cached("UPDATE Shapes SET ShapeType = ?, ShapeData = ? WHERE ShapeId = ?").map_err(|_| ())?;
+            update_existing.execute(params![shape_type, shape_data, existing_idx]).map_err(|_| ())?;
         } else {
             // Insert a new shape with a generated ShapeId
-            let next_id: i64 = self.sqlite.query_one("SELECT COALESCE(MAX(ShapeId), 0) + 1 FROM Shapes", [], |row| row.get(0)).map_err(|_| ())?;
+            let mut insert_new  = self.sqlite.prepare_cached("INSERT INTO Shapes (ShapeId, ShapeGuid, ShapeType, ShapeData) VALUES (?, ?, ?, ?)").map_err(|_| ())?;
+            let mut get_max_id  = self.sqlite.prepare_cached("SELECT COALESCE(MAX(ShapeId), 0) + 1 FROM Shapes").map_err(|_| ())?;
+            let next_id: i64    = get_max_id.query_one([], |row| row.get(0)).map_err(|_| ())?;
 
-            self.sqlite.execute("INSERT INTO Shapes (ShapeId, ShapeGuid, ShapeType, ShapeData) VALUES (?, ?, ?, ?)", params![next_id, shape_id.to_string(), shape_type, shape_data]).map_err(|_| ())?;
+            insert_new.execute(params![next_id, shape_id.to_string(), shape_type, shape_data]).map_err(|_| ())?;
         }
 
         Ok(())
