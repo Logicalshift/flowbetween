@@ -105,8 +105,6 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
                     Layers(target, layer_list)                                   => { canvas.send_vec_query_response(target, &context, move |canvas, response| canvas.query_layers_with_shapes(layer_list, response)).await.ok(); },
                     Shapes(target, shape_list)                                   => { canvas.send_vec_query_response(target, &context, move |canvas, response| canvas.query_shapes(shape_list, response)).await.ok(); },
                     Brushes(target, brush_list)                                  => { canvas.send_vec_query_response(target, &context, move |canvas, response| canvas.query_brushes(brush_list, response)).await.ok(); },
-                    ShapesInRegion { target, search_layers, region, inclusive, } => { todo!() },
-                    ShapesAtPoint { target, search_layers, point, }              => { todo!() },
                 }
             }
         }

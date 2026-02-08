@@ -29,12 +29,6 @@ pub enum VectorQuery {
 
     /// Queries the properties of the specified set of brushes
     Brushes(StreamTarget, Vec<CanvasBrushId>),
-
-    /// Queries the shapes that can be found in a particular region (in a range of layers). If 'inclusive' is true then the shapes must lie entirely in the specified region.
-    ShapesInRegion { target: StreamTarget, search_layers: Vec<CanvasLayerId>, region: (UiPoint, UiPoint), inclusive: bool },
-
-    /// Queries the shapes that can be found at a particular point
-    ShapesAtPoint { target: StreamTarget, search_layers: Vec<CanvasLayerId>, point: UiPoint },
 }
 
 ///
@@ -86,8 +80,6 @@ impl QueryRequest for VectorQuery {
             Layers(_target, layers)                                             => Layers(new_target, layers),
             Shapes(_target, shape_id)                                           => Shapes(new_target, shape_id),
             Brushes(_target, brush_id)                                          => Brushes(new_target, brush_id),
-            ShapesInRegion { target: _, search_layers, region, inclusive }      => ShapesInRegion { target: new_target, search_layers, region, inclusive },
-            ShapesAtPoint { target: _, search_layers, point }                   => ShapesAtPoint { target: new_target, search_layers, point },
         }
     }
 }
