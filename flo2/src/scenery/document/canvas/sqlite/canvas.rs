@@ -1140,6 +1140,31 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Queries a list of layers, retrieving their properties and any shapes that are on them
+    ///
+    pub fn query_layers_with_shapes(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+        // Query the layers
+        let mut layers = vec![];
+        self.query_layers(query_layers, &mut layers)?;
+
+        // Merge in the shapes to generate the result
+        for response in layers {
+            match response {
+                VectorResponse::Layer(layer_id, layer_properties) => {
+                    layer_response.push(VectorResponse::Layer(layer_id, layer_properties));
+                    self.query_shapes_on_layer(layer_id, layer_response)?;
+                }
+
+                other => {
+                    layer_response.push(other);
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    ///
     /// Queries the outline of the document
     ///
     pub fn query_document_outline(&mut self, outline: &mut Vec<VectorResponse>) -> Result<(), ()> {
