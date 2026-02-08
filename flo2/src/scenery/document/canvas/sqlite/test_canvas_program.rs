@@ -172,15 +172,35 @@ fn query_layer() {
         canvas.send(VectorCanvas::SetShapeParent(shape_3, CanvasShapeParent::Layer(layer_2))).await.ok();
         canvas.send(VectorCanvas::SetShapeParent(shape_4, CanvasShapeParent::Layer(layer_2))).await.ok();
 
-        // Query the document outline
-        let outline = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1, layer_2]), ()).unwrap();
-        let outline = outline.collect::<Vec<_>>().await;
+        // Query the layers in a few ways (we start with the simpler second layer)
+        let second_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_2]), ()).unwrap();
+        let second_layer = second_layer.collect::<Vec<_>>().await;
 
-        context.send_message(TestResponse(outline)).await.unwrap();
+        context.send_message(TestResponse(second_layer)).await.unwrap();
+
+        let first_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1]), ()).unwrap();
+        let first_layer = first_layer.collect::<Vec<_>>().await;
+
+        context.send_message(TestResponse(first_layer)).await.unwrap();
+
+        let all_layers = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1, layer_2]), ()).unwrap();
+        let all_layers = all_layers.collect::<Vec<_>>().await;
+
+        context.send_message(TestResponse(all_layers)).await.unwrap();
     }, 1);
 
     // The expected response to the query after this set up
-    let expected = vec![
+    let expected_first = vec![
+        VectorResponse::Layer(layer_1, vec![]),
+        VectorResponse::Shape(shape_1, vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(42))]),
+        VectorResponse::Shape(shape_2, vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(43)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))]),
+    ];
+    let expected_second = vec![
+        VectorResponse::Layer(layer_2, vec![]),
+        VectorResponse::Shape(shape_3, vec![]),
+        VectorResponse::Shape(shape_4, vec![]),
+    ];
+    let expected_all = vec![
         VectorResponse::Layer(layer_1, vec![]),
         VectorResponse::Shape(shape_1, vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(42))]),
         VectorResponse::Shape(shape_2, vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(43)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))]),
@@ -192,7 +212,9 @@ fn query_layer() {
 
     // Run the test
     TestBuilder::new()
-        .expect_message_matching(TestResponse(expected), "")
+        .expect_message_matching(TestResponse(expected_second), "Second layer failed (no properties)")
+        .expect_message_matching(TestResponse(expected_first), "First layer failed (properties)")
+        .expect_message_matching(TestResponse(expected_all), "All layers failed")
         .run_in_scene(&scene, test_program);
 }
 
