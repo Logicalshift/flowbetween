@@ -1094,9 +1094,10 @@ impl SqliteCanvas {
         let mut shapes      = vec![];
         let mut properties  = vec![];
 
-        let mut shapes_rows     = shapes_query.query(params![layer.to_string()]).map_err(|_| ())?;
-        let mut cur_shape_idx   = None;
-        let mut cur_shape_id    = None;
+        let mut shapes_rows      = shapes_query.query(params![layer.to_string()]).map_err(|_| ())?;
+        let mut cur_shape_idx    = None;
+        let mut cur_shape_id     = None;
+        let mut cur_property_idx = None;
 
         while let Ok(Some(shape_row)) = shapes_rows.next() {
             // Update the shape that we're reading
@@ -1108,14 +1109,20 @@ impl SqliteCanvas {
                     properties = vec![];
                 }
 
-                cur_shape_idx = Some(shape_idx);
-                cur_shape_id  = Some(CanvasShapeId::from_string(&shape_row.get::<_, String>(8).map_err(|_| ())?));
+                cur_shape_idx    = Some(shape_idx);
+                cur_shape_id     = Some(CanvasShapeId::from_string(&shape_row.get::<_, String>(8).map_err(|_| ())?));
+                cur_property_idx = None;
             }
 
             // Read the next property
             if let Some(property_value) = Self::decode_property(&shape_row) {
                 let property_idx = shape_row.get::<_, i64>(3).map_err(|_| ())?;
-                properties.push((property_idx, property_value));
+
+                if Some(property_idx) != cur_property_idx {
+                    // Only write the first property if the property is defined in more than one place
+                    cur_property_idx = Some(property_idx);
+                    properties.push((property_idx, property_value));
+                }
             }
         }
 
