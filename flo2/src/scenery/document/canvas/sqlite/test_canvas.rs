@@ -118,7 +118,23 @@ fn set_property_ids() {
 }
 
 #[test]
-fn read_property_ids_from_cache() {
+fn read_property_names() {
+    let mut canvas = SqliteCanvas::new_in_memory().unwrap();
+
+    let property_1 = canvas.index_for_property(CanvasPropertyId::new("One")).unwrap();
+    let property_2 = canvas.index_for_property(CanvasPropertyId::new("Two")).unwrap();
+
+    canvas.property_for_id_cache.clear();
+
+    let property_1_readback = canvas.property_for_index(property_1).unwrap();
+    let property_2_readback = canvas.property_for_index(property_2).unwrap();
+
+    assert!(property_1_readback == CanvasPropertyId::new("One"), "Property 1: {:?} != One", property_1_readback);
+    assert!(property_2_readback == CanvasPropertyId::new("Two"), "Property 2: {:?} != Two", property_2_readback);
+}
+
+#[test]
+fn read_property_ids_without_cache() {
     let mut canvas = SqliteCanvas::new_in_memory().unwrap();
 
     // Write some properties

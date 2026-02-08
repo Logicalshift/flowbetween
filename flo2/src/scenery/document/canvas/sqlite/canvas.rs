@@ -27,8 +27,14 @@ pub struct SqliteCanvas {
     /// Cache of the known property IDs
     pub (super) property_id_cache: HashMap<CanvasPropertyId, i64>,
 
+    /// Reverse cache of the known property IDs
+    pub (super) property_for_id_cache: HashMap<i64, CanvasPropertyId>,
+
     /// Cache of the known shape type IDs
     pub (super) shapetype_id_cache: HashMap<ShapeType, i64>,
+
+    /// Reverse cache of the known shape type IDs
+    pub (super) shapetype_for_id_cache: HashMap<i64, ShapeType>,
 }
 
 impl SqliteCanvas {
@@ -39,9 +45,11 @@ impl SqliteCanvas {
         sqlite.execute_batch("PRAGMA foreign_keys = ON").map_err(|_| ())?;
 
         Ok(Self {
-            sqlite:             sqlite,
-            property_id_cache:  HashMap::new(),
-            shapetype_id_cache: HashMap::new(),
+            sqlite:                 sqlite,
+            property_id_cache:      HashMap::new(),
+            property_for_id_cache:  HashMap::new(),
+            shapetype_id_cache:     HashMap::new(),
+            shapetype_for_id_cache: HashMap::new(),
         })
     }
 
@@ -78,12 +86,14 @@ impl SqliteCanvas {
             if let Ok(property_id) = query_property.query_one([canvas_property_id.name()], |row| row.get::<_, i64>(0)) {
                 // Cache it so we don't need to look it up again
                 self.property_id_cache.insert(canvas_property_id, property_id);
+                self.property_for_id_cache.insert(property_id, canvas_property_id);
 
                 Ok(property_id)
             } else {
                 // Create a new property ID
                 let new_property_id = self.sqlite.query_one("INSERT INTO Properties (Name) VALUES (?) RETURNING PropertyId", [canvas_property_id.name()], |row| row.get::<_, i64>(0)).map_err(|_| ())?;
                 self.property_id_cache.insert(canvas_property_id, new_property_id);
+                self.property_for_id_cache.insert(new_property_id, canvas_property_id);
 
                 Ok(new_property_id)
             }
@@ -103,15 +113,59 @@ impl SqliteCanvas {
             if let Ok(shapetype_id) = query_shapetype.query_one([shape_type.name()], |row| row.get::<_, i64>(0)) {
                 // Cache it so we don't need to look it up again
                 self.shapetype_id_cache.insert(shape_type, shapetype_id);
+                self.shapetype_for_id_cache.insert(shapetype_id, shape_type);
 
                 Ok(shapetype_id)
             } else {
                 // Create a new shape type ID
                 let new_shapetype_id = self.sqlite.query_one("INSERT INTO ShapeTypes (Name) VALUES (?) RETURNING ShapeTypeId", [shape_type.name()], |row| row.get::<_, i64>(0)).map_err(|_| ())?;
                 self.shapetype_id_cache.insert(shape_type, new_shapetype_id);
+                self.shapetype_for_id_cache.insert(new_shapetype_id, shape_type);
 
                 Ok(new_shapetype_id)
             }
+        }
+    }
+
+    ///
+    /// Retrieve the property ID for a database index
+    ///
+    pub (super) fn property_for_index(&mut self, property_index: i64) -> Result<CanvasPropertyId, ()> {
+        if let Some(cached_property) = self.property_for_id_cache.get(&property_index) {
+            // We've encountered this index before so we know its property
+            Ok(*cached_property)
+        } else {
+            // Fetch the property name from the database
+            let mut query_name  = self.sqlite.prepare_cached("SELECT Name FROM Properties WHERE PropertyId = ?").map_err(|_| ())?;
+            let name            = query_name.query_one([property_index], |row| row.get::<_, String>(0)).map_err(|_| ())?;
+
+            // Create the property ID and cache it
+            let canvas_property_id = CanvasPropertyId::new(&name);
+            self.property_id_cache.insert(canvas_property_id, property_index);
+            self.property_for_id_cache.insert(property_index, canvas_property_id);
+
+            Ok(canvas_property_id)
+        }
+    }
+
+    ///
+    /// Retrieve the shape type for a database index
+    ///
+    pub (super) fn shapetype_for_index(&mut self, shapetype_index: i64) -> Result<ShapeType, ()> {
+        if let Some(cached_shapetype) = self.shapetype_for_id_cache.get(&shapetype_index) {
+            // We've encountered this index before so we know its shape type
+            Ok(*cached_shapetype)
+        } else {
+            // Fetch the shape type name from the database
+            let mut query_name  = self.sqlite.prepare_cached("SELECT Name FROM ShapeTypes WHERE ShapeTypeId = ?").map_err(|_| ())?;
+            let name            = query_name.query_one([shapetype_index], |row| row.get::<_, String>(0)).map_err(|_| ())?;
+
+            // Create the shape type and cache it
+            let shape_type = ShapeType::new(&name);
+            self.shapetype_id_cache.insert(shape_type, shapetype_index);
+            self.shapetype_for_id_cache.insert(shapetype_index, shape_type);
+
+            Ok(shape_type)
         }
     }
 
@@ -844,28 +898,89 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Given a row returned from the database with the int, float and blob values for a property at the start, in
+    /// that order, decodes the canvas property corresponding to that row.
+    ///
+    fn decode_property(row: &Row) -> Option<CanvasProperty> {
+        if let Some(int_val) = row.get::<_, Option<i64>>(0).ok()? {
+            Some(CanvasProperty::Int(int_val))
+        } else if let Some(float_val) = row.get::<_, Option<f64>>(1).ok()? {
+            Some(CanvasProperty::Float(float_val as _))
+        } else if let Some(blob_val) = row.get::<_, Option<Vec<u8>>>(2).ok()? {
+            Some(postcard::from_bytes(&blob_val).ok()?)
+        } else {
+            None
+        }
+    }
+
+    ///
+    /// Queries the layers and their properties in the document
+    ///
+    pub fn query_layers(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+        // Query to fetch the properties ofr each layer
+        let properties_query =
+            "
+            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId)
+            FROM Layers l
+            LEFT OUTER JOIN LayerIntProperties   ip ON ip.LayerId = l.LayerId
+            LEFT OUTER JOIN LayerFloatProperties fp ON fp.LayerId = l.LayerId
+            LEFT OUTER JOIN LayerBlobProperties  bp ON bp.LayerId = l.LayerId
+            WHERE l.LayerGuid = ?
+            ";
+        let mut properties_query = self.sqlite.prepare_cached(properties_query).map_err(|_| ())?;
+
+        // We query layers one at a time (would be nice if we could pass in an array to Sqlite)
+        let mut layers = vec![];
+
+        // Read the property values
+        for layer in query_layers {
+            // Read the properties for this layer
+            let properties = properties_query.query_map(params![layer.to_string()], |row| {
+                    let property_idx    = row.get::<_, i64>(3)?;
+                    let property_value  = Self::decode_property(&row);
+
+                    Ok((property_idx, property_value))
+                }).map_err(|_| ())?
+                .flatten()
+                .flat_map(|(property_idx, value)| Some((property_idx, value?)))
+                .collect::<Vec<_>>();
+
+            layers.push((layer, properties));
+        }
+
+        drop(properties_query);
+
+        // Map the property indexes to the actual property values, then generate the layer response
+        for (layer, properties) in layers.into_iter() {
+            let properties = properties.into_iter()
+                .map(|(property_idx, value)| Ok((self.property_for_index(property_idx)?, value)))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            layer_response.push(VectorResponse::Layer(layer, properties));
+        }
+
+        Ok(())
+    }
+
+    ///
     /// Queries the outline of the document
     ///
     pub fn query_document_outline(&mut self, outline: &mut Vec<VectorResponse>) -> Result<(), ()> {
         // Add the document properties to start
         outline.push(VectorResponse::Document(vec![]));
 
-        // Indicate the layers
-        let mut layer_order     = vec![];
-
         // Layers are fetched in order
         let mut select_layers   = self.sqlite.prepare_cached("SELECT LayerGuid FROM Layers ORDER BY OrderIdx ASC").map_err(|_| ())?;
-        let layers              = select_layers.query_map(params![], |row| Ok(row.get::<_, String>(0)?)).map_err(|_| ())?;
+        let layers              = select_layers.query_map(params![], |row| Ok(CanvasLayerId::from_string(&row.get::<_, String>(0)?)))
+            .map_err(|_| ())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| ())?;
+        drop(select_layers);
 
-        for layer_row in layers {
-            let layer_guid = layer_row.map_err(|_| ())?;
-            let layer_guid = CanvasLayerId::from_string(&layer_guid);
+        // Use the layer query to populate the layers, then write the order
+        self.query_layers(layers.iter().copied(), outline)?;
+        outline.push(VectorResponse::LayerOrder(layers));
 
-            layer_order.push(layer_guid);
-            outline.push(VectorResponse::Layer(layer_guid, vec![]));
-        }
-
-        outline.push(VectorResponse::LayerOrder(layer_order));
         Ok(())
     }
 }
