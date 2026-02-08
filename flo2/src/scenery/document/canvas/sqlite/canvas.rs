@@ -1149,10 +1149,11 @@ impl SqliteCanvas {
         // Query to fetch the properties for each shape, including brush properties from attached brushes
         let shapes_query =
             "
-            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId) AS PropertyId, 0 AS Source, 0 AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid
+            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId) AS PropertyId, 0 AS Source, 0 AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, g.ParentShapeId As GroupIdx
             FROM Shapes s
             INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
             INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
+            LEFT OUTER JOIN ShapeGroups          g  ON g.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeIntProperties   ip ON ip.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeFloatProperties fp ON fp.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeBlobProperties  bp ON bp.ShapeId = s.ShapeId
@@ -1160,11 +1161,12 @@ impl SqliteCanvas {
 
             UNION ALL
 
-            SELECT bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId, 1 AS Source, sb.OrderIdx AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid
+            SELECT bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId, 1 AS Source, sb.OrderIdx AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, g.ParentShapeId As GroupIdx
             FROM Shapes s
             INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
             INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
             INNER JOIN      ShapeBrushes         sb ON sb.ShapeId = s.ShapeId
+            LEFT OUTER JOIN ShapeGroups          g  ON g.ShapeId = s.ShapeId
             LEFT OUTER JOIN BrushIntProperties   bip ON bip.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushFloatProperties bfp ON bfp.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushBlobProperties  bbp ON bbp.BrushId = sb.BrushId
@@ -1182,11 +1184,48 @@ impl SqliteCanvas {
         let mut cur_shape_idx    = None;
         let mut cur_shape_id     = None;
         let mut cur_property_idx = None;
+        let mut cur_group        = None;
+        let mut group_stack      = vec![];
 
         while let Ok(Some(shape_row)) = shapes_rows.next() {
             // Update the shape that we're reading
             let shape_idx = shape_row.get::<_, i64>(7).map_err(|_| ())?;
             if Some(shape_idx) != cur_shape_idx {
+                // Manage the group. We can either be entering a group for the previous shape (new group ID matching the last shape we generated), or leaving to a parent group (new group ID not matching the last shape we generated)
+                // Groups always have a 'parent' shape so the case where a group changes to a shape we haven't already seen in this way should be impossible
+                if let Some(last_shape_idx) = cur_shape_idx {
+                    let group_idx = shape_row.get::<_, Option<i64>>(9).map_err(|_| ())?;
+                    if group_idx != cur_group {
+                        // Group has changed
+                        if let Some(group_idx) = group_idx {
+                            // Changed to either a new child group or a parent group
+                            if group_idx == last_shape_idx {
+                                // Moving further down the stack
+                                group_stack.push(group_idx);
+                                shape_response.push(VectorResponse::StartGroup);
+                            } else {
+                                // Leaving to a parent group
+                                while group_stack.last() != Some(&group_idx) {
+                                    if group_stack.pop().is_none() {
+                                        // Oops: if we get here there's some corruption in the shape ordering
+                                        debug_assert!(false, "Moved to a group that's not a child or a parent of the current shape");
+                                        break;
+                                    }
+
+                                    shape_response.push(VectorResponse::EndGroup);
+                                }
+                            }
+                        } else {
+                            // Left all groups and back at the main layer
+                            while group_stack.pop().is_some() {
+                                shape_response.push(VectorResponse::EndGroup);
+                            }
+                        }
+
+                        cur_group = group_idx;
+                    }
+                }
+
                 // Finished receiving properties for the current shape, so move on to the next
                 if let Some(old_shape_id) = cur_shape_id {
                     shapes.push((old_shape_id, properties));
