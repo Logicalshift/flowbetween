@@ -17,7 +17,7 @@ fn test_ellipse() -> CanvasShape {
 }
 
 fn test_shape_type() -> ShapeType {
-    ShapeType::new("flo2::test")
+    ShapeType::new("flowbetween::test")
 }
 
 #[test]
@@ -44,6 +44,10 @@ fn query_document_outline() {
         canvas.send(VectorCanvas::AddLayer { new_layer_id: layer_1, before_layer: None }).await.unwrap();
         canvas.send(VectorCanvas::AddLayer { new_layer_id: layer_2, before_layer: Some(layer_1) }).await.unwrap();
 
+        // Set some properties
+        canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Document, vec![(CanvasPropertyId::new("test::document::property"), CanvasProperty::Int(42))])).await.unwrap();
+        canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Layer(layer_2), vec![(CanvasPropertyId::new("test::layer::property"), CanvasProperty::Int(43))])).await.unwrap();
+
         // Query the document outline
         let outline = context.spawn_query(ReadCommand::default(), VectorQuery::DocumentOutline(().into()), ()).unwrap();
         let outline = outline.collect::<Vec<_>>().await;
@@ -53,8 +57,8 @@ fn query_document_outline() {
 
     // The expected response to the query after this set up
     let expected = vec![
-        VectorResponse::Document(vec![]),
-        VectorResponse::Layer(layer_2, vec![]),
+        VectorResponse::Document(vec![(CanvasPropertyId::new("test::document::property"), CanvasProperty::Int(42))]),
+        VectorResponse::Layer(layer_2, vec![(CanvasPropertyId::new("test::layer::property"), CanvasProperty::Int(43))]),
         VectorResponse::Layer(layer_1, vec![]),
         VectorResponse::LayerOrder(vec![layer_2, layer_1]),
     ];
