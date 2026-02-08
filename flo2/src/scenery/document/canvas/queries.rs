@@ -20,7 +20,7 @@ pub enum VectorQuery {
     /// Queries the document and layer properties without returning any shape data
     DocumentOutline(StreamTarget),
 
-    /// Queries the entities associated with the specified layer
+    /// Queries the entities associated with the specified layers
     Layers(StreamTarget, Vec<CanvasLayerId>),
 
     /// Queries specific shapes

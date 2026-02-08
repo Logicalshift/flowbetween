@@ -1010,7 +1010,7 @@ impl SqliteCanvas {
 
             SELECT bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId, 1 AS Source, sb.OrderIdx AS BrushOrder
             FROM Shapes s
-            JOIN ShapeBrushes sb ON sb.ShapeId = s.ShapeId
+            INNER JOIN      ShapeBrushes         sb ON sb.ShapeId = s.ShapeId
             LEFT OUTER JOIN BrushIntProperties   bip ON bip.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushFloatProperties bfp ON bfp.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushBlobProperties  bbp ON bbp.BrushId = sb.BrushId
@@ -1033,7 +1033,13 @@ impl SqliteCanvas {
                 }).map_err(|_| ())?
                 .flatten()
                 .flat_map(|(property_idx, value)| Some((property_idx, value?)))
-                .collect::<Vec<_>>();
+                .fold(vec![], |mut properties: Vec<(i64, CanvasProperty)>, (property_idx, value)| {
+                    // Only keep the first value for each property index (results are ordered so the shape property comes before any brush properties)
+                    if properties.last().map_or(true, |(last_idx, _)| *last_idx != property_idx) {
+                        properties.push((property_idx, value));
+                    }
+                    properties
+                });
 
             shapes.push((shape, properties));
         }
@@ -1047,6 +1053,87 @@ impl SqliteCanvas {
                 .collect::<Result<Vec<_>, _>>()?;
 
             shape_response.push(VectorResponse::Shape(shape, properties));
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Queries the shapes and their properties on a particular layer
+    ///
+    pub fn query_shapes_on_layer(&mut self, layer: CanvasLayerId, shape_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+        // Query to fetch the properties for each shape, including brush properties from attached brushes
+        let shapes_query =
+            "
+            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId) AS PropertyId, 0 AS Source, 0 AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid
+            FROM Shapes s
+            INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
+            INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
+            LEFT OUTER JOIN ShapeIntProperties   ip ON ip.ShapeId = s.ShapeId
+            LEFT OUTER JOIN ShapeFloatProperties fp ON fp.ShapeId = s.ShapeId
+            LEFT OUTER JOIN ShapeBlobProperties  bp ON bp.ShapeId = s.ShapeId
+            WHERE l.LayerId = ?1
+
+            UNION ALL
+
+            SELECT bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId, 1 AS Source, sb.OrderIdx AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid
+            FROM Shapes s
+            INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
+            INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
+            INNER JOIN      ShapeBrushes         sb ON sb.ShapeId = s.ShapeId
+            LEFT OUTER JOIN BrushIntProperties   bip ON bip.BrushId = sb.BrushId
+            LEFT OUTER JOIN BrushFloatProperties bfp ON bfp.BrushId = sb.BrushId
+            LEFT OUTER JOIN BrushBlobProperties  bbp ON bbp.BrushId = sb.BrushId
+            WHERE l.LayerId = ?1
+
+            ORDER BY ShapeOrder ASC, PropertyId ASC, Source ASC, BrushOrder DESC
+            ";
+        let mut shapes_query = self.sqlite.prepare_cached(shapes_query).map_err(|_| ())?;
+
+        // Shapes we've seen from the query, and the properties we've gathered from each shape
+        let mut shapes      = vec![];
+        let mut properties  = vec![];
+
+        let mut shapes_rows     = shapes_query.query(params![layer.to_string()]).map_err(|_| ())?;
+        let mut cur_shape_idx   = None;
+        let mut cur_shape_id    = None;
+
+        while let Ok(Some(shape_row)) = shapes_rows.next() {
+            // Update the shape that we're reading
+            let shape_idx = shape_row.get::<_, i64>(7).map_err(|_| ())?;
+            if Some(shape_idx) != cur_shape_idx {
+                // Finished receiving properties for the current shape, so move on to the next
+                if let Some(old_shape_id) = cur_shape_id {
+                    shapes.push((old_shape_id, properties));
+                    properties = vec![];
+                }
+
+                cur_shape_idx = Some(shape_idx);
+                cur_shape_id  = Some(CanvasShapeId::from_string(&shape_row.get::<_, String>(8).map_err(|_| ())?));
+            }
+
+            // Read the next property
+            if let Some(property_value) = Self::decode_property(&shape_row) {
+                let property_idx = shape_row.get::<_, i64>(3).map_err(|_| ())?;
+                properties.push((property_idx, property_value));
+            }
+        }
+
+        // Set the last shape
+        if let Some(shape_id) = cur_shape_id {
+            shapes.push((shape_id, properties));
+        }
+
+        drop(shapes_rows);
+        drop(shapes_query);
+
+        // Generate the shapes for the response
+        for (shape_id, properties) in shapes.into_iter() {
+            let properties = properties.into_iter()
+                .map(|(property_idx, value)| Ok((self.property_for_index(property_idx)?, value)))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            shape_response.push(VectorResponse::Shape(shape_id, properties));
         }
 
         Ok(())
