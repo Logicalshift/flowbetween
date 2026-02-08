@@ -290,6 +290,8 @@ fn query_layer_with_groups() {
     let nested_group    = CanvasShapeId::new();
     let nested_child_1  = CanvasShapeId::new();
     let nested_child_2  = CanvasShapeId::new();
+    let nested2_child_1 = CanvasShapeId::new();
+    let nested2_child_2 = CanvasShapeId::new();
     let child_2         = CanvasShapeId::new();
     let after_group     = CanvasShapeId::new();
 
@@ -306,6 +308,8 @@ fn query_layer_with_groups() {
         canvas.send(VectorCanvas::AddShape(nested_group, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
         canvas.send(VectorCanvas::AddShape(nested_child_1, ShapeType::new("shape"), test_ellipse())).await.unwrap();
         canvas.send(VectorCanvas::AddShape(nested_child_2, ShapeType::new("shape"), test_rect())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(nested2_child_1, ShapeType::new("shape"), test_ellipse())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(nested2_child_2, ShapeType::new("shape"), test_rect())).await.unwrap();
         canvas.send(VectorCanvas::AddShape(child_2, ShapeType::new("shape"), test_ellipse())).await.unwrap();
         canvas.send(VectorCanvas::AddShape(after_group, ShapeType::new("shape"), test_rect())).await.unwrap();
 
@@ -320,6 +324,8 @@ fn query_layer_with_groups() {
         // Parent nested children to the nested group
         canvas.send(VectorCanvas::SetShapeParent(nested_child_1, CanvasShapeParent::Shape(nested_group))).await.ok();
         canvas.send(VectorCanvas::SetShapeParent(nested_child_2, CanvasShapeParent::Shape(nested_group))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(nested2_child_1, CanvasShapeParent::Shape(nested_child_2))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(nested2_child_2, CanvasShapeParent::Shape(nested_child_2))).await.ok();
 
         // Parent the trailing shape to the layer
         canvas.send(VectorCanvas::SetShapeParent(after_group, CanvasShapeParent::Layer(layer))).await.ok();
@@ -341,6 +347,10 @@ fn query_layer_with_groups() {
         VectorResponse::StartGroup,
         VectorResponse::Shape(nested_child_1, vec![]),
         VectorResponse::Shape(nested_child_2, vec![]),
+        VectorResponse::StartGroup,
+        VectorResponse::Shape(nested2_child_1, vec![]),
+        VectorResponse::Shape(nested2_child_2, vec![]),
+        VectorResponse::EndGroup,
         VectorResponse::EndGroup,
         VectorResponse::Shape(child_2, vec![]),
         VectorResponse::EndGroup,
