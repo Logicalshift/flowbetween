@@ -210,6 +210,67 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Collects all descendents of a shape in depth-first pre-order (does not include the shape itself).
+    ///
+    #[inline]
+    fn all_descendents_for_shape(transaction: &Transaction<'_>, shape_idx: i64) -> Result<Vec<i64>, ()> {
+        let mut result = Vec::new();
+        Self::collect_shape_dependents(transaction, shape_idx, &mut result)?;
+        Ok(result)
+    }
+
+    ///
+    /// Recurses through the descendents of a shape
+    ///
+    fn collect_shape_dependents(transaction: &Transaction<'_>, parent_idx: i64, result: &mut Vec<i64>) -> Result<(), ()> {
+        // Using a recursive Rust function because SQL CTEs don't guarantee depth-first ordering.
+        let mut stmt = transaction.prepare_cached("SELECT ShapeId FROM ShapeGroups WHERE ParentShapeId = ? ORDER BY OrderIdx ASC").map_err(|_| ())?;
+        let children: Vec<i64> = stmt.query_map(params![parent_idx], |row| row.get(0))
+            .map_err(|_| ())?
+            .filter_map(|r| r.ok())
+            .collect();
+        drop(stmt);
+
+        for child in children {
+            result.push(child);
+            Self::collect_shape_dependents(transaction, child, result)?;
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Inserts a block of shapes into ShapeLayers at the specified position, shifting existing entries to make room.
+    ///
+    fn insert_shapes_on_layer(transaction: &Transaction<'_>, layer_id: i64, at_order: i64, shape_ids: &[i64]) -> Result<(), ()> {
+        let block_size = shape_ids.len() as i64;
+
+        // Make room for the block
+        transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx + ? WHERE LayerId = ? AND OrderIdx >= ?", params![block_size, layer_id, at_order]).map_err(|_| ())?;
+
+        // Insert each shape
+        let mut insert = transaction.prepare_cached("INSERT INTO ShapeLayers (ShapeId, LayerId, OrderIdx) VALUES (?, ?, ?)").map_err(|_| ())?;
+        for (i, shape_id) in shape_ids.iter().enumerate() {
+            insert.execute(params![shape_id, layer_id, at_order + i as i64]).map_err(|_| ())?;
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Removes a contiguous block of entries from ShapeLayers and compacts the ordering.
+    ///
+    fn remove_shapes_from_layer(transaction: &Transaction<'_>, layer_id: i64, from_order: i64, block_size: i64) -> Result<(), ()> {
+        // Delete the block
+        transaction.execute("DELETE FROM ShapeLayers WHERE LayerId = ? AND OrderIdx >= ? AND OrderIdx < ?", params![layer_id, from_order, from_order + block_size]).map_err(|_| ())?;
+
+        // Compact the ordering
+        transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - ? WHERE LayerId = ? AND OrderIdx >= ?", params![block_size, layer_id, from_order + block_size]).map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
     /// Sets the properties for a property target
     ///
     pub fn set_properties(&mut self, target: CanvasPropertyTarget, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
@@ -646,36 +707,24 @@ impl SqliteCanvas {
         let layer_info = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).ok();
         let group_info = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).ok();
 
-        // Recursively delete all shapes grouped under this shape (and their descendants)
-        {
-            let mut stmt = transaction.prepare_cached(
-                "WITH RECURSIVE descendants(ShapeId) AS (
-                    SELECT ShapeId FROM ShapeGroups WHERE ParentShapeId = ?1
-                    UNION ALL
-                    SELECT sg.ShapeId FROM ShapeGroups sg JOIN descendants d ON sg.ParentShapeId = d.ShapeId
-                )
-                SELECT ShapeId FROM descendants"
-            ).map_err(|_| ())?;
-            let descendant_ids: Vec<i64> = stmt.query_map(params![shape_idx], |row| row.get(0))
-                .map_err(|_| ())?
-                .filter_map(|r| r.ok())
-                .collect();
-            drop(stmt);
+        // Collect descendents for block-size compaction and deletion
+        let descendents = Self::all_descendents_for_shape(&transaction, shape_idx)?;
+        let block_size  = 1 + descendents.len() as i64;
 
-            for desc_id in descendant_ids {
-                transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![desc_id]).map_err(|_| ())?;
-            }
+        // Delete all descendents from Shapes (CASCADE handles their ShapeLayers, ShapeGroups, properties)
+        for desc_id in &descendents {
+            transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![desc_id]).map_err(|_| ())?;
         }
 
         // Delete the shape: CASCADE handles ShapeLayers, ShapeGroups, ShapeBrushes, and properties
         transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
 
-        // Compact ordering in the parent layer
+        // Compact ordering in the parent layer by block_size (shape + all descendents were contiguous)
         if let Some((layer_id, order_idx)) = layer_info {
-            transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - 1 WHERE LayerId = ? AND OrderIdx > ?", params![layer_id, order_idx]).map_err(|_| ())?;
+            transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - ? WHERE LayerId = ? AND OrderIdx > ?", params![block_size, layer_id, order_idx]).map_err(|_| ())?;
         }
 
-        // Compact ordering in the parent group
+        // Compact ordering in the parent group by 1 (only the shape itself was a direct child)
         if let Some((parent_id, order_idx)) = group_info {
             transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, order_idx]).map_err(|_| ())?;
         }
@@ -706,30 +755,7 @@ impl SqliteCanvas {
 
         let transaction = self.sqlite.transaction().map_err(|_| ())?;
 
-        // Check if shape is on a layer
-        if let Ok((layer_id, original_order)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
-            let before_order = if let Some(before_idx) = before_shape_idx {
-                transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeLayers WHERE ShapeId = ? AND LayerId = ?", params![before_idx, layer_id], |row| row.get(0)).map_err(|_| ())?
-            } else {
-                let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeLayers WHERE LayerId = ?", params![layer_id], |row| row.get(0)).map_err(|_| ())?;
-                max_order.map(|idx| idx + 1).unwrap_or(0)
-            };
-
-            // Remove from original position
-            transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - 1 WHERE LayerId = ? AND OrderIdx > ?", params![layer_id, original_order]).map_err(|_| ())?;
-            let before_order = if before_order > original_order { before_order - 1 } else { before_order };
-
-            // Make space at the new position
-            transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx + 1 WHERE LayerId = ? AND OrderIdx >= ?", params![layer_id, before_order]).map_err(|_| ())?;
-
-            // Move to the new position
-            transaction.execute("UPDATE ShapeLayers SET OrderIdx = ? WHERE ShapeId = ? AND LayerId = ?", params![before_order, shape_idx, layer_id]).map_err(|_| ())?;
-
-            transaction.commit().map_err(|_| ())?;
-            return Ok(());
-        }
-
-        // Check if shape is in a group
+        // Check if shape is in a group first
         if let Ok((parent_id, original_order)) = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
             let before_order = if let Some(before_idx) = before_shape_idx {
                 transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeGroups WHERE ShapeId = ? AND ParentShapeId = ?", params![before_idx, parent_id], |row| row.get(0)).map_err(|_| ())?
@@ -738,15 +764,53 @@ impl SqliteCanvas {
                 max_order.map(|idx| idx + 1).unwrap_or(0)
             };
 
-            // Remove from original position
+            // Reorder within ShapeGroups
             transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, original_order]).map_err(|_| ())?;
             let before_order = if before_order > original_order { before_order - 1 } else { before_order };
 
-            // Make space at the new position
             transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx + 1 WHERE ParentShapeId = ? AND OrderIdx >= ?", params![parent_id, before_order]).map_err(|_| ())?;
-
-            // Move to the new position
             transaction.execute("UPDATE ShapeGroups SET OrderIdx = ? WHERE ShapeId = ?", params![before_order, shape_idx]).map_err(|_| ())?;
+
+            // Rebuild the parent group's ShapeLayers descendents to reflect the new ordering
+            if let Ok((layer_id, parent_order_idx)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![parent_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+                // Collect new depth-first order (ShapeGroups already reordered)
+                let new_descendents = Self::all_descendents_for_shape(&transaction, parent_id)?;
+                let desc_count      = new_descendents.len() as i64;
+
+                // Remove old descendent entries from ShapeLayers
+                Self::remove_shapes_from_layer(&transaction, layer_id, parent_order_idx + 1, desc_count)?;
+
+                // Re-insert in new depth-first order
+                Self::insert_shapes_on_layer(&transaction, layer_id, parent_order_idx + 1, &new_descendents)?;
+            }
+
+            transaction.commit().map_err(|_| ())?;
+            return Ok(());
+        }
+
+        // Check if shape is directly on a layer (not in a group)
+        if let Ok((layer_id, original_order)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+            // Collect descendents for block movement
+            let descendents = Self::all_descendents_for_shape(&transaction, shape_idx)?;
+            let block_size  = 1 + descendents.len() as i64;
+
+            // Build the block
+            let mut block = vec![shape_idx];
+            block.extend(&descendents);
+
+            // Remove the block from its current position
+            Self::remove_shapes_from_layer(&transaction, layer_id, original_order, block_size)?;
+
+            // Query the target position (after removal, so positions are up to date)
+            let before_order = if let Some(before_idx) = before_shape_idx {
+                transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeLayers WHERE ShapeId = ? AND LayerId = ?", params![before_idx, layer_id], |row| row.get(0)).map_err(|_| ())?
+            } else {
+                let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeLayers WHERE LayerId = ?", params![layer_id], |row| row.get(0)).map_err(|_| ())?;
+                max_order.map(|idx| idx + 1).unwrap_or(0)
+            };
+
+            // Re-insert the block at the new position
+            Self::insert_shapes_on_layer(&transaction, layer_id, before_order, &block)?;
 
             transaction.commit().map_err(|_| ())?;
             return Ok(());
@@ -776,10 +840,13 @@ impl SqliteCanvas {
 
         let transaction = self.sqlite.transaction().map_err(|_| ())?;
 
-        // Remove from any existing layer parent
+        // Collect descendents for block operations (the shape and its descendents move together)
+        let descendents = Self::all_descendents_for_shape(&transaction, shape_idx)?;
+        let block_size  = 1 + descendents.len() as i64;
+
+        // Remove from ShapeLayers (covers both direct layer parent and group-via-layer)
         if let Ok((layer_id, order_idx)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
-            transaction.execute("DELETE FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
-            transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - 1 WHERE LayerId = ? AND OrderIdx > ?", params![layer_id, order_idx]).map_err(|_| ())?;
+            Self::remove_shapes_from_layer(&transaction, layer_id, order_idx, block_size)?;
         }
 
         // Remove from any existing group parent
@@ -790,6 +857,10 @@ impl SqliteCanvas {
             transaction.execute("DELETE FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
             transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, order_idx]).map_err(|_| ())?;
         }
+
+        // Build the block of shapes to insert (shape + descendents in depth-first order)
+        let mut block = vec![shape_idx];
+        block.extend(&descendents);
 
         // Add to the new parent at the end
         match parent {
@@ -802,15 +873,28 @@ impl SqliteCanvas {
                 let next_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeLayers WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).map_err(|_| ())?;
                 let next_order = next_order.map(|idx| idx + 1).unwrap_or(0);
 
-                transaction.execute("INSERT INTO ShapeLayers (ShapeId, LayerId, OrderIdx) VALUES (?, ?, ?)", params![shape_idx, layer_idx, next_order]).map_err(|_| ())?;
+                Self::insert_shapes_on_layer(&transaction, layer_idx, next_order, &block)?;
             }
 
             CanvasShapeParent::Shape(_) => {
                 let parent_shape_idx = new_parent_shape_idx.unwrap();
-                let next_order       = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeGroups WHERE ParentShapeId = ?", params![parent_shape_idx], |row| row.get(0)).map_err(|_| ())?;
-                let next_order       = next_order.map(|idx| idx + 1).unwrap_or(0);
+
+                // Count the parent group's current descendents before inserting (for finding the insertion point in ShapeLayers)
+                let parent_old_descendents = Self::all_descendents_for_shape(&transaction, parent_shape_idx)?;
+                let parent_old_block_size  = 1 + parent_old_descendents.len() as i64;
+
+                // Add to ShapeGroups at the end
+                let next_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeGroups WHERE ParentShapeId = ?", params![parent_shape_idx], |row| row.get(0)).map_err(|_| ())?;
+                let next_order = next_order.map(|idx| idx + 1).unwrap_or(0);
 
                 transaction.execute("INSERT INTO ShapeGroups (ShapeId, ParentShapeId, OrderIdx) VALUES (?, ?, ?)", params![shape_idx, parent_shape_idx, next_order]).map_err(|_| ())?;
+
+                // Also add to ShapeLayers if the parent group is on a layer
+                if let Ok((layer_id, parent_sl_order)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![parent_shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+
+                    let insert_at = parent_sl_order + parent_old_block_size;
+                    Self::insert_shapes_on_layer(&transaction, layer_id, insert_at, &block)?;
+                }
             }
         }
 

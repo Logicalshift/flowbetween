@@ -116,6 +116,8 @@ CREATE TABLE Shapes (
 
 /**
  * For shapes that are on a layer, this associates them with that layer
+ * 
+ * If a shape is part of a group, it's also stored in order on the layer (so for things like rendering, it's not necessary to know about groups)
  **/
 CREATE TABLE ShapeLayers (
     ShapeId     INTEGER NOT NULL REFERENCES Shapes(ShapeId) ON DELETE CASCADE,
