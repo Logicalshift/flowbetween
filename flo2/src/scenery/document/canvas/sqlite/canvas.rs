@@ -996,16 +996,27 @@ impl SqliteCanvas {
     /// Queries a list of shapes for their properties
     ///
     pub fn query_shapes(&mut self, query_shapes: impl IntoIterator<Item=CanvasShapeId>, shape_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
-        // Query to fetch the properties for each shape
+        // Query to fetch the properties for each shape, including brush properties from attached brushes
         let properties_query =
             "
-            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId)
+            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId) AS PropertyId, 0 AS Source, 0 AS BrushOrder
             FROM Shapes s
-            LEFT OUTER JOIN ShapeIntProperties   ip ON ip.ShapeId = l.ShapeId
-            LEFT OUTER JOIN ShapeFloatProperties fp ON fp.ShapeId = l.ShapeId
-            LEFT OUTER JOIN ShapeBlobProperties  bp ON bp.ShapeId = l.ShapeId
-            WHERE s.ShapeGuid = ?
-            ORDER BY PropertyId
+            LEFT OUTER JOIN ShapeIntProperties   ip ON ip.ShapeId = s.ShapeId
+            LEFT OUTER JOIN ShapeFloatProperties fp ON fp.ShapeId = s.ShapeId
+            LEFT OUTER JOIN ShapeBlobProperties  bp ON bp.ShapeId = s.ShapeId
+            WHERE s.ShapeGuid = ?1
+
+            UNION ALL
+
+            SELECT bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId, 1 AS Source, sb.OrderIdx AS BrushOrder
+            FROM Shapes s
+            JOIN ShapeBrushes sb ON sb.ShapeId = s.ShapeId
+            LEFT OUTER JOIN BrushIntProperties   bip ON bip.BrushId = sb.BrushId
+            LEFT OUTER JOIN BrushFloatProperties bfp ON bfp.BrushId = sb.BrushId
+            LEFT OUTER JOIN BrushBlobProperties  bbp ON bbp.BrushId = sb.BrushId
+            WHERE s.ShapeGuid = ?1
+
+            ORDER BY PropertyId ASC, Source ASC, BrushOrder DESC
             ";
         let mut properties_query = self.sqlite.prepare_cached(properties_query).map_err(|_| ())?;
 
