@@ -1185,56 +1185,24 @@ impl SqliteCanvas {
         let mut cur_shape_id     = None;
         let mut cur_property_idx = None;
         let mut cur_group        = None;
-        let mut group_stack      = vec![];
 
         while let Ok(Some(shape_row)) = shapes_rows.next() {
             // Update the shape that we're reading
             let shape_idx = shape_row.get::<_, i64>(7).map_err(|_| ())?;
+            let group_idx = shape_row.get::<_, Option<i64>>(9).map_err(|_| ())?;
             if Some(shape_idx) != cur_shape_idx {
-                // Manage the group. We can either be entering a group for the previous shape (new group ID matching the last shape we generated), or leaving to a parent group (new group ID not matching the last shape we generated)
-                // Groups always have a 'parent' shape so the case where a group changes to a shape we haven't already seen in this way should be impossible
-                if let Some(last_shape_idx) = cur_shape_idx {
-                    let group_idx = shape_row.get::<_, Option<i64>>(9).map_err(|_| ())?;
-                    if group_idx != cur_group {
-                        // Group has changed
-                        if let Some(group_idx) = group_idx {
-                            // Changed to either a new child group or a parent group
-                            if group_idx == last_shape_idx {
-                                // Moving further down the stack
-                                group_stack.push(group_idx);
-                                shape_response.push(VectorResponse::StartGroup);
-                            } else {
-                                // Leaving to a parent group
-                                while group_stack.last() != Some(&group_idx) {
-                                    if group_stack.pop().is_none() {
-                                        // Oops: if we get here there's some corruption in the shape ordering
-                                        debug_assert!(false, "Moved to a group that's not a child or a parent of the current shape");
-                                        break;
-                                    }
-
-                                    shape_response.push(VectorResponse::EndGroup);
-                                }
-                            }
-                        } else {
-                            // Left all groups and back at the main layer
-                            while group_stack.pop().is_some() {
-                                shape_response.push(VectorResponse::EndGroup);
-                            }
-                        }
-
-                        cur_group = group_idx;
-                    }
-                }
-
                 // Finished receiving properties for the current shape, so move on to the next
-                if let Some(old_shape_id) = cur_shape_id {
-                    shapes.push((old_shape_id, properties));
+                if let (Some(old_shape_id), Some(old_shape_idx)) = (cur_shape_id, cur_shape_idx) {
+                    // cur_group contains the old group at this point
+                    shapes.push((old_shape_idx, old_shape_id, properties, cur_group));
                     properties = vec![];
                 }
 
+                // Update to track the shape indicated by the current row
                 cur_shape_idx    = Some(shape_idx);
                 cur_shape_id     = Some(CanvasShapeId::from_string(&shape_row.get::<_, String>(8).map_err(|_| ())?));
                 cur_property_idx = None;
+                cur_group        = group_idx;
             }
 
             // Read the next property
@@ -1250,20 +1218,61 @@ impl SqliteCanvas {
         }
 
         // Set the last shape
-        if let Some(shape_id) = cur_shape_id {
-            shapes.push((shape_id, properties));
+        if let (Some(shape_id), Some(shape_idx)) = (cur_shape_id, cur_shape_idx) {
+            shapes.push((shape_idx, shape_id, properties, cur_group));
         }
 
         drop(shapes_rows);
         drop(shapes_query);
 
         // Generate the shapes for the response
-        for (shape_id, properties) in shapes.into_iter() {
+        let mut last_group_idx  = None;
+        let mut last_shape_idx  = None;
+        let mut group_stack     = vec![];
+
+        for (shape_idx, shape_id, properties, group_idx) in shapes.into_iter() {
+            // Generate start or end group messages
+            // We can either be entering a group for the previous shape (new group ID matching the last shape we generated), or 
+            // leaving to a parent group (new group ID not matching the last shape we generated)
+            // Groups always have a 'parent' shape so the case where a group changes to a shape we haven't already seen in this 
+            // way should be impossible
+            if group_idx != last_group_idx {
+                // Group has changed
+                if let Some(group_idx) = group_idx {
+                    // Changed to either a new child group or a parent group
+                    if Some(group_idx) == last_shape_idx {
+                        // Moving further down the stack
+                        group_stack.push(group_idx);
+                        shape_response.push(VectorResponse::StartGroup);
+                    } else {
+                        // Leaving to a parent group
+                        while group_stack.last() != Some(&group_idx) {
+                            if group_stack.pop().is_none() {
+                                // Oops: if we get here there's some corruption in the shape ordering
+                                debug_assert!(false, "Moved to a group that's not a child or a parent of the current shape");
+                                break;
+                            }
+
+                            shape_response.push(VectorResponse::EndGroup);
+                        }
+                    }
+                } else {
+                    // Left all groups and back at the main layer
+                    while group_stack.pop().is_some() {
+                        shape_response.push(VectorResponse::EndGroup);
+                    }
+                }
+            }
+
+            // Map the properties
             let properties = properties.into_iter()
                 .map(|(property_idx, value)| Ok((self.property_for_index(property_idx)?, value)))
                 .collect::<Result<Vec<_>, _>>()?;
 
             shape_response.push(VectorResponse::Shape(shape_id, properties));
+
+            last_group_idx  = group_idx;
+            last_shape_idx  = Some(shape_idx);
         }
 
         Ok(())
