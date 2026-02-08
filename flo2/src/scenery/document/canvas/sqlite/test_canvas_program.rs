@@ -70,6 +70,60 @@ fn query_document_outline() {
 }
 
 #[test]
+fn query_shape_properties() {
+    let scene = Scene::default();
+
+    #[derive(PartialEq, Debug, Serialize, Deserialize)]
+    struct TestResponse(Vec<VectorResponse>);
+
+    impl SceneMessage for TestResponse { }
+
+    let test_program    = SubProgramId::new();
+    let query_program   = SubProgramId::new();
+
+    let shape_1         = CanvasShapeId::new();
+    let shape_2         = CanvasShapeId::new();
+    let brush_1         = CanvasBrushId::new();
+    let brush_2         = CanvasBrushId::new();
+
+    // Program that adds some layers and sends a test response
+    scene.add_subprogram(query_program, move |_input: InputStream<()>, context| async move {
+        let _sqlite     = context.send::<SqliteCanvasRequest>(()).unwrap();
+        let mut canvas  = context.send(()).unwrap();
+
+        // Set up some layers (layer2 vs layer1)
+        canvas.send(VectorCanvas::AddShape(shape_1, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_2, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
+
+        canvas.send(VectorCanvas::AddBrush(brush_1)).await.unwrap();
+        canvas.send(VectorCanvas::AddBrush(brush_2)).await.unwrap();
+        canvas.send(VectorCanvas::AddShapeBrushes(shape_2, vec![brush_1, brush_2])).await.unwrap();
+
+        canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Shape(shape_1), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(42))])).await.unwrap();
+        canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Shape(shape_2), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(43))])).await.unwrap();
+        canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Brush(brush_1), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(44)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(46))])).await.unwrap();
+        canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Brush(brush_2), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(47)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))])).await.unwrap();
+
+        // Query the document outline
+        let outline = context.spawn_query(ReadCommand::default(), VectorQuery::Shapes(().into(), vec![shape_1, shape_2]), ()).unwrap();
+        let outline = outline.collect::<Vec<_>>().await;
+
+        context.send_message(TestResponse(outline)).await.unwrap();
+    }, 1);
+
+    // The expected response to the query after this set up
+    let expected = vec![
+        VectorResponse::Shape(shape_1, vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(42))]),
+        VectorResponse::Shape(shape_2, vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(43)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))]),
+    ];
+
+    // Run the test
+    TestBuilder::new()
+        .expect_message_matching(TestResponse(expected), "")
+        .run_in_scene(&scene, test_program);
+}
+
+#[test]
 fn subscribe_to_canvas_updates() {
     let scene = Scene::default();
 
