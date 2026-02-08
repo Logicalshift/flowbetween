@@ -914,6 +914,36 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Reads the document properties generate s a VectorResponse::Document in the response
+    ///
+    pub fn query_document(&mut self, document_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+        // Read the properties from the three properties tables
+        let mut q_int_properties    = self.sqlite.prepare_cached("SELECT IntValue,   PropertyId FROM DocumentIntProperties").map_err(|_| ())?;
+        let mut q_float_properties  = self.sqlite.prepare_cached("SELECT FloatValue, PropertyId FROM DocumentFloatProperties").map_err(|_| ())?;
+        let mut q_blob_properties   = self.sqlite.prepare_cached("SELECT BlobValue,  PropertyId FROM DocumentBlobProperties").map_err(|_| ())?;
+
+        let int_properties          = q_int_properties.query_map([],   |row| Ok((row.get::<_, i64>(1)?, CanvasProperty::Int(row.get(0)?)))).map_err(|_| ())?.collect::<Result<Vec<_>, _>>().map_err(|_| ())?;
+        let float_properties        = q_float_properties.query_map([], |row| Ok((row.get::<_, i64>(1)?, CanvasProperty::Float(row.get(0)?)))).map_err(|_| ())?.collect::<Result<Vec<_>, _>>().map_err(|_| ())?;
+        let blob_properties         = q_blob_properties.query_map([],  |row| Ok((row.get::<_, i64>(1)?, postcard::from_bytes::<CanvasProperty>(&row.get::<_, Vec<u8>>(0)?).ok()))).map_err(|_| ())?.collect::<Result<Vec<_>, _>>().map_err(|_| ())?;
+
+        drop(q_blob_properties);
+        drop(q_float_properties);
+        drop(q_int_properties);
+
+        // Combine them to create the final set of document properties
+        let document_properties = int_properties.into_iter()
+            .chain(float_properties.into_iter())
+            .chain(blob_properties.into_iter().flat_map(|(property_idx, maybe_value)| Some((property_idx, maybe_value?))))
+            .flat_map(|(property_idx, value)| Some((self.property_for_index(property_idx).ok()?, value)))
+            .collect::<Vec<_>>();
+
+        // Add the response
+        document_response.push(VectorResponse::Document(document_properties));
+
+        Ok(())
+    }
+
+    ///
     /// Queries the layers and their properties in the document
     ///
     pub fn query_layers(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
@@ -967,7 +997,7 @@ impl SqliteCanvas {
     ///
     pub fn query_document_outline(&mut self, outline: &mut Vec<VectorResponse>) -> Result<(), ()> {
         // Add the document properties to start
-        outline.push(VectorResponse::Document(vec![]));
+        self.query_document(outline)?;
 
         // Layers are fetched in order
         let mut select_layers   = self.sqlite.prepare_cached("SELECT LayerGuid FROM Layers ORDER BY OrderIdx ASC").map_err(|_| ())?;
