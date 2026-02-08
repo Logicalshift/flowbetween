@@ -1077,6 +1077,55 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Queries a list of brushes for their properties
+    ///
+    pub fn query_brushes(&mut self, query_brushes: impl IntoIterator<Item=CanvasBrushId>, brush_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+        // Query to fetch the properties ofr each brush
+        let properties_query =
+            "
+            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId)
+            FROM Brushes b
+            LEFT OUTER JOIN BrushIntProperties   ip ON ip.BrushId = b.BrushId
+            LEFT OUTER JOIN BrushFloatProperties fp ON fp.BrushId = b.BrushId
+            LEFT OUTER JOIN BrushBlobProperties  bp ON bp.BrushId = b.BrushId
+            WHERE b.BrushGuid = ?
+            ";
+        let mut properties_query = self.sqlite.prepare_cached(properties_query).map_err(|_| ())?;
+
+        // We query brushes one at a time (would be nice if we could pass in an array to Sqlite)
+        let mut brushes = vec![];
+
+        // Read the property values
+        for brush_id in query_brushes {
+            // Read the properties for this brush
+            let properties = properties_query.query_map(params![brush_id.to_string()], |row| {
+                    let property_idx    = row.get::<_, i64>(3)?;
+                    let property_value  = Self::decode_property(&row);
+
+                    Ok((property_idx, property_value))
+                }).map_err(|_| ())?
+                .flatten()
+                .flat_map(|(property_idx, value)| Some((property_idx, value?)))
+                .collect::<Vec<_>>();
+
+            brushes.push((brush_id, properties));
+        }
+
+        drop(properties_query);
+
+        // Map the property indexes to the actual property values, then generate the layer response
+        for (brush_id, properties) in brushes.into_iter() {
+            let properties = properties.into_iter()
+                .map(|(property_idx, value)| Ok((self.property_for_index(property_idx)?, value)))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            brush_response.push(VectorResponse::Brush(brush_id, properties));
+        }
+
+        Ok(())
+    }
+
+    ///
     /// Queries a list of shapes for their properties
     ///
     pub fn query_shapes(&mut self, query_shapes: impl IntoIterator<Item=CanvasShapeId>, shape_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
