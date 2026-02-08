@@ -100,7 +100,7 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
                 use VectorQuery::*;
 
                 match query {
-                    WholeDocument(target)                                        => { todo!() },
+                    WholeDocument(target)                                        => { canvas.send_vec_query_response(target, &context, |canvas, response| canvas.query_document_whole(response)).await.ok(); },
                     DocumentOutline(target)                                      => { canvas.send_vec_query_response(target, &context, |canvas, response| canvas.query_document_outline(response)).await.ok(); },
                     Layers(target, layer_list)                                   => { canvas.send_vec_query_response(target, &context, move |canvas, response| canvas.query_layers_with_shapes(layer_list, response)).await.ok(); },
                     Shapes(target, shape_list)                                   => { canvas.send_vec_query_response(target, &context, move |canvas, response| canvas.query_shapes(shape_list, response)).await.ok(); },

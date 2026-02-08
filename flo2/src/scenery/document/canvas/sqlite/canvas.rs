@@ -1373,4 +1373,35 @@ impl SqliteCanvas {
 
         Ok(())
     }
+
+    ///
+    /// Queries the whole of the document
+    ///
+    pub fn query_document_whole(&mut self, outline: &mut Vec<VectorResponse>) -> Result<(), ()> {
+        // Add the document properties to start
+        self.query_document(outline)?;
+
+        // Layers are fetched in order
+        let mut select_layers   = self.sqlite.prepare_cached("SELECT LayerGuid FROM Layers ORDER BY OrderIdx ASC").map_err(|_| ())?;
+        let layers              = select_layers.query_map(params![], |row| Ok(CanvasLayerId::from_string(&row.get::<_, String>(0)?)))
+            .map_err(|_| ())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| ())?;
+        drop(select_layers);
+
+        // Use the layer query to populate the layers, then write the order
+        self.query_layers_with_shapes(layers.iter().copied(), outline)?;
+        outline.push(VectorResponse::LayerOrder(layers));
+
+        // Query the brushes
+        let mut select_brushes   = self.sqlite.prepare_cached("SELECT BrushGuid FROM Brushes").map_err(|_| ())?;
+        let brushes              = select_brushes.query_map(params![], |row| Ok(CanvasBrushId::from_string(&row.get::<_, String>(0)?)))
+            .map_err(|_| ())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| ())?;
+        drop(select_brushes);
+        self.query_brushes(brushes, outline)?;
+
+        Ok(())
+    }
 }
