@@ -233,10 +233,13 @@ fn query_layer_with_groups() {
     let layer           = CanvasLayerId::new();
     let group_shape     = CanvasShapeId::new();
     let child_1         = CanvasShapeId::new();
+    let nested_group    = CanvasShapeId::new();
+    let nested_child_1  = CanvasShapeId::new();
+    let nested_child_2  = CanvasShapeId::new();
     let child_2         = CanvasShapeId::new();
     let after_group     = CanvasShapeId::new();
 
-    // Program that sets up a layer with a group containing two child shapes, plus a shape outside the group
+    // Program that sets up a layer with nested groups
     scene.add_subprogram(query_program, move |_input: InputStream<()>, context| async move {
         let _sqlite     = context.send::<SqliteCanvasRequest>(()).unwrap();
         let mut canvas  = context.send(()).unwrap();
@@ -246,6 +249,9 @@ fn query_layer_with_groups() {
 
         canvas.send(VectorCanvas::AddShape(group_shape, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
         canvas.send(VectorCanvas::AddShape(child_1, ShapeType::new("shape"), test_rect())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(nested_group, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(nested_child_1, ShapeType::new("shape"), test_ellipse())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(nested_child_2, ShapeType::new("shape"), test_rect())).await.unwrap();
         canvas.send(VectorCanvas::AddShape(child_2, ShapeType::new("shape"), test_ellipse())).await.unwrap();
         canvas.send(VectorCanvas::AddShape(after_group, ShapeType::new("shape"), test_rect())).await.unwrap();
 
@@ -254,7 +260,12 @@ fn query_layer_with_groups() {
 
         // Parent children to the group shape
         canvas.send(VectorCanvas::SetShapeParent(child_1, CanvasShapeParent::Shape(group_shape))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(nested_group, CanvasShapeParent::Shape(group_shape))).await.ok();
         canvas.send(VectorCanvas::SetShapeParent(child_2, CanvasShapeParent::Shape(group_shape))).await.ok();
+
+        // Parent nested children to the nested group
+        canvas.send(VectorCanvas::SetShapeParent(nested_child_1, CanvasShapeParent::Shape(nested_group))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(nested_child_2, CanvasShapeParent::Shape(nested_group))).await.ok();
 
         // Parent the trailing shape to the layer
         canvas.send(VectorCanvas::SetShapeParent(after_group, CanvasShapeParent::Layer(layer))).await.ok();
@@ -266,12 +277,17 @@ fn query_layer_with_groups() {
         context.send_message(TestResponse(layer_result)).await.unwrap();
     }, 1);
 
-    // The expected response: the group shape, then StartGroup, then the children, then EndGroup, then the trailing shape
+    // The expected response, with two nested groups
     let expected = vec![
         VectorResponse::Layer(layer, vec![]),
         VectorResponse::Shape(group_shape, vec![]),
         VectorResponse::StartGroup,
         VectorResponse::Shape(child_1, vec![]),
+        VectorResponse::Shape(nested_group, vec![]),
+        VectorResponse::StartGroup,
+        VectorResponse::Shape(nested_child_1, vec![]),
+        VectorResponse::Shape(nested_child_2, vec![]),
+        VectorResponse::EndGroup,
         VectorResponse::Shape(child_2, vec![]),
         VectorResponse::EndGroup,
         VectorResponse::Shape(after_group, vec![]),
@@ -279,7 +295,7 @@ fn query_layer_with_groups() {
 
     // Run the test
     TestBuilder::new()
-        .expect_message_matching(TestResponse(expected), "Layer with groups")
+        .expect_message_matching(TestResponse(expected), "Layer with nested groups")
         .run_in_scene(&scene, test_program);
 }
 
