@@ -170,6 +170,17 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Retrieves the shape type for a shape
+    ///
+    fn shapetype_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<ShapeType, ()> {
+        let mut shape_type_query    = self.sqlite.prepare_cached("SELECT ShapeType FROM Shapes WHERE ShapeGuid = ?").map_err(|_| ())?;
+        let shape_type              = shape_type_query.query_one(params![shape_id.to_string()], |row| row.get(0)).map_err(|_| ())?;
+        drop(shape_type_query);
+
+        self.shapetype_for_index(shape_type)
+    }
+
+    ///
     /// Queries the database for the ordering index of the specified layer
     ///
     #[inline]
@@ -1180,12 +1191,13 @@ impl SqliteCanvas {
         drop(properties_query);
 
         // Map the property indexes to the actual property values, then generate the shape responses
-        for (shape, properties) in shapes.into_iter() {
+        for (shape_id, properties) in shapes.into_iter() {
             let properties = properties.into_iter()
                 .map(|(property_idx, value)| Ok((self.property_for_index(property_idx)?, value)))
                 .collect::<Result<Vec<_>, _>>()?;
+            let shape_type = self.shapetype_for_shape(shape_id)?;
 
-            shape_response.push(VectorResponse::Shape(shape, properties));
+            shape_response.push(VectorResponse::Shape(shape_id, shape_type, properties));
         }
 
         Ok(())
@@ -1198,7 +1210,7 @@ impl SqliteCanvas {
         // Query to fetch the properties for each shape, including brush properties from attached brushes
         let shapes_query =
             "
-            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId) AS PropertyId, 0 AS Source, 0 AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, g.ParentShapeId As GroupIdx
+            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId) AS PropertyId, 0 AS Source, 0 AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, g.ParentShapeId As GroupIdx, s.ShapeType AS ShapeType
             FROM Shapes s
             INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
             INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
@@ -1210,7 +1222,7 @@ impl SqliteCanvas {
 
             UNION ALL
 
-            SELECT bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId, 1 AS Source, sb.OrderIdx AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, g.ParentShapeId As GroupIdx
+            SELECT bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId, 1 AS Source, sb.OrderIdx AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, g.ParentShapeId As GroupIdx, s.ShapeType AS ShapeType
             FROM Shapes s
             INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
             INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
@@ -1232,6 +1244,7 @@ impl SqliteCanvas {
         let mut shapes_rows      = shapes_query.query(params![layer.to_string()]).map_err(|_| ())?;
         let mut cur_shape_idx    = None;
         let mut cur_shape_id     = None;
+        let mut cur_shape_type   = None;
         let mut cur_property_idx = None;
         let mut cur_group        = None;
 
@@ -1241,15 +1254,16 @@ impl SqliteCanvas {
             let group_idx = shape_row.get::<_, Option<i64>>(9).map_err(|_| ())?;
             if Some(shape_idx) != cur_shape_idx {
                 // Finished receiving properties for the current shape, so move on to the next
-                if let (Some(old_shape_id), Some(old_shape_idx)) = (cur_shape_id, cur_shape_idx) {
+                if let (Some(old_shape_id), Some(old_shape_idx), Some(old_shape_type)) = (cur_shape_id, cur_shape_idx, cur_shape_type) {
                     // cur_group contains the old group at this point
-                    shapes.push((old_shape_idx, old_shape_id, properties, cur_group));
+                    shapes.push((old_shape_idx, old_shape_id, old_shape_type, properties, cur_group));
                     properties = vec![];
                 }
 
                 // Update to track the shape indicated by the current row
                 cur_shape_idx    = Some(shape_idx);
                 cur_shape_id     = Some(CanvasShapeId::from_string(&shape_row.get::<_, String>(8).map_err(|_| ())?));
+                cur_shape_type   = Some(shape_row.get::<_, i64>(10).map_err(|_| ())?);
                 cur_property_idx = None;
                 cur_group        = group_idx;
             }
@@ -1267,8 +1281,8 @@ impl SqliteCanvas {
         }
 
         // Set the last shape
-        if let (Some(shape_id), Some(shape_idx)) = (cur_shape_id, cur_shape_idx) {
-            shapes.push((shape_idx, shape_id, properties, cur_group));
+        if let (Some(shape_id), Some(shape_idx), Some(shape_type)) = (cur_shape_id, cur_shape_idx, cur_shape_type) {
+            shapes.push((shape_idx, shape_id, shape_type, properties, cur_group));
         }
 
         drop(shapes_rows);
@@ -1279,7 +1293,7 @@ impl SqliteCanvas {
         let mut last_shape_idx  = None;
         let mut group_stack     = vec![];
 
-        for (shape_idx, shape_id, properties, group_idx) in shapes.into_iter() {
+        for (shape_idx, shape_id, shape_type_idx, properties, group_idx) in shapes.into_iter() {
             // Generate start or end group messages
             // We can either be entering a group for the previous shape (new group ID matching the last shape we generated), or 
             // leaving to a parent group (new group ID not matching the last shape we generated)
@@ -1313,12 +1327,13 @@ impl SqliteCanvas {
                 }
             }
 
-            // Map the properties
+            // Map the shape type and properties
+            let shape_type = self.shapetype_for_index(shape_type_idx)?;
             let properties = properties.into_iter()
                 .map(|(property_idx, value)| Ok((self.property_for_index(property_idx)?, value)))
                 .collect::<Result<Vec<_>, _>>()?;
 
-            shape_response.push(VectorResponse::Shape(shape_id, properties));
+            shape_response.push(VectorResponse::Shape(shape_id, shape_type, properties));
 
             last_group_idx  = group_idx;
             last_shape_idx  = Some(shape_idx);

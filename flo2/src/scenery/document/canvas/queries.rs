@@ -2,6 +2,7 @@ use super::brush::*;
 use super::layer::*;
 use super::property::*;
 use super::shape::*;
+use super::shape_type::*;
 
 use crate::scenery::ui::*;
 
@@ -55,7 +56,7 @@ pub enum VectorResponse {
 
     /// Indicates the definition of a shape. These are returned in bottom-to-top order. Properties come from the
     /// shape itself, along with any attached brushes
-    Shape(CanvasShapeId, Vec<(CanvasPropertyId, CanvasProperty)>),
+    Shape(CanvasShapeId, ShapeType, Vec<(CanvasPropertyId, CanvasProperty)>),
 
     /// The following shapes are parented to the previous shape
     StartGroup,
