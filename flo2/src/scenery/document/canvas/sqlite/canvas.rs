@@ -1072,7 +1072,7 @@ impl SqliteCanvas {
             LEFT OUTER JOIN ShapeIntProperties   ip ON ip.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeFloatProperties fp ON fp.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeBlobProperties  bp ON bp.ShapeId = s.ShapeId
-            WHERE l.LayerId = ?1
+            WHERE l.LayerGuid = ?1
 
             UNION ALL
 
@@ -1084,7 +1084,7 @@ impl SqliteCanvas {
             LEFT OUTER JOIN BrushIntProperties   bip ON bip.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushFloatProperties bfp ON bfp.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushBlobProperties  bbp ON bbp.BrushId = sb.BrushId
-            WHERE l.LayerId = ?1
+            WHERE l.LayerGuid = ?1
 
             ORDER BY ShapeOrder ASC, PropertyId ASC, Source ASC, BrushOrder DESC
             ";
