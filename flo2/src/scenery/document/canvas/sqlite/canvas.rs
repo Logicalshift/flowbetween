@@ -944,7 +944,7 @@ impl SqliteCanvas {
     }
 
     ///
-    /// Queries the layers and their properties in the document
+    /// Queries a list of layers for their properties
     ///
     pub fn query_layers(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
         // Query to fetch the properties ofr each layer
@@ -987,6 +987,55 @@ impl SqliteCanvas {
                 .collect::<Result<Vec<_>, _>>()?;
 
             layer_response.push(VectorResponse::Layer(layer, properties));
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Queries a list of shapes for their properties
+    ///
+    pub fn query_shapes(&mut self, query_shapes: impl IntoIterator<Item=CanvasShapeId>, shape_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+        // Query to fetch the properties for each shape
+        let properties_query =
+            "
+            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId)
+            FROM Shapes s
+            LEFT OUTER JOIN ShapeIntProperties   ip ON ip.ShapeId = l.ShapeId
+            LEFT OUTER JOIN ShapeFloatProperties fp ON fp.ShapeId = l.ShapeId
+            LEFT OUTER JOIN ShapeBlobProperties  bp ON bp.ShapeId = l.ShapeId
+            WHERE s.ShapeGuid = ?
+            ORDER BY PropertyId
+            ";
+        let mut properties_query = self.sqlite.prepare_cached(properties_query).map_err(|_| ())?;
+
+        let mut shapes = vec![];
+
+        // Read the property values
+        for shape in query_shapes {
+            // Read the properties for this shape
+            let properties = properties_query.query_map(params![shape.to_string()], |row| {
+                    let property_idx    = row.get::<_, i64>(3)?;
+                    let property_value  = Self::decode_property(&row);
+
+                    Ok((property_idx, property_value))
+                }).map_err(|_| ())?
+                .flatten()
+                .flat_map(|(property_idx, value)| Some((property_idx, value?)))
+                .collect::<Vec<_>>();
+
+            shapes.push((shape, properties));
+        }
+
+        drop(properties_query);
+
+        // Map the property indexes to the actual property values, then generate the shape responses
+        for (shape, properties) in shapes.into_iter() {
+            let properties = properties.into_iter()
+                .map(|(property_idx, value)| Ok((self.property_for_index(property_idx)?, value)))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            shape_response.push(VectorResponse::Shape(shape, properties));
         }
 
         Ok(())

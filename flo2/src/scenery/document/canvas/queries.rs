@@ -53,9 +53,9 @@ pub enum VectorResponse {
     /// The following items are part of the specified layer
     Layer(CanvasLayerId, Vec<(CanvasPropertyId, CanvasProperty)>),
 
-    /// Indicates the definition of a shape. These are returned in bottom-to-top order. Properties from brushes are 
-    /// already added to the shape, but the attached brush IDs are returned in case they're useful
-    Shape(CanvasShapeId, Vec<CanvasBrushId>, Vec<(CanvasPropertyId, CanvasProperty)>),
+    /// Indicates the definition of a shape. These are returned in bottom-to-top order. Properties come from the
+    /// shape itself, along with any attached brushes
+    Shape(CanvasShapeId, Vec<(CanvasPropertyId, CanvasProperty)>),
 
     /// The following shapes are parented to the previous shape
     StartGroup,
