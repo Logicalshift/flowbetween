@@ -15,6 +15,15 @@ fn create_test_rectangle(x: f32, y: f32) -> CanvasShape {
     })
 }
 
+/// Creates default properties for a benchmark shape
+fn create_test_properties(index: usize) -> Vec<(CanvasPropertyId, CanvasProperty)> {
+    vec![
+        (CanvasPropertyId::new("benchmark::id"), CanvasProperty::Int(index as i64)),
+        (CanvasPropertyId::new("benchmark::opacity"), CanvasProperty::Float(0.8)),
+        (CanvasPropertyId::new("benchmark::layer_depth"), CanvasProperty::Float(1.0)),
+    ]
+}
+
 /// Creates a canvas with the specified number of layers and shapes per layer
 fn create_populated_canvas(num_layers: usize, shapes_per_layer: usize) -> SqliteCanvas {
     let mut canvas = SqliteCanvas::new_in_memory().unwrap();
@@ -39,6 +48,9 @@ fn create_populated_canvas(num_layers: usize, shapes_per_layer: usize) -> Sqlite
                 .unwrap();
             canvas
                 .set_shape_parent(shape_id, CanvasShapeParent::Layer(*layer_id))
+                .unwrap();
+            canvas
+                .set_shape_properties(shape_id, create_test_properties(i))
                 .unwrap();
         }
     }
@@ -70,6 +82,9 @@ fn bench_query_shapes_scaling(c: &mut Criterion) {
                 .unwrap();
             canvas
                 .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id))
+                .unwrap();
+            canvas
+                .set_shape_properties(shape_id, create_test_properties(i))
                 .unwrap();
         }
 
@@ -237,6 +252,9 @@ fn bench_add_shapes_scaling(c: &mut Criterion) {
                             canvas
                                 .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id))
                                 .unwrap();
+                            canvas
+                                .set_shape_properties(shape_id, create_test_properties(i))
+                                .unwrap();
                         }
 
                         (canvas, layer_id, start_size)
@@ -257,6 +275,9 @@ fn bench_add_shapes_scaling(c: &mut Criterion) {
                                     black_box(shape_id),
                                     CanvasShapeParent::Layer(layer_id),
                                 )
+                                .unwrap();
+                            canvas
+                                .set_shape_properties(black_box(shape_id), create_test_properties(i))
                                 .unwrap();
                         }
                         black_box(canvas);
@@ -305,6 +326,9 @@ fn bench_add_single_shape_scaling(c: &mut Criterion) {
                             canvas
                                 .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id))
                                 .unwrap();
+                            canvas
+                                .set_shape_properties(shape_id, create_test_properties(i))
+                                .unwrap();
                         }
 
                         (canvas, layer_id, size)
@@ -324,6 +348,9 @@ fn bench_add_single_shape_scaling(c: &mut Criterion) {
                                 black_box(shape_id),
                                 CanvasShapeParent::Layer(layer_id),
                             )
+                            .unwrap();
+                        canvas
+                            .set_shape_properties(black_box(shape_id), create_test_properties(size))
                             .unwrap();
                         black_box(canvas);
                     },
