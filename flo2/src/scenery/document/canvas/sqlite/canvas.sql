@@ -226,16 +226,19 @@ CREATE TABLE BrushBlobProperties (
 /** 
  * Fast lookup of layers by GUID 
  **/
+-- ~50% speedup in benchmark when added (+100% throughput)
 CREATE INDEX idx_layers_guid ON Layers(LayerGuid);
 
 /**
  * Fast lookup for how brushes are attached to shapes
  **/
+-- Perf improvement not measured by benchmark (doesn't use brushes)
 CREATE INDEX idx_shapebrushes_brush ON ShapeBrushes(BrushId);
 
 /**
  * Covering indexes for properties when used on shapes
  **/
+-- ~4% speedup when added
 CREATE INDEX idx_shape_int_props ON ShapeIntProperties(ShapeId, PropertyId, IntValue);
 CREATE INDEX idx_shape_float_props ON ShapeFloatProperties(ShapeId, PropertyId, FloatValue);
 CREATE INDEX idx_shape_blob_props ON ShapeBlobProperties(ShapeId, PropertyId, BlobValue);
