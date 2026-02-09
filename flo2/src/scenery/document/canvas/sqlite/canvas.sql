@@ -251,3 +251,8 @@ CREATE INDEX idx_brush_blob_props ON BrushBlobProperties(BrushId, PropertyId, Bl
  * Fast lookup of shapes by GUID
  **/
 CREATE INDEX idx_shapes_guid ON Shapes(ShapeGuid);
+
+/**
+ * Fast lookup of shape layer assignments by ShapeId
+ **/
+CREATE INDEX idx_shapelayers_shape ON ShapeLayers(ShapeId);
