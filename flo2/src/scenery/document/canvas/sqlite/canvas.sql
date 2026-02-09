@@ -246,3 +246,8 @@ CREATE INDEX idx_shape_blob_props ON ShapeBlobProperties(ShapeId, PropertyId, Bl
 CREATE INDEX idx_brush_int_props ON BrushIntProperties(BrushId, PropertyId, IntValue);
 CREATE INDEX idx_brush_float_props ON BrushFloatProperties(BrushId, PropertyId, FloatValue);
 CREATE INDEX idx_brush_blob_props ON BrushBlobProperties(BrushId, PropertyId, BlobValue);
+
+/**
+ * Fast lookup of shapes by GUID
+ **/
+CREATE INDEX idx_shapes_guid ON Shapes(ShapeGuid);
