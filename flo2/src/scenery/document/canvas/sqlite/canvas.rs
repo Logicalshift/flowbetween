@@ -35,6 +35,12 @@ pub struct SqliteCanvas {
 
     /// Reverse cache of the known shape type IDs
     pub (super) shapetype_for_id_cache: HashMap<i64, ShapeType>,
+
+    /// Cache of the known shape GUID → integer ID mappings
+    shape_id_cache: HashMap<CanvasShapeId, i64>,
+
+    /// The next shape ID to use (avoids querying MAX(ShapeId) each time)
+    next_shape_id: Option<i64>,
 }
 
 impl SqliteCanvas {
@@ -50,6 +56,8 @@ impl SqliteCanvas {
             property_for_id_cache:  HashMap::new(),
             shapetype_id_cache:     HashMap::new(),
             shapetype_for_id_cache: HashMap::new(),
+            shape_id_cache:         HashMap::new(),
+            next_shape_id:          None,
         })
     }
 
@@ -193,7 +201,13 @@ impl SqliteCanvas {
     ///
     #[inline]
     pub fn index_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, ()> {
-        self.sqlite.query_one::<i64, _, _>("SELECT ShapeId FROM Shapes WHERE ShapeGuid = ?", [shape_id.to_string()], |row| row.get(0)).map_err(|_| ())
+        if let Some(cached_id) = self.shape_id_cache.get(&shape_id) {
+            Ok(*cached_id)
+        } else {
+            let idx = self.sqlite.query_one::<i64, _, _>("SELECT ShapeId FROM Shapes WHERE ShapeGuid = ?", [shape_id.to_string()], |row| row.get(0)).map_err(|_| ())?;
+            self.shape_id_cache.insert(shape_id, idx);
+            Ok(idx)
+        }
     }
 
     ///
@@ -697,10 +711,16 @@ impl SqliteCanvas {
         } else {
             // Insert a new shape with a generated ShapeId
             let mut insert_new  = self.sqlite.prepare_cached("INSERT INTO Shapes (ShapeId, ShapeGuid, ShapeType, ShapeDataType, ShapeData) VALUES (?, ?, ?, ?, ?)").map_err(|_| ())?;
-            let mut get_max_id  = self.sqlite.prepare_cached("SELECT COALESCE(MAX(ShapeId), 0) + 1 FROM Shapes").map_err(|_| ())?;
-            let next_id: i64    = get_max_id.query_one([], |row| row.get(0)).map_err(|_| ())?;
+            let next_id: i64    = if let Some(cached_id) = self.next_shape_id {
+                cached_id
+            } else {
+                let mut get_max_id = self.sqlite.prepare_cached("SELECT COALESCE(MAX(ShapeId), 0) + 1 FROM Shapes").map_err(|_| ())?;
+                get_max_id.query_one([], |row| row.get(0)).map_err(|_| ())?
+            };
 
             insert_new.execute(params![next_id, shape_id.to_string(), shape_type_idx, shape_data_type, shape_data]).map_err(|_| ())?;
+            self.shape_id_cache.insert(shape_id, next_id);
+            self.next_shape_id = Some(next_id + 1);
         }
 
         Ok(())
@@ -741,6 +761,10 @@ impl SqliteCanvas {
         }
 
         transaction.commit().map_err(|_| ())?;
+
+        // Invalidate caches for the removed shape and its descendents
+        self.shape_id_cache.remove(&shape_id);
+        self.next_shape_id = None;
 
         Ok(())
     }
