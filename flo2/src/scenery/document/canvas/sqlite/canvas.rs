@@ -1210,7 +1210,10 @@ impl SqliteCanvas {
         // Query to fetch the properties for each shape, including brush properties from attached brushes
         let shapes_query =
             "
-            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId) AS PropertyId, 0 AS Source, 0 AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, g.ParentShapeId As GroupIdx, s.ShapeType AS ShapeType
+            SELECT 
+                ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId) AS PropertyId, 
+                0 AS Source, 0 AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, 
+                g.ParentShapeId As GroupIdx, s.ShapeType AS ShapeType
             FROM Shapes s
             INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
             INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
@@ -1222,7 +1225,10 @@ impl SqliteCanvas {
 
             UNION ALL
 
-            SELECT bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId, 1 AS Source, sb.OrderIdx AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, g.ParentShapeId As GroupIdx, s.ShapeType AS ShapeType
+            SELECT 
+                bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId,
+                1 AS Source, sb.OrderIdx AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, 
+                g.ParentShapeId As GroupIdx, s.ShapeType AS ShapeType
             FROM Shapes s
             INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
             INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
