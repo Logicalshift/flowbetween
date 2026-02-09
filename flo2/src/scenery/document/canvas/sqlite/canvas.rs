@@ -1210,36 +1210,34 @@ impl SqliteCanvas {
         // Query to fetch the properties for each shape, including brush properties from attached brushes
         let shapes_query =
             "
-            WITH ShapesOnLayer AS (
-                SELECT  s.ShapeId, s.ShapeGuid, s.ShapeType, sl.OrderIdx
-                FROM       Shapes      s
-                INNER JOIN ShapeLayers sl ON sl.ShapeId = s.ShapeId
-                INNER JOIN Layers      l  ON l.LayerId  = sl.LayerId
-                WHERE l.LayerGuid = ?1
-            )
-
             SELECT 
                 ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId) AS PropertyId, 
-                0 AS Source, 0 AS BrushOrder, sol.OrderIdx As ShapeOrder, sol.ShapeId As ShapeIdx, sol.ShapeGuid As ShapeGuid, 
-                g.ParentShapeId As GroupIdx, sol.ShapeType AS ShapeType
-            FROM            ShapesOnlayer        sol
+                0 AS Source, 0 AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, 
+                g.ParentShapeId As GroupIdx, s.ShapeType AS ShapeType
+            FROM Shapes s
+            INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
+            INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
             LEFT OUTER JOIN ShapeGroups          g  ON g.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeIntProperties   ip ON ip.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeFloatProperties fp ON fp.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeBlobProperties  bp ON bp.ShapeId = s.ShapeId
+            WHERE l.LayerGuid = ?1
 
             UNION ALL
 
             SELECT 
                 bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId,
-                1 AS Source, sb.OrderIdx AS BrushOrder, sol.OrderIdx As ShapeOrder, sol.ShapeId As ShapeIdx, sol.ShapeGuid As ShapeGuid, 
-                g.ParentShapeId As GroupIdx, sol.ShapeType AS ShapeType
-            FROM            ShapesOnlayer        sol
+                1 AS Source, sb.OrderIdx AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, 
+                g.ParentShapeId As GroupIdx, s.ShapeType AS ShapeType
+            FROM Shapes s
+            INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
+            INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
             INNER JOIN      ShapeBrushes         sb ON sb.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeGroups          g  ON g.ShapeId = s.ShapeId
             LEFT OUTER JOIN BrushIntProperties   bip ON bip.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushFloatProperties bfp ON bfp.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushBlobProperties  bbp ON bbp.BrushId = sb.BrushId
+            WHERE l.LayerGuid = ?1
 
             ORDER BY ShapeOrder ASC, PropertyId ASC, Source ASC, BrushOrder DESC
             ";
