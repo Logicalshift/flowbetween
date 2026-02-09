@@ -1,3 +1,4 @@
+use super::lru_cache::*;
 use super::super::brush::*;
 use super::super::layer::*;
 use super::super::property::*;
@@ -36,13 +37,13 @@ pub struct SqliteCanvas {
     /// Reverse cache of the known shape type IDs
     pub (super) shapetype_for_id_cache: HashMap<i64, ShapeType>,
 
-    /// Cache of the known shape GUID → integer ID mappings
-    shape_id_cache: HashMap<CanvasShapeId, i64>,
+    /// Cache of the known shape IDs (maps to the index for the shape)
+    pub (super) shape_id_cache: LruCache<CanvasShapeId, i64>,
 
-    /// Cache of the known layer GUID → integer ID mappings
-    layer_id_cache: HashMap<CanvasLayerId, i64>,
+    /// Cache of the known layer IDs (maps to the index for the layer)
+    pub (super) layer_id_cache: HashMap<CanvasLayerId, i64>,
 
-    /// The next shape ID to use (avoids querying MAX(ShapeId) each time)
+    /// The next shape ID to use (None if we haven't retrieved this from the database yet)
     next_shape_id: Option<i64>,
 }
 
@@ -59,7 +60,7 @@ impl SqliteCanvas {
             property_for_id_cache:  HashMap::new(),
             shapetype_id_cache:     HashMap::new(),
             shapetype_for_id_cache: HashMap::new(),
-            shape_id_cache:         HashMap::new(),
+            shape_id_cache:         LruCache::new(200),
             layer_id_cache:         HashMap::new(),
             next_shape_id:          None,
         })
