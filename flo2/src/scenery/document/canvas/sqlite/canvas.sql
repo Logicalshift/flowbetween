@@ -229,6 +229,11 @@ CREATE TABLE BrushBlobProperties (
 CREATE INDEX idx_layers_guid ON Layers(LayerGuid);
 
 /**
+ * Fast lookup for how brushes are attached to shapes
+ **/
+CREATE INDEX idx_shapebrushes_brush ON ShapeBrushes(BrushId);
+
+/**
  * Covering indexes for properties when used on shapes
  **/
  /* -- disabling due to low effect on performance (~5%)
