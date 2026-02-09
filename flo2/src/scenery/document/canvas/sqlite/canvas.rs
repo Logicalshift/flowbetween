@@ -39,6 +39,9 @@ pub struct SqliteCanvas {
     /// Cache of the known shape GUID → integer ID mappings
     shape_id_cache: HashMap<CanvasShapeId, i64>,
 
+    /// Cache of the known layer GUID → integer ID mappings
+    layer_id_cache: HashMap<CanvasLayerId, i64>,
+
     /// The next shape ID to use (avoids querying MAX(ShapeId) each time)
     next_shape_id: Option<i64>,
 }
@@ -57,6 +60,7 @@ impl SqliteCanvas {
             shapetype_id_cache:     HashMap::new(),
             shapetype_for_id_cache: HashMap::new(),
             shape_id_cache:         HashMap::new(),
+            layer_id_cache:         HashMap::new(),
             next_shape_id:          None,
         })
     }
@@ -193,7 +197,13 @@ impl SqliteCanvas {
     ///
     #[inline]
     pub fn index_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, ()> {
-        self.sqlite.query_one::<i64, _, _>("SELECT LayerId FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
+        if let Some(cached_id) = self.layer_id_cache.get(&layer_id) {
+            Ok(*cached_id)
+        } else {
+            let idx = self.sqlite.query_one::<i64, _, _>("SELECT LayerId FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())?;
+            self.layer_id_cache.insert(layer_id, idx);
+            Ok(idx)
+        }
     }
 
     ///
@@ -626,9 +636,11 @@ impl SqliteCanvas {
         };
 
         // Add the layer itself
-        transaction.execute("INSERT INTO Layers(LayerGuid, OrderIdx) VALUES (?, ?)", params![new_layer_id.to_string(), new_layer_order]).map_err(|_| ())?;
+        let new_layer_idx: i64 = transaction.query_one("INSERT INTO Layers(LayerGuid, OrderIdx) VALUES (?, ?) RETURNING LayerId", params![new_layer_id.to_string(), new_layer_order], |row| row.get(0)).map_err(|_| ())?;
 
         transaction.commit().map_err(|_| ())?;
+
+        self.layer_id_cache.insert(new_layer_id, new_layer_idx);
 
         Ok(())
     }
@@ -644,6 +656,8 @@ impl SqliteCanvas {
         transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx - 1 WHERE OrderIdx >= ?", params![old_layer_order]).map_err(|_| ())?;
 
         transaction.commit().map_err(|_| ())?;
+
+        self.layer_id_cache.remove(&old_layer_id);
 
         Ok(())
     }
@@ -764,6 +778,9 @@ impl SqliteCanvas {
 
         // Invalidate caches for the removed shape and its descendents
         self.shape_id_cache.remove(&shape_id);
+        if !descendents.is_empty() {
+            self.shape_id_cache.retain(|_, idx| !descendents.contains(idx));
+        }
         self.next_shape_id = None;
 
         Ok(())
