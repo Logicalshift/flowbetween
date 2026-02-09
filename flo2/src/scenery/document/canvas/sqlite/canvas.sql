@@ -222,3 +222,8 @@ CREATE TABLE BrushBlobProperties (
 
     PRIMARY KEY (BrushId, PropertyId)
 );
+
+/** 
+ * Fast lookup of layers by GUID 
+ **/
+CREATE INDEX idx_layers_guid ON Layers(LayerGuid);
