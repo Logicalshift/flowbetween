@@ -1,6 +1,6 @@
 mod canvas;
 mod canvas_program;
-mod lru_cache;
+mod id_cache;
 
 pub use canvas::*;
 pub use canvas_program::*;

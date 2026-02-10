@@ -4,13 +4,13 @@ use std::hash::{Hash};
 ///
 /// A basic LRU cache, used for things like ShapeIds which may end up requiring a lot of space
 ///
-pub struct LruCache<K: Eq + Hash + Clone, V> {
+pub struct IdCache<K: Eq + Hash + Clone, V> {
     map:        HashMap<K, V>,
     order:      VecDeque<K>,
     capacity:   usize,
 }
 
-impl<K: Eq + Hash + Clone, V> LruCache<K, V> {
+impl<K: Eq + Hash + Clone, V> IdCache<K, V> {
     ///
     /// Creates a new LRU cache that will contain a certain number of items
     ///
