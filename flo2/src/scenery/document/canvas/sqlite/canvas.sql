@@ -229,7 +229,7 @@ CREATE TABLE BrushBlobProperties (
  * Time is measured in nanoseconds from the start of an animation
  **/
 CREATE TABLE ShapeFrames (
-    ShapeId INTEGER NOT NULL REFERENCES Shapes(ShapeId),
+    ShapeId INTEGER NOT NULL REFERENCES Shapes(ShapeId) ON DELETE CASCADE,
     Time    INTEGER NOT NULL,
 
     PRIMARY KEY (ShapeId)
