@@ -216,9 +216,9 @@ impl SqliteCanvas {
         let layer_idx = self.index_for_layer(layer_id)?;
 
         let mut most_recent_time = self.sqlite.prepare_cached("SELECT MAX(Time) FROM LayerFrames WHERE LayerId = ? AND Time <= ?").map_err(|_| ())?;
-        let mut most_recent_time = most_recent_time.query_map(params![layer_idx, when.as_nanos() as i64], |row| row.get::<_, i64>(0)).map_err(|_| ())?;
-        let most_recent_time     = most_recent_time.next().unwrap_or(Ok(0)).map_err(|_| ())?;
-        let most_recent_time     = Duration::from_nanos(most_recent_time as u64);
+        let mut most_recent_time = most_recent_time.query_map(params![layer_idx, when.as_nanos() as i64], |row| row.get::<_, Option<i64>>(0)).map_err(|_| ())?;
+        let most_recent_time     = most_recent_time.next().unwrap_or(Ok(None)).map_err(|_| ())?;
+        let most_recent_time     = Duration::from_nanos(most_recent_time.unwrap_or(0) as u64);
 
         Ok(most_recent_time)
     }
