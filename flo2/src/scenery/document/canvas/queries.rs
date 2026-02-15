@@ -14,14 +14,14 @@ use std::time::{Duration};
 ///
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum VectorQuery {
-    /// Queries all of the entities in the document, sending a response as a `QueryResponse<VectorResponse>`
-    WholeDocument(StreamTarget),
+    /// Queries all of the entities in the document for a frame at the specified time, sending a response as a `QueryResponse<VectorResponse>`
+    WholeDocument(StreamTarget, Duration),
 
     /// Queries the document and layer properties without returning any shape data
     DocumentOutline(StreamTarget),
 
-    /// Queries the entities associated with the specified layers
-    Layers(StreamTarget, Vec<CanvasLayerId>),
+    /// Queries the entities associated with the specified layers for a frame at the specified time
+    Layers(StreamTarget, Vec<CanvasLayerId>, Duration),
 
     /// Queries specific shapes
     Shapes(StreamTarget, Vec<CanvasShapeId>),
@@ -77,11 +77,11 @@ impl QueryRequest for VectorQuery {
         use VectorQuery::*;
 
         match self {
-            WholeDocument(_target)                                              => WholeDocument(new_target),
-            DocumentOutline(_target)                                            => DocumentOutline(new_target),
-            Layers(_target, layers)                                             => Layers(new_target, layers),
-            Shapes(_target, shape_id)                                           => Shapes(new_target, shape_id),
-            Brushes(_target, brush_id)                                          => Brushes(new_target, brush_id),
+            WholeDocument(_target, when)    => WholeDocument(new_target, when),
+            DocumentOutline(_target)        => DocumentOutline(new_target),
+            Layers(_target, layers, when)   => Layers(new_target, layers, when),
+            Shapes(_target, shape_id)       => Shapes(new_target, shape_id),
+            Brushes(_target, brush_id)      => Brushes(new_target, brush_id),
         }
     }
 }

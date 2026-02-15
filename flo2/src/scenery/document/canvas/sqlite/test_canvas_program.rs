@@ -228,17 +228,17 @@ fn query_layer() {
         canvas.send(VectorCanvas::SetShapeParent(shape_4, CanvasShapeParent::Layer(layer_2, Duration::from_nanos(0)))).await.ok();
 
         // Query the layers in a few ways (we start with the simpler second layer)
-        let second_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_2]), ()).unwrap();
+        let second_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_2], Duration::ZERO), ()).unwrap();
         let second_layer = second_layer.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(second_layer)).await.unwrap();
 
-        let first_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1]), ()).unwrap();
+        let first_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1], Duration::ZERO), ()).unwrap();
         let first_layer = first_layer.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(first_layer)).await.unwrap();
 
-        let all_layers = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1, layer_2]), ()).unwrap();
+        let all_layers = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1, layer_2], Duration::ZERO), ()).unwrap();
         let all_layers = all_layers.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(all_layers)).await.unwrap();
@@ -332,7 +332,7 @@ fn query_layer_with_groups() {
         canvas.send(VectorCanvas::SetShapeParent(after_group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0)))).await.ok();
 
         // Query the layer
-        let layer_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer]), ()).unwrap();
+        let layer_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer], Duration::ZERO), ()).unwrap();
         let layer_result = layer_result.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(layer_result)).await.unwrap();
