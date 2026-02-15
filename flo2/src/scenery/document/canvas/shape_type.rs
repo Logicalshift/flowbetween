@@ -108,7 +108,7 @@ impl LazyShapeType {
     /// This can be used with static shape types - eg:
     ///
     /// ```
-    /// #use flo2::scenery::document::canvas::*;
+    /// # use flow_between::scenery::document::canvas::*;
     /// static MY_SHAPE_TYPE: LazyShapeType = LazyShapeType::new("flo2::my_shape_type");
     ///
     /// let shape_type = *MY_SHAPE_TYPE;

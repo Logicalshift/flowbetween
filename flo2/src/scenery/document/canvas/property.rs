@@ -161,7 +161,7 @@ impl LazyCanvasPropertyId {
     /// This can be used with static properties - eg:
     ///
     /// ```
-    /// #use flo2::scenery::document::canvas::*;
+    /// # use flow_between::scenery::document::canvas::*;
     /// static MY_PROPERTY: LazyCanvasPropertyId = LazyCanvasPropertyId::new("flo2::my_property");
     ///
     /// let property_id = *MY_PROPERTY;
