@@ -1,5 +1,6 @@
 mod canvas;
 mod canvas_program;
+mod error;
 mod id_cache;
 
 pub use canvas::*;

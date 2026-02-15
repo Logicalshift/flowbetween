@@ -9,6 +9,7 @@ mod queries;
 mod shape_type;
 mod sqlite;
 mod vector_editor;
+mod error;
 
 pub use basic_properties::*;
 pub use name_property::*;
@@ -21,3 +22,4 @@ pub use queries::*;
 pub use shape_type::*;
 pub use sqlite::*;
 pub use vector_editor::*;
+pub use error::*;
