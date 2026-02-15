@@ -96,7 +96,7 @@ fn bench_query_shapes_scaling(c: &mut Criterion) {
                 b.iter(|| {
                     let mut response = vec![];
                     canvas
-                        .query_shapes_on_layer(black_box(layer_id), &mut response)
+                        .query_shapes_on_layer(black_box(layer_id), &mut response, Duration::ZERO)
                         .unwrap();
                     black_box(response);
                 });
@@ -140,7 +140,7 @@ fn bench_query_shapes_large_database(c: &mut Criterion) {
         b.iter(|| {
             let mut response = vec![];
             canvas
-                .query_shapes_on_layer(black_box(first_layer), &mut response)
+                .query_shapes_on_layer(black_box(first_layer), &mut response, Duration::ZERO)
                 .unwrap();
             black_box(response);
         });
@@ -152,7 +152,7 @@ fn bench_query_shapes_large_database(c: &mut Criterion) {
         b.iter(|| {
             let mut response = vec![];
             canvas
-                .query_shapes_on_layer(black_box(middle_layer), &mut response)
+                .query_shapes_on_layer(black_box(middle_layer), &mut response, Duration::ZERO)
                 .unwrap();
             black_box(response);
         });
@@ -164,7 +164,7 @@ fn bench_query_shapes_large_database(c: &mut Criterion) {
         b.iter(|| {
             let mut response = vec![];
             canvas
-                .query_shapes_on_layer(black_box(last_layer), &mut response)
+                .query_shapes_on_layer(black_box(last_layer), &mut response, Duration::ZERO)
                 .unwrap();
             black_box(response);
         });
@@ -206,7 +206,7 @@ fn bench_performance_per_shape(c: &mut Criterion) {
                 b.iter(|| {
                     let mut response = vec![];
                     canvas
-                        .query_shapes_on_layer(black_box(layer_id), &mut response)
+                        .query_shapes_on_layer(black_box(layer_id), &mut response, Duration::ZERO)
                         .unwrap();
                     black_box(response);
                 });
