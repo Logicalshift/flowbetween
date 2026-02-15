@@ -243,7 +243,6 @@ CREATE TABLE ShapeFrames (
 CREATE TABLE LayerFrames (
     LayerId INTEGER NOT NULL REFERENCES Layers(LayerId),
     Time    INTEGER NOT NULL,
-    Length  INTEGER NOT NULL,
 
     PRIMARY KEY (LayerId, Time)
 );
