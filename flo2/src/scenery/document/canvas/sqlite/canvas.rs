@@ -1,5 +1,6 @@
 use super::id_cache::*;
 use super::super::brush::*;
+use super::super::error::*;
 use super::super::layer::*;
 use super::super::property::*;
 use super::super::queries::*;
@@ -52,8 +53,8 @@ impl SqliteCanvas {
     ///
     /// Creates a storage structure with an existing connection
     ///
-    pub fn with_connection(sqlite: Connection) -> Result<Self, ()> {
-        sqlite.execute_batch("PRAGMA foreign_keys = ON").map_err(|_| ())?;
+    pub fn with_connection(sqlite: Connection) -> Result<Self, CanvasError> {
+        sqlite.execute_batch("PRAGMA foreign_keys = ON")?;
 
         Ok(Self {
             sqlite:                 sqlite,
@@ -70,8 +71,8 @@ impl SqliteCanvas {
     ///
     /// Initialises the canvas in this object
     ///
-    pub fn initialise(&self) -> Result<(), ()> {
-        self.sqlite.execute_batch(SCHEMA).map_err(|_| ())?;
+    pub fn initialise(&self) -> Result<(), CanvasError> {
+        self.sqlite.execute_batch(SCHEMA)?;
 
         Ok(())
     }
@@ -79,8 +80,8 @@ impl SqliteCanvas {
     ///
     /// Creates a new SQLite canvas in memory
     ///
-    pub fn new_in_memory() -> Result<Self, ()> {
-        let sqlite  = Connection::open_in_memory().map_err(|_| ())?;
+    pub fn new_in_memory() -> Result<Self, CanvasError> {
+        let sqlite  = Connection::open_in_memory()?;
         let canvas  = Self::with_connection(sqlite)?;
         canvas.initialise()?;
 
@@ -90,13 +91,13 @@ impl SqliteCanvas {
     ///
     /// Retrieve or create a property ID in the database
     ///
-    pub (super) fn index_for_property(&mut self, canvas_property_id: CanvasPropertyId) -> Result<i64, ()> {
+    pub (super) fn index_for_property(&mut self, canvas_property_id: CanvasPropertyId) -> Result<i64, CanvasError> {
         if let Some(cached_id) = self.property_id_cache.get(&canvas_property_id) {
             // We've encountered this property before so we know its ID
             Ok(*cached_id)
         } else {
             // Try to fetch the existing property
-            let mut query_property = self.sqlite.prepare_cached("SELECT PropertyId FROM Properties WHERE Name = ?").map_err(|_| ())?;
+            let mut query_property = self.sqlite.prepare_cached("SELECT PropertyId FROM Properties WHERE Name = ?")?;
             if let Ok(property_id) = query_property.query_one([canvas_property_id.name()], |row| row.get::<_, i64>(0)) {
                 // Cache it so we don't need to look it up again
                 self.property_id_cache.insert(canvas_property_id, property_id);
@@ -105,7 +106,7 @@ impl SqliteCanvas {
                 Ok(property_id)
             } else {
                 // Create a new property ID
-                let new_property_id = self.sqlite.query_one("INSERT INTO Properties (Name) VALUES (?) RETURNING PropertyId", [canvas_property_id.name()], |row| row.get::<_, i64>(0)).map_err(|_| ())?;
+                let new_property_id = self.sqlite.query_one("INSERT INTO Properties (Name) VALUES (?) RETURNING PropertyId", [canvas_property_id.name()], |row| row.get::<_, i64>(0))?;
                 self.property_id_cache.insert(canvas_property_id, new_property_id);
                 self.property_for_id_cache.insert(new_property_id, canvas_property_id);
 
@@ -117,13 +118,13 @@ impl SqliteCanvas {
     ///
     /// Retrieve or create a shape type ID in the database
     ///
-    pub (super) fn index_for_shapetype(&mut self, shape_type: ShapeType) -> Result<i64, ()> {
+    pub (super) fn index_for_shapetype(&mut self, shape_type: ShapeType) -> Result<i64, CanvasError> {
         if let Some(cached_id) = self.shapetype_id_cache.get(&shape_type) {
             // We've encountered this shape type before so we know its ID
             Ok(*cached_id)
         } else {
             // Try to fetch the existing shape type
-            let mut query_shapetype = self.sqlite.prepare_cached("SELECT ShapeTypeId FROM ShapeTypes WHERE Name = ?").map_err(|_| ())?;
+            let mut query_shapetype = self.sqlite.prepare_cached("SELECT ShapeTypeId FROM ShapeTypes WHERE Name = ?")?;
             if let Ok(shapetype_id) = query_shapetype.query_one([shape_type.name()], |row| row.get::<_, i64>(0)) {
                 // Cache it so we don't need to look it up again
                 self.shapetype_id_cache.insert(shape_type, shapetype_id);
@@ -132,7 +133,7 @@ impl SqliteCanvas {
                 Ok(shapetype_id)
             } else {
                 // Create a new shape type ID
-                let new_shapetype_id = self.sqlite.query_one("INSERT INTO ShapeTypes (Name) VALUES (?) RETURNING ShapeTypeId", [shape_type.name()], |row| row.get::<_, i64>(0)).map_err(|_| ())?;
+                let new_shapetype_id = self.sqlite.query_one("INSERT INTO ShapeTypes (Name) VALUES (?) RETURNING ShapeTypeId", [shape_type.name()], |row| row.get::<_, i64>(0))?;
                 self.shapetype_id_cache.insert(shape_type, new_shapetype_id);
                 self.shapetype_for_id_cache.insert(new_shapetype_id, shape_type);
 
@@ -144,14 +145,14 @@ impl SqliteCanvas {
     ///
     /// Retrieve the property ID for a database index
     ///
-    pub (super) fn property_for_index(&mut self, property_index: i64) -> Result<CanvasPropertyId, ()> {
+    pub (super) fn property_for_index(&mut self, property_index: i64) -> Result<CanvasPropertyId, CanvasError> {
         if let Some(cached_property) = self.property_for_id_cache.get(&property_index) {
             // We've encountered this index before so we know its property
             Ok(*cached_property)
         } else {
             // Fetch the property name from the database
-            let mut query_name  = self.sqlite.prepare_cached("SELECT Name FROM Properties WHERE PropertyId = ?").map_err(|_| ())?;
-            let name            = query_name.query_one([property_index], |row| row.get::<_, String>(0)).map_err(|_| ())?;
+            let mut query_name  = self.sqlite.prepare_cached("SELECT Name FROM Properties WHERE PropertyId = ?")?;
+            let name            = query_name.query_one([property_index], |row| row.get::<_, String>(0))?;
 
             // Create the property ID and cache it
             let canvas_property_id = CanvasPropertyId::new(&name);
@@ -165,14 +166,14 @@ impl SqliteCanvas {
     ///
     /// Retrieve the shape type for a database index
     ///
-    pub (super) fn shapetype_for_index(&mut self, shapetype_index: i64) -> Result<ShapeType, ()> {
+    pub (super) fn shapetype_for_index(&mut self, shapetype_index: i64) -> Result<ShapeType, CanvasError> {
         if let Some(cached_shapetype) = self.shapetype_for_id_cache.get(&shapetype_index) {
             // We've encountered this index before so we know its shape type
             Ok(*cached_shapetype)
         } else {
             // Fetch the shape type name from the database
-            let mut query_name  = self.sqlite.prepare_cached("SELECT Name FROM ShapeTypes WHERE ShapeTypeId = ?").map_err(|_| ())?;
-            let name            = query_name.query_one([shapetype_index], |row| row.get::<_, String>(0)).map_err(|_| ())?;
+            let mut query_name  = self.sqlite.prepare_cached("SELECT Name FROM ShapeTypes WHERE ShapeTypeId = ?")?;
+            let name            = query_name.query_one([shapetype_index], |row| row.get::<_, String>(0))?;
 
             // Create the shape type and cache it
             let shape_type = ShapeType::new(&name);
@@ -186,9 +187,9 @@ impl SqliteCanvas {
     ///
     /// Retrieves the shape type for a shape
     ///
-    fn shapetype_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<ShapeType, ()> {
-        let mut shape_type_query    = self.sqlite.prepare_cached("SELECT ShapeType FROM Shapes WHERE ShapeGuid = ?").map_err(|_| ())?;
-        let shape_type              = shape_type_query.query_one(params![shape_id.to_string()], |row| row.get(0)).map_err(|_| ())?;
+    fn shapetype_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<ShapeType, CanvasError> {
+        let mut shape_type_query    = self.sqlite.prepare_cached("SELECT ShapeType FROM Shapes WHERE ShapeGuid = ?")?;
+        let shape_type              = shape_type_query.query_one(params![shape_id.to_string()], |row| row.get(0))?;
         drop(shape_type_query);
 
         self.shapetype_for_index(shape_type)
@@ -198,11 +199,11 @@ impl SqliteCanvas {
     /// Queries the database for the ordering index of the specified layer
     ///
     #[inline]
-    pub fn index_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, ()> {
+    pub fn index_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, CanvasError> {
         if let Some(cached_id) = self.layer_id_cache.get(&layer_id) {
             Ok(*cached_id)
         } else {
-            let idx = self.sqlite.query_one::<i64, _, _>("SELECT LayerId FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())?;
+            let idx = self.sqlite.query_one::<i64, _, _>("SELECT LayerId FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0))?;
             self.layer_id_cache.insert(layer_id, idx);
             Ok(idx)
         }
@@ -212,12 +213,12 @@ impl SqliteCanvas {
     /// Returns the time where the frame starts
     ///
     #[inline]
-    pub fn layer_frame_time(&mut self, layer_id: CanvasLayerId, when: Duration) -> Result<Duration, ()> {
+    pub fn layer_frame_time(&mut self, layer_id: CanvasLayerId, when: Duration) -> Result<Duration, CanvasError> {
         let layer_idx = self.index_for_layer(layer_id)?;
 
-        let mut most_recent_time = self.sqlite.prepare_cached("SELECT MAX(Time) FROM LayerFrames WHERE LayerId = ? AND Time <= ?").map_err(|_| ())?;
-        let mut most_recent_time = most_recent_time.query_map(params![layer_idx, when.as_nanos() as i64], |row| row.get::<_, Option<i64>>(0)).map_err(|_| ())?;
-        let most_recent_time     = most_recent_time.next().unwrap_or(Ok(None)).map_err(|_| ())?;
+        let mut most_recent_time = self.sqlite.prepare_cached("SELECT MAX(Time) FROM LayerFrames WHERE LayerId = ? AND Time <= ?")?;
+        let mut most_recent_time = most_recent_time.query_map(params![layer_idx, when.as_nanos() as i64], |row| row.get::<_, Option<i64>>(0))?;
+        let most_recent_time     = most_recent_time.next().unwrap_or(Ok(None))?;
         let most_recent_time     = Duration::from_nanos(most_recent_time.unwrap_or(0) as u64);
 
         Ok(most_recent_time)
@@ -227,11 +228,11 @@ impl SqliteCanvas {
     /// Queries the database for the ordering index of the specified layer
     ///
     #[inline]
-    pub fn index_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, ()> {
+    pub fn index_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, CanvasError> {
         if let Some(cached_id) = self.shape_id_cache.get(&shape_id) {
             Ok(*cached_id)
         } else {
-            let idx = self.sqlite.query_one::<i64, _, _>("SELECT ShapeId FROM Shapes WHERE ShapeGuid = ?", [shape_id.to_string()], |row| row.get(0)).map_err(|_| ())?;
+            let idx = self.sqlite.query_one::<i64, _, _>("SELECT ShapeId FROM Shapes WHERE ShapeGuid = ?", [shape_id.to_string()], |row| row.get(0))?;
             self.shape_id_cache.insert(shape_id, idx);
             Ok(idx)
         }
@@ -241,15 +242,15 @@ impl SqliteCanvas {
     /// Retrieves the time (in nanoseconds) when a shape appears on the canvas
     ///
     #[inline]
-    pub fn time_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, ()> {
+    pub fn time_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, CanvasError> {
         let mut time_query = self.sqlite.prepare_cached("
             SELECT      sl.Time 
             FROM        ShapeLayers sl 
             INNER JOIN  Shapes s ON s.ShapeId = sl.ShapeId 
-            WHERE       s.ShapeGuid = ?").map_err(|_| ())?;
+            WHERE       s.ShapeGuid = ?")?;
 
-        let mut time    = time_query.query_map([shape_id.to_string()], |row| row.get(0)).map_err(|_| ())?;
-        let time        = time.next().unwrap_or(Ok(0i64)).map_err(|_| ())?;
+        let mut time    = time_query.query_map([shape_id.to_string()], |row| row.get(0))?;
+        let time        = time.next().unwrap_or(Ok(0i64))?;
 
         Ok(time)
     }
@@ -258,31 +259,31 @@ impl SqliteCanvas {
     /// Queries the database for the ordering index of the specified layer
     ///
     #[inline]
-    pub fn index_for_brush(&mut self, brush_id: CanvasBrushId) -> Result<i64, ()> {
-        self.sqlite.query_one::<i64, _, _>("SELECT BrushId FROM Brushes WHERE BrushGuid = ?", [brush_id.to_string()], |row| row.get(0)).map_err(|_| ())
+    pub fn index_for_brush(&mut self, brush_id: CanvasBrushId) -> Result<i64, CanvasError> {
+        Ok(self.sqlite.query_one::<i64, _, _>("SELECT BrushId FROM Brushes WHERE BrushGuid = ?", [brush_id.to_string()], |row| row.get(0))?)
     }
 
     ///
     /// Queries the database for the ordering index of the specified layer
     ///
     #[inline]
-    pub fn order_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, ()> {
-        self.sqlite.query_one::<i64, _, _>("SELECT OrderIdx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
+    pub fn order_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, CanvasError> {
+        Ok(self.sqlite.query_one::<i64, _, _>("SELECT OrderIdx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0))?)
     }
 
     ///
     /// Queries the database for the index of the specified layer
     ///
     #[inline]
-    pub fn order_for_layer_in_transaction(transaction: &Transaction<'_>, layer_id: CanvasLayerId) -> Result<i64, ()> {
-        transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0)).map_err(|_| ())
+    pub fn order_for_layer_in_transaction(transaction: &Transaction<'_>, layer_id: CanvasLayerId) -> Result<i64, CanvasError> {
+        Ok(transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0))?)
     }
 
     ///
     /// Collects all descendents of a shape in depth-first pre-order (does not include the shape itself).
     ///
     #[inline]
-    fn all_descendents_for_shape(transaction: &Transaction<'_>, shape_idx: i64) -> Result<Vec<i64>, ()> {
+    fn all_descendents_for_shape(transaction: &Transaction<'_>, shape_idx: i64) -> Result<Vec<i64>, CanvasError> {
         let mut result = Vec::new();
         Self::collect_shape_dependents(transaction, shape_idx, &mut result)?;
         Ok(result)
@@ -291,11 +292,10 @@ impl SqliteCanvas {
     ///
     /// Recurses through the descendents of a shape
     ///
-    fn collect_shape_dependents(transaction: &Transaction<'_>, parent_idx: i64, result: &mut Vec<i64>) -> Result<(), ()> {
+    fn collect_shape_dependents(transaction: &Transaction<'_>, parent_idx: i64, result: &mut Vec<i64>) -> Result<(), CanvasError> {
         // Using a recursive Rust function because SQL CTEs don't guarantee depth-first ordering.
-        let mut stmt = transaction.prepare_cached("SELECT ShapeId FROM ShapeGroups WHERE ParentShapeId = ? ORDER BY OrderIdx ASC").map_err(|_| ())?;
-        let children: Vec<i64> = stmt.query_map(params![parent_idx], |row| row.get(0))
-            .map_err(|_| ())?
+        let mut stmt = transaction.prepare_cached("SELECT ShapeId FROM ShapeGroups WHERE ParentShapeId = ? ORDER BY OrderIdx ASC")?;
+        let children: Vec<i64> = stmt.query_map(params![parent_idx], |row| row.get(0))?
             .filter_map(|r| r.ok())
             .collect();
         drop(stmt);
@@ -311,16 +311,16 @@ impl SqliteCanvas {
     ///
     /// Inserts a block of shapes into ShapeLayers at the specified position, shifting existing entries to make room.
     ///
-    fn insert_shapes_on_layer(transaction: &Transaction<'_>, layer_id: i64, at_order: i64, shape_ids: &[i64], time: i64) -> Result<(), ()> {
+    fn insert_shapes_on_layer(transaction: &Transaction<'_>, layer_id: i64, at_order: i64, shape_ids: &[i64], time: i64) -> Result<(), CanvasError> {
         let block_size = shape_ids.len() as i64;
 
         // Make room for the block
-        transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx + ? WHERE LayerId = ? AND OrderIdx >= ?", params![block_size, layer_id, at_order]).map_err(|_| ())?;
+        transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx + ? WHERE LayerId = ? AND OrderIdx >= ?", params![block_size, layer_id, at_order])?;
 
         // Insert each shape
-        let mut insert = transaction.prepare_cached("INSERT INTO ShapeLayers (ShapeId, LayerId, OrderIdx, Time) VALUES (?, ?, ?, ?)").map_err(|_| ())?;
+        let mut insert = transaction.prepare_cached("INSERT INTO ShapeLayers (ShapeId, LayerId, OrderIdx, Time) VALUES (?, ?, ?, ?)")?;
         for (i, shape_id) in shape_ids.iter().enumerate() {
-            insert.execute(params![shape_id, layer_id, at_order + i as i64, time]).map_err(|_| ())?;
+            insert.execute(params![shape_id, layer_id, at_order + i as i64, time])?;
         }
 
         Ok(())
@@ -329,12 +329,12 @@ impl SqliteCanvas {
     ///
     /// Removes a contiguous block of entries from ShapeLayers and compacts the ordering.
     ///
-    fn remove_shapes_from_layer(transaction: &Transaction<'_>, layer_id: i64, from_order: i64, block_size: i64) -> Result<(), ()> {
+    fn remove_shapes_from_layer(transaction: &Transaction<'_>, layer_id: i64, from_order: i64, block_size: i64) -> Result<(), CanvasError> {
         // Delete the block
-        transaction.execute("DELETE FROM ShapeLayers WHERE LayerId = ? AND OrderIdx >= ? AND OrderIdx < ?", params![layer_id, from_order, from_order + block_size]).map_err(|_| ())?;
+        transaction.execute("DELETE FROM ShapeLayers WHERE LayerId = ? AND OrderIdx >= ? AND OrderIdx < ?", params![layer_id, from_order, from_order + block_size])?;
 
         // Compact the ordering
-        transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - ? WHERE LayerId = ? AND OrderIdx >= ?", params![block_size, layer_id, from_order + block_size]).map_err(|_| ())?;
+        transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - ? WHERE LayerId = ? AND OrderIdx >= ?", params![block_size, layer_id, from_order + block_size])?;
 
         Ok(())
     }
@@ -342,7 +342,7 @@ impl SqliteCanvas {
     ///
     /// Sets the properties for a property target
     ///
-    pub fn set_properties(&mut self, target: CanvasPropertyTarget, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+    pub fn set_properties(&mut self, target: CanvasPropertyTarget, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), CanvasError> {
         match target {
             CanvasPropertyTarget::Document          => self.set_document_properties(properties),
             CanvasPropertyTarget::Layer(layer_id)   => self.set_layer_properties(layer_id, properties),
@@ -354,7 +354,7 @@ impl SqliteCanvas {
     ///
     /// Deletes properties of the specified type from the canvas
     ///
-    pub fn delete_properties(&mut self, target: CanvasPropertyTarget, properties: Vec<CanvasPropertyId>) -> Result<(), ()> {
+    pub fn delete_properties(&mut self, target: CanvasPropertyTarget, properties: Vec<CanvasPropertyId>) -> Result<(), CanvasError> {
         // Map to property IDs
         let properties = properties.into_iter()
             .map(|property_id| self.index_for_property(property_id))
@@ -375,7 +375,7 @@ impl SqliteCanvas {
     /// Sets values in a properties table. Property values are appended to the supplied default parameters
     ///
     #[inline]
-    fn set_sql_properties<'a>(properties: impl Iterator<Item=(i64, &'a dyn ToSql)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
+    fn set_sql_properties<'a>(properties: impl Iterator<Item=(i64, &'a dyn ToSql)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), CanvasError> {
         for (property_idx, property) in properties {
             // Add the property ID and value to the parameters
             let mut params = other_params.clone();
@@ -384,7 +384,7 @@ impl SqliteCanvas {
             let params: &[&dyn ToSql] = &params;
 
             // Run the query
-            command.execute(params).map_err(|_| ())?;
+            command.execute(params)?;
         }
 
         Ok(())
@@ -397,18 +397,18 @@ impl SqliteCanvas {
     /// for each table
     ///
     #[inline]
-    fn delete_sql_properties(&mut self, command_template: &str, properties: impl Iterator<Item=i64>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
+    fn delete_sql_properties(&mut self, command_template: &str, properties: impl Iterator<Item=i64>, other_params: Vec<&dyn ToSql>) -> Result<(), CanvasError> {
         // Delete all or nothing
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+        let transaction = self.sqlite.transaction()?;
 
         // Prepare the three commands to delete the three different types of property
         let delete_ints     = command_template.replace("{}", "Int");
         let delete_floats   = command_template.replace("{}", "Float");
         let delete_blobs    = command_template.replace("{}", "Blob");
 
-        let mut delete_ints     = transaction.prepare_cached(&delete_ints).map_err(|_| ())?;
-        let mut delete_floats   = transaction.prepare_cached(&delete_floats).map_err(|_| ())?;
-        let mut delete_blobs    = transaction.prepare_cached(&delete_blobs).map_err(|_| ())?;
+        let mut delete_ints     = transaction.prepare_cached(&delete_ints)?;
+        let mut delete_floats   = transaction.prepare_cached(&delete_floats)?;
+        let mut delete_blobs    = transaction.prepare_cached(&delete_blobs)?;
 
         // Delete the properties in the list
         for property_idx in properties {
@@ -418,9 +418,9 @@ impl SqliteCanvas {
             let params: &[&dyn ToSql] = &params;
 
             // Delete from the three properties tables
-            delete_ints.execute(params).map_err(|_| ())?;
-            delete_floats.execute(params).map_err(|_| ())?;
-            delete_blobs.execute(params).map_err(|_| ())?;
+            delete_ints.execute(params)?;
+            delete_floats.execute(params)?;
+            delete_blobs.execute(params)?;
         }
 
         // Finish up the transaction
@@ -428,7 +428,7 @@ impl SqliteCanvas {
         drop(delete_floats);
         drop(delete_blobs);
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         Ok(())
     }
@@ -436,7 +436,7 @@ impl SqliteCanvas {
     ///
     /// Sets any int properties found in the specified properties array. Property values are appended to the supplied default parameters
     ///
-    fn set_int_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
+    fn set_int_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), CanvasError> {
         // Only set the int properties that are requested
         let int_properties = properties.iter()
             .filter_map::<(_, &dyn ToSql), _>(|(property_idx, property)| {
@@ -456,7 +456,7 @@ impl SqliteCanvas {
     ///
     /// Sets any float properties found in the specified properties array. Property values are appended to the supplied default parameters
     ///
-    fn set_float_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
+    fn set_float_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), CanvasError> {
         // Only set the float properties that are requested
         let float_properties = properties.iter()
             .filter_map::<(_, &dyn ToSql), _>(|(property_idx, property)| {
@@ -475,17 +475,17 @@ impl SqliteCanvas {
     ///
     /// Sets any blob properties found in the specified properties array. Property values are appended to the supplied default parameters
     ///
-    fn set_blob_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), ()> {
+    fn set_blob_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), CanvasError> {
         // Only set the blob properties that are requested
         let blob_properties = properties.iter()
             .filter_map(|(property_idx, property)| {
                 match property {
                     CanvasProperty::Int(_)      | 
                     CanvasProperty::Float(_)    => None,
-                    property                    => Some(postcard::to_allocvec(property).map(|val| (*property_idx, val)).map_err(|_| ()))
+                    property                    => Some(postcard::to_allocvec(property).map(|val| (*property_idx, val)).map_err(|e| e.into()))
                 }
             })
-            .collect::<Result<Vec<_>, ()>>()?;
+            .collect::<Result<Vec<_>, CanvasError>>()?;
 
         // Need references to the blobs we've built up
         let blob_properties = blob_properties.iter()
@@ -499,32 +499,32 @@ impl SqliteCanvas {
     ///
     /// Updates the properties for a document
     ///
-    pub fn set_document_properties(&mut self, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+    pub fn set_document_properties(&mut self, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), CanvasError> {
         // Map to property IDs
         let properties = properties.into_iter()
             .map(|(property_id, property)| self.index_for_property(property_id).map(move |int_id| (int_id, property)))
             .collect::<Result<Vec<_>, _>>()?;
 
         // Write the properties themselves
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+        let transaction = self.sqlite.transaction()?;
 
         // Run commands to set each type of property value
         {
-            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentIntProperties (PropertyId, IntValue) VALUES (?, ?)").map_err(|_| ())?;
+            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentIntProperties (PropertyId, IntValue) VALUES (?, ?)")?;
             Self::set_int_properties(&properties, &mut int_properties_cmd, vec![])?;
         }
 
         {
-            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentFloatProperties (PropertyId, FloatValue) VALUES (?, ?)").map_err(|_| ())?;
+            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentFloatProperties (PropertyId, FloatValue) VALUES (?, ?)")?;
             Self::set_float_properties(&properties, &mut float_properties_cmd, vec![])?;
         }
 
         {
-            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentBlobProperties (PropertyId, BlobValue) VALUES (?, ?)").map_err(|_| ())?;
+            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentBlobProperties (PropertyId, BlobValue) VALUES (?, ?)")?;
             Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![])?;
         }
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         Ok(())
     }
@@ -532,7 +532,7 @@ impl SqliteCanvas {
     ///
     /// Updates the properties for a layer
     ///
-    pub fn set_layer_properties(&mut self, layer_id: CanvasLayerId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+    pub fn set_layer_properties(&mut self, layer_id: CanvasLayerId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), CanvasError> {
         let layer_idx = self.index_for_layer(layer_id)?;
 
         // Map to property IDs
@@ -541,25 +541,25 @@ impl SqliteCanvas {
             .collect::<Result<Vec<_>, _>>()?;
 
         // Write the properties themselves
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+        let transaction = self.sqlite.transaction()?;
 
         // Run commands to set each type of property value
         {
-            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerIntProperties (LayerId, PropertyId, IntValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerIntProperties (LayerId, PropertyId, IntValue) VALUES (?, ?, ?)")?;
             Self::set_int_properties(&properties, &mut int_properties_cmd, vec![&layer_idx])?;
         }
 
         {
-            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerFloatProperties (LayerId, PropertyId, FloatValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerFloatProperties (LayerId, PropertyId, FloatValue) VALUES (?, ?, ?)")?;
             Self::set_float_properties(&properties, &mut float_properties_cmd, vec![&layer_idx])?;
         }
 
         {
-            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerBlobProperties (LayerId, PropertyId, BlobValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerBlobProperties (LayerId, PropertyId, BlobValue) VALUES (?, ?, ?)")?;
             Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![&layer_idx])?;
         }
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         Ok(())
     }
@@ -567,7 +567,7 @@ impl SqliteCanvas {
     ///
     /// Updates the properties for a shape
     ///
-    pub fn set_shape_properties(&mut self, shape_id: CanvasShapeId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+    pub fn set_shape_properties(&mut self, shape_id: CanvasShapeId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), CanvasError> {
         let shape_idx = self.index_for_shape(shape_id)?;
 
         // Map to property IDs
@@ -576,25 +576,25 @@ impl SqliteCanvas {
             .collect::<Result<Vec<_>, _>>()?;
 
         // Write the properties themselves
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+        let transaction = self.sqlite.transaction()?;
 
         // Run commands to set each type of property value
         {
-            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO ShapeIntProperties (ShapeId, PropertyId, IntValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO ShapeIntProperties (ShapeId, PropertyId, IntValue) VALUES (?, ?, ?)")?;
             Self::set_int_properties(&properties, &mut int_properties_cmd, vec![&shape_idx])?;
         }
 
         {
-            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO ShapeFloatProperties (ShapeId, PropertyId, FloatValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO ShapeFloatProperties (ShapeId, PropertyId, FloatValue) VALUES (?, ?, ?)")?;
             Self::set_float_properties(&properties, &mut float_properties_cmd, vec![&shape_idx])?;
         }
 
         {
-            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO ShapeBlobProperties (ShapeId, PropertyId, BlobValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO ShapeBlobProperties (ShapeId, PropertyId, BlobValue) VALUES (?, ?, ?)")?;
             Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![&shape_idx])?;
         }
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         Ok(())
     }
@@ -602,7 +602,7 @@ impl SqliteCanvas {
     ///
     /// Updates the properties for a brush
     ///
-    pub fn set_brush_properties(&mut self, brush_id: CanvasBrushId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), ()> {
+    pub fn set_brush_properties(&mut self, brush_id: CanvasBrushId, properties: Vec<(CanvasPropertyId, CanvasProperty)>) -> Result<(), CanvasError> {
         let brush_idx = self.index_for_brush(brush_id)?;
 
         // Map to property IDs
@@ -611,25 +611,25 @@ impl SqliteCanvas {
             .collect::<Result<Vec<_>, _>>()?;
 
         // Write the properties themselves
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+        let transaction = self.sqlite.transaction()?;
 
         // Run commands to set each type of property value
         {
-            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushIntProperties (BrushId, PropertyId, IntValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushIntProperties (BrushId, PropertyId, IntValue) VALUES (?, ?, ?)")?;
             Self::set_int_properties(&properties, &mut int_properties_cmd, vec![&brush_idx])?;
         }
 
         {
-            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushFloatProperties (BrushId, PropertyId, FloatValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushFloatProperties (BrushId, PropertyId, FloatValue) VALUES (?, ?, ?)")?;
             Self::set_float_properties(&properties, &mut float_properties_cmd, vec![&brush_idx])?;
         }
 
         {
-            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushBlobProperties (BrushId, PropertyId, BlobValue) VALUES (?, ?, ?)").map_err(|_| ())?;
+            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushBlobProperties (BrushId, PropertyId, BlobValue) VALUES (?, ?, ?)")?;
             Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![&brush_idx])?;
         }
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         Ok(())
     }
@@ -637,16 +637,16 @@ impl SqliteCanvas {
     ///
     /// Sends a query response stored in a Vec<()>
     ///
-    pub async fn send_vec_query_response(&mut self, target: StreamTarget, context: &SceneContext, generate_response: impl FnOnce(&mut SqliteCanvas, &mut Vec<VectorResponse>) -> Result<(), ()>) -> Result<(), ()> {
+    pub async fn send_vec_query_response(&mut self, target: StreamTarget, context: &SceneContext, generate_response: impl FnOnce(&mut SqliteCanvas, &mut Vec<VectorResponse>) -> Result<(), CanvasError>) -> Result<(), CanvasError> {
         // Connect to the query response target
-        let mut target      = context.send(target).map_err(|_| ())?;
+        let mut target      = context.send(target)?;
         let mut response    = vec![];
 
         // Generate the values to send
         generate_response(self, &mut response)?;
 
         // Send the query response message
-        target.send(QueryResponse::with_iterator(response)).await.map_err(|_| ())?;
+        target.send(QueryResponse::with_iterator(response)).await?;
 
         Ok(())
     }
@@ -654,25 +654,25 @@ impl SqliteCanvas {
     ///
     /// Adds a new layer to the canvas
     ///
-    pub fn add_layer(&mut self, new_layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>) -> Result<(), ()> {
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+    pub fn add_layer(&mut self, new_layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>) -> Result<(), CanvasError> {
+        let transaction = self.sqlite.transaction()?;
 
         let new_layer_order = if let Some(before_layer) = before_layer {
             // Add between the existing layers
             let before_order = Self::order_for_layer_in_transaction(&transaction, before_layer)?;
-            transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx + 1 WHERE OrderIdx >= ?", [before_order]).map_err(|_| ())?;
+            transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx + 1 WHERE OrderIdx >= ?", [before_order])?;
 
             before_order
         } else {
             // Add the layer at the end
-            let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM Layers", [], |row| row.get(0)).map_err(|_| ())?;
+            let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM Layers", [], |row| row.get(0))?;
             max_order.map(|idx| idx + 1).unwrap_or(0)
         };
 
         // Add the layer itself
-        let new_layer_idx: i64 = transaction.query_one("INSERT INTO Layers(LayerGuid, OrderIdx) VALUES (?, ?) RETURNING LayerId", params![new_layer_id.to_string(), new_layer_order], |row| row.get(0)).map_err(|_| ())?;
+        let new_layer_idx: i64 = transaction.query_one("INSERT INTO Layers(LayerGuid, OrderIdx) VALUES (?, ?) RETURNING LayerId", params![new_layer_id.to_string(), new_layer_order], |row| row.get(0))?;
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         self.layer_id_cache.insert(new_layer_id, new_layer_idx);
 
@@ -682,14 +682,14 @@ impl SqliteCanvas {
     ///
     /// Removes an existing layer
     ///
-    pub fn remove_layer(&mut self, old_layer_id: CanvasLayerId) -> Result<(), ()> {
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+    pub fn remove_layer(&mut self, old_layer_id: CanvasLayerId) -> Result<(), CanvasError> {
+        let transaction = self.sqlite.transaction()?;
 
         let old_layer_order = Self::order_for_layer_in_transaction(&transaction, old_layer_id)?;
-        transaction.execute("DELETE FROM Layers WHERE OrderIdx = ?", params![old_layer_order]).map_err(|_| ())?;
-        transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx - 1 WHERE OrderIdx >= ?", params![old_layer_order]).map_err(|_| ())?;
+        transaction.execute("DELETE FROM Layers WHERE OrderIdx = ?", params![old_layer_order])?;
+        transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx - 1 WHERE OrderIdx >= ?", params![old_layer_order])?;
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         self.layer_id_cache.remove(&old_layer_id);
 
@@ -699,11 +699,11 @@ impl SqliteCanvas {
     ///
     /// Adds a frame to a layer at the specified time with the specified length
     ///
-    pub fn add_frame(&mut self, frame_layer: CanvasLayerId, when: Duration, _length: Duration) -> Result<(), ()> {
+    pub fn add_frame(&mut self, frame_layer: CanvasLayerId, when: Duration, _length: Duration) -> Result<(), CanvasError> {
         let layer_idx   = self.index_for_layer(frame_layer)?;
         let when_nanos  = when.as_nanos() as i64;
 
-        self.sqlite.execute("INSERT INTO LayerFrames (LayerId, Time) VALUES (?, ?)", params![layer_idx, when_nanos]).map_err(|_| ())?;
+        self.sqlite.execute("INSERT INTO LayerFrames (LayerId, Time) VALUES (?, ?)", params![layer_idx, when_nanos])?;
 
         Ok(())
     }
@@ -711,13 +711,13 @@ impl SqliteCanvas {
     ///
     /// Removes a frame from a layer at the specified time
     ///
-    pub fn remove_frame(&mut self, frame_layer: CanvasLayerId, when: Duration) -> Result<(), ()> {
+    pub fn remove_frame(&mut self, frame_layer: CanvasLayerId, when: Duration) -> Result<(), CanvasError> {
         // TODO: also remove the shapes that exist in this timeframe
 
         let layer_idx   = self.index_for_layer(frame_layer)?;
         let when_nanos  = when.as_nanos() as i64;
 
-        self.sqlite.execute("DELETE FROM LayerFrames WHERE LayerId = ? AND Time = ?", params![layer_idx, when_nanos]).map_err(|_| ())?;
+        self.sqlite.execute("DELETE FROM LayerFrames WHERE LayerId = ? AND Time = ?", params![layer_idx, when_nanos])?;
 
         Ok(())
     }
@@ -725,20 +725,20 @@ impl SqliteCanvas {
     ///
     /// Changes the ordering of a layer
     ///
-    pub fn reorder_layer(&mut self, layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>) -> Result<(), ()> {
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+    pub fn reorder_layer(&mut self, layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>) -> Result<(), CanvasError> {
+        let transaction = self.sqlite.transaction()?;
 
         // Work out the layer indexes where we want to add the new layer and the 
         let original_layer_order  = Self::order_for_layer_in_transaction(&transaction, layer_id)?;
         let before_layer_order    = if let Some(before_layer) = before_layer {
             Self::order_for_layer_in_transaction(&transaction, before_layer)?            
         } else {
-            let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM Layers", [], |row| row.get(0)).map_err(|_| ())?;
+            let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM Layers", [], |row| row.get(0))?;
             max_order.map(|idx| idx + 1).unwrap_or(0)
         };
 
         // Move the layers after the original layer
-        transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx - 1 WHERE OrderIdx > ?", params![original_layer_order]).map_err(|_| ())?;
+        transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx - 1 WHERE OrderIdx > ?", params![original_layer_order])?;
         let before_layer_order = if before_layer_order > original_layer_order {
             before_layer_order-1
         } else {
@@ -746,12 +746,12 @@ impl SqliteCanvas {
         };
 
         // Move the layers after the before layer index
-        transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx + 1 WHERE OrderIdx >= ?", params![before_layer_order]).map_err(|_| ())?;
+        transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx + 1 WHERE OrderIdx >= ?", params![before_layer_order])?;
 
         // Move the re-ordered layer to its new position
-        transaction.execute("UPDATE Layers SET OrderIdx = ? WHERE LayerGuid = ?", params![before_layer_order, layer_id.to_string()]).map_err(|_| ())?;
+        transaction.execute("UPDATE Layers SET OrderIdx = ? WHERE LayerGuid = ?", params![before_layer_order, layer_id.to_string()])?;
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         Ok(())
     }
@@ -761,38 +761,38 @@ impl SqliteCanvas {
     ///
     /// Shape types are defined by the CANVAS_*_V1_TYPE constants
     ///
-    fn encode_shape(shape: &CanvasShape) -> Result<(i64, Vec<u8>), ()> {
+    fn encode_shape(shape: &CanvasShape) -> Result<(i64, Vec<u8>), CanvasError> {
         match shape {
-            CanvasShape::Path(path)         => Ok((CANVAS_PATH_V1_TYPE, postcard::to_allocvec(path).map_err(|_| ())?)),
+            CanvasShape::Path(path)         => Ok((CANVAS_PATH_V1_TYPE, postcard::to_allocvec(path)?)),
             CanvasShape::Group              => Ok((CANVAS_GROUP_V1_TYPE, vec![])),
-            CanvasShape::Rectangle(rect)    => Ok((CANVAS_RECTANGLE_V1_TYPE, postcard::to_allocvec(rect).map_err(|_| ())?)),
-            CanvasShape::Ellipse(ellipse)   => Ok((CANVAS_ELLIPSE_V1_TYPE, postcard::to_allocvec(ellipse).map_err(|_| ())?)),
-            CanvasShape::Polygon(polygon)   => Ok((CANVAS_POLYGON_V1_TYPE, postcard::to_allocvec(polygon).map_err(|_| ())?)),
+            CanvasShape::Rectangle(rect)    => Ok((CANVAS_RECTANGLE_V1_TYPE, postcard::to_allocvec(rect)?)),
+            CanvasShape::Ellipse(ellipse)   => Ok((CANVAS_ELLIPSE_V1_TYPE, postcard::to_allocvec(ellipse)?)),
+            CanvasShape::Polygon(polygon)   => Ok((CANVAS_POLYGON_V1_TYPE, postcard::to_allocvec(polygon)?)),
         }
     }
 
     ///
     /// Adds a new shape to the canvas, or replaces the definition if the shape ID is already in use
     ///
-    pub fn add_shape(&mut self, shape_id: CanvasShapeId, shape_type: ShapeType, shape: CanvasShape) -> Result<(), ()> {
+    pub fn add_shape(&mut self, shape_id: CanvasShapeId, shape_type: ShapeType, shape: CanvasShape) -> Result<(), CanvasError> {
         let shape_type_idx                  = self.index_for_shapetype(shape_type)?;
         let (shape_data_type, shape_data)   = Self::encode_shape(&shape)?;
 
         if let Ok(existing_idx) = self.index_for_shape(shape_id) {
             // Replace the existing shape definition in place
-            let mut update_existing = self.sqlite.prepare_cached("UPDATE Shapes SET ShapeType = ?, ShapeDataType = ?, ShapeData = ? WHERE ShapeId = ?").map_err(|_| ())?;
-            update_existing.execute(params![shape_type_idx, shape_data_type, shape_data, existing_idx]).map_err(|_| ())?;
+            let mut update_existing = self.sqlite.prepare_cached("UPDATE Shapes SET ShapeType = ?, ShapeDataType = ?, ShapeData = ? WHERE ShapeId = ?")?;
+            update_existing.execute(params![shape_type_idx, shape_data_type, shape_data, existing_idx])?;
         } else {
             // Insert a new shape with a generated ShapeId
-            let mut insert_new  = self.sqlite.prepare_cached("INSERT INTO Shapes (ShapeId, ShapeGuid, ShapeType, ShapeDataType, ShapeData) VALUES (?, ?, ?, ?, ?)").map_err(|_| ())?;
+            let mut insert_new  = self.sqlite.prepare_cached("INSERT INTO Shapes (ShapeId, ShapeGuid, ShapeType, ShapeDataType, ShapeData) VALUES (?, ?, ?, ?, ?)")?;
             let next_id: i64    = if let Some(cached_id) = self.next_shape_id {
                 cached_id
             } else {
-                let mut get_max_id = self.sqlite.prepare_cached("SELECT COALESCE(MAX(ShapeId), 0) + 1 FROM Shapes").map_err(|_| ())?;
-                get_max_id.query_one([], |row| row.get(0)).map_err(|_| ())?
+                let mut get_max_id = self.sqlite.prepare_cached("SELECT COALESCE(MAX(ShapeId), 0) + 1 FROM Shapes")?;
+                get_max_id.query_one([], |row| row.get(0))?
             };
 
-            insert_new.execute(params![next_id, shape_id.to_string(), shape_type_idx, shape_data_type, shape_data]).map_err(|_| ())?;
+            insert_new.execute(params![next_id, shape_id.to_string(), shape_type_idx, shape_data_type, shape_data])?;
 
             // Store the shape ID in the cache so we can look it up faster for things like setting properties
             self.shape_id_cache.insert(shape_id, next_id);
@@ -805,10 +805,10 @@ impl SqliteCanvas {
     ///
     /// Removes a shape and all its associations from the canvas
     ///
-    pub fn remove_shape(&mut self, shape_id: CanvasShapeId) -> Result<(), ()> {
+    pub fn remove_shape(&mut self, shape_id: CanvasShapeId) -> Result<(), CanvasError> {
         let shape_idx = self.index_for_shape(shape_id)?;
 
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+        let transaction = self.sqlite.transaction()?;
 
         // Query parent info for order compaction before the cascading delete
         let layer_info = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).ok();
@@ -820,23 +820,23 @@ impl SqliteCanvas {
 
         // Delete all descendents from Shapes (CASCADE handles their ShapeLayers, ShapeGroups, properties)
         for desc_id in &descendents {
-            transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![desc_id]).map_err(|_| ())?;
+            transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![desc_id])?;
         }
 
         // Delete the shape: CASCADE handles ShapeLayers, ShapeGroups, ShapeBrushes, and properties
-        transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
+        transaction.execute("DELETE FROM Shapes WHERE ShapeId = ?", params![shape_idx])?;
 
         // Compact ordering in the parent layer by block_size (shape + all descendents were contiguous)
         if let Some((layer_id, order_idx)) = layer_info {
-            transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - ? WHERE LayerId = ? AND OrderIdx > ?", params![block_size, layer_id, order_idx]).map_err(|_| ())?;
+            transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx - ? WHERE LayerId = ? AND OrderIdx > ?", params![block_size, layer_id, order_idx])?;
         }
 
         // Compact ordering in the parent group by 1 (only the shape itself was a direct child)
         if let Some((parent_id, order_idx)) = group_info {
-            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, order_idx]).map_err(|_| ())?;
+            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, order_idx])?;
         }
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         // Invalidate caches for the removed shape and its descendents
         self.shape_id_cache.remove(&shape_id);
@@ -851,11 +851,11 @@ impl SqliteCanvas {
     ///
     /// Replaces the definition of an existing shape, preserving its parent, properties, and brushes
     ///
-    pub fn set_shape_definition(&mut self, shape_id: CanvasShapeId, shape: CanvasShape) -> Result<(), ()> {
+    pub fn set_shape_definition(&mut self, shape_id: CanvasShapeId, shape: CanvasShape) -> Result<(), CanvasError> {
         let shape_idx                   = self.index_for_shape(shape_id)?;
         let (shape_type, shape_data)    = Self::encode_shape(&shape)?;
 
-        self.sqlite.execute("UPDATE Shapes SET ShapeDataType = ?, ShapeData = ? WHERE ShapeId = ?", params![shape_type, shape_data, shape_idx]).map_err(|_| ())?;
+        self.sqlite.execute("UPDATE Shapes SET ShapeDataType = ?, ShapeData = ? WHERE ShapeId = ?", params![shape_type, shape_data, shape_idx])?;
 
         Ok(())
     }
@@ -863,11 +863,11 @@ impl SqliteCanvas {
     ///
     /// Sets the time when a shape should appear on its layer
     ///
-    pub fn set_shape_time(&mut self, shape_id: CanvasShapeId, when: Duration) -> Result<(), ()> {
+    pub fn set_shape_time(&mut self, shape_id: CanvasShapeId, when: Duration) -> Result<(), CanvasError> {
         let shape_idx   = self.index_for_shape(shape_id)?;
         let when_nanos  = when.as_nanos() as i64;
 
-        self.sqlite.execute("UPDATE ShapeLayers SET Time = ? WHERE ShapeId = ?", params![when_nanos, shape_idx]).map_err(|_| ())?;
+        self.sqlite.execute("UPDATE ShapeLayers SET Time = ? WHERE ShapeId = ?", params![when_nanos, shape_idx])?;
 
         Ok(())
     }
@@ -875,28 +875,28 @@ impl SqliteCanvas {
     ///
     /// Reorders a shape within its current parent (layer or group)
     ///
-    pub fn reorder_shape(&mut self, shape_id: CanvasShapeId, before_shape: Option<CanvasShapeId>) -> Result<(), ()> {
+    pub fn reorder_shape(&mut self, shape_id: CanvasShapeId, before_shape: Option<CanvasShapeId>) -> Result<(), CanvasError> {
         let shape_idx           = self.index_for_shape(shape_id)?;
         let before_shape_idx    = before_shape.map(|bs| self.index_for_shape(bs)).transpose()?;
 
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+        let transaction = self.sqlite.transaction()?;
 
         // Check if shape is in a group first
         if let Ok((parent_id, original_order)) = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
             // Read the existing order of the shape within a group
             let before_order = if let Some(before_idx) = before_shape_idx {
-                transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeGroups WHERE ShapeId = ? AND ParentShapeId = ?", params![before_idx, parent_id], |row| row.get(0)).map_err(|_| ())?
+                transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeGroups WHERE ShapeId = ? AND ParentShapeId = ?", params![before_idx, parent_id], |row| row.get(0))?
             } else {
-                let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeGroups WHERE ParentShapeId = ?", params![parent_id], |row| row.get(0)).map_err(|_| ())?;
+                let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeGroups WHERE ParentShapeId = ?", params![parent_id], |row| row.get(0))?;
                 max_order.map(|idx| idx + 1).unwrap_or(0)
             };
 
             // Reorder within ShapeGroups
-            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, original_order]).map_err(|_| ())?;
+            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, original_order])?;
             let before_order = if before_order > original_order { before_order - 1 } else { before_order };
 
-            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx + 1 WHERE ParentShapeId = ? AND OrderIdx >= ?", params![parent_id, before_order]).map_err(|_| ())?;
-            transaction.execute("UPDATE ShapeGroups SET OrderIdx = ? WHERE ShapeId = ?", params![before_order, shape_idx]).map_err(|_| ())?;
+            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx + 1 WHERE ParentShapeId = ? AND OrderIdx >= ?", params![parent_id, before_order])?;
+            transaction.execute("UPDATE ShapeGroups SET OrderIdx = ? WHERE ShapeId = ?", params![before_order, shape_idx])?;
 
             // Rebuild the parent group's ShapeLayers descendents to reflect the new ordering
             if let Ok((layer_id, parent_order_idx, parent_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![parent_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))) {
@@ -911,7 +911,7 @@ impl SqliteCanvas {
                 Self::insert_shapes_on_layer(&transaction, layer_id, parent_order_idx + 1, &new_descendents, parent_time)?;
             }
 
-            transaction.commit().map_err(|_| ())?;
+            transaction.commit()?;
             return Ok(());
         }
 
@@ -930,28 +930,28 @@ impl SqliteCanvas {
 
             // Query the target position and time (after removal, so positions are up to date)
             let (before_order, new_time) = if let Some(before_idx) = before_shape_idx {
-                let (order, time) = transaction.query_one("SELECT OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ? AND LayerId = ?", params![before_idx, layer_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).map_err(|_| ())?;
+                let (order, time) = transaction.query_one("SELECT OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ? AND LayerId = ?", params![before_idx, layer_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)))?;
                 (order, time)
             } else {
-                let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeLayers WHERE LayerId = ?", params![layer_id], |row| row.get(0)).map_err(|_| ())?;
+                let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeLayers WHERE LayerId = ?", params![layer_id], |row| row.get(0))?;
                 (max_order.map(|idx| idx + 1).unwrap_or(0), original_time)
             };
 
             // Re-insert the block at the new position with the target time
             Self::insert_shapes_on_layer(&transaction, layer_id, before_order, &block, new_time)?;
 
-            transaction.commit().map_err(|_| ())?;
+            transaction.commit()?;
             return Ok(());
         }
 
         // Shape has no parent, cannot reorder
-        Err(())
+        Err(CanvasError::ShapeHasNoParent(shape_id))
     }
 
     ///
     /// Sets the parent of a shape, placing it as the topmost (last) shape in the new parent
     ///
-    pub fn set_shape_parent(&mut self, shape_id: CanvasShapeId, parent: CanvasShapeParent) -> Result<(), ()> {
+    pub fn set_shape_parent(&mut self, shape_id: CanvasShapeId, parent: CanvasShapeParent) -> Result<(), CanvasError> {
         let shape_idx = self.index_for_shape(shape_id)?;
 
         // Look up the new parent index before starting the transaction
@@ -982,7 +982,7 @@ impl SqliteCanvas {
         }
 
         // Perform the update itself in a transaction
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+        let transaction = self.sqlite.transaction()?;
 
         // Collect descendents for block operations (the shape and its descendents move together)
         let descendents = Self::all_descendents_for_shape(&transaction, shape_idx)?;
@@ -998,8 +998,8 @@ impl SqliteCanvas {
             "SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?",
             params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
         ) {
-            transaction.execute("DELETE FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx]).map_err(|_| ())?;
-            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, order_idx]).map_err(|_| ())?;
+            transaction.execute("DELETE FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx])?;
+            transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, order_idx])?;
         }
 
         // Build the block of shapes to insert (shape + descendents in depth-first order)
@@ -1014,7 +1014,7 @@ impl SqliteCanvas {
 
             CanvasShapeParent::Layer(..) => {
                 let layer_idx  = new_layer_idx.unwrap();
-                let next_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeLayers WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).map_err(|_| ())?;
+                let next_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeLayers WHERE LayerId = ?", params![layer_idx], |row| row.get(0))?;
                 let next_order = next_order.map(|idx| idx + 1).unwrap_or(0);
 
                 Self::insert_shapes_on_layer(&transaction, layer_idx, next_order, &block, when_nanos)?;
@@ -1028,10 +1028,10 @@ impl SqliteCanvas {
                 let parent_old_block_size  = 1 + parent_old_descendents.len() as i64;
 
                 // Add to ShapeGroups at the end
-                let next_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeGroups WHERE ParentShapeId = ?", params![parent_shape_idx], |row| row.get(0)).map_err(|_| ())?;
+                let next_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeGroups WHERE ParentShapeId = ?", params![parent_shape_idx], |row| row.get(0))?;
                 let next_order = next_order.map(|idx| idx + 1).unwrap_or(0);
 
-                transaction.execute("INSERT INTO ShapeGroups (ShapeId, ParentShapeId, OrderIdx) VALUES (?, ?, ?)", params![shape_idx, parent_shape_idx, next_order]).map_err(|_| ())?;
+                transaction.execute("INSERT INTO ShapeGroups (ShapeId, ParentShapeId, OrderIdx) VALUES (?, ?, ?)", params![shape_idx, parent_shape_idx, next_order])?;
 
                 // Also add to ShapeLayers if the parent group is on a layer
                 if let Ok((layer_id, parent_sl_order, parent_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![parent_shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))) {
@@ -1041,7 +1041,7 @@ impl SqliteCanvas {
             }
         }
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         Ok(())
     }
@@ -1049,22 +1049,22 @@ impl SqliteCanvas {
     ///
     /// Adds brush associations to a shape
     ///
-    pub fn add_shape_brushes(&mut self, shape_id: CanvasShapeId, brush_ids: Vec<CanvasBrushId>) -> Result<(), ()> {
+    pub fn add_shape_brushes(&mut self, shape_id: CanvasShapeId, brush_ids: Vec<CanvasBrushId>) -> Result<(), CanvasError> {
         let shape_idx               = self.index_for_shape(shape_id)?;
         let brush_indices: Vec<i64> = brush_ids.iter()
             .map(|brush_id| self.index_for_brush(*brush_id))
             .collect::<Result<Vec<_>, _>>()?;
 
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+        let transaction = self.sqlite.transaction()?;
 
-        let mut next_order: i64 = transaction.query_one("SELECT COALESCE(MAX(OrderIdx), -1) + 1 FROM ShapeBrushes WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).map_err(|_| ())?;
+        let mut next_order: i64 = transaction.query_one("SELECT COALESCE(MAX(OrderIdx), -1) + 1 FROM ShapeBrushes WHERE ShapeId = ?", params![shape_idx], |row| row.get(0))?;
 
         for brush_idx in brush_indices {
-            transaction.execute("INSERT INTO ShapeBrushes (ShapeId, BrushId, OrderIdx) VALUES (?, ?, ?)", params![shape_idx, brush_idx, next_order]).map_err(|_| ())?;
+            transaction.execute("INSERT INTO ShapeBrushes (ShapeId, BrushId, OrderIdx) VALUES (?, ?, ?)", params![shape_idx, brush_idx, next_order])?;
             next_order += 1;
         }
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         Ok(())
     }
@@ -1072,22 +1072,22 @@ impl SqliteCanvas {
     ///
     /// Removes brush associations from a shape
     ///
-    pub fn remove_shape_brushes(&mut self, shape_id: CanvasShapeId, brush_ids: Vec<CanvasBrushId>) -> Result<(), ()> {
+    pub fn remove_shape_brushes(&mut self, shape_id: CanvasShapeId, brush_ids: Vec<CanvasBrushId>) -> Result<(), CanvasError> {
         let shape_idx               = self.index_for_shape(shape_id)?;
         let brush_indices: Vec<i64> = brush_ids.iter()
             .map(|brush_id| self.index_for_brush(*brush_id))
             .collect::<Result<Vec<_>, _>>()?;
 
-        let transaction = self.sqlite.transaction().map_err(|_| ())?;
+        let transaction = self.sqlite.transaction()?;
 
         for brush_idx in brush_indices {
             if let Ok(order_idx) = transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeBrushes WHERE ShapeId = ? AND BrushId = ?", params![shape_idx, brush_idx], |row| row.get(0)) {
-                transaction.execute("DELETE FROM ShapeBrushes WHERE ShapeId = ? AND BrushId = ?", params![shape_idx, brush_idx]).map_err(|_| ())?;
-                transaction.execute("UPDATE ShapeBrushes SET OrderIdx = OrderIdx - 1 WHERE ShapeId = ? AND OrderIdx > ?", params![shape_idx, order_idx]).map_err(|_| ())?;
+                transaction.execute("DELETE FROM ShapeBrushes WHERE ShapeId = ? AND BrushId = ?", params![shape_idx, brush_idx])?;
+                transaction.execute("UPDATE ShapeBrushes SET OrderIdx = OrderIdx - 1 WHERE ShapeId = ? AND OrderIdx > ?", params![shape_idx, order_idx])?;
             }
         }
 
-        transaction.commit().map_err(|_| ())?;
+        transaction.commit()?;
 
         Ok(())
     }
@@ -1095,8 +1095,8 @@ impl SqliteCanvas {
     ///
     /// Adds a brush to the canvas
     ///
-    pub fn add_brush(&mut self, brush_id: CanvasBrushId) -> Result<(), ()> {
-        self.sqlite.execute("INSERT INTO Brushes (BrushGuid) VALUES (?)", params![brush_id.to_string()]).map_err(|_| ())?;
+    pub fn add_brush(&mut self, brush_id: CanvasBrushId) -> Result<(), CanvasError> {
+        self.sqlite.execute("INSERT INTO Brushes (BrushGuid) VALUES (?)", params![brush_id.to_string()])?;
 
         Ok(())
     }
@@ -1104,8 +1104,8 @@ impl SqliteCanvas {
     ///
     /// Removes a brush and all its associations from the canvas
     ///
-    pub fn remove_brush(&mut self, brush_id: CanvasBrushId) -> Result<(), ()> {
-        self.sqlite.execute("DELETE FROM Brushes WHERE BrushGuid = ?", params![brush_id.to_string()]).map_err(|_| ())?;
+    pub fn remove_brush(&mut self, brush_id: CanvasBrushId) -> Result<(), CanvasError> {
+        self.sqlite.execute("DELETE FROM Brushes WHERE BrushGuid = ?", params![brush_id.to_string()])?;
 
         Ok(())
     }
@@ -1113,12 +1113,12 @@ impl SqliteCanvas {
     ///
     /// Returns the shape IDs that have the specified brush attached
     ///
-    pub fn shapes_with_brush(&self, brush_id: CanvasBrushId) -> Result<Vec<CanvasShapeId>, ()> {
-        let mut query_shapes = self.sqlite.prepare_cached("SELECT s.ShapeGuid FROM ShapeBrushes sb JOIN Brushes b ON sb.BrushId = b.BrushId JOIN Shapes s ON sb.ShapeId = s.ShapeId WHERE b.BrushGuid = ?").map_err(|_| ())?;
+    pub fn shapes_with_brush(&self, brush_id: CanvasBrushId) -> Result<Vec<CanvasShapeId>, CanvasError> {
+        let mut query_shapes = self.sqlite.prepare_cached("SELECT s.ShapeGuid FROM ShapeBrushes sb JOIN Brushes b ON sb.BrushId = b.BrushId JOIN Shapes s ON sb.ShapeId = s.ShapeId WHERE b.BrushGuid = ?")?;
 
         let mut shapes = vec![];
-        for row in query_shapes.query_map(params![brush_id.to_string()], |row| Ok(CanvasShapeId::from_string(&row.get::<_, String>(0)?))).map_err(|_| ())? {
-            shapes.push(row.map_err(|_| ())?);
+        for row in query_shapes.query_map(params![brush_id.to_string()], |row| Ok(CanvasShapeId::from_string(&row.get::<_, String>(0)?)))? {
+            shapes.push(row?);
         }
 
         Ok(shapes)
@@ -1143,15 +1143,15 @@ impl SqliteCanvas {
     ///
     /// Reads the document properties generate s a VectorResponse::Document in the response
     ///
-    pub fn query_document(&mut self, document_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+    pub fn query_document(&mut self, document_response: &mut Vec<VectorResponse>) -> Result<(), CanvasError> {
         // Read the properties from the three properties tables
-        let mut q_int_properties    = self.sqlite.prepare_cached("SELECT IntValue,   PropertyId FROM DocumentIntProperties").map_err(|_| ())?;
-        let mut q_float_properties  = self.sqlite.prepare_cached("SELECT FloatValue, PropertyId FROM DocumentFloatProperties").map_err(|_| ())?;
-        let mut q_blob_properties   = self.sqlite.prepare_cached("SELECT BlobValue,  PropertyId FROM DocumentBlobProperties").map_err(|_| ())?;
+        let mut q_int_properties    = self.sqlite.prepare_cached("SELECT IntValue,   PropertyId FROM DocumentIntProperties")?;
+        let mut q_float_properties  = self.sqlite.prepare_cached("SELECT FloatValue, PropertyId FROM DocumentFloatProperties")?;
+        let mut q_blob_properties   = self.sqlite.prepare_cached("SELECT BlobValue,  PropertyId FROM DocumentBlobProperties")?;
 
-        let int_properties          = q_int_properties.query_map([],   |row| Ok((row.get::<_, i64>(1)?, CanvasProperty::Int(row.get(0)?)))).map_err(|_| ())?.collect::<Result<Vec<_>, _>>().map_err(|_| ())?;
-        let float_properties        = q_float_properties.query_map([], |row| Ok((row.get::<_, i64>(1)?, CanvasProperty::Float(row.get(0)?)))).map_err(|_| ())?.collect::<Result<Vec<_>, _>>().map_err(|_| ())?;
-        let blob_properties         = q_blob_properties.query_map([],  |row| Ok((row.get::<_, i64>(1)?, postcard::from_bytes::<CanvasProperty>(&row.get::<_, Vec<u8>>(0)?).ok()))).map_err(|_| ())?.collect::<Result<Vec<_>, _>>().map_err(|_| ())?;
+        let int_properties          = q_int_properties.query_map([],   |row| Ok((row.get::<_, i64>(1)?, CanvasProperty::Int(row.get(0)?))))?.collect::<Result<Vec<_>, _>>()?;
+        let float_properties        = q_float_properties.query_map([], |row| Ok((row.get::<_, i64>(1)?, CanvasProperty::Float(row.get(0)?))))?.collect::<Result<Vec<_>, _>>()?;
+        let blob_properties         = q_blob_properties.query_map([],  |row| Ok((row.get::<_, i64>(1)?, postcard::from_bytes::<CanvasProperty>(&row.get::<_, Vec<u8>>(0)?).ok())))?.collect::<Result<Vec<_>, _>>()?;
 
         drop(q_blob_properties);
         drop(q_float_properties);
@@ -1173,7 +1173,7 @@ impl SqliteCanvas {
     ///
     /// Queries a list of layers for their properties
     ///
-    pub fn query_layers(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+    pub fn query_layers(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>) -> Result<(), CanvasError> {
         // Query to fetch the properties ofr each layer
         let properties_query =
             "
@@ -1184,7 +1184,7 @@ impl SqliteCanvas {
             LEFT OUTER JOIN LayerBlobProperties  bp ON bp.LayerId = l.LayerId
             WHERE l.LayerGuid = ?
             ";
-        let mut properties_query = self.sqlite.prepare_cached(properties_query).map_err(|_| ())?;
+        let mut properties_query = self.sqlite.prepare_cached(properties_query)?;
 
         // We query layers one at a time (would be nice if we could pass in an array to Sqlite)
         let mut layers = vec![];
@@ -1197,7 +1197,7 @@ impl SqliteCanvas {
                     let property_value  = Self::decode_property(&row);
 
                     Ok((property_idx, property_value))
-                }).map_err(|_| ())?
+                })?
                 .flatten()
                 .flat_map(|(property_idx, value)| Some((property_idx, value?)))
                 .collect::<Vec<_>>();
@@ -1211,7 +1211,7 @@ impl SqliteCanvas {
         for (layer, properties) in layers.into_iter() {
             let properties = properties.into_iter()
                 .map(|(property_idx, value)| Ok((self.property_for_index(property_idx)?, value)))
-                .collect::<Result<Vec<_>, _>>()?;
+                .collect::<Result<Vec<_>, CanvasError>>()?;
 
             layer_response.push(VectorResponse::Layer(layer, properties));
         }
@@ -1222,7 +1222,7 @@ impl SqliteCanvas {
     ///
     /// Queries a list of brushes for their properties
     ///
-    pub fn query_brushes(&mut self, query_brushes: impl IntoIterator<Item=CanvasBrushId>, brush_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+    pub fn query_brushes(&mut self, query_brushes: impl IntoIterator<Item=CanvasBrushId>, brush_response: &mut Vec<VectorResponse>) -> Result<(), CanvasError> {
         // Query to fetch the properties ofr each brush
         let properties_query =
             "
@@ -1233,7 +1233,7 @@ impl SqliteCanvas {
             LEFT OUTER JOIN BrushBlobProperties  bp ON bp.BrushId = b.BrushId
             WHERE b.BrushGuid = ?
             ";
-        let mut properties_query = self.sqlite.prepare_cached(properties_query).map_err(|_| ())?;
+        let mut properties_query = self.sqlite.prepare_cached(properties_query)?;
 
         // We query brushes one at a time (would be nice if we could pass in an array to Sqlite)
         let mut brushes = vec![];
@@ -1246,7 +1246,7 @@ impl SqliteCanvas {
                     let property_value  = Self::decode_property(&row);
 
                     Ok((property_idx, property_value))
-                }).map_err(|_| ())?
+                })?
                 .flatten()
                 .flat_map(|(property_idx, value)| Some((property_idx, value?)))
                 .collect::<Vec<_>>();
@@ -1260,7 +1260,7 @@ impl SqliteCanvas {
         for (brush_id, properties) in brushes.into_iter() {
             let properties = properties.into_iter()
                 .map(|(property_idx, value)| Ok((self.property_for_index(property_idx)?, value)))
-                .collect::<Result<Vec<_>, _>>()?;
+                .collect::<Result<Vec<_>, CanvasError>>()?;
 
             brush_response.push(VectorResponse::Brush(brush_id, properties));
         }
@@ -1271,7 +1271,7 @@ impl SqliteCanvas {
     ///
     /// Queries a list of shapes for their properties
     ///
-    pub fn query_shapes(&mut self, query_shapes: impl IntoIterator<Item=CanvasShapeId>, shape_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+    pub fn query_shapes(&mut self, query_shapes: impl IntoIterator<Item=CanvasShapeId>, shape_response: &mut Vec<VectorResponse>) -> Result<(), CanvasError> {
         // Query to fetch the properties for each shape, including brush properties from attached brushes
         let properties_query =
             "
@@ -1294,7 +1294,7 @@ impl SqliteCanvas {
 
             ORDER BY PropertyId ASC, Source ASC, BrushOrder DESC
             ";
-        let mut properties_query = self.sqlite.prepare_cached(properties_query).map_err(|_| ())?;
+        let mut properties_query = self.sqlite.prepare_cached(properties_query)?;
 
         let mut shapes = vec![];
 
@@ -1306,7 +1306,7 @@ impl SqliteCanvas {
                     let property_value  = Self::decode_property(&row);
 
                     Ok((property_idx, property_value))
-                }).map_err(|_| ())?
+                })?
                 .flatten()
                 .flat_map(|(property_idx, value)| Some((property_idx, value?)))
                 .fold(vec![], |mut properties: Vec<(i64, CanvasProperty)>, (property_idx, value)| {
@@ -1326,7 +1326,7 @@ impl SqliteCanvas {
         for (shape_id, properties) in shapes.into_iter() {
             let properties = properties.into_iter()
                 .map(|(property_idx, value)| Ok((self.property_for_index(property_idx)?, value)))
-                .collect::<Result<Vec<_>, _>>()?;
+                .collect::<Result<Vec<_>, CanvasError>>()?;
             let shape_type = self.shapetype_for_shape(shape_id)?;
 
             shape_response.push(VectorResponse::Shape(shape_id, shape_type, properties));
@@ -1338,7 +1338,7 @@ impl SqliteCanvas {
     ///
     /// Queries the shapes and their properties on a particular layer
     ///
-    pub fn query_shapes_on_layer(&mut self, layer: CanvasLayerId, shape_response: &mut Vec<VectorResponse>, when: Duration) -> Result<(), ()> {
+    pub fn query_shapes_on_layer(&mut self, layer: CanvasLayerId, shape_response: &mut Vec<VectorResponse>, when: Duration) -> Result<(), CanvasError> {
         let latest_time_nanos   = when.as_nanos() as i64;
         let earliest_time_nanos = self.layer_frame_time(layer, when)?.as_nanos() as i64;
 
@@ -1376,13 +1376,13 @@ impl SqliteCanvas {
 
             ORDER BY ShapeOrder ASC, PropertyId ASC, Source ASC, BrushOrder DESC
             ";
-        let mut shapes_query = self.sqlite.prepare_cached(shapes_query).map_err(|_| ())?;
+        let mut shapes_query = self.sqlite.prepare_cached(shapes_query)?;
 
         // Shapes we've seen from the query, and the properties we've gathered from each shape
         let mut shapes      = vec![];
         let mut properties  = vec![];
 
-        let mut shapes_rows      = shapes_query.query(params![layer.to_string(), latest_time_nanos, earliest_time_nanos]).map_err(|_| ())?;
+        let mut shapes_rows      = shapes_query.query(params![layer.to_string(), latest_time_nanos, earliest_time_nanos])?;
         let mut cur_shape_idx    = None;
         let mut cur_shape_id     = None;
         let mut cur_shape_type   = None;
@@ -1391,8 +1391,8 @@ impl SqliteCanvas {
 
         while let Ok(Some(shape_row)) = shapes_rows.next() {
             // Update the shape that we're reading
-            let shape_idx = shape_row.get::<_, i64>(7).map_err(|_| ())?;
-            let group_idx = shape_row.get::<_, Option<i64>>(9).map_err(|_| ())?;
+            let shape_idx = shape_row.get::<_, i64>(7)?;
+            let group_idx = shape_row.get::<_, Option<i64>>(9)?;
             if Some(shape_idx) != cur_shape_idx {
                 // Finished receiving properties for the current shape, so move on to the next
                 if let (Some(old_shape_id), Some(old_shape_idx), Some(old_shape_type)) = (cur_shape_id, cur_shape_idx, cur_shape_type) {
@@ -1403,15 +1403,15 @@ impl SqliteCanvas {
 
                 // Update to track the shape indicated by the current row
                 cur_shape_idx    = Some(shape_idx);
-                cur_shape_id     = Some(CanvasShapeId::from_string(&shape_row.get::<_, String>(8).map_err(|_| ())?));
-                cur_shape_type   = Some(shape_row.get::<_, i64>(10).map_err(|_| ())?);
+                cur_shape_id     = Some(CanvasShapeId::from_string(&shape_row.get::<_, String>(8)?));
+                cur_shape_type   = Some(shape_row.get::<_, i64>(10)?);
                 cur_property_idx = None;
                 cur_group        = group_idx;
             }
 
             // Read the next property
             if let Some(property_value) = Self::decode_property(&shape_row) {
-                let property_idx = shape_row.get::<_, i64>(3).map_err(|_| ())?;
+                let property_idx = shape_row.get::<_, i64>(3)?;
 
                 if Some(property_idx) != cur_property_idx {
                     // Only write the first property if the property is defined in more than one place
@@ -1472,7 +1472,7 @@ impl SqliteCanvas {
             let shape_type = self.shapetype_for_index(shape_type_idx)?;
             let properties = properties.into_iter()
                 .map(|(property_idx, value)| Ok((self.property_for_index(property_idx)?, value)))
-                .collect::<Result<Vec<_>, _>>()?;
+                .collect::<Result<Vec<_>, CanvasError>>()?;
 
             shape_response.push(VectorResponse::Shape(shape_id, shape_type, properties));
 
@@ -1486,7 +1486,7 @@ impl SqliteCanvas {
     ///
     /// Queries a list of layers, retrieving their properties and any shapes that are on them
     ///
-    pub fn query_layers_with_shapes(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>, when: Duration) -> Result<(), ()> {
+    pub fn query_layers_with_shapes(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>, when: Duration) -> Result<(), CanvasError> {
         // Query the layers
         let mut layers = vec![];
         self.query_layers(query_layers, &mut layers)?;
@@ -1511,16 +1511,14 @@ impl SqliteCanvas {
     ///
     /// Queries the outline of the document
     ///
-    pub fn query_document_outline(&mut self, outline: &mut Vec<VectorResponse>) -> Result<(), ()> {
+    pub fn query_document_outline(&mut self, outline: &mut Vec<VectorResponse>) -> Result<(), CanvasError> {
         // Add the document properties to start
         self.query_document(outline)?;
 
         // Layers are fetched in order
-        let mut select_layers   = self.sqlite.prepare_cached("SELECT LayerGuid FROM Layers ORDER BY OrderIdx ASC").map_err(|_| ())?;
-        let layers              = select_layers.query_map(params![], |row| Ok(CanvasLayerId::from_string(&row.get::<_, String>(0)?)))
-            .map_err(|_| ())?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| ())?;
+        let mut select_layers   = self.sqlite.prepare_cached("SELECT LayerGuid FROM Layers ORDER BY OrderIdx ASC")?;
+        let layers              = select_layers.query_map(params![], |row| Ok(CanvasLayerId::from_string(&row.get::<_, String>(0)?)))?
+            .collect::<Result<Vec<_>, _>>()?;
         drop(select_layers);
 
         // Use the layer query to populate the layers, then write the order
@@ -1533,16 +1531,14 @@ impl SqliteCanvas {
     ///
     /// Queries the whole of the document
     ///
-    pub fn query_document_whole(&mut self, outline: &mut Vec<VectorResponse>, when: Duration) -> Result<(), ()> {
+    pub fn query_document_whole(&mut self, outline: &mut Vec<VectorResponse>, when: Duration) -> Result<(), CanvasError> {
         // Add the document properties to start
         self.query_document(outline)?;
 
         // Layers are fetched in order
-        let mut select_layers   = self.sqlite.prepare_cached("SELECT LayerGuid FROM Layers ORDER BY OrderIdx ASC").map_err(|_| ())?;
-        let layers              = select_layers.query_map(params![], |row| Ok(CanvasLayerId::from_string(&row.get::<_, String>(0)?)))
-            .map_err(|_| ())?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| ())?;
+        let mut select_layers   = self.sqlite.prepare_cached("SELECT LayerGuid FROM Layers ORDER BY OrderIdx ASC")?;
+        let layers              = select_layers.query_map(params![], |row| Ok(CanvasLayerId::from_string(&row.get::<_, String>(0)?)))?
+            .collect::<Result<Vec<_>, _>>()?;
         drop(select_layers);
 
         // Use the layer query to populate the layers, then write the order
@@ -1550,11 +1546,9 @@ impl SqliteCanvas {
         outline.push(VectorResponse::LayerOrder(layers));
 
         // Query the brushes
-        let mut select_brushes   = self.sqlite.prepare_cached("SELECT BrushGuid FROM Brushes").map_err(|_| ())?;
-        let brushes              = select_brushes.query_map(params![], |row| Ok(CanvasBrushId::from_string(&row.get::<_, String>(0)?)))
-            .map_err(|_| ())?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| ())?;
+        let mut select_brushes   = self.sqlite.prepare_cached("SELECT BrushGuid FROM Brushes")?;
+        let brushes              = select_brushes.query_map(params![], |row| Ok(CanvasBrushId::from_string(&row.get::<_, String>(0)?)))?
+            .collect::<Result<Vec<_>, _>>()?;
         drop(select_brushes);
         self.query_brushes(brushes, outline)?;
 
