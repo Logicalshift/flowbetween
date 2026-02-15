@@ -484,10 +484,11 @@ async fn events_program(input: InputStream<FocusEvent>, context: SceneContext, f
 async fn physics_program(input: InputStream<BindingProgram>, context: SceneContext, floating_dock: Arc<FloatingToolDock>) {
     #[derive(Clone)]
     struct ToolState {
-        current_position:             BindRef<UiPoint>,
+        current_position:   BindRef<UiPoint>,
         position_binding:   Binding<UiPoint>,
+        anchor_binding:     Binding<UiPoint>,
+        actual_position:    UiPoint,
         drag_offset:        Option<(f64, f64)>,
-        is_dragged:         bool,
     }
 
     impl PartialEq for ToolState {
@@ -514,8 +515,9 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
                     ToolState {
                         current_position:   tool.1.current_position.clone(),
                         position_binding:   tool.1.position.clone(),
+                        anchor_binding:     tool.1.anchor.clone(),
+                        actual_position:    tool.1.position.get(),
                         drag_offset:        tool.1.drag_offset.get(),
-                        is_dragged:         tool.1.dragged.get(),
                     }
                 )
             }).collect::<HashMap<_, _>>()
@@ -541,7 +543,7 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
                     // Updating a tool that's already in the simulation
                     if old_tool.drag_offset.is_none() && tool.drag_offset.is_some() {
                         // Tool is changing state to being dragged (set to kinematic)
-                        tool.position_binding.set(tool.current_position.get());
+                        tool.anchor_binding.set(old_tool.actual_position);
 
                         new_properties.push(SimBodyProperty::Type(SimObjectType::Kinematic));
                         new_properties.push(SimBodyProperty::Shape(SimShape::Circle(TOOL_WIDTH/2.0)));
