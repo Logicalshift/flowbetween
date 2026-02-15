@@ -7,6 +7,7 @@ use super::shape_type::*;
 use flo_scene::*;
 
 use ::serde::*;
+use std::time::{Duration};
 
 ///
 /// Basic editing actions for a vector canvas
@@ -35,13 +36,16 @@ pub enum VectorCanvas {
     ReorderLayer { layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>, },
 
     /// Adds a shape with no properties (transparent fill/stroke) to the canvas. If the shape ID is already in use, this will replace the existing shape in place with the new one
-    AddShape(CanvasShapeId, ShapeType, CanvasShape),
+    AddShape(CanvasShapeId, ShapeType, CanvasShape, Duration),
 
     /// Removes a shape from the canvas
     RemoveShape(CanvasShapeId),
 
     /// Replaces the definition of an existing shape, preserving its parent, properties, and brushes
     SetShapeDefinition(CanvasShapeId, CanvasShape),
+
+    /// Sets the time when a shape should appear
+    SetShapeTime(CanvasShapeId, Duration),
 
     /// Adds a brush to this canvas
     AddBrush(CanvasBrushId),

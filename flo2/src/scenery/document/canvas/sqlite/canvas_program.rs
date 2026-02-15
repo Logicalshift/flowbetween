@@ -42,18 +42,19 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
 
                 for edit in edits {
                     match edit {
-                        AddLayer { new_layer_id, before_layer, }        => { changed_layers.insert(new_layer_id); canvas.add_layer(new_layer_id, before_layer).ok(); }
-                        RemoveLayer(layer_id)                           => { changed_layers.insert(layer_id); canvas.remove_layer(layer_id).ok(); }
-                        ReorderLayer { layer_id, before_layer, }        => { changed_layers.insert(layer_id); canvas.reorder_layer(layer_id, before_layer).ok(); }
-                        AddShape(shape_id, shape_type, shape_defn)      => { changed_shapes.insert(shape_id); canvas.add_shape(shape_id, shape_type, shape_defn).ok(); }
-                        RemoveShape(shape_id)                           => { changed_shapes.insert(shape_id); canvas.remove_shape(shape_id).ok(); }
-                        SetShapeDefinition(shape_id, shape_defn)        => { changed_shapes.insert(shape_id); canvas.set_shape_definition(shape_id, shape_defn).ok(); }
-                        AddBrush(brush_id)                              => { canvas.add_brush(brush_id).ok(); }
-                        RemoveBrush(brush_id)                           => { canvas.remove_brush(brush_id).ok(); }
-                        ReorderShape { shape_id, before_shape, }        => { changed_shapes.insert(shape_id); canvas.reorder_shape(shape_id, before_shape).ok(); }
-                        AddShapeBrushes(shape_id, brush_ids)            => { changed_shapes.insert(shape_id); canvas.add_shape_brushes(shape_id, brush_ids).ok(); }
-                        RemoveShapeBrushes(shape_id, brush_ids)         => { changed_shapes.insert(shape_id); canvas.remove_shape_brushes(shape_id, brush_ids).ok(); }
-                        Subscribe(edit_target)                          => { if let Ok(edit_target) = context.send(edit_target) { subscribers.add_target(edit_target); } }
+                        AddLayer { new_layer_id, before_layer, }            => { changed_layers.insert(new_layer_id); canvas.add_layer(new_layer_id, before_layer).ok(); }
+                        RemoveLayer(layer_id)                               => { changed_layers.insert(layer_id); canvas.remove_layer(layer_id).ok(); }
+                        ReorderLayer { layer_id, before_layer, }            => { changed_layers.insert(layer_id); canvas.reorder_layer(layer_id, before_layer).ok(); }
+                        AddShape(shape_id, shape_type, shape_defn, when)    => { changed_shapes.insert(shape_id); canvas.add_shape(shape_id, shape_type, shape_defn).ok(); }
+                        RemoveShape(shape_id)                               => { changed_shapes.insert(shape_id); canvas.remove_shape(shape_id).ok(); }
+                        SetShapeDefinition(shape_id, shape_defn)            => { changed_shapes.insert(shape_id); canvas.set_shape_definition(shape_id, shape_defn).ok(); }
+                        SetShapeTime(shape_id, when)                        => { todo!() }
+                        AddBrush(brush_id)                                  => { canvas.add_brush(brush_id).ok(); }
+                        RemoveBrush(brush_id)                               => { canvas.remove_brush(brush_id).ok(); }
+                        ReorderShape { shape_id, before_shape, }            => { changed_shapes.insert(shape_id); canvas.reorder_shape(shape_id, before_shape).ok(); }
+                        AddShapeBrushes(shape_id, brush_ids)                => { changed_shapes.insert(shape_id); canvas.add_shape_brushes(shape_id, brush_ids).ok(); }
+                        RemoveShapeBrushes(shape_id, brush_ids)             => { changed_shapes.insert(shape_id); canvas.remove_shape_brushes(shape_id, brush_ids).ok(); }
+                        Subscribe(edit_target)                              => { if let Ok(edit_target) = context.send(edit_target) { subscribers.add_target(edit_target); } }
 
                         SetShapeParent(shape_id, parent) => {
                             changed_shapes.insert(shape_id);
