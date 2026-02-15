@@ -484,7 +484,7 @@ async fn events_program(input: InputStream<FocusEvent>, context: SceneContext, f
 async fn physics_program(input: InputStream<BindingProgram>, context: SceneContext, floating_dock: Arc<FloatingToolDock>) {
     #[derive(Clone)]
     struct ToolState {
-        anchor:             BindRef<UiPoint>,
+        current_position:             BindRef<UiPoint>,
         position_binding:   Binding<UiPoint>,
         drag_offset:        Option<(f64, f64)>,
         is_dragged:         bool,
@@ -512,7 +512,7 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
                 (
                     tool.1.sim_id,
                     ToolState {
-                        anchor:             tool.1.current_position.clone(),
+                        current_position:   tool.1.current_position.clone(),
                         position_binding:   tool.1.position.clone(),
                         drag_offset:        tool.1.drag_offset.get(),
                         is_dragged:         tool.1.dragged.get(),
@@ -541,7 +541,7 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
                     // Updating a tool that's already in the simulation
                     if old_tool.drag_offset.is_none() && tool.drag_offset.is_some() {
                         // Tool is changing state to being dragged (set to kinematic)
-                        tool.position_binding.set(tool.anchor.get());
+                        tool.position_binding.set(tool.current_position.get());
 
                         new_properties.push(SimBodyProperty::Type(SimObjectType::Kinematic));
                         new_properties.push(SimBodyProperty::Shape(SimShape::Circle(TOOL_WIDTH/2.0)));
@@ -557,12 +557,12 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
                     }
                 } else {
                     // Creating a new tool
-                    tool.position_binding.set(tool.anchor.get());
+                    tool.position_binding.set(tool.current_position.get());
 
                     physics_sim.send(PhysicsSimulation::CreateRigidBody(*id)).await.ok();
                     physics_sim.send(PhysicsSimulation::BindPosition(*id, tool.position_binding.clone())).await.ok();
                     physics_sim.send(PhysicsSimulation::Set(*id, vec![
-                        SimBodyProperty::Position(Some(tool.anchor.clone())),
+                        SimBodyProperty::Position(Some(tool.current_position.clone())),
                         SimBodyProperty::Type(SimObjectType::Dynamic),
                         SimBodyProperty::LinearDamping(10.0),
                         SimBodyProperty::AngularDamping(5.0),
