@@ -32,6 +32,12 @@ pub enum VectorCanvas {
     /// Removes the specified layer
     RemoveLayer(CanvasLayerId),
 
+    /// Adds a new frame at the specified time. Any shapes on this layer displayed before the 'when' time will be removed from display at this point
+    AddFrame { frame_layer: CanvasLayerId, when: Duration, length: Duration },
+
+    /// Removes an existing frame from the layer. Any shapes that appear after the removed frame starts and before the next frame starts will also be removed from the canvas.
+    RemoveFrame { frame_layer: CanvasLayerId, when: Duration },
+
     /// Moves the specified layer before another layer (None to move it to the top)
     ReorderLayer { layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>, },
 
