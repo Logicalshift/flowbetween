@@ -200,4 +200,38 @@ impl SqliteCanvas {
 
         Ok(())
     }
+
+    ///
+    /// Changes the ordering of a layer
+    ///
+    pub fn reorder_layer(&mut self, layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>) -> Result<(), CanvasError> {
+        let transaction = self.sqlite.transaction()?;
+
+        // Work out the layer indexes where we want to add the new layer and the 
+        let original_layer_order  = Self::order_for_layer_in_transaction(&transaction, layer_id)?;
+        let before_layer_order    = if let Some(before_layer) = before_layer {
+            Self::order_for_layer_in_transaction(&transaction, before_layer)?            
+        } else {
+            let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM Layers", [], |row| row.get(0))?;
+            max_order.map(|idx| idx + 1).unwrap_or(0)
+        };
+
+        // Move the layers after the original layer
+        transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx - 1 WHERE OrderIdx > ?", params![original_layer_order])?;
+        let before_layer_order = if before_layer_order > original_layer_order {
+            before_layer_order-1
+        } else {
+            before_layer_order
+        };
+
+        // Move the layers after the before layer index
+        transaction.execute("UPDATE Layers SET OrderIdx = OrderIdx + 1 WHERE OrderIdx >= ?", params![before_layer_order])?;
+
+        // Move the re-ordered layer to its new position
+        transaction.execute("UPDATE Layers SET OrderIdx = ? WHERE LayerGuid = ?", params![before_layer_order, layer_id.to_string()])?;
+
+        transaction.commit()?;
+
+        Ok(())
+    }
 }
