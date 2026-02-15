@@ -333,6 +333,27 @@ fn set_shape_parent_to_layer() {
 }
 
 #[test]
+fn query_shapes_on_layer() {
+    let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
+    let layer       = CanvasLayerId::new();
+    let shape       = CanvasShapeId::new();
+
+    canvas.add_layer(layer, None).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
+
+    canvas.set_shape_parent(shape, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
+    assert!(shapes_on_layer(&canvas, layer) == vec![shape.to_string()]);
+
+    // Query the layer
+    let mut response = vec![];
+    canvas.query_layers_with_shapes(vec![layer], &mut response, Duration::ZERO).unwrap();
+
+    // Initially not on any layer
+    assert!(response == vec![
+        ], "Response was {:?}", response);
+}
+
+#[test]
 fn set_shape_parent_to_group() {
     let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
     let layer       = CanvasLayerId::new();

@@ -209,6 +209,21 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Returns the time where the frame starts
+    ///
+    #[inline]
+    pub fn layer_frame_time(&mut self, layer_id: CanvasLayerId, when: Duration) -> Result<Duration, ()> {
+        let layer_idx = self.index_for_layer(layer_id)?;
+
+        let mut most_recent_time = self.sqlite.prepare_cached("SELECT MAX(Time) FROM LayerFrames WHERE LayerId = ? AND Time <= ?").map_err(|_| ())?;
+        let mut most_recent_time = most_recent_time.query_map(params![layer_idx, when.as_nanos() as i64], |row| row.get::<_, i64>(0)).map_err(|_| ())?;
+        let most_recent_time     = most_recent_time.next().unwrap_or(Ok(0)).map_err(|_| ())?;
+        let most_recent_time     = Duration::from_nanos(most_recent_time as u64);
+
+        Ok(most_recent_time)
+    }
+
+    ///
     /// Queries the database for the ordering index of the specified layer
     ///
     #[inline]
@@ -227,7 +242,7 @@ impl SqliteCanvas {
     ///
     #[inline]
     pub fn time_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, ()> {
-        let mut time_query = self.sqlite.prepare("
+        let mut time_query = self.sqlite.prepare_cached("
             SELECT      sl.Time 
             FROM        ShapeLayers sl 
             INNER JOIN  Shapes s ON s.ShapeId = sl.ShapeId 
@@ -1323,7 +1338,10 @@ impl SqliteCanvas {
     ///
     /// Queries the shapes and their properties on a particular layer
     ///
-    pub fn query_shapes_on_layer(&mut self, layer: CanvasLayerId, shape_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+    pub fn query_shapes_on_layer(&mut self, layer: CanvasLayerId, shape_response: &mut Vec<VectorResponse>, when: Duration) -> Result<(), ()> {
+        let latest_time_nanos   = when.as_nanos() as i64;
+        let earliest_time_nanos = self.layer_frame_time(layer, when)?.as_nanos() as i64;
+
         // Query to fetch the properties for each shape, including brush properties from attached brushes
         let shapes_query =
             "
@@ -1338,7 +1356,7 @@ impl SqliteCanvas {
             LEFT OUTER JOIN ShapeIntProperties   ip ON ip.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeFloatProperties fp ON fp.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeBlobProperties  bp ON bp.ShapeId = s.ShapeId
-            WHERE l.LayerGuid = ?1
+            WHERE l.LayerGuid = ?1 AND sl.Time >= ?3 AND sl.Time <= ?2
 
             UNION ALL
 
@@ -1354,7 +1372,7 @@ impl SqliteCanvas {
             LEFT OUTER JOIN BrushIntProperties   bip ON bip.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushFloatProperties bfp ON bfp.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushBlobProperties  bbp ON bbp.BrushId = sb.BrushId
-            WHERE l.LayerGuid = ?1
+            WHERE l.LayerGuid = ?1 AND sl.Time >= ?3 AND sl.Time <= ?2
 
             ORDER BY ShapeOrder ASC, PropertyId ASC, Source ASC, BrushOrder DESC
             ";
@@ -1364,7 +1382,7 @@ impl SqliteCanvas {
         let mut shapes      = vec![];
         let mut properties  = vec![];
 
-        let mut shapes_rows      = shapes_query.query(params![layer.to_string()]).map_err(|_| ())?;
+        let mut shapes_rows      = shapes_query.query(params![layer.to_string(), latest_time_nanos, earliest_time_nanos]).map_err(|_| ())?;
         let mut cur_shape_idx    = None;
         let mut cur_shape_id     = None;
         let mut cur_shape_type   = None;
@@ -1468,7 +1486,7 @@ impl SqliteCanvas {
     ///
     /// Queries a list of layers, retrieving their properties and any shapes that are on them
     ///
-    pub fn query_layers_with_shapes(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>) -> Result<(), ()> {
+    pub fn query_layers_with_shapes(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>, when: Duration) -> Result<(), ()> {
         // Query the layers
         let mut layers = vec![];
         self.query_layers(query_layers, &mut layers)?;
@@ -1478,7 +1496,7 @@ impl SqliteCanvas {
             match response {
                 VectorResponse::Layer(layer_id, layer_properties) => {
                     layer_response.push(VectorResponse::Layer(layer_id, layer_properties));
-                    self.query_shapes_on_layer(layer_id, layer_response)?;
+                    self.query_shapes_on_layer(layer_id, layer_response, when)?;
                 }
 
                 other => {
@@ -1515,7 +1533,7 @@ impl SqliteCanvas {
     ///
     /// Queries the whole of the document
     ///
-    pub fn query_document_whole(&mut self, outline: &mut Vec<VectorResponse>) -> Result<(), ()> {
+    pub fn query_document_whole(&mut self, outline: &mut Vec<VectorResponse>, when: Duration) -> Result<(), ()> {
         // Add the document properties to start
         self.query_document(outline)?;
 
@@ -1528,7 +1546,7 @@ impl SqliteCanvas {
         drop(select_layers);
 
         // Use the layer query to populate the layers, then write the order
-        self.query_layers_with_shapes(layers.iter().copied(), outline)?;
+        self.query_layers_with_shapes(layers.iter().copied(), outline, when)?;
         outline.push(VectorResponse::LayerOrder(layers));
 
         // Query the brushes
