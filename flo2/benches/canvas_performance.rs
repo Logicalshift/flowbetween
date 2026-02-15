@@ -364,12 +364,79 @@ fn bench_add_single_shape_scaling(c: &mut Criterion) {
     group.finish();
 }
 
+/// Benchmark querying shapes across multiple frames
+/// Creates a single layer with 100 frames, each containing the same number of shapes,
+/// and measures the time to query shapes at each frame
+fn bench_query_shapes_per_frame(c: &mut Criterion) {
+    let mut group = c.benchmark_group("query_shapes_per_frame");
+
+    let num_frames = 100;
+
+    for &shapes_per_frame in &[1, 10, 100, 1000] {
+        group.throughput(Throughput::Elements(shapes_per_frame as u64));
+
+        let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
+        let layer_id    = CanvasLayerId::new();
+        canvas.add_layer(layer_id, None).unwrap();
+
+        // Add shapes to each frame
+        for frame in 0..num_frames {
+            let frame_time = Duration::from_millis(frame as u64 * 100);
+
+            for i in 0..shapes_per_frame {
+                let shape_id = CanvasShapeId::new();
+                let x        = (i % 100) as f32 * 15.0;
+                let y        = (i / 100) as f32 * 15.0;
+                let shape    = create_test_rectangle(x, y);
+
+                canvas
+                    .add_shape(shape_id, test_shape_type(), shape)
+                    .unwrap();
+                canvas
+                    .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id, frame_time))
+                    .unwrap();
+                canvas
+                    .set_shape_properties(shape_id, create_test_properties(i))
+                    .unwrap();
+            }
+        }
+
+        // Collect all frame times for benchmarking
+        let frame_times: Vec<Duration> = (0..num_frames)
+            .map(|frame| Duration::from_millis(frame as u64 * 100))
+            .collect();
+
+        group.bench_with_input(
+            BenchmarkId::new("shapes_per_frame", shapes_per_frame),
+            &shapes_per_frame,
+            |b, _| {
+                let mut frame_idx = 0usize;
+                b.iter(|| {
+                    let mut response = vec![];
+                    canvas
+                        .query_shapes_on_layer(
+                            black_box(layer_id),
+                            &mut response,
+                            frame_times[frame_idx % num_frames],
+                        )
+                        .unwrap();
+                    frame_idx += 1;
+                    black_box(response);
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_query_shapes_scaling,
     bench_query_shapes_large_database,
     bench_performance_per_shape,
     bench_add_shapes_scaling,
-    bench_add_single_shape_scaling
+    bench_add_single_shape_scaling,
+    bench_query_shapes_per_frame,
 );
 criterion_main!(benches);
