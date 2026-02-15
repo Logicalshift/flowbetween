@@ -8,6 +8,7 @@ use ::serde::*;
 use uuid::*;
 
 use std::str::*;
+use std::time::{Duration};
 
 ///
 /// Identifier used for a shape in the canvas document
@@ -44,8 +45,8 @@ pub enum CanvasShapeParent {
     /// Shape is not a parent shape
     None,
 
-    /// Shape is part of a layer
-    Layer(CanvasLayerId),
+    /// Shape is part of a layer, appearing at the specified time
+    Layer(CanvasLayerId, Duration),
 
     /// Shape is grouped with another shape
     Shape(CanvasShapeId),

@@ -45,10 +45,10 @@ fn create_populated_canvas(num_layers: usize, shapes_per_layer: usize) -> Sqlite
             let shape = create_test_rectangle(x, y);
 
             canvas
-                .add_shape(shape_id, test_shape_type(), shape, Duration::from_nanos(0))
+                .add_shape(shape_id, test_shape_type(), shape)
                 .unwrap();
             canvas
-                .set_shape_parent(shape_id, CanvasShapeParent::Layer(*layer_id))
+                .set_shape_parent(shape_id, CanvasShapeParent::Layer(*layer_id, Duration::from_nanos(0)))
                 .unwrap();
             canvas
                 .set_shape_properties(shape_id, create_test_properties(i))
@@ -79,10 +79,10 @@ fn bench_query_shapes_scaling(c: &mut Criterion) {
             let shape    = create_test_rectangle(x, y);
 
             canvas
-                .add_shape(shape_id, test_shape_type(), shape, Duration::from_nanos(0))
+                .add_shape(shape_id, test_shape_type(), shape)
                 .unwrap();
             canvas
-                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id))
+                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id, Duration::from_nanos(0)))
                 .unwrap();
             canvas
                 .set_shape_properties(shape_id, create_test_properties(i))
@@ -248,10 +248,10 @@ fn bench_add_shapes_scaling(c: &mut Criterion) {
                             let shape = create_test_rectangle(x, y);
 
                             canvas
-                                .add_shape(shape_id, test_shape_type(), shape, Duration::from_nanos(0))
+                                .add_shape(shape_id, test_shape_type(), shape)
                                 .unwrap();
                             canvas
-                                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id))
+                                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id, Duration::from_nanos(0)))
                                 .unwrap();
                             canvas
                                 .set_shape_properties(shape_id, create_test_properties(i))
@@ -269,12 +269,12 @@ fn bench_add_shapes_scaling(c: &mut Criterion) {
                             let shape = create_test_rectangle(x, y);
 
                             canvas
-                                .add_shape(black_box(shape_id), test_shape_type(), shape, Duration::from_nanos(0))
+                                .add_shape(black_box(shape_id), test_shape_type(), shape)
                                 .unwrap();
                             canvas
                                 .set_shape_parent(
                                     black_box(shape_id),
-                                    CanvasShapeParent::Layer(layer_id),
+                                    CanvasShapeParent::Layer(layer_id, Duration::from_nanos(0)),
                                 )
                                 .unwrap();
                             canvas
@@ -322,10 +322,10 @@ fn bench_add_single_shape_scaling(c: &mut Criterion) {
                             let shape = create_test_rectangle(x, y);
 
                             canvas
-                                .add_shape(shape_id, test_shape_type(), shape, Duration::from_nanos(0))
+                                .add_shape(shape_id, test_shape_type(), shape)
                                 .unwrap();
                             canvas
-                                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id))
+                                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id, Duration::from_nanos(0)))
                                 .unwrap();
                             canvas
                                 .set_shape_properties(shape_id, create_test_properties(i))
@@ -342,12 +342,12 @@ fn bench_add_single_shape_scaling(c: &mut Criterion) {
                         let shape = create_test_rectangle(x, y);
 
                         canvas
-                            .add_shape(black_box(shape_id), test_shape_type(), shape, Duration::from_nanos(0))
+                            .add_shape(black_box(shape_id), test_shape_type(), shape)
                             .unwrap();
                         canvas
                             .set_shape_parent(
                                 black_box(shape_id),
-                                CanvasShapeParent::Layer(layer_id),
+                                CanvasShapeParent::Layer(layer_id, Duration::from_nanos(0)),
                             )
                             .unwrap();
                         canvas

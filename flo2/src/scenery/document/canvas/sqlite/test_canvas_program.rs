@@ -93,8 +93,8 @@ fn query_shape_properties() {
         let mut canvas  = context.send(()).unwrap();
 
         // Set up some shapes with properties
-        canvas.send(VectorCanvas::AddShape(shape_1, ShapeType::new("shape"), CanvasShape::Group, Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(shape_2, ShapeType::new("shape"), CanvasShape::Group, Duration::from_nanos(0))).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_1, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_2, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
 
         canvas.send(VectorCanvas::AddBrush(brush_1)).await.unwrap();
         canvas.send(VectorCanvas::AddBrush(brush_2)).await.unwrap();
@@ -147,8 +147,8 @@ fn query_brush_properties() {
         let mut canvas  = context.send(()).unwrap();
 
         // Set up some shapes with properties
-        canvas.send(VectorCanvas::AddShape(shape_1, ShapeType::new("shape"), CanvasShape::Group, Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(shape_2, ShapeType::new("shape"), CanvasShape::Group, Duration::from_nanos(0))).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_1, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_2, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
 
         canvas.send(VectorCanvas::AddBrush(brush_1)).await.unwrap();
         canvas.send(VectorCanvas::AddBrush(brush_2)).await.unwrap();
@@ -208,10 +208,10 @@ fn query_layer() {
         canvas.send(VectorCanvas::AddLayer { new_layer_id: layer_1, before_layer: None }).await.unwrap();
         canvas.send(VectorCanvas::AddLayer { new_layer_id: layer_2, before_layer: None }).await.unwrap();
 
-        canvas.send(VectorCanvas::AddShape(shape_1, ShapeType::new("shape"), CanvasShape::Group, Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(shape_2, ShapeType::new("shape"), CanvasShape::Group, Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(shape_3, ShapeType::new("shape"), CanvasShape::Group, Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(shape_4, ShapeType::new("shape"), CanvasShape::Group, Duration::from_nanos(0))).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_1, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_2, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_3, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_4, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
 
         canvas.send(VectorCanvas::AddBrush(brush_1)).await.unwrap();
         canvas.send(VectorCanvas::AddBrush(brush_2)).await.unwrap();
@@ -222,10 +222,10 @@ fn query_layer() {
         canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Brush(brush_1), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(44)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(46))])).await.unwrap();
         canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Brush(brush_2), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(47)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))])).await.unwrap();
 
-        canvas.send(VectorCanvas::SetShapeParent(shape_1, CanvasShapeParent::Layer(layer_1))).await.ok();
-        canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Layer(layer_1))).await.ok();
-        canvas.send(VectorCanvas::SetShapeParent(shape_3, CanvasShapeParent::Layer(layer_2))).await.ok();
-        canvas.send(VectorCanvas::SetShapeParent(shape_4, CanvasShapeParent::Layer(layer_2))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(shape_1, CanvasShapeParent::Layer(layer_1, Duration::from_nanos(0)))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Layer(layer_1, Duration::from_nanos(0)))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(shape_3, CanvasShapeParent::Layer(layer_2, Duration::from_nanos(0)))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(shape_4, CanvasShapeParent::Layer(layer_2, Duration::from_nanos(0)))).await.ok();
 
         // Query the layers in a few ways (we start with the simpler second layer)
         let second_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_2]), ()).unwrap();
@@ -304,18 +304,18 @@ fn query_layer_with_groups() {
         // Create the layer and shapes
         canvas.send(VectorCanvas::AddLayer { new_layer_id: layer, before_layer: None }).await.unwrap();
 
-        canvas.send(VectorCanvas::AddShape(group_shape, ShapeType::new("shape"), CanvasShape::Group, Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(child_1, ShapeType::new("shape"), test_rect(), Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(nested_group, ShapeType::new("shape"), CanvasShape::Group, Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(nested_child_1, ShapeType::new("shape"), test_ellipse(), Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(nested_child_2, ShapeType::new("shape"), test_rect(), Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(nested2_child_1, ShapeType::new("shape"), test_ellipse(), Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(nested2_child_2, ShapeType::new("shape"), test_rect(), Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(child_2, ShapeType::new("shape"), test_ellipse(), Duration::from_nanos(0))).await.unwrap();
-        canvas.send(VectorCanvas::AddShape(after_group, ShapeType::new("shape"), test_rect(), Duration::from_nanos(0))).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(group_shape, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(child_1, ShapeType::new("shape"), test_rect())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(nested_group, ShapeType::new("shape"), CanvasShape::Group)).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(nested_child_1, ShapeType::new("shape"), test_ellipse())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(nested_child_2, ShapeType::new("shape"), test_rect())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(nested2_child_1, ShapeType::new("shape"), test_ellipse())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(nested2_child_2, ShapeType::new("shape"), test_rect())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(child_2, ShapeType::new("shape"), test_ellipse())).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(after_group, ShapeType::new("shape"), test_rect())).await.unwrap();
 
         // Parent the group shape to the layer
-        canvas.send(VectorCanvas::SetShapeParent(group_shape, CanvasShapeParent::Layer(layer))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(group_shape, CanvasShapeParent::Layer(layer, Duration::from_nanos(0)))).await.ok();
 
         // Parent children to the group shape
         canvas.send(VectorCanvas::SetShapeParent(child_1, CanvasShapeParent::Shape(group_shape))).await.ok();
@@ -329,7 +329,7 @@ fn query_layer_with_groups() {
         canvas.send(VectorCanvas::SetShapeParent(nested2_child_2, CanvasShapeParent::Shape(nested_child_2))).await.ok();
 
         // Parent the trailing shape to the layer
-        canvas.send(VectorCanvas::SetShapeParent(after_group, CanvasShapeParent::Layer(layer))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(after_group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0)))).await.ok();
 
         // Query the layer
         let layer_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer]), ()).unwrap();
@@ -400,11 +400,11 @@ fn subscribe_to_canvas_updates() {
         context.wait_for_idle(100).await;
 
         // AddShape → ShapeChanged
-        canvas.send(VectorCanvas::AddShape(shape_1, test_shape_type(), test_rect(), Duration::from_nanos(0))).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_1, test_shape_type(), test_rect())).await.unwrap();
         context.wait_for_idle(100).await;
 
         // SetShapeParent to layer → LayerChanged + ShapeChanged
-        canvas.send(VectorCanvas::SetShapeParent(shape_1, CanvasShapeParent::Layer(layer_1))).await.unwrap();
+        canvas.send(VectorCanvas::SetShapeParent(shape_1, CanvasShapeParent::Layer(layer_1, Duration::from_nanos(0)))).await.unwrap();
         context.wait_for_idle(100).await;
 
         // SetShapeDefinition → ShapeChanged
@@ -448,9 +448,9 @@ fn subscribe_to_canvas_updates() {
         context.wait_for_idle(100).await;
 
         // Set up shape_2 on layer_1 for ReorderShape
-        canvas.send(VectorCanvas::AddShape(shape_2, test_shape_type(), test_rect(), Duration::from_nanos(0))).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(shape_2, test_shape_type(), test_rect())).await.unwrap();
         context.wait_for_idle(100).await;
-        canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Layer(layer_1))).await.unwrap();
+        canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Layer(layer_1, Duration::from_nanos(0)))).await.unwrap();
         context.wait_for_idle(100).await;
 
         // ReorderShape → ShapeChanged
@@ -458,7 +458,7 @@ fn subscribe_to_canvas_updates() {
         context.wait_for_idle(100).await;
 
         // SetShapeParent to group → ShapeChanged (contains both the shape and the parent)
-        canvas.send(VectorCanvas::AddShape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0))).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(group, test_shape_type(), CanvasShape::Group)).await.unwrap();
         context.wait_for_idle(100).await;
         canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Shape(group))).await.unwrap();
         context.wait_for_idle(100).await;

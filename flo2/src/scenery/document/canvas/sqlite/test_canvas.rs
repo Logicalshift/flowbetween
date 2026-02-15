@@ -216,7 +216,7 @@ fn add_shape() {
     let mut canvas = SqliteCanvas::new_in_memory().unwrap();
     let shape = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
 
     // Shape should exist in the database
     assert!(canvas.index_for_shape(shape).is_ok());
@@ -227,11 +227,11 @@ fn add_shape_replaces_existing() {
     let mut canvas = SqliteCanvas::new_in_memory().unwrap();
     let shape = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     let idx_before = canvas.index_for_shape(shape).unwrap();
 
     // Adding the same shape ID again should replace in place
-    canvas.add_shape(shape, test_shape_type(), test_ellipse(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_ellipse()).unwrap();
     let idx_after = canvas.index_for_shape(shape).unwrap();
 
     assert!(idx_before == idx_after, "ShapeId should be preserved on replace");
@@ -248,8 +248,8 @@ fn remove_shape() {
     let shape       = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.set_shape_parent(shape, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
+    canvas.set_shape_parent(shape, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
 
     // Shape should be on the layer
     assert!(shapes_on_layer(&canvas, layer).len() == 1);
@@ -267,8 +267,8 @@ fn remove_group_deletes_children() {
     let group       = CanvasShapeId::new();
     let child       = CanvasShapeId::new();
 
-    canvas.add_shape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(child, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_parent(child, CanvasShapeParent::Shape(group)).unwrap();
     assert!(shapes_in_group(&canvas, group).len() == 1);
 
@@ -285,9 +285,9 @@ fn remove_group_deletes_nested_children() {
     let inner_group     = CanvasShapeId::new();
     let child           = CanvasShapeId::new();
 
-    canvas.add_shape(outer_group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(inner_group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(child, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(outer_group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(inner_group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_parent(inner_group, CanvasShapeParent::Shape(outer_group)).unwrap();
     canvas.set_shape_parent(child, CanvasShapeParent::Shape(inner_group)).unwrap();
 
@@ -303,7 +303,7 @@ fn set_shape_definition() {
     let mut canvas = SqliteCanvas::new_in_memory().unwrap();
     let shape = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     let shape_idx = canvas.index_for_shape(shape).unwrap();
 
     // Check initial type
@@ -323,12 +323,12 @@ fn set_shape_parent_to_layer() {
     let shape       = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
 
     // Initially not on any layer
     assert!(shapes_on_layer(&canvas, layer).is_empty());
 
-    canvas.set_shape_parent(shape, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(shape, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
     assert!(shapes_on_layer(&canvas, layer) == vec![shape.to_string()]);
 }
 
@@ -340,11 +340,11 @@ fn set_shape_parent_to_group() {
     let child       = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(child, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child, test_shape_type(), test_rect()).unwrap();
 
     // Put shape on a layer first, then move to group
-    canvas.set_shape_parent(child, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(child, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
     assert!(shapes_on_layer(&canvas, layer) == vec![child.to_string()]);
 
     canvas.set_shape_parent(child, CanvasShapeParent::Shape(group)).unwrap();
@@ -361,8 +361,8 @@ fn set_shape_parent_detach() {
     let shape       = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.set_shape_parent(shape, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
+    canvas.set_shape_parent(shape, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
     assert!(shapes_on_layer(&canvas, layer).len() == 1);
 
     canvas.set_shape_parent(shape, CanvasShapeParent::None).unwrap();
@@ -379,12 +379,12 @@ fn reorder_shape_on_layer() {
     let shape_c     = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(shape_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_c, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.set_shape_parent(shape_a, CanvasShapeParent::Layer(layer)).unwrap();
-    canvas.set_shape_parent(shape_b, CanvasShapeParent::Layer(layer)).unwrap();
-    canvas.set_shape_parent(shape_c, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_c, test_shape_type(), test_rect()).unwrap();
+    canvas.set_shape_parent(shape_a, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
+    canvas.set_shape_parent(shape_b, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
+    canvas.set_shape_parent(shape_c, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
 
     // Order is A, B, C
     assert!(shapes_on_layer(&canvas, layer) == vec![shape_a.to_string(), shape_b.to_string(), shape_c.to_string()]);
@@ -405,9 +405,9 @@ fn reorder_shape_in_group() {
     let shape_a     = CanvasShapeId::new();
     let shape_b     = CanvasShapeId::new();
 
-    canvas.add_shape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_parent(shape_a, CanvasShapeParent::Shape(group)).unwrap();
     canvas.set_shape_parent(shape_b, CanvasShapeParent::Shape(group)).unwrap();
 
@@ -429,10 +429,10 @@ fn reorder_shape_different_parent_is_error() {
 
     canvas.add_layer(layer_1, None).unwrap();
     canvas.add_layer(layer_2, None).unwrap();
-    canvas.add_shape(shape_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.set_shape_parent(shape_a, CanvasShapeParent::Layer(layer_1)).unwrap();
-    canvas.set_shape_parent(shape_b, CanvasShapeParent::Layer(layer_2)).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
+    canvas.set_shape_parent(shape_a, CanvasShapeParent::Layer(layer_1, Duration::from_nanos(0))).unwrap();
+    canvas.set_shape_parent(shape_b, CanvasShapeParent::Layer(layer_2, Duration::from_nanos(0))).unwrap();
 
     // Trying to reorder shape_a before shape_b should fail because they have different parents
     let result = canvas.reorder_shape(shape_a, Some(shape_b));
@@ -448,7 +448,7 @@ fn reorder_unparented_shape_is_error() {
     let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
     let shape       = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
 
     // Shape has no parent, reorder should fail
     let result = canvas.reorder_shape(shape, None);
@@ -462,7 +462,7 @@ fn add_shape_brushes() {
     let brush_1     = CanvasBrushId::new();
     let brush_2     = CanvasBrushId::new();
 
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     insert_brush(&canvas, brush_1);
     insert_brush(&canvas, brush_2);
 
@@ -478,7 +478,7 @@ fn add_shape_brushes_appends() {
     let brush_2     = CanvasBrushId::new();
     let brush_3     = CanvasBrushId::new();
 
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     insert_brush(&canvas, brush_1);
     insert_brush(&canvas, brush_2);
     insert_brush(&canvas, brush_3);
@@ -496,7 +496,7 @@ fn remove_shape_brushes() {
     let brush_2     = CanvasBrushId::new();
     let brush_3     = CanvasBrushId::new();
 
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     insert_brush(&canvas, brush_1);
     insert_brush(&canvas, brush_2);
     insert_brush(&canvas, brush_3);
@@ -513,7 +513,7 @@ fn remove_shape_deletes_properties() {
     let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
     let shape       = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     canvas.set_shape_properties(shape, vec![
         (CanvasPropertyId::new("Color"), CanvasProperty::Int(255)),
         (CanvasPropertyId::new("Width"), CanvasProperty::Float(1.5)),
@@ -629,7 +629,7 @@ fn delete_shape_properties() {
     let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
     let shape       = CanvasShapeId::new();
 
-    canvas.add_shape(shape, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape, test_shape_type(), test_rect()).unwrap();
     canvas.set_properties(CanvasPropertyTarget::Shape(shape), vec![
         (CanvasPropertyId::new("Color"), CanvasProperty::Int(255)),
         (CanvasPropertyId::new("Width"), CanvasProperty::Float(1.5)),
@@ -666,8 +666,8 @@ fn delete_shape_properties_does_not_affect_other_shapes() {
     let shape_a     = CanvasShapeId::new();
     let shape_b     = CanvasShapeId::new();
 
-    canvas.add_shape(shape_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
 
     // Set the same property on both shapes
     canvas.set_properties(CanvasPropertyTarget::Shape(shape_a), vec![
@@ -735,9 +735,9 @@ fn shapes_with_brush() {
     let shape_3     = CanvasShapeId::new();
     let brush       = CanvasBrushId::new();
 
-    canvas.add_shape(shape_1, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_2, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_3, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape_1, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_2, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_3, test_shape_type(), test_rect()).unwrap();
     canvas.add_brush(brush).unwrap();
 
     // No shapes attached yet
@@ -832,12 +832,12 @@ fn group_children_appear_on_layer() {
     let child_b     = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(child_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(child_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(child_b, test_shape_type(), test_rect()).unwrap();
 
     // Parent the group to the layer
-    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
 
     // Add children to the group
     canvas.set_shape_parent(child_a, CanvasShapeParent::Shape(group)).unwrap();
@@ -860,16 +860,16 @@ fn nested_groups_depth_first_order() {
     let shape_f     = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(group_a, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(group_c, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_d, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_e, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_f, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(group_a, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(group_c, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(shape_d, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_e, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_f, test_shape_type(), test_rect()).unwrap();
 
     // Build hierarchy: Layer has [GroupA, ShapeF], GroupA has [ShapeB, GroupC, ShapeE], GroupC has [ShapeD]
-    canvas.set_shape_parent(group_a, CanvasShapeParent::Layer(layer)).unwrap();
-    canvas.set_shape_parent(shape_f, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(group_a, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
+    canvas.set_shape_parent(shape_f, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
 
     canvas.set_shape_parent(shape_b, CanvasShapeParent::Shape(group_a)).unwrap();
     canvas.set_shape_parent(group_c, CanvasShapeParent::Shape(group_a)).unwrap();
@@ -892,14 +892,14 @@ fn reparent_into_group_on_layer() {
     let shape_b     = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(shape_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
 
     // Layer starts with [ShapeA, Group, ShapeB]
-    canvas.set_shape_parent(shape_a, CanvasShapeParent::Layer(layer)).unwrap();
-    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer)).unwrap();
-    canvas.set_shape_parent(shape_b, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(shape_a, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
+    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
+    canvas.set_shape_parent(shape_b, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
 
     // Move ShapeA into the group
     canvas.set_shape_parent(shape_a, CanvasShapeParent::Shape(group)).unwrap();
@@ -920,17 +920,17 @@ fn reparent_out_of_group_to_layer() {
     let shape_b     = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
 
     // Group on layer with two children
-    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
     canvas.set_shape_parent(shape_a, CanvasShapeParent::Shape(group)).unwrap();
     canvas.set_shape_parent(shape_b, CanvasShapeParent::Shape(group)).unwrap();
 
     // Move ShapeA directly to the layer
-    canvas.set_shape_parent(shape_a, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(shape_a, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
 
     // ShapeA should move to the end of the layer
     let expected = vec![group.to_string(), shape_b.to_string(), shape_a.to_string()];
@@ -948,16 +948,16 @@ fn reparent_group_with_children_to_layer() {
     let child_b     = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(child_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(child_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(child_b, test_shape_type(), test_rect()).unwrap();
 
     // Build group hierarchy while detached
     canvas.set_shape_parent(child_a, CanvasShapeParent::Shape(group)).unwrap();
     canvas.set_shape_parent(child_b, CanvasShapeParent::Shape(group)).unwrap();
 
     // Now parent the group to the layer -- children should appear too
-    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
 
     let expected = vec![group.to_string(), child_a.to_string(), child_b.to_string()];
     assert!(shapes_on_layer(&canvas, layer) == expected,
@@ -974,16 +974,16 @@ fn remove_group_compacts_layer() {
     let shape_c     = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(child_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(child_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_c, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(child_b, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_c, test_shape_type(), test_rect()).unwrap();
 
     // Layer: [Group(0), ChildA(1), ChildB(2), ShapeC(3)]
-    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
     canvas.set_shape_parent(child_a, CanvasShapeParent::Shape(group)).unwrap();
     canvas.set_shape_parent(child_b, CanvasShapeParent::Shape(group)).unwrap();
-    canvas.set_shape_parent(shape_c, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(shape_c, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
 
     // Remove the group -- should remove group + children and compact
     canvas.remove_shape(group).unwrap();
@@ -1002,16 +1002,16 @@ fn reorder_group_on_layer_moves_block() {
     let shape_c     = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(child_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(child_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_c, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(child_b, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_c, test_shape_type(), test_rect()).unwrap();
 
     // Layer: [Group(0), ChildA(1), ChildB(2), ShapeC(3)]
-    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
     canvas.set_shape_parent(child_a, CanvasShapeParent::Shape(group)).unwrap();
     canvas.set_shape_parent(child_b, CanvasShapeParent::Shape(group)).unwrap();
-    canvas.set_shape_parent(shape_c, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(shape_c, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
 
     // Reorder group to end -> [ShapeC, Group, ChildA, ChildB]
     canvas.reorder_shape(group, None).unwrap();
@@ -1031,13 +1031,13 @@ fn reorder_within_group_updates_layer() {
     let shape_c     = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_c, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_c, test_shape_type(), test_rect()).unwrap();
 
     // Group on layer with three children: [Group, A, B, C]
-    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
     canvas.set_shape_parent(shape_a, CanvasShapeParent::Shape(group)).unwrap();
     canvas.set_shape_parent(shape_b, CanvasShapeParent::Shape(group)).unwrap();
     canvas.set_shape_parent(shape_c, CanvasShapeParent::Shape(group)).unwrap();
@@ -1063,11 +1063,11 @@ fn detach_from_group_removes_from_layer() {
     let shape_b     = CanvasShapeId::new();
 
     canvas.add_layer(layer, None).unwrap();
-    canvas.add_shape(group, test_shape_type(), CanvasShape::Group, Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_a, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
-    canvas.add_shape(shape_b, test_shape_type(), test_rect(), Duration::from_nanos(0)).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
 
-    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer)).unwrap();
+    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
     canvas.set_shape_parent(shape_a, CanvasShapeParent::Shape(group)).unwrap();
     canvas.set_shape_parent(shape_b, CanvasShapeParent::Shape(group)).unwrap();
 

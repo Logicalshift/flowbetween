@@ -47,7 +47,7 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
                         AddFrame { frame_layer, when, length }              => { changed_layers.insert(frame_layer); canvas.add_frame(frame_layer, when, length).ok(); }
                         RemoveFrame { frame_layer, when }                   => { changed_layers.insert(frame_layer); canvas.remove_frame(frame_layer, when).ok(); }
                         ReorderLayer { layer_id, before_layer, }            => { changed_layers.insert(layer_id); canvas.reorder_layer(layer_id, before_layer).ok(); }
-                        AddShape(shape_id, shape_type, shape_defn, when)    => { changed_shapes.insert(shape_id); canvas.add_shape(shape_id, shape_type, shape_defn, when).ok(); }
+                        AddShape(shape_id, shape_type, shape_defn)          => { changed_shapes.insert(shape_id); canvas.add_shape(shape_id, shape_type, shape_defn).ok(); }
                         RemoveShape(shape_id)                               => { changed_shapes.insert(shape_id); canvas.remove_shape(shape_id).ok(); }
                         SetShapeDefinition(shape_id, shape_defn)            => { changed_shapes.insert(shape_id); canvas.set_shape_definition(shape_id, shape_defn).ok(); }
                         SetShapeTime(shape_id, when)                        => { changed_shapes.insert(shape_id); canvas.set_shape_time(shape_id, when).ok(); }
@@ -61,7 +61,7 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
                         SetShapeParent(shape_id, parent) => {
                             changed_shapes.insert(shape_id);
                             match &parent {
-                                CanvasShapeParent::Layer(layer_id)  => { changed_layers.insert(*layer_id); }
+                                CanvasShapeParent::Layer(layer_id, _)  => { changed_layers.insert(*layer_id); }
                                 CanvasShapeParent::Shape(parent_id) => { changed_shapes.insert(*parent_id); }
                                 CanvasShapeParent::None             => { }
                             }

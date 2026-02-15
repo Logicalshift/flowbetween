@@ -223,6 +223,23 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Retrieves the time (in nanoseconds) when a shape appears on the canvas
+    ///
+    #[inline]
+    pub fn time_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, ()> {
+        let mut time_query = self.sqlite.prepare("
+            SELECT      sl.Time 
+            FROM        ShapeLayers sl 
+            INNER JOIN  Shapes s ON s.ShapeId = sl.ShapeId 
+            WHERE       s.ShapeGuid = ?").map_err(|_| ())?;
+
+        let mut time    = time_query.query_map([shape_id.to_string()], |row| row.get(0)).map_err(|_| ())?;
+        let time        = time.next().unwrap_or(Ok(0i64)).map_err(|_| ())?;
+
+        Ok(time)
+    }
+
+    ///
     /// Queries the database for the ordering index of the specified layer
     ///
     #[inline]
@@ -279,16 +296,16 @@ impl SqliteCanvas {
     ///
     /// Inserts a block of shapes into ShapeLayers at the specified position, shifting existing entries to make room.
     ///
-    fn insert_shapes_on_layer(transaction: &Transaction<'_>, layer_id: i64, at_order: i64, shape_ids: &[i64]) -> Result<(), ()> {
+    fn insert_shapes_on_layer(transaction: &Transaction<'_>, layer_id: i64, at_order: i64, shape_ids: &[i64], time: i64) -> Result<(), ()> {
         let block_size = shape_ids.len() as i64;
 
         // Make room for the block
         transaction.execute("UPDATE ShapeLayers SET OrderIdx = OrderIdx + ? WHERE LayerId = ? AND OrderIdx >= ?", params![block_size, layer_id, at_order]).map_err(|_| ())?;
 
         // Insert each shape
-        let mut insert = transaction.prepare_cached("INSERT INTO ShapeLayers (ShapeId, LayerId, OrderIdx) VALUES (?, ?, ?)").map_err(|_| ())?;
+        let mut insert = transaction.prepare_cached("INSERT INTO ShapeLayers (ShapeId, LayerId, OrderIdx, Time) VALUES (?, ?, ?, ?)").map_err(|_| ())?;
         for (i, shape_id) in shape_ids.iter().enumerate() {
-            insert.execute(params![shape_id, layer_id, at_order + i as i64]).map_err(|_| ())?;
+            insert.execute(params![shape_id, layer_id, at_order + i as i64, time]).map_err(|_| ())?;
         }
 
         Ok(())
@@ -742,19 +759,14 @@ impl SqliteCanvas {
     ///
     /// Adds a new shape to the canvas, or replaces the definition if the shape ID is already in use
     ///
-    pub fn add_shape(&mut self, shape_id: CanvasShapeId, shape_type: ShapeType, shape: CanvasShape, when: Duration) -> Result<(), ()> {
+    pub fn add_shape(&mut self, shape_id: CanvasShapeId, shape_type: ShapeType, shape: CanvasShape) -> Result<(), ()> {
         let shape_type_idx                  = self.index_for_shapetype(shape_type)?;
         let (shape_data_type, shape_data)   = Self::encode_shape(&shape)?;
-        let when_nanos: i64                 = when.as_nanos() as i64;
 
         if let Ok(existing_idx) = self.index_for_shape(shape_id) {
             // Replace the existing shape definition in place
             let mut update_existing = self.sqlite.prepare_cached("UPDATE Shapes SET ShapeType = ?, ShapeDataType = ?, ShapeData = ? WHERE ShapeId = ?").map_err(|_| ())?;
             update_existing.execute(params![shape_type_idx, shape_data_type, shape_data, existing_idx]).map_err(|_| ())?;
-
-            // Set the time when the shape will appear
-            let mut update_frame = self.sqlite.prepare_cached("INSERT OR REPLACE INTO ShapeFrames (ShapeId, Time) VALUES (?, ?)").map_err(|_| ())?;
-            update_frame.execute(params![existing_idx, when_nanos]).map_err(|_| ())?;
         } else {
             // Insert a new shape with a generated ShapeId
             let mut insert_new  = self.sqlite.prepare_cached("INSERT INTO Shapes (ShapeId, ShapeGuid, ShapeType, ShapeDataType, ShapeData) VALUES (?, ?, ?, ?, ?)").map_err(|_| ())?;
@@ -766,10 +778,6 @@ impl SqliteCanvas {
             };
 
             insert_new.execute(params![next_id, shape_id.to_string(), shape_type_idx, shape_data_type, shape_data]).map_err(|_| ())?;
-
-            // Set the time when the shape will appear
-            let mut insert_frame = self.sqlite.prepare_cached("INSERT INTO ShapeFrames (ShapeId, Time) VALUES (?, ?)").map_err(|_| ())?;
-            insert_frame.execute(params![next_id, when_nanos]).map_err(|_| ())?;
 
             // Store the shape ID in the cache so we can look it up faster for things like setting properties
             self.shape_id_cache.insert(shape_id, next_id);
@@ -838,13 +846,13 @@ impl SqliteCanvas {
     }
 
     ///
-    /// Sets the time when a shape should appear in a frame
+    /// Sets the time when a shape should appear on its layer
     ///
     pub fn set_shape_time(&mut self, shape_id: CanvasShapeId, when: Duration) -> Result<(), ()> {
         let shape_idx   = self.index_for_shape(shape_id)?;
         let when_nanos  = when.as_nanos() as i64;
 
-        self.sqlite.execute("INSERT OR REPLACE INTO ShapeFrames (ShapeId, Time) VALUES (?, ?)", params![shape_idx, when_nanos]).map_err(|_| ())?;
+        self.sqlite.execute("UPDATE ShapeLayers SET Time = ? WHERE ShapeId = ?", params![when_nanos, shape_idx]).map_err(|_| ())?;
 
         Ok(())
     }
@@ -860,6 +868,7 @@ impl SqliteCanvas {
 
         // Check if shape is in a group first
         if let Ok((parent_id, original_order)) = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+            // Read the existing order of the shape within a group
             let before_order = if let Some(before_idx) = before_shape_idx {
                 transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeGroups WHERE ShapeId = ? AND ParentShapeId = ?", params![before_idx, parent_id], |row| row.get(0)).map_err(|_| ())?
             } else {
@@ -875,7 +884,7 @@ impl SqliteCanvas {
             transaction.execute("UPDATE ShapeGroups SET OrderIdx = ? WHERE ShapeId = ?", params![before_order, shape_idx]).map_err(|_| ())?;
 
             // Rebuild the parent group's ShapeLayers descendents to reflect the new ordering
-            if let Ok((layer_id, parent_order_idx)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![parent_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+            if let Ok((layer_id, parent_order_idx, parent_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![parent_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))) {
                 // Collect new depth-first order (ShapeGroups already reordered)
                 let new_descendents = Self::all_descendents_for_shape(&transaction, parent_id)?;
                 let desc_count      = new_descendents.len() as i64;
@@ -883,8 +892,8 @@ impl SqliteCanvas {
                 // Remove old descendent entries from ShapeLayers
                 Self::remove_shapes_from_layer(&transaction, layer_id, parent_order_idx + 1, desc_count)?;
 
-                // Re-insert in new depth-first order
-                Self::insert_shapes_on_layer(&transaction, layer_id, parent_order_idx + 1, &new_descendents)?;
+                // Re-insert in new depth-first order, preserving the parent group's time
+                Self::insert_shapes_on_layer(&transaction, layer_id, parent_order_idx + 1, &new_descendents, parent_time)?;
             }
 
             transaction.commit().map_err(|_| ())?;
@@ -892,7 +901,7 @@ impl SqliteCanvas {
         }
 
         // Check if shape is directly on a layer (not in a group)
-        if let Ok((layer_id, original_order)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+        if let Ok((layer_id, original_order, original_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))) {
             // Collect descendents for block movement
             let descendents = Self::all_descendents_for_shape(&transaction, shape_idx)?;
             let block_size  = 1 + descendents.len() as i64;
@@ -904,16 +913,17 @@ impl SqliteCanvas {
             // Remove the block from its current position
             Self::remove_shapes_from_layer(&transaction, layer_id, original_order, block_size)?;
 
-            // Query the target position (after removal, so positions are up to date)
-            let before_order = if let Some(before_idx) = before_shape_idx {
-                transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeLayers WHERE ShapeId = ? AND LayerId = ?", params![before_idx, layer_id], |row| row.get(0)).map_err(|_| ())?
+            // Query the target position and time (after removal, so positions are up to date)
+            let (before_order, new_time) = if let Some(before_idx) = before_shape_idx {
+                let (order, time) = transaction.query_one("SELECT OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ? AND LayerId = ?", params![before_idx, layer_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).map_err(|_| ())?;
+                (order, time)
             } else {
                 let max_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeLayers WHERE LayerId = ?", params![layer_id], |row| row.get(0)).map_err(|_| ())?;
-                max_order.map(|idx| idx + 1).unwrap_or(0)
+                (max_order.map(|idx| idx + 1).unwrap_or(0), original_time)
             };
 
-            // Re-insert the block at the new position
-            Self::insert_shapes_on_layer(&transaction, layer_id, before_order, &block)?;
+            // Re-insert the block at the new position with the target time
+            Self::insert_shapes_on_layer(&transaction, layer_id, before_order, &block, new_time)?;
 
             transaction.commit().map_err(|_| ())?;
             return Ok(());
@@ -930,17 +940,33 @@ impl SqliteCanvas {
         let shape_idx = self.index_for_shape(shape_id)?;
 
         // Look up the new parent index before starting the transaction
-        let new_layer_idx = if let CanvasShapeParent::Layer(layer_id) = &parent {
-            Some(self.index_for_layer(*layer_id)?)
-        } else {
-            None
-        };
-        let new_parent_shape_idx = if let CanvasShapeParent::Shape(parent_id) = &parent {
-            Some(self.index_for_shape(*parent_id)?)
-        } else {
-            None
-        };
+        let new_layer_idx;
+        let new_parent_shape_idx;
+        let when_nanos;
 
+        match &parent {
+            CanvasShapeParent::Layer(layer_id, when) => {
+                // Specified in the request
+                new_layer_idx           = Some(self.index_for_layer(*layer_id)?);
+                new_parent_shape_idx    = None;
+                when_nanos              = when.as_nanos() as i64;
+            }
+
+            CanvasShapeParent::Shape(parent_shape_id) => {
+                new_layer_idx           = Some(self.time_for_shape(*parent_shape_id)?);
+                new_parent_shape_idx    = Some(self.index_for_shape(*parent_shape_id)?);
+                when_nanos              = 0;
+            }
+
+            CanvasShapeParent::None => {
+                // Unparented shape
+                new_layer_idx           = None;
+                new_parent_shape_idx    = None;
+                when_nanos              = 0;
+            }
+        }
+
+        // Perform the update itself in a transaction
         let transaction = self.sqlite.transaction().map_err(|_| ())?;
 
         // Collect descendents for block operations (the shape and its descendents move together)
@@ -971,12 +997,12 @@ impl SqliteCanvas {
                 // Shape is detached, nothing more to do
             }
 
-            CanvasShapeParent::Layer(_) => {
+            CanvasShapeParent::Layer(..) => {
                 let layer_idx  = new_layer_idx.unwrap();
                 let next_order = transaction.query_one::<Option<i64>, _, _>("SELECT MAX(OrderIdx) FROM ShapeLayers WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).map_err(|_| ())?;
                 let next_order = next_order.map(|idx| idx + 1).unwrap_or(0);
 
-                Self::insert_shapes_on_layer(&transaction, layer_idx, next_order, &block)?;
+                Self::insert_shapes_on_layer(&transaction, layer_idx, next_order, &block, when_nanos)?;
             }
 
             CanvasShapeParent::Shape(_) => {
@@ -993,10 +1019,10 @@ impl SqliteCanvas {
                 transaction.execute("INSERT INTO ShapeGroups (ShapeId, ParentShapeId, OrderIdx) VALUES (?, ?, ?)", params![shape_idx, parent_shape_idx, next_order]).map_err(|_| ())?;
 
                 // Also add to ShapeLayers if the parent group is on a layer
-                if let Ok((layer_id, parent_sl_order)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![parent_shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+                if let Ok((layer_id, parent_sl_order, parent_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![parent_shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))) {
 
                     let insert_at = parent_sl_order + parent_old_block_size;
-                    Self::insert_shapes_on_layer(&transaction, layer_id, insert_at, &block)?;
+                    Self::insert_shapes_on_layer(&transaction, layer_id, insert_at, &block, parent_time)?;
                 }
             }
         }

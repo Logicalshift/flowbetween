@@ -123,6 +123,7 @@ CREATE TABLE ShapeLayers (
     ShapeId     INTEGER NOT NULL REFERENCES Shapes(ShapeId) ON DELETE CASCADE,
     LayerId     INTEGER NOT NULL REFERENCES Layers(LayerId) ON DELETE CASCADE,
     OrderIdx    INTEGER NOT NULL,
+    Time        INTEGER NOT NULL,
 
     PRIMARY KEY (LayerId, OrderIdx, ShapeId)
 ) WITHOUT ROWID;
@@ -223,17 +224,6 @@ CREATE TABLE BrushBlobProperties (
     PRIMARY KEY (BrushId, PropertyId)
 );
 
-/**
- * Indicates the time that a shape appears in a frame
- * 
- * Time is measured in nanoseconds from the start of an animation
- **/
-CREATE TABLE ShapeFrames (
-    ShapeId INTEGER NOT NULL REFERENCES Shapes(ShapeId) ON DELETE CASCADE,
-    Time    INTEGER NOT NULL,
-
-    PRIMARY KEY (ShapeId)
-);
 
 /**
  * Indicates the time that a layer is cleared to create a new frame.
@@ -281,6 +271,6 @@ CREATE INDEX idx_shapes_guid ON Shapes(ShapeGuid);
  **/
 CREATE INDEX idx_shapelayers_shape ON ShapeLayers(ShapeId);
 
-CREATE INDEX idx_shape_time ON ShapeFrames(Time, ShapeId);
+CREATE INDEX idx_shape_time ON ShapeLayers(Time, LayerId, ShapeId);
 CREATE INDEX idx_layer_time ON LayerFrames(Time, LayerId);
 
