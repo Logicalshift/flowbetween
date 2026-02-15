@@ -9,6 +9,7 @@ use uuid::*;
 
 use std::str::*;
 use std::time::{Duration};
+use std::fmt;
 
 ///
 /// Identifier used for a shape in the canvas document
@@ -73,6 +74,12 @@ impl CanvasShapeId {
     #[inline]
     pub fn to_string(&self) -> String {
         self.0.to_string()
+    }
+}
+
+impl fmt::Display for CanvasShapeId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

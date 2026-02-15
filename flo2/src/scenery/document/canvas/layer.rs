@@ -2,6 +2,7 @@ use ::serde::*;
 use uuid::*;
 
 use std::str::*;
+use std::fmt;
 
 ///
 /// Identifier used for a layer in the canvas document
@@ -30,5 +31,11 @@ impl CanvasLayerId {
     #[inline]
     pub fn to_string(&self) -> String {
         self.0.to_string()
+    }
+}
+
+impl fmt::Display for CanvasLayerId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }

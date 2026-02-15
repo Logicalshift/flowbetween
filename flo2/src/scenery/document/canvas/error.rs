@@ -3,6 +3,8 @@ use super::layer::*;
 use super::shape::*;
 
 use ::serde::*;
+use std::error::{Error};
+use std::fmt;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum CanvasError {
@@ -15,6 +17,19 @@ pub enum CanvasError {
     /// Operation failed because a shape does not exist
     NoSuchShape(CanvasShapeId),
 
-    /// Operation failed because a brush does not exisat
+    /// Operation failed because a brush does not exist
     NoSuchBrush(CanvasBrushId),
 }
+
+impl fmt::Display for CanvasError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CanvasError::UnexpectedStorageError(msg)    => write!(f, "Unexpected storage error: {}", msg),
+            CanvasError::NoSuchLayer(id)                => write!(f, "No such layer with id: {}", id),
+            CanvasError::NoSuchShape(id)                => write!(f, "No such shape with id: {}", id),
+            CanvasError::NoSuchBrush(id)                => write!(f, "No such brush with id: {}", id),
+        }
+    }
+}
+
+impl Error for CanvasError {}
