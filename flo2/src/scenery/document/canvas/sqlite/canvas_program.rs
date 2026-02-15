@@ -45,7 +45,7 @@ pub async fn sqlite_canvas_program(input: InputStream<SqliteCanvasRequest>, cont
                         AddLayer { new_layer_id, before_layer, }            => { changed_layers.insert(new_layer_id); canvas.add_layer(new_layer_id, before_layer).ok(); }
                         RemoveLayer(layer_id)                               => { changed_layers.insert(layer_id); canvas.remove_layer(layer_id).ok(); }
                         ReorderLayer { layer_id, before_layer, }            => { changed_layers.insert(layer_id); canvas.reorder_layer(layer_id, before_layer).ok(); }
-                        AddShape(shape_id, shape_type, shape_defn, when)    => { changed_shapes.insert(shape_id); canvas.add_shape(shape_id, shape_type, shape_defn).ok(); }
+                        AddShape(shape_id, shape_type, shape_defn, when)    => { changed_shapes.insert(shape_id); canvas.add_shape(shape_id, shape_type, shape_defn, when).ok(); }
                         RemoveShape(shape_id)                               => { changed_shapes.insert(shape_id); canvas.remove_shape(shape_id).ok(); }
                         SetShapeDefinition(shape_id, shape_defn)            => { changed_shapes.insert(shape_id); canvas.set_shape_definition(shape_id, shape_defn).ok(); }
                         SetShapeTime(shape_id, when)                        => { todo!() }

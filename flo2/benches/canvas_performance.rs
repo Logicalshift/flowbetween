@@ -1,5 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use flow_between::scenery::document::canvas::*;
+use std::time::{Duration};
 
 fn test_shape_type() -> ShapeType {
     ShapeType::new("flowbetween::benchmark::rectangle")
@@ -44,7 +45,7 @@ fn create_populated_canvas(num_layers: usize, shapes_per_layer: usize) -> Sqlite
             let shape = create_test_rectangle(x, y);
 
             canvas
-                .add_shape(shape_id, test_shape_type(), shape)
+                .add_shape(shape_id, test_shape_type(), shape, Duration::from_nanos(0))
                 .unwrap();
             canvas
                 .set_shape_parent(shape_id, CanvasShapeParent::Layer(*layer_id))
@@ -78,7 +79,7 @@ fn bench_query_shapes_scaling(c: &mut Criterion) {
             let shape    = create_test_rectangle(x, y);
 
             canvas
-                .add_shape(shape_id, test_shape_type(), shape)
+                .add_shape(shape_id, test_shape_type(), shape, Duration::from_nanos(0))
                 .unwrap();
             canvas
                 .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id))
@@ -247,7 +248,7 @@ fn bench_add_shapes_scaling(c: &mut Criterion) {
                             let shape = create_test_rectangle(x, y);
 
                             canvas
-                                .add_shape(shape_id, test_shape_type(), shape)
+                                .add_shape(shape_id, test_shape_type(), shape, Duration::from_nanos(0))
                                 .unwrap();
                             canvas
                                 .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id))
@@ -268,7 +269,7 @@ fn bench_add_shapes_scaling(c: &mut Criterion) {
                             let shape = create_test_rectangle(x, y);
 
                             canvas
-                                .add_shape(black_box(shape_id), test_shape_type(), shape)
+                                .add_shape(black_box(shape_id), test_shape_type(), shape, Duration::from_nanos(0))
                                 .unwrap();
                             canvas
                                 .set_shape_parent(
@@ -321,7 +322,7 @@ fn bench_add_single_shape_scaling(c: &mut Criterion) {
                             let shape = create_test_rectangle(x, y);
 
                             canvas
-                                .add_shape(shape_id, test_shape_type(), shape)
+                                .add_shape(shape_id, test_shape_type(), shape, Duration::from_nanos(0))
                                 .unwrap();
                             canvas
                                 .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id))
@@ -341,7 +342,7 @@ fn bench_add_single_shape_scaling(c: &mut Criterion) {
                         let shape = create_test_rectangle(x, y);
 
                         canvas
-                            .add_shape(black_box(shape_id), test_shape_type(), shape)
+                            .add_shape(black_box(shape_id), test_shape_type(), shape, Duration::from_nanos(0))
                             .unwrap();
                         canvas
                             .set_shape_parent(

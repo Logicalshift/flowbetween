@@ -14,6 +14,7 @@ use rusqlite::*;
 
 use std::collections::{HashMap};
 use std::result::{Result};
+use std::time::{Duration};
 
 /// Definition for the canvas sqlite storage
 pub (super) static SCHEMA: &'static str = include_str!("canvas.sql");
@@ -715,14 +716,19 @@ impl SqliteCanvas {
     ///
     /// Adds a new shape to the canvas, or replaces the definition if the shape ID is already in use
     ///
-    pub fn add_shape(&mut self, shape_id: CanvasShapeId, shape_type: ShapeType, shape: CanvasShape) -> Result<(), ()> {
-        let shape_type_idx              = self.index_for_shapetype(shape_type)?;
+    pub fn add_shape(&mut self, shape_id: CanvasShapeId, shape_type: ShapeType, shape: CanvasShape, when: Duration) -> Result<(), ()> {
+        let shape_type_idx                  = self.index_for_shapetype(shape_type)?;
         let (shape_data_type, shape_data)   = Self::encode_shape(&shape)?;
+        let when_nanos: i64                 = when.as_nanos() as i64;
 
         if let Ok(existing_idx) = self.index_for_shape(shape_id) {
             // Replace the existing shape definition in place
             let mut update_existing = self.sqlite.prepare_cached("UPDATE Shapes SET ShapeType = ?, ShapeDataType = ?, ShapeData = ? WHERE ShapeId = ?").map_err(|_| ())?;
             update_existing.execute(params![shape_type_idx, shape_data_type, shape_data, existing_idx]).map_err(|_| ())?;
+
+            // Set the time when the shape will appear
+            let mut update_frame = self.sqlite.prepare_cached("INSERT OR REPLACE INTO ShapeFrames (ShapeId, Time) VALUES (?, ?)").map_err(|_| ())?;
+            update_frame.execute(params![existing_idx, when_nanos]).map_err(|_| ())?;
         } else {
             // Insert a new shape with a generated ShapeId
             let mut insert_new  = self.sqlite.prepare_cached("INSERT INTO Shapes (ShapeId, ShapeGuid, ShapeType, ShapeDataType, ShapeData) VALUES (?, ?, ?, ?, ?)").map_err(|_| ())?;
@@ -734,6 +740,12 @@ impl SqliteCanvas {
             };
 
             insert_new.execute(params![next_id, shape_id.to_string(), shape_type_idx, shape_data_type, shape_data]).map_err(|_| ())?;
+
+            // Set the time when the shape will appear
+            let mut insert_frame = self.sqlite.prepare_cached("INSERT INTO ShapeFrames (ShapeId, Time) VALUES (?, ?)").map_err(|_| ())?;
+            insert_frame.execute(params![next_id, when_nanos]).map_err(|_| ())?;
+
+            // Store the shape ID in the cache so we can look it up faster for things like setting properties
             self.shape_id_cache.insert(shape_id, next_id);
             self.next_shape_id = Some(next_id + 1);
         }
