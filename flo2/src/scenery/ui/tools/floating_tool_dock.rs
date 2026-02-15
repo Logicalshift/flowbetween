@@ -487,6 +487,7 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
         anchor:             BindRef<UiPoint>,
         position_binding:   Binding<UiPoint>,
         drag_offset:        Option<(f64, f64)>,
+        is_dragged:         bool,
     }
 
     impl PartialEq for ToolState {
@@ -514,6 +515,7 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
                         anchor:             tool.1.current_position.clone(),
                         position_binding:   tool.1.position.clone(),
                         drag_offset:        tool.1.drag_offset.get(),
+                        is_dragged:         tool.1.dragged.get(),
                     }
                 )
             }).collect::<HashMap<_, _>>()
@@ -539,6 +541,8 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
                     // Updating a tool that's already in the simulation
                     if old_tool.drag_offset.is_none() && tool.drag_offset.is_some() {
                         // Tool is changing state to being dragged (set to kinematic)
+                        tool.position_binding.set(tool.anchor.get());
+
                         new_properties.push(SimBodyProperty::Type(SimObjectType::Kinematic));
                         new_properties.push(SimBodyProperty::Shape(SimShape::Circle(TOOL_WIDTH/2.0)));
                     } else if old_tool.drag_offset.is_some() && tool.drag_offset.is_none() {
