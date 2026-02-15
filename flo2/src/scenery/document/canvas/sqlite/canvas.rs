@@ -1339,7 +1339,6 @@ impl SqliteCanvas {
     /// Queries the shapes and their properties on a particular layer
     ///
     pub fn query_shapes_on_layer(&mut self, layer: CanvasLayerId, shape_response: &mut Vec<VectorResponse>, when: Duration) -> Result<(), CanvasError> {
-        let layer_idx           = self.index_for_layer(layer)?;
         let latest_time_nanos   = when.as_nanos() as i64;
         let earliest_time_nanos = self.layer_frame_time(layer, when)?.as_nanos() as i64;
 
@@ -1357,7 +1356,7 @@ impl SqliteCanvas {
             LEFT OUTER JOIN ShapeIntProperties   ip ON ip.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeFloatProperties fp ON fp.ShapeId = s.ShapeId
             LEFT OUTER JOIN ShapeBlobProperties  bp ON bp.ShapeId = s.ShapeId
-            WHERE l.LayerId = ?1 AND sl.Time >= ?3 AND sl.Time <= ?2
+            WHERE l.LayerGuid = ?1 AND sl.Time >= ?3 AND sl.Time <= ?2
 
             UNION ALL
 
@@ -1373,7 +1372,7 @@ impl SqliteCanvas {
             LEFT OUTER JOIN BrushIntProperties   bip ON bip.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushFloatProperties bfp ON bfp.BrushId = sb.BrushId
             LEFT OUTER JOIN BrushBlobProperties  bbp ON bbp.BrushId = sb.BrushId
-            WHERE l.LayerId = ?1 AND sl.Time >= ?3 AND sl.Time <= ?2
+            WHERE l.LayerGuid = ?1 AND sl.Time >= ?3 AND sl.Time <= ?2
 
             ORDER BY ShapeOrder ASC, PropertyId ASC, Source ASC, BrushOrder DESC
             ";
@@ -1383,7 +1382,7 @@ impl SqliteCanvas {
         let mut shapes      = vec![];
         let mut properties  = vec![];
 
-        let mut shapes_rows      = shapes_query.query(params![layer_idx, latest_time_nanos, earliest_time_nanos])?;
+        let mut shapes_rows      = shapes_query.query(params![layer.to_string(), latest_time_nanos, earliest_time_nanos])?;
         let mut cur_shape_idx    = None;
         let mut cur_shape_id     = None;
         let mut cur_shape_type   = None;
