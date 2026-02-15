@@ -46,7 +46,7 @@ pub struct SqliteCanvas {
     pub (super) layer_id_cache: HashMap<CanvasLayerId, i64>,
 
     /// The next shape ID to use (None if we haven't retrieved this from the database yet)
-    next_shape_id: Option<i64>,
+    pub (super) next_shape_id: Option<i64>,
 }
 
 impl SqliteCanvas {
