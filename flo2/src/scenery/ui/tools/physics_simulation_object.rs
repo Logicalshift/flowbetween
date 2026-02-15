@@ -189,7 +189,7 @@ impl SimObject {
         } else {
             // Action for setting the position depends on the type of the object
             match self.body_type {
-                SimObjectType::Static       => { rigid_body.set_position(Isometry::new(vector![new_position.x() as _, new_position.y() as _], 0.0), true); }
+                SimObjectType::Static       => { /* rigid_body.set_position(Isometry::new(vector![new_position.x() as _, new_position.y() as _], 0.0), true); */ }
                 SimObjectType::Kinematic    => { rigid_body.set_next_kinematic_position(Isometry::new(vector![new_position.x() as _, new_position.y() as _], 0.0)); rigid_body.wake_up(false); }
                 SimObjectType::Dynamic      => { /* We set up a spring to pull the object into position */ }
             }
