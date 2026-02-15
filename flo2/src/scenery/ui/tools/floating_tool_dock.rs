@@ -40,10 +40,10 @@ struct FloatingTool {
     /// The name of this tool
     name: Binding<String>,
 
-    /// Where the tool is anchored (its home position)
+    /// Where the tool is anchored (its home position, which it's attached to by a spring), or its actual position if it's being dragged
     anchor: Binding<UiPoint>,
 
-    /// The position of this tool
+    /// The position of this tool (binding managed by the physics program: the actual rendering position of the tool)
     position: Binding<UiPoint>,
 
     /// The offset from the tool's current position due to the user dragging the tool
@@ -543,6 +543,8 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
                     // Updating a tool that's already in the simulation
                     if old_tool.drag_offset.is_none() && tool.drag_offset.is_some() {
                         // Tool is changing state to being dragged (set to kinematic)
+
+                        // Changing the anchor position stops the tool from snapping to its old anchor if it's currently away from it
                         tool.anchor_binding.set(old_tool.actual_position);
 
                         new_properties.push(SimBodyProperty::Type(SimObjectType::Kinematic));
@@ -559,7 +561,10 @@ async fn physics_program(input: InputStream<BindingProgram>, context: SceneConte
                     }
                 } else {
                     // Creating a new tool
+
+                    // Set the initial position of the tool (as we're a new tool, the position binding is not yet being managed by the physics program)
                     tool.position_binding.set(tool.current_position.get());
+                    tool.anchor_binding.set(tool.current_position.get());
 
                     physics_sim.send(PhysicsSimulation::CreateRigidBody(*id)).await.ok();
                     physics_sim.send(PhysicsSimulation::BindPosition(*id, tool.position_binding.clone())).await.ok();
