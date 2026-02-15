@@ -529,3 +529,68 @@ fn subscribe_to_canvas_updates() {
         .expect_message_matching(VectorCanvasUpdate::LayerChanged(vec![layer_2]), "RemoveLayer")
         .run_in_scene(&scene, test_program);
 }
+
+#[test]
+fn query_layer_frames_returns_shapes_for_correct_frame() {
+    let scene = Scene::default();
+
+    #[derive(PartialEq, Debug, Serialize, Deserialize)]
+    struct TestResponse(Vec<VectorResponse>);
+
+    impl SceneMessage for TestResponse { }
+
+    let test_program    = SubProgramId::new();
+    let query_program   = SubProgramId::new();
+
+    let layer           = CanvasLayerId::new();
+    let shape_1         = CanvasShapeId::new();
+    let shape_2         = CanvasShapeId::new();
+
+    let frame_1_time    = Duration::from_millis(0);
+    let frame_2_time    = Duration::from_millis(1000);
+
+    // Program that creates a layer with two frames, adds a shape to each, then queries each frame
+    scene.add_subprogram(query_program, move |_input: InputStream<()>, context| async move {
+        let _sqlite     = context.send::<SqliteCanvasRequest>(()).unwrap();
+        let mut canvas  = context.send(()).unwrap();
+
+        // Create a layer and two frames on it
+        canvas.send(VectorCanvas::AddLayer { new_layer_id: layer, before_layer: None }).await.unwrap();
+        canvas.send(VectorCanvas::AddFrame { frame_layer: layer, when: frame_1_time, length: Duration::from_millis(1000) }).await.unwrap();
+        canvas.send(VectorCanvas::AddFrame { frame_layer: layer, when: frame_2_time, length: Duration::from_millis(1000) }).await.unwrap();
+
+        // Add shapes and parent them to the layer at different frame times
+        canvas.send(VectorCanvas::AddShape(shape_1, ShapeType::new("shape"), test_rect())).await.unwrap();
+        canvas.send(VectorCanvas::SetShapeParent(shape_1, CanvasShapeParent::Layer(layer, frame_1_time))).await.ok();
+
+        canvas.send(VectorCanvas::AddShape(shape_2, ShapeType::new("shape"), test_ellipse())).await.unwrap();
+        canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Layer(layer, frame_2_time))).await.ok();
+
+        // Query at frame 1 time - should only return shape_1
+        let frame_1_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer], frame_1_time), ()).unwrap();
+        let frame_1_result = frame_1_result.collect::<Vec<_>>().await;
+
+        context.send_message(TestResponse(frame_1_result)).await.unwrap();
+
+        // Query at frame 2 time - should only return shape_2
+        let frame_2_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer], frame_2_time), ()).unwrap();
+        let frame_2_result = frame_2_result.collect::<Vec<_>>().await;
+
+        context.send_message(TestResponse(frame_2_result)).await.unwrap();
+    }, 1);
+
+    let expected_frame_1 = vec![
+        VectorResponse::Layer(layer, vec![]),
+        VectorResponse::Shape(shape_1, ShapeType::new("shape"), vec![]),
+    ];
+    let expected_frame_2 = vec![
+        VectorResponse::Layer(layer, vec![]),
+        VectorResponse::Shape(shape_2, ShapeType::new("shape"), vec![]),
+    ];
+
+    // Run the test
+    TestBuilder::new()
+        .expect_message_matching(TestResponse(expected_frame_1), "Frame 1 should only contain shape_1")
+        .expect_message_matching(TestResponse(expected_frame_2), "Frame 2 should only contain shape_2")
+        .run_in_scene(&scene, test_program);
+}
