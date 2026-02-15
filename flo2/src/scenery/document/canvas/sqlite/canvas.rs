@@ -812,6 +812,18 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Sets the time when a shape should appear in a frame
+    ///
+    pub fn set_shape_time(&mut self, shape_id: CanvasShapeId, when: Duration) -> Result<(), ()> {
+        let shape_idx   = self.index_for_shape(shape_id)?;
+        let when_nanos  = when.as_nanos() as i64;
+
+        self.sqlite.execute("INSERT OR REPLACE INTO ShapeFrames (ShapeId, Time) VALUES (?, ?)", params![shape_idx, when_nanos]).map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
     /// Reorders a shape within its current parent (layer or group)
     ///
     pub fn reorder_shape(&mut self, shape_id: CanvasShapeId, before_shape: Option<CanvasShapeId>) -> Result<(), ()> {
