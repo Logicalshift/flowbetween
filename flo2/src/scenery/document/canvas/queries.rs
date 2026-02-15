@@ -4,11 +4,10 @@ use super::property::*;
 use super::shape::*;
 use super::shape_type::*;
 
-use crate::scenery::ui::*;
-
 use flo_scene::*;
 use flo_scene::programs::*;
 use serde::*;
+use std::time::{Duration};
 
 ///
 /// Queries that can be made on a vector document
@@ -47,6 +46,9 @@ pub enum VectorResponse {
 
     /// The following items are part of the specified layer
     Layer(CanvasLayerId, Vec<(CanvasPropertyId, CanvasProperty)>),
+
+    /// A frame starts at the specified point in time (on the layer that was previously indicated with `Layer`)
+    Frame(Duration),
 
     /// Indicates the definition of a shape. These are returned in bottom-to-top order. Properties come from the
     /// shape itself, along with any attached brushes
