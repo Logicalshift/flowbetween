@@ -665,6 +665,32 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Adds a frame to a layer at the specified time with the specified length
+    ///
+    pub fn add_frame(&mut self, frame_layer: CanvasLayerId, when: Duration, _length: Duration) -> Result<(), ()> {
+        let layer_idx   = self.index_for_layer(frame_layer)?;
+        let when_nanos  = when.as_nanos() as i64;
+
+        self.sqlite.execute("INSERT INTO LayerFrames (LayerId, Time) VALUES (?, ?)", params![layer_idx, when_nanos]).map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
+    /// Removes a frame from a layer at the specified time
+    ///
+    pub fn remove_frame(&mut self, frame_layer: CanvasLayerId, when: Duration) -> Result<(), ()> {
+        // TODO: also remove the shapes that exist in this timeframe
+
+        let layer_idx   = self.index_for_layer(frame_layer)?;
+        let when_nanos  = when.as_nanos() as i64;
+
+        self.sqlite.execute("DELETE FROM LayerFrames WHERE LayerId = ? AND Time = ?", params![layer_idx, when_nanos]).map_err(|_| ())?;
+
+        Ok(())
+    }
+
+    ///
     /// Changes the ordering of a layer
     ///
     pub fn reorder_layer(&mut self, layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>) -> Result<(), ()> {
