@@ -271,6 +271,6 @@ CREATE INDEX idx_shapes_guid ON Shapes(ShapeGuid);
  **/
 CREATE INDEX idx_shapelayers_shape ON ShapeLayers(ShapeId);
 
-CREATE INDEX idx_shape_time ON ShapeLayers(Time, LayerId, ShapeId);
-CREATE INDEX idx_layer_time ON LayerFrames(Time, LayerId);
+CREATE INDEX idx_shape_time ON ShapeLayers(LayerId, Time, OrderIdx, ShapeId);
+CREATE INDEX idx_layer_time ON LayerFrames(LayerId, Time);
 
