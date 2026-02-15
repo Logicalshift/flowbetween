@@ -49,7 +49,7 @@ struct FloatingTool {
     /// The offset from the tool's current position due to the user dragging the tool
     drag_offset: Binding<Option<(f64, f64)>>,
 
-    /// The current center point of the tool (a computed binding)
+    /// The current center point of the tool, as it should be set in the physics program (a computed binding). This is the actual anchor point the physics program uses, incorporating any drag offsets
     current_position: BindRef<UiPoint>,         // TODO: better name? This is based on the anchor and drag position (so it's the position for the physics sim)
 
     /// The instructions to draw the icon for this tool
