@@ -1020,7 +1020,6 @@ impl SqliteCanvas {
 
                 // Also add to ShapeLayers if the parent group is on a layer
                 if let Ok((layer_id, parent_sl_order, parent_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![parent_shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))) {
-
                     let insert_at = parent_sl_order + parent_old_block_size;
                     Self::insert_shapes_on_layer(&transaction, layer_id, insert_at, &block, parent_time)?;
                 }

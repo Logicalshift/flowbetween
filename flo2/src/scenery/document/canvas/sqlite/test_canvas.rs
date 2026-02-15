@@ -1022,6 +1022,41 @@ fn reorder_group_on_layer_moves_block() {
 }
 
 #[test]
+fn reorder_group_on_layer_children_follow() {
+    let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
+    let layer       = CanvasLayerId::new();
+    let shape_a     = CanvasShapeId::new();
+    let group       = CanvasShapeId::new();
+    let child_1     = CanvasShapeId::new();
+    let child_2     = CanvasShapeId::new();
+    let shape_b     = CanvasShapeId::new();
+
+    canvas.add_layer(layer, None).unwrap();
+    canvas.add_shape(shape_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child_1, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(child_2, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(shape_b, test_shape_type(), test_rect()).unwrap();
+
+    // Layer starts as: [ShapeA, Group, Child1, Child2, ShapeB]
+    canvas.set_shape_parent(shape_a, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
+    canvas.set_shape_parent(group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
+    canvas.set_shape_parent(child_1, CanvasShapeParent::Shape(group)).unwrap();
+    canvas.set_shape_parent(child_2, CanvasShapeParent::Shape(group)).unwrap();
+    canvas.set_shape_parent(shape_b, CanvasShapeParent::Layer(layer, Duration::from_nanos(0))).unwrap();
+
+    // Reorder group before shape_a -> [Group, Child1, Child2, ShapeA, ShapeB]
+    canvas.reorder_shape(group, Some(shape_a)).unwrap();
+
+    let expected = vec![group.to_string(), child_1.to_string(), child_2.to_string(), shape_a.to_string(), shape_b.to_string()];
+    assert!(shapes_on_layer(&canvas, layer) == expected,
+        "Expected {:?}, got {:?}", expected, shapes_on_layer(&canvas, layer));
+
+    // Group children should be unchanged
+    assert!(shapes_in_group(&canvas, group) == vec![child_1.to_string(), child_2.to_string()]);
+}
+
+#[test]
 fn reorder_within_group_updates_layer() {
     let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
     let layer       = CanvasLayerId::new();
@@ -1079,4 +1114,53 @@ fn detach_from_group_removes_from_layer() {
         "Expected [group, shape_b], got {:?}", shapes_on_layer(&canvas, layer));
     assert!(shapes_in_group(&canvas, group) == vec![shape_b.to_string()]);
     assert!(canvas.index_for_shape(shape_a).is_ok(), "Shape should still exist after detach");
+}
+
+#[test]
+fn set_group_parent_to_layer_moves_descendents() {
+    let mut canvas      = SqliteCanvas::new_in_memory().unwrap();
+    let layer_1         = CanvasLayerId::new();
+    let layer_2         = CanvasLayerId::new();
+    let outer_group     = CanvasShapeId::new();
+    let inner_group     = CanvasShapeId::new();
+    let child_a         = CanvasShapeId::new();
+    let child_b         = CanvasShapeId::new();
+    let inner_child     = CanvasShapeId::new();
+
+    canvas.add_layer(layer_1, None).unwrap();
+    canvas.add_layer(layer_2, None).unwrap();
+    canvas.add_shape(outer_group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(inner_group, test_shape_type(), CanvasShape::Group).unwrap();
+    canvas.add_shape(child_a, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(child_b, test_shape_type(), test_rect()).unwrap();
+    canvas.add_shape(inner_child, test_shape_type(), test_rect()).unwrap();
+
+    // Build hierarchy: outer_group -> [child_a, inner_group -> [inner_child], child_b]
+    canvas.set_shape_parent(outer_group, CanvasShapeParent::Layer(layer_1, Duration::from_nanos(0))).unwrap();
+    canvas.set_shape_parent(child_a, CanvasShapeParent::Shape(outer_group)).unwrap();
+    canvas.set_shape_parent(inner_group, CanvasShapeParent::Shape(outer_group)).unwrap();
+    canvas.set_shape_parent(inner_child, CanvasShapeParent::Shape(inner_group)).unwrap();
+    canvas.set_shape_parent(child_b, CanvasShapeParent::Shape(outer_group)).unwrap();
+
+    // All shapes should be on layer_1
+    let expected = vec![outer_group, child_a, inner_group, inner_child, child_b].into_iter().map(|s| s.to_string()).collect::<Vec<_>>();
+    assert!(shapes_on_layer(&canvas, layer_1) == expected,
+        "Before move: expected {:?}, got {:?}", expected, shapes_on_layer(&canvas, layer_1));
+    assert!(shapes_on_layer(&canvas, layer_2).is_empty());
+
+    // Move the outer group to layer_2 -- all descendents should follow
+    canvas.set_shape_parent(outer_group, CanvasShapeParent::Layer(layer_2, Duration::from_nanos(0))).unwrap();
+
+    // layer_1 should now be empty
+    assert!(shapes_on_layer(&canvas, layer_1).is_empty(),
+        "After move: layer_1 should be empty, got {:?}", shapes_on_layer(&canvas, layer_1));
+
+    // layer_2 should have the full hierarchy in depth-first order
+    let expected = vec![outer_group, child_a, inner_group, inner_child, child_b].into_iter().map(|s| s.to_string()).collect::<Vec<_>>();
+    assert!(shapes_on_layer(&canvas, layer_2) == expected,
+        "After move: expected {:?}, got {:?}", expected, shapes_on_layer(&canvas, layer_2));
+
+    // Group membership should be unchanged
+    assert!(shapes_in_group(&canvas, outer_group) == vec![child_a.to_string(), inner_group.to_string(), child_b.to_string()]);
+    assert!(shapes_in_group(&canvas, inner_group) == vec![inner_child.to_string()]);
 }
