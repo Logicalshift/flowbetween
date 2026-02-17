@@ -12,6 +12,7 @@ use flo_curves::line::*;
 use ::serde::*;
 
 use std::f64;
+use std::vec;
 
 ///
 /// Represents a subpath of a shape on the canvas, used for working on a path in-memory
@@ -124,13 +125,7 @@ impl WorkingPathAction {
     ///
     /// Checks if a cubic curve is actually a straight line (control points lie on the line between endpoints).
     ///
-    fn try_simplify_to_line(
-        start:      WorkingPoint,
-        cp1:        WorkingPoint,
-        cp2:        WorkingPoint,
-        end:        WorkingPoint,
-        max_error:  f64,
-    ) -> Option<WorkingPathAction> {
+    fn try_simplify_to_line(start: WorkingPoint, cp1: WorkingPoint, cp2: WorkingPoint, end: WorkingPoint, max_error: f64) -> Option<WorkingPathAction> {
         // Calculate the distance from each control point to the line (start -> end)
         let line_vec    = end - start;
         let line_len_sq = line_vec.x * line_vec.x + line_vec.y * line_vec.y;
@@ -167,19 +162,7 @@ impl WorkingPathAction {
     ///
     /// Checks if a cubic curve can be represented as a quadratic curve.
     ///
-    /// A cubic that was elevated from a quadratic has:
-    /// - cp1 = start + 2/3 * (qcp - start)
-    /// - cp2 = end + 2/3 * (qcp - end)
-    ///
-    /// Solving for qcp from both equations should give the same point if it's truly a quadratic.
-    ///
-    fn try_simplify_to_quadratic(
-        start:      WorkingPoint,
-        cp1:        WorkingPoint,
-        cp2:        WorkingPoint,
-        end:        WorkingPoint,
-        max_error:  f64,
-    ) -> Option<WorkingPathAction> {
+    fn try_simplify_to_quadratic(start: WorkingPoint, cp1: WorkingPoint, cp2: WorkingPoint, end: WorkingPoint, max_error: f64) -> Option<WorkingPathAction> {
         // Recover the quadratic control point from cp1: qcp = start + (cp1 - start) * 3/2
         let qcp_from_cp1 = start + (cp1 - start) * 1.5;
 
@@ -211,7 +194,7 @@ impl Geo for WorkingSubpath {
 pub struct CanvasPrecisionSubpathPointIter {
     start_point:   WorkingPoint,
     current_point: WorkingPoint,
-    actions:       std::vec::IntoIter<WorkingPathAction>,
+    actions:       vec::IntoIter<WorkingPathAction>,
 }
 
 impl Iterator for CanvasPrecisionSubpathPointIter {
