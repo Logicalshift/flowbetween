@@ -67,6 +67,12 @@ impl ShapeType {
     }
 }
 
+impl Default for ShapeType {
+    fn default() -> Self {
+        Self::new("app.flowbetween::shape")
+    }
+}
+
 impl fmt::Debug for ShapeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "ShapeType::new(\"{}\")", self.name())
