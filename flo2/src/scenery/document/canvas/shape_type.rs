@@ -1,3 +1,4 @@
+use flo_scene::SubProgramId;
 use ::serde::*;
 
 use std::collections::*;
@@ -64,6 +65,13 @@ impl ShapeType {
     pub fn name(&self) -> &'static str {
         // Look up the name associated with this shape type when `new()` was called
         SHAPE_TYPE_NAMES.lock().unwrap()[self.0]
+    }
+
+    ///
+    /// The ID of the subprogram that provides rendering instructions for this shape type
+    ///
+    pub fn render_program_id(&self) -> SubProgramId {
+        SubProgramId::called(&format!("flowbetween::render::{}", self.name()))
     }
 }
 
