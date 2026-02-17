@@ -50,30 +50,32 @@ impl WorkingPathAction {
     ///
     /// Returns the end point of this action, given the current point and start point of the path
     ///
-    fn end_point(&self, start: WorkingPoint) -> WorkingPoint {
+    #[inline]
+    fn end_point(&self, start: &WorkingPoint) -> WorkingPoint {
         match self {
             WorkingPathAction::Line(end)                  => *end,
             WorkingPathAction::QuadraticCurve { end, .. } => *end,
             WorkingPathAction::CubicCurve { end, .. }     => *end,
-            WorkingPathAction::Close                      => start,
+            WorkingPathAction::Close                      => *start,
         }
     }
 
     ///
     /// Converts this action to a cubic bezier curve (cp1, cp2, end), given the current point and start point
     ///
-    fn to_cubic(&self, current: WorkingPoint, start: WorkingPoint) -> (WorkingPoint, WorkingPoint, WorkingPoint) {
+    #[inline]
+    fn to_cubic(&self, current: &WorkingPoint, start: &WorkingPoint) -> (WorkingPoint, WorkingPoint, WorkingPoint) {
         match self {
             WorkingPathAction::Line(end) => {
                 // Line becomes a cubic curve with control points at 1/3 and 2/3 along the line
-                let cp1 = current + (*end - current) * (1.0 / 3.0);
-                let cp2 = current + (*end - current) * (2.0 / 3.0);
+                let cp1 = *current + (*end - *current) * (1.0 / 3.0);
+                let cp2 = *current + (*end - *current) * (2.0 / 3.0);
                 (cp1, cp2, *end)
             }
 
             WorkingPathAction::QuadraticCurve { end, cp } => {
                 // Elevate quadratic to cubic: CP1 = P0 + 2/3*(CP - P0), CP2 = P1 + 2/3*(CP - P1)
-                let cp1 = current + (*cp - current) * (2.0 / 3.0);
+                let cp1 = *current + (*cp - *current) * (2.0 / 3.0);
                 let cp2 = *end + (*cp - *end) * (2.0 / 3.0);
                 (cp1, cp2, *end)
             }
@@ -84,9 +86,9 @@ impl WorkingPathAction {
 
             WorkingPathAction::Close => {
                 // Close becomes a line back to start
-                let cp1 = current + (start - current) * (1.0 / 3.0);
-                let cp2 = current + (start - current) * (2.0 / 3.0);
-                (cp1, cp2, start)
+                let cp1 = *current + (*start - *current) * (1.0 / 3.0);
+                let cp2 = *current + (*start - *current) * (2.0 / 3.0);
+                (cp1, cp2, *start)
             }
         }
     }
@@ -202,8 +204,8 @@ impl Iterator for CanvasPrecisionSubpathPointIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.actions.next().map(|action| {
-            let cubic           = action.to_cubic(self.current_point, self.start_point);
-            self.current_point  = action.end_point(self.start_point);
+            let cubic           = action.to_cubic(&self.current_point, &self.start_point);
+            self.current_point  = action.end_point(&self.start_point);
             cubic
         })
     }
@@ -278,7 +280,7 @@ impl WorkingSubpath {
 
         for action in &self.actions {
             let simplified   = action.simplify(current_point, max_error);
-            current_point    = action.end_point(self.start_point);
+            current_point    = action.end_point(&self.start_point);
             simplified_actions.push(simplified);
         }
 
@@ -296,7 +298,7 @@ impl WorkingSubpath {
 
         for action in &mut self.actions {
             let simplified = action.simplify(current_point, max_error);
-            current_point  = action.end_point(self.start_point);
+            current_point  = action.end_point(&self.start_point);
             *action        = simplified;
         }
     }
