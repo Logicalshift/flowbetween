@@ -3,6 +3,7 @@ use super::ellipse::*;
 use super::path::*;
 use super::polygon::*;
 use super::rectangle::*;
+use super::working_path::*;
 
 use ::serde::*;
 use uuid::*;
@@ -80,6 +81,21 @@ impl CanvasShapeId {
 impl fmt::Display for CanvasShapeId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl CanvasShape {
+    ///
+    /// Converts this shape to a path (empty vec if ther's no path here)
+    ///
+    pub fn to_path(&self) -> Vec<WorkingSubpath> {
+        match self {
+            CanvasShape::Path(canvas_path)           => WorkingSubpath::from_canvas_path(canvas_path),
+            CanvasShape::Group                       => vec![],
+            CanvasShape::Rectangle(canvas_rectangle) => vec![WorkingSubpath::rectangle(canvas_rectangle)],
+            CanvasShape::Ellipse(canvas_ellipse)     => vec![WorkingSubpath::ellipse(canvas_ellipse)],
+            CanvasShape::Polygon(canvas_polygon)     => vec![WorkingSubpath::polygon(canvas_polygon)],
+        }
     }
 }
 

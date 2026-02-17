@@ -1,11 +1,17 @@
 use super::super::point::*;
+use super::ellipse::*;
 use super::path::*;
+use super::polygon::*;
+use super::rectangle::*;
 use super::working_point::*;
 
 use flo_curves::bezier::path::*;
 use flo_curves::geo::*;
 
+use flo_curves::line::*;
 use ::serde::*;
+
+use std::f64;
 
 ///
 /// Represents a subpath of a shape on the canvas, used for working on a path in-memory
@@ -313,15 +319,120 @@ impl WorkingSubpath {
     }
 
     ///
+    /// Creates a closed rectangular path from a CanvasRectangle
+    ///
+    pub fn rectangle(rect: &CanvasRectangle) -> WorkingSubpath {
+        let min = WorkingPoint::from(rect.min);
+        let max = WorkingPoint::from(rect.max);
+
+        WorkingSubpath {
+            start_point: min,
+            actions: vec![
+                WorkingPathAction::Line(WorkingPoint { x: max.x, y: min.y }),
+                WorkingPathAction::Line(max),
+                WorkingPathAction::Line(WorkingPoint { x: min.x, y: max.y }),
+                WorkingPathAction::Close,
+            ],
+        }
+    }
+
+    ///
+    /// Creates a closed elliptical path from a CanvasEllipse, approximated with 4 cubic bezier curves
+    ///
+    pub fn ellipse(ellipse: &CanvasEllipse) -> WorkingSubpath {
+        let min     = WorkingPoint::from(ellipse.min);
+        let max     = WorkingPoint::from(ellipse.max);
+        let center  = WorkingPoint { x: (min.x + max.x) / 2.0, y: (min.y + max.y) / 2.0 };
+        let rx      = (max.x - min.x) / 2.0;
+        let ry      = (max.y - min.y) / 2.0;
+
+        // Rotation from the direction vector
+        let direction   = WorkingPoint::from(ellipse.direction);
+        let direction   = (WorkingPoint { x: 0.0, y: 1.0 }, direction).angle();
+        let cos_a       = direction.cos();
+        let sin_a       = direction.sin();
+
+        // Transform a point in local ellipse space to world space
+        let transform = move |px: f64, py: f64| -> WorkingPoint {
+            WorkingPoint {
+                x: center.x + px * cos_a - py * sin_a,
+                y: center.y + px * sin_a + py * cos_a,
+            }
+        };
+
+        // Kappa: control point distance for cubic bezier circle approximation
+        const KAPPA: f64 = 0.5522847498;
+
+        let kx = rx * KAPPA;
+        let ky = ry * KAPPA;
+
+        // Cardinal points on the ellipse
+        let p0 = transform(rx, 0.0);
+        let p1 = transform(0.0, ry);
+        let p2 = transform(-rx, 0.0);
+        let p3 = transform(0.0, -ry);
+
+        WorkingSubpath {
+            start_point: p0,
+            actions: vec![
+                WorkingPathAction::CubicCurve { cp1: transform(rx, ky),   cp2: transform(kx, ry),   end: p1 },
+                WorkingPathAction::CubicCurve { cp1: transform(-kx, ry),  cp2: transform(-rx, ky),  end: p2 },
+                WorkingPathAction::CubicCurve { cp1: transform(-rx, -ky), cp2: transform(-kx, -ry), end: p3 },
+                WorkingPathAction::CubicCurve { cp1: transform(kx, -ry),  cp2: transform(rx, -ky),  end: p0 },
+                WorkingPathAction::Close,
+            ],
+        }
+    }
+
+    ///
+    /// Creates a closed polygonal path from a CanvasPolygon
+    ///
+    pub fn polygon(polygon: &CanvasPolygon) -> WorkingSubpath {
+        let min     = WorkingPoint::from(polygon.min);
+        let max     = WorkingPoint::from(polygon.max);
+        let center  = WorkingPoint { x: (min.x + max.x) / 2.0, y: (min.y + max.y) / 2.0 };
+        let rx      = (max.x - min.x) / 2.0;
+        let ry      = (max.y - min.y) / 2.0;
+
+        // Starting angle from the direction vector
+        let direction   = WorkingPoint::from(polygon.direction);
+        let direction   = (WorkingPoint { x: 0.0, y: 1.0 }, direction).angle();
+        let sides       = polygon.sides.max(3);
+        let angle_step  = f64::consts::TAU / (sides as f64);
+
+        // Generate vertices
+        let vertex = move |point_idx: usize| -> WorkingPoint {
+            let angle = direction + angle_step * (point_idx as f64);
+            WorkingPoint {
+                x: center.x + rx * angle.cos(),
+                y: center.y + ry * angle.sin(),
+            }
+        };
+
+        let mut actions = Vec::with_capacity(sides);
+        for i in 1..sides {
+            actions.push(WorkingPathAction::Line(vertex(i)));
+        }
+        actions.push(WorkingPathAction::Close);
+
+        WorkingSubpath {
+            start_point: vertex(0),
+            actions,
+        }
+    }
+
+    ///
     /// Converts a CanvasPath (which may contain multiple subpaths via Move actions) into a
     /// Vec of CanvasPrecisionSubpath (one per subpath).
     ///
     /// This splits the path at each Move action and converts coordinates from f32 to f64.
     ///
     pub fn from_canvas_path(path: &CanvasPath) -> Vec<WorkingSubpath> {
-        let mut subpaths = Vec::new();
-        let mut current_start = WorkingPoint::from(path.start_point);
-        let mut current_actions: Vec<WorkingPathAction> = Vec::new();
+        use std::mem;
+
+        let mut subpaths                                = Vec::new();
+        let mut current_start                           = WorkingPoint::from(path.start_point);
+        let mut current_actions: Vec<WorkingPathAction> = vec![];
 
         for action in &path.actions {
             match action {
@@ -330,35 +441,17 @@ impl WorkingSubpath {
                     if !current_actions.is_empty() {
                         subpaths.push(WorkingSubpath {
                             start_point: current_start,
-                            actions:     std::mem::take(&mut current_actions),
+                            actions:     mem::take(&mut current_actions),
                         });
                     }
                     // Start a new subpath
                     current_start = WorkingPoint::from(*point);
                 }
 
-                CanvasPathV1Action::Close => {
-                    current_actions.push(WorkingPathAction::Close);
-                }
-
-                CanvasPathV1Action::Line(end) => {
-                    current_actions.push(WorkingPathAction::Line(WorkingPoint::from(*end)));
-                }
-
-                CanvasPathV1Action::QuadraticCurve { end, cp } => {
-                    current_actions.push(WorkingPathAction::QuadraticCurve {
-                        end: WorkingPoint::from(*end),
-                        cp:  WorkingPoint::from(*cp),
-                    });
-                }
-
-                CanvasPathV1Action::CubicCurve { end, cp1, cp2 } => {
-                    current_actions.push(WorkingPathAction::CubicCurve {
-                        end: WorkingPoint::from(*end),
-                        cp1: WorkingPoint::from(*cp1),
-                        cp2: WorkingPoint::from(*cp2),
-                    });
-                }
+                CanvasPathV1Action::Close                        => current_actions.push(WorkingPathAction::Close),
+                CanvasPathV1Action::Line(end)                    => current_actions.push(WorkingPathAction::Line(WorkingPoint::from(*end))),
+                CanvasPathV1Action::QuadraticCurve { end, cp }   => current_actions.push(WorkingPathAction::QuadraticCurve { end: WorkingPoint::from(*end), cp: WorkingPoint::from(*cp), }),
+                CanvasPathV1Action::CubicCurve { end, cp1, cp2 } => current_actions.push(WorkingPathAction::CubicCurve { end: WorkingPoint::from(*end), cp1: WorkingPoint::from(*cp1), cp2: WorkingPoint::from(*cp2), }),
             }
         }
 
@@ -398,26 +491,10 @@ impl WorkingSubpath {
             // Convert all actions in this subpath
             for action in &subpath.actions {
                 actions.push(match action {
-                    WorkingPathAction::Close => CanvasPathV1Action::Close,
-
-                    WorkingPathAction::Line(end) => {
-                        CanvasPathV1Action::Line(CanvasPoint::from(*end))
-                    }
-
-                    WorkingPathAction::QuadraticCurve { end, cp } => {
-                        CanvasPathV1Action::QuadraticCurve {
-                            end: CanvasPoint::from(*end),
-                            cp:  CanvasPoint::from(*cp),
-                        }
-                    }
-
-                    WorkingPathAction::CubicCurve { end, cp1, cp2 } => {
-                        CanvasPathV1Action::CubicCurve {
-                            end: CanvasPoint::from(*end),
-                            cp1: CanvasPoint::from(*cp1),
-                            cp2: CanvasPoint::from(*cp2),
-                        }
-                    }
+                    WorkingPathAction::Close                        => CanvasPathV1Action::Close,
+                    WorkingPathAction::Line(end)                    => CanvasPathV1Action::Line(CanvasPoint::from(*end)),
+                    WorkingPathAction::QuadraticCurve { end, cp }   => CanvasPathV1Action::QuadraticCurve { end: CanvasPoint::from(*end), cp: CanvasPoint::from(*cp), },
+                    WorkingPathAction::CubicCurve { end, cp1, cp2 } => CanvasPathV1Action::CubicCurve { end: CanvasPoint::from(*end), cp1: CanvasPoint::from(*cp1), cp2: CanvasPoint::from(*cp2), },
                 });
             }
         }
