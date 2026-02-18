@@ -59,6 +59,9 @@ pub enum CanvasProperty {
 
     /// Property with a value that's a series of bytes
     ByteList(Vec<u8>),
+
+    /// Property with a string value
+    String(String),
 }
 
 ///
