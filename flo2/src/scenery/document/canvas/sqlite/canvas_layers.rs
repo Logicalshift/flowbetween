@@ -1,20 +1,10 @@
 use super::canvas::*;
-use super::id_cache::*;
-use super::super::brush::*;
 use super::super::error::*;
 use super::super::layer::*;
 use super::super::property::*;
-use super::super::queries::*;
-use super::super::shape::*;
-use super::super::shape_type::*;
 
-use flo_scene::*;
-use flo_scene::programs::*;
-
-use futures::prelude::*;
 use rusqlite::*;
 
-use std::collections::{HashMap};
 use std::result::{Result};
 use std::time::{Duration};
 
@@ -23,7 +13,7 @@ impl SqliteCanvas {
     /// Queries the database for the ordering index of the specified layer
     ///
     #[inline]
-    pub fn index_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, CanvasError> {
+    pub (super) fn index_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, rusqlite::Error> {
         if let Some(cached_id) = self.layer_id_cache.get(&layer_id) {
             Ok(*cached_id)
         } else {
@@ -37,7 +27,7 @@ impl SqliteCanvas {
     /// Returns the time where the frame starts
     ///
     #[inline]
-    pub fn layer_frame_time(&mut self, layer_id: CanvasLayerId, when: Duration) -> Result<Duration, CanvasError> {
+    pub (super) fn layer_frame_time(&mut self, layer_id: CanvasLayerId, when: Duration) -> Result<Duration, CanvasError> {
         let layer_idx = self.index_for_layer(layer_id)?;
 
         let mut most_recent_time = self.sqlite.prepare_cached("SELECT MAX(Time) FROM LayerFrames WHERE LayerId = ? AND Time <= ?")?;
@@ -49,18 +39,10 @@ impl SqliteCanvas {
     }
 
     ///
-    /// Queries the database for the ordering index of the specified layer
-    ///
-    #[inline]
-    pub fn order_for_layer(&mut self, layer_id: CanvasLayerId) -> Result<i64, CanvasError> {
-        Ok(self.sqlite.query_one::<i64, _, _>("SELECT OrderIdx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0))?)
-    }
-
-    ///
     /// Queries the database for the index of the specified layer
     ///
     #[inline]
-    pub fn order_for_layer_in_transaction(transaction: &Transaction<'_>, layer_id: CanvasLayerId) -> Result<i64, CanvasError> {
+    pub (super) fn order_for_layer_in_transaction(transaction: &Transaction<'_>, layer_id: CanvasLayerId) -> Result<i64, CanvasError> {
         Ok(transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM Layers WHERE LayerGuid = ?", [layer_id.to_string()], |row| row.get(0))?)
     }
 

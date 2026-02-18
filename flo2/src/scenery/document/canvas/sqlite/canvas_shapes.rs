@@ -74,7 +74,7 @@ impl SqliteCanvas {
     /// Queries the database for the ordering index of the specified layer
     ///
     #[inline]
-    pub fn index_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, CanvasError> {
+    pub (super) fn index_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, rusqlite::Error> {
         if let Some(cached_id) = self.shape_id_cache.get(&shape_id) {
             Ok(*cached_id)
         } else {
@@ -88,7 +88,7 @@ impl SqliteCanvas {
     /// Retrieves the time (in nanoseconds) when a shape appears on the canvas
     ///
     #[inline]
-    pub fn time_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, CanvasError> {
+    pub (super) fn time_for_shape(&mut self, shape_id: CanvasShapeId) -> Result<i64, CanvasError> {
         let mut time_query = self.sqlite.prepare_cached("
             SELECT      sl.Time 
             FROM        ShapeLayers sl 
@@ -201,7 +201,7 @@ impl SqliteCanvas {
         let shape_type_idx                  = self.index_for_shapetype(shape_type)?;
         let (shape_data_type, shape_data)   = Self::encode_shape(&shape)?;
 
-        if let Ok(existing_idx) = self.index_for_shape(shape_id) {
+        if let Some(existing_idx) = self.index_for_shape(shape_id).optional()? {
             // Replace the existing shape definition in place
             let mut update_existing = self.sqlite.prepare_cached("UPDATE Shapes SET ShapeType = ?, ShapeDataType = ?, ShapeData = ? WHERE ShapeId = ?")?;
             update_existing.execute(params![shape_type_idx, shape_data_type, shape_data, existing_idx])?;
