@@ -9,28 +9,18 @@ pub static PROP_NAME: LazyCanvasPropertyId = LazyCanvasPropertyId::new("flowbetw
 pub struct Name(pub String);
 
 ///
-/// Converts a string value into a canvas property
-///
-pub fn string_property(string: impl Into<String>) -> CanvasProperty {
-    let string = string.into();
-    let bytes = string.bytes().collect::<Vec<_>>();
-
-    CanvasProperty::ByteList(bytes)
-}
-
-///
 /// Converts a property value that should be a string into a string (or returns None if the property is not a valid string)
 ///
 pub fn string_from_property(property: &CanvasProperty) -> Option<String> {
     match property {
-        CanvasProperty::ByteList(bytes) => String::from_utf8(bytes.clone()).ok(),
-        _                               => None
+        CanvasProperty::String(name) => Some(name.clone()),
+        _                            => None
     }
 }
 
 impl ToCanvasProperties for Name {
     fn to_properties(&self) -> Vec<(CanvasPropertyId, CanvasProperty)> {
-        vec![(*PROP_NAME, string_property(&self.0))]
+        vec![(*PROP_NAME, CanvasProperty::String(self.0.clone()))]
     }
 
     fn used_properties() -> Vec<CanvasPropertyId> {
