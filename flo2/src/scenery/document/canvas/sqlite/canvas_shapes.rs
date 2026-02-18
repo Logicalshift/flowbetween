@@ -21,7 +21,7 @@ impl SqliteCanvas {
         } else {
             // Try to fetch the existing shape type
             let mut query_shapetype = self.sqlite.prepare_cached("SELECT ShapeTypeId FROM ShapeTypes WHERE Name = ?")?;
-            if let Ok(shapetype_id) = query_shapetype.query_one([shape_type.name()], |row| row.get::<_, i64>(0)) {
+            if let Some(shapetype_id) = query_shapetype.query_one([shape_type.name()], |row| row.get::<_, i64>(0)).optional()? {
                 // Cache it so we don't need to look it up again
                 self.shapetype_id_cache.insert(shape_type, shapetype_id);
                 self.shapetype_for_id_cache.insert(shapetype_id, shape_type);
@@ -305,7 +305,7 @@ impl SqliteCanvas {
         let transaction = self.sqlite.transaction()?;
 
         // Check if shape is in a group first
-        if let Ok((parent_id, original_order)) = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+        if let Some((parent_id, original_order)) = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).optional()? {
             // Read the existing order of the shape within a group
             let before_order = if let Some(before_idx) = before_shape_idx {
                 transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeGroups WHERE ShapeId = ? AND ParentShapeId = ?", params![before_idx, parent_id], |row| row.get(0))?
@@ -322,7 +322,7 @@ impl SqliteCanvas {
             transaction.execute("UPDATE ShapeGroups SET OrderIdx = ? WHERE ShapeId = ?", params![before_order, shape_idx])?;
 
             // Rebuild the parent group's ShapeLayers descendents to reflect the new ordering
-            if let Ok((layer_id, parent_order_idx, parent_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![parent_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))) {
+            if let Some((layer_id, parent_order_idx, parent_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![parent_id], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))).optional()? {
                 // Collect new depth-first order (ShapeGroups already reordered)
                 let new_descendents = Self::all_descendents_for_shape(&transaction, parent_id)?;
                 let desc_count      = new_descendents.len() as i64;
@@ -339,7 +339,7 @@ impl SqliteCanvas {
         }
 
         // Check if shape is directly on a layer (not in a group)
-        if let Ok((layer_id, original_order, original_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))) {
+        if let Some((layer_id, original_order, original_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))).optional()? {
             // Collect descendents for block movement
             let descendents = Self::all_descendents_for_shape(&transaction, shape_idx)?;
             let block_size  = 1 + descendents.len() as i64;
@@ -412,15 +412,12 @@ impl SqliteCanvas {
         let block_size  = 1 + descendents.len() as i64;
 
         // Remove from ShapeLayers (covers both direct layer parent and group-via-layer)
-        if let Ok((layer_id, order_idx)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))) {
+        if let Some((layer_id, order_idx)) = transaction.query_one("SELECT LayerId, OrderIdx FROM ShapeLayers WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).optional()? {
             Self::remove_shapes_from_layer(&transaction, layer_id, order_idx, block_size)?;
         }
 
         // Remove from any existing group parent
-        if let Ok((parent_id, order_idx)) = transaction.query_one(
-            "SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?",
-            params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
-        ) {
+        if let Some((parent_id, order_idx)) = transaction.query_one("SELECT ParentShapeId, OrderIdx FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))).optional()? {
             transaction.execute("DELETE FROM ShapeGroups WHERE ShapeId = ?", params![shape_idx])?;
             transaction.execute("UPDATE ShapeGroups SET OrderIdx = OrderIdx - 1 WHERE ParentShapeId = ? AND OrderIdx > ?", params![parent_id, order_idx])?;
         }
@@ -457,7 +454,7 @@ impl SqliteCanvas {
                 transaction.execute("INSERT INTO ShapeGroups (ShapeId, ParentShapeId, OrderIdx) VALUES (?, ?, ?)", params![shape_idx, parent_shape_idx, next_order])?;
 
                 // Also add to ShapeLayers if the parent group is on a layer
-                if let Ok((layer_id, parent_sl_order, parent_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![parent_shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))) {
+                if let Some((layer_id, parent_sl_order, parent_time)) = transaction.query_one("SELECT LayerId, OrderIdx, Time FROM ShapeLayers WHERE ShapeId = ?", params![parent_shape_idx], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?))).optional()? {
                     let insert_at = parent_sl_order + parent_old_block_size;
                     Self::insert_shapes_on_layer(&transaction, layer_id, insert_at, &block, parent_time)?;
                 }
@@ -504,7 +501,7 @@ impl SqliteCanvas {
         let transaction = self.sqlite.transaction()?;
 
         for brush_idx in brush_indices {
-            if let Ok(order_idx) = transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeBrushes WHERE ShapeId = ? AND BrushId = ?", params![shape_idx, brush_idx], |row| row.get(0)) {
+            if let Some(order_idx) = transaction.query_one::<i64, _, _>("SELECT OrderIdx FROM ShapeBrushes WHERE ShapeId = ? AND BrushId = ?", params![shape_idx, brush_idx], |row| row.get(0)).optional()? {
                 transaction.execute("DELETE FROM ShapeBrushes WHERE ShapeId = ? AND BrushId = ?", params![shape_idx, brush_idx])?;
                 transaction.execute("UPDATE ShapeBrushes SET OrderIdx = OrderIdx - 1 WHERE ShapeId = ? AND OrderIdx > ?", params![shape_idx, order_idx])?;
             }

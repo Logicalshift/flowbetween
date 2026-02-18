@@ -17,7 +17,7 @@ impl SqliteCanvas {
         } else {
             // Try to fetch the existing property
             let mut query_property = self.sqlite.prepare_cached("SELECT PropertyId FROM Properties WHERE Name = ?")?;
-            if let Ok(property_id) = query_property.query_one([canvas_property_id.name()], |row| row.get::<_, i64>(0)) {
+            if let Some(property_id) = query_property.query_one([canvas_property_id.name()], |row| row.get::<_, i64>(0)).optional()? {
                 // Cache it so we don't need to look it up again
                 self.property_id_cache.insert(canvas_property_id, property_id);
                 self.property_for_id_cache.insert(property_id, canvas_property_id);
