@@ -95,8 +95,8 @@ impl SqliteCanvas {
             INNER JOIN  Shapes s ON s.ShapeId = sl.ShapeId 
             WHERE       s.ShapeGuid = ?")?;
 
-        let mut time    = time_query.query_map([shape_id.to_string()], |row| row.get(0))?;
-        let time        = time.next().unwrap_or(Ok(0i64))?;
+        let time = time_query.query_one([shape_id.to_string()], |row| row.get(0)).optional()?;
+        let time = time.unwrap_or(0i64);
 
         Ok(time)
     }
