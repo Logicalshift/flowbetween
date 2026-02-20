@@ -200,6 +200,36 @@ impl ToCanvasProperties for Stroke {
     }
 }
 
+impl FlatFill {
+    ///
+    /// Renders the current shape using this fill
+    ///
+    #[inline]
+    pub fn draw(&self, drawing: &mut impl GraphicsContext) {
+        let FlatFill(color) = self;
+
+        drawing.fill_color(*color);
+        drawing.fill();
+    }
+}
+
+impl Stroke {
+    ///
+    /// Renders the current shape using this stroke
+    ///
+    #[inline]
+    pub fn draw(&self, drawing: &mut impl GraphicsContext) {
+        let Stroke(StrokeWidth(line_width), line_cap, line_join, color) = self;
+
+        drawing.line_width(*line_width as _);
+        drawing.line_cap(*line_cap);
+        drawing.line_join(*line_join);
+        drawing.stroke_color(*color);
+
+        drawing.stroke();
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
