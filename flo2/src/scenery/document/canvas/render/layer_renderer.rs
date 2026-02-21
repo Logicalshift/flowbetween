@@ -33,14 +33,14 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
                 parent_stack.pop();
             }
 
-            VectorResponse::Shape(shape_id, shape_type, properties) => {
+            VectorResponse::Shape(shape_id, shape, shape_type, properties) => {
                 // Create a node for this shape
                 let parent_idx  = parent_stack.last().copied();
                 let properties  = Arc::new(properties);
                 let group       = vec![];
 
                 render.push(RenderItem {
-                    shape:          Arc::new(ShapeWithProperties { shape: todo!(), shape_type, properties, group }),
+                    shape:          Arc::new(ShapeWithProperties { shape, shape_type, properties, group }),
                     child_nodes:    vec![],
                     parent_node:    parent_idx,
                     render:         None,
@@ -48,7 +48,8 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
 
                 // Add as a child node to the current parent
                 if let Some(parent_idx) = parent_idx {
-                    render[parent_idx].child_nodes.push(render.len()-1);
+                    let new_idx = render.len() - 1;
+                    render[parent_idx].child_nodes.push(new_idx);
                 }
             }
 
