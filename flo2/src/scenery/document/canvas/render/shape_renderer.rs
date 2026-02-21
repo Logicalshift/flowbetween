@@ -5,6 +5,7 @@ use flo_scene::*;
 use flo_scene::commands::*;
 
 use futures::prelude::*;
+use futures::stream::{FuturesUnordered};
 
 use std::collections::*;
 use std::sync::*;
@@ -30,7 +31,7 @@ pub async fn render_shapes(shapes: impl Iterator<Item=Arc<ShapeWithProperties>>,
     }
 
     // Query all of the programs to build up the result
-    let requests = shape_bins.into_iter()
+    let mut requests = shape_bins.into_iter()
         .map(|(shape_type, shapes)| async move {
             let num_shapes      = shapes.len();
             let query_rendering = context.spawn_query(ReadCommand::default(), RenderShapesRequest::RenderRequest(shapes, ().into()), shape_type.render_program_id());
@@ -40,12 +41,26 @@ pub async fn render_shapes(shapes: impl Iterator<Item=Arc<ShapeWithProperties>>,
             } else {
                 (shape_type, vec![RenderShapesResponse::ShapeRendering(Arc::new(vec![])); num_shapes])
             }
-        });
+        })
+        .collect::<FuturesUnordered<_>>();
 
-    // TODO: wait for the requests to generate their sets of shapes
-    // TODO: use the read_order to read from the resulting vecs to generate the final result
+    // Wait for the requests to generate their sets of shapes
+    let mut generated_drawing = HashMap::new();
+    while let Some((shape_type, drawings)) = requests.next().await {
+        generated_drawing.insert(shape_type, drawings.into_iter());
+    }
 
-    // Build the result
+    // Use the read_order to read from the resulting vecs to generate the final result
     let mut result = vec![];
+    for shape_type in read_order {
+        if let Some(drawing) = generated_drawing.get_mut(&shape_type).and_then(|shape_iter| shape_iter.next()) {
+            match drawing {
+                RenderShapesResponse::ShapeRendering(drawing) => {
+                    result.push(drawing);
+                }
+            }
+        }
+    }
+
     result
 }
