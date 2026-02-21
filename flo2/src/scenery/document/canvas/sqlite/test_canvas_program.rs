@@ -114,8 +114,8 @@ fn query_shape_properties() {
 
     // The expected response to the query after this set up
     let expected = vec![
-        VectorResponse::Shape(shape_1, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(42))]),
-        VectorResponse::Shape(shape_2, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(43)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))]),
+        VectorResponse::Shape(shape_1, CanvasShape::Group, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(42))]),
+        VectorResponse::Shape(shape_2, CanvasShape::Group, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(43)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))]),
     ];
 
     // Run the test
@@ -247,22 +247,22 @@ fn query_layer() {
     // The expected response to the query after this set up
     let expected_first = vec![
         VectorResponse::Layer(layer_1, vec![]),
-        VectorResponse::Shape(shape_1, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(42))]),
-        VectorResponse::Shape(shape_2, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(43)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))]),
+        VectorResponse::Shape(shape_1, CanvasShape::Group, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(42))]),
+        VectorResponse::Shape(shape_2, CanvasShape::Group, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(43)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))]),
     ];
     let expected_second = vec![
         VectorResponse::Layer(layer_2, vec![]),
-        VectorResponse::Shape(shape_3, ShapeType::new("shape"), vec![]),
-        VectorResponse::Shape(shape_4, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(shape_3, CanvasShape::Group, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(shape_4, CanvasShape::Group, ShapeType::new("shape"), vec![]),
     ];
     let expected_all = vec![
         VectorResponse::Layer(layer_1, vec![]),
-        VectorResponse::Shape(shape_1, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(42))]),
-        VectorResponse::Shape(shape_2, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(43)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))]),
+        VectorResponse::Shape(shape_1, CanvasShape::Group, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(42))]),
+        VectorResponse::Shape(shape_2, CanvasShape::Group, ShapeType::new("shape"), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(43)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))]),
 
         VectorResponse::Layer(layer_2, vec![]),
-        VectorResponse::Shape(shape_3, ShapeType::new("shape"), vec![]),
-        VectorResponse::Shape(shape_4, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(shape_3, CanvasShape::Group, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(shape_4, CanvasShape::Group, ShapeType::new("shape"), vec![]),
     ];
 
     // Run the test
@@ -341,21 +341,21 @@ fn query_layer_with_groups() {
     // The expected response, with two nested groups
     let expected = vec![
         VectorResponse::Layer(layer, vec![]),
-        VectorResponse::Shape(group_shape, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(group_shape, CanvasShape::Group, ShapeType::new("shape"), vec![]),
         VectorResponse::StartGroup,
-        VectorResponse::Shape(child_1, ShapeType::new("shape"), vec![]),
-        VectorResponse::Shape(nested_group, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(child_1, test_rect(), ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(nested_group, CanvasShape::Group, ShapeType::new("shape"), vec![]),
         VectorResponse::StartGroup,
-        VectorResponse::Shape(nested_child_1, ShapeType::new("shape"), vec![]),
-        VectorResponse::Shape(nested_child_2, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(nested_child_1, test_ellipse(), ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(nested_child_2, test_rect(), ShapeType::new("shape"), vec![]),
         VectorResponse::StartGroup,
-        VectorResponse::Shape(nested2_child_1, ShapeType::new("shape"), vec![]),
-        VectorResponse::Shape(nested2_child_2, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(nested2_child_1, test_ellipse(), ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(nested2_child_2, test_rect(), ShapeType::new("shape"), vec![]),
         VectorResponse::EndGroup,
         VectorResponse::EndGroup,
-        VectorResponse::Shape(child_2, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(child_2, test_ellipse(), ShapeType::new("shape"), vec![]),
         VectorResponse::EndGroup,
-        VectorResponse::Shape(after_group, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(after_group, test_rect(), ShapeType::new("shape"), vec![]),
     ];
 
     // Run the test
@@ -581,11 +581,11 @@ fn query_layer_frames_returns_shapes_for_correct_frame() {
 
     let expected_frame_1 = vec![
         VectorResponse::Layer(layer, vec![]),
-        VectorResponse::Shape(shape_1, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(shape_1, test_rect(), ShapeType::new("shape"), vec![]),
     ];
     let expected_frame_2 = vec![
         VectorResponse::Layer(layer, vec![]),
-        VectorResponse::Shape(shape_2, ShapeType::new("shape"), vec![]),
+        VectorResponse::Shape(shape_2, test_ellipse(), ShapeType::new("shape"), vec![]),
     ];
 
     // Run the test

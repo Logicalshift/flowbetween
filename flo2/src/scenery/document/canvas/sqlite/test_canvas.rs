@@ -351,7 +351,7 @@ fn query_shapes_on_layer() {
     // Initially not on any layer
     assert!(response == vec![
         VectorResponse::Layer(layer, vec![]),
-        VectorResponse::Shape(shape, ShapeType::new("flowbetween::test"), vec![])
+        VectorResponse::Shape(shape, test_rect(), ShapeType::new("flowbetween::test"), vec![])
     ], "Response was {:?}", response);
 }
 
