@@ -1,5 +1,6 @@
 use super::super::property::*;
 use super::super::shape::*;
+use super::super::shape_type::*;
 
 use futures::prelude::*;
 
@@ -14,6 +15,9 @@ use std::sync::*;
 pub struct ShapeWithProperties {
     /// The shape definition
     pub shape: CanvasShape,
+
+    /// The type of this shape
+    pub shape_type: ShapeType,
 
     /// The properties for the shape
     pub properties: Arc<Vec<(CanvasPropertyId, CanvasProperty)>>,
