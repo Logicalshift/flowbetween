@@ -180,6 +180,18 @@ impl SqliteCanvas {
     }
 
     ///
+    /// Retrieves the CanvasShape definition for a shape from the database
+    ///
+    pub (super) fn shape_for_shape_id(&mut self, shape_id: CanvasShapeId) -> Result<CanvasShape, CanvasError> {
+        let mut query = self.sqlite.prepare_cached("SELECT ShapeDataType, ShapeData FROM Shapes WHERE ShapeGuid = ?")?;
+        
+        let (shape_data_type, shape_data) = query.query_one(params![shape_id.to_string()], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, Vec<u8>>(1)?)))?;
+        drop(query);
+
+        Self::decode_shape(shape_data_type, &shape_data)
+    }
+
+    ///
     /// Encodes a canvas shape as a (shape_type, shape_data) pair for database storage
     ///
     /// Shape types are defined by the CANVAS_*_V1_TYPE constants
@@ -191,6 +203,20 @@ impl SqliteCanvas {
             CanvasShape::Rectangle(rect)    => Ok((CANVAS_RECTANGLE_V1_TYPE, postcard::to_allocvec(rect)?)),
             CanvasShape::Ellipse(ellipse)   => Ok((CANVAS_ELLIPSE_V1_TYPE, postcard::to_allocvec(ellipse)?)),
             CanvasShape::Polygon(polygon)   => Ok((CANVAS_POLYGON_V1_TYPE, postcard::to_allocvec(polygon)?)),
+        }
+    }
+
+    ///
+    /// Decodes a canvas shape from (shape_data_type, shape_data) stored in the database
+    ///
+    pub (super) fn decode_shape(shape_data_type: i64, shape_data: &[u8]) -> Result<CanvasShape, CanvasError> {
+        match shape_data_type {
+            CANVAS_PATH_V1_TYPE      => Ok(CanvasShape::Path(postcard::from_bytes(shape_data).map_err(|e| CanvasError::SerializationError(e.to_string()))?)),
+            CANVAS_GROUP_V1_TYPE     => Ok(CanvasShape::Group),
+            CANVAS_RECTANGLE_V1_TYPE => Ok(CanvasShape::Rectangle(postcard::from_bytes(shape_data).map_err(|e| CanvasError::SerializationError(e.to_string()))?)),
+            CANVAS_ELLIPSE_V1_TYPE   => Ok(CanvasShape::Ellipse(postcard::from_bytes(shape_data).map_err(|e| CanvasError::SerializationError(e.to_string()))?)),
+            CANVAS_POLYGON_V1_TYPE   => Ok(CanvasShape::Polygon(postcard::from_bytes(shape_data).map_err(|e| CanvasError::SerializationError(e.to_string()))?)),
+            _                        => Err(CanvasError::UnexpectedStorageError(format!("Unknown shape data type: {}", shape_data_type))),
         }
     }
 
