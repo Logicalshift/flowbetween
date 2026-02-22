@@ -20,6 +20,9 @@ pub struct ShapeWithProperties {
     /// The type of this shape
     pub shape_type: ShapeType,
 
+    /// The time when the shape first appears on the canvas
+    pub shape_time: FrameTime,
+
     /// The properties for the shape
     pub properties: Arc<Vec<(CanvasPropertyId, CanvasProperty)>>,
 

@@ -54,7 +54,7 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
                 parent_stack.pop();
             }
 
-            VectorResponse::Shape(_shape_id, shape, frame_time, shape_type, properties) => {
+            VectorResponse::Shape(_shape_id, shape, shape_time, shape_type, properties) => {
                 // Create a node for this shape
                 let node_idx    = render.len();
                 let parent_idx  = parent_stack.last().copied();
@@ -63,7 +63,7 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
 
                 // Everything starts out at height 0
                 render.push(RenderItem {
-                    shape:          Arc::new(ShapeWithProperties { shape, shape_type, properties, group }),
+                    shape:          Arc::new(ShapeWithProperties { shape, shape_type, shape_time, properties, group }),
                     child_nodes:    vec![],
                     drawing:        None,
                     height:         0,

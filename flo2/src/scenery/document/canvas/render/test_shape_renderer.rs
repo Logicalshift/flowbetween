@@ -51,6 +51,7 @@ fn render_shapes_dispatches_to_correct_renderer_and_preserves_order() {
         let make_shape = |shape_type: ShapeType| Arc::new(ShapeWithProperties {
             shape:      CanvasShape::Group,
             shape_type: shape_type,
+            shape_time: FrameTime::ZERO,
             properties: Arc::new(vec![]),
             group:      vec![],
         });
