@@ -10,3 +10,6 @@ pub use standard_shape_type_renderer::*;
 
 #[cfg(test)]
 mod test_shape_renderer;
+
+#[cfg(test)]
+mod test_layer_renderer;
