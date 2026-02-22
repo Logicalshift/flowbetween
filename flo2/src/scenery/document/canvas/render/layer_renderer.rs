@@ -93,7 +93,7 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
 
     // Bin into render passes. By rendering down from the leaves, we ensure that the drawing instructions needed to render each group are available just in time
     // By processing the whole 'level' in the render tree all in one go, we minimize the number of calls to `render_shapes`
-    let mut render_passes = vec![vec![]; max_height];
+    let mut render_passes = vec![vec![]; max_height+1];
     for (idx, item) in render.iter().enumerate() {
         render_passes[item.height].push(idx);
     }
