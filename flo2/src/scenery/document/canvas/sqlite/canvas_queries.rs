@@ -237,6 +237,16 @@ impl SqliteCanvas {
         let latest_time_nanos   = when.as_nanos();
         let earliest_time_nanos = self.layer_frame_time(layer, when)?.as_nanos();
 
+        // Column indices for the shapes query result set
+        const COL_PROPERTY_ID:      usize = 3;
+        const COL_SHAPE_IDX:        usize = 7;
+        const COL_SHAPE_GUID:       usize = 8;
+        const COL_GROUP_IDX:        usize = 9;
+        const COL_SHAPE_TYPE:       usize = 10;
+        const COL_SHAPE_DATA_TYPE:  usize = 11;
+        const COL_SHAPE_DATA:       usize = 12;
+        const COL_FRAME_TIME:       usize = 13;
+
         // Query to fetch the properties for each shape, including brush properties from attached brushes
         let shapes_query =
             "
@@ -291,8 +301,8 @@ impl SqliteCanvas {
 
         while let Ok(Some(shape_row)) = shapes_rows.next() {
             // Update the shape that we're reading
-            let shape_idx = shape_row.get::<_, i64>(7)?;
-            let group_idx = shape_row.get::<_, Option<i64>>(9)?;
+            let shape_idx = shape_row.get::<_, i64>(COL_SHAPE_IDX)?;
+            let group_idx = shape_row.get::<_, Option<i64>>(COL_GROUP_IDX)?;
             if Some(shape_idx) != cur_shape_idx {
                 // Finished receiving properties for the current shape, so move on to the next
                 if let (Some(old_shape_id), Some(old_shape_idx), Some(old_shape_type), Some(old_data_type), Some(old_data), Some(old_time)) = (cur_shape_id, cur_shape_idx, cur_shape_type, cur_shape_data_type, cur_shape_data, cur_shape_time) {
@@ -303,18 +313,18 @@ impl SqliteCanvas {
 
                 // Update to track the shape indicated by the current row
                 cur_shape_idx       = Some(shape_idx);
-                cur_shape_id        = Some(CanvasShapeId::from_string(&shape_row.get::<_, String>(8)?));
-                cur_shape_type      = Some(shape_row.get::<_, i64>(10)?);
-                cur_shape_data_type = Some(shape_row.get::<_, i64>(11)?);
-                cur_shape_data      = Some(shape_row.get::<_, Vec<u8>>(12)?);
-                cur_shape_time      = Some(shape_row.get::<_, i64>(13)?);
+                cur_shape_id        = Some(CanvasShapeId::from_string(&shape_row.get::<_, String>(COL_SHAPE_GUID)?));
+                cur_shape_type      = Some(shape_row.get::<_, i64>(COL_SHAPE_TYPE)?);
+                cur_shape_data_type = Some(shape_row.get::<_, i64>(COL_SHAPE_DATA_TYPE)?);
+                cur_shape_data      = Some(shape_row.get::<_, Vec<u8>>(COL_SHAPE_DATA)?);
+                cur_shape_time      = Some(shape_row.get::<_, i64>(COL_FRAME_TIME)?);
                 cur_property_idx    = None;
                 cur_group           = group_idx;
             }
 
             // Read the next property
             if let Some(property_value) = Self::decode_property(&shape_row) {
-                let property_idx = shape_row.get::<_, i64>(3)?;
+                let property_idx = shape_row.get::<_, i64>(COL_PROPERTY_ID)?;
 
                 if Some(property_idx) != cur_property_idx {
                     // Only write the first property if the property is defined in more than one place
