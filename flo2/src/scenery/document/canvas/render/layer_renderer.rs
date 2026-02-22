@@ -33,7 +33,7 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
                 parent_stack.pop();
             }
 
-            VectorResponse::Shape(shape_id, shape, shape_type, properties) => {
+            VectorResponse::Shape(_shape_id, shape, shape_type, properties) => {
                 // Create a node for this shape
                 let parent_idx  = parent_stack.last().copied();
                 let properties  = Arc::new(properties);
@@ -57,6 +57,17 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
             // Ignore everything else
             _ => {}
         }
+    }
+
+    enum RenderOp {
+        /// Render the shape at the specified index, storing in the render queue
+        RenderShape(usize),
+
+        /// Pop a result from the front of the render queue and push to the list of final rendering instructions
+        PushResult,
+
+        /// Pop a result from the front of the render queue and push it to the list of child nodes for the specified item
+        AddChild(usize),
     }
 
     // TODO: rendering needs to render as many shapes at once as it can (for perf reasons), but needs multiple passes for groups
