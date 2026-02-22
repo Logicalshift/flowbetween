@@ -1,6 +1,7 @@
 use super::canvas::*;
 use super::super::brush::*;
 use super::super::error::*;
+use super::super::frame_time::*;
 use super::super::layer::*;
 use super::super::property::*;
 use super::super::queries::*;
@@ -13,7 +14,6 @@ use futures::prelude::*;
 use rusqlite::*;
 
 use std::result::{Result};
-use std::time::{Duration};
 
 impl SqliteCanvas {
     ///
@@ -232,9 +232,9 @@ impl SqliteCanvas {
     ///
     /// Queries the shapes and their properties on a particular layer
     ///
-    pub fn query_shapes_on_layer(&mut self, layer: CanvasLayerId, shape_response: &mut Vec<VectorResponse>, when: Duration) -> Result<(), CanvasError> {
-        let latest_time_nanos   = when.as_nanos() as i64;
-        let earliest_time_nanos = self.layer_frame_time(layer, when)?.as_nanos() as i64;
+    pub fn query_shapes_on_layer(&mut self, layer: CanvasLayerId, shape_response: &mut Vec<VectorResponse>, when: FrameTime) -> Result<(), CanvasError> {
+        let latest_time_nanos   = when.as_nanos();
+        let earliest_time_nanos = self.layer_frame_time(layer, when)?.as_nanos();
 
         // Query to fetch the properties for each shape, including brush properties from attached brushes
         let shapes_query =
@@ -385,7 +385,7 @@ impl SqliteCanvas {
     ///
     /// Queries a list of layers, retrieving their properties and any shapes that are on them
     ///
-    pub fn query_layers_with_shapes(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>, when: Duration) -> Result<(), CanvasError> {
+    pub fn query_layers_with_shapes(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>, when: FrameTime) -> Result<(), CanvasError> {
         // Query the layers
         let mut layers = vec![];
         self.query_layers(query_layers, &mut layers)?;
@@ -430,7 +430,7 @@ impl SqliteCanvas {
     ///
     /// Queries the whole of the document
     ///
-    pub fn query_document_whole(&mut self, outline: &mut Vec<VectorResponse>, when: Duration) -> Result<(), CanvasError> {
+    pub fn query_document_whole(&mut self, outline: &mut Vec<VectorResponse>, when: FrameTime) -> Result<(), CanvasError> {
         // Add the document properties to start
         self.query_document(outline)?;
 

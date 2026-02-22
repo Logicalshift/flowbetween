@@ -1,4 +1,5 @@
 use super::brush::*;
+use super::frame_time::*;
 use super::layer::*;
 use super::property::*;
 use super::shape::*;
@@ -33,10 +34,10 @@ pub enum VectorCanvas {
     RemoveLayer(CanvasLayerId),
 
     /// Adds a new frame at the specified time. Any shapes on this layer displayed before the 'when' time will be removed from display at this point
-    AddFrame { frame_layer: CanvasLayerId, when: Duration, length: Duration },
+    AddFrame { frame_layer: CanvasLayerId, when: FrameTime, length: Duration },
 
     /// Removes an existing frame from the layer. Any shapes that appear after the removed frame starts and before the next frame starts will also be removed from the canvas.
-    RemoveFrame { frame_layer: CanvasLayerId, when: Duration },
+    RemoveFrame { frame_layer: CanvasLayerId, when: FrameTime },
 
     /// Moves the specified layer before another layer (None to move it to the top)
     ReorderLayer { layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>, },
@@ -51,7 +52,7 @@ pub enum VectorCanvas {
     SetShapeDefinition(CanvasShapeId, CanvasShape),
 
     /// Sets the time when a shape should appear on its layer
-    SetShapeTime(CanvasShapeId, Duration),
+    SetShapeTime(CanvasShapeId, FrameTime),
 
     /// Adds a brush to this canvas
     AddBrush(CanvasBrushId),

@@ -1,5 +1,6 @@
 use super::canvas::*;
 use super::super::error::*;
+use super::super::frame_time::*;
 use super::super::layer::*;
 use super::super::property::*;
 
@@ -27,13 +28,13 @@ impl SqliteCanvas {
     /// Returns the time where the frame starts
     ///
     #[inline]
-    pub (super) fn layer_frame_time(&mut self, layer_id: CanvasLayerId, when: Duration) -> Result<Duration, CanvasError> {
+    pub (super) fn layer_frame_time(&mut self, layer_id: CanvasLayerId, when: FrameTime) -> Result<FrameTime, CanvasError> {
         let layer_idx = self.index_for_layer(layer_id)?;
 
         let mut most_recent_time = self.sqlite.prepare_cached("SELECT MAX(Time) FROM LayerFrames WHERE LayerId = ? AND Time <= ?")?;
-        let mut most_recent_time = most_recent_time.query_map(params![layer_idx, when.as_nanos() as i64], |row| row.get::<_, Option<i64>>(0))?;
+        let mut most_recent_time = most_recent_time.query_map(params![layer_idx, when.as_nanos()], |row| row.get::<_, Option<i64>>(0))?;
         let most_recent_time     = most_recent_time.next().unwrap_or(Ok(None))?;
-        let most_recent_time     = Duration::from_nanos(most_recent_time.unwrap_or(0) as u64);
+        let most_recent_time     = FrameTime::from_nanos(most_recent_time.unwrap_or(0) as u64);
 
         Ok(most_recent_time)
     }
@@ -160,9 +161,9 @@ impl SqliteCanvas {
     ///
     /// Adds a frame to a layer at the specified time with the specified length
     ///
-    pub fn add_frame(&mut self, frame_layer: CanvasLayerId, when: Duration, _length: Duration) -> Result<(), CanvasError> {
+    pub fn add_frame(&mut self, frame_layer: CanvasLayerId, when: FrameTime, _length: Duration) -> Result<(), CanvasError> {
         let layer_idx   = self.index_for_layer(frame_layer)?;
-        let when_nanos  = when.as_nanos() as i64;
+        let when_nanos  = when.as_nanos();
 
         self.sqlite.execute("INSERT INTO LayerFrames (LayerId, Time) VALUES (?, ?)", params![layer_idx, when_nanos])?;
 
@@ -172,11 +173,11 @@ impl SqliteCanvas {
     ///
     /// Removes a frame from a layer at the specified time
     ///
-    pub fn remove_frame(&mut self, frame_layer: CanvasLayerId, when: Duration) -> Result<(), CanvasError> {
+    pub fn remove_frame(&mut self, frame_layer: CanvasLayerId, when: FrameTime) -> Result<(), CanvasError> {
         // TODO: also remove the shapes that exist in this timeframe
 
         let layer_idx   = self.index_for_layer(frame_layer)?;
-        let when_nanos  = when.as_nanos() as i64;
+        let when_nanos  = when.as_nanos();
 
         self.sqlite.execute("DELETE FROM LayerFrames WHERE LayerId = ? AND Time = ?", params![layer_idx, when_nanos])?;
 

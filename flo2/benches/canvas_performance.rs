@@ -1,6 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use flow_between::scenery::document::canvas::*;
-use std::time::{Duration};
 
 fn test_shape_type() -> ShapeType {
     ShapeType::new("flowbetween::benchmark::rectangle")
@@ -48,7 +47,7 @@ fn create_populated_canvas(num_layers: usize, shapes_per_layer: usize) -> Sqlite
                 .add_shape(shape_id, test_shape_type(), shape)
                 .unwrap();
             canvas
-                .set_shape_parent(shape_id, CanvasShapeParent::Layer(*layer_id, Duration::from_nanos(0)))
+                .set_shape_parent(shape_id, CanvasShapeParent::Layer(*layer_id, FrameTime::ZERO))
                 .unwrap();
             canvas
                 .set_shape_properties(shape_id, create_test_properties(i))
@@ -82,7 +81,7 @@ fn bench_query_shapes_scaling(c: &mut Criterion) {
                 .add_shape(shape_id, test_shape_type(), shape)
                 .unwrap();
             canvas
-                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id, Duration::from_nanos(0)))
+                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id, FrameTime::ZERO))
                 .unwrap();
             canvas
                 .set_shape_properties(shape_id, create_test_properties(i))
@@ -96,7 +95,7 @@ fn bench_query_shapes_scaling(c: &mut Criterion) {
                 b.iter(|| {
                     let mut response = vec![];
                     canvas
-                        .query_shapes_on_layer(black_box(layer_id), &mut response, Duration::ZERO)
+                        .query_shapes_on_layer(black_box(layer_id), &mut response, FrameTime::ZERO)
                         .unwrap();
                     black_box(response);
                 });
@@ -140,7 +139,7 @@ fn bench_query_shapes_large_database(c: &mut Criterion) {
         b.iter(|| {
             let mut response = vec![];
             canvas
-                .query_shapes_on_layer(black_box(first_layer), &mut response, Duration::ZERO)
+                .query_shapes_on_layer(black_box(first_layer), &mut response, FrameTime::ZERO)
                 .unwrap();
             black_box(response);
         });
@@ -152,7 +151,7 @@ fn bench_query_shapes_large_database(c: &mut Criterion) {
         b.iter(|| {
             let mut response = vec![];
             canvas
-                .query_shapes_on_layer(black_box(middle_layer), &mut response, Duration::ZERO)
+                .query_shapes_on_layer(black_box(middle_layer), &mut response, FrameTime::ZERO)
                 .unwrap();
             black_box(response);
         });
@@ -164,7 +163,7 @@ fn bench_query_shapes_large_database(c: &mut Criterion) {
         b.iter(|| {
             let mut response = vec![];
             canvas
-                .query_shapes_on_layer(black_box(last_layer), &mut response, Duration::ZERO)
+                .query_shapes_on_layer(black_box(last_layer), &mut response, FrameTime::ZERO)
                 .unwrap();
             black_box(response);
         });
@@ -206,7 +205,7 @@ fn bench_performance_per_shape(c: &mut Criterion) {
                 b.iter(|| {
                     let mut response = vec![];
                     canvas
-                        .query_shapes_on_layer(black_box(layer_id), &mut response, Duration::ZERO)
+                        .query_shapes_on_layer(black_box(layer_id), &mut response, FrameTime::ZERO)
                         .unwrap();
                     black_box(response);
                 });
@@ -251,7 +250,7 @@ fn bench_add_shapes_scaling(c: &mut Criterion) {
                                 .add_shape(shape_id, test_shape_type(), shape)
                                 .unwrap();
                             canvas
-                                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id, Duration::from_nanos(0)))
+                                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id, FrameTime::ZERO))
                                 .unwrap();
                             canvas
                                 .set_shape_properties(shape_id, create_test_properties(i))
@@ -274,7 +273,7 @@ fn bench_add_shapes_scaling(c: &mut Criterion) {
                             canvas
                                 .set_shape_parent(
                                     black_box(shape_id),
-                                    CanvasShapeParent::Layer(layer_id, Duration::from_nanos(0)),
+                                    CanvasShapeParent::Layer(layer_id, FrameTime::ZERO),
                                 )
                                 .unwrap();
                             canvas
@@ -325,7 +324,7 @@ fn bench_add_single_shape_scaling(c: &mut Criterion) {
                                 .add_shape(shape_id, test_shape_type(), shape)
                                 .unwrap();
                             canvas
-                                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id, Duration::from_nanos(0)))
+                                .set_shape_parent(shape_id, CanvasShapeParent::Layer(layer_id, FrameTime::ZERO))
                                 .unwrap();
                             canvas
                                 .set_shape_properties(shape_id, create_test_properties(i))
@@ -347,7 +346,7 @@ fn bench_add_single_shape_scaling(c: &mut Criterion) {
                         canvas
                             .set_shape_parent(
                                 black_box(shape_id),
-                                CanvasShapeParent::Layer(layer_id, Duration::from_nanos(0)),
+                                CanvasShapeParent::Layer(layer_id, FrameTime::ZERO),
                             )
                             .unwrap();
                         canvas
@@ -381,7 +380,7 @@ fn bench_query_shapes_per_frame(c: &mut Criterion) {
 
         // Add shapes to each frame
         for frame in 0..num_frames {
-            let frame_time = Duration::from_millis(frame as u64 * 100);
+            let frame_time = FrameTime::from_nanos(frame as u64 * 100_000_000);
 
             for i in 0..shapes_per_frame {
                 let shape_id = CanvasShapeId::new();
@@ -402,8 +401,8 @@ fn bench_query_shapes_per_frame(c: &mut Criterion) {
         }
 
         // Collect all frame times for benchmarking
-        let frame_times: Vec<Duration> = (0..num_frames)
-            .map(|frame| Duration::from_millis(frame as u64 * 100))
+        let frame_times: Vec<FrameTime> = (0..num_frames)
+            .map(|frame| FrameTime::from_nanos(frame as u64 * 100_000_000))
             .collect();
 
         group.bench_with_input(

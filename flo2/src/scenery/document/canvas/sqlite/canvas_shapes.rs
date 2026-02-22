@@ -1,6 +1,7 @@
 use super::canvas::*;
 use super::super::brush::*;
 use super::super::error::*;
+use super::super::frame_time::*;
 use super::super::property::*;
 use super::super::shape::*;
 use super::super::shape_type::*;
@@ -8,7 +9,6 @@ use super::super::shape_type::*;
 use rusqlite::*;
 
 use std::result::{Result};
-use std::time::{Duration};
 
 impl SqliteCanvas {
     ///
@@ -312,9 +312,9 @@ impl SqliteCanvas {
     ///
     /// Sets the time when a shape should appear on its layer
     ///
-    pub fn set_shape_time(&mut self, shape_id: CanvasShapeId, when: Duration) -> Result<(), CanvasError> {
+    pub fn set_shape_time(&mut self, shape_id: CanvasShapeId, when: FrameTime) -> Result<(), CanvasError> {
         let shape_idx   = self.index_for_shape(shape_id)?;
-        let when_nanos  = when.as_nanos() as i64;
+        let when_nanos  = when.as_nanos();
 
         self.sqlite.execute("UPDATE ShapeLayers SET Time = ? WHERE ShapeId = ?", params![when_nanos, shape_idx])?;
 
@@ -413,7 +413,7 @@ impl SqliteCanvas {
                 // Specified in the request
                 new_layer_idx           = Some(self.index_for_layer(*layer_id)?);
                 new_parent_shape_idx    = None;
-                when_nanos              = when.as_nanos() as i64;
+                when_nanos              = when.as_nanos();
             }
 
             CanvasShapeParent::Shape(parent_shape_id) => {

@@ -11,7 +11,6 @@ use futures::prelude::*;
 use ::serde::*;
 
 use std::collections::{HashSet};
-use std::time::{Duration};
 
 ///
 /// Messages for the sqlite canvas program

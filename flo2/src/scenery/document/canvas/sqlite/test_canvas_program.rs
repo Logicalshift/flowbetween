@@ -222,23 +222,23 @@ fn query_layer() {
         canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Brush(brush_1), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(44)), (CanvasPropertyId::new("brush1"), CanvasProperty::Int(45)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(46))])).await.unwrap();
         canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Brush(brush_2), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(47)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))])).await.unwrap();
 
-        canvas.send(VectorCanvas::SetShapeParent(shape_1, CanvasShapeParent::Layer(layer_1, Duration::from_nanos(0)))).await.ok();
-        canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Layer(layer_1, Duration::from_nanos(0)))).await.ok();
-        canvas.send(VectorCanvas::SetShapeParent(shape_3, CanvasShapeParent::Layer(layer_2, Duration::from_nanos(0)))).await.ok();
-        canvas.send(VectorCanvas::SetShapeParent(shape_4, CanvasShapeParent::Layer(layer_2, Duration::from_nanos(0)))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(shape_1, CanvasShapeParent::Layer(layer_1, FrameTime::ZERO))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Layer(layer_1, FrameTime::ZERO))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(shape_3, CanvasShapeParent::Layer(layer_2, FrameTime::ZERO))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(shape_4, CanvasShapeParent::Layer(layer_2, FrameTime::ZERO))).await.ok();
 
         // Query the layers in a few ways (we start with the simpler second layer)
-        let second_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_2], Duration::ZERO), ()).unwrap();
+        let second_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_2], FrameTime::ZERO), ()).unwrap();
         let second_layer = second_layer.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(second_layer)).await.unwrap();
 
-        let first_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1], Duration::ZERO), ()).unwrap();
+        let first_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1], FrameTime::ZERO), ()).unwrap();
         let first_layer = first_layer.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(first_layer)).await.unwrap();
 
-        let all_layers = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1, layer_2], Duration::ZERO), ()).unwrap();
+        let all_layers = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1, layer_2], FrameTime::ZERO), ()).unwrap();
         let all_layers = all_layers.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(all_layers)).await.unwrap();
@@ -315,7 +315,7 @@ fn query_layer_with_groups() {
         canvas.send(VectorCanvas::AddShape(after_group, ShapeType::new("shape"), test_rect())).await.unwrap();
 
         // Parent the group shape to the layer
-        canvas.send(VectorCanvas::SetShapeParent(group_shape, CanvasShapeParent::Layer(layer, Duration::from_nanos(0)))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(group_shape, CanvasShapeParent::Layer(layer, FrameTime::ZERO))).await.ok();
 
         // Parent children to the group shape
         canvas.send(VectorCanvas::SetShapeParent(child_1, CanvasShapeParent::Shape(group_shape))).await.ok();
@@ -329,10 +329,10 @@ fn query_layer_with_groups() {
         canvas.send(VectorCanvas::SetShapeParent(nested2_child_2, CanvasShapeParent::Shape(nested_child_2))).await.ok();
 
         // Parent the trailing shape to the layer
-        canvas.send(VectorCanvas::SetShapeParent(after_group, CanvasShapeParent::Layer(layer, Duration::from_nanos(0)))).await.ok();
+        canvas.send(VectorCanvas::SetShapeParent(after_group, CanvasShapeParent::Layer(layer, FrameTime::ZERO))).await.ok();
 
         // Query the layer
-        let layer_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer], Duration::ZERO), ()).unwrap();
+        let layer_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer], FrameTime::ZERO), ()).unwrap();
         let layer_result = layer_result.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(layer_result)).await.unwrap();
@@ -404,7 +404,7 @@ fn subscribe_to_canvas_updates() {
         context.wait_for_idle(100).await;
 
         // SetShapeParent to layer → LayerChanged + ShapeChanged
-        canvas.send(VectorCanvas::SetShapeParent(shape_1, CanvasShapeParent::Layer(layer_1, Duration::from_nanos(0)))).await.unwrap();
+        canvas.send(VectorCanvas::SetShapeParent(shape_1, CanvasShapeParent::Layer(layer_1, FrameTime::ZERO))).await.unwrap();
         context.wait_for_idle(100).await;
 
         // SetShapeDefinition → ShapeChanged
@@ -450,7 +450,7 @@ fn subscribe_to_canvas_updates() {
         // Set up shape_2 on layer_1 for ReorderShape
         canvas.send(VectorCanvas::AddShape(shape_2, test_shape_type(), test_rect())).await.unwrap();
         context.wait_for_idle(100).await;
-        canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Layer(layer_1, Duration::from_nanos(0)))).await.unwrap();
+        canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Layer(layer_1, FrameTime::ZERO))).await.unwrap();
         context.wait_for_idle(100).await;
 
         // ReorderShape → ShapeChanged
@@ -546,8 +546,8 @@ fn query_layer_frames_returns_shapes_for_correct_frame() {
     let shape_1         = CanvasShapeId::new();
     let shape_2         = CanvasShapeId::new();
 
-    let frame_1_time    = Duration::from_millis(0);
-    let frame_2_time    = Duration::from_millis(1000);
+    let frame_1_time = FrameTime::ZERO;
+    let frame_2_time = FrameTime::from_nanos(1_000_000_000);
 
     // Program that creates a layer with two frames, adds a shape to each, then queries each frame
     scene.add_subprogram(query_program, move |_input: InputStream<()>, context| async move {

@@ -1,3 +1,4 @@
+use super::super::frame_time::*;
 use super::super::layer::*;
 use super::ellipse::*;
 use super::path::*;
@@ -9,7 +10,6 @@ use ::serde::*;
 use uuid::*;
 
 use std::str::*;
-use std::time::{Duration};
 use std::fmt;
 
 ///
@@ -48,7 +48,7 @@ pub enum CanvasShapeParent {
     None,
 
     /// Shape is part of a layer, appearing at the specified time
-    Layer(CanvasLayerId, Duration),
+    Layer(CanvasLayerId, FrameTime),
 
     /// Shape is grouped with another shape
     Shape(CanvasShapeId),

@@ -1,4 +1,5 @@
 use super::brush::*;
+use super::frame_time::*;
 use super::layer::*;
 use super::property::*;
 use super::shape::*;
@@ -7,7 +8,6 @@ use super::shape_type::*;
 use flo_scene::*;
 use flo_scene::programs::*;
 use serde::*;
-use std::time::{Duration};
 
 ///
 /// Queries that can be made on a vector document
@@ -15,13 +15,13 @@ use std::time::{Duration};
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum VectorQuery {
     /// Queries all of the entities in the document for a frame at the specified time, sending a response as a `QueryResponse<VectorResponse>`
-    WholeDocument(StreamTarget, Duration),
+    WholeDocument(StreamTarget, FrameTime),
 
     /// Queries the document and layer properties without returning any shape data
     DocumentOutline(StreamTarget),
 
     /// Queries the entities associated with the specified layers for a frame at the specified time
-    Layers(StreamTarget, Vec<CanvasLayerId>, Duration),
+    Layers(StreamTarget, Vec<CanvasLayerId>, FrameTime),
 
     /// Queries specific shapes
     Shapes(StreamTarget, Vec<CanvasShapeId>),
@@ -48,7 +48,7 @@ pub enum VectorResponse {
     Layer(CanvasLayerId, Vec<(CanvasPropertyId, CanvasProperty)>),
 
     /// A frame starts at the specified point in time (on the layer that was previously indicated with `Layer`)
-    Frame(Duration),
+    Frame(FrameTime),
 
     /// Indicates the definition of a shape. These are returned in bottom-to-top order. Properties come from the
     /// shape itself, along with any attached brushes

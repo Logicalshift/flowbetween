@@ -11,6 +11,28 @@ pub struct FrameTime(i64);
 
 impl FrameTime {
     ///
+    /// The earliest frame in the animation
+    ///
+    pub const ZERO: FrameTime = FrameTime(0);
+
+    ///
+    /// Create a FrameTime at a specific time in nanoseconds
+    ///
+    #[inline]
+    pub fn from_nanos(nanoseconds: u64) -> Self {
+        Self(nanoseconds as _)
+    }
+
+    ///
+    /// Create a FrameTime at a time in seconds
+    ///
+    #[inline]
+    pub fn from_seconds(seconds: f64) -> Self {
+        let seconds = seconds.min(0.0);
+        Self((seconds * 1_000_000_000.0) as _)
+    }
+
+    ///
     /// Returns the time in nanoseconds since the start of the animation for this frame
     ///
     #[inline]
