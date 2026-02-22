@@ -69,9 +69,9 @@ fn render_layer_flat_shapes() {
     // Call render_layer with a flat list of shapes (no groups) and check the total draw count
     scene.add_subprogram(query_program, move |_input: InputStream<()>, context| async move {
         let layer = vec![
-            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, shape_type_1, vec![]),   // 1 draw
-            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, shape_type_2, vec![]),   // 3 draws
-            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, shape_type_1, vec![]),   // 1 draw
+            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, FrameTime::ZERO, shape_type_1, vec![]),   // 1 draw
+            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, FrameTime::ZERO, shape_type_2, vec![]),   // 3 draws
+            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, FrameTime::ZERO, shape_type_1, vec![]),   // 1 draw
         ];
 
         let result = render_layer(layer, FrameTime::ZERO, &context).await;
@@ -127,14 +127,14 @@ fn render_layer_nested_groups_passes_child_drawings_to_group_renderer() {
     // Build a layer with one group containing two child shapes
     scene.add_subprogram(query_program, move |_input: InputStream<()>, context| async move {
         let layer = vec![
-            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, group_type, vec![]),
+            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, FrameTime::ZERO, group_type, vec![]),
             VectorResponse::StartGroup,
-            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, group_type, vec![]),
+            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, FrameTime::ZERO, group_type, vec![]),
             VectorResponse::StartGroup,
-            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, child_type, vec![]),
-            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, child_type, vec![]),
+            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, FrameTime::ZERO, child_type, vec![]),
+            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, FrameTime::ZERO, child_type, vec![]),
             VectorResponse::EndGroup,
-            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, child_type, vec![]),
+            VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, FrameTime::ZERO, child_type, vec![]),
             VectorResponse::EndGroup,
         ];
 
