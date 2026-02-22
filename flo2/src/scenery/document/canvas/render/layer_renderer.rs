@@ -18,14 +18,8 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
         /// Child nodes for the shape if it's a group (must be rendered before this shape can be rendered)
         child_nodes:    Vec<usize>,
 
-        /// Parent node for this shape
-        parent_node:    Option<usize>,
-
         /// The rendering for this shape, once it's complete
-        render:         Option<Arc<Vec<Draw>>>,
-
-        /// Depth of this shape in the tree (distance from the bottom of the tree)
-        depth:          usize,
+        drawing:        Option<Arc<Vec<Draw>>>,
 
         /// Height of this shape in the tree (distance from the top of the tree)
         height:         usize,
@@ -70,9 +64,7 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
                 render.push(RenderItem {
                     shape:          Arc::new(ShapeWithProperties { shape, shape_type, properties, group }),
                     child_nodes:    vec![],
-                    parent_node:    parent_idx,
-                    render:         None,
-                    depth:          parent_stack.len(),
+                    drawing:        None,
                     height:         0,
                 });
 
@@ -109,7 +101,7 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
 
             // Gather the children for this shape
             let children = render[render_idx].child_nodes.iter()
-                .map(|child_idx| (render[*child_idx].shape.clone(), render[*child_idx].render.clone().unwrap()))
+                .map(|child_idx| (render[*child_idx].shape.clone(), render[*child_idx].drawing.clone().unwrap()))
                 .collect::<Vec<_>>();
 
             // Modify the shape to contain the items in its group
@@ -129,7 +121,7 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
 
         // Put the drawings back into the render items
         for (idx, drawing) in render_pass_idxs.into_iter().zip(drawings) {
-            render[idx].render = Some(drawing);
+            render[idx].drawing = Some(drawing);
         }
     }
 
@@ -137,7 +129,7 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
     let mut drawing = vec![];
 
     for node_idx in root_nodes {
-        drawing.extend(render[node_idx].render.as_ref().unwrap().iter().cloned());
+        drawing.extend(render[node_idx].drawing.as_ref().unwrap().iter().cloned());
     }
 
     drawing
