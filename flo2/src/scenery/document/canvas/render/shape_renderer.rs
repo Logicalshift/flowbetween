@@ -1,4 +1,5 @@
 use super::shape_type_renderer::*;
+use super::super::frame_time::*;
 
 use flo_draw::canvas::*;
 use flo_scene::*;
@@ -15,7 +16,7 @@ use std::sync::*;
 ///
 /// The returned list is in the same order as the original iterator, and will always have the same number of entries.
 ///
-pub async fn render_shapes(shapes: impl Iterator<Item=Arc<ShapeWithProperties>>, context: &SceneContext) -> Vec<Arc<Vec<Draw>>> {
+pub async fn render_shapes(shapes: impl Iterator<Item=Arc<ShapeWithProperties>>, frame_time: FrameTime, context: &SceneContext) -> Vec<Arc<Vec<Draw>>> {
     // Sort the shapes into bins by target program ID, and also remember the order that we need to read values from the bins (so we make one request per program regardless of the ordering of the shapes)
     let mut shape_bins = HashMap::new();
     let mut read_order = vec![];
@@ -34,7 +35,7 @@ pub async fn render_shapes(shapes: impl Iterator<Item=Arc<ShapeWithProperties>>,
     let mut requests = shape_bins.into_iter()
         .map(|(shape_type, shapes)| async move {
             let num_shapes      = shapes.len();
-            let query_rendering = context.spawn_query(ReadCommand::default(), RenderShapesRequest::RenderRequest(shapes, ().into()), shape_type.render_program_id());
+            let query_rendering = context.spawn_query(ReadCommand::default(), RenderShapesRequest::RenderRequest(shapes, frame_time, ().into()), shape_type.render_program_id());
 
             if let Ok(query_rendering) = query_rendering {
                 (shape_type, query_rendering.collect::<Vec<_>>().await)

@@ -1,5 +1,6 @@
 use super::shape_renderer::*;
 use super::shape_type_renderer::*;
+use super::super::frame_time::*;
 use super::super::queries::*;
 
 use flo_scene::*;
@@ -10,7 +11,7 @@ use std::sync::*;
 ///
 /// Renders the shapes on a layer when described as a set of vector responses
 ///
-pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, context: &SceneContext) -> Vec<Draw> {
+pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, frame_time: FrameTime, context: &SceneContext) -> Vec<Draw> {
     struct RenderItem {
         /// Shape to render
         shape:          Arc<ShapeWithProperties>,
@@ -117,7 +118,7 @@ pub async fn render_layer(layer: impl Send + IntoIterator<Item=VectorResponse>, 
         }
 
         // Render the shapes in this pass
-        let drawings = render_shapes(render_pass_idxs.iter().map(|idx| Arc::clone(&render[*idx].shape)), context).await;
+        let drawings = render_shapes(render_pass_idxs.iter().map(|idx| Arc::clone(&render[*idx].shape)), frame_time, context).await;
 
         // Put the drawings back into the render items
         for (idx, drawing) in render_pass_idxs.into_iter().zip(drawings) {

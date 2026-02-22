@@ -11,7 +11,7 @@ use flo_scene::*;
 /// This renders shapes using the properties defined in basic_properties. Groups are just rendered in a 'straight through' fashion
 ///
 pub async fn standard_shape_type_renderer_program(input: InputStream<RenderShapesRequest>, context: SceneContext) {
-    shape_renderer_program(input, context, |shape, drawing| {
+    shape_renderer_program(input, context, |shape, _frame_time, drawing| {
         // Generate the path
         drawing.new_path();
         shape.shape.to_path()

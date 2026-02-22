@@ -23,7 +23,7 @@ fn render_shapes_dispatches_to_correct_renderer_and_preserves_order() {
     scene.add_subprogram(
         shape_type_1.render_program_id(),
         |input: InputStream<RenderShapesRequest>, context| async move {
-            shape_renderer_program(input, context, |_shape, drawing| {
+            shape_renderer_program(input, context, |_shape, _time, drawing| {
                 drawing.new_path();
             }).await;
         },
@@ -34,7 +34,7 @@ fn render_shapes_dispatches_to_correct_renderer_and_preserves_order() {
     scene.add_subprogram(
         shape_type_2.render_program_id(),
         |input: InputStream<RenderShapesRequest>, context| async move {
-            shape_renderer_program(input, context, |_shape, drawing| {
+            shape_renderer_program(input, context, |_shape, _time, drawing| {
                 drawing.new_path();
                 drawing.new_path();
                 drawing.new_path();
@@ -63,7 +63,7 @@ fn render_shapes_dispatches_to_correct_renderer_and_preserves_order() {
             make_shape(shape_type_2),   // should produce 3 draw commands (renderer 2)
         ];
 
-        let result      = render_shapes(shapes.into_iter(), &context).await;
+        let result      = render_shapes(shapes.into_iter(), FrameTime::ZERO, &context).await;
         let draw_counts = result.iter().map(|d| d.len()).collect::<Vec<_>>();
 
         context.send_message(TestResponse(draw_counts)).await.unwrap();

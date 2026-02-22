@@ -1,3 +1,4 @@
+use super::super::frame_time::*;
 use super::super::property::*;
 use super::super::shape::*;
 use super::super::shape_type::*;
@@ -34,7 +35,7 @@ pub struct ShapeWithProperties {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum RenderShapesRequest {
     /// Queries the rendering instructions for each shape in the list. The query should return one response per shape
-    RenderRequest(Vec<Arc<ShapeWithProperties>>, StreamTarget),
+    RenderRequest(Vec<Arc<ShapeWithProperties>>, FrameTime, StreamTarget),
 }
 
 ///
@@ -54,7 +55,7 @@ impl QueryRequest for RenderShapesRequest {
 
     fn with_new_target(self, new_target: StreamTarget) -> Self {
         match self {
-            Self::RenderRequest(shapes, _old_target) => Self::RenderRequest(shapes, new_target)
+            Self::RenderRequest(shapes, frame_time, _old_target) => Self::RenderRequest(shapes, frame_time, new_target)
         }
     }
 }
@@ -65,13 +66,13 @@ impl SceneMessage for RenderShapesResponse {
 ///
 /// Runs a shape renderer program that uses the supplied function to generate the drawing instructions for a shape
 ///
-pub async fn shape_renderer_program(input: InputStream<RenderShapesRequest>, context: SceneContext, shape_renderer: impl 'static + Send + Sync + Fn(&ShapeWithProperties, &mut Vec<Draw>)) {
+pub async fn shape_renderer_program(input: InputStream<RenderShapesRequest>, context: SceneContext, shape_renderer: impl 'static + Send + Sync + Fn(&ShapeWithProperties, FrameTime, &mut Vec<Draw>)) {
     let mut input       = input;
     let shape_renderer  = Arc::new(shape_renderer);
 
     while let Some(request) = input.next().await {
         match request {
-            RenderShapesRequest::RenderRequest(shapes, response_target) => {
+            RenderShapesRequest::RenderRequest(shapes, frame_time, response_target) => {
                 // Send to the target (we'll just ignore errors by not doing any work)
                 let Ok(mut target) = context.send(response_target) else { continue; };
 
@@ -79,7 +80,7 @@ pub async fn shape_renderer_program(input: InputStream<RenderShapesRequest>, con
                 let shape_renderer = Arc::clone(&shape_renderer);
                 target.send(QueryResponse::with_iterator(shapes.into_iter().map(move |shape| {
                     let mut drawing = vec![];
-                    (shape_renderer)(&*shape, &mut drawing);
+                    (shape_renderer)(&*shape, frame_time, &mut drawing);
 
                     RenderShapesResponse::ShapeRendering(Arc::new(drawing))
                 }))).await.ok();

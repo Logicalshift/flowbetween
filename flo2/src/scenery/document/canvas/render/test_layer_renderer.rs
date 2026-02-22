@@ -18,7 +18,7 @@ fn render_layer_empty() {
     let query_program = SubProgramId::new();
 
     scene.add_subprogram(query_program, move |_input: InputStream<()>, context| async move {
-        let result = render_layer(vec![], &context).await;
+        let result = render_layer(vec![], FrameTime::ZERO, &context).await;
 
         context.send_message(NumDrawingInstructions(result.len())).await.unwrap();
     }, 1);
@@ -43,7 +43,7 @@ fn render_layer_flat_shapes() {
     scene.add_subprogram(
         shape_type_1.render_program_id(),
         |input: InputStream<RenderShapesRequest>, context| async move {
-            shape_renderer_program(input, context, |_shape, drawing| {
+            shape_renderer_program(input, context, |_shape, _time, drawing| {
                 drawing.new_path();
             }).await;
         },
@@ -54,7 +54,7 @@ fn render_layer_flat_shapes() {
     scene.add_subprogram(
         shape_type_2.render_program_id(),
         |input: InputStream<RenderShapesRequest>, context| async move {
-            shape_renderer_program(input, context, |_shape, drawing| {
+            shape_renderer_program(input, context, |_shape, _time, drawing| {
                 drawing.new_path();
                 drawing.new_path();
                 drawing.new_path();
@@ -74,7 +74,7 @@ fn render_layer_flat_shapes() {
             VectorResponse::Shape(CanvasShapeId::new(), CanvasShape::Group, shape_type_1, vec![]),   // 1 draw
         ];
 
-        let result = render_layer(layer, &context).await;
+        let result = render_layer(layer, FrameTime::ZERO, &context).await;
 
         context.send_message(NumDrawingInstructions(result.len())).await.unwrap();
     }, 1);
@@ -99,7 +99,7 @@ fn render_layer_nested_groups_passes_child_drawings_to_group_renderer() {
     scene.add_subprogram(
         child_type.render_program_id(),
         |input: InputStream<RenderShapesRequest>, context| async move {
-            shape_renderer_program(input, context, |_shape, drawing| {
+            shape_renderer_program(input, context, |_shape, _time, drawing| {
                 drawing.new_path();
                 drawing.new_path();
             }).await;
@@ -112,7 +112,7 @@ fn render_layer_nested_groups_passes_child_drawings_to_group_renderer() {
     scene.add_subprogram(
         group_type.render_program_id(),
         |input: InputStream<RenderShapesRequest>, context| async move {
-            shape_renderer_program(input, context, |shape, drawing| {
+            shape_renderer_program(input, context, |shape, _time, drawing| {
                 for (_child_shape, child_draws) in shape.group.iter() {
                     drawing.extend(child_draws.iter().cloned());
                 }
@@ -138,7 +138,7 @@ fn render_layer_nested_groups_passes_child_drawings_to_group_renderer() {
             VectorResponse::EndGroup,
         ];
 
-        let result = render_layer(layer, &context).await;
+        let result = render_layer(layer, FrameTime::ZERO, &context).await;
 
         context.send_message(NumDrawingInstructions(result.len())).await.unwrap();
     }, 1);
