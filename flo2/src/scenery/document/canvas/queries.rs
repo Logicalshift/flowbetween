@@ -52,7 +52,7 @@ pub enum VectorResponse {
 
     /// Indicates the definition of a shape. These are returned in bottom-to-top order. Properties come from the
     /// shape itself, along with any attached brushes
-    Shape(CanvasShapeId, CanvasShape, ShapeType, Vec<(CanvasPropertyId, CanvasProperty)>),
+    Shape(CanvasShapeId, CanvasShape, FrameTime, ShapeType, Vec<(CanvasPropertyId, CanvasProperty)>),
 
     /// The following shapes are parented to the previous shape
     StartGroup,
