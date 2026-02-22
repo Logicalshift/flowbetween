@@ -1,4 +1,5 @@
 use std::time::{Duration};
+use std::ops::*;
 
 use ::serde::*;
 
@@ -29,5 +30,14 @@ impl Into<Duration> for FrameTime {
     #[inline]
     fn into(self) -> Duration {
         Duration::from_nanos(self.0 as _)
+    }
+}
+
+impl Add for FrameTime {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0)
     }
 }
