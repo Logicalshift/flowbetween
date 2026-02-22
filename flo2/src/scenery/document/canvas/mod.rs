@@ -1,6 +1,7 @@
 mod basic_properties;
 mod name_property;
 mod brush;
+mod frame_time;
 mod shape;
 mod layer;
 mod point;
@@ -15,6 +16,7 @@ mod error;
 pub use basic_properties::*;
 pub use name_property::*;
 pub use brush::*;
+pub use frame_time::*;
 pub use shape::*;
 pub use layer::*;
 pub use point::*;
