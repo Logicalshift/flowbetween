@@ -60,7 +60,8 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
     let our_program_id = context.current_program_id().unwrap();
 
     // Set to true when we've requested an idle event to complete a rendering operation
-    let mut idle_requested = false;
+    let mut idle_requested  = false;
+    let mut need_redraw     = true;
 
     // General state: the frame to render and the transformation to apply to the canvas
     let mut frame_time  = FrameTime::ZERO;
@@ -88,103 +89,108 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                 // There's no longer an idle request
                 idle_requested = false;
 
-                // Build up the drawing in a vec. We start by pushing the current state and switching to our namespace
-                let mut drawing = vec![];
-                drawing.push_state();
-                drawing.namespace(*CANVAS_NAMESPACE);
-                drawing.transform(transform);
+                if need_redraw {
+                    need_redraw = false;
 
-                // Get the layers and properties from the document outline
-                let mut properties  = vec![];
-                let mut layers      = HashMap::new();
-                let mut layer_order = vec![];
+                    // Build up the drawing in a vec. We start by pushing the current state and switching to our namespace
+                    let mut drawing = vec![];
+                    drawing.push_state();
+                    drawing.namespace(*CANVAS_NAMESPACE);
+                    drawing.transform(transform);
 
-                let mut outline     = query_vector_outline();
-                while let Some(outline) = outline.next().await {
-                    match outline {
-                        VectorResponse::Document(doc_properties)            => { properties = doc_properties; }
-                        VectorResponse::Layer(layer_id, layer_properties)   => { layers.insert(layer_id, layer_properties); }
-                        VectorResponse::LayerOrder(doc_layer_order)         => { layer_order = doc_layer_order; }
-                        _                                                   => { }
-                    }
-                }
+                    // Get the layers and properties from the document outline
+                    let mut properties  = vec![];
+                    let mut layers      = HashMap::new();
+                    let mut layer_order = vec![];
 
-                // TODO: use the properties to render the document outline
-                let _ = properties;
-
-                // If the layer order has changed, then re-render everything
-                if layer_order != last_layer_order {
-                    // Blank all of the layers in the map
-                    for layer_id in layer_map.values() {
-                        drawing.layer(*layer_id);
-                        drawing.clear_layer();
+                    let mut outline     = query_vector_outline();
+                    while let Some(outline) = outline.next().await {
+                        match outline {
+                            VectorResponse::Document(doc_properties)            => { properties = doc_properties; }
+                            VectorResponse::Layer(layer_id, layer_properties)   => { layers.insert(layer_id, layer_properties); }
+                            VectorResponse::LayerOrder(doc_layer_order)         => { layer_order = doc_layer_order; }
+                            _                                                   => { }
+                        }
                     }
 
-                    // Clear out the layers
-                    valid_layers.clear();
-                    layer_map.clear();
-                    last_layer_order = layer_order.clone();
-                }
+                    // TODO: use the properties to render the document outline
+                    let _ = properties;
 
-                // We render all layers that are in layers but not in valid_layers
-                let layers_to_render = layers.keys()
-                    .filter(|layer_id| !valid_layers.contains(layer_id))
-                    .copied()
-                    .collect::<Vec<_>>();
-
-                // Query the layers that we're going to render, and bin them by layer
-                let mut layer_contents  = query_vector_layers(frame_time, layers_to_render.clone());
-                let mut layer_rendering = HashMap::new();
-                let mut current_layer   = None;
-
-                while let Some(layer_response) = layer_contents.next().await {
-                    match layer_response {
-                        VectorResponse::Layer(layer_id, _properties) => {
-                            // Select the layer
-                            current_layer = Some(layer_id);
-                            layer_rendering.insert(layer_id, vec![]);
+                    // If the layer order has changed, then re-render everything
+                    if layer_order != last_layer_order {
+                        // Blank all of the layers in the map
+                        for layer_id in layer_map.values() {
+                            drawing.layer(*layer_id);
+                            drawing.clear_layer();
                         }
 
-                        other => {
-                            // Add to the current layer
-                            if let Some(current_layer) = current_layer {
-                                layer_rendering.get_mut(&current_layer).unwrap().push(other);
+                        // Clear out the layers
+                        valid_layers.clear();
+                        layer_map.clear();
+                        last_layer_order = layer_order.clone();
+                    }
+
+                    // We render all layers that are in layers but not in valid_layers
+                    let layers_to_render = layers.keys()
+                        .filter(|layer_id| !valid_layers.contains(layer_id))
+                        .copied()
+                        .collect::<Vec<_>>();
+
+                    // Query the layers that we're going to render, and bin them by layer
+                    let mut layer_contents  = query_vector_layers(frame_time, layers_to_render.clone());
+                    let mut layer_rendering = HashMap::new();
+                    let mut current_layer   = None;
+
+                    while let Some(layer_response) = layer_contents.next().await {
+                        match layer_response {
+                            VectorResponse::Layer(layer_id, _properties) => {
+                                // Select the layer
+                                current_layer = Some(layer_id);
+                                layer_rendering.insert(layer_id, vec![]);
+                            }
+
+                            other => {
+                                // Add to the current layer
+                                if let Some(current_layer) = current_layer {
+                                    layer_rendering.get_mut(&current_layer).unwrap().push(other);
+                                }
                             }
                         }
                     }
+
+                    // Assign layer IDs based on the ordering (layers have a layer above and below for previews/annotations)
+                    let mut current_layer = 2;
+                    for layer_id in layer_order.iter() {
+                        layer_map.insert(*layer_id, LayerId(current_layer));
+
+                        current_layer += 3;
+                    }
+
+                    // Render the layers to get their drawing instructions
+                    let mut layer_instructions = layer_rendering
+                        .into_iter()
+                        .map(|(layer_id, layer_data)| render_layer(layer_data, frame_time, &context).map(move |drawing| (layer_id, drawing)))
+                        .collect::<FuturesUnordered<_>>();
+
+                    // Read the rendered layers and add to our drawing instructions
+                    while let Some((canvas_layer_id, layer_drawing)) = layer_instructions.next().await {
+                        let layer_id = layer_map.get(&canvas_layer_id).copied().unwrap();
+
+                        drawing.layer(layer_id);
+                        drawing.extend(layer_drawing);
+                    }
+
+                    // Finish the drawing
+                    drawing.pop_state();
+
+                    // Send to be renderered
+                    drawing_request.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
                 }
-
-                // Assign layer IDs based on the ordering (layers have a layer above and below for previews/annotations)
-                let mut current_layer = 2;
-                for layer_id in layer_order.iter() {
-                    layer_map.insert(*layer_id, LayerId(current_layer));
-
-                    current_layer += 3;
-                }
-
-                // Render the layers to get their drawing instructions
-                let mut layer_instructions = layer_rendering
-                    .into_iter()
-                    .map(|(layer_id, layer_data)| render_layer(layer_data, frame_time, &context).map(move |drawing| (layer_id, drawing)))
-                    .collect::<FuturesUnordered<_>>();
-
-                // Read the rendered layers and add to our drawing instructions
-                while let Some((canvas_layer_id, layer_drawing)) = layer_instructions.next().await {
-                    let layer_id = layer_map.get(&canvas_layer_id).copied().unwrap();
-
-                    drawing.layer(layer_id);
-                    drawing.extend(layer_drawing);
-                }
-
-                // Finish the drawing
-                drawing.pop_state();
-
-                // Send to be renderered
-                drawing_request.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
             }
 
             CanvasRender::Update(VectorCanvasUpdate::LayerChanged(layers)) => {
                 // Invalidate these layers and request a redraw
+                need_redraw = true;
                 for layer in layers.into_iter() {
                     valid_layers.remove(&layer);
                 }
@@ -201,6 +207,7 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
             CanvasRender::Refresh => {
                 // All layers become invalid and we request an idle event to force a redraw
                 valid_layers.clear();
+                need_redraw = true;
 
                 if !idle_requested && idle_request.send(IdleRequest::WhenIdle(our_program_id)).await.is_ok() {
                     idle_requested = true;
@@ -211,6 +218,7 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                 // Update the transform, invalidate the layers and request an idle event to redraw everything
                 transform = new_transform;
                 valid_layers.clear();
+                need_redraw = true;
 
                 if !idle_requested && idle_request.send(IdleRequest::WhenIdle(our_program_id)).await.is_ok() {
                     idle_requested = true;
@@ -221,6 +229,7 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                 // Update the frame time, invalidate the layers and request an idle event to redraw everything
                 frame_time = new_frame_time;
                 valid_layers.clear();
+                need_redraw = true;
 
                 if !idle_requested && idle_request.send(IdleRequest::WhenIdle(our_program_id)).await.is_ok() {
                     idle_requested = true;
