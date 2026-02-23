@@ -196,7 +196,10 @@ impl ToCanvasProperties for Stroke {
             else if *prop_id == *PROP_STROKE_WIDTH      { width = Some(prop_val); }
         }
 
-        Some(Stroke(StrokeWidth(float(width?)?), linecap_from_property(cap?)?, linejoin_from_property(join?)?, color_from_properties(stroke_color_type?, stroke_color_value?)?))
+        let cap     = if let Some(cap)  = cap   { linecap_from_property(cap)? }   else { LineCap::Round };
+        let join    = if let Some(join) = join  { linejoin_from_property(join)? } else { LineJoin::Round };
+
+        Some(Stroke(StrokeWidth(float(width?)?), cap, join, color_from_properties(stroke_color_type?, stroke_color_value?)?))
     }
 }
 
