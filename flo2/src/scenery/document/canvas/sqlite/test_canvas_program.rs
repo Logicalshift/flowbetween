@@ -4,6 +4,7 @@ use super::super::*;
 use flo_scene::*;
 use flo_scene::programs::*;
 use flo_scene::commands::*;
+use flo_draw::canvas::*;
 
 use futures::prelude::*;
 use ::serde::*;
@@ -592,5 +593,67 @@ fn query_layer_frames_returns_shapes_for_correct_frame() {
     TestBuilder::new()
         .expect_message_matching(TestResponse(expected_frame_1), "Frame 1 should only contain shape_1")
         .expect_message_matching(TestResponse(expected_frame_2), "Frame 2 should only contain shape_2")
+        .run_in_scene(&scene, test_program);
+}
+
+#[test]
+fn ellipse_visual_properties_read_back_via_layers_query() {
+    let scene = Scene::default();
+
+    #[derive(PartialEq, Debug, Serialize, Deserialize)]
+    struct TestResponse(Vec<VectorResponse>);
+
+    impl SceneMessage for TestResponse { }
+
+    let test_program    = SubProgramId::new();
+    let query_program   = SubProgramId::new();
+
+    let layer_1 = CanvasLayerId::new();
+    let ellipse = CanvasShapeId::new();
+
+    // Set up an ellipse with fill color, stroke color and stroke width properties
+    scene.add_subprogram(query_program, move |_input: InputStream<()>, context| async move {
+        let _sqlite     = context.send::<SqliteCanvasRequest>(()).unwrap();
+        let mut canvas  = context.send(()).unwrap();
+
+        canvas.send(VectorCanvas::AddLayer { new_layer_id: layer_1, before_layer: None }).await.unwrap();
+        canvas.send(VectorCanvas::AddShape(ellipse, ShapeType::default(), CanvasShape::Ellipse(CanvasEllipse {
+            min:        CanvasPoint { x: 100.0, y: 100.0 },
+            max:        CanvasPoint { x: 300.0, y: 200.0 },
+            direction:  CanvasPoint { x: 0.0, y: 1.0 },
+        }))).await.unwrap();
+        canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Shape(ellipse), vec![
+            (*PROP_FILL_COLOR,          color_value_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))),
+            (*PROP_FILL_COLOR_TYPE,     color_type_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))),
+            (*PROP_STROKE_COLOR,        color_value_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))),
+            (*PROP_STROKE_COLOR_TYPE,   color_type_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))),
+            (*PROP_STROKE_WIDTH,        CanvasProperty::Float(3.0)),
+        ])).await.unwrap();
+        canvas.send(VectorCanvas::SetShapeParent(ellipse, CanvasShapeParent::Layer(layer_1, FrameTime::ZERO))).await.unwrap();
+
+        // Read back using VectorQuery::Layers
+        let result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1], FrameTime::ZERO), ()).unwrap();
+        let result = result.collect::<Vec<_>>().await;
+
+        context.send_message(TestResponse(result)).await.unwrap();
+    }, 1);
+
+    let expected = vec![
+        VectorResponse::Layer(layer_1, vec![]),
+        VectorResponse::Shape(ellipse, CanvasShape::Ellipse(CanvasEllipse {
+            min:        CanvasPoint { x: 100.0, y: 100.0 },
+            max:        CanvasPoint { x: 300.0, y: 200.0 },
+            direction:  CanvasPoint { x: 0.0, y: 1.0 },
+        }), FrameTime::ZERO, ShapeType::default(), vec![
+            (*PROP_FILL_COLOR,          color_value_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))),
+            (*PROP_FILL_COLOR_TYPE,     color_type_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))),
+            (*PROP_STROKE_COLOR,        color_value_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))),
+            (*PROP_STROKE_COLOR_TYPE,   color_type_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))),
+            (*PROP_STROKE_WIDTH,        CanvasProperty::Float(3.0)),
+        ]),
+    ];
+
+    TestBuilder::new()
+        .expect_message_matching(TestResponse(expected), "Ellipse visual properties")
         .run_in_scene(&scene, test_program);
 }
