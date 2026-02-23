@@ -145,11 +145,11 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     context.send_message(VectorCanvas::AddLayer { new_layer_id: layer_1, before_layer: None }).await.unwrap();
     context.send_message(VectorCanvas::AddShape(ellipse, ShapeType::default(), CanvasShape::Ellipse(CanvasEllipse { min: CanvasPoint { x: 100.0, y: 100.0 }, max: CanvasPoint { x: 300.0, y: 200.0 }, direction: CanvasPoint { x: 0.0, y: 1.0 } }))).await.unwrap();
     context.send_message(VectorCanvas::SetProperty(CanvasPropertyTarget::Shape(ellipse), vec![
-        (*PROP_FILL_COLOR, color_value_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))), 
-        (*PROP_FILL_COLOR_TYPE, color_type_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))), 
-        (*PROP_STROKE_COLOR, color_value_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))), 
-        (*PROP_STROKE_COLOR_TYPE, color_type_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))), 
-        (*PROP_STROKE_WIDTH, CanvasProperty::Float(3.0))])).await.unwrap();
+        (*PROP_FILL_COLOR,          color_value_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))), 
+        (*PROP_FILL_COLOR_TYPE,     color_type_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))), 
+        (*PROP_STROKE_COLOR,        color_value_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))), 
+        (*PROP_STROKE_COLOR_TYPE,   color_type_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))), 
+        (*PROP_STROKE_WIDTH,        CanvasProperty::Float(3.0))])).await.unwrap();
     context.send_message(VectorCanvas::SetShapeParent(ellipse, CanvasShapeParent::Layer(layer_1, FrameTime::ZERO))).await.unwrap();
 
     // TODO: start the other document subprograms
