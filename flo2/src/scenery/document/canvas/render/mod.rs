@@ -15,3 +15,6 @@ mod test_shape_renderer;
 
 #[cfg(test)]
 mod test_layer_renderer;
+
+#[cfg(test)]
+mod test_canvas_render_program;
