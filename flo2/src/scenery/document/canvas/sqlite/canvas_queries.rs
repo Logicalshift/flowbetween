@@ -67,14 +67,19 @@ impl SqliteCanvas {
     /// Queries a list of layers for their properties
     ///
     pub fn query_layers(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>) -> Result<(), CanvasError> {
-        // Query to fetch the properties ofr each layer
+        // Query to fetch the properties for each layer. We use UNION ALL to merge the three property tables so
+        // that layers with properties in multiple tables don't produce a cross-product of rows.
         let properties_query =
             "
-            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId)
+            SELECT props.IntValue, props.FloatValue, props.BlobValue, props.PropertyId
             FROM Layers l
-            LEFT OUTER JOIN LayerIntProperties   ip ON ip.LayerId = l.LayerId
-            LEFT OUTER JOIN LayerFloatProperties fp ON fp.LayerId = l.LayerId
-            LEFT OUTER JOIN LayerBlobProperties  bp ON bp.LayerId = l.LayerId
+            LEFT OUTER JOIN (
+                SELECT LayerId, IntValue AS IntValue, NULL  AS FloatValue, NULL     AS BlobValue, PropertyId FROM LayerIntProperties
+                UNION ALL
+                SELECT LayerId, NULL     AS IntValue, FloatValue AS FloatValue, NULL AS BlobValue, PropertyId FROM LayerFloatProperties
+                UNION ALL
+                SELECT LayerId, NULL     AS IntValue, NULL  AS FloatValue, BlobValue AS BlobValue, PropertyId FROM LayerBlobProperties
+            ) props ON props.LayerId = l.LayerId
             WHERE l.LayerGuid = ?
             ";
         let mut properties_query = self.sqlite.prepare_cached(properties_query)?;
@@ -116,14 +121,18 @@ impl SqliteCanvas {
     /// Queries a list of brushes for their properties
     ///
     pub fn query_brushes(&mut self, query_brushes: impl IntoIterator<Item=CanvasBrushId>, brush_response: &mut Vec<VectorResponse>) -> Result<(), CanvasError> {
-        // Query to fetch the properties ofr each brush
+        // Query to fetch the properties for each brush.
         let properties_query =
             "
-            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId)
+            SELECT props.IntValue, props.FloatValue, props.BlobValue, props.PropertyId
             FROM Brushes b
-            LEFT OUTER JOIN BrushIntProperties   ip ON ip.BrushId = b.BrushId
-            LEFT OUTER JOIN BrushFloatProperties fp ON fp.BrushId = b.BrushId
-            LEFT OUTER JOIN BrushBlobProperties  bp ON bp.BrushId = b.BrushId
+            LEFT OUTER JOIN (
+                SELECT BrushId, IntValue AS IntValue, NULL      AS FloatValue, NULL      AS BlobValue, PropertyId FROM BrushIntProperties
+                UNION ALL
+                SELECT BrushId, NULL     AS IntValue, FloatValue AS FloatValue, NULL     AS BlobValue, PropertyId FROM BrushFloatProperties
+                UNION ALL
+                SELECT BrushId, NULL     AS IntValue, NULL      AS FloatValue, BlobValue AS BlobValue, PropertyId FROM BrushBlobProperties
+            ) props ON props.BrushId = b.BrushId
             WHERE b.BrushGuid = ?
             ";
         let mut properties_query = self.sqlite.prepare_cached(properties_query)?;
@@ -165,24 +174,32 @@ impl SqliteCanvas {
     /// Queries a list of shapes for their properties
     ///
     pub fn query_shapes(&mut self, query_shapes: impl IntoIterator<Item=CanvasShapeId>, shape_response: &mut Vec<VectorResponse>) -> Result<(), CanvasError> {
-        // Query to fetch the properties for each shape, including brush properties from attached brushes
+        // Query to fetch the properties for each shape, including brush properties from attached brushes.
         let properties_query =
             "
-            SELECT ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId) AS PropertyId, 0 AS Source, 0 AS BrushOrder
+            SELECT sp.IntValue, sp.FloatValue, sp.BlobValue, sp.PropertyId, 0 AS Source, 0 AS BrushOrder
             FROM Shapes s
-            LEFT OUTER JOIN ShapeIntProperties   ip ON ip.ShapeId = s.ShapeId
-            LEFT OUTER JOIN ShapeFloatProperties fp ON fp.ShapeId = s.ShapeId
-            LEFT OUTER JOIN ShapeBlobProperties  bp ON bp.ShapeId = s.ShapeId
+            LEFT OUTER JOIN (
+                SELECT ShapeId, IntValue AS IntValue, NULL       AS FloatValue, NULL      AS BlobValue, PropertyId FROM ShapeIntProperties
+                UNION ALL
+                SELECT ShapeId, NULL     AS IntValue, FloatValue AS FloatValue, NULL      AS BlobValue, PropertyId FROM ShapeFloatProperties
+                UNION ALL
+                SELECT ShapeId, NULL     AS IntValue, NULL       AS FloatValue, BlobValue AS BlobValue, PropertyId FROM ShapeBlobProperties
+            ) sp ON sp.ShapeId = s.ShapeId
             WHERE s.ShapeGuid = ?1
 
             UNION ALL
 
-            SELECT bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId, 1 AS Source, sb.OrderIdx AS BrushOrder
+            SELECT bp.IntValue, bp.FloatValue, bp.BlobValue, bp.PropertyId, 1 AS Source, sb.OrderIdx AS BrushOrder
             FROM Shapes s
-            INNER JOIN      ShapeBrushes         sb ON sb.ShapeId = s.ShapeId
-            LEFT OUTER JOIN BrushIntProperties   bip ON bip.BrushId = sb.BrushId
-            LEFT OUTER JOIN BrushFloatProperties bfp ON bfp.BrushId = sb.BrushId
-            LEFT OUTER JOIN BrushBlobProperties  bbp ON bbp.BrushId = sb.BrushId
+            INNER JOIN ShapeBrushes sb ON sb.ShapeId = s.ShapeId
+            LEFT OUTER JOIN (
+                SELECT BrushId, IntValue AS IntValue, NULL       AS FloatValue, NULL      AS BlobValue, PropertyId FROM BrushIntProperties
+                UNION ALL
+                SELECT BrushId, NULL     AS IntValue, FloatValue AS FloatValue, NULL      AS BlobValue, PropertyId FROM BrushFloatProperties
+                UNION ALL
+                SELECT BrushId, NULL     AS IntValue, NULL       AS FloatValue, BlobValue AS BlobValue, PropertyId FROM BrushBlobProperties
+            ) bp ON bp.BrushId = sb.BrushId
             WHERE s.ShapeGuid = ?1
 
             ORDER BY PropertyId ASC, Source ASC, BrushOrder DESC
@@ -247,38 +264,46 @@ impl SqliteCanvas {
         const COL_SHAPE_DATA:       usize = 12;
         const COL_FRAME_TIME:       usize = 13;
 
-        // Query to fetch the properties for each shape, including brush properties from attached brushes
+        // Query to fetch the properties for each shape, including brush properties from attached brushes.
         let shapes_query =
             "
-            SELECT 
-                ip.IntValue, fp.FloatValue, bp.BlobValue, COALESCE(ip.PropertyId, fp.PropertyId, bp.PropertyId) AS PropertyId, 
-                0 AS Source, 0 AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, 
+            SELECT
+                sp.IntValue, sp.FloatValue, sp.BlobValue, sp.PropertyId,
+                0 AS Source, 0 AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid,
                 g.ParentShapeId As GroupIdx, s.ShapeType AS ShapeType, s.ShapeDataType AS ShapeDataType, s.ShapeData AS ShapeData,
                 sl.Time as FrameTime
             FROM Shapes s
-            INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
-            INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
-            LEFT OUTER JOIN ShapeGroups          g  ON g.ShapeId = s.ShapeId
-            LEFT OUTER JOIN ShapeIntProperties   ip ON ip.ShapeId = s.ShapeId
-            LEFT OUTER JOIN ShapeFloatProperties fp ON fp.ShapeId = s.ShapeId
-            LEFT OUTER JOIN ShapeBlobProperties  bp ON bp.ShapeId = s.ShapeId
+            INNER JOIN      ShapeLayers sl ON sl.ShapeId = s.ShapeId
+            INNER JOIN      Layers      l  ON l.LayerId = sl.LayerId
+            LEFT OUTER JOIN ShapeGroups g  ON g.ShapeId = s.ShapeId
+            LEFT OUTER JOIN (
+                SELECT ShapeId, IntValue AS IntValue, NULL       AS FloatValue, NULL      AS BlobValue, PropertyId FROM ShapeIntProperties
+                UNION ALL
+                SELECT ShapeId, NULL     AS IntValue, FloatValue AS FloatValue, NULL      AS BlobValue, PropertyId FROM ShapeFloatProperties
+                UNION ALL
+                SELECT ShapeId, NULL     AS IntValue, NULL       AS FloatValue, BlobValue AS BlobValue, PropertyId FROM ShapeBlobProperties
+            ) sp ON sp.ShapeId = s.ShapeId
             WHERE l.LayerGuid = ?1 AND sl.Time >= ?3 AND sl.Time <= ?2
 
             UNION ALL
 
-            SELECT 
-                bip.IntValue, bfp.FloatValue, bbp.BlobValue, COALESCE(bip.PropertyId, bfp.PropertyId, bbp.PropertyId) AS PropertyId,
-                1 AS Source, sb.OrderIdx AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid, 
+            SELECT
+                bp.IntValue, bp.FloatValue, bp.BlobValue, bp.PropertyId,
+                1 AS Source, sb.OrderIdx AS BrushOrder, sl.OrderIdx As ShapeOrder, s.ShapeId As ShapeIdx, s.ShapeGuid As ShapeGuid,
                 g.ParentShapeId As GroupIdx, s.ShapeType AS ShapeType, s.ShapeDataType AS ShapeDataType, s.ShapeData AS ShapeData,
                 sl.Time as FrameTime
             FROM Shapes s
-            INNER JOIN      ShapeLayers          sl ON sl.ShapeId = s.ShapeId
-            INNER JOIN      Layers               l  ON l.LayerId = sl.LayerId
-            INNER JOIN      ShapeBrushes         sb ON sb.ShapeId = s.ShapeId
-            LEFT OUTER JOIN ShapeGroups          g  ON g.ShapeId = s.ShapeId
-            LEFT OUTER JOIN BrushIntProperties   bip ON bip.BrushId = sb.BrushId
-            LEFT OUTER JOIN BrushFloatProperties bfp ON bfp.BrushId = sb.BrushId
-            LEFT OUTER JOIN BrushBlobProperties  bbp ON bbp.BrushId = sb.BrushId
+            INNER JOIN      ShapeLayers  sl ON sl.ShapeId = s.ShapeId
+            INNER JOIN      Layers       l  ON l.LayerId = sl.LayerId
+            INNER JOIN      ShapeBrushes sb ON sb.ShapeId = s.ShapeId
+            LEFT OUTER JOIN ShapeGroups  g  ON g.ShapeId = s.ShapeId
+            LEFT OUTER JOIN (
+                SELECT BrushId, IntValue AS IntValue, NULL       AS FloatValue, NULL      AS BlobValue, PropertyId FROM BrushIntProperties
+                UNION ALL
+                SELECT BrushId, NULL     AS IntValue, FloatValue AS FloatValue, NULL      AS BlobValue, PropertyId FROM BrushFloatProperties
+                UNION ALL
+                SELECT BrushId, NULL     AS IntValue, NULL       AS FloatValue, BlobValue AS BlobValue, PropertyId FROM BrushBlobProperties
+            ) bp ON bp.BrushId = sb.BrushId
             WHERE l.LayerGuid = ?1 AND sl.Time >= ?3 AND sl.Time <= ?2
 
             ORDER BY ShapeOrder ASC, PropertyId ASC, Source ASC, BrushOrder DESC
