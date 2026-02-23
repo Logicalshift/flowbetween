@@ -177,6 +177,7 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                         let layer_id = layer_map.get(&canvas_layer_id).copied().unwrap();
 
                         drawing.layer(layer_id);
+                        drawing.clear_layer();
                         drawing.extend(layer_drawing);
                     }
 
