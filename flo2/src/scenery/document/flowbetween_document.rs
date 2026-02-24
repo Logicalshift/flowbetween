@@ -140,7 +140,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     document_scene.add_subprogram(ShapeType::default().render_program_id(), standard_shape_type_renderer_program, 10);
 
     // Add an ellipse to the canvas
-    let layer_1  = vector_add_layer(&[]).await;
+    let layer_1  = vector_add_layer(&[&Name::from("Layer 1")]).await;
     let _ellipse = vector_add_shape(
         ShapeType::default(), 
         CanvasShape::Ellipse(CanvasEllipse { min: CanvasPoint { x: 100.0, y: 100.0 }, max: CanvasPoint { x: 300.0, y: 200.0 }, direction: CanvasPoint { x: 0.0, y: 1.0 } }),
