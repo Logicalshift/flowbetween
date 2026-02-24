@@ -46,7 +46,7 @@ impl ToCanvasProperties for () {
 ///
 /// Sets some properties on an item in the canvas
 ///
-pub async fn vector_set_properties(target: impl Into<CanvasPropertyTarget>, properties: &impl ToCanvasProperties) {
+pub async fn vector_set_properties(target: impl Into<CanvasPropertyTarget>, properties: &[&dyn ToCanvasProperties]) {
     // Fetch the context
     let context             = scene_context().expect("Must be called from a flo_scene subprogram");
     let mut vector_editor   = context.send(()).unwrap();
@@ -68,7 +68,7 @@ pub async fn vector_remove_properties(target: impl Into<CanvasPropertyTarget>, p
 ///
 /// Adds a new layer as the topmost layer to the canvas in the current scene
 ///
-pub async fn vector_add_layer(properties: &impl ToCanvasProperties) -> CanvasLayerId {
+pub async fn vector_add_layer(properties: &[&dyn ToCanvasProperties]) -> CanvasLayerId {
     // Fetch the context
     let context             = scene_context().expect("Must be called from a flo_scene subprogram");
     let mut vector_editor   = context.send(()).unwrap();
@@ -176,7 +176,7 @@ pub async fn vector_detach_brushes_to_shape(shape_id: CanvasShapeId, brushes: im
 ///
 /// Adds a brush to the canvas in the current scene
 ///
-pub async fn vector_add_brush(properties: &impl ToCanvasProperties) -> CanvasBrushId {
+pub async fn vector_add_brush(properties: &[&dyn ToCanvasProperties]) -> CanvasBrushId {
     // Fetch the context
     let context             = scene_context().expect("Must be called from a flo_scene subprogram");
     let mut vector_editor   = context.send(()).unwrap();
