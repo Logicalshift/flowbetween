@@ -23,26 +23,6 @@ CREATE TABLE ShapeTypes (
 );
 
 /**
- * Properties that apply to the whole document with int values
- **/
-CREATE TABLE DocumentIntProperties (
-    PropertyId  INTEGER NOT NULL REFERENCES Properties(PropertyId),
-    IntValue    INTEGER NOT NULL,
-
-    PRIMARY KEY (PropertyId)
-);
-
-/**
- * Properties that apply to the whole document with float values
- **/
-CREATE TABLE DocumentFloatProperties (
-    PropertyId  INTEGER NOT NULL REFERENCES Properties(PropertyId),
-    FloatValue  FLOAT   NOT NULL,
-
-    PRIMARY KEY (PropertyId)
-);
-
-/**
  * Properties that apply to the whole document but are encoded as postcard blob values (serialized `CanvasProperty` values)
  **/
 CREATE TABLE DocumentBlobProperties (
@@ -59,28 +39,6 @@ CREATE TABLE Layers (
     LayerId     INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
     LayerGuid   CHAR(36)    NOT NULL,
     OrderIdx    INTEGER     NOT NULL
-);
-
-/**
- * Integer properties attached to a layer
- **/
-CREATE TABLE LayerIntProperties (
-    LayerId     INTEGER NOT NULL REFERENCES Layers(LayerId) ON DELETE CASCADE,
-    PropertyId  INTEGER NOT NULL REFERENCES Properties(PropertyId),
-    IntValue    INTEGER NOT NULL,
-
-    PRIMARY KEY (LayerId, PropertyId)
-);
-
-/**
- * Float properties attached to a layer
- **/
-CREATE TABLE LayerFloatProperties (
-    LayerId     INTEGER NOT NULL REFERENCES Layers(LayerId) ON DELETE CASCADE,
-    PropertyId  INTEGER NOT NULL REFERENCES Properties(PropertyId),
-    FloatValue  FLOAT   NOT NULL,
-
-    PRIMARY KEY (LayerId, PropertyId)
 );
 
 /**
@@ -140,28 +98,6 @@ CREATE TABLE ShapeGroups (
 );
 
 /**
- * Integer properties attached to a shape
- **/
-CREATE TABLE ShapeIntProperties (
-    ShapeId     INTEGER NOT NULL REFERENCES Shapes(ShapeId) ON DELETE CASCADE,
-    PropertyId  INTEGER NOT NULL REFERENCES Properties(PropertyId),
-    IntValue    INTEGER NOT NULL,
-
-    PRIMARY KEY (ShapeId, PropertyId)
-);
-
-/**
- * Float properties attached to a shape
- **/
-CREATE TABLE ShapeFloatProperties (
-    ShapeId     INTEGER NOT NULL REFERENCES Shapes(ShapeId) ON DELETE CASCADE,
-    PropertyId  INTEGER NOT NULL REFERENCES Properties(PropertyId),
-    FloatValue  FLOAT   NOT NULL,
-
-    PRIMARY KEY (ShapeId, PropertyId)
-);
-
-/**
  * Blob properties attached to a shape (postcard serialized `CanvasProperty` values)
  **/
 CREATE TABLE ShapeBlobProperties (
@@ -189,28 +125,6 @@ CREATE TABLE ShapeBrushes (
     OrderIdx    INTEGER NOT NULL,
 
     PRIMARY KEY (ShapeId, OrderIdx)
-);
-
-/**
- * Integer properties attached to a brush
- **/
-CREATE TABLE BrushIntProperties (
-    BrushId     INTEGER NOT NULL REFERENCES Brushes(BrushId) ON DELETE CASCADE,
-    PropertyId  INTEGER NOT NULL REFERENCES Properties(PropertyId),
-    IntValue    INTEGER NOT NULL,
-
-    PRIMARY KEY (BrushId, PropertyId)
-);
-
-/**
- * Float properties attached to a brush
- **/
-CREATE TABLE BrushFloatProperties (
-    BrushId     INTEGER NOT NULL REFERENCES Brushes(BrushId) ON DELETE CASCADE,
-    PropertyId  INTEGER NOT NULL REFERENCES Properties(PropertyId),
-    FloatValue  FLOAT   NOT NULL,
-
-    PRIMARY KEY (BrushId, PropertyId)
 );
 
 /**
@@ -253,12 +167,7 @@ CREATE INDEX idx_shapebrushes_brush ON ShapeBrushes(BrushId);
  * Covering indexes for properties when used on shapes
  **/
 -- ~4% speedup when added
-CREATE INDEX idx_shape_int_props ON ShapeIntProperties(ShapeId, PropertyId, IntValue);
-CREATE INDEX idx_shape_float_props ON ShapeFloatProperties(ShapeId, PropertyId, FloatValue);
 CREATE INDEX idx_shape_blob_props ON ShapeBlobProperties(ShapeId, PropertyId, BlobValue);
-
-CREATE INDEX idx_brush_int_props ON BrushIntProperties(BrushId, PropertyId, IntValue);
-CREATE INDEX idx_brush_float_props ON BrushFloatProperties(BrushId, PropertyId, FloatValue);
 CREATE INDEX idx_brush_blob_props ON BrushBlobProperties(BrushId, PropertyId, BlobValue);
 
 /**
