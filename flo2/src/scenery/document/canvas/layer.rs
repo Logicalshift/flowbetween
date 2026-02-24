@@ -1,3 +1,6 @@
+use super::frame_time::*;
+use super::shape::*;
+
 use ::serde::*;
 use uuid::*;
 
@@ -37,5 +40,11 @@ impl CanvasLayerId {
 impl fmt::Display for CanvasLayerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl Into<CanvasShapeParent> for (CanvasLayerId, FrameTime) {
+    fn into(self) -> CanvasShapeParent {
+        CanvasShapeParent::Layer(self.0, self.1)
     }
 }

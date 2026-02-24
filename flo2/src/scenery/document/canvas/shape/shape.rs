@@ -99,4 +99,16 @@ impl CanvasShape {
     }
 }
 
+impl Into<CanvasShapeParent> for CanvasShapeId {
+    fn into(self) -> CanvasShapeParent {
+        CanvasShapeParent::Shape(self)
+    }
+}
+
+impl Into<CanvasShapeParent> for () {
+    fn into(self) -> CanvasShapeParent {
+        CanvasShapeParent::None
+    }
+}
+
 pub const CANVAS_GROUP_V1_TYPE: i64 = 4;
