@@ -3,6 +3,7 @@ use super::super::point::*;
 
 use super::super::basic_properties::*;
 use super::super::brush::*;
+use super::super::document_properties::*;
 use super::super::frame_time::*;
 use super::super::layer::*;
 use super::super::property::*;
@@ -63,6 +64,25 @@ fn initialize_schema() {
 #[test]
 fn initialise_canvas() {
     SqliteCanvas::new_in_memory().unwrap();
+}
+
+#[test]
+fn default_document_properties() {
+    let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
+    let mut outline = vec![];
+
+    canvas.query_document_outline(&mut outline).unwrap();
+
+    assert!(matches!(&outline[0], VectorResponse::Document(_)));
+
+    if let VectorResponse::Document(props) = &outline[0] {
+        let size        = DocumentSize::from_properties(props.iter()).expect("No document size");
+        let frametime   = DocumentTimePerFrame::from_properties(props.iter()).expect("No frame time");
+
+        assert!((size.width - 1920.0).abs() < 0.0001);
+        assert!((size.height - 1080.0).abs() < 0.0001);
+        assert!((frametime.0 - (1.0/12.0)).abs() < 0.0001);
+    }
 }
 
 #[test]
