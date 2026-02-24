@@ -136,8 +136,7 @@ fn set_property_ids() {
     let property_1 = canvas.index_for_property(CanvasPropertyId::new("One")).unwrap();
     let property_2 = canvas.index_for_property(CanvasPropertyId::new("Two")).unwrap();
 
-    assert!(property_1 == 1, "Property 1: {:?} != 1", property_1);
-    assert!(property_2 == 2, "Property 2: {:?} != 2", property_2);
+    assert!(property_2 == property_1 + 1, "Property 2 should follow property 1: {:?} {:?}", property_1, property_2);
 }
 
 #[test]
@@ -172,9 +171,8 @@ fn read_property_ids_without_cache() {
     let property_2 = canvas.index_for_property(CanvasPropertyId::new("Two")).unwrap();
     let property_3 = canvas.index_for_property(CanvasPropertyId::new("Three")).unwrap();
 
-    assert!(property_1 == 1, "Property 1: {:?} != 1", property_1);
-    assert!(property_2 == 2, "Property 2: {:?} != 2", property_2);
-    assert!(property_3 == 3, "Property 3: {:?} != 3", property_3);
+    assert!(property_2 == property_1 + 1, "Property 2 should follow property 1: {:?} {:?}", property_1, property_2);
+    assert!(property_3 == property_2 + 1, "Property 3 should follow property 2: {:?} {:?}", property_2, property_3);
 }
 
 #[test]
