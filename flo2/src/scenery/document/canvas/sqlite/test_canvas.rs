@@ -599,6 +599,8 @@ fn remove_brush_deletes_properties() {
 fn delete_document_properties() {
     let mut canvas = SqliteCanvas::new_in_memory().unwrap();
 
+    let initial_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
+
     // Set some document properties of different types
     canvas.set_properties(CanvasPropertyTarget::Document, vec![
         (CanvasPropertyId::new("Name"), CanvasProperty::Int(1)),
@@ -608,7 +610,7 @@ fn delete_document_properties() {
 
     // Verify properties exist (all stored in blob table)
     let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
-    assert!(blob_count == 3, "Document should have 3 blob properties, got {}", blob_count);
+    assert!(blob_count == initial_count + 3, "Document should have 3 new blob properties, got {}", blob_count - initial_count);
 
     // Delete two of the properties
     canvas.delete_properties(CanvasPropertyTarget::Document, vec![
@@ -618,12 +620,14 @@ fn delete_document_properties() {
 
     // Two properties should be gone, one should remain
     let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
-    assert!(blob_count == 1, "Document blob property should still exist, got {}", blob_count);
+    assert!(blob_count == initial_count + 1, "Document blob property should still exist, got {}", blob_count - initial_count);
 }
 
 #[test]
 fn delete_document_properties_all_types() {
     let mut canvas = SqliteCanvas::new_in_memory().unwrap();
+
+    let initial_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
 
     // Set properties covering all types
     canvas.set_properties(CanvasPropertyTarget::Document, vec![
@@ -633,7 +637,7 @@ fn delete_document_properties_all_types() {
     ]).unwrap();
 
     let property_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
-    assert!(property_count == 3, "All document properties should exist before the test");
+    assert!(property_count == initial_count + 3, "All document properties should exist before the test");
 
     // Delete all three properties at once
     canvas.delete_properties(CanvasPropertyTarget::Document, vec![
@@ -643,7 +647,7 @@ fn delete_document_properties_all_types() {
     ]).unwrap();
 
     let property_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
-    assert!(property_count == 0, "All document properties should be deleted");
+    assert!(property_count == initial_count, "All added document properties should be deleted");
 }
 
 #[test]
