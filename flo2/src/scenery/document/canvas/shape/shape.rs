@@ -1,3 +1,5 @@
+use crate::scenery::document::CanvasPropertyTarget;
+
 use super::super::frame_time::*;
 use super::super::layer::*;
 use super::ellipse::*;
@@ -108,6 +110,12 @@ impl Into<CanvasShapeParent> for CanvasShapeId {
 impl Into<CanvasShapeParent> for () {
     fn into(self) -> CanvasShapeParent {
         CanvasShapeParent::None
+    }
+}
+
+impl Into<CanvasPropertyTarget> for CanvasShapeId {
+    fn into(self) -> CanvasPropertyTarget {
+        CanvasPropertyTarget::Shape(self)
     }
 }
 

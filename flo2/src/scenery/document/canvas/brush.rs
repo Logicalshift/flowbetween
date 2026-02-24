@@ -1,3 +1,5 @@
+use super::property::*;
+
 use ::serde::*;
 use uuid::*;
 
@@ -37,5 +39,11 @@ impl CanvasBrushId {
 impl fmt::Display for CanvasBrushId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl Into<CanvasPropertyTarget> for CanvasBrushId {
+    fn into(self) -> CanvasPropertyTarget {
+        CanvasPropertyTarget::Brush(self)
     }
 }

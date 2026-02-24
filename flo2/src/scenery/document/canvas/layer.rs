@@ -1,4 +1,5 @@
 use super::frame_time::*;
+use super::property::*;
 use super::shape::*;
 
 use ::serde::*;
@@ -46,5 +47,11 @@ impl fmt::Display for CanvasLayerId {
 impl Into<CanvasShapeParent> for (CanvasLayerId, FrameTime) {
     fn into(self) -> CanvasShapeParent {
         CanvasShapeParent::Layer(self.0, self.1)
+    }
+}
+
+impl Into<CanvasPropertyTarget> for CanvasLayerId {
+    fn into(self) -> CanvasPropertyTarget {
+        CanvasPropertyTarget::Layer(self)
     }
 }
