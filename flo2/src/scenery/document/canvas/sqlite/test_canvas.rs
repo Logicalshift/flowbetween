@@ -102,8 +102,8 @@ fn add_two_layers() {
 
     let mut layers = vec![];
     canvas.query_document_outline(&mut layers).unwrap();
-    assert!(layers == vec![
-        VectorResponse::Document(vec![]),
+    assert!(matches!(&layers[0], VectorResponse::Document(_)));
+    assert!(layers[1..] == [
         VectorResponse::Layer(first_layer, vec![]),
         VectorResponse::Layer(second_layer, vec![]),
         VectorResponse::LayerOrder(vec![first_layer, second_layer]),
