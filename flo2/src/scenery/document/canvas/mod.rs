@@ -1,6 +1,7 @@
 mod basic_properties;
 mod name_property;
 mod brush;
+mod document_properties;
 mod error;
 mod frame_time;
 mod shape;
@@ -17,6 +18,7 @@ mod vector_editor_sugar;
 pub use basic_properties::*;
 pub use name_property::*;
 pub use brush::*;
+pub use document_properties::*;
 pub use error::*;
 pub use frame_time::*;
 pub use shape::*;
