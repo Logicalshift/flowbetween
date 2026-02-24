@@ -1,6 +1,7 @@
 mod basic_properties;
 mod name_property;
 mod brush;
+mod error;
 mod frame_time;
 mod shape;
 mod layer;
@@ -11,11 +12,12 @@ mod render;
 mod shape_type;
 mod sqlite;
 mod vector_editor;
-mod error;
+mod vector_editor_sugar;
 
 pub use basic_properties::*;
 pub use name_property::*;
 pub use brush::*;
+pub use error::*;
 pub use frame_time::*;
 pub use shape::*;
 pub use layer::*;
@@ -26,4 +28,4 @@ pub use render::*;
 pub use shape_type::*;
 pub use sqlite::*;
 pub use vector_editor::*;
-pub use error::*;
+pub use vector_editor_sugar::*;

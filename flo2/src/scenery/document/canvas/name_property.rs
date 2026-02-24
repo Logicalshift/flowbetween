@@ -22,7 +22,9 @@ impl ToCanvasProperties for Name {
     fn to_properties(&self) -> Vec<(CanvasPropertyId, CanvasProperty)> {
         vec![(*PROP_NAME, CanvasProperty::String(self.0.clone()))]
     }
+}
 
+impl FromCanvasProperties for Name {
     fn used_properties() -> Vec<CanvasPropertyId> {
         vec![*PROP_NAME]
     }

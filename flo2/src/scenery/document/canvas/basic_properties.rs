@@ -146,7 +146,9 @@ impl ToCanvasProperties for FlatFill {
             (*PROP_FILL_COLOR,      color_value_property(&self.0)),
         ]
     }
+}
 
+impl FromCanvasProperties for FlatFill {
     fn used_properties() -> Vec<CanvasPropertyId> {
         vec![*PROP_FILL_COLOR_TYPE, *PROP_FILL_COLOR]
     }
@@ -176,7 +178,9 @@ impl ToCanvasProperties for Stroke {
             (*PROP_STROKE_WIDTH,      CanvasProperty::Float(width.0 as _)),
         ]
     }
+}
 
+impl FromCanvasProperties for Stroke {
     fn used_properties() -> Vec<CanvasPropertyId> {
         vec![*PROP_STROKE_COLOR_TYPE, *PROP_STROKE_COLOR, *PROP_STROKE_LINECAP, *PROP_STROKE_LINEJOIN, *PROP_STROKE_WIDTH]
     }

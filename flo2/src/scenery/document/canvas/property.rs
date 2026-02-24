@@ -18,10 +18,15 @@ pub struct CanvasPropertyId(usize);
 ///
 /// Trait implemented by types that can be converted to a property
 ///
-pub trait ToCanvasProperties : Sized {
+pub trait ToCanvasProperties {
     /// Returns the properties that can represent this value
     fn to_properties(&self) -> Vec<(CanvasPropertyId, CanvasProperty)>;
+}
 
+///
+/// Trait implemented by types that can be converted from a property
+///
+pub trait FromCanvasProperties : Sized {
     /// The properties that need to be set on something for it to have this value associated with it
     fn used_properties() -> Vec<CanvasPropertyId>;
 
