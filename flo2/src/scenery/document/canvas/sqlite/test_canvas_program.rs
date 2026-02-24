@@ -57,9 +57,8 @@ fn query_document_outline() {
         context.send_message(TestResponse(outline)).await.unwrap();
     }, 1);
 
-    // The expected response to the query after this set up
-    let expected = vec![
-        VectorResponse::Document(vec![(CanvasPropertyId::new("test::document::property"), CanvasProperty::Int(42))]),
+    // The expected layers/order after the document item (which may contain default properties)
+    let expected_rest = vec![
         VectorResponse::Layer(layer_2, vec![(CanvasPropertyId::new("test::layer::property"), CanvasProperty::Int(43))]),
         VectorResponse::Layer(layer_1, vec![]),
         VectorResponse::LayerOrder(vec![layer_2, layer_1]),
@@ -67,7 +66,24 @@ fn query_document_outline() {
 
     // Run the test
     TestBuilder::new()
-        .expect_message_matching(TestResponse(expected), format!("Layer 1 = {:?}, layer 2 = {:?}", layer_1, layer_2))
+        .expect_message(move |response: TestResponse| {
+            let outline = response.0;
+            
+            // Ignore default document properties; just check our test property is present
+            let has_test_property = match outline.first() {
+                Some(VectorResponse::Document(props)) => props.contains(&(CanvasPropertyId::new("test::document::property"), CanvasProperty::Int(42))),
+                _ => false,
+            };
+            
+            if !has_test_property {
+                return Err(format!("Expected document to contain test property, got {:?}", outline.first()));
+            }
+
+            if outline[1..] != expected_rest[..] {
+                return Err(format!("Layer 1 = {:?}, layer 2 = {:?}: {:?}", layer_1, layer_2, &outline[1..]));
+            }
+            Ok(())
+        })
         .run_in_scene(&scene, test_program);
 }
 
