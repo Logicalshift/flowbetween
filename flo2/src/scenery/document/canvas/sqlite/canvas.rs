@@ -1,4 +1,5 @@
 use super::id_cache::*;
+use super::super::document_properties::*;
 use super::super::error::*;
 use super::super::layer::*;
 use super::super::property::*;
@@ -64,8 +65,11 @@ impl SqliteCanvas {
     ///
     /// Initialises the canvas in this object
     ///
-    pub fn initialise(&self) -> Result<(), CanvasError> {
+    pub fn initialise(&mut self) -> Result<(), CanvasError> {
         self.sqlite.execute_batch(SCHEMA)?;
+
+        let default_props: Vec<&dyn ToCanvasProperties> = vec![&DocumentSize { width: 1920.0, height: 1080.0 }, &DocumentTimePerFrame(1.0/12.0)];
+        self.set_properties(CanvasPropertyTarget::Document, default_props.to_properties()).expect("Initial properties should be set OK");
 
         Ok(())
     }
@@ -74,8 +78,8 @@ impl SqliteCanvas {
     /// Creates a new SQLite canvas in memory
     ///
     pub fn new_in_memory() -> Result<Self, CanvasError> {
-        let sqlite  = Connection::open_in_memory()?;
-        let canvas  = Self::with_connection(sqlite)?;
+        let sqlite      = Connection::open_in_memory()?;
+        let mut canvas  = Self::with_connection(sqlite)?;
         canvas.initialise()?;
 
         Ok(canvas)
