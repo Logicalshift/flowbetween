@@ -1,4 +1,5 @@
 use super::brush::*;
+use super::frame_time::*;
 use super::layer::*;
 use super::shape::*;
 use super::shape_type::*;
@@ -8,6 +9,8 @@ use super::vector_editor::*;
 use flo_scene::*;
 
 use futures::prelude::*;
+
+use std::time::{Duration};
 
 impl ToCanvasProperties for &[&dyn ToCanvasProperties] {
     fn to_properties(&self) -> Vec<(CanvasPropertyId, CanvasProperty)> {
@@ -198,4 +201,26 @@ pub async fn vector_remove_brushes(shape_ids: impl IntoIterator<Item=CanvasBrush
     for shape_id in shape_ids {
         vector_editor.send(VectorCanvas::RemoveBrush(shape_id)).await.unwrap();
     }
+}
+
+///
+/// Adds a frame to a layer in the canvas in the scene
+///
+pub async fn vector_add_frame(layer_id: CanvasLayerId, when: impl Into<FrameTime>, length: impl Into<Duration>) {
+    // Fetch the context
+    let context             = scene_context().expect("Must be called from a flo_scene subprogram");
+    let mut vector_editor   = context.send(()).unwrap();
+
+    vector_editor.send(VectorCanvas::AddFrame { frame_layer: layer_id, when: when.into(), length: length.into() }).await.unwrap();
+}
+
+///
+/// Removes a frame from a layer in the canvas in the scene
+///
+pub async fn vector_remove_frame(layer_id: CanvasLayerId, when: impl Into<FrameTime>) {
+    // Fetch the context
+    let context             = scene_context().expect("Must be called from a flo_scene subprogram");
+    let mut vector_editor   = context.send(()).unwrap();
+
+    vector_editor.send(VectorCanvas::RemoveFrame { frame_layer: layer_id, when: when.into() }).await.unwrap();
 }
