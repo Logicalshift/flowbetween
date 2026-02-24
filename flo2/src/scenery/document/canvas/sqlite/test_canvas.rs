@@ -199,18 +199,14 @@ fn remove_layer_deletes_properties() {
     let layer_idx = canvas.index_for_layer(layer).unwrap();
 
     // Verify properties exist
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerIntProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerFloatProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   > 0, "Layer should have int properties before removal");
-    assert!(float_count > 0, "Layer should have float properties before removal");
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerBlobProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
+    assert!(blob_count > 0, "Layer should have blob properties before removal");
 
     canvas.remove_layer(layer).unwrap();
 
     // Properties should be gone via CASCADE
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerIntProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerFloatProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   == 0, "Layer int properties should be deleted via CASCADE");
-    assert!(float_count == 0, "Layer float properties should be deleted via CASCADE");
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerBlobProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
+    assert!(blob_count == 0, "Layer blob properties should be deleted via CASCADE");
 }
 
 #[test]
@@ -547,18 +543,14 @@ fn remove_shape_deletes_properties() {
     let shape_idx = canvas.index_for_shape(shape).unwrap();
 
     // Verify properties exist
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeIntProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeFloatProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   > 0, "Shape should have int properties before removal");
-    assert!(float_count > 0, "Shape should have float properties before removal");
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeBlobProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
+    assert!(blob_count > 0, "Shape should have blob properties before removal");
 
     canvas.remove_shape(shape).unwrap();
 
     // Properties should be gone via CASCADE
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeIntProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeFloatProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   == 0, "Shape int properties should be deleted via CASCADE");
-    assert!(float_count == 0, "Shape float properties should be deleted via CASCADE");
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeBlobProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
+    assert!(blob_count == 0, "Shape blob properties should be deleted via CASCADE");
 }
 
 #[test]
@@ -575,18 +567,14 @@ fn remove_brush_deletes_properties() {
     let brush_idx = canvas.index_for_brush(brush).unwrap();
 
     // Verify properties exist
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushIntProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushFloatProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   > 0, "Brush should have int properties before removal");
-    assert!(float_count > 0, "Brush should have float properties before removal");
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushBlobProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
+    assert!(blob_count > 0, "Brush should have blob properties before removal");
 
     canvas.remove_brush(brush).unwrap();
 
     // Properties should be gone via CASCADE
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushIntProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushFloatProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   == 0, "Brush int properties should be deleted via CASCADE");
-    assert!(float_count == 0, "Brush float properties should be deleted via CASCADE");
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushBlobProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
+    assert!(blob_count == 0, "Brush blob properties should be deleted via CASCADE");
 }
 
 #[test]
@@ -600,27 +588,19 @@ fn delete_document_properties() {
         (CanvasPropertyId::new("Data"), CanvasProperty::ByteList(vec![1, 2, 3])),
     ]).unwrap();
 
-    // Verify properties exist
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentIntProperties", params![], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentFloatProperties", params![], |row| row.get(0)).unwrap();
-    let blob_count: i64     = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
-    assert!(int_count   == 1, "Document should have 1 int property, got {}", int_count);
-    assert!(float_count == 1, "Document should have 1 float property, got {}", float_count);
-    assert!(blob_count  == 1, "Document should have 1 blob property, got {}", blob_count);
+    // Verify properties exist (all stored in blob table)
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
+    assert!(blob_count == 3, "Document should have 3 blob properties, got {}", blob_count);
 
-    // Delete the int and float properties
+    // Delete two of the properties
     canvas.delete_properties(CanvasPropertyTarget::Document, vec![
         CanvasPropertyId::new("Name"),
         CanvasPropertyId::new("Version"),
     ]).unwrap();
 
-    // Int and float properties should be gone, blob should remain
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentIntProperties", params![], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentFloatProperties", params![], |row| row.get(0)).unwrap();
-    let blob_count: i64     = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
-    assert!(int_count   == 0, "Document int property should be deleted, got {}", int_count);
-    assert!(float_count == 0, "Document float property should be deleted, got {}", float_count);
-    assert!(blob_count  == 1, "Document blob property should still exist, got {}", blob_count);
+    // Two properties should be gone, one should remain
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
+    assert!(blob_count == 1, "Document blob property should still exist, got {}", blob_count);
 }
 
 #[test]
@@ -663,26 +643,18 @@ fn delete_shape_properties() {
 
     let shape_idx = canvas.index_for_shape(shape).unwrap();
 
-    // Verify properties exist
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeIntProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeFloatProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
-    let blob_count: i64     = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeBlobProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   == 1, "Shape should have 1 int property");
-    assert!(float_count == 1, "Shape should have 1 float property");
-    assert!(blob_count  == 1, "Shape should have 1 blob property");
+    // Verify properties exist (all stored in blob table)
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeBlobProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
+    assert!(blob_count == 3, "Shape should have 3 blob properties");
 
-    // Delete just the int property
+    // Delete just the Color property
     canvas.delete_properties(CanvasPropertyTarget::Shape(shape), vec![
         CanvasPropertyId::new("Color"),
     ]).unwrap();
 
-    // Only the int property should be gone
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeIntProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeFloatProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
-    let blob_count: i64     = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeBlobProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   == 0, "Shape int property should be deleted");
-    assert!(float_count == 1, "Shape float property should still exist");
-    assert!(blob_count  == 1, "Shape blob property should still exist");
+    // Only the Color property should be gone
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeBlobProperties WHERE ShapeId = ?", params![shape_idx], |row| row.get(0)).unwrap();
+    assert!(blob_count == 2, "Shape should have 2 remaining blob properties");
 }
 
 #[test]
@@ -710,10 +682,10 @@ fn delete_shape_properties_does_not_affect_other_shapes() {
     let shape_a_idx = canvas.index_for_shape(shape_a).unwrap();
     let shape_b_idx = canvas.index_for_shape(shape_b).unwrap();
 
-    let a_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeIntProperties WHERE ShapeId = ?", params![shape_a_idx], |row| row.get(0)).unwrap();
-    let b_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeIntProperties WHERE ShapeId = ?", params![shape_b_idx], |row| row.get(0)).unwrap();
-    assert!(a_count == 0, "Shape A int property should be deleted");
-    assert!(b_count == 1, "Shape B int property should be unaffected");
+    let a_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeBlobProperties WHERE ShapeId = ?", params![shape_a_idx], |row| row.get(0)).unwrap();
+    let b_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM ShapeBlobProperties WHERE ShapeId = ?", params![shape_b_idx], |row| row.get(0)).unwrap();
+    assert!(a_count == 0, "Shape A blob property should be deleted");
+    assert!(b_count == 1, "Shape B blob property should be unaffected");
 }
 
 #[test]
@@ -731,12 +703,8 @@ fn delete_brush_properties() {
     let brush_idx = canvas.index_for_brush(brush).unwrap();
 
     // Verify properties exist
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushIntProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushFloatProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
-    let blob_count: i64     = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushBlobProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   == 1, "Brush should have 1 int property");
-    assert!(float_count == 1, "Brush should have 1 float property");
-    assert!(blob_count  == 1, "Brush should have 1 blob property");
+    let property_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushBlobProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
+    assert!(property_count  == 3, "Brush should have 3 blob properties");
 
     // Delete the float and blob properties, leaving int
     canvas.delete_properties(CanvasPropertyTarget::Brush(brush), vec![
@@ -744,12 +712,8 @@ fn delete_brush_properties() {
         CanvasPropertyId::new("Pattern"),
     ]).unwrap();
 
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushIntProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushFloatProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
-    let blob_count: i64     = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushBlobProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   == 1, "Brush int property should still exist");
-    assert!(float_count == 0, "Brush float property should be deleted");
-    assert!(blob_count  == 0, "Brush blob property should be deleted");
+    let property_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM BrushBlobProperties WHERE BrushId = ?", params![brush_idx], |row| row.get(0)).unwrap();
+    assert!(property_count  == 1, "Brush int property should still exist");
 }
 
 #[test]
@@ -796,25 +760,17 @@ fn delete_layer_properties() {
 
     let layer_idx = canvas.index_for_layer(layer).unwrap();
 
-    // Verify properties exist
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerIntProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerFloatProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
-    let blob_count: i64     = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerBlobProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   == 1, "Layer should have 1 int property");
-    assert!(float_count == 1, "Layer should have 1 float property");
-    assert!(blob_count  == 1, "Layer should have 1 blob property");
+    // Verify properties exist (all stored in blob table)
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerBlobProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
+    assert!(blob_count == 3, "Layer should have 3 blob properties");
 
-    // Delete just the float property
+    // Delete just the Visible property
     canvas.delete_properties(CanvasPropertyTarget::Layer(layer), vec![
         CanvasPropertyId::new("Visible"),
     ]).unwrap();
 
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerIntProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerFloatProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
-    let blob_count: i64     = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerBlobProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
-    assert!(int_count   == 1, "Layer int property should still exist");
-    assert!(float_count == 0, "Layer float property should be deleted");
-    assert!(blob_count  == 1, "Layer blob property should still exist");
+    let blob_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerBlobProperties WHERE LayerId = ?", params![layer_idx], |row| row.get(0)).unwrap();
+    assert!(blob_count == 2, "Layer should have 2 remaining blob properties");
 }
 
 #[test]
@@ -842,10 +798,10 @@ fn delete_layer_properties_does_not_affect_other_layers() {
     let layer_a_idx = canvas.index_for_layer(layer_a).unwrap();
     let layer_b_idx = canvas.index_for_layer(layer_b).unwrap();
 
-    let a_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerIntProperties WHERE LayerId = ?", params![layer_a_idx], |row| row.get(0)).unwrap();
-    let b_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerIntProperties WHERE LayerId = ?", params![layer_b_idx], |row| row.get(0)).unwrap();
-    assert!(a_count == 0, "Layer A int property should be deleted");
-    assert!(b_count == 1, "Layer B int property should be unaffected");
+    let a_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerBlobProperties WHERE LayerId = ?", params![layer_a_idx], |row| row.get(0)).unwrap();
+    let b_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM LayerBlobProperties WHERE LayerId = ?", params![layer_b_idx], |row| row.get(0)).unwrap();
+    assert!(a_count == 0, "Layer A blob property should be deleted");
+    assert!(b_count == 1, "Layer B blob property should be unaffected");
 }
 
 #[test]
