@@ -59,14 +59,13 @@ impl SqliteCanvas {
     /// Queries a list of layers for their properties
     ///
     pub fn query_layers(&mut self, query_layers: impl IntoIterator<Item=CanvasLayerId>, layer_response: &mut Vec<VectorResponse>) -> Result<(), CanvasError> {
-        // Query to fetch the properties for each layer. We use UNION ALL to merge the three property tables so
-        // that layers with properties in multiple tables don't produce a cross-product of rows.
+        // Query the properties from the layer's blob properties table
         let properties_query =
             "
-            SELECT props.BlobValue, props.PropertyId
-            FROM Layers l
+            SELECT          props.BlobValue, props.PropertyId
+            FROM            Layers              l
             LEFT OUTER JOIN LayerBlobProperties props ON props.LayerId = l.LayerId
-            WHERE l.LayerGuid = ?
+            WHERE           l.LayerGuid = ?
             ";
         let mut properties_query = self.sqlite.prepare_cached(properties_query)?;
 

@@ -56,8 +56,8 @@ impl SqliteCanvas {
     }
 
     ///
-    /// Given a row returned from the database with the int, float and blob values for a property at the start, in
-    /// that order, decodes the canvas property corresponding to that row.
+    /// Given a row returned from the database with the blob values for a property in column 0, decodes 
+    /// the canvas property corresponding to that row.
     ///
     pub (super) fn decode_property(row: &Row) -> Option<CanvasProperty> {
         if let Some(blob_val) = row.get::<_, Option<Vec<u8>>>(0).ok()? {
@@ -130,12 +130,7 @@ impl SqliteCanvas {
         let transaction = self.sqlite.transaction()?;
 
         // Prepare the three commands to delete the three different types of property
-        let delete_ints     = command_template.replace("{}", "Int");
-        let delete_floats   = command_template.replace("{}", "Float");
-        let delete_blobs    = command_template.replace("{}", "Blob");
-
-        let mut delete_ints     = transaction.prepare_cached(&delete_ints)?;
-        let mut delete_floats   = transaction.prepare_cached(&delete_floats)?;
+        let delete_blobs        = command_template.replace("{}", "Blob");
         let mut delete_blobs    = transaction.prepare_cached(&delete_blobs)?;
 
         // Delete the properties in the list
@@ -146,14 +141,10 @@ impl SqliteCanvas {
             let params: &[&dyn ToSql] = &params;
 
             // Delete from the three properties tables
-            delete_ints.execute(params)?;
-            delete_floats.execute(params)?;
             delete_blobs.execute(params)?;
         }
 
         // Finish up the transaction
-        drop(delete_ints);
-        drop(delete_floats);
         drop(delete_blobs);
 
         transaction.commit()?;

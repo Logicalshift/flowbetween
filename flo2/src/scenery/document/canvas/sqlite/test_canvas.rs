@@ -614,6 +614,9 @@ fn delete_document_properties_all_types() {
         (CanvasPropertyId::new("BlobProp"), CanvasProperty::ByteList(vec![10, 20])),
     ]).unwrap();
 
+    let property_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
+    assert!(property_count == 3, "All document properties should exist before the test");
+
     // Delete all three properties at once
     canvas.delete_properties(CanvasPropertyTarget::Document, vec![
         CanvasPropertyId::new("IntProp"),
@@ -621,12 +624,8 @@ fn delete_document_properties_all_types() {
         CanvasPropertyId::new("BlobProp"),
     ]).unwrap();
 
-    let int_count: i64      = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentIntProperties", params![], |row| row.get(0)).unwrap();
-    let float_count: i64    = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentFloatProperties", params![], |row| row.get(0)).unwrap();
-    let blob_count: i64     = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
-    assert!(int_count   == 0, "All document int properties should be deleted");
-    assert!(float_count == 0, "All document float properties should be deleted");
-    assert!(blob_count  == 0, "All document blob properties should be deleted");
+    let property_count: i64 = canvas.sqlite.query_one("SELECT COUNT(*) FROM DocumentBlobProperties", params![], |row| row.get(0)).unwrap();
+    assert!(property_count == 0, "All document properties should be deleted");
 }
 
 #[test]
