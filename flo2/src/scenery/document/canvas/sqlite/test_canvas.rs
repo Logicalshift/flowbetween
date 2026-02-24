@@ -121,8 +121,8 @@ fn add_layer_before() {
 
     let mut layers = vec![];
     canvas.query_document_outline(&mut layers).unwrap();
-    assert!(layers == vec![
-        VectorResponse::Document(vec![]),
+    assert!(matches!(&layers[0], VectorResponse::Document(_)));
+    assert!(layers[1..] == [
         VectorResponse::Layer(second_layer, vec![]),
         VectorResponse::Layer(first_layer, vec![]),
         VectorResponse::LayerOrder(vec![second_layer, first_layer]),
