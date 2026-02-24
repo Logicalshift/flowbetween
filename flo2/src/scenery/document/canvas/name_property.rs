@@ -18,6 +18,20 @@ pub fn string_from_property(property: &CanvasProperty) -> Option<String> {
     }
 }
 
+impl From<&str> for Name {
+    #[inline]
+    fn from(value: &str) -> Self {
+        Name(value.into())
+    }
+}
+
+impl From<String> for Name {
+    #[inline]
+    fn from(value: String) -> Self {
+        Name(value)
+    }
+}
+
 impl ToCanvasProperties for Name {
     fn to_properties(&self) -> Vec<(CanvasPropertyId, CanvasProperty)> {
         vec![(*PROP_NAME, CanvasProperty::String(self.0.clone()))]
