@@ -93,20 +93,10 @@ impl SqliteCanvas {
         let transaction = self.sqlite.transaction()?;
 
         // Run commands to set each type of property value
-        {
-            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerIntProperties (LayerId, PropertyId, IntValue) VALUES (?, ?, ?)")?;
-            Self::set_int_properties(&properties, &mut int_properties_cmd, vec![&layer_idx])?;
-        }
+        let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerBlobProperties (LayerId, PropertyId, BlobValue) VALUES (?, ?, ?)")?;
+        Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![&layer_idx])?;
 
-        {
-            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerFloatProperties (LayerId, PropertyId, FloatValue) VALUES (?, ?, ?)")?;
-            Self::set_float_properties(&properties, &mut float_properties_cmd, vec![&layer_idx])?;
-        }
-
-        {
-            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO LayerBlobProperties (LayerId, PropertyId, BlobValue) VALUES (?, ?, ?)")?;
-            Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![&layer_idx])?;
-        }
+        drop(blob_properties_cmd);
 
         transaction.commit()?;
 

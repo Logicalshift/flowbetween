@@ -31,20 +31,10 @@ impl SqliteCanvas {
         let transaction = self.sqlite.transaction()?;
 
         // Run commands to set each type of property value
-        {
-            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushIntProperties (BrushId, PropertyId, IntValue) VALUES (?, ?, ?)")?;
-            Self::set_int_properties(&properties, &mut int_properties_cmd, vec![&brush_idx])?;
-        }
+        let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushBlobProperties (BrushId, PropertyId, BlobValue) VALUES (?, ?, ?)")?;
+        Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![&brush_idx])?;
 
-        {
-            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushFloatProperties (BrushId, PropertyId, FloatValue) VALUES (?, ?, ?)")?;
-            Self::set_float_properties(&properties, &mut float_properties_cmd, vec![&brush_idx])?;
-        }
-
-        {
-            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO BrushBlobProperties (BrushId, PropertyId, BlobValue) VALUES (?, ?, ?)")?;
-            Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![&brush_idx])?;
-        }
+        drop(blob_properties_cmd);
 
         transaction.commit()?;
 

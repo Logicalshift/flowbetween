@@ -166,57 +166,12 @@ impl SqliteCanvas {
     }
 
     ///
-    /// Sets any int properties found in the specified properties array. Property values are appended to the supplied default parameters
-    ///
-    pub (super) fn set_int_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), CanvasError> {
-        // Only set the int properties that are requested
-        let int_properties = properties.iter()
-            .filter_map::<(_, &dyn ToSql), _>(|(property_idx, property)| {
-                if let CanvasProperty::Int(val) = property {
-                    Some((*property_idx, val))
-                } else {
-                    None
-                }
-            });
-
-        // Set each of the int properties
-        Self::set_sql_properties(int_properties, command, other_params)?;
-
-        Ok(())
-    }
-
-    ///
-    /// Sets any float properties found in the specified properties array. Property values are appended to the supplied default parameters
-    ///
-    pub (super) fn set_float_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), CanvasError> {
-        // Only set the float properties that are requested
-        let float_properties = properties.iter()
-            .filter_map::<(_, &dyn ToSql), _>(|(property_idx, property)| {
-                if let CanvasProperty::Float(val) = property {
-                    Some((*property_idx, val))
-                } else {
-                    None
-                }
-            });
-
-        Self::set_sql_properties(float_properties, command, other_params)?;
-
-        Ok(())
-    }
-
-    ///
     /// Sets any blob properties found in the specified properties array. Property values are appended to the supplied default parameters
     ///
     pub (super) fn set_blob_properties(properties: &Vec<(i64, CanvasProperty)>, command: &mut CachedStatement<'_>, other_params: Vec<&dyn ToSql>) -> Result<(), CanvasError> {
         // Only set the blob properties that are requested
         let blob_properties = properties.iter()
-            .filter_map(|(property_idx, property)| {
-                match property {
-                    CanvasProperty::Int(_)      | 
-                    CanvasProperty::Float(_)    => None,
-                    property                    => Some(postcard::to_allocvec(property).map(|val| (*property_idx, val)).map_err(|e| e.into()))
-                }
-            })
+            .map(|(property_idx, property)| postcard::to_allocvec(property).map(|val| (*property_idx, val)).map_err(|e| e.into()))
             .collect::<Result<Vec<_>, CanvasError>>()?;
 
         // Need references to the blobs we've built up
@@ -241,20 +196,10 @@ impl SqliteCanvas {
         let transaction = self.sqlite.transaction()?;
 
         // Run commands to set each type of property value
-        {
-            let mut int_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentIntProperties (PropertyId, IntValue) VALUES (?, ?)")?;
-            Self::set_int_properties(&properties, &mut int_properties_cmd, vec![])?;
-        }
+        let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentBlobProperties (PropertyId, BlobValue) VALUES (?, ?)")?;
+        Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![])?;
 
-        {
-            let mut float_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentFloatProperties (PropertyId, FloatValue) VALUES (?, ?)")?;
-            Self::set_float_properties(&properties, &mut float_properties_cmd, vec![])?;
-        }
-
-        {
-            let mut blob_properties_cmd = transaction.prepare_cached("REPLACE INTO DocumentBlobProperties (PropertyId, BlobValue) VALUES (?, ?)")?;
-            Self::set_blob_properties(&properties, &mut blob_properties_cmd, vec![])?;
-        }
+        drop(blob_properties_cmd);
 
         transaction.commit()?;
 
