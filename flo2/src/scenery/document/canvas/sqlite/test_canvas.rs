@@ -1147,7 +1147,7 @@ fn set_group_parent_to_layer_moves_descendents() {
 }
 
 #[test]
-fn ellipse_visual_properties_read_back() {
+fn ellipse_visual_properties_read_back_1() {
     let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
     let layer_1     = CanvasLayerId::new();
     let ellipse     = CanvasShapeId::new();
@@ -1171,6 +1171,47 @@ fn ellipse_visual_properties_read_back() {
     // Read back using query_shapes_on_layer and check that the properties are correct
     let mut response = vec![];
     canvas.query_shapes_on_layer(layer_1, &mut response, FrameTime::ZERO).unwrap();
+
+    assert!(response == vec![
+        VectorResponse::Shape(ellipse, CanvasShape::Ellipse(CanvasEllipse {
+            min:        CanvasPoint { x: 100.0, y: 100.0 },
+            max:        CanvasPoint { x: 300.0, y: 200.0 },
+            direction:  CanvasPoint { x: 0.0, y: 1.0 },
+        }), FrameTime::ZERO, ShapeType::default(), vec![
+            (*PROP_FILL_COLOR,          color_value_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))),
+            (*PROP_FILL_COLOR_TYPE,     color_type_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))),
+            (*PROP_STROKE_COLOR,        color_value_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))),
+            (*PROP_STROKE_COLOR_TYPE,   color_type_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))),
+            (*PROP_STROKE_WIDTH,        CanvasProperty::Float(3.0)),
+        ]),
+    ], "Response was {:?}", response);
+}
+
+#[test]
+fn ellipse_visual_properties_read_back_2() {
+    let mut canvas  = SqliteCanvas::new_in_memory().unwrap();
+    let layer_1     = CanvasLayerId::new();
+    let ellipse     = CanvasShapeId::new();
+
+    // Set up an ellipse with fill color, stroke color and stroke width properties
+    canvas.add_layer(layer_1, None).unwrap();
+    canvas.add_shape(ellipse, ShapeType::default(), CanvasShape::Ellipse(CanvasEllipse {
+        min:        CanvasPoint { x: 100.0, y: 100.0 },
+        max:        CanvasPoint { x: 300.0, y: 200.0 },
+        direction:  CanvasPoint { x: 0.0, y: 1.0 },
+    })).unwrap();
+    canvas.set_properties(CanvasPropertyTarget::Shape(ellipse), vec![
+        (*PROP_FILL_COLOR,          color_value_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))),
+        (*PROP_FILL_COLOR_TYPE,     color_type_property(&Color::Rgba(0.0, 0.5, 1.0, 1.0))),
+        (*PROP_STROKE_COLOR,        color_value_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))),
+        (*PROP_STROKE_COLOR_TYPE,   color_type_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))),
+        (*PROP_STROKE_WIDTH,        CanvasProperty::Float(3.0)),
+    ]).unwrap();
+    canvas.set_shape_parent(ellipse, CanvasShapeParent::Layer(layer_1, FrameTime::ZERO)).unwrap();
+
+    // Read back using query_shapes_on_layer and check that the properties are correct
+    let mut response = vec![];
+    canvas.query_shapes(vec![ellipse], &mut response).unwrap();
 
     assert!(response == vec![
         VectorResponse::Shape(ellipse, CanvasShape::Ellipse(CanvasEllipse {

@@ -60,11 +60,7 @@ impl SqliteCanvas {
     /// that order, decodes the canvas property corresponding to that row.
     ///
     pub (super) fn decode_property(row: &Row) -> Option<CanvasProperty> {
-        if let Some(int_val) = row.get::<_, Option<i64>>(0).ok()? {
-            Some(CanvasProperty::Int(int_val))
-        } else if let Some(float_val) = row.get::<_, Option<f64>>(1).ok()? {
-            Some(CanvasProperty::Float(float_val as _))
-        } else if let Some(blob_val) = row.get::<_, Option<Vec<u8>>>(2).ok()? {
+        if let Some(blob_val) = row.get::<_, Option<Vec<u8>>>(0).ok()? {
             Some(postcard::from_bytes(&blob_val).ok()?)
         } else {
             None
