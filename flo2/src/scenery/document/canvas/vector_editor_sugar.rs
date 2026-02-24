@@ -91,6 +91,17 @@ pub async fn vector_remove_layer(layer_id: CanvasLayerId)  {
 }
 
 ///
+/// Moves a layer behind another layer in the canvas
+///
+pub async fn vector_order_layer(layer_id: CanvasLayerId, before_layer: Option<CanvasLayerId>)  {
+    // Fetch the context
+    let context             = scene_context().expect("Must be called from a flo_scene subprogram");
+    let mut vector_editor   = context.send(()).unwrap();
+
+    vector_editor.send(VectorCanvas::ReorderLayer { layer_id, before_layer }).await.unwrap();
+}
+
+///
 /// Adds a shape to the canvas in the current scene
 ///
 pub async fn vector_add_shape(shape_type: impl Into<ShapeType>, shape: impl Into<CanvasShape>, parent: impl Into<CanvasShapeParent>, properties: &impl ToCanvasProperties, brushes: impl IntoIterator<Item=CanvasBrushId>) -> CanvasShapeId {
@@ -124,6 +135,17 @@ pub async fn vector_remove_shapes(shape_ids: impl IntoIterator<Item=CanvasShapeI
     for shape_id in shape_ids {
         vector_editor.send(VectorCanvas::RemoveShape(shape_id)).await.unwrap();
     }
+}
+
+///
+/// Moves a shape behind another shape in the canvas
+///
+pub async fn vector_order_shape(shape_id: CanvasShapeId, before_shape: Option<CanvasShapeId>)  {
+    // Fetch the context
+    let context             = scene_context().expect("Must be called from a flo_scene subprogram");
+    let mut vector_editor   = context.send(()).unwrap();
+
+    vector_editor.send(VectorCanvas::ReorderShape { shape_id, before_shape }).await.unwrap();
 }
 
 ///
