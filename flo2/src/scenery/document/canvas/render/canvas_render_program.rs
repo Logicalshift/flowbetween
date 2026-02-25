@@ -3,9 +3,11 @@ use super::super::frame_time::*;
 use super::super::layer::*;
 use super::super::queries::*;
 use super::super::vector_editor::*;
+use crate::scenery::ui::*;
 
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
+use flo_draw::events::*;
 use flo_scene::*;
 use flo_scene::programs::*;
 
@@ -30,6 +32,9 @@ pub enum CanvasRender {
     /// An update for the canvas has been received
     Update(VectorCanvasUpdate),
 
+    /// Focus message (we're really only interested in resizing events)
+    Focus(FocusEvent),
+
     /// Redraw the whole canvas
     Refresh,
 
@@ -48,6 +53,7 @@ impl SceneMessage for CanvasRender {
     fn initialise(init_context: &impl SceneInitialisationContext) { 
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|msgs| msgs.map(|_: IdleNotification| CanvasRender::Idle))), (), StreamId::with_message_type::<IdleNotification>()).unwrap();
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|msgs| msgs.map(|update| CanvasRender::Update(update)))), (), StreamId::with_message_type::<VectorCanvasUpdate>()).unwrap();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|msgs| msgs.map(|focus| CanvasRender::Focus(focus)))), (), StreamId::with_message_type::<FocusEvent>()).unwrap();
 
         init_context.add_subprogram(SubProgramId::called("flowbetween::canvas_renderer"), canvas_render_program, 50);
     }
@@ -66,6 +72,9 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
     // General state: the frame to render and the transformation to apply to the canvas
     let mut frame_time  = FrameTime::ZERO;
     let mut transform   = Transform2D::identity();
+    let mut size_w      = 1920.0;
+    let mut size_h      = 1080.0;
+    let mut scale       = 1.0;
 
     // List of layers that have been rendered and not invalidated
     let mut valid_layers        = HashSet::<CanvasLayerId>::new();
@@ -80,6 +89,9 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
     if idle_request.send(IdleRequest::WhenIdle(our_program_id)).await.is_ok() {
         idle_requested = true;
     }
+
+    // Claim an empty region in the focus program (we want resizing messages, but don't actually have any need of mouse events)
+    context.send_message(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 }).await.unwrap();
 
     // Run the main loop
     let mut input = input;
@@ -186,6 +198,52 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
 
                     // Send to be renderered
                     drawing_request.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
+                }
+            }
+
+            CanvasRender::Focus(evt) => {
+                match evt {
+                    FocusEvent::Event(_, DrawEvent::Resize(new_w, new_h)) => {
+                        if (new_w/scale) != size_w || (new_h/scale) != size_h {
+                            // Update the size
+                            size_w = new_w/scale;
+                            size_h = new_h/scale;
+
+                            // TODO: if we could move the layers without needing to completely regenerate them we wouldn't need to invalidate them here
+                            valid_layers.clear();
+
+                            // Schedule a redraw
+                            valid_layers.clear();
+                            need_redraw = true;
+
+                            if !idle_requested && idle_request.send(IdleRequest::WhenIdle(our_program_id)).await.is_ok() {
+                                idle_requested = true;
+                            }
+                        }
+                    }
+
+                    FocusEvent::Event(_, DrawEvent::Scale(new_scale)) => {
+                        if new_scale != scale {
+                            // Update the size
+                            size_w = (size_w*scale)/new_scale;
+                            size_h = (size_h*scale)/new_scale;
+
+                            // Update the scale
+                            scale = new_scale;
+
+                            // TODO: if we could move the layers without needing to completely regenerate them we wouldn't need to invalidate them here
+                            valid_layers.clear();
+
+                            // Schedule a redraw
+                            need_redraw = true;
+
+                            if !idle_requested && idle_request.send(IdleRequest::WhenIdle(our_program_id)).await.is_ok() {
+                                idle_requested = true;
+                            }
+                        }
+                    }
+
+                    _ => { }
                 }
             }
 
