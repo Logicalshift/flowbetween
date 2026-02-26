@@ -72,14 +72,13 @@ fn calculate_layer_transform(transform: Transform2D, canvas_size: (f64, f64), wi
     let move_canvas_center = Transform2D::translate(-canvas_center_x as _, -canvas_center_y as _);
 
     // Apply the transformation
-    let with_transform      = move_canvas_center * transform;
-    let inverse_transform   = transform.invert().unwrap_or_else(|| Transform2D::identity());
+    let with_transform      = transform * move_canvas_center;
 
     // Move back to the center of the window
     let window_center_x = (window_size.0/2.0).ceil();
     let window_center_y = (window_size.1/2.0).ceil();
 
-    let center_in_window = with_transform * (inverse_transform * Transform2D::translate(window_center_x as _, window_center_y as _));
+    let center_in_window = Transform2D::translate(window_center_x as _, window_center_y as _) * with_transform;
 
     center_in_window
 }
