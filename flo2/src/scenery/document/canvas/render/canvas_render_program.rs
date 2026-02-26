@@ -1,6 +1,8 @@
 use super::layer_renderer::*;
+use super::super::document_properties::*;
 use super::super::frame_time::*;
 use super::super::layer::*;
+use super::super::property::*;
 use super::super::queries::*;
 use super::super::vector_editor::*;
 use crate::scenery::ui::*;
@@ -60,6 +62,13 @@ impl SceneMessage for CanvasRender {
 }
 
 ///
+/// Calculates the layer transform for the canvas
+///
+fn calculate_layer_transform(transform: Transform2D, canvas_size: (f64, f64), window_size: (f64, f64)) -> Transform2D {
+    Transform2D::identity()
+}
+
+///
 /// Renders the canvas
 ///
 pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: SceneContext) {
@@ -76,6 +85,8 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
     let mut layer_transform = Transform2D::identity();
     let mut size_w          = 1920.0;
     let mut size_h          = 1080.0;
+    let mut doc_w           = 1920.0;
+    let mut doc_h           = 1080.0;
     let mut scale           = 1.0;
 
     // List of layers that have been rendered and not invalidated
@@ -196,12 +207,26 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                         drawing.extend(layer_drawing);
                     }
 
+                    // Update the document size if necessary
+                    if let Some(doc_size) = DocumentSize::from_properties(properties.iter()) {
+                        if doc_size.width != doc_w || doc_size.height != doc_h {
+                            doc_w = doc_size.width;
+                            doc_h = doc_size.height;
+
+                            update_transform = true;
+                        }
+                    }
+
                     // Update the transformation for all the layers if needed
                     if update_transform {
+                        layer_transform = calculate_layer_transform(transform, (doc_w, doc_h), (size_w, size_h));
+
                         for (_, layer_id) in layer_map.iter() {
                             drawing.layer(*layer_id);
                             drawing.set_layer_transform(layer_transform);
                         }
+
+                        update_transform = false;
                     }
 
                     // Finish the drawing
