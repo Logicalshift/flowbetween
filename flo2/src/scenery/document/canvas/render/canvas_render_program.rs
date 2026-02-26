@@ -232,18 +232,6 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                         }
                     }
 
-                    // Update the transformation for all the layers if needed
-                    if update_transform {
-                        layer_transform = calculate_layer_transform(transform, (doc_w, doc_h), (size_w, size_h));
-
-                        for (_, layer_id) in layer_map.iter() {
-                            drawing.layer(*layer_id);
-                            drawing.set_layer_transform(layer_transform);
-                        }
-
-                        update_transform = false;
-                    }
-
                     // Finish the drawing
                     drawing.pop_state();
 
@@ -341,6 +329,25 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                     idle_requested = true;
                 }
             }
+        }
+
+        // Update the transformation for all the layers if needed
+        if update_transform {
+            let mut drawing = vec![];
+            drawing.push_state();
+            drawing.namespace(*CANVAS_NAMESPACE);
+
+            layer_transform = calculate_layer_transform(transform, (doc_w, doc_h), (size_w, size_h));
+
+            for (_, layer_id) in layer_map.iter() {
+                drawing.layer(*layer_id);
+                drawing.set_layer_transform(layer_transform);
+            }
+
+            update_transform = false;
+
+            drawing.pop_state();
+            drawing_request.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
         }
     }
 }
