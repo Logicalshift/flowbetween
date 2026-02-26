@@ -136,7 +136,6 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                     let mut drawing = vec![];
                     drawing.push_state();
                     drawing.namespace(*CANVAS_NAMESPACE);
-                    drawing.transform(transform);
 
                     // Get the layers and properties from the document outline
                     let mut properties  = vec![];
