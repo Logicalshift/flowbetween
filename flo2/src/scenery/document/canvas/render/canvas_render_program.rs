@@ -410,9 +410,10 @@ mod test {
     #[test]
     pub fn center_preserved_after_scaling() {
         // If we translate then scale the canvas, the centered point should be the same as if the canvas hadn't been scaled
+        // With flo_canvas's transforms, 'A*B' = 'B then A' so the translation is last here
         let canvas_size = (100.0, 200.0);
         let window_size = (500.0, 700.0);
-        let transform   = calculate_layer_transform(Transform2D::translate(20.0, 30.0) * Transform2D::scale(2.0, 2.0), canvas_size, window_size);
+        let transform   = calculate_layer_transform(Transform2D::scale(2.0, 2.0) * Transform2D::translate(20.0, 30.0), canvas_size, window_size);
 
         // Point at the center of the canvas should end up in the center of the window
         let canvas_center = (canvas_size.0/2.0, canvas_size.1/2.0);
