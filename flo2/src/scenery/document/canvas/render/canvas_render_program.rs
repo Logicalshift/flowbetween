@@ -100,8 +100,8 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
     let mut layer_transform = Transform2D::identity();
     let mut size_w          = 1920.0;
     let mut size_h          = 1080.0;
-    let mut doc_w           = 1920.0;
-    let mut doc_h           = 1080.0;
+    let mut doc_w           = 0.0;
+    let mut doc_h           = 0.0;
     let mut scale           = 1.0;
 
     // List of layers that have been rendered and not invalidated
@@ -224,9 +224,11 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                     // Update the document size if necessary
                     if let Some(doc_size) = DocumentSize::from_properties(properties.iter()) {
                         if doc_size.width != doc_w || doc_size.height != doc_h {
+                            // Update the document size
                             doc_w = doc_size.width;
                             doc_h = doc_size.height;
 
+                            // The transform for all the layers will change if the document size changes
                             update_transform = true;
                         }
                     }
@@ -343,6 +345,28 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                 drawing.set_layer_transform(layer_transform);
             }
 
+            // Redraw the document frame on layer 0
+            drawing.layer(LayerId(0));
+            drawing.clear_layer();
+            drawing.set_layer_transform(layer_transform);
+
+            drawing.fill_color(Color::Rgba(0.4, 0.4, 0.4, 1.0));
+            drawing.new_path();
+            drawing.rect(4.0, (doc_h-4.0) as _, (doc_w-4.0) as _, (doc_h+4.0) as _);
+            drawing.fill();
+
+            drawing.line_width(1.0);
+            drawing.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+            drawing.line_join(LineJoin::Miter);
+            drawing.new_dash_pattern();
+            drawing.fill_color(Color::Rgba(1.0, 1.0, 1.0, 1.0));
+
+            drawing.new_path();
+            drawing.rect(-0.5, -0.5, (doc_w+1.0) as _, (doc_h+1.0) as _);
+            drawing.fill();
+            drawing.stroke();
+
+            // Transform has been updated: 
             update_transform = false;
 
             drawing.pop_state();
