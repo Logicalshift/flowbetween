@@ -141,7 +141,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     context.send::<SqliteCanvasRequest>(()).unwrap();
     context.send::<CanvasRender>(()).unwrap();
 
-    //context.send_message(CanvasRender::SetTransform(Transform2D::scale(2.0, 2.0))).await.unwrap();
+    context.send_message(CanvasRender::SetTransform(Transform2D::scale(1.5, 1.5))).await.unwrap();
 
     document_scene.add_subprogram(ShapeType::default().render_program_id(), standard_shape_type_renderer_program, 10);
 
