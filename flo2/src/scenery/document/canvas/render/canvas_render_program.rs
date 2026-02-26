@@ -12,6 +12,7 @@ use flo_draw::canvas::scenery::*;
 use flo_draw::events::*;
 use flo_scene::*;
 use flo_scene::programs::*;
+use flo_curves::*;
 
 use futures::prelude::*;
 use futures::stream::{FuturesUnordered};
@@ -345,6 +346,10 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                 drawing.set_layer_transform(layer_transform);
             }
 
+            // Figure out the scale of a pixel after the transform is applied
+            let transform_scale = layer_transform.transform_coord(UiPoint(0.0, 0.0)).distance_to(&layer_transform.transform_coord(UiPoint(0.0, 1.0)));
+            let transform_scale = 1.0 / transform_scale;
+
             // Redraw the document frame on layer 0
             drawing.layer(LayerId(0));
             drawing.clear_layer();
@@ -352,10 +357,10 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
 
             drawing.fill_color(Color::Rgba(0.4, 0.4, 0.4, 1.0));
             drawing.new_path();
-            drawing.rect(4.0, (doc_h-4.0) as _, (doc_w-4.0) as _, (doc_h+4.0) as _);
+            drawing.rect((4.0*transform_scale) as _, (doc_h-4.0*transform_scale) as _, (doc_w-4.0*transform_scale) as _, (doc_h+4.0*transform_scale) as _);
             drawing.fill();
 
-            drawing.line_width(1.0);
+            drawing.line_width((1.0 * transform_scale) as _);
             drawing.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
             drawing.line_join(LineJoin::Miter);
             drawing.new_dash_pattern();
