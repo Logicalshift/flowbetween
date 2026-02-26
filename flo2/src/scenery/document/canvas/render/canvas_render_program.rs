@@ -66,15 +66,17 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
     let our_program_id = context.current_program_id().unwrap();
 
     // Set to true when we've requested an idle event to complete a rendering operation
-    let mut idle_requested  = false;
-    let mut need_redraw     = true;
+    let mut idle_requested      = false;
+    let mut need_redraw         = true;
+    let mut update_transform    = true;
 
     // General state: the frame to render and the transformation to apply to the canvas
-    let mut frame_time  = FrameTime::ZERO;
-    let mut transform   = Transform2D::identity();
-    let mut size_w      = 1920.0;
-    let mut size_h      = 1080.0;
-    let mut scale       = 1.0;
+    let mut frame_time      = FrameTime::ZERO;
+    let mut transform       = Transform2D::identity();
+    let mut layer_transform = Transform2D::identity();
+    let mut size_w          = 1920.0;
+    let mut size_h          = 1080.0;
+    let mut scale           = 1.0;
 
     // List of layers that have been rendered and not invalidated
     let mut valid_layers        = HashSet::<CanvasLayerId>::new();
@@ -190,7 +192,16 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
 
                         drawing.layer(layer_id);
                         drawing.clear_layer();
+                        drawing.set_layer_transform(layer_transform);
                         drawing.extend(layer_drawing);
+                    }
+
+                    // Update the transformation for all the layers if needed
+                    if update_transform {
+                        for (_, layer_id) in layer_map.iter() {
+                            drawing.layer(*layer_id);
+                            drawing.set_layer_transform(layer_transform);
+                        }
                     }
 
                     // Finish the drawing
@@ -209,12 +220,9 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                             size_w = new_w/scale;
                             size_h = new_h/scale;
 
-                            // TODO: if we could move the layers without needing to completely regenerate them we wouldn't need to invalidate them here
-                            valid_layers.clear();
-
                             // Schedule a redraw
-                            valid_layers.clear();
-                            need_redraw = true;
+                            need_redraw         = true;
+                            update_transform    = true;
 
                             if !idle_requested && idle_request.send(IdleRequest::WhenIdle(our_program_id)).await.is_ok() {
                                 idle_requested = true;
@@ -235,7 +243,8 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                             valid_layers.clear();
 
                             // Schedule a redraw
-                            need_redraw = true;
+                            need_redraw         = true;
+                            update_transform    = true;
 
                             if !idle_requested && idle_request.send(IdleRequest::WhenIdle(our_program_id)).await.is_ok() {
                                 idle_requested = true;
@@ -274,10 +283,8 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
             }
 
             CanvasRender::SetTransform(new_transform) => {
-                // Update the transform, invalidate the layers and request an idle event to redraw everything
+                // Update the transform. We use layer transforms to move the rendering around
                 transform = new_transform;
-                valid_layers.clear();
-                need_redraw = true;
 
                 if !idle_requested && idle_request.send(IdleRequest::WhenIdle(our_program_id)).await.is_ok() {
                     idle_requested = true;
