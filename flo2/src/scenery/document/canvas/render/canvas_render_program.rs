@@ -72,13 +72,14 @@ fn calculate_layer_transform(transform: Transform2D, canvas_size: (f64, f64), wi
     let move_canvas_center = Transform2D::translate(-canvas_center_x as _, -canvas_center_y as _);
 
     // Apply the transformation
-    let with_transform = move_canvas_center * transform;
+    let with_transform      = move_canvas_center * transform;
+    let inverse_transform   = transform.invert().unwrap_or_else(|| Transform2D::identity());
 
     // Move back to the center of the window
     let window_center_x = (window_size.0/2.0).ceil();
     let window_center_y = (window_size.1/2.0).ceil();
 
-    let center_in_window = with_transform * Transform2D::translate(window_center_x as _, window_center_y as _);
+    let center_in_window = with_transform * (inverse_transform * Transform2D::translate(window_center_x as _, window_center_y as _));
 
     center_in_window
 }
@@ -349,5 +350,78 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
             drawing.pop_state();
             drawing_request.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    pub fn layer_transform_centers_in_window() {
+        // By default the canvas should be centered in the window
+        let canvas_size = (100.0, 200.0);
+        let window_size = (500.0, 700.0);
+        let transform   = calculate_layer_transform(Transform2D::identity(), canvas_size, window_size);
+
+        // Point at the center of the canvas should end up in the center of the window
+        let canvas_center = (canvas_size.0/2.0, canvas_size.1/2.0);
+        let window_center = (window_size.0/2.0, window_size.1/2.0);
+
+        let new_center = transform.transform_point(canvas_center.0 as _, canvas_center.1 as _);
+
+        assert!((new_center.0 as f64 - window_center.0).abs() < 0.0001, "{:?} != {:?}", new_center, window_center);
+        assert!((new_center.1 as f64 - window_center.1).abs() < 0.0001, "{:?} != {:?}", new_center, window_center);
+    }
+
+    #[test]
+    pub fn scales_around_center() {
+        // Just scaling the canvas should leave the center point in the window as the center point in the canvas
+        let canvas_size = (100.0, 200.0);
+        let window_size = (500.0, 700.0);
+        let transform   = calculate_layer_transform(Transform2D::scale(2.0, 2.0), canvas_size, window_size);
+
+        // Point at the center of the canvas should end up in the center of the window (even with the scaling)
+        let canvas_center = (canvas_size.0/2.0, canvas_size.1/2.0);
+        let window_center = (window_size.0/2.0, window_size.1/2.0);
+
+        let new_center = transform.transform_point(canvas_center.0 as _, canvas_center.1 as _);
+
+        assert!((new_center.0 as f64 - window_center.0).abs() < 0.0001, "{:?} != {:?}", new_center, window_center);
+        assert!((new_center.1 as f64 - window_center.1).abs() < 0.0001, "{:?} != {:?}", new_center, window_center);
+    }
+
+    #[test]
+    pub fn translates_center() {
+        // If we translate the canvas by 20, 30 then the centered point in the window should be -20, -30 from the original center
+        let canvas_size = (100.0, 200.0);
+        let window_size = (500.0, 700.0);
+        let transform   = calculate_layer_transform(Transform2D::translate(20.0, 30.0), canvas_size, window_size);
+
+        // Point at the center of the canvas should end up in the center of the window
+        let canvas_center = (canvas_size.0/2.0, canvas_size.1/2.0);
+        let window_center = (window_size.0/2.0, window_size.1/2.0);
+
+        let new_center = transform.transform_point(canvas_center.0 as f32 - 20.0, canvas_center.1 as f32 - 30.0);
+
+        assert!((new_center.0 as f64 - window_center.0).abs() < 0.0001, "{:?} != {:?}", new_center, window_center);
+        assert!((new_center.1 as f64 - window_center.1).abs() < 0.0001, "{:?} != {:?}", new_center, window_center);
+    }
+
+    #[test]
+    pub fn center_preserved_after_scaling() {
+        // If we translate then scale the canvas, the centered point should be the same as if the canvas hadn't been scaled
+        let canvas_size = (100.0, 200.0);
+        let window_size = (500.0, 700.0);
+        let transform   = calculate_layer_transform(Transform2D::translate(20.0, 30.0) * Transform2D::scale(2.0, 2.0), canvas_size, window_size);
+
+        // Point at the center of the canvas should end up in the center of the window
+        let canvas_center = (canvas_size.0/2.0, canvas_size.1/2.0);
+        let window_center = (window_size.0/2.0, window_size.1/2.0);
+
+        let new_center = transform.transform_point(canvas_center.0 as f32 - 20.0, canvas_center.1 as f32 - 30.0);
+
+        assert!((new_center.0 as f64 - window_center.0).abs() < 0.0001, "{:?} != {:?}", new_center, window_center);
+        assert!((new_center.1 as f64 - window_center.1).abs() < 0.0001, "{:?} != {:?}", new_center, window_center);
     }
 }
