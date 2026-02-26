@@ -65,7 +65,22 @@ impl SceneMessage for CanvasRender {
 /// Calculates the layer transform for the canvas
 ///
 fn calculate_layer_transform(transform: Transform2D, canvas_size: (f64, f64), window_size: (f64, f64)) -> Transform2D {
-    Transform2D::identity()
+    // Move the center of the canvas to 0,0
+    let canvas_center_x = (canvas_size.0 / 2.0).floor();
+    let canvas_center_y = (canvas_size.1 / 2.0).floor();
+
+    let move_canvas_center = Transform2D::translate(-canvas_center_x as _, -canvas_center_y as _);
+
+    // Apply the transformation
+    let with_transform = move_canvas_center * transform;
+
+    // Move back to the center of the window
+    let window_center_x = (window_size.0/2.0).ceil();
+    let window_center_y = (window_size.1/2.0).ceil();
+
+    let center_in_window = with_transform * Transform2D::translate(window_center_x as _, window_center_y as _);
+
+    center_in_window
 }
 
 ///
