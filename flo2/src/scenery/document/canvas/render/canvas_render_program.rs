@@ -46,6 +46,24 @@ pub enum CanvasRender {
 
     /// Sets the time for the canvas
     SetFrame(FrameTime),
+
+    /// Send stream updates to the
+    Subscribe(StreamTarget),
+}
+
+///
+/// Updates from the canvas renderer program, indicating the status of the display of the canvas on screen
+///
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum CanvasRenderUpdate {
+    /// The layer transform has changed
+    LayerTransform(Transform2D),
+
+    /// The layer ordering has changed
+    Layers(HashMap<CanvasLayerId, LayerId>),
+}
+
+impl SceneMessage for CanvasRenderUpdate {
 }
 
 impl SceneMessage for CanvasRender {
@@ -89,6 +107,8 @@ fn calculate_layer_transform(transform: Transform2D, canvas_size: (f64, f64), wi
 ///
 pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: SceneContext) {
     let our_program_id = context.current_program_id().unwrap();
+
+    let mut subscribers = EventSubscribers::new();
 
     // Set to true when we've requested an idle event to complete a rendering operation
     let mut idle_requested      = false;
@@ -199,9 +219,18 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                     }
 
                     // Assign layer IDs based on the ordering (layers have a layer above and below for previews/annotations)
-                    let mut current_layer = 2;
+                    let mut current_layer   = 2;
+                    let mut layers_changed  = false;
                     for layer_id in layer_order.iter() {
-                        layer_map.insert(*layer_id, LayerId(current_layer));
+                        if let Some(old_layer) = layer_map.insert(*layer_id, LayerId(current_layer)) {
+                            if old_layer != LayerId(current_layer) {
+                                // Layer ordering changed
+                                layers_changed = true;
+                            }
+                        } else {
+                            // Layer is new
+                            layers_changed = true;
+                        }
 
                         current_layer += 3;
                     }
@@ -239,6 +268,11 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
 
                     // Send to be renderered
                     drawing_request.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
+
+                    // Indicate to the subscribers that the layer map has changed
+                    if layers_changed {
+                        subscribers.send(CanvasRenderUpdate::Layers(layer_map.clone())).await;
+                    }
                 }
             }
 
@@ -331,6 +365,12 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                     idle_requested = true;
                 }
             }
+
+            CanvasRender::Subscribe(target) => {
+                if let Ok(target) = context.send(target) {
+                    subscribers.add_target(target);
+                }
+            }
         }
 
         // Update the transformation for all the layers if needed
@@ -376,6 +416,8 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
 
             drawing.pop_state();
             drawing_request.send(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
+
+            subscribers.send(CanvasRenderUpdate::LayerTransform(layer_transform)).await;
         }
     }
 }
