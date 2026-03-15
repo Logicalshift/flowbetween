@@ -78,12 +78,12 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     let mut draw_scale      = 1.0;
     let mut draw_transform  = Transform2D::identity();
 
-    // The document canvas contains the drawing instructions to regenerate the canvas (except for the 'clear canvas' instruction that begins it)
-    // We re-use this whenever the document is resized
-    let document_canvas = Canvas::new();
-    document_canvas.write([
+    // Set up the canvas (in particular, the ordering of the namespaces)
+    window_drawing.send(DrawingRequest::Draw(Arc::new(vec![
         Draw::ClearCanvas(Color::Rgba(0.8, 0.8, 0.8, 1.0)),
-        Draw::CanvasHeight(1024.0),
+        Draw::CanvasHeight(1000.0),
+        Draw::MultiplyTransform(Transform2D::scale(1.0, -1.0)),
+        Draw::CenterRegion((0.0, 0.0), (1000.0, 1000.0)),
 
         Draw::Namespace(NamespaceId::default()),
         Draw::Layer(LayerId(0)),
@@ -107,7 +107,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
         Draw::Namespace(NamespaceId::default()),
         Draw::Layer(LayerId(0)),
-    ].into_iter().collect());
+    ]))).await.ok();
 
     // Drawing instructions that are waiting for this document scene to become idle
     let mut pending_drawing         = Vec::with_capacity(128);
@@ -168,9 +168,6 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
         for request in many_requests {
             match request {
                 DocumentRequest::Draw(DrawingRequest::Draw(drawing)) => {
-                    // Write to the canvas
-                    document_canvas.write(drawing.iter().cloned().collect());
-
                     // Also write to the pending drawing instructions, ready to pass on to the main window
                     for draw in drawing.iter() {
                         match draw {
