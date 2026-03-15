@@ -172,10 +172,11 @@ pub fn draw_text(text_shape: &epaint::TextShape, drawing: &mut Vec<canvas::Draw>
             let (texture_min_x, texture_max_x) = texture_pos_for_uv(glyph_min_x, glyph_max_x, glyph.uv_rect.min[0] as f32 / texture_size.0, glyph.uv_rect.max[0] as f32 / texture_size.0);
             let (texture_min_y, texture_max_y) = texture_pos_for_uv(glyph_min_y, glyph_max_y, glyph.uv_rect.min[1] as f32 / texture_size.1, glyph.uv_rect.max[1] as f32 / texture_size.1);
 
-            // Colour and other formatting is done by looking up the section in the original rendering job
-            let section     = glyph.section_index;
-            let glyph_color = text_shape.galley.job.sections[section as usize].format.color;
-            let glyph_color = if glyph_color == egui::Color32::PLACEHOLDER { fallback_color } else { canvas_color(&glyph_color) };
+            // Colour is read from the pre-tessellated mesh vertex that egui already computed for this glyph.
+            let glyph_color = row.visuals.mesh.vertices
+                .get(glyph.first_vertex as usize)
+                .map(|v| canvas_color(&v.color))
+                .unwrap_or(fallback_color);
 
             // Render the glyph
             drawing.new_path();

@@ -252,17 +252,6 @@ fn canvas_texture_bytes(image: &epaint::ImageData) -> (usize, usize, Arc<Vec<u8>
 
             (color_image.size[0], color_image.size[1], bytes)
         }
-
-        epaint::ImageData::Font(font_image) => {
-            let bytes = font_image.srgba_pixels(None)
-                .flat_map(|pixel| {
-                    let (r, g, b, a) = pixel.to_tuple();
-                    [r, g, b, a]
-                })
-                .collect();
-
-            (font_image.size[0], font_image.size[1], bytes)
-        }
     };
 
     (width, height, Arc::new(bytes))
