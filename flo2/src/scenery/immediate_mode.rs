@@ -6,11 +6,26 @@ use futures::future::{BoxFuture};
 use std::sync::*;
 
 ///
+/// Result from requesting
+///
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ImUpdateResult<TState> {
+    /// New state to return to the processing program
+    NewState(TState),
+
+    /// Request more input and re-enter the update function
+    MoreInput(TState),
+
+    /// Updating is finished, there's no new state
+    Finished,
+}
+
+///
 /// Context for an immediate-mode subprogram
 ///
 pub struct ImContext<TInput, TState> {
     /// Function that handles updating the state. Called when waiting for a new state, should await the future to retrieve the input for the current program
-    update_state: Arc<dyn Send + Sync + for<'a> Fn(BoxFuture<'a, Option<Vec<TInput>>>, TState, SceneContext) -> BoxFuture<'a, Option<TState>>>,
+    update_state: Arc<dyn Send + Sync + for<'a> Fn(BoxFuture<'a, Option<Vec<TInput>>>, TState, SceneContext) -> BoxFuture<'a, ImUpdateResult<TState>>>,
 
     /// The input stream for the subprogram
     input_stream: stream::ReadyChunks<InputStream<TInput>>,
@@ -29,12 +44,20 @@ where
     ///
     pub async fn next(&mut self, state: TState) -> Option<TState> {
         let input_stream    = &mut self.input_stream;
-        let context         = self.context.clone();
+        let context         = &self.context;
         let update_state    = &mut self.update_state;
 
-        let next_input = input_stream.next();
+        let mut state       = state;
 
-        update_state(next_input.boxed(), state, context).await
+        loop {
+            let next_input = input_stream.next();
+
+            state = match update_state(next_input.boxed(), state, context.clone()).await {
+                ImUpdateResult::MoreInput(state)    => state,
+                ImUpdateResult::NewState(state)     => { return Some(state); },
+                ImUpdateResult::Finished            => { return None; },
+            }
+        }
     }
 }
 
@@ -56,7 +79,7 @@ where
 pub async fn immediate_mode_subprogram<TInput, TState, TProcessFuture>(
     input:          InputStream<TInput>, 
     context:        SceneContext, 
-    update_state:   impl 'static + Send + Sync + for<'a> Fn(BoxFuture<'a, Option<Vec<TInput>>>, TState, SceneContext) -> BoxFuture<'a, Option<TState>>, 
+    update_state:   impl 'static + Send + Sync + for<'a> Fn(BoxFuture<'a, Option<Vec<TInput>>>, TState, SceneContext) -> BoxFuture<'a, ImUpdateResult<TState>>, 
     process_state:  impl 'static + Send + FnOnce(ImContext<TInput, TState>, SceneContext) -> TProcessFuture)
 where
     TInput:         SceneMessage,
