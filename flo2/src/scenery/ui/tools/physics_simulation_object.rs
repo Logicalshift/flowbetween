@@ -221,11 +221,11 @@ impl SimObject {
     ///
     /// Performs an action when the bindings of this object change
     ///
+    /// Note: call this *before* reading any of the object properties to avoid issues with missed updates or undetected changes
+    ///
     pub fn when_changed(&mut self, notify: Arc<dyn Notifiable>) {
         // Stop any existing notification
-        if let Some(bindings_changed) = self.bindings_changed.take() {
-            bindings_changed.lock().unwrap().done();
-        }
+        let old_bindings = self.bindings_changed.take();
 
         // Create a new notification, if there are any dependencies
         let mut dependencies     = BindingDependencies::new();
@@ -244,6 +244,11 @@ impl SimObject {
         // If there are any dependencies, set up the notifications
         if num_dependencies > 0 {
             self.bindings_changed = Some(Mutex::new(dependencies.when_changed(notify)));
+        }
+
+        // Clear up old bindings
+        if let Some(old_bindings) = old_bindings {
+            old_bindings.lock().unwrap().done();
         }
     }
 }

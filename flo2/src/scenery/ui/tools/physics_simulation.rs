@@ -442,6 +442,8 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                 for changed_object_id in recently_changed.drain() {
                     let Some(object) = rigid_bodies.get_mut(&changed_object_id) else { continue; };
 
+                    object.when_changed(NotifySubprogram::send(UpdateObject(changed_object_id), &context, our_program_id));
+
                     if let Some(position) = object.position.as_ref().map(|pos| pos.get()) {
                         object.update_position(position, &mut rigid_body_set, &mut impulse_joint_set);
                     }
@@ -452,8 +454,6 @@ pub async fn physics_simulation_program(input: InputStream<PhysicsSimulation>, c
                             body.add_force(vector![impulse.x() as _, impulse.y() as _], true);
                         }
                     }
-
-                    object.when_changed(NotifySubprogram::send(UpdateObject(changed_object_id), &context, our_program_id));
                 }
 
                 // There are no more new objects
