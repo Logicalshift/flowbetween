@@ -241,6 +241,11 @@ impl SimObject {
             num_dependencies += 1;
         }
 
+        if let Some(collision_exclusions) = &mut self.collision_exclusions {
+            dependencies.add_dependency(collision_exclusions.clone());
+            num_dependencies += 1;
+        }
+
         // If there are any dependencies, set up the notifications
         if num_dependencies > 0 {
             self.bindings_changed = Some(Mutex::new(dependencies.when_changed(notify)));
