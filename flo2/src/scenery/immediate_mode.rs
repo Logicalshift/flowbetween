@@ -43,6 +43,16 @@ where
 /// state based on messages in another. This is a style used in libraries like egui, but is adapted here for flo_scene
 /// to support a wide range of possible interactions.
 ///
+/// This takes two functions. 
+///
+/// `update_state()` takes the previous state along with a future that receives the input for the subprogram and performs
+/// any actions required to reflect any state updates (both from the last pass through the processing loop and from any
+/// input received from its future)
+///
+/// `process_state()` runs the 'immediate mode' loop. It is responsible for creating the initial state, and then typically
+/// performs a loop waiting on `ImContext::next()` to retrieve the next state. This creates the 'immediate mode' event
+/// handling loop.
+///
 pub async fn immediate_mode_subprogram<TInput, TState, TProcessFuture>(
     input:          InputStream<TInput>, 
     context:        SceneContext, 
