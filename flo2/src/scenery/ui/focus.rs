@@ -793,6 +793,9 @@ impl FocusProgram {
                     // Indicate that we've entered the new program
                     new_target.send(FocusPointerEvent::Pointer(None, PointerAction::Enter, PointerId(0), PointerState::new())).await.ok();
                 }
+
+                // No pointer target control at this point
+                *pointer_target_control = None;
             }
 
             *pointer_target_program = Some(target_program);
@@ -837,6 +840,7 @@ impl FocusProgram {
             // No canvas program set
             *pointer_target         = None;
             *pointer_target_program = None;
+            *pointer_target_control = None;
         }
 
         if &target_program_control != &*pointer_target_control {
