@@ -35,8 +35,8 @@ pub enum CanvasRender {
     /// An update for the canvas has been received
     Update(VectorCanvasUpdate),
 
-    /// Focus message (we're really only interested in resizing events)
-    Focus(FocusEvent),
+    /// Focus window message (we're really only interested in resizing events)
+    Window(FocusWindowEvent),
 
     /// Redraw the whole canvas
     Refresh,
@@ -74,7 +74,7 @@ impl SceneMessage for CanvasRender {
     fn initialise(init_context: &impl SceneInitialisationContext) { 
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|msgs| msgs.map(|_: IdleNotification| CanvasRender::Idle))), (), StreamId::with_message_type::<IdleNotification>()).unwrap();
         init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|msgs| msgs.map(|update| CanvasRender::Update(update)))), (), StreamId::with_message_type::<VectorCanvasUpdate>()).unwrap();
-        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|msgs| msgs.map(|focus| CanvasRender::Focus(focus)))), (), StreamId::with_message_type::<FocusEvent>()).unwrap();
+        init_context.connect_programs(StreamSource::Filtered(FilterHandle::for_filter(|msgs| msgs.map(|focus| CanvasRender::Window(focus)))), (), StreamId::with_message_type::<FocusWindowEvent>()).unwrap();
 
         init_context.add_subprogram(SubProgramId::called("flowbetween::canvas_renderer"), canvas_render_program, 50);
     }
@@ -276,9 +276,9 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                 }
             }
 
-            CanvasRender::Focus(evt) => {
+            CanvasRender::Window(evt) => {
                 match evt {
-                    FocusEvent::Event(_, DrawEvent::Resize(new_w, new_h)) => {
+                    FocusWindowEvent::Resize(new_w, new_h) => {
                         if (new_w/scale) != size_w || (new_h/scale) != size_h {
                             // Update the size
                             size_w = new_w/scale;
@@ -294,7 +294,7 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                         }
                     }
 
-                    FocusEvent::Event(_, DrawEvent::Scale(new_scale)) => {
+                    FocusWindowEvent::Scale(new_scale) => {
                         if new_scale != scale {
                             // Update the size
                             size_w = (size_w*scale)/new_scale;
