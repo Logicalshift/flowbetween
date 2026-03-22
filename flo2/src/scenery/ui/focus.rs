@@ -630,9 +630,9 @@ impl FocusProgram {
     }
 
     ///
-    /// Determines the target program at a location in the canvas
+    /// Determines the target program at a location in the canvas, filtering out any programs/controls that shouldn't be matched
     ///
-    fn pointer_target(&mut self, location_in_canvas: Option<(f64, f64)>) -> (Option<SubProgramId>, Option<ControlId>) {
+    fn pointer_target_filter(&mut self, location_in_canvas: Option<(f64, f64)>, should_match: impl Fn(SubProgramId, Option<ControlId>) -> bool) -> (Option<SubProgramId>, Option<ControlId>) {
         let space                   = &mut self.subprogram_space;
         let subprogram_data         = &self.subprogram_data;
 
@@ -695,6 +695,14 @@ impl FocusProgram {
     }
 
     ///
+    /// Determines the target program at a location in the canvas
+    ///
+    #[inline]
+    fn pointer_target(&mut self, location_in_canvas: Option<(f64, f64)>) -> (Option<SubProgramId>, Option<ControlId>) {
+        self.pointer_target_filter(location_in_canvas, |_, _| true)
+    }
+
+    ///
     /// Send a hover message to the pointer target
     ///
     async fn send_hover(&mut self, pointer_state: &PointerState) {
@@ -705,8 +713,20 @@ impl FocusProgram {
         }
 
         // Locate the subprogram that the pointer is over
-        // TODO: not the control that's already clicked
-        let (hover_program, hover_control) = self.pointer_target(pointer_state.location_in_canvas);
+        let current_target          = self.pointer_target_program;
+        let current_target_control  = self.pointer_target_control;
+
+        let (hover_program, hover_control) = self.pointer_target_filter(pointer_state.location_in_canvas, |program_id, control_id| {
+            if Some(program_id) == current_target {
+                if control_id.is_none() || control_id == current_target_control {
+                    false
+                } else {
+                    true
+                }
+            } else {
+                true
+            }
+        });
 
         if &self.hover != &(hover_program, hover_control) {
             // Replace the hover control
