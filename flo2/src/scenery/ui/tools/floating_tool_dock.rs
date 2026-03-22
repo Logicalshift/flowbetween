@@ -459,7 +459,7 @@ async fn events_program(input: InputStream<FocusEvent>, context: SceneContext, f
 
         // Looking for clicks and drags
         match evt {
-            FocusEvent::Event(control_id, DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(control_id, PointerAction::ButtonDown, pointer_id, pointer_state)) => {
                 if pointer_state.buttons.contains(&Button::Left) {
                     // Fetch the tool that was clicked on
                     let tools       = floating_dock.tools.get();
@@ -609,8 +609,8 @@ async fn track_left_down(input: &mut InputStream<FocusEvent>, context: &SceneCon
 
         // Track until the user releases the mouse or drags the tool
         match evt {
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, pointer_id, pointer_state)) |
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Drag, pointer_id, pointer_state)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Move, pointer_id, pointer_state)) |
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Drag, pointer_id, pointer_state)) => {
                 if pointer_id != initial_pointer_id { continue; }
 
                 // Get the distance the user has dragged the cursor
@@ -633,7 +633,7 @@ async fn track_left_down(input: &mut InputStream<FocusEvent>, context: &SceneCon
                 }
             }
 
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::ButtonUp, pointer_id, pointer_state)) => {
                 if pointer_id != initial_pointer_id { continue; }
                 if pointer_state.buttons.contains(&Button::Left) { continue; }
 
@@ -665,8 +665,8 @@ async fn track_left_drag(input: &mut InputStream<FocusEvent>, context: &SceneCon
 
         // Track until the user releases the mouse or drags the tool
         match evt {
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, pointer_id, pointer_state)) |
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Drag, pointer_id, pointer_state)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Move, pointer_id, pointer_state)) |
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Drag, pointer_id, pointer_state)) => {
                 if pointer_id != initial_pointer_id { continue; }
 
                 // Get the distance the user has dragged the cursor
@@ -677,7 +677,7 @@ async fn track_left_drag(input: &mut InputStream<FocusEvent>, context: &SceneCon
                 tool.drag_offset.set(Some((offset_x, offset_y)));
             }
 
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::ButtonUp, pointer_id, pointer_state)) => {
                 if pointer_id != initial_pointer_id { continue; }
                 if pointer_state.buttons.contains(&Button::Left) { continue; }
 
@@ -709,13 +709,9 @@ impl FloatingToolDock {
     ///
     fn process_focus_event(&self, evt: &FocusEvent) {
         match evt {
-            FocusEvent::Event(_, DrawEvent::Resize(_, _)) => {
-            }
+            FocusEvent::Window(_) => { }
 
-            FocusEvent::Event(_, DrawEvent::Scale(_)) => {
-            }
-
-            FocusEvent::Focused(control_id) => {
+            FocusEvent::Keyboard(FocusKeyboardEvent::Focused(control_id)) => {
                 // Keyboard focus is on a tool
                 self.tools.get().values()
                     .for_each(|tool| {
@@ -725,7 +721,7 @@ impl FloatingToolDock {
                     });
             }
 
-            FocusEvent::Unfocused(control_id) => {
+            FocusEvent::Keyboard(FocusKeyboardEvent::Unfocused(control_id)) => {
                 // Keyboard focus has left a tool
                 self.tools.get().values()
                     .for_each(|tool| {
@@ -735,7 +731,7 @@ impl FloatingToolDock {
                     });
             }
 
-            FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Enter, _, _)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(Some(control_id), PointerAction::Enter, _, _)) => {
                 // Pointer has entered a tool
                 self.tools.get().values()
                     .for_each(|tool| {
@@ -745,7 +741,7 @@ impl FloatingToolDock {
                     });
             }
 
-            FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Leave, _, _)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(Some(control_id), PointerAction::Leave, _, _)) => {
                 // Pointer has left a tool
                 self.tools.get().values()
                     .for_each(|tool| {
