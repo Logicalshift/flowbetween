@@ -755,6 +755,23 @@ impl FocusProgram {
     }
 
     ///
+    /// Send a drop message to the pointer target
+    ///
+    async fn send_drop(&mut self, pointer_state: &PointerState) {
+        // Locate the subprogram that the pointer is over
+        let current_target          = self.pointer_target_program;
+        let current_target_control  = self.pointer_target_control;
+
+        let (drop_program, drop_control) = self.pointer_target_filter(pointer_state.location_in_canvas, |program_id, control_id| {
+            Some(program_id) != current_target && control_id != current_target_control
+        });
+
+        if let Some(drop_program) = drop_program {
+            self.send_to_pointer_target(FocusPointerEvent::Drop(drop_program, drop_control)).await;
+        }
+    }
+
+    ///
     /// Sets the target of the pointer target, according to the pointer state
     ///
     async fn set_pointer_target(&mut self, pointer_state: &PointerState, context: &SceneContext) {
