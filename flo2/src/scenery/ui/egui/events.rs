@@ -1,4 +1,5 @@
 use super::key::*;
+use crate::scenery::ui::focus_events::*;
 
 use flo_draw as draw;
 use egui;
@@ -22,18 +23,18 @@ pub fn convert_button(button: draw::Button) -> egui::PointerButton {
 ///
 /// Converts DrawEvents to egui events
 ///
-pub fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent) {
-    use draw::DrawEvent::*;
+pub fn convert_events(pending_input: &mut egui::RawInput, event: FocusEvent) {
+    use FocusEvent::{Window, Keyboard};
+    use FocusPointerEvent::*;
+    use FocusKeyboardEvent::*;
+    use FocusWindowEvent::*;
     use draw::PointerAction;
 
     match event {
-        Redraw              => { }
-        NewFrame            => { }
-        Resize(_, _)        => { }
-        CanvasTransform(_)  => { }
-        Closed              => { }
+        Window(Resize(_, _))        => { }
+        Window(Closed)              => { }
 
-        Scale(new_scale)    => {
+        Window(Scale(new_scale))    => {
             let mut viewport_info                   = egui::ViewportInfo::default();
             viewport_info.native_pixels_per_point   = Some(new_scale as _);
 
@@ -41,13 +42,13 @@ pub fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent
         }
 
         // Pointer actions
-        Pointer(PointerAction::Move, _, pointer_state) => {
+        FocusEvent::Pointer(Pointer(_, PointerAction::Move, _, pointer_state)) => {
             if let Some(location) = pointer_state.location_in_canvas {
                 pending_input.events.push(egui::Event::PointerMoved(egui::Pos2 { x: location.0 as _, y: location.1 as _ }));
             }
         }
 
-        Pointer(PointerAction::ButtonDown, _, pointer_state) => {
+        FocusEvent::Pointer(Pointer(_, PointerAction::ButtonDown, _, pointer_state)) => {
             if let Some(location) = pointer_state.location_in_canvas {
                 for button in pointer_state.buttons.iter() {
                     pending_input.events.push(egui::Event::PointerButton {
@@ -60,7 +61,7 @@ pub fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent
             }
         }
 
-        Pointer(PointerAction::ButtonUp, _, pointer_state) => {
+        FocusEvent::Pointer(Pointer(_, PointerAction::ButtonUp, _, pointer_state)) => {
             if let Some(location) = pointer_state.location_in_canvas {
                 for button in pointer_state.buttons.iter() {
                     pending_input.events.push(egui::Event::PointerButton {
@@ -73,40 +74,40 @@ pub fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent
             }
         }
 
-        Pointer(_, _, _) => {
+        FocusEvent::Pointer(_) => {
             // Other pointer actions (Enter, Leave, Drag, Cancel) are ignored
         }
 
         // Modifiers: key down
-        KeyDown(_, Some(draw::Key::ModifierShift))  => { pending_input.modifiers.shift = true; },
-        KeyDown(_, Some(draw::Key::ModifierAlt))    => { pending_input.modifiers.alt = true; },
+        Keyboard(KeyDown(_, _, Some(draw::Key::ModifierShift)))  => { pending_input.modifiers.shift = true; },
+        Keyboard(KeyDown(_, _, Some(draw::Key::ModifierAlt)))    => { pending_input.modifiers.alt = true; },
 
         #[cfg(target_os="macos")]
-        KeyDown(_, Some(draw::Key::ModifierMeta))   => { pending_input.modifiers.mac_cmd = true; pending_input.modifiers.command = true; },
+        Keyboard(KeyDown(_, _, Some(draw::Key::ModifierMeta)))   => { pending_input.modifiers.mac_cmd = true; pending_input.modifiers.command = true; },
         #[cfg(target_os="macos")]
-        KeyDown(_, Some(draw::Key::ModifierCtrl))   => { pending_input.modifiers.ctrl = true; },
+        Keyboard(KeyDown(_, _, Some(draw::Key::ModifierCtrl)))   => { pending_input.modifiers.ctrl = true; },
 
         #[cfg(not(target_os="macos"))]
-        KeyDown(_, Some(draw::Key::ModifierMeta))   => { pending_input.modifiers.mac_cmd = true; },
+        Keyboard(KeyDown(_, _, Some(draw::Key::ModifierMeta)))   => { pending_input.modifiers.mac_cmd = true; },
         #[cfg(not(target_os="macos"))]
-        KeyDown(_, Some(draw::Key::ModifierCtrl))   => { pending_input.modifiers.ctrl = true; pending_input.modifiers.command = true; },
+        Keyboard(KeyDown(_, _, Some(draw::Key::ModifierCtrl)))   => { pending_input.modifiers.ctrl = true; pending_input.modifiers.command = true; },
 
         // Modifiers: key up
-        KeyUp(_, Some(draw::Key::ModifierShift))    => { pending_input.modifiers.shift = false; },
-        KeyUp(_, Some(draw::Key::ModifierAlt))      => { pending_input.modifiers.alt = false; },
+        Keyboard(KeyUp(_, _, Some(draw::Key::ModifierShift)))    => { pending_input.modifiers.shift = false; },
+        Keyboard(KeyUp(_, _, Some(draw::Key::ModifierAlt)))      => { pending_input.modifiers.alt = false; },
 
         #[cfg(target_os="macos")]
-        KeyUp(_, Some(draw::Key::ModifierMeta))     => { pending_input.modifiers.mac_cmd = false; pending_input.modifiers.command = false; },
+        Keyboard(KeyUp(_, _, Some(draw::Key::ModifierMeta)))     => { pending_input.modifiers.mac_cmd = false; pending_input.modifiers.command = false; },
         #[cfg(target_os="macos")]
-        KeyUp(_, Some(draw::Key::ModifierCtrl))     => { pending_input.modifiers.ctrl = false; },
+        Keyboard(KeyUp(_, _, Some(draw::Key::ModifierCtrl)))     => { pending_input.modifiers.ctrl = false; },
 
         #[cfg(not(target_os="macos"))]
-        KeyUp(_, Some(draw::Key::ModifierMeta))     => { pending_input.modifiers.mac_cmd = false; },
+        Keyboard(KeyUp(_, _, Some(draw::Key::ModifierMeta)))     => { pending_input.modifiers.mac_cmd = false; },
         #[cfg(not(target_os="macos"))]
-        KeyUp(_, Some(draw::Key::ModifierCtrl))     => { pending_input.modifiers.ctrl = false; pending_input.modifiers.command = false; },
+        Keyboard(KeyUp(_, _, Some(draw::Key::ModifierCtrl)))     => { pending_input.modifiers.ctrl = false; pending_input.modifiers.command = false; },
 
         // Other key presses
-        KeyDown(_, key) => {
+        Keyboard(KeyDown(_, _, key)) => {
             if let Some(key) = key.and_then(|key| convert_key(key)) {
                 // Add a key down event
                 // TODO: we can't currently track repeats
@@ -120,7 +121,7 @@ pub fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent
             }
         }
 
-        KeyUp(_, key) => {
+        Keyboard(KeyUp(_, _, key)) => {
             if let Some(key) = key.and_then(|key| convert_key(key)) {
                 // Add a key up event
                 // TODO: we can't currently track repeats
@@ -133,5 +134,8 @@ pub fn convert_events(pending_input: &mut egui::RawInput, event: draw::DrawEvent
                 });
             }
         }
+
+        Keyboard(Focused(_))    => {}
+        Keyboard(Unfocused(_))  => {}
     }
 }

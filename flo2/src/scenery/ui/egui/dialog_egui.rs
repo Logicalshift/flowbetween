@@ -154,11 +154,7 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
 
             FocusEvent(focus_event) => {
                 // Process the event
-                match focus_event {
-                    FocusEvent::Event(_control, event)  => { convert_events(&mut pending_input, event); }
-                    FocusEvent::Focused(_control)       => { }
-                    FocusEvent::Unfocused(_control)     => { }
-                }
+                convert_events(&mut pending_input, focus_event);
 
                 // Request an idle event (we'll use this to run the egui)
                 if !awaiting_idle {
