@@ -126,6 +126,7 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
         tab_ordering:               HashMap::new(),
         scale:                      None,
         bounds:                     None,
+        hover:                      (None, None),
     };
 
     while let Some(request) = input.next().await {
@@ -260,6 +261,9 @@ struct FocusProgram {
 
     /// The scale of the window (None if this has not been sent to us)
     scale: Option<f64>,
+
+    /// The last control that we found we were hovering over
+    hover: (Option<SubProgramId>, Option<ControlId>),
 }
 
 impl SubProgramRegion {
@@ -693,14 +697,26 @@ impl FocusProgram {
     ///
     /// Send a hover message to the pointer target
     ///
-    async fn send_hover(&mut self, pointer_state: &PointerState, context: &SceneContext) {
+    async fn send_hover(&mut self, pointer_state: &PointerState) {
         // 'Hovering' only happens when a mouse button is held down
         if self.button_state.num_buttons_down() == 0 {
+            self.hover = (None, None);
             return;
         }
 
         // Locate the subprogram that the pointer is over
+        // TODO: not the control that's already clicked
+        let (hover_program, hover_control) = self.pointer_target(pointer_state.location_in_canvas);
 
+        if &self.hover != &(hover_program, hover_control) {
+            // Replace the hover control
+            self.hover = (hover_program, hover_control);
+
+            // Send a hover event
+            if let Some(hover_program) = hover_program {
+                self.send_to_pointer_target(FocusPointerEvent::Hover(hover_program, hover_control)).await;
+            }
+        }
     }
 
     ///
@@ -715,7 +731,6 @@ impl FocusProgram {
         // Locate the subprogram that the pointer is over
         let (target_program, target_program_control) = self.pointer_target(pointer_state.location_in_canvas);
 
-        let subprogram_data         = &self.subprogram_data;
         let pointer_target          = &mut self.pointer_target;
         let pointer_target_program  = &mut self.pointer_target_program;
         let pointer_target_control  = &mut self.pointer_target_control;
