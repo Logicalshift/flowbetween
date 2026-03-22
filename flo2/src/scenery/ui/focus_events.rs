@@ -10,14 +10,14 @@ use serde::*;
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum FocusEvent {
-    /// An event has occurred for the specified control
-    Event(Option<ControlId>, DrawEvent),
+    /// Pointer event
+    Pointer(FocusPointerEvent),
 
-    /// The specified control ID has received keyboard focus
-    Focused(ControlId),
+    /// Keyboard event
+    Keyboard(FocusKeyboardEvent),
 
-    /// The specified control ID has lost keyboard focus (when focus moves, we unfocus first)
-    Unfocused(ControlId),
+    /// Window event
+    Window(FocusWindowEvent),
 }
 
 ///
@@ -63,7 +63,10 @@ pub enum FocusWindowEvent {
 }
 
 fn setup_focus_events(init_context: &impl SceneInitialisationContext) {
-    // TODO: convert the individual events to the main FocusEvent
+    // Convert the specific events to the 'general' event type so programs can receive all the events if they need to
+    init_context.connect_programs(StreamSource::Filtered(FilterHandle::conversion_filter::<FocusPointerEvent, FocusEvent>()), (), StreamId::with_message_type::<FocusPointerEvent>()).unwrap();
+    init_context.connect_programs(StreamSource::Filtered(FilterHandle::conversion_filter::<FocusKeyboardEvent, FocusEvent>()), (), StreamId::with_message_type::<FocusKeyboardEvent>()).unwrap();
+    init_context.connect_programs(StreamSource::Filtered(FilterHandle::conversion_filter::<FocusWindowEvent, FocusEvent>()), (), StreamId::with_message_type::<FocusWindowEvent>()).unwrap();
 }
 
 impl SceneMessage for FocusEvent {
@@ -87,5 +90,26 @@ impl SceneMessage for FocusKeyboardEvent {
 impl SceneMessage for FocusWindowEvent {
     fn initialise(init_context: &impl SceneInitialisationContext) {
         setup_focus_events(init_context);
+    }
+}
+
+impl Into<FocusEvent> for FocusPointerEvent {
+    #[inline]
+    fn into(self) -> FocusEvent {
+        FocusEvent::Pointer(self)
+    }
+}
+
+impl Into<FocusEvent> for FocusKeyboardEvent {
+    #[inline]
+    fn into(self) -> FocusEvent {
+        FocusEvent::Keyboard(self)
+    }
+}
+
+impl Into<FocusEvent> for FocusWindowEvent {
+    #[inline]
+    fn into(self) -> FocusEvent {
+        FocusEvent::Window(self)
     }
 }
