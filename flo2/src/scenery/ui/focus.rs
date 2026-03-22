@@ -628,7 +628,7 @@ impl FocusProgram {
     ///
     /// Determines the target program at a location in the canvas
     ///
-    fn pointer_target_program(&mut self, location_in_canvas: Option<(f64, f64)>) -> (Option<SubProgramId>, Option<ControlId>) {
+    fn pointer_target(&mut self, location_in_canvas: Option<(f64, f64)>) -> (Option<SubProgramId>, Option<ControlId>) {
         let space                   = &mut self.subprogram_space;
         let subprogram_data         = &self.subprogram_data;
 
@@ -712,39 +712,13 @@ impl FocusProgram {
             return;
         }
 
-        let space                   = &mut self.subprogram_space;
+        // Locate the subprogram that the pointer is over
+        let (target_program, target_program_control) = self.pointer_target(pointer_state.location_in_canvas);
+
         let subprogram_data         = &self.subprogram_data;
         let pointer_target          = &mut self.pointer_target;
         let pointer_target_program  = &mut self.pointer_target_program;
         let pointer_target_control  = &mut self.pointer_target_control;
-
-        // Generate the space if it's not already generated
-        let space = if let Some(space) = space {
-            space
-        } else {
-            *space = Some(Space1D::from_data(subprogram_data.iter().map(|(program_id, region)| (region.bounds.min().x()..region.bounds.max().x(), *program_id))));
-            space.as_mut().unwrap()
-        };
-
-        // Locate the subprogram that the pointer is over
-        let target_program = if let Some((x, y)) = pointer_state.location_in_canvas {
-            // Find all of the subprograms where the point might be inside
-            let mut possible_matches = space.data_at_point(x)
-                .flat_map(|subprogram_id| subprogram_data.get(subprogram_id).map(|region| (subprogram_id, region)))
-                .filter(|(_, region)| UiPoint(x, y).in_bounds(&region.bounds))
-                .filter(|(_, region)| region.point_is_inside(x, y))
-                .collect::<Vec<_>>();
-
-            // Order by z-index if there are multiple possibilities
-            if possible_matches.len() > 1 {
-                possible_matches.sort_by_key(|(_, region)| region.z_index);
-            }
-
-            // Highest z index is the target program
-            possible_matches.last().map(|(program_id, _)| **program_id)
-        } else {
-            None
-        };
 
         // Connect to the program
         if let Some(target_program) = target_program {
@@ -815,43 +789,18 @@ impl FocusProgram {
             *pointer_target_program = None;
         }
 
-        if let (Some(target_program), Some((x, y))) = (target_program, pointer_state.location_in_canvas) {
-            let target_program_data = subprogram_data.get(&target_program);
-
-            if let Some(target_program_data) = target_program_data {
-                // Find the control that the point might be inside
-                let mut possible_controls = target_program_data.controls.iter()
-                    .filter(|control| UiPoint(x, y).in_bounds(&control.bounds))
-                    .filter(|control| control.point_is_inside(x, y))
-                    .collect::<Vec<_>>();
-
-                // Order by z-index if there are multiple possibilities
-                if possible_controls.len() > 1 {
-                    possible_controls.sort_by_key(|control| control.z_index);
-                }
-
-                // The highest z-index is the target control
-                let new_control = possible_controls.last().map(|control| control.id);
-
-                if &new_control != &*pointer_target_control {
-                    if let (Some(old_control), Some(target)) = (&*pointer_target_control, pointer_target.as_mut()) {
-                        // Leave the old control
-                        target.send(FocusPointerEvent::Pointer(Some(old_control.clone()), PointerAction::Leave, PointerId(0), PointerState::new())).await.ok();
-                    }
-
-                    *pointer_target_control = new_control.clone();
-
-                    if let (Some(new_control), Some(target)) = (&*pointer_target_control, pointer_target.as_mut()) {
-                        // Enter the new control
-                        target.send(FocusPointerEvent::Pointer(Some(new_control.clone()), PointerAction::Enter, PointerId(0), PointerState::new())).await.ok();
-                    }
-                }
-            } else {
-                *pointer_target_control = None;
+        if &target_program_control != &*pointer_target_control {
+            if let (Some(old_control), Some(target)) = (&*pointer_target_control, pointer_target.as_mut()) {
+                // Leave the old control
+                target.send(FocusPointerEvent::Pointer(Some(old_control.clone()), PointerAction::Leave, PointerId(0), PointerState::new())).await.ok();
             }
-        } else {
-            // Target is the canvas
-            *pointer_target_control = None;
+
+            *pointer_target_control = target_program_control.clone();
+
+            if let (Some(new_control), Some(target)) = (&*pointer_target_control, pointer_target.as_mut()) {
+                // Enter the new control
+                target.send(FocusPointerEvent::Pointer(Some(new_control.clone()), PointerAction::Enter, PointerId(0), PointerState::new())).await.ok();
+            }
         }
     }
 
