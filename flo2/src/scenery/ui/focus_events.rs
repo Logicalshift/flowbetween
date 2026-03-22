@@ -27,6 +27,12 @@ pub enum FocusEvent {
 pub enum FocusPointerEvent {
     /// A pointer device has changed its state
     Pointer(Option<ControlId>, PointerAction, PointerId, PointerState),
+
+    /// The mouse was released over a control in the specified subprogram
+    Drop(SubProgramId, Option<ControlId>),
+
+    /// While being held down, the mouse has moved over a control in the specified subprogram
+    Hover(SubProgramId, Option<ControlId>),
 }
 
 ///
@@ -75,7 +81,9 @@ impl FocusPointerEvent {
     ///
     pub fn with_target(self, new_target: Option<ControlId>) -> Self {
         match self {
-            FocusPointerEvent::Pointer(_, pointer_action, pointer_id, pointer_state) => FocusPointerEvent::Pointer(new_target, pointer_action, pointer_id, pointer_state),
+            FocusPointerEvent::Pointer(_, pointer_action, pointer_id, pointer_state)    => FocusPointerEvent::Pointer(new_target, pointer_action, pointer_id, pointer_state),
+            FocusPointerEvent::Drop(program_id, target_control)                         => FocusPointerEvent::Drop(program_id, target_control),
+            FocusPointerEvent::Hover(program_id, target_control)                        => FocusPointerEvent::Hover(program_id, target_control),
         }
     }
 }
