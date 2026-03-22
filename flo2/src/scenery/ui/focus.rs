@@ -626,6 +626,84 @@ impl FocusProgram {
     }
 
     ///
+    /// Determines the target program at a location in the canvas
+    ///
+    fn pointer_target_program(&mut self, location_in_canvas: Option<(f64, f64)>) -> (Option<SubProgramId>, Option<ControlId>) {
+        let space                   = &mut self.subprogram_space;
+        let subprogram_data         = &self.subprogram_data;
+
+        // Generate the space if it's not already generated
+        let space = if let Some(space) = space {
+            space
+        } else {
+            *space = Some(Space1D::from_data(subprogram_data.iter().map(|(program_id, region)| (region.bounds.min().x()..region.bounds.max().x(), *program_id))));
+            space.as_mut().unwrap()
+        };
+
+        // Locate the subprogram that the pointer is over
+        let target_program = if let Some((x, y)) = location_in_canvas {
+            // Find all of the subprograms where the point might be inside
+            let mut possible_matches = space.data_at_point(x)
+                .flat_map(|subprogram_id| subprogram_data.get(subprogram_id).map(|region| (subprogram_id, region)))
+                .filter(|(_, region)| UiPoint(x, y).in_bounds(&region.bounds))
+                .filter(|(_, region)| region.point_is_inside(x, y))
+                .collect::<Vec<_>>();
+
+            // Order by z-index if there are multiple possibilities
+            if possible_matches.len() > 1 {
+                possible_matches.sort_by_key(|(_, region)| region.z_index);
+            }
+
+            // Highest z index is the target program
+            possible_matches.last().map(|(program_id, _)| **program_id)
+        } else {
+            None
+        };
+
+        // Locate the control in the target program
+        let target_control = if let (Some(target_program), Some((x, y))) = (target_program, location_in_canvas) {
+            let target_program_data = subprogram_data.get(&target_program);
+
+            if let Some(target_program_data) = target_program_data {
+                // Find the control that the point might be inside
+                let mut possible_controls = target_program_data.controls.iter()
+                    .filter(|control| UiPoint(x, y).in_bounds(&control.bounds))
+                    .filter(|control| control.point_is_inside(x, y))
+                    .collect::<Vec<_>>();
+
+                // Order by z-index if there are multiple possibilities
+                if possible_controls.len() > 1 {
+                    possible_controls.sort_by_key(|control| control.z_index);
+                }
+
+                // The highest z-index is the target control
+                possible_controls.last().map(|control| control.id)
+            } else {
+                None
+            }
+        } else {
+            // Target is the canvas
+            None
+        };
+
+
+        (target_program, target_control)
+    }
+
+    ///
+    /// Send a hover message to the pointer target
+    ///
+    async fn send_hover(&mut self, pointer_state: &PointerState, context: &SceneContext) {
+        // 'Hovering' only happens when a mouse button is held down
+        if self.button_state.num_buttons_down() == 0 {
+            return;
+        }
+
+        // Locate the subprogram that the pointer is over
+
+    }
+
+    ///
     /// Sets the target of the pointer target, according to the pointer state
     ///
     async fn set_pointer_target(&mut self, pointer_state: &PointerState, context: &SceneContext) {
