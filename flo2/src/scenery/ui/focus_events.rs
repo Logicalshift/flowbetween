@@ -26,7 +26,7 @@ pub enum FocusEvent {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum FocusPointerEvent {
     /// A pointer device has changed its state
-    Pointer(PointerAction, PointerId, PointerState),
+    Pointer(Option<ControlId>, PointerAction, PointerId, PointerState),
 }
 
 ///
@@ -35,10 +35,16 @@ pub enum FocusPointerEvent {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum FocusKeyboardEvent {
     /// The user has pressed a key (parameters are scancode and the name of the key that was pressed, if known)
-    KeyDown(u64, Option<Key>),
+    KeyDown(Option<ControlId>, u64, Option<Key>),
 
     /// The user has released a key (parameters are scancode and the name of the key that was pressed, if known)
-    KeyUp(u64, Option<Key>),
+    KeyUp(Option<ControlId>, u64, Option<Key>),
+
+    /// The specified control ID has received keyboard focus
+    Focused(ControlId),
+
+    /// The specified control ID has lost keyboard focus (when focus moves, we unfocus first)
+    Unfocused(ControlId),
 }
 
 ///
@@ -46,12 +52,6 @@ pub enum FocusKeyboardEvent {
 ///
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum FocusWindowEvent {
-    /// The specified control ID has received keyboard focus
-    Focused(ControlId),
-
-    /// The specified control ID has lost keyboard focus (when focus moves, we unfocus first)
-    Unfocused(ControlId),
-
     /// The window has a new scale
     Scale(f64),
 
@@ -67,6 +67,31 @@ fn setup_focus_events(init_context: &impl SceneInitialisationContext) {
     init_context.connect_programs(StreamSource::Filtered(FilterHandle::conversion_filter::<FocusPointerEvent, FocusEvent>()), (), StreamId::with_message_type::<FocusPointerEvent>()).unwrap();
     init_context.connect_programs(StreamSource::Filtered(FilterHandle::conversion_filter::<FocusKeyboardEvent, FocusEvent>()), (), StreamId::with_message_type::<FocusKeyboardEvent>()).unwrap();
     init_context.connect_programs(StreamSource::Filtered(FilterHandle::conversion_filter::<FocusWindowEvent, FocusEvent>()), (), StreamId::with_message_type::<FocusWindowEvent>()).unwrap();
+}
+
+impl FocusPointerEvent {
+    ///
+    /// Returns this event with a new target
+    ///
+    pub fn with_target(self, new_target: Option<ControlId>) -> Self {
+        match self {
+            FocusPointerEvent::Pointer(_, pointer_action, pointer_id, pointer_state) => FocusPointerEvent::Pointer(new_target, pointer_action, pointer_id, pointer_state),
+        }
+    }
+}
+
+impl FocusKeyboardEvent {
+    ///
+    /// Returns this event with a new target
+    ///
+    pub fn with_target(self, new_target: Option<ControlId>) -> Self {
+        match self {
+            FocusKeyboardEvent::KeyDown(_, code, key)   => { FocusKeyboardEvent::KeyDown(new_target, code, key) },
+            FocusKeyboardEvent::KeyUp(_, code, key)     => { FocusKeyboardEvent::KeyUp(new_target, code, key) },
+            FocusKeyboardEvent::Focused(_)              => { FocusKeyboardEvent::Focused(new_target.unwrap()) },
+            FocusKeyboardEvent::Unfocused(_)            => { FocusKeyboardEvent::Unfocused(new_target.unwrap()) },
+        }
+    }
 }
 
 impl SceneMessage for FocusEvent {
