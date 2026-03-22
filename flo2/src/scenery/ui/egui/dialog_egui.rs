@@ -4,6 +4,7 @@ use super::state::*;
 
 use crate::scenery::ui::dialog::*;
 use crate::scenery::ui::focus::*;
+use crate::scenery::ui::focus_events::*;
 use crate::scenery::ui::ui_path::*;
 
 use flo_scene::*;
@@ -153,8 +154,6 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
 
             FocusEvent(focus_event) => {
                 // Process the event
-                use crate::scenery::ui::focus::{FocusEvent};
-
                 match focus_event {
                     FocusEvent::Event(_control, event)  => { convert_events(&mut pending_input, event); }
                     FocusEvent::Focused(_control)       => { }
