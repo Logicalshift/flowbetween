@@ -18,7 +18,6 @@ mod tools;
 mod colors;
 mod render_binding;
 mod svg;
-mod gesture;
 
 pub use colors::*;
 pub use namespaces::*;
@@ -39,7 +38,6 @@ pub use tools::physics_simulation_object::*;
 pub use tools::physics_simulation_joints::*;
 pub use render_binding::*;
 pub use svg::*;
-pub use gesture::*;
 
 pub use tools::tool_dock::*;
 pub use tools::floating_tool_dock::*;
