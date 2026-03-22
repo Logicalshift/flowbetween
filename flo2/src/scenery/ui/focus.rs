@@ -645,53 +645,68 @@ impl FocusProgram {
         };
 
         // Locate the subprogram that the pointer is over
-        let target_program = if let Some((x, y)) = location_in_canvas {
+        if let Some((x, y)) = location_in_canvas {
             // Find all of the subprograms where the point might be inside
-            let mut possible_matches = space.data_at_point(x)
+            let mut possible_target_programs = space.data_at_point(x)
                 .flat_map(|subprogram_id| subprogram_data.get(subprogram_id).map(|region| (subprogram_id, region)))
                 .filter(|(_, region)| UiPoint(x, y).in_bounds(&region.bounds))
                 .filter(|(_, region)| region.point_is_inside(x, y))
                 .collect::<Vec<_>>();
 
             // Order by z-index if there are multiple possibilities
-            if possible_matches.len() > 1 {
-                possible_matches.sort_by_key(|(_, region)| region.z_index);
+            if possible_target_programs.len() > 1 {
+                possible_target_programs.sort_by_key(|(_, region)| region.z_index);
             }
 
-            // Highest z index is the target program
-            possible_matches.last().map(|(program_id, _)| **program_id)
-        } else {
-            None
-        };
+            // Locate the control in the target program
+            let possible_controls = possible_target_programs.into_iter()
+                .rev()                          // Because the 'nearest' program is last due to the ordering
+                .map(|(program_id, _)| program_id)
+                .flat_map(|target_program| {
+                    let target_program      = *target_program;
+                    let target_program_data = subprogram_data.get(&target_program);
 
-        // Locate the control in the target program
-        let target_control = if let (Some(target_program), Some((x, y))) = (target_program, location_in_canvas) {
-            let target_program_data = subprogram_data.get(&target_program);
+                    target_program_data
+                        .into_iter()
+                        .flat_map(move |target_program_data| {
+                            // Find the control that the point might be inside
+                            let mut possible_controls = target_program_data.controls.iter()
+                                .filter(|control| UiPoint(x, y).in_bounds(&control.bounds))
+                                .filter(|control| control.point_is_inside(x, y))
+                                .collect::<Vec<_>>();
 
-            if let Some(target_program_data) = target_program_data {
-                // Find the control that the point might be inside
-                let mut possible_controls = target_program_data.controls.iter()
-                    .filter(|control| UiPoint(x, y).in_bounds(&control.bounds))
-                    .filter(|control| control.point_is_inside(x, y))
-                    .collect::<Vec<_>>();
+                            // Order by z-index if there are multiple possibilities
+                            if possible_controls.len() > 1 {
+                                possible_controls.sort_by_key(|control| control.z_index);
+                            }
 
-                // Order by z-index if there are multiple possibilities
-                if possible_controls.len() > 1 {
-                    possible_controls.sort_by_key(|control| control.z_index);
-                }
+                            // If no controls match, then add in the 'base' program canvas
+                            let base = if possible_controls.is_empty() {
+                                Some((target_program, None))
+                            } else {
+                                None
+                            };
 
-                // The highest z-index is the target control
-                possible_controls.last().map(|control| control.id)
+                            // The highest z-index is the target control
+                            possible_controls.into_iter()
+                                .rev()
+                                .map(move |control| (target_program, Some(control.id)))
+                                .chain(base)
+                        })
+                });
+
+            // Apply the filter to the results (which are now a set of possibilities in descending order)
+            let mut filtered_controls = possible_controls.filter(|(program_id, control_id)| should_match(*program_id, *control_id));
+
+            // The first item in this iterator is the 'topmost' control that isn't filtered
+            if let Some((program_id, control_id)) = filtered_controls.next() {
+                (Some(program_id), control_id)
             } else {
-                None
+                (None, None)
             }
         } else {
-            // Target is the canvas
-            None
-        };
-
-
-        (target_program, target_control)
+            (None, None)
+        }
     }
 
     ///
