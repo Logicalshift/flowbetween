@@ -732,15 +732,7 @@ impl FocusProgram {
         let current_target_control  = self.pointer_target_control;
 
         let (hover_program, hover_control) = self.pointer_target_filter(pointer_state.location_in_canvas, |program_id, control_id| {
-            if Some(program_id) == current_target {
-                if control_id.is_none() || control_id == current_target_control {
-                    false
-                } else {
-                    true
-                }
-            } else {
-                true
-            }
+            Some(program_id) != current_target || control_id != current_target_control
         });
 
         if &self.hover != &(hover_program, hover_control) {
@@ -763,7 +755,7 @@ impl FocusProgram {
         let current_target_control  = self.pointer_target_control;
 
         let (drop_program, drop_control) = self.pointer_target_filter(pointer_state.location_in_canvas, |program_id, control_id| {
-            Some(program_id) != current_target && control_id != current_target_control
+            Some(program_id) != current_target || control_id != current_target_control
         });
 
         if let Some(drop_program) = drop_program {
