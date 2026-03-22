@@ -812,6 +812,8 @@ impl FocusProgram {
                         // Also leave the subprogram if we were in a control
                         old_target.send(FocusPointerEvent::Pointer(None, PointerAction::Leave, PointerId(0), PointerState::new())).await.ok();
                     }
+
+                    *pointer_target_control = None;
                 }
 
                 *pointer_target = context.send(canvas_program).ok();
@@ -835,6 +837,8 @@ impl FocusProgram {
                     // Also leave the subprogram if we were in a control
                     old_target.send(FocusPointerEvent::Pointer(None, PointerAction::Leave, PointerId(0), PointerState::new())).await.ok();
                 }
+
+                *pointer_target_control = None;
             }
 
             // No canvas program set
