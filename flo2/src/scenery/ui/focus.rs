@@ -138,16 +138,16 @@ pub async fn focus(input: InputStream<Focus>, context: SceneContext) {
             Event(DrawEvent::Scale(scale))          => { focus.set_scale(scale, &context).await; },
             Event(DrawEvent::Resize(w, h))          => { focus.set_bounds(w, h, &context).await; },
             Event(DrawEvent::CanvasTransform(_))    => { },
-            Event(DrawEvent::Closed)                => { focus.send_to_all(DrawEvent::Closed, &context).await; }
+            Event(DrawEvent::Closed)                => { focus.send_to_all(FocusWindowEvent::Closed, &context).await; }
 
             // Pointer and key events
             Event(DrawEvent::Pointer(PointerAction::Enter, _, _))                           => { },
             Event(DrawEvent::Pointer(PointerAction::Leave, _, _))                           => { },
-            Event(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => { focus.set_pointer_target(&pointer_state, &context).await; focus.button_state.set_buttons(&pointer_state.buttons); focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)).await; },
-            Event(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state))   => { focus.button_state.set_buttons(&pointer_state.buttons); focus.send_to_pointer_target(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state)).await; },
-            Event(DrawEvent::Pointer(other_action, pointer_id, pointer_state))              => { focus.set_pointer_target(&pointer_state, &context).await; focus.send_to_pointer_target(DrawEvent::Pointer(other_action, pointer_id, pointer_state)).await; },
-            Event(DrawEvent::KeyDown(scancode, key))                                        => { focus.send_to_focus(DrawEvent::KeyDown(scancode, key)).await; },
-            Event(DrawEvent::KeyUp(scancode, key))                                          => { focus.send_to_focus(DrawEvent::KeyUp(scancode, key)).await; },
+            Event(DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => { focus.set_pointer_target(&pointer_state, &context).await; focus.button_state.set_buttons(&pointer_state.buttons); focus.send_to_pointer_target(FocusPointerEvent::Pointer(None, PointerAction::ButtonDown, pointer_id, pointer_state)).await; },
+            Event(DrawEvent::Pointer(PointerAction::ButtonUp, pointer_id, pointer_state))   => { focus.button_state.set_buttons(&pointer_state.buttons); focus.send_to_pointer_target(FocusPointerEvent::Pointer(None, PointerAction::ButtonUp, pointer_id, pointer_state)).await; },
+            Event(DrawEvent::Pointer(other_action, pointer_id, pointer_state))              => { focus.set_pointer_target(&pointer_state, &context).await; focus.send_to_pointer_target(FocusPointerEvent::Pointer(None, other_action, pointer_id, pointer_state)).await; },
+            Event(DrawEvent::KeyDown(scancode, key))                                        => { focus.send_to_focus(FocusKeyboardEvent::KeyDown(None, scancode, key), &context).await; },
+            Event(DrawEvent::KeyUp(scancode, key))                                          => { focus.send_to_focus(FocusKeyboardEvent::KeyUp(None, scancode, key), &context).await; },
 
             // Updates from the scene in general
             Update(SceneUpdate::Stopped(program_id))    => { focus.remove_program_claims(program_id).await; focus.remove_program_focus(program_id).await; },
@@ -229,7 +229,7 @@ struct FocusProgram {
     subprogram_data: HashMap<SubProgramId, SubProgramRegion>,
 
     /// The control that pointer events should be sent to
-    pointer_target: Option<OutputSink<FocusEvent>>,
+    pointer_target: Option<OutputSink<FocusPointerEvent>>,
 
     /// The subprogram ID of the active pointer target
     pointer_target_program: Option<SubProgramId>,
@@ -247,7 +247,7 @@ struct FocusProgram {
     focused_control: Option<ControlId>,
 
     /// Where keyboard events should be sent
-    focused_event_target: Option<OutputSink<FocusEvent>>,
+    focused_event_target: Option<OutputSink<FocusKeyboardEvent>>,
 
     /// The tab ordering for the controls within this program
     tab_ordering: HashMap<SubProgramId, KeyboardSubProgram>,
@@ -300,7 +300,7 @@ impl FocusProgram {
     ///
     async fn set_scale(&mut self, scale: f64, context: &SceneContext) {
         self.scale = Some(scale);
-        self.send_to_all(DrawEvent::Scale(scale), &context).await;
+        self.send_to_all(FocusWindowEvent::Scale(scale), &context).await;
     }
 
     ///
@@ -308,7 +308,7 @@ impl FocusProgram {
     ///
     async fn set_bounds(&mut self, width: f64, height: f64, context: &SceneContext) {
         self.bounds = Some((width, height));
-        self.send_to_all(DrawEvent::Resize(width, height), &context).await;
+        self.send_to_all(FocusWindowEvent::Resize(width, height), &context).await;
     }
 
     ///
@@ -320,12 +320,12 @@ impl FocusProgram {
         if let Some(mut subprogram) = subprogram {
             // Send the scale if it's been stored
             if let Some(scale) = self.scale {
-                subprogram.send(FocusEvent::Event(None, DrawEvent::Scale(scale))).await.ok();
+                subprogram.send(FocusWindowEvent::Scale(scale)).await.ok();
             }
 
             // Send the bounds if they've been stored
             if let Some((w, h)) = self.bounds {
-                subprogram.send(FocusEvent::Event(None, DrawEvent::Resize(w, h))).await.ok();
+                subprogram.send(FocusWindowEvent::Resize(w, h)).await.ok();
             }
         }
     }
@@ -337,7 +337,7 @@ impl FocusProgram {
         // Unfocus the existing program
         if let (Some(old_program_id), Some(old_control_id)) = (self.focused_subprogram, self.focused_control) {
             if let Ok(mut channel) = context.send(old_program_id) {
-                channel.send(FocusEvent::Unfocused(old_control_id)).await.ok();
+                channel.send(FocusKeyboardEvent::Unfocused(old_control_id)).await.ok();
             }
 
             self.focused_subprogram  = None;
@@ -348,7 +348,7 @@ impl FocusProgram {
         if let Ok(mut channel) = context.send(program_id) {
             self.focused_subprogram  = Some(program_id);
             self.focused_control     = Some(control_id);
-            channel.send(FocusEvent::Focused(control_id)).await.ok();
+            channel.send(FocusKeyboardEvent::Focused(control_id)).await.ok();
 
             self.focused_event_target = Some(channel);
         } else {
@@ -608,13 +608,18 @@ impl FocusProgram {
     ///
     /// Sends an event to whichever program/control is focused
     ///
-    async fn send_to_focus(&mut self, event: DrawEvent) {
+    async fn send_to_focus(&mut self, event: FocusKeyboardEvent, context: &SceneContext) {
         let control = self.focused_control;
+        let event   = event.with_target(control);
 
-        if let Some(pointer_target) = &mut self.pointer_target {
-            pointer_target.send(FocusEvent::Event(control, event)).await.ok();
+        if let Some(pointer_target_program) = &mut self.pointer_target_program {
+            // While performing actions, we try to send to the pointer target instead (if it accepts keyboard events)
+            if let Ok(mut pointer_target) = context.send(*pointer_target_program) {
+                pointer_target.send(event).await.ok();
+            }
         } else if let Some(focus_target) = &mut self.focused_event_target {
-            if focus_target.send(FocusEvent::Event(control, event)).await.is_err() {
+            // Send to the keyboard focus if there's no pointer target
+            if focus_target.send(event).await.is_err() {
                 self.focused_event_target = None;
             }
         }
@@ -671,11 +676,11 @@ impl FocusProgram {
                 let old_target_control = pointer_target_control.clone();
                 if let Some(old_target) = pointer_target {
                     // Leave the control
-                    old_target.send(FocusEvent::Event(old_target_control, DrawEvent::Pointer(PointerAction::Leave, PointerId(0), PointerState::new()))).await.ok();
+                    old_target.send(FocusPointerEvent::Pointer(old_target_control, PointerAction::Leave, PointerId(0), PointerState::new())).await.ok();
 
                     if old_target_control.is_some() {
                         // Also leave the subprogram if we were in a control
-                        old_target.send(FocusEvent::Event(None, DrawEvent::Pointer(PointerAction::Leave, PointerId(0), PointerState::new()))).await.ok();
+                        old_target.send(FocusPointerEvent::Pointer(None, PointerAction::Leave, PointerId(0), PointerState::new())).await.ok();
                     }
                 }
 
@@ -684,7 +689,7 @@ impl FocusProgram {
 
                 if let Some(new_target) = pointer_target {
                     // Indicate that we've entered the new program
-                    new_target.send(FocusEvent::Event(None, DrawEvent::Pointer(PointerAction::Enter, PointerId(0), PointerState::new()))).await.ok();
+                    new_target.send(FocusPointerEvent::Pointer(None, PointerAction::Enter, PointerId(0), PointerState::new())).await.ok();
                 }
             }
 
@@ -696,11 +701,11 @@ impl FocusProgram {
                 let old_target_control = pointer_target_control.clone();
                 if let Some(old_target) = pointer_target {
                     // Leave the control
-                    old_target.send(FocusEvent::Event(old_target_control, DrawEvent::Pointer(PointerAction::Leave, PointerId(0), PointerState::new()))).await.ok();
+                    old_target.send(FocusPointerEvent::Pointer(old_target_control, PointerAction::Leave, PointerId(0), PointerState::new())).await.ok();
 
                     if old_target_control.is_some() {
                         // Also leave the subprogram if we were in a control
-                        old_target.send(FocusEvent::Event(None, DrawEvent::Pointer(PointerAction::Leave, PointerId(0), PointerState::new()))).await.ok();
+                        old_target.send(FocusPointerEvent::Pointer(None, PointerAction::Leave, PointerId(0), PointerState::new())).await.ok();
                     }
                 }
 
@@ -709,7 +714,7 @@ impl FocusProgram {
                 // Enter the canvas
                 if let Some(new_target) = pointer_target {
                     // Indicate that we've entered the new program
-                    new_target.send(FocusEvent::Event(None, DrawEvent::Pointer(PointerAction::Enter, PointerId(0), PointerState::new()))).await.ok();
+                    new_target.send(FocusPointerEvent::Pointer(None, PointerAction::Enter, PointerId(0), PointerState::new())).await.ok();
                 }
             }
 
@@ -719,11 +724,11 @@ impl FocusProgram {
             let old_target_control = pointer_target_control.clone();
             if let Some(old_target) = pointer_target {
                 // Leave the control
-                old_target.send(FocusEvent::Event(old_target_control, DrawEvent::Pointer(PointerAction::Leave, PointerId(0), PointerState::new()))).await.ok();
+                old_target.send(FocusPointerEvent::Pointer(old_target_control, PointerAction::Leave, PointerId(0), PointerState::new())).await.ok();
 
                 if old_target_control.is_some() {
                     // Also leave the subprogram if we were in a control
-                    old_target.send(FocusEvent::Event(None, DrawEvent::Pointer(PointerAction::Leave, PointerId(0), PointerState::new()))).await.ok();
+                    old_target.send(FocusPointerEvent::Pointer(None, PointerAction::Leave, PointerId(0), PointerState::new())).await.ok();
                 }
             }
 
@@ -753,14 +758,14 @@ impl FocusProgram {
                 if &new_control != &*pointer_target_control {
                     if let (Some(old_control), Some(target)) = (&*pointer_target_control, pointer_target.as_mut()) {
                         // Leave the old control
-                        target.send(FocusEvent::Event(Some(old_control.clone()), DrawEvent::Pointer(PointerAction::Leave, PointerId(0), PointerState::new()))).await.ok();
+                        target.send(FocusPointerEvent::Pointer(Some(old_control.clone()), PointerAction::Leave, PointerId(0), PointerState::new())).await.ok();
                     }
 
                     *pointer_target_control = new_control.clone();
 
                     if let (Some(new_control), Some(target)) = (&*pointer_target_control, pointer_target.as_mut()) {
                         // Enter the new control
-                        target.send(FocusEvent::Event(Some(new_control.clone()), DrawEvent::Pointer(PointerAction::Enter, PointerId(0), PointerState::new()))).await.ok();
+                        target.send(FocusPointerEvent::Pointer(Some(new_control.clone()), PointerAction::Enter, PointerId(0), PointerState::new())).await.ok();
                     }
                 }
             } else {
@@ -775,11 +780,11 @@ impl FocusProgram {
     ///
     /// Sends an event to whichever program/control is the pointer target
     ///
-    async fn send_to_pointer_target(&mut self, event: DrawEvent) {
+    async fn send_to_pointer_target(&mut self, event: FocusPointerEvent) {
         let control = self.pointer_target_control;
 
         if let Some(pointer_target) = &mut self.pointer_target {
-            if pointer_target.send(FocusEvent::Event(control, event)).await.is_err() {
+            if pointer_target.send(event.with_target(control)).await.is_err() {
                 self.pointer_target = None;
             }
         }
@@ -788,7 +793,7 @@ impl FocusProgram {
     ///
     /// Sends an event to all registered programs
     ///
-    async fn send_to_all(&mut self, event: DrawEvent, context: &SceneContext) {
+    async fn send_to_all(&mut self, event: impl Clone + SceneMessage, context: &SceneContext) {
         // Make a list of all the subprograms we know about
         let all_subprograms = self.subprogram_data.keys().copied()
             .chain(self.subprogram_order.iter().copied())
@@ -796,13 +801,14 @@ impl FocusProgram {
 
         // Send copies of the events to each one
         let mut send_actions = vec![];
+
         for program in all_subprograms {
             // Send to each program in turn
             if let Ok(mut target) = context.send(program) {
                 let event = event.clone();
                 send_actions.push(async move { 
                     if target.is_attached() {
-                        target.send(FocusEvent::Event(None, event)).await.ok(); 
+                        target.send(event).await.ok(); 
                     }
                 });
             }
@@ -819,7 +825,7 @@ mod test {
     use std::result::{Result};
 
     fn expect_focus(evt: FocusEvent, control: ControlId, control_num: usize) -> Result<(), String> {
-        if let FocusEvent::Focused(actual_control) = evt {
+        if let FocusEvent::Keyboard(FocusKeyboardEvent::Focused(actual_control)) = evt {
             if actual_control == control {
                 Ok(())
             } else {
@@ -831,7 +837,7 @@ mod test {
     }
 
     fn expect_unfocus(evt: FocusEvent, control: ControlId, control_num: usize) -> Result<(), String> {
-        if let FocusEvent::Unfocused(actual_control) = evt {
+        if let FocusEvent::Keyboard(FocusKeyboardEvent::Unfocused(actual_control)) = evt {
             if actual_control == control {
                 Ok(())
             } else {
@@ -976,7 +982,7 @@ mod test {
     /// Checks that evt is an enter event for a subprogram and not a control
     ///
     fn expect_enter_program(evt: FocusEvent) -> Result<(), String> {
-        if let FocusEvent::Event(control_id, DrawEvent::Pointer(PointerAction::Enter, _, _)) = evt {
+        if let FocusEvent::Pointer(FocusPointerEvent::Pointer(control_id, PointerAction::Enter, _, _)) = evt {
             if control_id.is_none() {
                 Ok(())
             } else {
@@ -991,7 +997,7 @@ mod test {
     /// Checks that evt is an enter event for a control
     ///
     fn expect_enter_control(evt: FocusEvent, control_id: ControlId) -> Result<(), String> {
-        if let FocusEvent::Event(actual_control_id, DrawEvent::Pointer(PointerAction::Enter, _, _)) = evt {
+        if let FocusEvent::Pointer(FocusPointerEvent::Pointer(actual_control_id, PointerAction::Enter, _, _)) = evt {
             if actual_control_id == Some(control_id) {
                 Ok(())
             } else {
@@ -1006,7 +1012,7 @@ mod test {
     /// Checks that evt is an enter event
     ///
     fn expect_enter(evt: FocusEvent) -> Result<(), String> {
-        if matches!(evt, FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Enter, _, _))) {
+        if matches!(evt, FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Enter, _, _))) {
             Ok(())
         } else {
             Err(format!("Expected PointerAction::Enter, got {:?}", evt))
@@ -1017,7 +1023,7 @@ mod test {
     /// Checks that evt is an leave event
     ///
     fn expect_leave(evt: FocusEvent) -> Result<(), String> {
-        if matches!(evt, FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Leave, _, _))) {
+        if matches!(evt, FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Leave, _, _))) {
             Ok(())
         } else {
             Err(format!("Expected PointerAction::Leave, got {:?}", evt))
@@ -1028,7 +1034,7 @@ mod test {
     /// Checks that evt is a button down event
     ///
     fn expect_buttondown(evt: FocusEvent) -> Result<(), String> {
-        if matches!(evt, FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonDown, _, _))) {
+        if matches!(evt, FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::ButtonDown, _, _))) {
             Ok(())
         } else {
             Err(format!("Expected PointerAction::ButtonDown, got {:?}", evt))
@@ -1039,7 +1045,7 @@ mod test {
     /// Checks that evt is a button up event
     ///
     fn expect_buttonup(evt: FocusEvent) -> Result<(), String> {
-        if matches!(evt, FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, _, _))) {
+        if matches!(evt, FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::ButtonUp, _, _))) {
             Ok(())
         } else {
             Err(format!("Expected PointerAction::ButtonUp, got {:?}", evt))
@@ -1050,7 +1056,7 @@ mod test {
     /// Checks that evt is a move event
     ///
     fn expect_move(evt: FocusEvent) -> Result<(), String> {
-        if matches!(evt, FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, _, _))) {
+        if matches!(evt, FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Move, _, _))) {
             Ok(())
         } else {
             Err(format!("Expected PointerAction::Move, got {:?}", evt))
