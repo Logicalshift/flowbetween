@@ -603,7 +603,7 @@ impl ToolDock {
     ///
     fn process_focus_event(&self, evt: &FocusEvent) {
         match evt {
-            FocusEvent::Event(_, DrawEvent::Resize(new_w, new_h)) => {
+            FocusEvent::Window(FocusWindowEvent::Resize(new_w, new_h)) => {
                 // Update the width and height
                 let scale   = self.scale.get();
                 let w       = new_w / scale;
@@ -612,7 +612,7 @@ impl ToolDock {
                 self.window_size.set((w, h));
             }
 
-            FocusEvent::Event(_, DrawEvent::Scale(new_scale)) => {
+            FocusEvent::Window(FocusWindowEvent::Scale(new_scale)) => {
                 // Update the scale, adjust the width and height accordingly
                 let (w, h)  = self.window_size.get();
                 let scale   = self.scale.get();
@@ -623,7 +623,7 @@ impl ToolDock {
                 self.window_size.set((w, h));
             }
 
-            FocusEvent::Focused(control_id) => {
+            FocusEvent::Keyboard(FocusKeyboardEvent::Focused(control_id)) => {
                 // Keyboard focus is on a tool
                 self.tools.get().values()
                     .for_each(|tool| {
@@ -633,7 +633,7 @@ impl ToolDock {
                     });
             }
 
-            FocusEvent::Unfocused(control_id) => {
+            FocusEvent::Keyboard(FocusKeyboardEvent::Unfocused(control_id)) => {
                 // Keyboard focus has left a tool
                 self.tools.get().values()
                     .for_each(|tool| {
@@ -643,7 +643,7 @@ impl ToolDock {
                     });
             }
 
-            FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Enter, _, _)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(Some(control_id), PointerAction::Enter, _, _)) => {
                 // Pointer has entered a tool
                 self.tools.get().values()
                     .for_each(|tool| {
@@ -653,7 +653,7 @@ impl ToolDock {
                     });
             }
 
-            FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::Leave, _, _)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(Some(control_id), PointerAction::Leave, _, _)) => {
                 // Pointer has left a tool
                 self.tools.get().values()
                     .for_each(|tool| {
@@ -692,7 +692,7 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
 
         // Pointer action event processing
         match msg {
-            FocusEvent::Event(Some(control_id), DrawEvent::Pointer(PointerAction::ButtonDown, pointer_id, pointer_state)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(Some(control_id), PointerAction::ButtonDown, pointer_id, pointer_state)) => {
                 if pointer_state.buttons.contains(&Button::Left) {
                     let tools = tool_dock.tools.get();
 
@@ -737,8 +737,8 @@ async fn track_left_button_down(input: &mut InputStream<FocusEvent>, context: &S
 
         // Track until the user releases the mouse button
         match msg {
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, evt_pointer_id, pointer_state)) |
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Drag, evt_pointer_id, pointer_state)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Move, evt_pointer_id, pointer_state)) |
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Drag, evt_pointer_id, pointer_state)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
 
@@ -767,7 +767,7 @@ async fn track_left_button_down(input: &mut InputStream<FocusEvent>, context: &S
                 }
             }
 
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, evt_pointer_id, pointer_state)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::ButtonUp, evt_pointer_id, pointer_state)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
                 if pointer_state.buttons.contains(&Button::Left) { continue; }
@@ -796,7 +796,7 @@ async fn track_left_button_down(input: &mut InputStream<FocusEvent>, context: &S
                 break;
             }
 
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Cancel, evt_pointer_id, _)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Cancel, evt_pointer_id, _)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
 
@@ -833,8 +833,8 @@ async fn track_left_button_drag(input: &mut InputStream<FocusEvent>, _context: &
 
         // Track until the user releases the mouse button
         match msg {
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Move, evt_pointer_id, pointer_state)) |
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Drag, evt_pointer_id, pointer_state)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Move, evt_pointer_id, pointer_state)) |
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Drag, evt_pointer_id, pointer_state)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
 
@@ -863,7 +863,7 @@ async fn track_left_button_drag(input: &mut InputStream<FocusEvent>, _context: &
                 clicked_tool.drag_position.set(Some((cx + offset_x, cy + offset_y)));
             }
 
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::ButtonUp, evt_pointer_id, pointer_state)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::ButtonUp, evt_pointer_id, pointer_state)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
                 if pointer_state.buttons.contains(&Button::Left) { continue; }
@@ -920,7 +920,7 @@ async fn track_left_button_drag(input: &mut InputStream<FocusEvent>, _context: &
                 return;
             }
 
-            FocusEvent::Event(_, DrawEvent::KeyDown(_, Some(Key::KeyEscape))) => {
+            FocusEvent::Keyboard(FocusKeyboardEvent::KeyDown(_, _, Some(Key::KeyEscape))) => {
                 // Cancel the drag if escape is pressed
                 let animated_tool = clicked_tool.clone();
                 clicked_tool.drop_cancel.change_animation(AnimationDescription::ease_in(0.15)
@@ -937,7 +937,7 @@ async fn track_left_button_drag(input: &mut InputStream<FocusEvent>, _context: &
                 return;
             }
 
-            FocusEvent::Event(_, DrawEvent::Pointer(PointerAction::Cancel, evt_pointer_id, _)) => {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Cancel, evt_pointer_id, _)) => {
                 // Ignore events from other pointers
                 if evt_pointer_id != pointer_id { continue; }
 
