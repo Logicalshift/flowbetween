@@ -1,6 +1,7 @@
 use super::control_id::*;
 
 use flo_draw::*;
+use flo_scene::*;
 
 use serde::*;
 
@@ -17,4 +18,7 @@ pub enum FocusEvent {
 
     /// The specified control ID has lost keyboard focus (when focus moves, we unfocus first)
     Unfocused(ControlId),
+}
+
+impl SceneMessage for FocusEvent {
 }

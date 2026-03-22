@@ -188,9 +188,6 @@ impl SceneMessage for Focus {
     }
 }
 
-impl SceneMessage for FocusEvent {
-}
-
 ///
 /// Represents a control within a subprogram
 ///
