@@ -22,7 +22,7 @@ use std::sync::*;
 const PULL_DISTANCE: f64    = 48.0;
 
 const TOOL_WIDTH: f64       = 48.0;
-const DOCK_Z_INDEX: usize   = 1000;
+const DOCK_Z_INDEX: usize   = 1001;
 
 ///
 /// Representation of a tool in the floating tool dock
