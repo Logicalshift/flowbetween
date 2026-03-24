@@ -10,10 +10,12 @@ mod document_id;
 mod subprograms;
 mod flowbetween_document;
 mod tools;
+mod brush;
 pub mod canvas;
 
 pub use document_id::*;
 pub use subprograms::*;
 pub use flowbetween_document::*;
 pub use tools::*;
+pub use brush::*;
 pub use canvas::*;
