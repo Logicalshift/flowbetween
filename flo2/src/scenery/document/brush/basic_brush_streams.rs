@@ -145,7 +145,7 @@ pub fn brush_fill_in_points(distance: f64, input_stream: impl 'static + Send + S
         let mut distance_covered        = 0.0;
 
         // Process each point that we get from the stream
-        while let Some(next_point) = input_stream.next().await {
+        loop {
             // Indexes of the 4 points in our circular buffer
             let p0_idx = previous_point_idx;
             let p1_idx = (previous_point_idx+1)%4;
@@ -170,6 +170,9 @@ pub fn brush_fill_in_points(distance: f64, input_stream: impl 'static + Send + S
                 // Just 'cover' this distance linearly and ignore the point
                 distance_covered += section_distance;
             }
+
+            // Fetch the next point to process
+            let Some(next_point) = input_stream.next().await else { break; };
 
             // Store this point
             previous_points[previous_point_idx] = next_point;
