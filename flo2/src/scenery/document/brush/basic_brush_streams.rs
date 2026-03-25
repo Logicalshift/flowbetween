@@ -55,9 +55,55 @@ where
 }
 
 ///
+/// Walks between brush points p2 and p3 at a set of fixed distances
+///
+#[inline]
+fn walk_between_brush_points(p1: &BrushPoint, p2: &BrushPoint, p3: &BrushPoint, p4: &BrushPoint, initial_distance: f64, step_distance: f64, tension: f64) -> impl Iterator<Item=BrushPoint> {
+    use std::iter;
+
+    // Interpolate the coordinates
+    let coords_curve = interpolate_coords(Coord2(p1.position.0, p1.position.1), Coord2(p2.position.0, p2.position.1), Coord2(p3.position.0, p3.position.1), Coord2(p4.position.0, p4.position.1), tension);
+
+    // Also the pressure, tilt, rotation and flow rate. Optional fields are left as None by this routine
+    let pressure    = interpolate_points(p1.pressure, p2.pressure, p3.pressure, p4.pressure, tension);
+    let rotation    = interpolate_points(p1.rotation, p2.rotation, p3.rotation, p4.rotation, tension);
+    let flow_rate   = interpolate_points(p1.flow_rate, p2.flow_rate, p3.flow_rate, p4.flow_rate, tension);
+    let tilt_x      = interpolate_points(p1.tilt.0, p2.tilt.0, p3.tilt.0, p4.tilt.0, tension);
+    let tilt_y      = interpolate_points(p1.tilt.1, p2.tilt.1, p3.tilt.1, p4.tilt.1, tension);
+
+    // Create the initial walk
+    let walk = walk_curve_evenly(&coords_curve, step_distance, 0.01);
+
+    // Vary according to the initial distance and step distance
+    let initial_distance    = if initial_distance > 0.0 { Some(initial_distance) } else { None };
+    let step_distance       = iter::once(step_distance).cycle();
+
+    let walk = walk.vary_by(initial_distance.into_iter().chain(step_distance));
+
+    // Map the curve sections to brush points
+    walk.map(move |section| {
+        let t = section.t_for_t(1.0);
+
+        let Coord2(x, y) = coords_curve.point_at_pos(t);
+
+        BrushPoint {
+            position:   (x, y),
+            pressure:   pressure(t),
+            rotation:   rotation(t),
+            flow_rate:  flow_rate(t),
+            tilt:       (tilt_x(t), tilt_y(t)),
+
+            ..Default::default()
+        }
+    })
+}
+
+///
 /// Takes a set of brush points from an input device and smooths them to generate brush points that are a fixed distance apart
 ///
-/// To generate points that are in between the input points, this applies a simple smoothing algorihtm to them
+/// To generate points that are in between the input points, this applies a simple smoothing algorihtm to them. There must be at
+/// least 3 input points for this to start generating points after the first point (this is because we need 4 points, but we can
+/// generate a fake initial point from the second point)
 ///
 pub fn brush_fill_in_points(distance: f64, input_stream: impl 'static + Send + Stream<Item=BrushPoint>) -> impl 'static + Send + Stream<Item=BrushPoint> {
     generator_stream(move |yield_fn| async move {
@@ -70,13 +116,60 @@ pub fn brush_fill_in_points(distance: f64, input_stream: impl 'static + Send + S
         let mut previous_points     = [BrushPoint::default(); 4];
         let mut previous_point_idx  = 0;
 
+        // Read the first 3 points. First point is always generated as-is
+        let Some(first_point) = input_stream.next().await else { return; };
+        previous_points[1] = first_point;
+
+        yield_fn(first_point).await;
+
+        for idx in 2..4 {
+            let Some(next_point) = input_stream.next().await else { return; };
+            previous_points[idx] = next_point;
+        }
+
+        // Generate a fake 'previous' point for point 0 (so we can interpolate between the first and second points, and also so we only need 3 points to prime the algorithm)
+        let dx = previous_points[2].position.0 - previous_points[1].position.1;
+        let dy = previous_points[2].position.1 - previous_points[1].position.0;
+
+        let fake_point = (first_point.position.0 - dx, first_point.position.1 - dy);
+        let fake_point = BrushPoint { position: fake_point, ..Default::default() };
+
+        previous_points[0] = fake_point;
+
         // We also need to know the last generated point, and the distance we've consumed between any points we might have discarded
-        let mut last_point: Option<BrushPoint>  = None;
-        let mut distance_covered                = 0.0;
+        let mut last_generated_point    = first_point;
+        let mut distance_covered        = 0.0;
 
         // Process each point that we get from the stream
         while let Some(next_point) = input_stream.next().await {
-            todo!()
+            // Indexes of the 4 points in our circular buffer
+            let p0_idx = previous_point_idx;
+            let p1_idx = (previous_point_idx+1)%4;
+            let p2_idx = (previous_point_idx+2)%4;
+            let p3_idx = (previous_point_idx+3)%4;
+
+            // Generate points using our existing set of 4 points (we're about to lose the first point and we're generating points between the second and third points)
+            let section_distance = previous_points[p1_idx].distance_to(&previous_points[p2_idx]);
+
+            if section_distance + distance_covered >= distance {
+                // Return points along this curve
+                let initial_distance = distance - distance_covered;
+
+                for point in walk_between_brush_points(&previous_points[p0_idx], &previous_points[p1_idx], &previous_points[p2_idx], &previous_points[p3_idx], initial_distance, distance, 1.0) {
+                    yield_fn(point).await;
+                    last_generated_point = point;
+                }
+
+                // Distance covered is the distance from the last point we generated to the end point of this section
+                distance_covered = last_generated_point.distance_to(&previous_points[p2_idx]);
+            } else {
+                // Just 'cover' this distance linearly and ignore the point
+                distance_covered += section_distance;
+            }
+
+            // Store this point
+            previous_points[previous_point_idx] = next_point;
+            previous_point_idx = (previous_point_idx+1)%4;
         }
     })
 }
