@@ -95,7 +95,7 @@ fn walk_between_brush_points(p1: &BrushPoint, p2: &BrushPoint, p3: &BrushPoint, 
 
             ..Default::default()
         }
-    })
+    }).collect::<Vec<_>>().into_iter()
 }
 
 ///
