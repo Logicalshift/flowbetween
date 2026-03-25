@@ -23,7 +23,7 @@ pub fn brush_pressure_to_radius_linear(max_radius: f64, input_stream: impl 'stat
 }
 
 ///
-/// Calculates a quadratic interpolation between two points in one dimension
+/// Calculates an interpolation between two points in one dimension
 ///
 /// This returns a function that interpolates between x2 and x3 given a value between 0 and 1, where x1 and x4 are the following points
 /// We use this for generating intermediate points when we're generating points for a brush stroke that are supposed to be a linear distance apart.
@@ -39,7 +39,7 @@ fn interpolate_points(x1: f64, x2: f64, x3: f64, x4: f64, tension: f64) -> impl 
 }
 
 ///
-/// Calculates a quadratic interpolation between two points in one dimension
+/// Calculates an interpolation between two points in one dimension
 ///
 /// This returns a function that interpolates between x2 and x3 given a value between 0 and 1, where x1 and x4 are the following points
 /// We use this for generating intermediate points when we're generating points for a brush stroke that are supposed to be a linear distance apart.
