@@ -75,7 +75,7 @@ fn walk_between_brush_points(p1: &BrushPoint, p2: &BrushPoint, p3: &BrushPoint, 
     let walk = walk_curve_evenly(&coords_curve, step_distance, 0.01);
 
     // Vary according to the initial distance and step distance
-    let initial_distance    = if initial_distance > 0.0 { Some(initial_distance) } else { None };
+    let initial_distance    = if initial_distance > 0.0 { Some(initial_distance) } else { Some(0.001) };        // TODO: very small distance here is a bit of a hack to make sure we generate a point, really we need to generate a 0-length section
     let step_distance       = iter::once(step_distance).cycle();
 
     let walk = walk.vary_by(initial_distance.into_iter().chain(step_distance));
