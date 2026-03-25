@@ -177,6 +177,7 @@ pub fn brush_fill_in_points(distance: f64, input_stream: impl 'static + Send + S
 #[cfg(test)]
 mod test {
     use super::*;
+    use itertools::*;
 
     #[test]
     fn interpolate_1d_start_and_end() {
@@ -192,5 +193,33 @@ mod test {
 
         assert!(curve.point_at_pos(0.0) == Coord2(3.0, 4.0), "{:?} != Coord2(3.0, 4.0)", curve.point_at_pos(0.0));
         assert!(curve.point_at_pos(1.0) == Coord2(4.0, 4.0), "{:?} != Coord2(4.0, 4.0)", curve.point_at_pos(1.0));
+    }
+
+    ///
+    /// Generates the 'fill in' points for a set of points
+    ///
+    fn generate_brush_fill_in_points(distance: f64, points: Vec<(f64, f64)>) -> Vec<BrushPoint> {
+        futures::executor::block_on(async {
+            let stream = stream::iter(points.into_iter().map(|(x, y)| BrushPoint { position: (x, y), ..Default::default() }));
+            brush_fill_in_points(distance, stream).collect::<Vec<_>>().await
+        })
+    }
+
+    #[test]
+    fn simple_distances_are_roughly_constant_1() {
+        let points = generate_brush_fill_in_points(10.0, vec![(0.0, 0.0), (45.0, 0.0), (50.0, 0.0), (80.0, 0.0), (100.0, 0.0), (110.0, 0.0)]);
+
+        for (p1, p2) in points.iter().tuple_windows() {
+            assert!((p1.distance_to(p2)-10.0).abs() < 0.1, "{:?}", points.iter().map(|p| p.position).collect::<Vec<_>>());
+        }
+    }
+
+    #[test]
+    fn simple_distances_are_roughly_constant_2() {
+        let points = generate_brush_fill_in_points(10.0, vec![(0.0, 0.0), (45.0, 0.0), (70.0, 0.0), (90.0, 0.0), (100.0, 0.0), (110.0, 0.0)]);
+
+        for (p1, p2) in points.iter().tuple_windows() {
+            assert!((p1.distance_to(p2)-10.0).abs() < 0.1, "{:?}", points.iter().map(|p| p.position).collect::<Vec<_>>());
+        }
     }
 }
