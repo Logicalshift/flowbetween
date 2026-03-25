@@ -226,4 +226,13 @@ mod test {
             assert!((p1.distance_to(p2)-10.0).abs() < 0.1, "{:?}", points.iter().map(|p| p.position).collect::<Vec<_>>());
         }
     }
+
+    #[test]
+    fn simple_distances_are_roughly_constant_3() {
+        let points = generate_brush_fill_in_points(3.0, vec![(0.0, 0.0), (45.0, 0.0), (70.0, 0.0), (90.0, 0.0), (100.0, 0.0), (110.0, 0.0)]);
+
+        for (p1, p2) in points.iter().tuple_windows() {
+            assert!((p1.distance_to(p2)-3.0).abs() < 0.1, "{:?}", points.iter().map(|p| p.position).collect::<Vec<_>>());
+        }
+    }
 }
