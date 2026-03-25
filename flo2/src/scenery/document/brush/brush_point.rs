@@ -4,7 +4,7 @@ use serde::*;
 ///
 /// Input point for a brush stroke
 ///
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, Default)]
 pub struct BrushPoint {
     /// The coordinates of this point
     pub position: (f64, f64),
