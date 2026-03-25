@@ -133,7 +133,7 @@ pub fn brush_fill_in_points(distance: f64, input_stream: impl 'static + Send + S
 
         // Generate a fake 'previous' point for point 0 (so we can interpolate between the first and second points, and also so we only need 3 points to prime the algorithm)
         let dx = previous_points[2].position.0 - previous_points[1].position.1;
-        let dy = previous_points[2].position.1 - previous_points[1].position.0;
+        let dy = previous_points[2].position.1 - previous_points[1].position.1;
 
         let fake_point = (first_point.position.0 - dx, first_point.position.1 - dy);
         let fake_point = BrushPoint { position: fake_point, ..Default::default() };
