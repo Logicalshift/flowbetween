@@ -81,7 +81,7 @@ fn walk_between_brush_points(p1: &BrushPoint, p2: &BrushPoint, p3: &BrushPoint, 
     let walk = walk.vary_by(initial_distance.into_iter().chain(step_distance));
 
     // Map the curve sections to brush points
-    walk.map(move |section| {
+    let points = walk.map(move |section| {
         let t = section.t_for_t(1.0);
 
         let Coord2(x, y) = coords_curve.point_at_pos(t);
@@ -95,7 +95,11 @@ fn walk_between_brush_points(p1: &BrushPoint, p2: &BrushPoint, p3: &BrushPoint, 
 
             ..Default::default()
         }
-    }).collect::<Vec<_>>().into_iter()
+    }).collect::<Vec<_>>();
+
+    let num_points = points.len();
+
+    points.into_iter().take(num_points-1)
 }
 
 ///
