@@ -4,6 +4,9 @@ use futures::prelude::*;
 
 use flo_curves::geo::*;
 use flo_curves::bezier::*;
+use flo_stream::*;
+
+use std::collections::*;
 
 ///
 /// Converts an input stream of brush points to an output stream of brush points with a radius based on the pen pressure
@@ -57,16 +60,32 @@ where
     Curve::from_points(x2, (cp1, cp2), x3)
 }
 
-/*
 ///
 /// Takes a set of brush points from an input device and smooths them to generate brush points that are a fixed distance apart
 ///
 /// To generate points that are in between the input points, this applies a simple smoothing algorihtm to them
 ///
 pub fn brush_fill_in_points(distance: f64, input_stream: impl 'static + Send + Stream<Item=BrushPoint>) -> impl 'static + Send + Stream<Item=BrushPoint> {
-    todo!()
+    generator_stream(move |yield_fn| async move {
+        use std::pin::{pin};
+
+        // Pin the stream for reading
+        let mut input_stream = pin!(input_stream);
+
+        // Before we can generate any points we need at least 4 points. This is a circular buffer
+        let mut previous_points     = [BrushPoint::default(); 4];
+        let mut previous_point_idx  = 0;
+
+        // We also need to know the last generated point, and the distance we've consumed between any points we might have discarded
+        let mut last_point: Option<BrushPoint>  = None;
+        let mut distance_covered                = 0.0;
+
+        // Process each point that we get from the stream
+        while let Some(next_point) = input_stream.next().await {
+            todo!()
+        }
+    })
 }
-*/
 
 #[cfg(test)]
 mod test {
