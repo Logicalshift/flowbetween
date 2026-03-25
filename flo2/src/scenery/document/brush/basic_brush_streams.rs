@@ -109,6 +109,9 @@ fn walk_between_brush_points(p1: &BrushPoint, p2: &BrushPoint, p3: &BrushPoint, 
 /// least 3 input points for this to start generating points after the first point (this is because we need 4 points, but we can
 /// generate a fake initial point from the second point)
 ///
+/// This does not interpolate the optional values in the BrushPoint: these will be left as 'None' (so perform this before an
+/// operation like `brush_pressure_to_radius_linear`)
+///
 pub fn brush_fill_in_points(distance: f64, input_stream: impl 'static + Send + Stream<Item=BrushPoint>) -> impl 'static + Send + Stream<Item=BrushPoint> {
     generator_stream(move |yield_fn| async move {
         use std::pin::{pin};
