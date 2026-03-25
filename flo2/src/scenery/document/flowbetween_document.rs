@@ -109,6 +109,38 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
         Draw::Layer(LayerId(0)),
     ]))).await.ok();
 
+    // Test of our brush points stepping routine
+    use super::brush::*;
+    let brush_points = vec![
+        BrushPoint { position: (100.0, 100.0), ..Default::default() },
+        BrushPoint { position: (200.0, 150.0), ..Default::default() },
+        BrushPoint { position: (201.0, 151.0), ..Default::default() },
+        BrushPoint { position: (120.0, 160.0), ..Default::default() },
+        BrushPoint { position: (300.0, 170.0), ..Default::default() },
+        BrushPoint { position: (250.0, 180.0), ..Default::default() },
+        BrushPoint { position: (210.0, 220.0), ..Default::default() },
+        BrushPoint { position: (200.0, 231.0), ..Default::default() },
+    ];
+    let smooth_points = brush_fill_in_points(10.0, stream::iter(brush_points)).collect::<Vec<_>>().await;
+    println!("{:?}", smooth_points);
+
+    let mut point_drawing = vec![];
+    point_drawing.push_state();
+    point_drawing.namespace(*DIALOG_LAYER);
+    point_drawing.layer(LayerId(100));
+    point_drawing.fill_color(Color::Rgba(0.2, 0.3, 1.0, 1.0));
+    point_drawing.extend(smooth_points.iter().flat_map(|point| {
+        let mut drawing = vec![];
+
+        drawing.new_path();
+        drawing.circle(point.position.0 as _, point.position.1 as _, 2.0);
+        drawing.fill();
+
+        drawing
+    }));
+    point_drawing.pop_state();
+    window_drawing.send(DrawingRequest::Draw(Arc::new(point_drawing))).await.ok();
+
     // Drawing instructions that are waiting for this document scene to become idle
     let mut pending_drawing         = Vec::with_capacity(128);
     let mut waiting_for_new_frame   = false;
