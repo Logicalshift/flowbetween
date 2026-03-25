@@ -27,3 +27,16 @@ pub struct BrushPoint {
     /// The transform that should be applied to the daub shape (after scaling to the radius but before transforming to the position value)
     pub daub_transform: Option<canvas::Transform2D>,
 }
+
+impl BrushPoint {
+    ///
+    /// Computes the distance from this point to another point
+    ///
+    #[inline]
+    pub fn distance_to(&self, other: &BrushPoint) -> f64 {
+        let dx = self.position.0 - other.position.0;
+        let dy = self.position.1 - other.position.1;
+
+        (dx*dx + dy*dy).sqrt()
+    }
+}
