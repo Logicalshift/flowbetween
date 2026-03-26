@@ -130,7 +130,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     ];
     let now = Instant::now();
     let brush_head      = PathContour::from_path(vec![Circle::new(UiPoint(10.0, 10.0), 10.0).to_path::<UiPath>()], ContourSize(20, 20));
-    let smooth_points   = brush_fill_in_points(1.0, stream::iter(brush_points));
+    let smooth_points   = brush_fill_in_points(0.5, stream::iter(brush_points));
     let pressure_points = brush_pressure_to_radius_linear(20.0, smooth_points).collect::<Vec<_>>().await;
     let shape           = daub_brush_stream(&brush_head, stream::once(future::ready(pressure_points.clone()))).boxed().next().await.unwrap();
     println!("{:?} {:?}", shape, Instant::now().duration_since(now));
