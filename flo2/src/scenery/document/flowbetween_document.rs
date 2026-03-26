@@ -2,6 +2,9 @@ use super::subprograms::*;
 use crate::scenery::document::canvas::*;
 use crate::scenery::ui::*;
 
+use flo_curves::arc::{Circle};
+use flo_curves::bezier::rasterize::*;
+use flo_curves::bezier::vectorize::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
@@ -13,6 +16,7 @@ use futures::prelude::*;
 use serde::*;
 
 use std::sync::*;
+use std::time::{Instant};
 
 ///
 /// Request for the main document program
@@ -112,24 +116,36 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     // Test of our brush points stepping routine
     use super::brush::*;
     let brush_points = vec![
-        BrushPoint { position: (100.0, 100.0), ..Default::default() },
-        BrushPoint { position: (200.0, 150.0), ..Default::default() },
-        BrushPoint { position: (201.0, 151.0), ..Default::default() },
-        BrushPoint { position: (120.0, 160.0), ..Default::default() },
-        BrushPoint { position: (300.0, 170.0), ..Default::default() },
-        BrushPoint { position: (250.0, 180.0), ..Default::default() },
-        BrushPoint { position: (210.0, 220.0), ..Default::default() },
-        BrushPoint { position: (200.0, 231.0), ..Default::default() },
+        BrushPoint { position: (100.0, 100.0), pressure: 0.0, ..Default::default() },
+        BrushPoint { position: (200.0, 150.0), pressure: 0.5, ..Default::default() },
+        BrushPoint { position: (201.0, 151.0), pressure: 0.6, ..Default::default() },
+        BrushPoint { position: (120.0, 160.0), pressure: 1.0, ..Default::default() },
+        BrushPoint { position: (300.0, 170.0), pressure: 0.6, ..Default::default() },
+        BrushPoint { position: (250.0, 180.0), pressure: 0.5, ..Default::default() },
+        BrushPoint { position: (210.0, 220.0), pressure: 0.0, ..Default::default() },
+        BrushPoint { position: (200.0, 231.0), pressure: 0.0, ..Default::default() },
     ];
-    let smooth_points = brush_fill_in_points(10.0, stream::iter(brush_points)).collect::<Vec<_>>().await;
-    println!("{:?}", smooth_points);
+    let now = Instant::now();
+    let brush_head      = PathContour::from_path(vec![Circle::new(UiPoint(10.0, 10.0), 10.0).to_path::<UiPath>()], ContourSize(20, 20));
+    let smooth_points   = brush_fill_in_points(1.0, stream::iter(brush_points));
+    let pressure_points = brush_pressure_to_radius_linear(20.0, smooth_points).collect::<Vec<_>>().await;
+    let shape           = daub_brush_stream(&brush_head, stream::once(future::ready(pressure_points.clone()))).boxed().next().await.unwrap();
+    println!("{:?} {:?}", shape, Instant::now().duration_since(now));
 
     let mut point_drawing = vec![];
     point_drawing.push_state();
     point_drawing.namespace(*DIALOG_LAYER);
     point_drawing.layer(LayerId(100));
+
+    point_drawing.fill_color(Color::Rgba(1.0, 0.3, 0.2, 1.0));
+    point_drawing.new_path();
+    shape.shape.to_path()
+            .into_iter()
+            .for_each(|path| point_drawing.bezier_path(&path));
+    point_drawing.fill();
+
     point_drawing.fill_color(Color::Rgba(0.2, 0.3, 1.0, 1.0));
-    point_drawing.extend(smooth_points.iter().flat_map(|point| {
+    point_drawing.extend(pressure_points.iter().flat_map(|point| {
         let mut drawing = vec![];
 
         drawing.new_path();
