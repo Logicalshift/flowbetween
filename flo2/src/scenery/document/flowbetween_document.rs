@@ -2,7 +2,10 @@ use super::subprograms::*;
 use crate::scenery::document::canvas::*;
 use crate::scenery::ui::*;
 
+use flo_curves::{BezierCurve};
 use flo_curves::arc::{Circle};
+use flo_curves::bezier::path::{BezierPath};
+use flo_curves::bezier::{Curve};
 use flo_curves::bezier::rasterize::*;
 use flo_curves::bezier::vectorize::*;
 use flo_draw::*;
@@ -154,6 +157,23 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
 
         drawing
     }));
+
+    point_drawing.fill_color(Color::Rgba(0.2, 1.0, 0.3, 1.0));
+    point_drawing.extend(shape.shape.to_path().iter()
+        .flat_map(|subpath| {
+            subpath.to_curves::<Curve<_>>()
+        })
+        .flat_map(|curve| {
+            let mut drawing = vec![];
+            let point = curve.end_point();
+
+            drawing.new_path();
+            drawing.circle(point.x as _, point.y as _, 2.0);
+            drawing.fill();
+
+            drawing
+        }));
+
     point_drawing.pop_state();
     window_drawing.send(DrawingRequest::Draw(Arc::new(point_drawing))).await.ok();
 
