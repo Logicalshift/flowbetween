@@ -47,7 +47,7 @@ pub fn daub_brush_stream<'a>(daub: &'a (impl Send + Sync + ColumnSampledContour)
         }
 
         // Generate a shape for the current set of daubs
-        let path    = trace_paths_from_intercepts::<WorkingSubpath>(&brush_contour, 0.1);
+        let path    = trace_paths_from_intercepts::<WorkingSubpath>(&brush_contour, 1.0);
         let shape   = CanvasShape::Path(WorkingSubpath::to_canvas_path(&path));
         let shape   = ShapeWithProperties {
             shape:      shape,
