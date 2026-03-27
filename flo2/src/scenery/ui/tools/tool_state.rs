@@ -36,7 +36,7 @@ impl ToolGroupId {
     /// Returns a tool group with a particular GUID as the ID
     ///
     pub const fn with_id(id: Uuid) -> Self {
-        ToolGroupId(id)
+        Self(id)
     }
 }
 
@@ -66,6 +66,13 @@ pub struct ToolId(Uuid);
 impl ToolId {
     pub fn new() -> Self {
         ToolId(Uuid::new_v4())
+    }
+
+    ///
+    /// Returns a tool with a particular GUID as the ID
+    ///
+    pub const fn with_id(id: Uuid) -> Self {
+        Self(id)
     }
 }
 
