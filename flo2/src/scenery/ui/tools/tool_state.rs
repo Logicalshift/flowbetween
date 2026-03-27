@@ -31,6 +31,13 @@ impl ToolGroupId {
     pub fn new() -> Self {
         ToolGroupId(Uuid::new_v4())
     }
+
+    ///
+    /// Returns a tool group with a particular GUID as the ID
+    ///
+    pub const fn with_id(id: Uuid) -> Self {
+        ToolGroupId(id)
+    }
 }
 
 ///
