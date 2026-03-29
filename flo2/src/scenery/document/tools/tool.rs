@@ -44,12 +44,12 @@ pub trait ToolData : Send {
     ///
     /// Indicates that this data is for a duplicate created by the tool manager
     ///
-    fn is_duplicate(&self, is_duplicate: bool) { let _ = is_duplicate; }
+    fn is_duplicate(&mut self, is_duplicate: bool) { let _ = is_duplicate; }
 
     ///
     /// The tool has been selected or deselected
     ///
-    fn selected(&self, is_selected: bool) { let _ = is_selected; }
+    fn selected(&mut self, is_selected: bool) { let _ = is_selected; }
 }
 
 impl<TToolData> ToolBehaviour<TToolData> 
