@@ -160,11 +160,24 @@ where
         let mut input = input;
         while let Some(evt) = input.next().await {
             match evt {
-                ToolState::DuplicateTool(from, to)          => { },
+                ToolState::DuplicateTool(from, to)          => {
+                    // Fetch the data for the existing tool (nothing to do if the tool doesn't exist)
+                    // TODO: need some sort of error indication here if the tool doesn't exist as that shouldn't happen
+                    let Some(from_data) = tool_data.get(&from).cloned() else { continue; };
+
+                    // Create the 'to_data'
+                    let to_data = Arc::new(Mutex::new(from_data.lock().unwrap().clone()));
+                    tool_data.insert(to, to_data.clone());
+
+                    // Start the subprograms for the cloned tool
+                    let subprograms = ToolSubPrograms::start(to, &to_data, &behaviour, &context).await;
+                    tool_subprograms.insert(to, subprograms);
+                },
+
                 ToolState::Select(_tool_id)                 => { },
+                ToolState::Deselect(_tool_id)               => { },
                 ToolState::OpenDialog(_tool_id)             => { },
                 ToolState::CloseDialog(_tool_id)            => { },
-                ToolState::Deselect(_tool_id)               => { },
 
                 ToolState::RemoveTool(tool_id)              => {
                     // Remove the tool data
