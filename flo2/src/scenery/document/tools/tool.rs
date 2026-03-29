@@ -105,6 +105,15 @@ impl ToolSubPrograms {
 
         Self { canvas_program, icon_program, canvas_program_id, icon_program_id }
     }
+
+    ///
+    /// Stops the subprograms for this tool
+    ///
+    async fn stop(&mut self, context: &SceneContext) {
+        // Close the input streams for all the tool subprograms
+        context.send_message(SceneControl::Close(self.canvas_program_id)).await.ok();
+        context.send_message(SceneControl::Close(self.icon_program_id)).await.ok();
+    }
 }
 
 ///
@@ -156,7 +165,15 @@ where
                 ToolState::OpenDialog(_tool_id)             => { },
                 ToolState::CloseDialog(_tool_id)            => { },
                 ToolState::Deselect(_tool_id)               => { },
-                ToolState::RemoveTool(_tool_id)             => { },
+
+                ToolState::RemoveTool(tool_id)              => {
+                    // Remove the tool data
+                    tool_data.remove(&tool_id);
+                    let Some(mut subprograms) = tool_subprograms.remove(&tool_id) else { continue; };
+
+                    // Stop the subprograms associated with this tool
+                    subprograms.stop(&context).await;
+                },
 
                 ToolState::AddTool(_tool_id)                => { },
                 ToolState::LocateTool(_tool_id, _)          => { },
@@ -166,6 +183,14 @@ where
             }
         }
 
-        // TODO: send messages to remove all the tools once this program is done
+        // Send messages to remove all the tools once this program is done
+        for (tool_id, subprograms) in tool_subprograms.drain() {
+            // Remove the tool from the manager
+            tool_target.send(Tool::RemoveTool(tool_id)).await.ok();
+
+            // Tell the subprograms to stop
+            let mut subprograms = subprograms;
+            subprograms.stop(&context).await;
+        }
     }.boxed()
 }
