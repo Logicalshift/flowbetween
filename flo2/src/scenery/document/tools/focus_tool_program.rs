@@ -27,7 +27,7 @@ pub enum FocusTool {
     SelectedTool(SubProgramId),
 
     /// Indicates that a tool is unselected
-    UnselectedTool(SubProgramId),
+    DeselectedTool(SubProgramId),
 }
 
 impl SceneMessage for FocusTool {
@@ -66,7 +66,7 @@ pub async fn focus_tool_program(input: InputStream<FocusTool>, context: SceneCon
     while let Some(msg) = input.next().await {
         match msg {
             FocusTool::SelectedTool(program_id)     => { active_tools.lock().unwrap().active_tool_programs.insert(program_id); }
-            FocusTool::UnselectedTool(program_id)   => { active_tools.lock().unwrap().active_tool_programs.remove(&program_id); }
+            FocusTool::DeselectedTool(program_id)   => { active_tools.lock().unwrap().active_tool_programs.remove(&program_id); }
         }
     }
 }

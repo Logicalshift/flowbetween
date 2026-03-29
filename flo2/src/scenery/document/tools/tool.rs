@@ -1,3 +1,4 @@
+use super::focus_tool_program::*;
 use crate::scenery::ui::*;
 
 use flo_scene::*;
@@ -244,7 +245,10 @@ where
                         data.lock().unwrap().selected(true);
                     }
 
-                    /* TODO: send canvas focus events to the tool canvas program */
+                    // Tell FocusTool to send canvas focus events to the tool canvas program
+                    if let Some(subprograms) = tool_subprograms.get(&tool_id) {
+                        context.send_message(FocusTool::SelectedTool(subprograms.canvas_program_id)).await.ok();
+                    }
                 },
 
                 ToolState::Deselect(tool_id) => { 
@@ -253,7 +257,10 @@ where
                         data.lock().unwrap().selected(false);
                     }
 
-                    /* TODO: stop sending canvas focus events */
+                    // Tell FocusTool to stop sending canvas focus events to the tool canvas program
+                    if let Some(subprograms) = tool_subprograms.get(&tool_id) {
+                        context.send_message(FocusTool::DeselectedTool(subprograms.canvas_program_id)).await.ok();
+                    }
                 },
 
                 ToolState::OpenDialog(_tool_id)             => { /* TODO: run dialog program if it's not running */ },
