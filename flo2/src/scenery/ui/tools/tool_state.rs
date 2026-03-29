@@ -54,6 +54,13 @@ impl ToolTypeId {
     pub fn new() -> Self {
         ToolTypeId(Uuid::new_v4())
     }
+
+    ///
+    /// Creates a ToolTypeId with a fixed GUID
+    ///
+    pub const fn with_id(id: Uuid) -> Self {
+        Self(id)
+    }
 }
 
 
