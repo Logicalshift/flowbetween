@@ -99,6 +99,24 @@ where
 
         self
     }
+
+    ///
+    /// Defines the icon for this tool using some svg
+    ///
+    pub fn with_icon_svg(mut self, svg: &[u8]) -> Self {
+        let icon = Arc::new(svg_with_width(svg, 32.0));
+
+        // Icon program just sets the icon then stops
+        self.icon_program = Box::new(move |_input, context, tool_id, _data| {
+            let icon = icon.clone();
+
+            async move {
+                context.send_message(Tool::SetToolIcon(tool_id, icon)).await.ok();
+            }.boxed()
+        });
+
+        self
+    }
 }
 
 ///
