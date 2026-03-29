@@ -174,10 +174,10 @@ where
                     tool_subprograms.insert(to, subprograms);
                 },
 
-                ToolState::Select(_tool_id)                 => { },
-                ToolState::Deselect(_tool_id)               => { },
-                ToolState::OpenDialog(_tool_id)             => { },
-                ToolState::CloseDialog(_tool_id)            => { },
+                ToolState::Select(_tool_id)                 => { /* TODO: send canvas focus events to the tool canvas program */ },
+                ToolState::Deselect(_tool_id)               => { /* TODO: stop sending canvas focus events */ },
+                ToolState::OpenDialog(_tool_id)             => { /* TODO: run dialog program if it's not running */ },
+                ToolState::CloseDialog(_tool_id)            => { /* TODO: stop dialog program */ },
 
                 ToolState::RemoveTool(tool_id)              => {
                     // Remove the tool data
