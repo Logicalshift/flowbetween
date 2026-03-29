@@ -1,7 +1,10 @@
 use crate::scenery::ui::*;
 
 use flo_scene::*;
+use flo_scene_binding::*;
 use flo_draw::*;
+use flo_draw::canvas::*;
+use flo_binding::*;
 use flo_scene::programs::*;
 
 use futures::prelude::*;
@@ -21,10 +24,10 @@ pub struct ToolBehaviour<TToolData> {
     create_default_data: Box<dyn Send + Sync + Fn() -> Vec<TToolData>>,
 
     /// Program that handles events on the canvas while this tool is running
-    canvas_program: Box<dyn Send + Sync + Fn(InputStream<FocusEvent>, SceneContext, Arc<Mutex<TToolData>>) -> BoxFuture<'static, ()>>,
+    canvas_program: Box<dyn Send + Sync + Fn(InputStream<FocusEvent>, SceneContext, ToolId, Arc<Mutex<TToolData>>) -> BoxFuture<'static, ()>>,
 
     /// Program that deals with updating the tool's main icon
-    icon_program: Box<dyn Send + Sync + Fn(InputStream<()>, SceneContext, Arc<Mutex<TToolData>>) -> BoxFuture<'static, ()>>,
+    icon_program: Box<dyn Send + Sync + Fn(InputStream<BindingProgram>, SceneContext, ToolId, Arc<Mutex<TToolData>>) -> BoxFuture<'static, ()>>,
 }
 
 ///
@@ -37,11 +40,16 @@ pub trait ToolData : Send {
     /// The stream target here is the subprogram that owns the initial instance of the tool
     ///
     fn initial_position(&self) -> (StreamTarget, (f64, f64));
+
+    ///
+    /// Indicates that this data is for a duplicate created by the tool manager
+    ///
+    fn is_duplicate(&self, is_duplicate: bool) { let _ = is_duplicate; }
 }
 
 impl<TToolData> ToolBehaviour<TToolData> 
 where 
-    TToolData: ToolData,
+    TToolData: 'static + ToolData,
 {
     ///
     /// Creates a tool with no behaviour, and a set of default tools
@@ -50,9 +58,41 @@ where
         Self {
             name:                   name.into(),
             create_default_data:    Box::new(create_default),
-            canvas_program:         Box::new(|_, _, _| future::ready(()).boxed()),
-            icon_program:           Box::new(|_, _, _| future::ready(()).boxed()),
+            canvas_program:         Box::new(|_, _, _, _| future::ready(()).boxed()),
+            icon_program:           Box::new(|_, _, _, _| future::ready(()).boxed()),
         }
+    }
+
+    ///
+    /// Updates this behaviour with a canvas program, to handle events sent to the canvas while this tool is selected
+    ///
+    pub fn with_canvas_program<TFuture>(mut self, canvas_program: impl 'static + Send + Sync + Fn(InputStream<FocusEvent>, SceneContext, Arc<Mutex<TToolData>>) -> TFuture) -> Self
+    where
+        TFuture: 'static + Send + Future<Output=()>,
+    {
+        self.canvas_program = Box::new(move |input, context, _tool_id, data| canvas_program(input, context, data).boxed());
+
+        self
+    }
+
+    ///
+    /// Defines the icon using a binding program, which can use `flo_binding` values to update the icon
+    /// drawn for the tool (eg, updating the colour for the colour tool)
+    ///
+    pub fn with_icon_binding(mut self, icon_binding: impl 'static + Send + Sync + Fn(&Arc<Mutex<TToolData>>) -> Vec<Draw>) -> Self {
+        let icon_binding = Arc::new(icon_binding);
+
+        // Icon program is a binding program that 
+        self.icon_program = Box::new(move |input, context, tool_id, data| {
+            let binding_action = BindingAction::new(move |drawing: Vec<Draw>, context| async move {
+                context.send_message(Tool::SetToolIcon(tool_id, Arc::new(drawing))).await.ok();
+            });
+
+            let icon_binding = icon_binding.clone();
+            binding_program(input, context, computed(move || icon_binding(&data)), binding_action).boxed()
+        });
+
+        self
     }
 }
 
@@ -77,7 +117,7 @@ impl ToolSubPrograms {
     ///
     /// Starts the tool subprograms for a tool data structure
     ///
-    async fn start<TToolData>(_tool_id: ToolId, tool_data: &Arc<Mutex<TToolData>>, behaviour: &Arc<ToolBehaviour<TToolData>>, context: &SceneContext) -> Self 
+    async fn start<TToolData>(tool_id: ToolId, tool_data: &Arc<Mutex<TToolData>>, behaviour: &Arc<ToolBehaviour<TToolData>>, context: &SceneContext) -> Self 
     where 
         TToolData: 'static + ToolData,
     {
@@ -91,12 +131,12 @@ impl ToolSubPrograms {
         // Start the canvas and icon programs as child programs of the current program
         let canvas_program_behaviour    = Arc::clone(behaviour);
         let canvas_program_data         = Arc::clone(tool_data);
-        context.send_message(SceneControl::start_child_program(canvas_program_id, our_program_id, move |input, context| (canvas_program_behaviour.canvas_program)(input, context, canvas_program_data), 1))
+        context.send_message(SceneControl::start_child_program(canvas_program_id, our_program_id, move |input, context| (canvas_program_behaviour.canvas_program)(input, context, tool_id, canvas_program_data), 1))
             .await.ok();
 
         let icon_program_behaviour  = Arc::clone(behaviour);
         let icon_program_data       = Arc::clone(tool_data);
-        context.send_message(SceneControl::start_child_program(icon_program_id, our_program_id, move |input, context| (icon_program_behaviour.icon_program)(input, context, icon_program_data), 1))
+        context.send_message(SceneControl::start_child_program(icon_program_id, our_program_id, move |input, context| (icon_program_behaviour.icon_program)(input, context, tool_id, icon_program_data), 1))
             .await.ok();
 
         // Connect to the programs we just started
@@ -167,6 +207,7 @@ where
 
                     // Create the 'to_data'
                     let to_data = Arc::new(Mutex::new(from_data.lock().unwrap().clone()));
+                    to_data.lock().unwrap().is_duplicate(true);
                     tool_data.insert(to, to_data.clone());
 
                     // Start the subprograms for the cloned tool
@@ -184,7 +225,7 @@ where
                     tool_data.remove(&tool_id);
                     let Some(mut subprograms) = tool_subprograms.remove(&tool_id) else { continue; };
 
-                    // Stop the subprograms associated with this tool
+                    // Stop the subprograms associiated with this tool
                     subprograms.stop(&context).await;
                 },
 
