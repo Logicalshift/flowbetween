@@ -45,6 +45,11 @@ pub trait ToolData : Send {
     /// Indicates that this data is for a duplicate created by the tool manager
     ///
     fn is_duplicate(&self, is_duplicate: bool) { let _ = is_duplicate; }
+
+    ///
+    /// The tool has been selected or deselected
+    ///
+    fn selected(&self, is_selected: bool) { let _ = is_selected; }
 }
 
 impl<TToolData> ToolBehaviour<TToolData> 
@@ -200,7 +205,7 @@ where
         let mut input = input;
         while let Some(evt) = input.next().await {
             match evt {
-                ToolState::DuplicateTool(from, to)          => {
+                ToolState::DuplicateTool(from, to) => {
                     // Fetch the data for the existing tool (nothing to do if the tool doesn't exist)
                     // TODO: need some sort of error indication here if the tool doesn't exist as that shouldn't happen
                     let Some(from_data) = tool_data.get(&from).cloned() else { continue; };
@@ -215,8 +220,24 @@ where
                     tool_subprograms.insert(to, subprograms);
                 },
 
-                ToolState::Select(_tool_id)                 => { /* TODO: send canvas focus events to the tool canvas program */ },
-                ToolState::Deselect(_tool_id)               => { /* TODO: stop sending canvas focus events */ },
+                ToolState::Select(tool_id) => {
+                    // Tell the data that the tool is selected
+                    if let Some(data) = tool_data.get(&tool_id) {
+                        data.lock().unwrap().selected(true);
+                    }
+
+                    /* TODO: send canvas focus events to the tool canvas program */
+                },
+
+                ToolState::Deselect(tool_id) => { 
+                    // Tell the data that the tool is unselected
+                    if let Some(data) = tool_data.get(&tool_id) {
+                        data.lock().unwrap().selected(false);
+                    }
+
+                    /* TODO: stop sending canvas focus events */
+                },
+
                 ToolState::OpenDialog(_tool_id)             => { /* TODO: run dialog program if it's not running */ },
                 ToolState::CloseDialog(_tool_id)            => { /* TODO: stop dialog program */ },
 
