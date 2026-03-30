@@ -1,4 +1,5 @@
 use super::subprograms::*;
+use super::tools::*;
 use crate::scenery::document::canvas::*;
 use crate::scenery::ui::*;
 
@@ -122,19 +123,16 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     document_scene.add_subprogram(subprogram_tool_dock_left(),  |input, context| tool_dock_program(input, context, DockPosition::Left, LayerId(1), Some(subprogram_floating_tools())), 20);
     document_scene.add_subprogram(subprogram_tool_dock_right(), |input, context| tool_dock_program(input, context, DockPosition::Right, LayerId(2), Some(subprogram_floating_tools())), 20);
 
+    document_scene.add_subprogram(SubProgramId::new(), brush_tool_program, 1);
+
     let test_tool       = ToolId::new();
-    let test_tool2      = ToolId::new();
-    let test_group      = ToolGroupId::new();
+    let test_group      = TOOL_GROUP_CANVAS;
     let test_type       = ToolTypeId::new();
     let tool_icon_1     = svg_with_width(include_bytes!("../../../../flo/svg/tools/pencil.svg"), 32.0);
-    let tool_icon_2     = svg_with_width(include_bytes!("../../../../flo/svg/tools/ink.svg"), 32.0);
 
     context.send_message(Tool::CreateTool(test_group, test_type, test_tool)).await.unwrap();
-    context.send_message(Tool::CreateTool(test_group, test_type, test_tool2)).await.unwrap();
     context.send_message(Tool::SetToolIcon(test_tool, Arc::new(tool_icon_1.clone()))).await.unwrap();
-    context.send_message(Tool::SetToolIcon(test_tool2, Arc::new(tool_icon_2.clone()))).await.unwrap();
     context.send_message(Tool::SetToolLocation(test_tool, subprogram_tool_dock_left().into(), (0.0, 0.0))).await.unwrap();
-    context.send_message(Tool::SetToolLocation(test_tool2, subprogram_tool_dock_left().into(), (0.0, 0.1))).await.unwrap();
     context.send_message(Tool::Select(test_tool)).await.unwrap();
 
     // Set up an initial canvas: make sure the SqliteCanvas and the rendering program both exist
