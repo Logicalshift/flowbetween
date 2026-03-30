@@ -1,6 +1,7 @@
 use crate::scenery::document::canvas::*;
 
 use flo_curves::bezier::*;
+use flo_curves::bezier::path::*;
 
 use serde::*;
 
@@ -14,14 +15,71 @@ pub struct CoreBrushSettings {
     /// How the shape should be built
     pub builder: BrushShapeBuilder,
 
-    /// The size of the brush (at radius = 1.0)
-    pub size: (f64, f64),
-
     /// What the pressure will vary (or the empty vec if the pressure has no effect)
     pub pressure_vary: Vec<BrushVary>,
 
     /// What the stroke speed will vary (or the empty vec if the speed has no effect)
     pub speed_vary: Vec<BrushVary>,
+}
+
+impl CoreBrushSettings {
+    ///
+    /// Creates the default daub brush from a path
+    ///
+    pub fn with_path(path: impl Into<CanvasPath>) -> Self {
+        // Convert the path
+        let path            = path.into();
+        let working_path    = WorkingSubpath::from_canvas_path(&path);
+
+        // Get the size of the path
+        let bounds = working_path.iter()
+            .map(|subpath| path_bounding_box::<_, Bounds<_>>(subpath))
+            .reduce(|b1, b2| b1.union_bounds(b2));
+        let bounds = bounds.unwrap_or(Bounds::empty());
+
+        // Radius comes from the bounds
+        let width       = bounds.max().x - bounds.min().x;
+        let height      = bounds.max().y - bounds.min().y;
+        let diameter    = width.max(height);
+        let radius      = diameter/2.0;
+
+        let brush_daub_settings = BrushDaubSettings {
+            shape:          path,
+            base_radius:    radius,
+            distance:       0.5,
+            fit:            1.0,
+        };
+
+        // Create the brush settings for a 'standard' pressure sensitive brush
+        CoreBrushSettings { 
+            builder:        BrushShapeBuilder::Daubs(brush_daub_settings), 
+            pressure_vary:  vec![BrushVary::Radius { min: 0.0, max: 1.0, profile: vec![ResponseCurve::linear()] }], 
+            speed_vary:     vec![],
+        }
+    }
+
+    ///
+    /// Creates the simple line-width brush
+    ///
+    pub fn line_width_brush() -> Self {
+        CoreBrushSettings { 
+            builder:        BrushShapeBuilder::LineWidth, 
+            pressure_vary:  vec![BrushVary::Radius { min: 0.0, max: 1.0, profile: vec![ResponseCurve::linear()] }], 
+            speed_vary:     vec![],
+        }
+    }
+}
+
+impl Default for CoreBrushSettings {
+    fn default() -> Self {
+        use flo_curves::arc::*;
+
+        let base_path = Circle::new(WorkingPoint { x: 0.0, y: 0.0 }, 10.0);
+        let base_path = base_path.to_path::<WorkingSubpath>();
+        let base_path = WorkingSubpath::to_canvas_path(&[base_path]);
+
+        Self::with_path(base_path)
+    }
 }
 
 ///
