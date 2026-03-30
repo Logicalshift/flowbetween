@@ -33,6 +33,9 @@ pub struct BrushToolState {
 
     /// Preview for the tool
     preview: Binding<Arc<Vec<Draw>>>,
+
+    /// The transform that's applied to the binding layer
+    layer_transform: Binding<Transform2D>,
 }
 
 impl ToolData for BrushToolState {
@@ -57,10 +60,11 @@ impl Default for BrushToolState {
         preview.stroke();
 
         Self {
-            hover_pos:      bind(None),
-            tool_selected:  bind(false),
-            mouse_over:     bind(false),
-            preview:        bind(Arc::new(preview)),
+            hover_pos:          bind(None),
+            tool_selected:      bind(false),
+            mouse_over:         bind(false),
+            preview:            bind(Arc::new(preview)),
+            layer_transform:    bind(Transform2D::identity()),
         }
     }
 }
@@ -78,6 +82,10 @@ pub async fn brush_tool_program(input: InputStream<ToolState>, context: SceneCon
     // The actual behaviour when focused on the canvas
     let behaviour = behaviour.with_canvas_program(|input, context, data| async move {
         let Some(our_program_id) = context.current_program_id() else { return; };
+
+        // Tell SceneControl to run a child program that monitors the layer transform
+        let transform_data = data.clone();
+        context.send_message(SceneControl::start_child_program(SubProgramId::new(), our_program_id, move |input, context| brush_tool_canvas_state_tracker(input, context, transform_data), 1)).await.ok();
 
         // Tell SceneControl to run a child program that draws the brush preview
         let preview_data = data.clone();
@@ -120,10 +128,10 @@ async fn brush_tool_preview_program(input: InputStream<BindingProgram>, context:
     });
 
     // Binding creates the drawing
-    let (hover_pos, tool_selected, mouse_over, preview) = {
+    let (hover_pos, tool_selected, mouse_over, preview, layer_transform) = {
         let data = data.lock().unwrap();
 
-        (data.hover_pos.clone(), data.tool_selected.clone(), data.mouse_over.clone(), data.preview.clone())
+        (data.hover_pos.clone(), data.tool_selected.clone(), data.mouse_over.clone(), data.preview.clone(), data.layer_transform.clone())
     };
 
     let binding = computed(move || {
@@ -143,6 +151,8 @@ async fn brush_tool_preview_program(input: InputStream<BindingProgram>, context:
         drawing.layer(LayerId(0));
         drawing.clear_layer();
 
+        drawing.set_layer_transform(layer_transform.get());
+
         // Draw the preview if the mouse is over the canvas
         if let (Some(hover_pos), true, true) = (hover_pos, tool_selected, mouse_over) {
             drawing.transform(Transform2D::translate(hover_pos.0 as _, hover_pos.1 as _));
@@ -156,4 +166,23 @@ async fn brush_tool_preview_program(input: InputStream<BindingProgram>, context:
 
     // Run the binding program
     binding_program(input, context, binding, action).await;
+}
+
+///
+/// Tracks the current layer transform for the canvas layers
+///
+async fn brush_tool_canvas_state_tracker(input: InputStream<CanvasRenderUpdate>, context: SceneContext, data: Arc<Mutex<BrushToolState>>) {
+    let our_program_id = context.current_program_id().unwrap();
+
+    // Request updates on the layer transform
+    context.send_message(CanvasRender::Subscribe(our_program_id.into())).await.ok();
+
+    // Monitor for updates
+    let mut input = input;
+    while let Some(msg) = input.next().await {
+        match msg {
+            CanvasRenderUpdate::LayerTransform(transform)   => { data.lock().unwrap().layer_transform.set(transform); },
+            CanvasRenderUpdate::Layers(_layers)             => { },
+        }
+    }
 }
