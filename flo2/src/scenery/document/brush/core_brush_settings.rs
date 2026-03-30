@@ -86,7 +86,7 @@ impl CoreBrushSettings {
     pub fn to_brush_responses(&self) -> Vec<BrushResponse> {
         let create_shape = match &self.builder {
             BrushShapeBuilder::Daubs(daubs) => { daubs.create_shape_response() }
-            BrushShapeBuilder::LineWidth    => { todo!() }
+            BrushShapeBuilder::LineWidth    => { BrushResponse::ShapeGenerator(Arc::new(|points| width_brush_stream(points, 0.25).boxed())) }
         };
 
         vec![create_shape]
