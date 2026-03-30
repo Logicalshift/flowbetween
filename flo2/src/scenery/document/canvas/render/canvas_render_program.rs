@@ -368,7 +368,12 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
             }
 
             CanvasRender::Subscribe(target) => {
-                if let Ok(target) = context.send(target) {
+                if let Ok(mut target) = context.send(target) {
+                    // Send the current state
+                    target.send(CanvasRenderUpdate::LayerTransform(layer_transform)).await.ok();
+                    target.send(CanvasRenderUpdate::Layers(layer_map.clone())).await.ok();
+
+                    // Add to the subscribers
                     subscribers.add_target(target);
                 }
             }
