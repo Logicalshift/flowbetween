@@ -214,6 +214,7 @@ where
             let (default_target, default_location) = default_tool.lock().unwrap().initial_position();
             tool_target.send(Tool::CreateTool(group_id, tool_type_id, tool_id)).await.ok();
             tool_target.send(Tool::SetToolLocation(tool_id, default_target, default_location)).await.ok();
+            tool_target.send(Tool::SetToolName(tool_id, behaviour.name.clone())).await.ok();
 
             // Start the subprograms for this tool (these will do things like set the initial icon)
             let subprograms = ToolSubPrograms::start(tool_id, &default_tool, &behaviour, &context).await;
