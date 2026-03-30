@@ -1,7 +1,9 @@
 use crate::scenery::ui::*;
+use crate::scenery::document::canvas::*;
 
 use flo_scene::*;
 use flo_scene::programs::*;
+use flo_draw::canvas::*;
 
 use futures::prelude::*;
 use futures::stream::FuturesUnordered;
@@ -15,7 +17,11 @@ use serde::*;
 /// Shared state for the two programs that make up the relay
 ///
 struct ActiveTools {
+    // Current set of active tool programs
     active_tool_programs: HashSet<SubProgramId>,
+
+    // Transform applied to the tool layer
+    layer_transform: Transform2D,
 }
 
 ///
@@ -51,12 +57,17 @@ impl SceneMessage for FocusTool {
 pub async fn focus_tool_program(input: InputStream<FocusTool>, context: SceneContext) {
     let Some(our_program_id) = context.current_program_id() else { return; };
 
-    let active_tools = Arc::new(Mutex::new(ActiveTools { active_tool_programs: HashSet::new() }));
+    let active_tools = Arc::new(Mutex::new(ActiveTools { active_tool_programs: HashSet::new(), layer_transform: Transform2D::identity() }));
 
     // Tell SceneControl to start a child program to do the actual event relaying (while we update which tools are active)
     let relay_program_id    = SubProgramId::new();
     let relay_state         = active_tools.clone();
     context.send_message(SceneControl::start_child_program(relay_program_id, our_program_id, move |input, context| tool_canvas_relay(input, context, relay_state), 20)).await.ok();
+
+    // Tell SceneControl to monitor the layer transform so we can transform the coordinates sent in focus events
+    let canvas_state_program_id = SubProgramId::new();
+    let canvas_state_state      = active_tools.clone();
+    context.send_message(SceneControl::start_child_program(canvas_state_program_id, our_program_id, move |input, context| tool_canvas_state_tracker(input, context, canvas_state_state), 20)).await.ok();
 
     // Tell Focus that our child program owns the canvas
     context.send_message(Focus::SetCanvas(relay_program_id)).await.ok();
@@ -121,6 +132,25 @@ async fn tool_canvas_relay(input: InputStream<FocusEvent>, context: SceneContext
         let mut returning_connections = futures.into_iter().collect::<FuturesUnordered<_>>();
         while let Some((program, maybe_connection)) = returning_connections.next().await {
             connections.insert(program, maybe_connection);
+        }
+    }
+}
+
+///
+/// Tracks the current layer transform for the canvas layers
+///
+async fn tool_canvas_state_tracker(input: InputStream<CanvasRenderUpdate>, context: SceneContext, data: Arc<Mutex<ActiveTools>>) {
+    let our_program_id = context.current_program_id().unwrap();
+
+    // Request updates on the layer transform
+    context.send_message(CanvasRender::Subscribe(our_program_id.into())).await.ok();
+
+    // Monitor for updates
+    let mut input = input;
+    while let Some(msg) = input.next().await {
+        match msg {
+            CanvasRenderUpdate::LayerTransform(transform)   => { data.lock().unwrap().layer_transform = transform; },
+            CanvasRenderUpdate::Layers(_layers)             => { },
         }
     }
 }
