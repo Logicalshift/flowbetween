@@ -21,7 +21,7 @@ struct ActiveTools {
     active_tool_programs: HashSet<SubProgramId>,
 
     // Transform applied to the tool layer
-    layer_transform: Transform2D,
+    inverse_layer_transform: Transform2D,
 }
 
 ///
@@ -57,7 +57,7 @@ impl SceneMessage for FocusTool {
 pub async fn focus_tool_program(input: InputStream<FocusTool>, context: SceneContext) {
     let Some(our_program_id) = context.current_program_id() else { return; };
 
-    let active_tools = Arc::new(Mutex::new(ActiveTools { active_tool_programs: HashSet::new(), layer_transform: Transform2D::identity() }));
+    let active_tools = Arc::new(Mutex::new(ActiveTools { active_tool_programs: HashSet::new(), inverse_layer_transform: Transform2D::identity() }));
 
     // Tell SceneControl to start a child program to do the actual event relaying (while we update which tools are active)
     let relay_program_id    = SubProgramId::new();
@@ -92,6 +92,25 @@ async fn tool_canvas_relay(input: InputStream<FocusEvent>, context: SceneContext
     // Event input
     let mut input = input;
     while let Some(event) = input.next().await {
+        // Update the event with canvas transforms
+        let event = match event {
+            FocusEvent::Pointer(FocusPointerEvent::Pointer(control_id, pointer_action, pointer_id, pointer_state)) => {
+                let mut pointer_state = pointer_state;
+
+                if let Some(location_in_canvas) = &mut pointer_state.location_in_canvas {
+                    // Apply the location in canvas transform
+                    let transform = state.lock().unwrap().inverse_layer_transform;
+
+                    let (x, y) = transform.transform_point(location_in_canvas.0 as _, location_in_canvas.1 as _);
+                    *location_in_canvas = (x as _, y as _);
+                }
+
+                FocusEvent::Pointer(FocusPointerEvent::Pointer(control_id, pointer_action, pointer_id, pointer_state))
+            },
+
+            event => event
+        };
+
         // Ensure we're connected to all active programs
         let active_programs = state.lock().unwrap().active_tool_programs.clone();
 
@@ -149,7 +168,7 @@ async fn tool_canvas_state_tracker(input: InputStream<CanvasRenderUpdate>, conte
     let mut input = input;
     while let Some(msg) = input.next().await {
         match msg {
-            CanvasRenderUpdate::LayerTransform(transform)   => { data.lock().unwrap().layer_transform = transform; },
+            CanvasRenderUpdate::LayerTransform(transform)   => { data.lock().unwrap().inverse_layer_transform = transform.invert().unwrap_or_else(|| Transform2D::identity()); },
             CanvasRenderUpdate::Layers(_layers)             => { },
         }
     }
