@@ -23,6 +23,7 @@ use std::collections::*;
 use std::sync::*;
 
 pub static CANVAS_NAMESPACE: Lazy<NamespaceId>  = Lazy::new(|| NamespaceId::new());
+pub static CANVAS_OVERLAY_NAMESPACE: Lazy<NamespaceId>  = Lazy::new(|| NamespaceId::new());
 
 ///
 /// Messages for the canvas rendering program
