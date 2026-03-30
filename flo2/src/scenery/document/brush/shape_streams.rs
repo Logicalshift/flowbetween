@@ -3,7 +3,6 @@ use crate::scenery::document::canvas::*;
 
 use flo_curves::*;
 use flo_curves::bezier::*;
-use flo_curves::bezier::path::*;
 use flo_curves::bezier::vectorize::*;
 
 use futures::prelude::*;
