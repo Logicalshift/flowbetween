@@ -1,9 +1,16 @@
+use super::brush_response::*;
+use super::shape_streams::*;
 use crate::scenery::document::canvas::*;
 
 use flo_curves::bezier::*;
 use flo_curves::bezier::path::*;
+use flo_curves::bezier::rasterize::*;
+use flo_curves::bezier::vectorize::*;
 
+use futures::prelude::*;
 use serde::*;
+
+use std::sync::*;
 
 ///
 /// The core brush settings describe how a brush stroke is turned into a shape
@@ -43,8 +50,19 @@ impl CoreBrushSettings {
         let diameter    = width.max(height);
         let radius      = diameter/2.0;
 
+        // Transform the path so that bounds.min() maps to 0,0
+        let working_path = working_path.iter()
+            .map(|subpath| subpath.map_points(|mut point| {
+                point.x -= bounds.min().x;
+                point.y -= bounds.min().y;
+
+                point
+            }))
+            .collect::<Vec<_>>();
+
         let brush_daub_settings = BrushDaubSettings {
-            shape:          path,
+            shape:          working_path,
+            bounds:         (bounds.min(), bounds.max()),
             base_radius:    radius,
             distance:       0.5,
             fit:            1.0,
@@ -67,6 +85,18 @@ impl CoreBrushSettings {
             pressure_vary:  vec![BrushVary::Radius { min: 0.0, max: 1.0, profile: vec![ResponseCurve::linear()] }], 
             speed_vary:     vec![],
         }
+    }
+
+    ///
+    /// Creates the brush responses that describe how to generate this part of the brush
+    ///
+    pub fn to_brush_responses(&self) -> Vec<BrushResponse> {
+        let create_shape = match &self.builder {
+            BrushShapeBuilder::Daubs(daubs) => { daubs.create_shape_response() }
+            BrushShapeBuilder::LineWidth    => { todo!() }
+        };
+
+        vec![create_shape]
     }
 }
 
@@ -100,7 +130,10 @@ pub enum BrushShapeBuilder {
 #[derive(Serialize, Deserialize)]
 pub struct BrushDaubSettings {
     /// The path that makes up the daub shape. This should be a path centered around the 0,0 point (the 0,0 point is where this shape will be scaled around)
-    pub shape: CanvasPath,
+    pub shape: Vec<WorkingSubpath>,
+
+    /// The size of the shape, as a minimum and maximum value
+    pub bounds: (WorkingPoint, WorkingPoint),
 
     /// The base radius of the shape (used for varying the size of the daub)
     pub base_radius: f64,
@@ -110,6 +143,21 @@ pub struct BrushDaubSettings {
 
     /// The minimum error allowed in the fit for this brush (>1.0 is a good value for a smooth brush stroke)
     pub fit: f64,
+}
+
+impl BrushDaubSettings {
+    ///
+    /// Creates the 'create brush shape' program for these daub settings
+    ///
+    pub fn create_shape_response(&self) -> BrushResponse {
+        let daub_size       = ContourSize((self.bounds.1.x - self.bounds.0.x).ceil() as usize, (self.bounds.1.y - self.bounds.0.y).ceil() as usize);
+        let daub_contour    = Arc::new(PathContour::from_path(self.shape.clone(), daub_size));
+        let max_error       = self.fit;
+
+        BrushResponse::ShapeGenerator(Arc::new(move |points| {
+            daub_brush_stream(daub_contour.clone(), points, max_error).boxed()
+        }))
+    }
 }
 
 ///
