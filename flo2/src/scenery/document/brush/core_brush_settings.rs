@@ -44,12 +44,6 @@ impl CoreBrushSettings {
             .reduce(|b1, b2| b1.union_bounds(b2));
         let bounds = bounds.unwrap_or(Bounds::empty());
 
-        // Radius comes from the bounds
-        let width       = bounds.max().x - bounds.min().x;
-        let height      = bounds.max().y - bounds.min().y;
-        let diameter    = width.max(height);
-        let radius      = diameter/2.0;
-
         // Transform the path so that bounds.min() maps to 0,0
         let working_path = working_path.iter()
             .map(|subpath| subpath.map_points(|mut point| {
@@ -63,7 +57,6 @@ impl CoreBrushSettings {
         let brush_daub_settings = BrushDaubSettings {
             shape:          working_path,
             bounds:         (bounds.min(), bounds.max()),
-            base_radius:    radius,
             distance:       0.5,
             fit:            1.0,
         };
@@ -134,9 +127,6 @@ pub struct BrushDaubSettings {
 
     /// The size of the shape, as a minimum and maximum value
     pub bounds: (WorkingPoint, WorkingPoint),
-
-    /// The base radius of the shape (used for varying the size of the daub)
-    pub base_radius: f64,
 
     /// The distance between daubs (applied irrespective of scale). 0.5 is a good value for a brush that's suposed to create a smooth stroke
     pub distance: f64,
