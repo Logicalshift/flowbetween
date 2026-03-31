@@ -260,6 +260,9 @@ async fn brush_stroke(button_down: Button, input: &mut InputStream<FocusEvent>, 
         while let Some(evt) = input.next().await {
             match evt {
                 FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Move, _, state)) => { 
+                    // Update the hover position
+                    data.lock().unwrap().hover_pos.set(state.location_in_canvas);
+
                     // Generate a brush point
                     let brush_point = BrushPoint::from(state);
 
