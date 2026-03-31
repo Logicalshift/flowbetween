@@ -103,6 +103,10 @@ pub async fn brush_tool_program(input: InputStream<ToolState>, context: SceneCon
                     data.lock().unwrap().hover_pos.set(state.location_in_canvas);
                 }
 
+                FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::ButtonDown, _, state)) => {
+                    brush_stroke(state.buttons[0], &mut input, &context, data.clone(), (*CANVAS_NAMESPACE, LayerId(1000))).await;
+                }
+
                 _ => {}
             }
         }
@@ -180,4 +184,14 @@ async fn brush_tool_canvas_state_tracker(input: InputStream<CanvasRenderUpdate>,
             CanvasRenderUpdate::Layers(_layers)             => { },
         }
     }
+}
+
+///
+/// Previews a brush stroke using this tool on the specified layer (returning the final brushstroke so it can be added to the canvas)
+///
+async fn brush_stroke(button_down: Button, input: &mut InputStream<FocusEvent>, context: &SceneContext, data: Arc<Mutex<BrushToolState>>, (namespace, layer): (NamespaceId, LayerId)) {
+    // Query the brush status (TODO: also send the request to other tools)
+    let core_settings = data.lock().unwrap().brush_settings.get();
+    let core_response = core_settings.to_brush_responses();
+    
 }
