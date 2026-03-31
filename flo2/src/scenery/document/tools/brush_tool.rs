@@ -109,9 +109,9 @@ pub async fn brush_tool_program(input: InputStream<ToolState>, context: SceneCon
                     data.lock().unwrap().hover_pos.set(state.location_in_canvas);
                 }
 
-                FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::ButtonDown, _, state)) => {
+                FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::ButtonDown, pointer_id, state)) => {
                     data.lock().unwrap().is_drawing.set(true);
-                    brush_stroke(state.buttons[0], &mut input, &context, data.clone(), (*CANVAS_NAMESPACE, LayerId(1000))).await;
+                    brush_stroke(state.buttons[0], pointer_id, &mut input, &context, data.clone(), (*CANVAS_NAMESPACE, LayerId(1000))).await;
                     data.lock().unwrap().is_drawing.set(false);
                 }
 
@@ -198,7 +198,7 @@ async fn brush_tool_canvas_state_tracker(input: InputStream<CanvasRenderUpdate>,
 ///
 /// Previews a brush stroke using this tool on the specified layer (returning the final brushstroke so it can be added to the canvas)
 ///
-async fn brush_stroke(button_down: Button, input: &mut InputStream<FocusEvent>, context: &SceneContext, data: Arc<Mutex<BrushToolState>>, (namespace, layer): (NamespaceId, LayerId)) {
+async fn brush_stroke(button_down: Button, pointer_id: PointerId, input: &mut InputStream<FocusEvent>, context: &SceneContext, data: Arc<Mutex<BrushToolState>>, (namespace, layer): (NamespaceId, LayerId)) {
     use std::iter;
 
     // Query the brush status (TODO: also send the request to other tools)
@@ -259,7 +259,10 @@ async fn brush_stroke(button_down: Button, input: &mut InputStream<FocusEvent>, 
         // Process mouse events until we're done
         while let Some(evt) = input.next().await {
             match evt {
-                FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Move, _, state)) => { 
+                FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::Move, moving_pointer_id, state)) => { 
+                    if !state.buttons.contains(&button_down) { continue; }
+                    if moving_pointer_id != pointer_id       { continue; }
+
                     // Update the hover position
                     data.lock().unwrap().hover_pos.set(state.location_in_canvas);
 
