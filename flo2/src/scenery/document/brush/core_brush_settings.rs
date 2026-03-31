@@ -1,5 +1,6 @@
 use super::brush_response::*;
 use super::shape_streams::*;
+use super::smoothing_streams::*;
 use crate::scenery::document::canvas::*;
 
 use flo_curves::bezier::*;
@@ -84,12 +85,23 @@ impl CoreBrushSettings {
     /// Creates the brush responses that describe how to generate this part of the brush
     ///
     pub fn to_brush_responses(&self) -> Vec<BrushResponse> {
+        use std::iter;
+
+        // The 'create shape' step
         let create_shape = match &self.builder {
             BrushShapeBuilder::Daubs(daubs) => { daubs.create_shape_response() }
             BrushShapeBuilder::LineWidth    => { BrushResponse::ShapeGenerator(Arc::new(|points| width_brush_stream(points, 0.25).boxed())) }
         };
 
-        vec![create_shape]
+        // The 'distance' step, used to convert the input points into values suitable for the generation algorithm
+        let distance_step = match &self.builder {
+            BrushShapeBuilder::Daubs(daubs) => { let distance = daubs.distance; Some(BrushResponse::Points(Arc::new(move |points| brush_fill_in_points(distance, points).boxed()))) },
+            BrushShapeBuilder::LineWidth    => None,
+        };
+
+        distance_step.into_iter()
+            .chain(iter::once(create_shape))
+            .collect()
     }
 }
 
