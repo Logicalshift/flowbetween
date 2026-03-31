@@ -1,3 +1,4 @@
+use flo_draw;
 use flo_draw::canvas;
 use serde::*;
 
@@ -38,5 +39,20 @@ impl BrushPoint {
         let dy = self.position.1 - other.position.1;
 
         (dx*dx + dy*dy).sqrt()
+    }
+}
+
+impl From<flo_draw::PointerState> for BrushPoint {
+    #[inline]
+    fn from(value: flo_draw::PointerState) -> Self {
+        BrushPoint {
+            position:       value.location_in_canvas.unwrap_or((0.0, 0.0)),
+            pressure:       value.pressure.unwrap_or(1.0),
+            tilt:           value.tilt.unwrap_or((0.0, 0.0)),
+            rotation:       value.rotation.unwrap_or(0.0),
+            flow_rate:      value.flow_rate.unwrap_or(1.0),
+            daub_radius:    None,
+            daub_transform: None
+        }
     }
 }
