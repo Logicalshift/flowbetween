@@ -286,16 +286,5 @@ async fn brush_stroke(button_down: Button, input: &mut InputStream<FocusEvent>, 
     tasks.next().await;
     drop(tasks);
 
-    // Clear up the preview layer
-    let mut clear_preview = vec![];
-
-    clear_preview.push_state();
-    clear_preview.namespace(namespace);
-    clear_preview.layer(layer);
-    clear_preview.clear_layer();
-    clear_preview.pop_state();
-
-    context.send_message(DrawingRequest::Draw(Arc::new(clear_preview))).await.ok();
-
     // TODO: the last set of shapes generated is the result of this function
 }
