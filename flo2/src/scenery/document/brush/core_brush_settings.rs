@@ -17,7 +17,7 @@ use std::sync::*;
 ///
 /// This misses out things like 
 ///
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct CoreBrushSettings {
     /// How the shape should be built
     pub builder: BrushShapeBuilder,
@@ -108,7 +108,7 @@ impl Default for CoreBrushSettings {
 ///
 /// How the shape of the brush is built up
 ///
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub enum BrushShapeBuilder {
     /// Simple 'line width' brush
     LineWidth,
@@ -120,7 +120,7 @@ pub enum BrushShapeBuilder {
 ///
 /// Settings for generating a brush daub
 ///
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct BrushDaubSettings {
     /// The path that makes up the daub shape. This should be a path centered around the 0,0 point (the 0,0 point is where this shape will be scaled around)
     pub shape: Vec<WorkingSubpath>,
@@ -153,7 +153,7 @@ impl BrushDaubSettings {
 ///
 /// Describes what an input parameter should vary
 ///
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub enum BrushVary {
     /// Change the radius of the brush stroke based on this parameter, between the minimum and maximum values (with the specified response curve)
     Radius { min: f64, max: f64, profile: Vec<ResponseCurve>, },
@@ -165,7 +165,7 @@ pub enum BrushVary {
 ///
 /// 1D Bezier curve that describes how an input value should map to an output value
 ///
-#[derive(Serialize, Deserialize, Clone, Copy)]
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub struct ResponseCurve(pub [f64; 4]);
 
 impl Geo for ResponseCurve {

@@ -2,6 +2,7 @@ use super::canvas_tool_type_ids::*;
 use super::group_ids::*;
 use super::tool::*;
 use crate::scenery::ui::*;
+use crate::scenery::document::brush::*;
 use crate::scenery::document::canvas::*;
 use crate::scenery::document::subprograms::*;
 
@@ -22,6 +23,9 @@ use std::sync::*;
 ///
 #[derive(Clone)]
 pub struct BrushToolState {
+    /// The settings for the brush
+    brush_settings: Binding<CoreBrushSettings>,
+
     /// Position where the tool is hovering
     hover_pos: Binding<Option<(f64, f64)>>,
 
@@ -60,6 +64,7 @@ impl Default for BrushToolState {
         preview.stroke();
 
         Self {
+            brush_settings:     bind(CoreBrushSettings::default()),
             hover_pos:          bind(None),
             tool_selected:      bind(false),
             mouse_over:         bind(false),
