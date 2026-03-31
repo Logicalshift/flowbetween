@@ -205,6 +205,8 @@ async fn brush_stroke(button_down: Button, input: &mut InputStream<FocusEvent>, 
     let core_settings = data.lock().unwrap().brush_settings.get();
     let core_response = core_settings.to_brush_responses();
 
+    let layer_transform = data.lock().unwrap().layer_transform.get();
+
     // Generate the shapes we're going to preview
     let (send_points, recv_points)  = mpsc::channel(100);
     let preview_shapes              = create_shape_stream(recv_points, core_response.iter());
@@ -221,8 +223,21 @@ async fn brush_stroke(button_down: Button, input: &mut InputStream<FocusEvent>, 
             drawing.namespace(namespace);
             drawing.layer(layer);
             drawing.clear_layer();
+            drawing.set_layer_transform(layer_transform);
 
             for shape in shapes {
+                // Add a colour if the shape generated doesn't have one
+                // TODO: temporary until we have an actual colour tool
+                let mut shape = shape;
+                if !shape.properties.iter().any(|(prop, _val)| prop == &*PROP_FILL_COLOR) {
+                    let mut properties = Arc::unwrap_or_clone(shape.properties);
+
+                    properties.push((*PROP_FILL_COLOR,      color_value_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))));
+                    properties.push((*PROP_FILL_COLOR_TYPE, color_type_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))));
+
+                    shape.properties = Arc::new(properties);
+                }
+
                 // Generate the drawing instructions for this shape
                 let shape_drawing = render_shapes(iter::once(Arc::new(shape)), FrameTime::ZERO, context).await;
 
@@ -273,7 +288,7 @@ async fn brush_stroke(button_down: Button, input: &mut InputStream<FocusEvent>, 
 
     // Clear up the preview layer
     let mut clear_preview = vec![];
-    
+
     clear_preview.push_state();
     clear_preview.namespace(namespace);
     clear_preview.layer(layer);
