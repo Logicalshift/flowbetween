@@ -35,9 +35,6 @@ pub struct BrushToolState {
     /// Whether or not the mouse has entered the tool region
     mouse_over: Binding<bool>,
 
-    /// Preview for the tool
-    preview: Binding<Arc<Vec<Draw>>>,
-
     /// The transform that's applied to the binding layer
     layer_transform: Binding<Transform2D>,
 }
@@ -56,19 +53,11 @@ impl ToolData for BrushToolState {
 
 impl Default for BrushToolState {
     fn default() -> Self {
-        let mut preview = vec![];
-        preview.new_path();
-        preview.circle(0.0, 0.0, 10.0);
-        preview.stroke_color(Color::Rgba(0.6, 0.6, 0.6, 1.0));
-        preview.line_width_pixels(1.0);
-        preview.stroke();
-
         Self {
             brush_settings:     bind(CoreBrushSettings::default()),
             hover_pos:          bind(None),
             tool_selected:      bind(false),
             mouse_over:         bind(false),
-            preview:            bind(Arc::new(preview)),
             layer_transform:    bind(Transform2D::identity()),
         }
     }
@@ -133,10 +122,10 @@ async fn brush_tool_preview_program(input: InputStream<BindingProgram>, context:
     });
 
     // Binding creates the drawing
-    let (hover_pos, tool_selected, mouse_over, preview, layer_transform) = {
+    let (hover_pos, tool_selected, mouse_over, settings, layer_transform) = {
         let data = data.lock().unwrap();
 
-        (data.hover_pos.clone(), data.tool_selected.clone(), data.mouse_over.clone(), data.preview.clone(), data.layer_transform.clone())
+        (data.hover_pos.clone(), data.tool_selected.clone(), data.mouse_over.clone(), data.brush_settings.clone(), data.layer_transform.clone())
     };
 
     let binding = computed(move || {
@@ -144,7 +133,8 @@ async fn brush_tool_preview_program(input: InputStream<BindingProgram>, context:
         let hover_pos       = hover_pos.get();
         let tool_selected   = tool_selected.get();
         let mouse_over      = mouse_over.get();
-        let preview         = preview.get();
+        let settings        = settings.get();
+        let size            = 40.0;
 
         let mut drawing = vec![];
 
@@ -161,7 +151,7 @@ async fn brush_tool_preview_program(input: InputStream<BindingProgram>, context:
         // Draw the preview if the mouse is over the canvas
         if let (Some(hover_pos), true, true) = (hover_pos, tool_selected, mouse_over) {
             drawing.transform(Transform2D::translate(hover_pos.0 as _, hover_pos.1 as _));
-            drawing.extend(preview.iter().cloned());
+            drawing.extend(settings.preview(PointerState { location_in_window: hover_pos, location_in_canvas: Some(hover_pos), buttons: vec![], pressure: None, tilt: None, rotation: None, flow_rate: None }, size));
         }
 
         drawing.pop_state();
