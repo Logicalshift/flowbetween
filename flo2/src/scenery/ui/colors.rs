@@ -12,3 +12,5 @@ use flo_draw::canvas::*;
 #[inline] pub fn color_tool_dock_outline() -> Color             { Color::Rgba(0.8, 0.8, 0.8, 1.0) }
 #[inline] pub fn color_tool_dock_highlight() -> Color           { Color::Rgba(0.1, 0.1, 0.1, 1.0) }
 #[inline] pub fn color_tool_dock_selected() -> Color            { Color::Rgba(0.0, 0.0, 0.0, 1.0) }
+
+#[inline] pub fn color_brush_preview() -> Color                 { Color::Rgba(0.8, 0.8, 0.8, 0.95) }

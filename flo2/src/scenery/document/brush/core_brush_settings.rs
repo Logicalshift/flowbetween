@@ -2,11 +2,14 @@ use super::brush_response::*;
 use super::shape_streams::*;
 use super::smoothing_streams::*;
 use crate::scenery::document::canvas::*;
+use crate::scenery::ui::*;
 
 use flo_curves::bezier::*;
 use flo_curves::bezier::path::*;
 use flo_curves::bezier::rasterize::*;
 use flo_curves::bezier::vectorize::*;
+use flo_draw::*;
+use flo_draw::canvas::*;
 
 use futures::prelude::*;
 use serde::*;
@@ -102,6 +105,57 @@ impl CoreBrushSettings {
         distance_step.into_iter()
             .chain(iter::once(create_shape))
             .collect()
+    }
+
+    ///
+    /// Returns instructions that draw a preview of these brush settings at the given position (and brush size)
+    ///
+    pub fn preview(&self, state: PointerState, size: f64) -> Vec<Draw> {
+        // Nothing to draw if there's no location in the canvas in the state
+        let Some(location_in_canvas) = state.location_in_canvas else { return vec![] };
+
+        // Use the daub shape or just a circle for the line-width case
+        let mut drawing = vec![];
+
+        match &self.builder {
+            BrushShapeBuilder::LineWidth => {
+                // Just draw a circle at the point where we're
+                drawing.new_path();
+                drawing.circle(location_in_canvas.0 as _, location_in_canvas.1 as _, (size/2.0) as _);
+                drawing.line_width_pixels(1.0);
+                drawing.stroke_color(color_brush_preview());
+                drawing.stroke();
+            }
+
+            BrushShapeBuilder::Daubs(daubs) => {
+                // Fetch the base size of the central daub
+                let base_size   = (daubs.bounds.max().x-daubs.bounds.min().x).max(daubs.bounds.max().y - daubs.bounds.min().y);
+
+                // Scale is the difference in size for the daub
+                let scale       = size / base_size;
+
+                // Offset is the mid-point of the daub (bounds is the original bounds, we use the center of the daub as the center of the brush stroke)
+                let offset      = (-(daubs.bounds.max().x-daubs.bounds.min().x)/2.0, -(daubs.bounds.max().y-daubs.bounds.min().y)/2.0);
+
+                // Generate the path for this daub
+                drawing.new_path();
+                for subpath in daubs.shape.iter() {
+                    drawing.bezier_path(&subpath.map_points::<WorkingSubpath>(|mut point| {
+                        point.x *= scale;
+                        point.y *= scale;
+                        point.x += scale*offset.0;
+                        point.y += scale*offset.1;
+
+                        point
+                    }));
+                }
+                drawing.line_width_pixels(1.0);
+                drawing.stroke_color(color_brush_preview());
+                drawing.stroke();
+            }
+        }
+
+        drawing
     }
 }
 
