@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 36 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g transform="matrix(1,0,0,1,-518,-224)">
+        <g id="Icons">
+            <g id="FlipVert">
+            </g>
+            <g id="FlipHoriz">
+            </g>
+            <g id="AlignLeft">
+            </g>
+            <g id="AlignCenter">
+            </g>
+            <g id="AlignRight">
+            </g>
+            <g id="AlignBottom">
+            </g>
+            <g id="AlignMiddle">
+            </g>
+            <g id="AlignTop">
+            </g>
+            <g id="OrderBack">
+            </g>
+            <g id="OrderBehind">
+            </g>
+            <g id="OrderForward">
+            </g>
+            <g id="OrderFront" transform="matrix(-1,0,0,1,931,146)">
+                <g transform="matrix(1,0,0,0.995937,3,0.645075)">
+                    <path d="M380,81.687L380,111.809" style="fill:none;stroke:rgb(162,216,227);stroke-width:4.01px;"/>
+                </g>
+                <g transform="matrix(1,0,0,0.464771,10,52.0344)">
+                    <path d="M380,81.687L380,111.809" style="fill:none;stroke:rgb(162,216,227);stroke-width:5.13px;"/>
+                </g>
+                <g transform="matrix(1,0,0,0.464771,17,52.0344)">
+                    <path d="M380,81.687L380,111.809" style="fill:none;stroke:rgb(162,216,227);stroke-width:5.13px;"/>
+                </g>
+                <g transform="matrix(1.57941,0,0,1.19791,-233.887,-19.2789)">
+                    <ellipse cx="405.776" cy="97.414" rx="2.533" ry="3.339" style="fill:rgb(198,247,196);"/>
+                </g>
+                <g transform="matrix(-1,0,0,1,413,78)">
+                    <path d="M16.826,3.49L23,6.114L17.197,9.479L16.826,3.49Z" style="fill:rgb(198,247,196);"/>
+                    <path d="M6,19.414C6,16.147 5.956,8.059 18.209,6.411" style="fill:none;stroke:rgb(198,247,196);stroke-width:2px;"/>
+                </g>
+            </g>
+            <g id="Add">
+            </g>
+            <g id="Subtract">
+            </g>
+            <g id="Intersect">
+            </g>
+            <g id="Ungroup">
+            </g>
+            <g id="Group">
+            </g>
+        </g>
+        <g id="BoundEditorControls">
+        </g>
+        <g id="Slices">
+        </g>
+    </g>
+</svg>

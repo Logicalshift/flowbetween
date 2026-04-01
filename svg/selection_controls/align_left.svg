@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 36 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g transform="matrix(1,0,0,1,-379,-318)">
+        <g id="Icons">
+            <g id="FlipVert">
+            </g>
+            <g id="FlipHoriz">
+            </g>
+            <g id="AlignLeft" transform="matrix(1,0,0,1,0,239)">
+                <g transform="matrix(1.07276,0,0,0.625748,-25.8144,31.9582)">
+                    <rect x="381.085" y="79" width="14.915" height="12.785" style="fill:rgb(162,216,227);fill-opacity:0.25;stroke:rgb(162,216,227);stroke-width:1.14px;"/>
+                </g>
+                <g transform="matrix(2.01143,0,0,0.625748,-383.527,42.9582)">
+                    <rect x="381.085" y="79" width="14.915" height="12.785" style="fill:rgb(162,216,227);fill-opacity:0.25;stroke:rgb(162,216,227);stroke-width:0.67px;"/>
+                </g>
+                <g transform="matrix(0.804573,0,0,0.625748,76.3892,53.9582)">
+                    <rect x="381.085" y="79" width="14.915" height="12.785" style="fill:rgb(162,216,227);fill-opacity:0.25;stroke:rgb(162,216,227);stroke-width:1.39px;"/>
+                </g>
+                <g transform="matrix(6.88864e-17,-1.125,1,6.12323e-17,283.046,542.5)">
+                    <path d="M380,97.039L412,96.954" style="fill:none;stroke:rgb(198,247,196);stroke-width:1.88px;stroke-dasharray:3.76,3.76,0,0;"/>
+                </g>
+            </g>
+            <g id="AlignCenter">
+            </g>
+            <g id="AlignRight">
+            </g>
+            <g id="AlignBottom">
+            </g>
+            <g id="AlignMiddle">
+            </g>
+            <g id="AlignTop">
+            </g>
+            <g id="OrderBack">
+            </g>
+            <g id="OrderBehind">
+            </g>
+            <g id="OrderForward">
+            </g>
+            <g id="OrderFront">
+            </g>
+            <g id="Add">
+            </g>
+            <g id="Subtract">
+            </g>
+            <g id="Intersect">
+            </g>
+            <g id="Ungroup">
+            </g>
+            <g id="Group">
+            </g>
+        </g>
+        <g id="BoundEditorControls">
+        </g>
+        <g id="Slices">
+        </g>
+    </g>
+</svg>

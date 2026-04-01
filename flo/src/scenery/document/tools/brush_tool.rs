@@ -93,7 +93,7 @@ pub async fn brush_tool_program(input: InputStream<ToolState>, context: SceneCon
     let behaviour = ToolBehaviour::new("Brush", || vec![ BrushToolState::default() ]);
 
     // Ink icon
-    let behaviour = behaviour.with_icon_svg(include_bytes!("../../../../../flo/svg/tools/ink.svg"));
+    let behaviour = behaviour.with_icon_svg(include_bytes!("../../../../../svg/tools/ink.svg"));
 
     // The actual behaviour when focused on the canvas
     let behaviour = behaviour.with_canvas_program(|input, context, data| async move {

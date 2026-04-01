@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 36 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g transform="matrix(1,0,0,1,-423,-176)">
+        <g id="Icons">
+            <g id="FlipVert">
+            </g>
+            <g id="FlipHoriz">
+            </g>
+            <g id="AlignLeft">
+            </g>
+            <g id="AlignCenter">
+            </g>
+            <g id="AlignRight">
+            </g>
+            <g id="AlignBottom">
+            </g>
+            <g id="AlignMiddle">
+            </g>
+            <g id="AlignTop">
+            </g>
+            <g id="OrderBack">
+            </g>
+            <g id="OrderBehind">
+            </g>
+            <g id="OrderForward">
+            </g>
+            <g id="OrderFront">
+            </g>
+            <g id="Add">
+            </g>
+            <g id="Subtract" transform="matrix(1,0,0,1,0,49)">
+                <g transform="matrix(1.38392,0,0,1.4306,-94.8893,22.372)">
+                    <ellipse cx="386.503" cy="89.912" rx="6.503" ry="6.291" style="fill:none;stroke:rgb(198,247,196);stroke-width:0.71px;stroke-dasharray:1.42,1.42,0,0;"/>
+                </g>
+                <g transform="matrix(1,0,0,1,0,50)">
+                    <path d="M431.12,99.529C427.564,98.327 425,94.96 425,91C425,86.033 429.033,82 434,82C438.967,82 443,86.033 443,91C443,91.501 442.959,91.993 442.88,92.471C441.975,92.166 441.007,92 440,92C435.534,92 431.823,95.26 431.12,99.529Z" style="fill:rgb(162,216,227);fill-opacity:0.5;stroke:rgb(162,216,227);stroke-width:1px;"/>
+                </g>
+                <g transform="matrix(1.04628,0,0,1,24.9281,49.7956)">
+                    <path d="M403.402,87.204L412.004,87.204" style="fill:none;stroke:rgb(198,247,196);stroke-width:1.95px;stroke-linecap:round;"/>
+                </g>
+            </g>
+            <g id="Intersect">
+            </g>
+            <g id="Ungroup">
+            </g>
+            <g id="Group">
+            </g>
+        </g>
+        <g id="BoundEditorControls">
+        </g>
+        <g id="Slices">
+        </g>
+    </g>
+</svg>

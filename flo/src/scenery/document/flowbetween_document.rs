@@ -148,7 +148,7 @@ pub async fn flowbetween_document(document_scene: Arc<Scene>, input: InputStream
     let test_tool       = ToolId::new();
     let test_group      = TOOL_GROUP_CANVAS;
     let test_type       = ToolTypeId::new();
-    let tool_icon_1     = svg_with_width(include_bytes!("../../../../flo/svg/tools/pencil.svg"), 32.0);
+    let tool_icon_1     = svg_with_width(include_bytes!("../../../../svg/tools/pencil.svg"), 32.0);
 
     context.send_message(Tool::CreateTool(test_group, test_type, test_tool)).await.unwrap();
     context.send_message(Tool::SetToolIcon(test_tool, Arc::new(tool_icon_1.clone()))).await.unwrap();

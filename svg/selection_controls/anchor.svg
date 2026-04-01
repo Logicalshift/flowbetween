@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 46 46" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g transform="matrix(1,0,0,1,-88,-224)">
+        <g id="Icons">
+            <g id="FlipVert">
+            </g>
+            <g id="FlipHoriz">
+            </g>
+            <g id="AlignLeft">
+            </g>
+            <g id="AlignCenter">
+            </g>
+            <g id="AlignRight">
+            </g>
+            <g id="AlignBottom">
+            </g>
+            <g id="AlignMiddle">
+            </g>
+            <g id="AlignTop">
+            </g>
+            <g id="OrderBack">
+            </g>
+            <g id="OrderBehind">
+            </g>
+            <g id="OrderForward">
+            </g>
+            <g id="OrderFront">
+            </g>
+            <g id="Add">
+            </g>
+            <g id="Subtract">
+            </g>
+            <g id="Intersect">
+            </g>
+            <g id="Ungroup">
+            </g>
+            <g id="Group">
+            </g>
+            <g transform="matrix(1.75,0,0,1.75,-83.25,-185.25)">
+                <g transform="matrix(0.798373,0,0,0.766332,22.204,57.3085)">
+                    <ellipse cx="111.221" cy="247.532" rx="8.768" ry="9.134" style="fill:none;stroke:rgb(126,126,126);stroke-width:2.92px;"/>
+                </g>
+                <g transform="matrix(1,0,0,0.756365,0,60.0687)">
+                    <path d="M111,231.279L111,263.01" style="fill:none;stroke:rgb(126,126,126);stroke-width:2.58px;"/>
+                </g>
+                <g transform="matrix(6.12323e-17,-1,0.756365,4.6314e-17,-75.9313,358)">
+                    <path d="M111,231.279L111,263.01" style="fill:none;stroke:rgb(126,126,126);stroke-width:2.58px;"/>
+                </g>
+            </g>
+            <g transform="matrix(1.75,0,0,1.75,-83.25,-185.25)">
+                <g transform="matrix(1,0,0,0.756365,0,60.0687)">
+                    <path d="M111,231.279L111,263.01" style="fill:none;stroke:rgb(198,247,196);stroke-width:1.29px;"/>
+                </g>
+                <g transform="matrix(6.12323e-17,-1,0.756365,4.6314e-17,-75.9313,358)">
+                    <path d="M111,231.279L111,263.01" style="fill:none;stroke:rgb(198,247,196);stroke-width:1.29px;"/>
+                </g>
+                <g transform="matrix(0.798373,0,0,0.766332,22.204,57.3085)">
+                    <ellipse cx="111.221" cy="247.532" rx="8.768" ry="9.134" style="fill:none;stroke:rgb(162,216,227);stroke-width:1.46px;"/>
+                </g>
+            </g>
+        </g>
+        <g id="BoundEditorControls">
+        </g>
+        <g id="Slices">
+        </g>
+    </g>
+</svg>
