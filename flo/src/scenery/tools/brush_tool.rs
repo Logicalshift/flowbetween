@@ -250,13 +250,11 @@ async fn brush_stroke(button_down: Button, pointer_id: PointerId, input: &mut In
             drawing.clear_layer();
             drawing.set_layer_transform(layer_transform);
 
-            let shapes = shapes.into_iter().map(|shape| Arc::new(shape)).collect::<Vec<_>>();
-
-            for shape in shapes.iter() {
-                // Add a colour if the shape generated doesn't have one
-                // TODO: temporary until we have an actual colour tool
-                let mut shape = (**shape).clone();
+            let shapes = shapes.into_iter().map(|shape| {
+                let mut shape = shape;
                 if !shape.properties.iter().any(|(prop, _val)| prop == &*PROP_FILL_COLOR) {
+                    // Add a colour if the shape generated doesn't have one
+                    // TODO: temporary until we have an actual colour tool
                     let mut properties = Arc::unwrap_or_clone(shape.properties);
 
                     properties.push((*PROP_FILL_COLOR,      color_value_property(&Color::Rgba(0.0, 0.0, 0.0, 1.0))));
@@ -265,8 +263,12 @@ async fn brush_stroke(button_down: Button, pointer_id: PointerId, input: &mut In
                     shape.properties = Arc::new(properties);
                 }
 
+                Arc::new(shape)
+            }).collect::<Vec<_>>();
+
+            for shape in shapes.iter() {
                 // Generate the drawing instructions for this shape
-                let shape_drawing = render_shapes(iter::once(Arc::new(shape)), FrameTime::ZERO, context).await;
+                let shape_drawing = render_shapes(iter::once(shape.clone()), FrameTime::ZERO, context).await;
 
                 // Add them to our drawing
                 drawing.extend(shape_drawing.iter().flat_map(|item| item.iter().cloned()));
@@ -347,6 +349,7 @@ async fn commit_brush_stroke(brush_stroke: Vec<Arc<ShapeWithProperties>>, contex
             })
             .collect::<Vec<_>>();
 
+        // TODO: would make sense to have a 'vector_add_shape_with_properties' function that just directly takes an Arc<ShapeWithProperties>
         vector_add_shape(shape.shape_type, shape.shape.clone(), (*canvas_layer, frame_time), properties.as_slice(), []).await;
     }
 
