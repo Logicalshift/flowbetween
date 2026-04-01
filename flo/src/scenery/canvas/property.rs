@@ -206,3 +206,15 @@ impl Deref for LazyCanvasPropertyId {
         self.val.get_or_init(|| CanvasPropertyId::new(self.name))
     }
 }
+
+impl ToCanvasProperties for (CanvasPropertyId, CanvasProperty) {
+    fn to_properties(&self) -> Vec<(CanvasPropertyId, CanvasProperty)> {
+        vec![(self.0.clone(), self.1.clone())]
+    }
+}
+
+impl ToCanvasProperties for Vec<(CanvasPropertyId, CanvasProperty)> {
+    fn to_properties(&self) -> Vec<(CanvasPropertyId, CanvasProperty)> {
+        self.clone()
+    }
+}
