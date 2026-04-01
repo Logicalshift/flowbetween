@@ -4,5 +4,6 @@
 *.xcworkspace
 *.xcscheme
 *.flo
+scratch/**
 SVGKit
 .DS_Store
