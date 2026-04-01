@@ -21,6 +21,9 @@ fn interpolate_points(x1: f64, x2: f64, x3: f64, x4: f64, tension: f64) -> impl 
     let d2 = (x2-x3).abs();
     let d3 = x3.distance_to(&x4);
 
+    let d1 = if d1 == 0.0 { 1e-5 } else { d1 };
+    let d3 = if d3 == 0.0 { 1e-5 } else { d3 };
+
     // Use the ratio of distances to correct the length of the control points we generate
     let cp1_offset = (x2-x1) * (d2/d1);
     let cp2_offset = (x4-x3) * (d2/d3);
@@ -48,6 +51,9 @@ where
     let d1 = x1.distance_to(&x2);
     let d2 = x2.distance_to(&x3);
     let d3 = x3.distance_to(&x4);
+
+    let d1 = if d1 == 0.0 { 1e-5 } else { d1 };
+    let d3 = if d3 == 0.0 { 1e-5 } else { d3 };
 
     // Use the ratio of distances to correct the length of the control points we generate
     let cp1_offset = (x2-x1) * (d2/d1);
