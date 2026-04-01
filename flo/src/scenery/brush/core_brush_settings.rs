@@ -77,8 +77,8 @@ impl CoreBrushSettings {
         let brush_daub_settings = BrushDaubSettings {
             shape:          working_path,
             bounds:         (bounds.min(), bounds.max()),
-            distance:       0.5,
-            fit:            1.0,
+            distance:       0.25,
+            fit:            0.5,
         };
 
         // Create the brush settings for a 'standard' pressure sensitive brush
