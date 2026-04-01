@@ -34,6 +34,7 @@ use futures::prelude::*;
 use futures::channel::mpsc;
 use futures::stream::FuturesUnordered;
 
+use std::collections::*;
 use std::sync::*;
 
 ///
@@ -58,6 +59,9 @@ pub struct BrushToolState {
 
     /// The transform that's applied to the binding layer
     layer_transform: Binding<Transform2D>,
+
+    /// The layer map
+    layers: Binding<Arc<HashMap<CanvasLayerId, LayerId>>>,
 }
 
 impl ToolData for BrushToolState {
@@ -81,6 +85,7 @@ impl Default for BrushToolState {
             mouse_over:         bind(false),
             is_drawing:         bind(false),
             layer_transform:    bind(Transform2D::identity()),
+            layers:             bind(Arc::new(HashMap::new())),
         }
     }
 }
@@ -127,7 +132,8 @@ pub async fn brush_tool_program(input: InputStream<ToolState>, context: SceneCon
 
                 FocusEvent::Pointer(FocusPointerEvent::Pointer(_, PointerAction::ButtonDown, pointer_id, state)) => {
                     data.lock().unwrap().is_drawing.set(true);
-                    brush_stroke(state.buttons[0], pointer_id, &mut input, &context, data.clone(), (*CANVAS_NAMESPACE, LayerId(1000))).await;
+                    let new_brush_stroke = brush_stroke(state.buttons[0], pointer_id, &mut input, &context, data.clone(), (*CANVAS_NAMESPACE, LayerId(1000))).await;
+                    commit_brush_stroke(new_brush_stroke, &context, data.clone(), (*CANVAS_NAMESPACE, LayerId(1000))).await;
                     data.lock().unwrap().is_drawing.set(false);
                 }
 
@@ -206,7 +212,7 @@ async fn brush_tool_canvas_state_tracker(input: InputStream<CanvasRenderUpdate>,
     while let Some(msg) = input.next().await {
         match msg {
             CanvasRenderUpdate::LayerTransform(transform)   => { data.lock().unwrap().layer_transform.set(transform); },
-            CanvasRenderUpdate::Layers(_layers)             => { },
+            CanvasRenderUpdate::Layers(layers)              => { data.lock().unwrap().layers.set(Arc::new(layers)); },
         }
     }
 }
@@ -317,4 +323,41 @@ async fn brush_stroke(button_down: Button, pointer_id: PointerId, input: &mut In
 
     // The last set of shapes generated is the result of this function
     generated_shapes
+}
+
+///
+/// Adds a brush stroke to the canvas
+///
+async fn commit_brush_stroke(brush_stroke: Vec<Arc<ShapeWithProperties>>, context: &SceneContext, data: Arc<Mutex<BrushToolState>>, (namespace, layer): (NamespaceId, LayerId)) {
+    // Short-circuit if there's nothing to add
+    if brush_stroke.is_empty() { return; }
+
+    // Get the layer that's selected
+    // TODO: this just gets any layer
+    let layers          = data.lock().unwrap().layers.get();
+    let canvas_layer    = layers.iter().next().unwrap().0;
+    let frame_time      = FrameTime::ZERO;
+
+    // Add the shapes to the canvas
+    for shape in brush_stroke {
+        let properties = shape.properties.iter()
+            .map(|prop| {
+                let prop: &dyn ToCanvasProperties = prop;
+                prop
+            })
+            .collect::<Vec<_>>();
+
+        vector_add_shape(shape.shape_type, shape.shape.clone(), (*canvas_layer, frame_time), properties.as_slice(), []).await;
+    }
+
+    // Clear the preview
+    let mut drawing = vec![];
+
+    drawing.push_state();
+    drawing.namespace(namespace);
+    drawing.layer(layer);
+    drawing.clear_layer();
+    drawing.pop_state();
+
+    context.send_message(DrawingRequest::Draw(Arc::new(drawing))).await.ok();
 }
