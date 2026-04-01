@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::scenery::ui::*;
-use crate::scenery::document::canvas::*;
+use crate::scenery::canvas::*;
 
 use flo_scene::*;
 use flo_scene::programs::*;

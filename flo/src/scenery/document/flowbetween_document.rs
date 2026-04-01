@@ -15,8 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::subprograms::*;
-use super::tools::*;
-use crate::scenery::document::canvas::*;
+use crate::scenery::tools::*;
+use crate::scenery::canvas::*;
 use crate::scenery::ui::*;
 
 use flo_draw::*;

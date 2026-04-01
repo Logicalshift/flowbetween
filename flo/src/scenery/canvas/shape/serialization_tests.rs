@@ -18,8 +18,8 @@
 /// Serialization tests for canvas shape types
 ///
 
-use crate::scenery::document::canvas::point::*;
-use crate::scenery::document::canvas::shape::*;
+use crate::scenery::canvas::point::*;
+use crate::scenery::canvas::shape::*;
 
 /// Helper to create a test CanvasPoint
 fn test_point(x: f32, y: f32) -> CanvasPoint {

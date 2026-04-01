@@ -18,3 +18,6 @@ pub mod app;
 pub mod document;
 pub mod ui;
 pub mod immediate_mode;
+pub mod tools;
+pub mod brush;
+pub mod canvas;

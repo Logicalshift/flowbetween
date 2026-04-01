@@ -16,7 +16,7 @@
 
 use super::brush_response::*;
 
-use crate::scenery::document::canvas::*;
+use crate::scenery::canvas::*;
 
 use flo_scene::*;
 use flo_scene::programs::*;

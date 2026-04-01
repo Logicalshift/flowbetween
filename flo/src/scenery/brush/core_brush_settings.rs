@@ -17,7 +17,7 @@
 use super::brush_response::*;
 use super::shape_streams::*;
 use super::smoothing_streams::*;
-use crate::scenery::document::canvas::*;
+use crate::scenery::canvas::*;
 use crate::scenery::ui::*;
 
 use flo_curves::bezier::*;

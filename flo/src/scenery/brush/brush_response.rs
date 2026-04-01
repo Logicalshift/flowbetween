@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::brush_point::*;
-use crate::scenery::document::canvas::*;
+use crate::scenery::canvas::*;
 
 use flo_scene::*;
 use serde::*;

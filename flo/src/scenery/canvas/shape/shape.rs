@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::scenery::document::CanvasPropertyTarget;
+use crate::scenery::canvas::CanvasPropertyTarget;
 
 use super::super::frame_time::*;
 use super::super::layer::*;

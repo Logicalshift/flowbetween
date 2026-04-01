@@ -18,9 +18,9 @@ use super::canvas_tool_type_ids::*;
 use super::group_ids::*;
 use super::tool::*;
 use crate::scenery::ui::*;
-use crate::scenery::document::brush::*;
-use crate::scenery::document::canvas::*;
-use crate::scenery::document::subprograms::*;
+use crate::scenery::brush::*;
+use crate::scenery::canvas::*;
+use crate::scenery::document::*;
 
 use flo_binding::*;
 use flo_draw::*;
@@ -93,7 +93,7 @@ pub async fn brush_tool_program(input: InputStream<ToolState>, context: SceneCon
     let behaviour = ToolBehaviour::new("Brush", || vec![ BrushToolState::default() ]);
 
     // Ink icon
-    let behaviour = behaviour.with_icon_svg(include_bytes!("../../../../../svg/tools/ink.svg"));
+    let behaviour = behaviour.with_icon_svg(include_bytes!("../../../../svg/tools/ink.svg"));
 
     // The actual behaviour when focused on the canvas
     let behaviour = behaviour.with_canvas_program(|input, context, data| async move {
