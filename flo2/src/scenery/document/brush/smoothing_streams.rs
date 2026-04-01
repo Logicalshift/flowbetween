@@ -16,8 +16,17 @@ use flo_stream::*;
 ///
 #[inline]
 fn interpolate_points(x1: f64, x2: f64, x3: f64, x4: f64, tension: f64) -> impl Fn(f64) -> f64 {
-    let cp1 = x2 + (x2-x1)*tension;
-    let cp2 = x3 - (x4-x3)*tension;
+    // Distances between points
+    let d1 = (x1-x2).abs();
+    let d2 = (x2-x3).abs();
+    let d3 = x3.distance_to(&x4);
+
+    // Use the ratio of distances to correct the length of the control points we generate
+    let cp1_offset = (x2-x1) * (d2/d1);
+    let cp2_offset = (x4-x3) * (d2/d3);
+
+    let cp1 = x2 + cp1_offset*tension;
+    let cp2 = x3 - cp2_offset*tension;
 
     move |t| de_casteljau4(t, x2, cp1, cp2, x3)
 }
@@ -35,8 +44,17 @@ fn interpolate_coords<TCoord>(x1: TCoord, x2: TCoord, x3: TCoord, x4: TCoord, te
 where
     TCoord: Coordinate + Coordinate2D,
 {
-    let cp1 = x2 + (x2-x1)*tension;
-    let cp2 = x3 - (x4-x3)*tension;
+    // Distances between points
+    let d1 = x1.distance_to(&x2);
+    let d2 = x2.distance_to(&x3);
+    let d3 = x3.distance_to(&x4);
+
+    // Use the ratio of distances to correct the length of the control points we generate
+    let cp1_offset = (x2-x1) * (d2/d1);
+    let cp2_offset = (x4-x3) * (d2/d3);
+
+    let cp1 = x2 + cp1_offset*tension;
+    let cp2 = x3 - cp2_offset*tension;
 
     Curve::from_points(x2, (cp1, cp2), x3)
 }
@@ -149,7 +167,7 @@ pub fn brush_fill_in_points(distance: f64, input_stream: impl 'static + Send + S
                 // Return points along this curve
                 let initial_distance = distance - distance_covered;
 
-                for point in walk_between_brush_points(&previous_points[p0_idx], &previous_points[p1_idx], &previous_points[p2_idx], &previous_points[p3_idx], initial_distance, distance, 1.0) {
+                for point in walk_between_brush_points(&previous_points[p0_idx], &previous_points[p1_idx], &previous_points[p2_idx], &previous_points[p3_idx], initial_distance, distance, 1.0/3.0) {
                     yield_fn(point).await;
                     last_generated_point = point;
                 }
