@@ -1,0 +1,51 @@
+[workspace]
+resolver    = "2"
+members     = [
+    "flo",
+]
+
+[profile.dev.package.flo_render_software]
+opt-level = 2
+
+[profile.dev.package.flo_draw]
+opt-level = 2
+
+[profile.dev.package.flo_canvas]
+opt-level = 2
+
+[profile.dev.package.flo_curves]
+opt-level = 2
+
+[patch.crates-io]
+flow_between            = { path = "./flo" }
+
+flo_curves              = { git = "https://github.com/Logicalshift/flo_curves", branch = "v0.8" }
+
+flo_scene               = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.3" }
+flo_scene_binding       = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.3" }
+flo_scene_guest         = { git = "https://github.com/Logicalshift/flo_scene", branch = "v0.3" }
+
+#flo_scene               = { path = "../../flo_scene/scene" }
+#flo_scene_binding       = { path = "../../flo_scene/binding" }
+#flo_scene_guest         = { path = "../../flo_scene/guest-nostd" }
+
+desync                  = { git = "https://github.com/Logicalshift/desync", branch = "v0.9" }
+
+flo_draw                = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+flo_canvas              = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+flo_canvas_events       = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+flo_render              = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+flo_render_canvas       = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+flo_render_gl_offscreen = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+flo_render_software     = { git = "https://github.com/Logicalshift/flo_draw", branch = "v0.4" }
+
+flo_svg                 = { git = "https://github.com/Logicalshift/flo_svg", branch = "v0.1" }
+
+# flo_draw                = { path = "../../flo_draw/draw"}
+# flo_canvas              = { path = "../../flo_draw/canvas"}
+# flo_canvas_events       = { path = "../../flo_draw/canvas_events"}
+# flo_render              = { path = "../../flo_draw/render"}
+# flo_render_canvas       = { path = "../../flo_draw/render_canvas"}
+# flo_render_gl_offscreen = { path = "../../flo_draw/render_gl_offscreen"}
+# flo_render_software     = { path = "../../flo_draw/render_software"}
+# flo_svg                 = { path = "../../flo_svg/svg" }
