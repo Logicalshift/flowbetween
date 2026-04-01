@@ -3,7 +3,7 @@ name        = "flow_between"
 version     = "0.3.0"
 edition     = "2024"
 authors     = ["Andrew Hunter"]
-license     = "Apache-2.0"
+license     = "GPL-3.0"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Vector animation editor"
 
