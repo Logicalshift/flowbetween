@@ -24,7 +24,6 @@ use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
 use flo_scene::*;
 use flo_scene::programs::*;
-use flo_binding::*;
 
 use futures::prelude::*;
 use serde::*;
