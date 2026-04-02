@@ -158,6 +158,9 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
     // Claim an empty region in the focus program (we want resizing messages, but don't actually have any need of mouse events)
     context.send_message(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 }).await.unwrap();
 
+    // Subscribe to canvas updates
+    context.send_message(VectorCanvas::Subscribe(our_program_id.into())).await.unwrap();
+
     // Run the main loop
     let mut input = input;
     while let Some(msg) = input.next().await {
