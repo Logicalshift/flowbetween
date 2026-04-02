@@ -64,16 +64,18 @@ where
     TCoord: Coordinate + Coordinate2D,
 {
     // Distances between points
-    let d1 = x1.distance_to(&x2);
     let d2 = x2.distance_to(&x3);
-    let d3 = x3.distance_to(&x4);
-
-    let d1 = if d1 == 0.0 { 1e-5 } else { d1 };
-    let d3 = if d3 == 0.0 { 1e-5 } else { d3 };
 
     // Use the ratio of distances to correct the length of the control points we generate
-    let cp1_offset = (x2-x1) * (d2/d1);
-    let cp2_offset = (x4-x3) * (d2/d3);
+    let cp1_offset      = (x2-x1).to_unit_vector();
+    let section_offset  = (x3-x2).to_unit_vector();
+    let cp2_offset      = (x4-x3).to_unit_vector();
+
+    let cp1_offset = (cp1_offset + section_offset) * 0.5;
+    let cp2_offset = (cp2_offset + section_offset) * 0.5;
+
+    let cp1_offset = cp1_offset * d2;
+    let cp2_offset = cp2_offset * d2;
 
     let cp1 = x2 + cp1_offset*tension;
     let cp2 = x3 - cp2_offset*tension;
