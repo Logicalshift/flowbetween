@@ -13,23 +13,3 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-mod group_ids;
-mod tool;
-mod canvas_tool_type_ids;
-mod focus_tool_program;
-
-mod brush_tool;
-mod brush_size_tool;
-mod colour_tool;
-mod layer_tool;
-
-pub use group_ids::*;
-pub use tool::*;
-pub use canvas_tool_type_ids::*;
-pub use focus_tool_program::*;
-
-pub use brush_tool::*;
-pub use brush_size_tool::*;
-pub use colour_tool::*;
-pub use layer_tool::*;
