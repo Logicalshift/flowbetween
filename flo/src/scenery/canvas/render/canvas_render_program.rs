@@ -21,10 +21,11 @@ use super::super::layer::*;
 use super::super::property::*;
 use super::super::queries::*;
 use super::super::vector_editor::*;
-use crate::scenery::ui::*;
 
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
+use flo_ui::subprograms::*;
+use flo_ui::util::*;
 use flo_scene::*;
 use flo_scene::programs::*;
 use flo_curves::*;

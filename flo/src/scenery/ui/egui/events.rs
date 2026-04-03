@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::key::*;
-use crate::scenery::ui::focus_events::*;
+use flo_ui::subprograms::*;
 
 use flo_draw as draw;
 use egui;

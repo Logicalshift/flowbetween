@@ -26,6 +26,7 @@ use flo_binding::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
+use flo_ui::subprograms::*;
 use flo_scene::*;
 use flo_scene::programs::*;
 use flo_scene_binding::*;

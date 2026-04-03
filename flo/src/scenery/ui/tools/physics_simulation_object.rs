@@ -15,11 +15,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::physics_simulation_joints::*;
-use crate::scenery::ui::ui_path::*;
 
 use flo_binding::*;
 use flo_binding::binding_context::*;
 use flo_curves::*;
+use flo_ui::util::*;
 use rapier2d::prelude::*;
 
 use uuid::*;

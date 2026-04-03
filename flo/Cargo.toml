@@ -11,6 +11,7 @@ description = "Vector animation editor"
 flo_draw            = { version = "0.4", features = [ "render-software" ], default-features = false }
 flo_svg             = "0.1"
 flo_curves          = "0.8"
+flo_ui              = "0.3"
 
 flo_binding         = "3.0"
 flo_scene           = "0.3"

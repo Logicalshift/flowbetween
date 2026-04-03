@@ -15,11 +15,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::scenery::ui::control::*;
-use crate::scenery::ui::control_id::*;
 use crate::scenery::ui::dialog::*;
-use crate::scenery::ui::ui_path::*;
 
 use flo_binding::*;
+use flo_ui::subprograms::*;
+use flo_ui::util::*;
 use egui;
 
 use std::collections::{HashMap};

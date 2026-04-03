@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::control_id::*;
-
 use flo_binding::*;
+use flo_ui::subprograms::*;
+
 use ::serde::*;
 use serde::de::{Error as DeError};
 use serde::ser::{Error as SeError};

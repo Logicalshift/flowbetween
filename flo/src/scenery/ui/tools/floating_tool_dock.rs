@@ -27,6 +27,8 @@ use flo_scene_binding::*;
 use flo_draw::*;
 use flo_draw::canvas::*;
 use flo_draw::canvas::scenery::*;
+use flo_ui::subprograms::*;
+use flo_ui::util::*;
 use flo_curves::arc::*;
 
 use futures::prelude::*;

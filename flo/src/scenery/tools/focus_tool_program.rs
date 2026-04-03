@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::scenery::ui::*;
 use crate::scenery::canvas::*;
 
 use flo_scene::*;
 use flo_scene::programs::*;
 use flo_draw::canvas::*;
+use flo_ui::subprograms::*;
 
 use futures::prelude::*;
 use futures::stream::FuturesUnordered;

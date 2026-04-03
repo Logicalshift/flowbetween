@@ -19,13 +19,13 @@
 //!
 
 use super::control::*;
-use super::control_id::*;
 use super::dialog_id::*;
 use super::egui::*;
 use super::subprograms::*;
-use super::ui_path::*;
 
 use flo_scene::*;
+use flo_ui::subprograms::*;
+use flo_ui::util::*;
 
 use serde::*;
 
