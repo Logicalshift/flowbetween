@@ -67,7 +67,7 @@ fn query_document_outline() {
         canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Layer(layer_2), vec![(CanvasPropertyId::new("test::layer::property"), CanvasProperty::Int(43))])).await.unwrap();
 
         // Query the document outline
-        let outline = context.spawn_query(ReadCommand::default(), VectorQuery::DocumentOutline(().into()), ()).unwrap();
+        let outline = context.spawn_query(ReadCommand::default(), VectorQuery::DocumentOutline(().into()), ()).await.unwrap();
         let outline = outline.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(outline)).await.unwrap();
@@ -139,7 +139,7 @@ fn query_shape_properties() {
         canvas.send(VectorCanvas::SetProperty(CanvasPropertyTarget::Brush(brush_2), vec![(CanvasPropertyId::new("shape"), CanvasProperty::Int(47)), (CanvasPropertyId::new("brush2"), CanvasProperty::Int(49))])).await.unwrap();
 
         // Query the document outline
-        let outline = context.spawn_query(ReadCommand::default(), VectorQuery::Shapes(().into(), vec![shape_1, shape_2]), ()).unwrap();
+        let outline = context.spawn_query(ReadCommand::default(), VectorQuery::Shapes(().into(), vec![shape_1, shape_2]), ()).await.unwrap();
         let outline = outline.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(outline)).await.unwrap();
@@ -261,17 +261,17 @@ fn query_layer() {
         canvas.send(VectorCanvas::SetShapeParent(shape_4, CanvasShapeParent::Layer(layer_2, FrameTime::ZERO))).await.ok();
 
         // Query the layers in a few ways (we start with the simpler second layer)
-        let second_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_2], FrameTime::ZERO), ()).unwrap();
+        let second_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_2], FrameTime::ZERO), ()).await.unwrap();
         let second_layer = second_layer.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(second_layer)).await.unwrap();
 
-        let first_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1], FrameTime::ZERO), ()).unwrap();
+        let first_layer = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1], FrameTime::ZERO), ()).await.unwrap();
         let first_layer = first_layer.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(first_layer)).await.unwrap();
 
-        let all_layers = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1, layer_2], FrameTime::ZERO), ()).unwrap();
+        let all_layers = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1, layer_2], FrameTime::ZERO), ()).await.unwrap();
         let all_layers = all_layers.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(all_layers)).await.unwrap();
@@ -365,7 +365,7 @@ fn query_layer_with_groups() {
         canvas.send(VectorCanvas::SetShapeParent(after_group, CanvasShapeParent::Layer(layer, FrameTime::ZERO))).await.ok();
 
         // Query the layer
-        let layer_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer], FrameTime::ZERO), ()).unwrap();
+        let layer_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer], FrameTime::ZERO), ()).await.unwrap();
         let layer_result = layer_result.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(layer_result)).await.unwrap();
@@ -600,13 +600,13 @@ fn query_layer_frames_returns_shapes_for_correct_frame() {
         canvas.send(VectorCanvas::SetShapeParent(shape_2, CanvasShapeParent::Layer(layer, frame_2_time))).await.ok();
 
         // Query at frame 1 time - should only return shape_1
-        let frame_1_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer], frame_1_time), ()).unwrap();
+        let frame_1_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer], frame_1_time), ()).await.unwrap();
         let frame_1_result = frame_1_result.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(frame_1_result)).await.unwrap();
 
         // Query at frame 2 time - should only return shape_2
-        let frame_2_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer], frame_2_time), ()).unwrap();
+        let frame_2_result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer], frame_2_time), ()).await.unwrap();
         let frame_2_result = frame_2_result.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(frame_2_result)).await.unwrap();
@@ -664,7 +664,7 @@ fn ellipse_visual_properties_read_back_via_layers_query() {
         canvas.send(VectorCanvas::SetShapeParent(ellipse, CanvasShapeParent::Layer(layer_1, FrameTime::ZERO))).await.unwrap();
 
         // Read back using VectorQuery::Layers
-        let result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1], FrameTime::ZERO), ()).unwrap();
+        let result = context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), vec![layer_1], FrameTime::ZERO), ()).await.unwrap();
         let result = result.collect::<Vec<_>>().await;
 
         context.send_message(TestResponse(result)).await.unwrap();

@@ -51,7 +51,7 @@ pub async fn render_shapes(shapes: impl Iterator<Item=Arc<ShapeWithProperties>>,
     let mut requests = shape_bins.into_iter()
         .map(|(shape_type, shapes)| async move {
             let num_shapes      = shapes.len();
-            let query_rendering = context.spawn_query(ReadCommand::default(), RenderShapesRequest::RenderRequest(shapes, frame_time, ().into()), shape_type.render_program_id());
+            let query_rendering = context.spawn_query(ReadCommand::default(), RenderShapesRequest::RenderRequest(shapes, frame_time, ().into()), shape_type.render_program_id()).await;
 
             if let Ok(query_rendering) = query_rendering {
                 (shape_type, query_rendering.collect::<Vec<_>>().await)

@@ -108,48 +108,48 @@ impl QueryRequest for VectorQuery {
 /// Queries the whole vector document's state at the given time
 ///
 #[inline]
-pub fn query_vector_whole_document(when: FrameTime) -> impl Stream<Item=VectorResponse> {
+pub async fn query_vector_whole_document(when: FrameTime) -> impl Stream<Item=VectorResponse> {
     let context = scene_context().unwrap();
 
-    context.spawn_query(ReadCommand::default(), VectorQuery::WholeDocument(().into(), when), ()).unwrap()
+    context.spawn_query(ReadCommand::default(), VectorQuery::WholeDocument(().into(), when), ()).await.unwrap()
 }
 
 ///
 /// Queries the outline of the document (document properties, which layers are present)
 ///
 #[inline]
-pub fn query_vector_outline() -> impl Stream<Item=VectorResponse> {
+pub async fn query_vector_outline() -> impl Stream<Item=VectorResponse> {
     let context = scene_context().unwrap();
 
-    context.spawn_query(ReadCommand::default(), VectorQuery::DocumentOutline(().into()), ()).unwrap()
+    context.spawn_query(ReadCommand::default(), VectorQuery::DocumentOutline(().into()), ()).await.unwrap()
 }
 
 ///
 /// Queries the contents of a set of layers at the given time
 ///
 #[inline]
-pub fn query_vector_layers(when: FrameTime, layers: impl IntoIterator<Item=CanvasLayerId>) -> impl Stream<Item=VectorResponse> {
+pub async fn query_vector_layers(when: FrameTime, layers: impl IntoIterator<Item=CanvasLayerId>) -> impl Stream<Item=VectorResponse> {
     let context = scene_context().unwrap();
 
-    context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), layers.into_iter().collect(), when), ()).unwrap()
+    context.spawn_query(ReadCommand::default(), VectorQuery::Layers(().into(), layers.into_iter().collect(), when), ()).await.unwrap()
 }
 
 ///
 /// Queries the values for a set of shapes
 ///
 #[inline]
-pub fn query_vector_shapes(shapes: impl IntoIterator<Item=CanvasShapeId>) -> impl Stream<Item=VectorResponse> {
+pub async fn query_vector_shapes(shapes: impl IntoIterator<Item=CanvasShapeId>) -> impl Stream<Item=VectorResponse> {
     let context = scene_context().unwrap();
 
-    context.spawn_query(ReadCommand::default(), VectorQuery::Shapes(().into(), shapes.into_iter().collect()), ()).unwrap()
+    context.spawn_query(ReadCommand::default(), VectorQuery::Shapes(().into(), shapes.into_iter().collect()), ()).await.unwrap()
 }
 
 ///
 /// Queries the values for a set of brushes (brushes are used to set properties on many shapes at once without having to duplicate them)
 ///
 #[inline]
-pub fn query_vector_brushes(brushes: impl IntoIterator<Item=CanvasBrushId>) -> impl Stream<Item=VectorResponse> {
+pub async fn query_vector_brushes(brushes: impl IntoIterator<Item=CanvasBrushId>) -> impl Stream<Item=VectorResponse> {
     let context = scene_context().unwrap();
 
-    context.spawn_query(ReadCommand::default(), VectorQuery::Brushes(().into(), brushes.into_iter().collect()), ()).unwrap()
+    context.spawn_query(ReadCommand::default(), VectorQuery::Brushes(().into(), brushes.into_iter().collect()), ()).await.unwrap()
 }

@@ -183,7 +183,7 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                     let mut layers      = HashMap::new();
                     let mut layer_order = vec![];
 
-                    let mut outline     = query_vector_outline();
+                    let mut outline     = query_vector_outline().await;
                     while let Some(outline) = outline.next().await {
                         match outline {
                             VectorResponse::Document(doc_properties)            => { properties = doc_properties; }
@@ -217,7 +217,7 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
                         .collect::<Vec<_>>();
 
                     // Query the layers that we're going to render, and bin them by layer
-                    let mut layer_contents  = query_vector_layers(frame_time, layers_to_render.clone());
+                    let mut layer_contents  = query_vector_layers(frame_time, layers_to_render.clone()).await;
                     let mut layer_rendering = HashMap::new();
                     let mut current_layer   = None;
 
