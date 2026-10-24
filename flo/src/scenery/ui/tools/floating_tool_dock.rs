@@ -423,6 +423,8 @@ async fn focus_program(input: InputStream<BindingProgram>, context: SceneContext
         tool_positions.collect::<Vec<_>>()
     });
 
+    let region_id = RegionId::new();
+
     // Action sets the positions of the various tools
     let existing_tools = Arc::new(Mutex::new(HashSet::new()));
     let action = BindingAction::new(move |positions: Vec<(ToolId, ControlId, UiPoint)>, context| {
@@ -431,7 +433,7 @@ async fn focus_program(input: InputStream<BindingProgram>, context: SceneContext
         async move {
             let mut focus = context.send(()).unwrap();
 
-            focus.send(Focus::ClaimRegion { program: events_subprogram, region: vec![], z_index: DOCK_Z_INDEX }).await.ok();
+            focus.send(Focus::ClaimRegion { region_id, program: events_subprogram, region: vec![], z_index: DOCK_Z_INDEX }).await.ok();
 
             // Tools that exist after this pass
             let mut still_existing_tools = HashSet::new();
@@ -441,8 +443,8 @@ async fn focus_program(input: InputStream<BindingProgram>, context: SceneContext
                 let region = Circle::new(UiPoint(x, y), TOOL_WIDTH/2.0);
                 let region = region.to_path::<UiPath>();
 
-                focus.send(Focus::RemoveControlClaim(events_subprogram, control_id)).await.ok();
-                focus.send(Focus::ClaimControlRegion { program: events_subprogram, region: vec![region], control: control_id, z_index: 0 }).await.ok();
+                focus.send(Focus::RemoveControlClaim(region_id, control_id)).await.ok();
+                focus.send(Focus::ClaimControlRegion { region_id, program: events_subprogram, region: vec![region], control: control_id, z_index: 0 }).await.ok();
 
                 // Add the tool to the list that we know exists
                 still_existing_tools.insert(control_id);
@@ -455,7 +457,7 @@ async fn focus_program(input: InputStream<BindingProgram>, context: SceneContext
                 .collect::<Vec<_>>();
 
             for deleted_tool in missing_tools {
-                focus.send(Focus::RemoveControlClaim(events_subprogram, deleted_tool)).await.ok();
+                focus.send(Focus::RemoveControlClaim(region_id, deleted_tool)).await.ok();
             }
 
             // Replace the existing tools for the next pass through

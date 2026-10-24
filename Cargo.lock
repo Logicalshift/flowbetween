@@ -1169,7 +1169,7 @@ dependencies = [
 [[package]]
 name = "flo_canvas"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#bc6174f6f2ba3144cddbed5cb1f4f10cf590d1a2"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#2f28eb248b54c26097553fabf654746cc2b4c1d5"
 dependencies = [
  "allsorts",
  "desync",
@@ -1194,7 +1194,7 @@ dependencies = [
 [[package]]
 name = "flo_canvas_events"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#bc6174f6f2ba3144cddbed5cb1f4f10cf590d1a2"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#2f28eb248b54c26097553fabf654746cc2b4c1d5"
 dependencies = [
  "flo_canvas",
  "flo_render",
@@ -1216,7 +1216,7 @@ dependencies = [
 [[package]]
 name = "flo_draw"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#bc6174f6f2ba3144cddbed5cb1f4f10cf590d1a2"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#2f28eb248b54c26097553fabf654746cc2b4c1d5"
 dependencies = [
  "desync",
  "flo_binding",
@@ -1245,7 +1245,7 @@ dependencies = [
 [[package]]
 name = "flo_render"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#bc6174f6f2ba3144cddbed5cb1f4f10cf590d1a2"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#2f28eb248b54c26097553fabf654746cc2b4c1d5"
 dependencies = [
  "bindgen",
  "core-foundation 0.10.1",
@@ -1258,7 +1258,7 @@ dependencies = [
 [[package]]
 name = "flo_render_canvas"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#bc6174f6f2ba3144cddbed5cb1f4f10cf590d1a2"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#2f28eb248b54c26097553fabf654746cc2b4c1d5"
 dependencies = [
  "desync",
  "flo_canvas",
@@ -1273,7 +1273,7 @@ dependencies = [
 [[package]]
 name = "flo_render_gl_offscreen"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#bc6174f6f2ba3144cddbed5cb1f4f10cf590d1a2"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#2f28eb248b54c26097553fabf654746cc2b4c1d5"
 dependencies = [
  "bindgen",
  "cgl",
@@ -1285,7 +1285,7 @@ dependencies = [
 [[package]]
 name = "flo_render_software"
 version = "0.4.0"
-source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#bc6174f6f2ba3144cddbed5cb1f4f10cf590d1a2"
+source = "git+https://github.com/Logicalshift/flo_draw?branch=v0.4#2f28eb248b54c26097553fabf654746cc2b4c1d5"
 dependencies = [
  "base64",
  "flo_canvas",
@@ -1378,7 +1378,7 @@ dependencies = [
 [[package]]
 name = "flo_ui"
 version = "0.3.0"
-source = "git+https://github.com/Logicalshift/flo_ui?branch=v0.3#62085d4ed1282ed11da56f2db4622fb6707606a8"
+source = "git+https://github.com/Logicalshift/flo_ui?branch=v0.3#6e62bb58dc411292d01be0c32d9f3cf8e5b7383d"
 dependencies = [
  "egui",
  "flo_binding",

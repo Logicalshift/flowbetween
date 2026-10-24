@@ -354,6 +354,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
 
     // Run the child program that handles events for this tool dock
     let events_subprogram   = SubProgramId::new();
+    let events_region_id    = RegionId::new();
     let tool_dock_copy      = tool_dock.clone();
 
     context.send_message(SceneControl::start_child_program(events_subprogram, our_program_id, move |input, context| tool_dock_focus_events_program(input, context, tool_dock_copy, floating_tools_program), 10)).await.ok();
@@ -362,7 +363,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
     let resizing_subprogram = SubProgramId::new();
     let tool_dock_copy      = tool_dock.clone();
 
-    context.send_message(SceneControl::start_child_program(resizing_subprogram, our_program_id, move |input, context| tool_dock_resizing_program(input, context, tool_dock_copy, events_subprogram), 10)).await.ok();
+    context.send_message(SceneControl::start_child_program(resizing_subprogram, our_program_id, move |input, context| tool_dock_resizing_program(input, context, tool_dock_copy, events_subprogram, events_region_id), 10)).await.ok();
 
     // Run the program
     let mut input = input.ready_chunks(50);
@@ -481,7 +482,7 @@ pub async fn tool_dock_program(input: InputStream<ToolState>, context: SceneCont
                             sprite_manager.send(SpriteManager::ReturnSprite(old_sprite)).await.ok();
                         }
 
-                        focus.send(Focus::RemoveControlClaim(events_subprogram, old_tool.control_id.get())).await.ok();
+                        focus.send(Focus::RemoveControlClaim(events_region_id, old_tool.control_id.get())).await.ok();
 
                         tool_dock.tools.set(Arc::new(new_tools));
                     }
@@ -556,7 +557,7 @@ async fn tool_dock_drawing_program(input: InputStream<BindingProgram>, context: 
 ///
 /// A child subprogram that deals with resizing the tool dock and repositioning any tools that it contains
 ///
-async fn tool_dock_resizing_program(input: InputStream<BindingProgram>, context: SceneContext, tool_dock: Arc<ToolDock>, events_subprogram: SubProgramId) {
+async fn tool_dock_resizing_program(input: InputStream<BindingProgram>, context: SceneContext, tool_dock: Arc<ToolDock>, events_subprogram: SubProgramId, events_region_id: RegionId) {
     #[derive(Clone, PartialEq)]
     struct BindingData {
         window_size:    (f64, f64),
@@ -589,7 +590,7 @@ async fn tool_dock_resizing_program(input: InputStream<BindingProgram>, context:
         let region          = data.region;
 
         // Claim the overall region
-        focus.send(Focus::ClaimRegion { program: events_subprogram, region: vec![region_as_path], z_index: DOCK_Z_INDEX }).await.ok();
+        focus.send(Focus::ClaimRegion { region_id: events_region_id, program: events_subprogram, region: vec![region_as_path], z_index: DOCK_Z_INDEX }).await.ok();
 
         // Claim the position of each tool
         let (topleft, bottomright) = region;
@@ -602,7 +603,7 @@ async fn tool_dock_resizing_program(input: InputStream<BindingProgram>, context:
         let mut z = 0;
         for (_, tool) in ordered_tools {
             let region = tool.outline_region(x, y);
-            focus.send(Focus::ClaimControlRegion { program: events_subprogram, control: tool.control_id.get(), region: vec![region], z_index: z }).await.ok();
+            focus.send(Focus::ClaimControlRegion { region_id: events_region_id, program: events_subprogram, control: tool.control_id.get(), region: vec![region], z_index: z }).await.ok();
 
             tool.center.set((x, y));
 
@@ -694,11 +695,12 @@ async fn tool_dock_focus_events_program(input: InputStream<FocusEvent>, context:
 
     // The focus program deals with redirecting events to us
     let mut focus = context.send(()).unwrap();
+    let region_id = RegionId::new();
 
     // Claim an initial region (this is so the focus subprogram sends us a greeting)
     {
         let (w, h) = tool_dock.window_size.get();
-        focus.send(Focus::ClaimRegion { program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
+        focus.send(Focus::ClaimRegion { region_id, program: our_program_id, region: vec![tool_dock.region_as_path(w, h)], z_index: DOCK_Z_INDEX }).await.ok();
     }
 
     // Process as many events as possible each iteration

@@ -104,7 +104,7 @@ pub async fn assign_sprite(context: &SceneContext) -> SpriteId {
     context.send::<SpriteManager>(()).ok();
 
     // Request the sprite (manager sends a response with a single sprite ID)
-    let mut sprite_id               = context.spawn_query(ReadCommand::default(), Query::<AssignedSprite>::with_no_target(), ()).unwrap();
+    let mut sprite_id               = context.spawn_query(ReadCommand::default(), Query::<AssignedSprite>::with_no_target(), ()).await.unwrap();
     let AssignedSprite(sprite_id)   = sprite_id.next().await.unwrap();
 
     sprite_id

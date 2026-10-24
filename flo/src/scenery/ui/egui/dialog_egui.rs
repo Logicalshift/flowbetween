@@ -66,13 +66,14 @@ pub (crate) async fn dialog_egui(input: InputStream<EguiDialogRequest>, context:
     // Create a namespace for the dialog graphics
     let dialog_subprogram   = context.current_program_id().unwrap();
 
-    let region = BezierPathBuilder::<UiPath>::start(bounds.0)
+    let region_id   = RegionId::new();
+    let region      = BezierPathBuilder::<UiPath>::start(bounds.0)
         .line_to(UiPoint(bounds.0.0, bounds.1.1))
         .line_to(bounds.1)
         .line_to(UiPoint(bounds.1.0, bounds.0.1))
         .line_to(bounds.0)
         .build();
-    context.send_message(Focus::ClaimRegion { program: dialog_subprogram, region: vec![region], z_index: 0 }).await.ok();
+    context.send_message(Focus::ClaimRegion { region_id, program: dialog_subprogram, region: vec![region], z_index: 0 }).await.ok();
 
     let mut dialog_state = EguiDialogState::new();
 

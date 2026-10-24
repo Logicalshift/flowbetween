@@ -124,6 +124,7 @@ fn calculate_layer_transform(transform: Transform2D, canvas_size: (f64, f64), wi
 ///
 pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: SceneContext) {
     let our_program_id = context.current_program_id().unwrap();
+    let our_region_id  = RegionId::new();
 
     let mut subscribers = EventSubscribers::new();
 
@@ -157,7 +158,7 @@ pub async fn canvas_render_program(input: InputStream<CanvasRender>, context: Sc
     }
 
     // Claim an empty region in the focus program (we want resizing messages, but don't actually have any need of mouse events)
-    context.send_message(Focus::ClaimRegion { program: our_program_id, region: vec![], z_index: 0 }).await.unwrap();
+    context.send_message(Focus::ClaimRegion { region_id: our_region_id, program: our_program_id, region: vec![], z_index: 0 }).await.unwrap();
 
     // Subscribe to canvas updates
     context.send_message(VectorCanvas::Subscribe(our_program_id.into())).await.unwrap();
